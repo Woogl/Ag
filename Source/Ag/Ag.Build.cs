@@ -23,7 +23,8 @@ public class Ag : ModuleRules
 			"GameplayTags",
 			"GameplayTasks",
 			"CommonUI",
-			"MotionWarping"
+			"MotionWarping",
+			"TargetingSystem"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
