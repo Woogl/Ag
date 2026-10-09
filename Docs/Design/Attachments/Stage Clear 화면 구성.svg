@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4553"/>
+      <stop offset="1" stop-color="#2a323d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경: 전투가 끝난 장면 (임시) -->
+  <rect width="1920" height="760" fill="url(#sky)"/>
+  <rect y="760" width="1920" height="320" fill="#222831"/>
+  <path d="M0 760 H1920" stroke="#4a5563" stroke-width="2"/>
+
+  <!-- 쓰러진 보스 -->
+  <g fill="#4b5563">
+    <rect x="1040" y="716" width="300" height="56" rx="24"/>
+    <circle cx="1372" cy="736" r="30"/>
+    <rect x="980" y="776" width="260" height="12" rx="3" fill="#6b7280" transform="rotate(-6 1110 782)"/>
+  </g>
+
+  <!-- 서 있는 플레이어 (뒷모습) -->
+  <g fill="#3f4753">
+    <circle cx="700" cy="640" r="34"/>
+    <rect x="636" y="680" width="128" height="200" rx="28"/>
+    <rect x="648" y="870" width="46" height="120" rx="16"/>
+    <rect x="706" y="870" width="46" height="120" rx="16"/>
+  </g>
+
+  <!-- 화면을 60% 어둡게 -->
+  <rect width="1920" height="1080" fill="#000000" fill-opacity="0.6"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">Stage Clear UI · 기준 해상도 1920 × 1080 · 보스 사망 연출이 끝난 뒤 표시</text>
+
+  <!-- 제목 -->
+  <text x="960" y="400" font-size="112" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="8">STAGE CLEAR</text>
+
+  <!-- 버튼 (세로 배치) -->
+  <g font-size="32" text-anchor="middle">
+    <rect x="750" y="560" width="420" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <polygon points="774,584 774,608 792,596" fill="#FFFFFF"/>
+    <text x="960" y="607" fill="#FFFFFF" font-weight="700">Try Again</text>
+
+    <rect x="750" y="652" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="699" fill="#c9d1db">Return to Title</text>
+
+    <rect x="750" y="744" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="791" fill="#c9d1db">Quit</text>
+  </g>
+  <text x="1190" y="602" font-size="16" fill="#9aa4b1">← 처음 선택된 버튼</text>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, W·S, ↑·↓ / 실행: 좌클릭, Enter, Space</text>
+</svg>
