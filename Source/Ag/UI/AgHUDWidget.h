@@ -37,7 +37,7 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> StatusPanel;
 
-	/** 플레이어 상태: SP 바, shown only while SP is below MaxSP. */
+	/** 플레이어 상태: SP 바 */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> PlayerSPBar;
 

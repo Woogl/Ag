@@ -88,11 +88,6 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 	SetValueText(PlayerHPText, Stats->GetHP(), Stats->GetMaxHP(), ShownHP);
 	SetValueText(PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
 	UpdateTrail(PlayerTrail, PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
-	if (PlayerSPBar)
-	{
-		// Hidden keeps its place, so the HP and MP bars never move.
-		PlayerSPBar->SetVisibility(Stats->GetSP() < Stats->GetMaxSP() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
-	}
 
 	const UAbilitySystemComponent* ASC = Player.GetAbilitySystemComponent();
 	SetSlotUsable(SkillSlot, CanUseAbility(*ASC, AgGameplayTags::Ability_Action_Skill));
