@@ -50,6 +50,10 @@ struct FAgAttackHit
 	/** 플레이어 사양 'UP 충전': UP the attacker gains when this hit lands. Player attacks only. */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float UPCharge = 0.f;
+
+	/** 전투 HUD '대미지 숫자': this hit's number shows at the large size (스킬·궁극기·처형). Player attacks only. */
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	bool bLargeDamageNumber = false;
 };
 
 /** A player attack action (평타 한 타, 회피 반격, 스킬, 궁극기). */

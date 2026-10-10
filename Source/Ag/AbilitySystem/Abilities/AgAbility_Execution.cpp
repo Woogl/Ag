@@ -114,6 +114,7 @@ void UAgAbility_Execution::HandleFinalBlow(FGameplayEventData Payload)
 	const FAgAttackHit& Hit = Data->Execution.Hits[0];
 	const int32 HPDamage = UAgCombatLibrary::CalculateHPDamage(Player->GetAttributeSet()->GetATK(), Hit.DamageMultiplier, Boss->GetAttributeSet()->GetDEF());
 	UAgCombatLibrary::ApplyStatChange(Player, Boss, -HPDamage, 0.f);
+	Boss->ShowDamageNumber(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageNumber);
 	UE_LOG(LogAg, Verbose, TEXT("Execution blow: HP -%d (now %.0f)"), HPDamage, Boss->GetAttributeSet()->GetHP());
 	if (Boss->GetAttributeSet()->GetHP() <= 0.f)
 	{
