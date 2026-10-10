@@ -87,20 +87,36 @@ void UAgAbility_HitReaction::PlayMontage(UAnimMontage* Montage, FName StartSecti
 		MontageTask->EndTask();
 	}
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, 1.f, StartSection);
-	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageFinished);
+	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageCompleted);
+	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageBlendingOut);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
 }
 
-void UAgAbility_HitReaction::HandleMontageFinished()
+bool UAgAbility_HitReaction::PlayFollowUp()
 {
 	UAnimMontage* FollowUp = bPlayingFollowUp ? nullptr : GetFollowUpMontage();
-	if (FollowUp)
+	if (!FollowUp)
 	{
-		bPlayingFollowUp = true;
-		PlayMontage(FollowUp);
+		return false;
+	}
+	bPlayingFollowUp = true;
+	PlayMontage(FollowUp);
+	return true;
+}
+
+void UAgAbility_HitReaction::HandleMontageBlendingOut()
+{
+	// The follow-up (getting up) cross-fades in as the motion blends out. The reaction itself lasts until the last motion
+	// ends (전투 시스템 '피격 모션': no action and, for 다운 and 넉업, invincible until getting up ends).
+	PlayFollowUp();
+}
+
+void UAgAbility_HitReaction::HandleMontageCompleted()
+{
+	if (PlayFollowUp())
+	{
 		return;
 	}
 	MontageTask = nullptr;
