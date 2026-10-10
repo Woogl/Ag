@@ -67,27 +67,27 @@
 
   <!-- [2] 슬롯: 스킬·궁극기 (오른쪽 아래) -->
   <g font-size="14" fill="#FFFFFF" text-anchor="middle">
-    <rect x="1732" y="944" width="64" height="64" rx="8" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="2"/>
-    <rect x="1740" y="952" width="48" height="48" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <text x="1791" y="1004" font-size="20" text-anchor="end">30</text>
-    <text x="1764" y="1028" font-size="20">E</text>
+    <rect x="1668" y="912" width="96" height="96" rx="12" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="3"/>
+    <rect x="1680" y="924" width="72" height="72" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="1757" y="1002" font-size="20" text-anchor="end">30</text>
+    <text x="1716" y="1028" font-size="20">E</text>
 
     <g opacity="0.5">
-      <rect x="1808" y="944" width="64" height="64" rx="8" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="2"/>
-      <rect x="1816" y="952" width="48" height="48" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <rect x="1776" y="912" width="96" height="96" rx="12" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="3"/>
+      <rect x="1788" y="924" width="72" height="72" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="4 3"/>
     </g>
-    <path d="M1840 944 H1864 A8 8 0 0 1 1872 952 V1000 A8 8 0 0 1 1864 1008 H1816 A8 8 0 0 1 1808 1000 V952 A8 8 0 0 1 1816 944 Z" fill="none" stroke="#A970FF" stroke-width="4" stroke-dasharray="145 242" stroke-linecap="round"/>
-    <text x="1840" y="1028" font-size="20">R</text>
+    <path d="M1824 912 H1860 A12 12 0 0 1 1872 924 V996 A12 12 0 0 1 1860 1008 H1788 A12 12 0 0 1 1776 996 V924 A12 12 0 0 1 1788 912 Z" fill="none" stroke="#A970FF" stroke-width="6" stroke-dasharray="218 363" stroke-linecap="round"/>
+    <text x="1824" y="1028" font-size="20">R</text>
   </g>
 
-  <text x="1716" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
+  <text x="1652" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
 
   <!-- 번호 표시 -->
   <g font-size="18" font-weight="700" text-anchor="middle" fill="#1b1f24">
     <circle cx="624" cy="996" r="16" fill="#FFD23F"/>
     <text x="624" y="1002">1</text>
-    <circle cx="1708" cy="944" r="16" fill="#FFD23F"/>
-    <text x="1708" y="950">2</text>
+    <circle cx="1644" cy="912" r="16" fill="#FFD23F"/>
+    <text x="1644" y="918">2</text>
     <circle cx="436" cy="99" r="16" fill="#FFD23F"/>
     <text x="436" y="105">3</text>
     <circle cx="1000" cy="450" r="16" fill="#FFD23F"/>
