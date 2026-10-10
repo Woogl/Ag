@@ -65,12 +65,12 @@ bool UAgBossPatternAbility::CheckCooldown(const FGameplayAbilitySpecHandle Handl
 	const AAgCharacterBase* Boss = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
 	const UAgBossData* Data = Boss ? Cast<UAgBossData>(Boss->GetCharacterData()) : nullptr;
 	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindAbilitySpecFromHandle(Handle) : nullptr;
-	const FAgBossPattern* Pattern = (Data && Spec) ? Data->FindPattern(GetPatternTag(*Spec)) : nullptr;
-	if (Pattern && Pattern->CooldownTag.IsValid() && ASC->HasMatchingGameplayTag(Pattern->CooldownTag))
+	const FGameplayTag CooldownTag = (Data && Spec) ? Data->FindPatternCooldownTag(GetPatternTag(*Spec)) : FGameplayTag();
+	if (CooldownTag.IsValid() && ASC->HasMatchingGameplayTag(CooldownTag))
 	{
 		if (OptionalRelevantTags)
 		{
-			OptionalRelevantTags->AddTag(Pattern->CooldownTag);
+			OptionalRelevantTags->AddTag(CooldownTag);
 		}
 		return false;
 	}
@@ -79,10 +79,12 @@ bool UAgBossPatternAbility::CheckCooldown(const FGameplayAbilitySpecHandle Handl
 
 void UAgBossPatternAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
+	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = GetPattern();
-	if (Pattern && Pattern->CooldownTag.IsValid() && ActorInfo)
+	const FGameplayTag CooldownTag = (Data && Pattern) ? Data->FindPatternCooldownTag(Pattern->Pattern) : FGameplayTag();
+	if (CooldownTag.IsValid() && ActorInfo)
 	{
-		UAgCombatLibrary::ApplyTimedTag(ActorInfo->AbilitySystemComponent.Get(), Pattern->CooldownTag, Pattern->Cooldown);
+		UAgCombatLibrary::ApplyTimedTag(ActorInfo->AbilitySystemComponent.Get(), CooldownTag, Pattern->Cooldown);
 	}
 }
 

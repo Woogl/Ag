@@ -110,7 +110,7 @@ void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 	{
 		return;
 	}
-	const FAgAttackHit& Hit = Data->Execution.Hits[StrikeIndex];
+	const FAgPlayerAttackHit& Hit = Data->Execution.Hits[StrikeIndex];
 	++StrikeIndex;
 	const bool bFinalBlow = StrikeIndex == Data->Execution.Hits.Num();
 

@@ -5,6 +5,7 @@
 #include "AbilitySystem/Abilities/AgAbility_Execution.h"
 #include "AbilitySystem/Abilities/AgBossPatternAbility.h"
 #include "AbilitySystemComponent.h"
+#include "Ag.h"
 #include "AI/AgBossAIController.h"
 #include "Animation/AgAnimNotify_GameplayEvent.h"
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
@@ -52,13 +53,6 @@ void AAgBossCharacter::BeginPlay()
 	AttachWorldWidgets();
 }
 
-void AAgBossCharacter::HandleDataReloaded()
-{
-	Super::HandleDataReloaded();
-
-	AttachWorldWidgets();
-}
-
 void AAgBossCharacter::AttachWorldWidgets()
 {
 	if (const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData()))
@@ -79,12 +73,15 @@ void AAgBossCharacter::GrantAbilities()
 	}
 	for (const FAgBossPattern& Pattern : Data->Patterns)
 	{
-		if (Pattern.AbilityClass && Pattern.Pattern.IsValid())
+		const TSubclassOf<UAgBossPatternAbility> AbilityClass = Data->FindPatternAbility(Pattern.Pattern);
+		if (!AbilityClass)
 		{
-			FGameplayAbilitySpec Spec(Pattern.AbilityClass);
-			Spec.GetDynamicSpecSourceTags().AddTag(Pattern.Pattern);
-			GetAbilitySystemComponent()->GiveAbility(Spec);
+			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no ability in %s's PatternAbilities."), *GetName(), *Pattern.Pattern.ToString(), *Data->GetName());
+			continue;
 		}
+		FGameplayAbilitySpec Spec(AbilityClass);
+		Spec.GetDynamicSpecSourceTags().AddTag(Pattern.Pattern);
+		GetAbilitySystemComponent()->GiveAbility(Spec);
 	}
 }
 

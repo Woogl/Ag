@@ -103,7 +103,7 @@ namespace
 	}
 
 	/** 카메라 '상황별 단계' for a hit that connected. */
-	EAgCameraShake GetHitShake(const UAgCameraData& Camera, EAgHitResult Result, const FAgAttackHit& Hit, bool bPlayerAttacked)
+	EAgCameraShake GetHitShake(const UAgCameraData& Camera, EAgHitResult Result, const FAgPlayerAttackHit& Hit, bool bPlayerAttacked)
 	{
 		// 넉업, 넉백 and 다운 shake harder than 움찔.
 		const bool bHeavy = GetReactionEvent(Hit.HitReaction).IsValid();
@@ -156,7 +156,7 @@ float UAgCombatLibrary::GetHorizontalDistance(const AActor* A, const AActor* B)
 	return (A && B) ? FVector::Dist2D(A->GetActorLocation(), B->GetActorLocation()) : TNumericLimits<float>::Max();
 }
 
-EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharacterBase* Target, const FAgAttackHit& Hit, const FVector& HitLocation, AActor* HitSource)
+EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharacterBase* Target, const FAgPlayerAttackHit& Hit, const FVector& HitLocation, AActor* HitSource)
 {
 	if (!AreHostile(Attacker, Target) || Target->IsDead())
 	{
@@ -319,14 +319,14 @@ void UAgCombatLibrary::ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGame
 	UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent();
 	ASC->RemoveActiveGameplayEffectBySourceEffect(RegenClass, nullptr);
 
-	const UAgCombatRules* Rules = GetCombatRules();
-	if (!Rules || RatePerSecond == 0.f)
+	const float TickInterval = UAgSettings::Get()->RegenTickInterval;
+	if (RatePerSecond == 0.f || TickInterval <= 0.f)
 	{
 		return;
 	}
 	const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RegenClass, 1.f, ASC->MakeEffectContext());
-	Spec.Data->Period = Rules->RegenTickInterval;
-	Spec.Data->SetSetByCallerMagnitude(DataTag, RatePerSecond * Rules->RegenTickInterval);
+	Spec.Data->Period = TickInterval;
+	Spec.Data->SetSetByCallerMagnitude(DataTag, RatePerSecond * TickInterval);
 	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 }
 

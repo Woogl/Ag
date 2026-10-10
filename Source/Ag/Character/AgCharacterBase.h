@@ -49,6 +49,9 @@ public:
 	bool IsDead() const { return bDead; }
 
 	/** Sets the attack data the running action's attack windows use, one entry per window. */
+	void SetActiveAttack(TConstArrayView<FAgPlayerAttackHit> Hits);
+
+	/** The same for a boss attack, whose windows have none of the player's charges or display flags. */
 	void SetActiveAttack(TConstArrayView<FAgAttackHit> Hits);
 
 	/** Closes any open attack window and forgets the action's attack data. */
@@ -116,8 +119,8 @@ protected:
 	virtual void StartRegen();
 
 	/**
-	 * A data file was read again in the editor: applies again the values set once at spawn, except the stats and the
-	 * granted abilities, which change on the next PIE start (구현 계획서 '데이터' 다시 읽기).
+	 * A data file was read again in the editor: starts the regen again with the new rates. The stats change on the next
+	 * PIE start (구현 계획서 '데이터' 다시 읽기).
 	 */
 	virtual void HandleDataReloaded();
 
@@ -174,7 +177,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
 
-	TArray<FAgAttackHit> ActiveAttackHits;
+	TArray<FAgPlayerAttackHit> ActiveAttackHits;
 	int32 OpenWindowHit = INDEX_NONE;
 	/** Characters the open window already touched (one hit per target per window). */
 	TArray<TWeakObjectPtr<AActor>> WindowTouchedActors;

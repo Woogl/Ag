@@ -55,6 +55,20 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Data")
 	TSoftObjectPtr<UTargetingPreset> BossTargeting;
 
+	/**
+	 * Regen is applied in steps this long (rate per second × interval each step).
+	 * The spec gives no number; an implementation value, short enough that the bars fill smoothly.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Combat", meta = (Units = "s", ClampMin = 0.01))
+	float RegenTickInterval = 0.1f;
+
+	/**
+	 * Speed the ragdoll is pushed with along the last attack's direction (전투 시스템 '사망 처리' 6).
+	 * The spec gives no number; an implementation value.
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Combat", meta = (Units = "cm/s", ClampMin = 0))
+	float DeathPushSpeed = 0.f;
+
 private:
 	/** The common data read from the files above. A file read again fills the same object, so users keep their pointers. */
 	UPROPERTY(Transient)

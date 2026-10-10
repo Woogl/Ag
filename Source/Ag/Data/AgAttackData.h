@@ -6,8 +6,6 @@
 #include "GameplayTagContainer.h"
 #include "AgAttackData.generated.h"
 
-class UAgBossPatternAbility;
-
 /** 전투 시스템 '피격 반응' */
 UENUM(BlueprintType)
 enum class EAgHitReaction : uint8
@@ -19,7 +17,7 @@ enum class EAgHitReaction : uint8
 	KnockUp UMETA(DisplayName = "넉업"),
 };
 
-/** 전투 시스템 '공격 데이터': the values of one attack window (1타). */
+/** 전투 시스템 '공격 데이터': the values of one attack window (1타), for player and boss attacks alike. */
 USTRUCT(BlueprintType)
 struct FAgAttackHit
 {
@@ -43,20 +41,32 @@ struct FAgAttackHit
 	/** 패리 가능. An unguardable attack is never parryable. */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (EditCondition = "bGuardable"))
 	bool bParryable = true;
+};
 
-	/** 플레이어 사양 'MP 충전': MP the attacker gains when this hit lands. Player attacks only. */
+/** A player attack's window: the attack data plus what only player attacks have. */
+USTRUCT(BlueprintType)
+struct FAgPlayerAttackHit : public FAgAttackHit
+{
+	GENERATED_BODY()
+
+	FAgPlayerAttackHit() = default;
+
+	/** A boss attack's window, with none of the player's charges or display flags. */
+	explicit FAgPlayerAttackHit(const FAgAttackHit& Hit) : FAgAttackHit(Hit) {}
+
+	/** 플레이어 사양 'MP 충전': MP the attacker gains when this hit lands. */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float MPCharge = 0.f;
 
-	/** 플레이어 사양 'UP 충전': UP the attacker gains when this hit lands. Player attacks only. */
+	/** 플레이어 사양 'UP 충전': UP the attacker gains when this hit lands. */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float UPCharge = 0.f;
 
-	/** 전투 HUD '대미지 숫자': this hit's number shows at the large size (스킬·궁극기·처형). Player attacks only. */
+	/** 전투 HUD '대미지 숫자': this hit's number shows at the large size (스킬·궁극기·처형). */
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	bool bLargeDamageNumber = false;
 
-	/** 카메라 '상황별 단계': this hit shakes the camera as a 마지막 일격 (궁극기) instead of an ordinary hit. Player attacks only. */
+	/** 카메라 '상황별 단계': this hit shakes the camera as a 마지막 일격 (궁극기) instead of an ordinary hit. */
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	bool bFinisher = false;
 };
@@ -69,7 +79,7 @@ struct FAgPlayerAttack
 
 	/** One entry per attack window, in montage order. */
 	UPROPERTY(EditAnywhere, Category = "Attack")
-	TArray<FAgAttackHit> Hits;
+	TArray<FAgPlayerAttackHit> Hits;
 
 	/** 타겟팅 범위: a boss this close (capsule centers, horizontal) becomes the target of 공격 방향 and 공격 중 이동. */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (Units = "cm", ClampMin = 0))
@@ -82,7 +92,7 @@ struct FAgBossPattern
 {
 	GENERATED_BODY()
 
-	/** Pattern ID. The pattern's montage is found by this tag. */
+	/** Pattern ID. The pattern's montage, ability and cooldown tag are found in DA_Boss by this tag. */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Categories = "Ability.Boss.Pattern"))
 	FGameplayTag Pattern;
 
@@ -92,10 +102,6 @@ struct FAgBossPattern
 
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "s", ClampMin = 0))
 	float Cooldown = 0.f;
-
-	/** The tag the cooldown gives while it runs. Patterns without a cooldown leave it empty. */
-	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Categories = "Cooldown.Boss"))
-	FGameplayTag CooldownTag;
 
 	/** 페이즈: usable in phase 1. */
 	UPROPERTY(EditAnywhere, Category = "Pattern")
@@ -120,8 +126,4 @@ struct FAgBossPattern
 	/** 보스 사양 '이동': during the first hit's windup the boss closes in on the stop distance (A1, A5). */
 	UPROPERTY(EditAnywhere, Category = "Pattern")
 	bool bApproachFirstHit = false;
-
-	/** The ability that runs the pattern. A1, A2 and A5 use the shared pattern ability. */
-	UPROPERTY(EditAnywhere, Category = "Pattern")
-	TSubclassOf<UAgBossPatternAbility> AbilityClass;
 };

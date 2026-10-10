@@ -48,7 +48,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GrantAbilities() override;
-	virtual void HandleDataReloaded() override;
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:

@@ -17,27 +17,6 @@
   },
   "PPRegenRate": 0,
   "DeathPresentationTime": 3,
-  "WeaponEdgeStart": { "X": 0, "Y": 45, "Z": 0 },
-  "WeaponEdgeEnd": { "X": 0, "Y": -43, "Z": 0 },
-  "WeaponEdgeRadius": 3,
-  "Abilities": [
-    "/Script/Ag.AgAbility_BasicAttack",
-    "/Script/Ag.AgAbility_Dodge",
-    "/Script/Ag.AgAbility_Guard",
-    "/Script/Ag.AgAbility_Skill",
-    "/Script/Ag.AgAbility_Ultimate",
-    "/Script/Ag.AgAbility_Execution",
-    "/Script/Ag.AgAbility_KnockBack",
-    "/Script/Ag.AgAbility_Down",
-    "/Script/Ag.AgAbility_GuardPushback",
-    "/Script/Ag.AgAbility_GuardBreak",
-    "/Script/Ag.AgAbility_Death",
-    "/Script/Ag.AgAbility_Sprint",
-    "/Script/Ag.AgAbility_DodgeCounter",
-    "/Script/Ag.AgAbility_Jump",
-    "/Script/Ag.AgAbility_KnockUp"
-  ],
-  "WeaponSocket": "KatanaSocket",
   "InputBufferTime": 0.3,
   "BasicAttack": [
     {
@@ -246,7 +225,6 @@
     ],
     "TargetingRange": 300
   },
-  "ExecutionDistance": 70,
   "LockOnRange": 2000,
   "LockOnReleaseRange": 3000,
   "SprintSpeedRatio": 1.5,

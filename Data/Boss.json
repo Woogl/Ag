@@ -17,16 +17,6 @@
   },
   "PPRegenRate": 50,
   "DeathPresentationTime": 4,
-  "WeaponEdgeStart": { "X": 0, "Y": 0, "Z": 0 },
-  "WeaponEdgeEnd": { "X": 0, "Y": -127.07886505126953, "Z": 0 },
-  "WeaponEdgeRadius": 8,
-  "Abilities": [
-    "/Script/Ag.AgAbility_KnockBack",
-    "/Script/Ag.AgAbility_Groggy",
-    "/Script/Ag.AgAbility_PhaseTransition",
-    "/Script/Ag.AgAbility_Death"
-  ],
-  "WeaponSocket": "HalberdSocket",
   "Patterns": [
     {
       "Pattern": "Ability.Boss.Pattern.A1",
@@ -36,33 +26,23 @@
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         },
         {
           "DamageMultiplier": 1.4,
           "PoiseMultiplier": 1,
           "HitReaction": "KnockBack",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         }
       ],
       "Cooldown": 0,
-      "CooldownTag": "",
       "bPhase1": true,
       "bPhase2": true,
       "WeightNear": 40,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": true,
-      "AbilityClass": "/Script/Ag.AgBossPatternAbility"
+      "bApproachFirstHit": true
     },
     {
       "Pattern": "Ability.Boss.Pattern.A2",
@@ -72,22 +52,16 @@
           "PoiseMultiplier": 1,
           "HitReaction": "Down",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         }
       ],
       "Cooldown": 5,
-      "CooldownTag": "Cooldown.Boss.A2",
       "bPhase1": true,
       "bPhase2": true,
       "WeightNear": 30,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": false,
-      "AbilityClass": "/Script/Ag.AgBossPatternAbility"
+      "bApproachFirstHit": false
     },
     {
       "Pattern": "Ability.Boss.Pattern.A3",
@@ -97,22 +71,16 @@
           "PoiseMultiplier": 1,
           "HitReaction": "KnockBack",
           "bGuardable": false,
-          "bParryable": false,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": false
         }
       ],
       "Cooldown": 10,
-      "CooldownTag": "Cooldown.Boss.A3",
       "bPhase1": true,
       "bPhase2": true,
       "WeightNear": 0,
       "WeightMid": 40,
       "WeightFar": 60,
-      "bApproachFirstHit": false,
-      "AbilityClass": "/Script/Ag.AgBossPattern_Dash"
+      "bApproachFirstHit": false
     },
     {
       "Pattern": "Ability.Boss.Pattern.A4",
@@ -122,22 +90,16 @@
           "PoiseMultiplier": 1,
           "HitReaction": "KnockUp",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         }
       ],
       "Cooldown": 12,
-      "CooldownTag": "Cooldown.Boss.A4",
       "bPhase1": true,
       "bPhase2": true,
       "WeightNear": 0,
       "WeightMid": 40,
       "WeightFar": 40,
-      "bApproachFirstHit": false,
-      "AbilityClass": "/Script/Ag.AgBossPattern_Leap"
+      "bApproachFirstHit": false
     },
     {
       "Pattern": "Ability.Boss.Pattern.A5",
@@ -147,44 +109,30 @@
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         },
         {
           "DamageMultiplier": 0.7,
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         },
         {
           "DamageMultiplier": 2,
           "PoiseMultiplier": 1,
           "HitReaction": "KnockUp",
           "bGuardable": false,
-          "bParryable": false,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": false
         }
       ],
       "Cooldown": 8,
-      "CooldownTag": "Cooldown.Boss.A5",
       "bPhase1": false,
       "bPhase2": true,
       "WeightNear": 40,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": true,
-      "AbilityClass": "/Script/Ag.AgBossPatternAbility"
+      "bApproachFirstHit": true
     },
     {
       "Pattern": "Ability.Boss.Pattern.A6",
@@ -194,57 +142,41 @@
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         },
         {
           "DamageMultiplier": 1.2,
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         },
         {
           "DamageMultiplier": 1.2,
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
-          "MPCharge": 0,
-          "UPCharge": 0,
-          "bLargeDamageNumber": false,
-          "bFinisher": false
+          "bParryable": true
         }
       ],
       "Cooldown": 10,
-      "CooldownTag": "Cooldown.Boss.A6",
       "bPhase1": false,
       "bPhase2": true,
       "WeightNear": 0,
       "WeightMid": 20,
       "WeightFar": 60,
-      "bApproachFirstHit": false,
-      "AbilityClass": "/Script/Ag.AgBossPattern_SwordWave"
+      "bApproachFirstHit": false
     },
     {
       "Pattern": "Ability.Boss.Pattern.B1",
       "Hits": [],
       "Cooldown": 8,
-      "CooldownTag": "Cooldown.Boss.B1",
       "bPhase1": true,
       "bPhase2": true,
       "WeightNear": 0,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": false,
-      "AbilityClass": "/Script/Ag.AgBossPattern_Backstep"
+      "bApproachFirstHit": false
     }
   ],
   "PatternPlayRate": 0.8,
@@ -274,7 +206,5 @@
   "BackstepChance": 0.3,
   "SwordWaveSpeed": 1500,
   "SwordWaveRange": 2000,
-  "LockOnBone": "spine_05",
-  "DisplayName": "커스터",
-  "ExecutionPromptBone": "head"
+  "DisplayName": "커스터"
 }

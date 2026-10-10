@@ -8,8 +8,8 @@
 #include "Character/AgCharacterBase.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
+#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
-#include "Data/AgCombatRules.h"
 
 UAgAbility_Death::UAgAbility_Death()
 {
@@ -53,8 +53,7 @@ void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 
 	// Pushed the way the last attack came from.
 	const AActor* Attacker = TriggerEventData ? TriggerEventData->Instigator.Get() : nullptr;
-	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
-	const FVector Push = UAgCombatLibrary::GetAttackDirection(Attacker, Character) * (Rules ? Rules->DeathPushSpeed : 0.f);
+	const FVector Push = UAgCombatLibrary::GetAttackDirection(Attacker, Character) * UAgSettings::Get()->DeathPushSpeed;
 	Character->Die(Push, this);
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

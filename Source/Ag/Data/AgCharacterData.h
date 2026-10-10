@@ -9,6 +9,7 @@
 #include "AgCharacterData.generated.h"
 
 class AAgSwordWave;
+class UAgBossPatternAbility;
 class UAnimMontage;
 class UAnimSequenceBase;
 class UBlendSpace;
@@ -70,8 +71,9 @@ struct FAgStats
 
 /**
  * Data shared by the player and the boss (구현 계획서 '데이터').
- * Asset references, in the Assets categories, are saved in the data asset (DA_Player, DA_Boss). Every other field is
- * Transient: it comes from the data file ValuesFile each time the asset loads (AgDataFile).
+ * The data asset (DA_Player, DA_Boss) saves asset references and the values the specs don't give (implementation values,
+ * abilities, sockets and bones). The Transient fields are the spec values the planner tunes: they come from the data file
+ * ValuesFile each time the asset loads (AgDataFile).
  * The 데이터 위치표 in the implementation plan maps each field to its spec item.
  */
 UCLASS(Abstract, BlueprintType)
@@ -102,19 +104,19 @@ public:
 	float DeathPresentationTime = 0.f;
 
 	/** Start of the weapon's damaging edge, in the weapon mesh's space. Attacks sweep the line from start to end. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Weapon", meta = (Units = "cm"))
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (Units = "cm"))
 	FVector WeaponEdgeStart = FVector::ZeroVector;
 
 	/** End (tip) of the weapon's damaging edge, in the weapon mesh's space. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Weapon", meta = (Units = "cm"))
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (Units = "cm"))
 	FVector WeaponEdgeEnd = FVector::ZeroVector;
 
 	/** Thickness of the swept edge (sphere radius). The spec gives no number; an implementation value for QA to tune. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Weapon", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (Units = "cm", ClampMin = 0))
 	float WeaponEdgeRadius = 0.f;
 
 	/** Abilities granted at the start: actions, reactions, death. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
+	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> Abilities;
 
 	/** 움찔: additive montage played on top of whatever the character is doing. */
@@ -142,7 +144,7 @@ public:
 	TObjectPtr<UStreamableRenderAsset> WeaponMesh;
 
 	/** Socket on SK_Mannequin the weapon attaches to. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Weapon")
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	FName WeaponSocket;
 };
 
@@ -265,7 +267,7 @@ public:
 	 * Gap (capsule centers) the player closes to in front of the boss by the execution's first slash, where the two
 	 * execution motions line up. The spec gives no number; measured from the two motions' authored placement.
 	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Execution", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(EditDefaultsOnly, Category = "Execution", meta = (Units = "cm", ClampMin = 0))
 	float ExecutionDistance = 0.f;
 
 	/** 락온 타겟팅 범위 */
@@ -381,6 +383,10 @@ class UAgBossData : public UAgCharacterData
 public:
 	const FAgBossPattern* FindPattern(const FGameplayTag& Pattern) const;
 	UAnimMontage* FindPatternMontage(const FGameplayTag& Pattern) const;
+	TSubclassOf<UAgBossPatternAbility> FindPatternAbility(const FGameplayTag& Pattern) const;
+
+	/** The tag the pattern's cooldown gives while it runs, or none for a pattern without a cooldown. */
+	FGameplayTag FindPatternCooldownTag(const FGameplayTag& Pattern) const;
 
 	/** 패턴 목록 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Patterns")
@@ -499,7 +505,7 @@ public:
 	float SwordWaveRange = 0.f;
 
 	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. The lock-on marker shows there too. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On")
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
 	FName LockOnBone;
 
 	/** 이름, shown in 전투 HUD '보스 상태'. */
@@ -507,8 +513,16 @@ public:
 	FText DisplayName;
 
 	/** 전투 HUD '처형 안내': the prompt shows above this bone (보스 머리 위). */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	FName ExecutionPromptBone;
+
+	/** The ability that runs each pattern, by pattern ID. A1, A2 and A5 use the shared pattern ability. */
+	UPROPERTY(EditDefaultsOnly, Category = "Patterns", meta = (Categories = "Ability.Boss.Pattern"))
+	TMap<FGameplayTag, TSubclassOf<UAgBossPatternAbility>> PatternAbilities;
+
+	/** The tag each pattern's cooldown gives while it runs, by pattern ID. Patterns without a cooldown have none. */
+	UPROPERTY(EditDefaultsOnly, Category = "Patterns")
+	TMap<FGameplayTag, FGameplayTag> PatternCooldownTags;
 
 	/** Pattern montages, by pattern ID. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages", meta = (Categories = "Ability.Boss.Pattern"))

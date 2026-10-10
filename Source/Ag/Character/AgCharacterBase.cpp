@@ -8,7 +8,6 @@
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "AIController.h"
-#include "Animation/AgAnimInstance.h"
 #include "Animation/AnimInstance.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
@@ -106,6 +105,10 @@ void AAgCharacterBase::OnConstruction(const FTransform& Transform)
 void AAgCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Again at play: a character placed in the level keeps the weapon of its last construction, even after the data
+	// asset changed.
+	ApplyWeapon();
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute()).AddUObject(this, &ThisClass::HandleMOVChanged);
@@ -215,11 +218,6 @@ void AAgCharacterBase::StartRegen()
 void AAgCharacterBase::HandleDataReloaded()
 {
 	StartRegen();
-	ApplyWeapon();
-	if (UAgAnimInstance* AnimInstance = Cast<UAgAnimInstance>(GetMesh()->GetAnimInstance()))
-	{
-		AnimInstance->ApplyCharacterData();
-	}
 }
 
 void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
@@ -275,10 +273,19 @@ bool AAgCharacterBase::GetWeaponEdge(FVector& OutStart, FVector& OutEnd) const
 	return true;
 }
 
-void AAgCharacterBase::SetActiveAttack(TConstArrayView<FAgAttackHit> Hits)
+void AAgCharacterBase::SetActiveAttack(TConstArrayView<FAgPlayerAttackHit> Hits)
 {
 	ClearActiveAttack();
 	ActiveAttackHits = Hits;
+}
+
+void AAgCharacterBase::SetActiveAttack(TConstArrayView<FAgAttackHit> Hits)
+{
+	ClearActiveAttack();
+	for (const FAgAttackHit& Hit : Hits)
+	{
+		ActiveAttackHits.Emplace(Hit);
+	}
 }
 
 void AAgCharacterBase::ClearActiveAttack()

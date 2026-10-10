@@ -80,7 +80,7 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 		}
 		TouchedActors.Add(Target);
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
-		UAgCombatLibrary::ProcessHit(ShooterCharacter, Target, Hit, HitLocation, this);
+		UAgCombatLibrary::ProcessHit(ShooterCharacter, Target, FAgPlayerAttackHit(Hit), HitLocation, this);
 	}
 
 	if (bHitWall)

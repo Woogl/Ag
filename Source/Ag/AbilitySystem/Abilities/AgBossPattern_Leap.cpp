@@ -115,7 +115,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	const float HeightGap = Player ? FMath::Abs(Player->GetActorLocation().Z - Boss->GetActorLocation().Z) : 0.f;
 	if (Player && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Data->LeapHitRadius && HeightGap <= Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.f)
 	{
-		UAgCombatLibrary::ProcessHit(Boss, Player, Pattern->Hits[0], Boss->GetActorLocation());
+		UAgCombatLibrary::ProcessHit(Boss, Player, FAgPlayerAttackHit(Pattern->Hits[0]), Boss->GetActorLocation());
 	}
 }
 

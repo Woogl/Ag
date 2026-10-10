@@ -345,10 +345,10 @@ namespace AgDataFile
 			}
 			if (bSucceeded && GEngine)
 			{
-				// Stats and granted abilities are set once at spawn and are not applied again (구현 계획서 '데이터' 다시 읽기).
+				// Stats are set once at spawn and are not applied again (구현 계획서 '데이터' 다시 읽기).
 				const bool bCharacterData = Objects.ContainsByPredicate([](const UObject* Object) { return Object->IsA<UAgCharacterData>(); });
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green, FString::Printf(TEXT("Data/%s reloaded.%s"), *FileName,
-					bCharacterData ? TEXT(" Stats and granted abilities change on the next PIE start.") : TEXT("")));
+					bCharacterData ? TEXT(" Stats change on the next PIE start.") : TEXT("")));
 			}
 		}
 
