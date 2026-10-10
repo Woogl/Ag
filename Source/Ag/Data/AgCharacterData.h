@@ -106,6 +106,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (Units = "cm", ClampMin = 0))
 	float WeaponEdgeRadius = 0.f;
 
+	/** Blend into the guard locomotion when the guard starts. The spec gives no number; an implementation value. */
+	UPROPERTY(EditDefaultsOnly, Category = "Animation", meta = (Units = "s", ClampMin = 0))
+	float GuardBlendInTime = 0.f;
+
+	/** Blend back to the normal locomotion when the guard ends. The spec gives no number; an implementation value. */
+	UPROPERTY(EditDefaultsOnly, Category = "Animation", meta = (Units = "s", ClampMin = 0))
+	float GuardBlendOutTime = 0.f;
+
+	/** Blend into the airborne loop and back out on landing. The spec gives no number; an implementation value. */
+	UPROPERTY(EditDefaultsOnly, Category = "Animation", meta = (Units = "s", ClampMin = 0))
+	float AirborneBlendTime = 0.f;
+
 	/** Abilities granted at the start: actions, reactions, death. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> Abilities;
