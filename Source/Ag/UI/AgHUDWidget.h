@@ -12,6 +12,7 @@ class UAbilitySystemComponent;
 class UImage;
 class UProgressBar;
 class UTextBlock;
+class UWidgetAnimation;
 struct FGameplayEventData;
 struct FGameplayTag;
 
@@ -25,11 +26,22 @@ class UAgHUDWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 
+public:
+	/**
+	 * 상황별 표시 규칙 '사망 연출': hides the player status, slots and boss status. Screen effects already playing go on
+	 * to their end (they sit outside the status panel).
+	 */
+	void HideStatus();
+
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	/** Holds every status element (플레이어 상태, 슬롯, 보스 상태); the screen effects are outside it. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UWidget> StatusPanel;
 
 	/** 플레이어 상태: SP 바, shown only while SP is below MaxSP. */
 	UPROPERTY(meta = (BindWidgetOptional))
@@ -87,13 +99,13 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> BossPPBar;
 
-	/** 화면 효과: 패리 성공, a faint flash over the whole screen. */
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UWidget> ParryFlash;
+	/** 화면 효과 '패리 성공': the flash's widget animation. */
+	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))
+	TObjectPtr<UWidgetAnimation> ParryFlashAnimation;
 
-	/** 화면 효과: 극한 회피, a flash around the screen edges. */
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UWidget> PerfectDodgeFlash;
+	/** 화면 효과 '극한 회피': the edge flash's widget animation. */
+	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))
+	TObjectPtr<UWidgetAnimation> PerfectDodgeFlashAnimation;
 
 	/** 보스 상태: the PP bar color during groggy, while the bar refills over the groggy time. */
 	UPROPERTY(EditAnywhere, Category = "HUD")
@@ -110,22 +122,6 @@ protected:
 	/** 감소 잔상: ... then shrinks to the current HP over this time. */
 	UPROPERTY(EditAnywhere, Category = "HUD|HP Trail", meta = (Units = "s", ClampMin = 0))
 	float TrailShrinkTime = 0.f;
-
-	/** 화면 효과 '패리 성공': flash time; it fades out from its strongest. */
-	UPROPERTY(EditAnywhere, Category = "HUD|Screen Effects", meta = (Units = "s", ClampMin = 0))
-	float ParryFlashTime = 0.f;
-
-	/** 화면 효과 '패리 성공': opacity at the start, faint enough not to hide the screen. */
-	UPROPERTY(EditAnywhere, Category = "HUD|Screen Effects", meta = (ClampMin = 0, ClampMax = 1))
-	float ParryFlashOpacity = 0.f;
-
-	/** 화면 효과 '극한 회피': flash time; it fades out from its strongest. */
-	UPROPERTY(EditAnywhere, Category = "HUD|Screen Effects", meta = (Units = "s", ClampMin = 0))
-	float PerfectDodgeFlashTime = 0.f;
-
-	/** 화면 효과 '극한 회피': opacity at the start. */
-	UPROPERTY(EditAnywhere, Category = "HUD|Screen Effects", meta = (ClampMin = 0, ClampMax = 1))
-	float PerfectDodgeFlashOpacity = 0.f;
 
 private:
 	/** 감소 잔상 of one HP bar. */
@@ -158,8 +154,8 @@ private:
 	/** HP dropped: the trail stays (even mid-shrink) and waits again; then it shrinks to the current HP. */
 	void UpdateTrail(FHPTrail& Trail, UProgressBar* TrailBar, float HPRatio, float DeltaTime) const;
 
-	/** Fades a screen effect out over its time; a negative age is idle. */
-	static void UpdateFlash(UWidget* Flash, float& Age, float Duration, float StartOpacity, float DeltaTime);
+	/** Plays a screen effect from the start at the game's time scale. */
+	void PlayScreenEffect(UWidgetAnimation* Animation);
 
 	/** Listens to the player's parry and 극한 회피 for the screen effects. */
 	void BindPlayerEvents(UAbilitySystemComponent* ASC);
@@ -180,6 +176,4 @@ private:
 	FIntPoint ShownMP = FIntPoint(INDEX_NONE, INDEX_NONE);
 	FHPTrail PlayerTrail;
 	FHPTrail BossTrail;
-	float ParryFlashAge = -1.f;
-	float PerfectDodgeFlashAge = -1.f;
 };

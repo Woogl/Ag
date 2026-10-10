@@ -4,6 +4,7 @@
 
 #include "Components/WidgetComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/WorldSettings.h"
 #include "UI/AgDamageNumberWidget.h"
 
 AAgDamageNumber::AAgDamageNumber()
@@ -39,7 +40,7 @@ void AAgDamageNumber::Spawn(UWorld* World, TSubclassOf<UAgDamageNumberWidget> Wi
 
 	if (UAgDamageNumberWidget* NumberWidget = Cast<UAgDamageNumberWidget>(Number->Widget->GetWidget()))
 	{
-		NumberWidget->SetDamage(Amount, bLarge);
+		NumberWidget->SetDamage(Amount, bLarge, World->GetWorldSettings()->GetEffectiveTimeDilation());
 	}
 }
 
@@ -57,5 +58,5 @@ void AAgDamageNumber::Tick(float DeltaSeconds)
 
 	const float Alpha = Age / NumberWidget->GetLifetime();
 	SetActorLocation(StartLocation + FVector(0.f, 0.f, NumberWidget->GetRiseHeight() * Alpha));
-	NumberWidget->SetRenderOpacity(1.f - Alpha);
+	NumberWidget->SetGameSpeed(GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation());
 }

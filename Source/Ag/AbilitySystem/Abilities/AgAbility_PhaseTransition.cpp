@@ -14,6 +14,9 @@ UAgAbility_PhaseTransition::UAgAbility_PhaseTransition()
 {
 	SetAssetTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_PhaseTransition));
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_Invincible);
+
+	// 회전 covers pattern runs, movement and the pattern recovery wait, not the roar.
+	ActivationOwnedTags.AddTag(AgGameplayTags::State_Boss_RotationLocked);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);

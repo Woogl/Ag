@@ -77,7 +77,6 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->ExecutionMontage);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
@@ -116,6 +115,9 @@ void UAgAbility_Execution::HandleFinalBlow(FGameplayEventData Payload)
 	const int32 HPDamage = UAgCombatLibrary::CalculateHPDamage(Player->GetAttributeSet()->GetATK(), Hit.DamageMultiplier, Boss->GetAttributeSet()->GetDEF());
 	UAgCombatLibrary::ApplyStatChange(Player, Boss, -HPDamage, 0.f);
 	Boss->ShowDamageNumber(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageNumber);
+	FGameplayCueParameters EffectParameters;
+	EffectParameters.Location = Boss->GetActorLocation();
+	Boss->GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Hit, EffectParameters);
 	if (const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData())
 	{
 		UAgCombatLibrary::PlayCameraShake(Player, Camera->ExecutionBlowShake);

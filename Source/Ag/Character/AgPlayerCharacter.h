@@ -47,6 +47,9 @@ public:
 	/** The dodge / sprint key (Shift) is held. */
 	bool IsDodgeHeld() const { return bDodgeHeld; }
 
+	/** 달리기: a dodge motion just ended. Starts the sprint if Shift and movement are still held and the guard key isn't. */
+	void TryStartSprint();
+
 	/**
 	 * True once when the guard starts again after a parry motion or a guard pushback with the key held,
 	 * which opens no parry window (플레이어 사양 '패리 구간').
@@ -90,10 +93,7 @@ private:
 	/** False while an action motion, a hit reaction, groggy, execution or death ignores movement input. */
 	bool CanMove() const;
 
-	/**
-	 * 가드 시작: with the guard key held, the guard starts again once an action or a hit reaction ends.
-	 * 달리기: a dodge motion that ends with Shift and movement held turns into a sprint.
-	 */
+	/** 가드 시작: with the guard key held, the guard starts again once an action or a hit reaction ends. */
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
 	void TryResumeGuard();
 

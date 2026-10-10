@@ -270,12 +270,18 @@ void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 		return;
 	}
 
-	// 백스텝이 끝나면 대기 없이 즉시 다음 패턴을 선택합니다.
+	// 백스텝이 끝나면 대기 없이 즉시 다음 패턴을 선택합니다. The phase transition still comes first if the backstep
+	// ended in its HP range: for that moment the boss is between patterns.
 	const bool bWasBackstep = RunningPattern == AgGameplayTags::Ability_Boss_Pattern_B1;
 	RunningPattern = FGameplayTag();
 	if (bWasBackstep)
 	{
-		SelectPattern();
+		State = EState::Waiting;
+		TryStartPhaseTransition();
+		if (State == EState::Waiting)
+		{
+			SelectPattern();
+		}
 		return;
 	}
 

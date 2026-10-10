@@ -10,8 +10,8 @@ class UAgDamageNumberWidget;
 class UWidgetComponent;
 
 /**
- * 전투 HUD '대미지 숫자': a number at a world position that rises at a constant speed while fading out, then removes
- * itself. How long it shows and how far it rises are in the widget (WBP_DamageNumber).
+ * 전투 HUD '대미지 숫자': a number at a world position that rises at a constant speed while its widget fades it out,
+ * then removes itself. The fade (and so how long it shows) and the rise height are in the widget (WBP_DamageNumber).
  */
 UCLASS(NotBlueprintable)
 class AAgDamageNumber : public AActor

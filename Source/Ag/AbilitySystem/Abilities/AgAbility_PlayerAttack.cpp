@@ -51,8 +51,8 @@ void UAgAbility_PlayerAttack::PlayMontageAt(int32 Index)
 	}
 	MontageIndex = Index;
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montages[Index]);
-	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageFinished);
+	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageCompleted);
+	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageBlendingOut);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
@@ -74,7 +74,15 @@ void UAgAbility_PlayerAttack::HandleAttackWindowEnded(FGameplayEventData Payload
 	}
 }
 
-void UAgAbility_PlayerAttack::HandleMontageFinished()
+void UAgAbility_PlayerAttack::HandleMontageBlendingOut()
+{
+	if (Montages.IsValidIndex(MontageIndex + 1))
+	{
+		PlayMontageAt(MontageIndex + 1);
+	}
+}
+
+void UAgAbility_PlayerAttack::HandleMontageCompleted()
 {
 	if (Montages.IsValidIndex(MontageIndex + 1))
 	{

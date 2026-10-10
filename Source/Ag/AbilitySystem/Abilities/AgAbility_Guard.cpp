@@ -121,6 +121,17 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 		return;
 	}
 
+	// The parry motion faces where the attack came from (전투 시스템 '피격 반응').
+	AAgCharacterBase* Character = GetAgCharacter();
+	if (const AActor* Attacker = Payload.Instigator.Get(); Character && Attacker)
+	{
+		const FVector ToAttacker = -UAgCombatLibrary::GetAttackDirection(Attacker, Character);
+		if (!ToAttacker.IsNearlyZero())
+		{
+			Character->SetActorRotation(FRotator(0.f, ToAttacker.Rotation().Yaw, 0.f));
+		}
+	}
+
 	// The parry window ends once the parry motion starts. The motion is an action: no movement, no input until its recovery.
 	CloseParryWindow();
 	bInParryMotion = true;
@@ -130,7 +141,6 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 
 	ParryTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->ParryMontage);
 	ParryTask->OnCompleted.AddDynamic(this, &ThisClass::HandleParryMotionFinished);
-	ParryTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleParryMotionFinished);
 	ParryTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleParryMotionCancelled);
 	ParryTask->OnCancelled.AddDynamic(this, &ThisClass::HandleParryMotionCancelled);
 	ParryTask->ReadyForActivation();
