@@ -14,7 +14,6 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "EngineUtils.h"
-#include "GameFramework/WorldSettings.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
 namespace
@@ -45,13 +44,6 @@ void UAgHUDWidget::HideStatus()
 	}
 }
 
-void UAgHUDWidget::NativeDestruct()
-{
-	UnbindPlayerEvents();
-
-	Super::NativeDestruct();
-}
-
 TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
 {
 	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown, /*bHideCursorDuringViewportCapture*/ true);
@@ -61,23 +53,10 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	// The trails and screen effects run on game time, so the slow motion slows them too.
+	// The trails run on game time, so the slow motion slows them too.
 	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();
-	const float GameSpeed = GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation();
-	for (UWidgetAnimation* Effect : { ParryFlashAnimation.Get(), PerfectDodgeFlashAnimation.Get() })
-	{
-		if (Effect && IsAnimationPlaying(Effect))
-		{
-			SetPlaybackSpeed(Effect, GameSpeed);
-		}
-	}
-
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
-		if (!PlayerASC.IsValid())
-		{
-			BindPlayerEvents(Player->GetAbilitySystemComponent());
-		}
 		UpdatePlayer(*Player, GameDeltaTime);
 	}
 
@@ -239,43 +218,4 @@ void UAgHUDWidget::UpdateTrail(FHPTrail& Trail, UProgressBar* TrailBar, float HP
 		Trail.Ratio = FMath::Lerp(Trail.ShrinkFrom, HPRatio, Alpha);
 	}
 	TrailBar->SetPercent(Trail.Ratio);
-}
-
-void UAgHUDWidget::PlayScreenEffect(UWidgetAnimation* Animation)
-{
-	if (Animation)
-	{
-		PlayAnimation(Animation, 0.f, 1, EUMGSequencePlayMode::Forward, GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation());
-	}
-}
-
-void UAgHUDWidget::BindPlayerEvents(UAbilitySystemComponent* ASC)
-{
-	if (!ASC)
-	{
-		return;
-	}
-	PlayerASC = ASC;
-	ParryHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Parry).AddUObject(this, &ThisClass::HandleParry);
-	PerfectDodgeHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_PerfectDodgeSucceeded).AddUObject(this, &ThisClass::HandlePerfectDodge);
-}
-
-void UAgHUDWidget::UnbindPlayerEvents()
-{
-	if (UAbilitySystemComponent* ASC = PlayerASC.Get())
-	{
-		ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Parry).Remove(ParryHandle);
-		ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_PerfectDodgeSucceeded).Remove(PerfectDodgeHandle);
-	}
-	PlayerASC.Reset();
-}
-
-void UAgHUDWidget::HandleParry(const FGameplayEventData* Payload)
-{
-	PlayScreenEffect(ParryFlashAnimation);
-}
-
-void UAgHUDWidget::HandlePerfectDodge(const FGameplayEventData* Payload)
-{
-	PlayScreenEffect(PerfectDodgeFlashAnimation);
 }

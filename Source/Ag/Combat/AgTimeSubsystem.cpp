@@ -71,7 +71,7 @@ void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 void UAgTimeSubsystem::ApplySlowMotion(float Speed, float RealDuration)
 {
 	// Global time dilation slows everything that runs on game time: motion, movement, timers, camera shakes, the HUD's
-	// screen effects. The end is counted in real time.
+	// HP trails and the damage numbers. The end is counted in real time.
 	GetWorld()->GetWorldSettings()->SetTimeDilation(Speed);
 	SlowMotionEndTime = FPlatformTime::Seconds() + RealDuration;
 	UE_LOG(LogAg, Verbose, TEXT("Slow motion starts: speed %.2f for %.2f s of real time"), Speed, RealDuration);

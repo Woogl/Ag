@@ -12,8 +12,6 @@ class UAbilitySystemComponent;
 class UImage;
 class UProgressBar;
 class UTextBlock;
-class UWidgetAnimation;
-struct FGameplayEventData;
 struct FGameplayTag;
 
 /**
@@ -27,19 +25,15 @@ class UAgHUDWidget : public UCommonActivatableWidget
 	GENERATED_BODY()
 
 public:
-	/**
-	 * 상황별 표시 규칙 '사망 연출': hides the player status, slots and boss status. Screen effects already playing go on
-	 * to their end (they sit outside the status panel).
-	 */
+	/** 상황별 표시 규칙 '사망 연출': hides the player status, slots and boss status. */
 	void HideStatus();
 
 protected:
 	virtual void NativeConstruct() override;
-	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-	/** Holds every status element (플레이어 상태, 슬롯, 보스 상태); the screen effects are outside it. */
+	/** Holds every status element (플레이어 상태, 슬롯, 보스 상태). */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> StatusPanel;
 
@@ -99,14 +93,6 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> BossPPBar;
 
-	/** 화면 효과 '패리 성공': the flash's widget animation. */
-	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))
-	TObjectPtr<UWidgetAnimation> ParryFlashAnimation;
-
-	/** 화면 효과 '극한 회피': the edge flash's widget animation. */
-	UPROPERTY(Transient, meta = (BindWidgetAnimOptional))
-	TObjectPtr<UWidgetAnimation> PerfectDodgeFlashAnimation;
-
 	/** 보스 상태: the PP bar color during groggy, while the bar refills over the groggy time. */
 	UPROPERTY(EditAnywhere, Category = "HUD")
 	FLinearColor GroggyPPColor = FLinearColor::White;
@@ -154,19 +140,7 @@ private:
 	/** HP dropped: the trail stays (even mid-shrink) and waits again; then it shrinks to the current HP. */
 	void UpdateTrail(FHPTrail& Trail, UProgressBar* TrailBar, float HPRatio, float DeltaTime) const;
 
-	/** Plays a screen effect from the start at the game's time scale. */
-	void PlayScreenEffect(UWidgetAnimation* Animation);
-
-	/** Listens to the player's parry and 극한 회피 for the screen effects. */
-	void BindPlayerEvents(UAbilitySystemComponent* ASC);
-	void UnbindPlayerEvents();
-	void HandleParry(const FGameplayEventData* Payload);
-	void HandlePerfectDodge(const FGameplayEventData* Payload);
-
 	TWeakObjectPtr<AAgBossCharacter> Boss;
-	TWeakObjectPtr<UAbilitySystemComponent> PlayerASC;
-	FDelegateHandle ParryHandle;
-	FDelegateHandle PerfectDodgeHandle;
 
 	/** The PP bar's fill color from the designer. */
 	FLinearColor PPColor = FLinearColor::White;

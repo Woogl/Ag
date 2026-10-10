@@ -74,5 +74,9 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
 	static bool SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName, FName WidgetName, float Duration, float StartOpacity, float EndOpacity);
+
+	/** Deletes the widget animation AnimationName the way the widget designer does. False if there was none. */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	static bool RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName);
 #endif
 };

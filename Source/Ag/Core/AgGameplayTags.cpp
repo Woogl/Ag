@@ -73,7 +73,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition, "Event.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PerfectDodge, "Event.PerfectDodge");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodgeSucceeded, "Event.PerfectDodgeSucceeded", "극한 회피가 발동함 (회피 한 번에 한 번)");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Parry, "Event.Parry");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타를 시작함 (B1 백스텝 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackWindowEnded, "Event.AttackWindowEnded", "판정 구간이 끝남. EventMagnitude는 몇 번째 타인지 (0부터)");
