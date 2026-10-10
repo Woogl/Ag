@@ -161,7 +161,7 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 bool AAgPlayerCharacter::CanMove() const
 {
-	// Actions, reactions and the parry window hold the character in place (입력 '상태별 허용 입력', '모션 캔슬').
+	// Actions, reactions and the parry window hold the character in place (플레이어 입력 '상태별 허용 입력', '모션 캔슬').
 	FGameplayTagContainer Blockers;
 	Blockers.AddTag(AgGameplayTags::State_Acting);
 	Blockers.AddTag(AgGameplayTags::State_ParryWindow);
@@ -187,7 +187,7 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 	const FVector Right = YawMatrix.GetUnitAxis(EAxis::Y);
 	MoveInputDirection = (Forward * Input.Y + Right * Input.X).GetSafeNormal2D();
 
-	// Movement input never cancels an action motion; it is ignored until the motion ends (입력 '모션 캔슬').
+	// Movement input never cancels an action motion; it is ignored until the motion ends (플레이어 입력 '모션 캔슬').
 	if (CanMove())
 	{
 		AddMovementInput(Forward, Input.Y);
@@ -293,7 +293,7 @@ void AAgPlayerCharacter::HandleInputPressed(const FGameplayTag& InputTag)
 	}
 	if (InputTag == AgGameplayTags::Input_LockOn)
 	{
-		// The lock-on key isn't limited by the action state; it works until death (입력 '공통 입력 처리').
+		// The lock-on key isn't limited by the action state; it works until death (플레이어 입력 '공통 입력 처리').
 		LockOn->ToggleLockOn();
 		return;
 	}

@@ -87,7 +87,7 @@ private:
 	void ExecutePressed();
 	void LockOnPressed();
 
-	/** Handles a pressed action key by its input tag (입력 '키 배치', '공통 입력 처리'). */
+	/** Handles a pressed action key by its input tag (플레이어 입력 '키 배치', '공통 입력 처리'). */
 	void HandleInputPressed(const FGameplayTag& InputTag);
 
 	/** Runs an action key: a running ability that takes the key gets it, otherwise its action starts if allowed. */
@@ -138,7 +138,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Lock-On")
 	TObjectPtr<UAgLockOnComponent> LockOn;
 
-	/** IMC_Ag: the key layout of 입력 '키 배치'. */
+	/** IMC_Ag: the key layout of 플레이어 입력 '키 배치'. */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;
 
