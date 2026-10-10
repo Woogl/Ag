@@ -6,6 +6,8 @@
 #include "Engine/DeveloperSettings.h"
 #include "AgSettings.generated.h"
 
+class UAgCameraData;
+
 /**
  * Project settings for Ag (Project Settings > Game > Ag).
  * Points at levels and shared data assets so code never hardcodes asset paths.
@@ -25,4 +27,8 @@ public:
 	/** 보스전 레벨 (게임 플로우 'Boss Stage') */
 	UPROPERTY(Config, EditAnywhere, Category = "Maps")
 	TSoftObjectPtr<UWorld> BossStageMap;
+
+	/** DA_Camera */
+	UPROPERTY(Config, EditAnywhere, Category = "Data")
+	TSoftObjectPtr<UAgCameraData> CameraData;
 };
