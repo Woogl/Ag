@@ -55,6 +55,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "deg/s", ClampMin = 0))
 	float LockOnRotationSpeed = 0.f;
 
+	/** 락온 카메라 '회전': 따라잡는 시간, how far the turn lags behind a target that keeps moving. It eases in and out. */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "s", ClampMin = 0))
+	float LockOnSmoothingTime = 0.f;
+
 	/** 상황별 단계: 플레이어의 공격 적중 (피격 반응 움찔) */
 	UPROPERTY(EditDefaultsOnly, Category = "Camera Shake")
 	EAgCameraShake PlayerHitShake = EAgCameraShake::None;
