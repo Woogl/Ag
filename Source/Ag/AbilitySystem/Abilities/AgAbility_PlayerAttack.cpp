@@ -63,7 +63,7 @@ void UAgAbility_PlayerAttack::HandleAttackWindowEnded(FGameplayEventData Payload
 	const int32 EndedHit = FMath::RoundToInt(Payload.EventMagnitude);
 	if (EndedHit >= HitCount - 1)
 	{
-		// The recovery starts when the last attack window ends (플레이어 사양 '모션 캔슬').
+		// The recovery starts when the last attack window ends (입력 '모션 캔슬').
 		EndBusy();
 		bInRecovery = true;
 	}

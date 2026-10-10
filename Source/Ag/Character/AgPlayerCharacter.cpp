@@ -56,6 +56,8 @@ void AAgPlayerCharacter::BeginPlay()
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleInputBlockChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandleSPChanged);
 	LockOn->OnLockOnChanged.AddUObject(this, &ThisClass::UpdateRotationMode);
 	UpdateRotationMode();
@@ -185,7 +187,7 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 	const FVector Right = YawMatrix.GetUnitAxis(EAxis::Y);
 	MoveInputDirection = (Forward * Input.Y + Right * Input.X).GetSafeNormal2D();
 
-	// Movement input never cancels an action motion; it is ignored until the motion ends (플레이어 사양 '모션 캔슬').
+	// Movement input never cancels an action motion; it is ignored until the motion ends (입력 '모션 캔슬').
 	if (CanMove())
 	{
 		AddMovementInput(Forward, Input.Y);
@@ -291,11 +293,22 @@ void AAgPlayerCharacter::HandleInputPressed(const FGameplayTag& InputTag)
 	}
 	if (InputTag == AgGameplayTags::Input_LockOn)
 	{
-		// The lock-on key isn't limited by the action state; it works until death (플레이어 사양 '공통 입력 처리').
+		// The lock-on key isn't limited by the action state; it works until death (입력 '공통 입력 처리').
 		LockOn->ToggleLockOn();
 		return;
 	}
 
+	// 선입력: a key pressed while actions aren't allowed is remembered and runs once they are. A new press replaces it.
+	BufferedInput = IsActionInputBlocked() ? InputTag : FGameplayTag();
+	BufferedInputTime = GetWorld()->GetTimeSeconds();
+
+	// The key goes in now as well: an action that isn't allowed yet doesn't start, but a running ability may still take
+	// it (the guard follows its key during the parry motion).
+	RunInput(InputTag);
+}
+
+void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
+{
 	// A running ability that handles this key itself gets the press: the basic attack's next hit, or the guard's new
 	// start during a parry motion. Otherwise the key starts its action, which checks whether it is allowed now.
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
@@ -369,6 +382,53 @@ void AAgPlayerCharacter::HandleInputReleased(const FGameplayTag& InputTag)
 	}
 }
 
+bool AAgPlayerCharacter::IsActionInputBlocked() const
+{
+	// The 상태별 허용 입력 rows without action keys: an action before its recovery (the air too) and the hit reactions
+	// that stop actions.
+	FGameplayTagContainer Blockers;
+	Blockers.AddTag(AgGameplayTags::State_Busy);
+	Blockers.AddTag(AgGameplayTags::State_HitReaction);
+	return GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Blockers);
+}
+
+void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// Checked next frame, once whatever follows in this frame is set up (a knockback that cancelled the action, the
+	// basic attack marking its recovery).
+	if (NewCount == 0 && BufferedInput.IsValid())
+	{
+		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunBufferedInput);
+	}
+}
+
+void AAgPlayerCharacter::TryRunBufferedInput()
+{
+	// Still not allowed: the key waits for the next change and is dropped then if it has expired.
+	if (!BufferedInput.IsValid() || IsActionInputBlocked())
+	{
+		return;
+	}
+
+	const FGameplayTag InputTag = BufferedInput;
+	BufferedInput = FGameplayTag();
+	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
+	const bool bExpired = !Data || GetWorld()->GetTimeSeconds() - BufferedInputTime > Data->InputBufferTime;
+	// The guard runs only while its key is still held.
+	if (IsDead() || bExpired || (InputTag == AgGameplayTags::Input_Guard && !bGuardHeld))
+	{
+		return;
+	}
+
+	UE_LOG(LogAg, Verbose, TEXT("Buffered input runs: %s"), *InputTag.ToString());
+	if (InputTag == AgGameplayTags::Input_Guard)
+	{
+		// A new press, so the guard opens a parry window even right after a guard pushback.
+		bGuardResumeWithoutParry = false;
+	}
+	RunInput(InputTag);
+}
+
 void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 {
 	const UGameplayAbility* Ended = EndedData.AbilityThatEnded;
@@ -390,6 +450,9 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 
 void AAgPlayerCharacter::TryResumeGuard()
 {
+	// A remembered key is a newer press than the held guard key, so it goes first.
+	TryRunBufferedInput();
+
 	// Only from standing or moving: nothing else may be running.
 	FGameplayTagContainer Running;
 	Running.AddTag(AgGameplayTags::State_Acting);

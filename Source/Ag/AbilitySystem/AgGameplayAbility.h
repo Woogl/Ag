@@ -45,7 +45,7 @@ protected:
 	virtual FAgResourceAmounts GetCost() const;
 
 	/**
-	 * Sets the tags of a player action (플레이어 사양 '입력과 모션 캔슬'):
+	 * Sets the tags of a player action (입력 '상태별 허용 입력', '모션 캔슬'):
 	 * the action can't start during another action's 행동 중, a hit reaction, groggy, execution or death, and cancels
 	 * the action it interrupts. With bIgnoresMovement it owns State.Acting, so movement input is ignored while it runs.
 	 */

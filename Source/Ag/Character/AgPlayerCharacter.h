@@ -87,11 +87,21 @@ private:
 	void ExecutePressed();
 	void LockOnPressed();
 
-	/** Handles a pressed action key by its input tag (플레이어 사양 '조작', '공통 입력 처리'). */
+	/** Handles a pressed action key by its input tag (입력 '키 배치', '공통 입력 처리'). */
 	void HandleInputPressed(const FGameplayTag& InputTag);
+
+	/** Runs an action key: a running ability that takes the key gets it, otherwise its action starts if allowed. */
+	void RunInput(const FGameplayTag& InputTag);
 
 	/** Handles a released key (the guard and dodge keys care). */
 	void HandleInputReleased(const FGameplayTag& InputTag);
+
+	/** 선입력: true while action keys aren't allowed (an action before its recovery, the air, a hit reaction). */
+	bool IsActionInputBlocked() const;
+
+	/** 선입력: once action keys are allowed again, the remembered key runs. */
+	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);
+	void TryRunBufferedInput();
 
 	/** False while an action motion, a hit reaction, groggy, execution or death ignores movement input. */
 	bool CanMove() const;
@@ -128,7 +138,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Lock-On")
 	TObjectPtr<UAgLockOnComponent> LockOn;
 
-	/** IMC_Ag: the key layout of 플레이어 사양 '조작'. */
+	/** IMC_Ag: the key layout of 입력 '키 배치'. */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;
 
@@ -163,6 +173,11 @@ private:
 	TObjectPtr<UInputAction> LockOnAction;
 
 	FVector MoveInputDirection = FVector::ZeroVector;
+
+	/** 선입력: the key pressed while it wasn't allowed, and when (world time). */
+	FGameplayTag BufferedInput;
+	double BufferedInputTime = 0.0;
+
 	bool bGuardHeld = false;
 	bool bDodgeHeld = false;
 	bool bGuardResumeWithoutParry = false;

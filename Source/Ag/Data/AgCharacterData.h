@@ -142,6 +142,10 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
+	/** 선입력: how long a key pressed while its action isn't allowed is remembered. */
+	UPROPERTY(EditDefaultsOnly, Category = "Input", meta = (Units = "s", ClampMin = 0))
+	float InputBufferTime = 0.f;
+
 	/** 평타: one action per hit, from the first hit. */
 	UPROPERTY(EditDefaultsOnly, Category = "Basic Attack")
 	TArray<FAgPlayerAttack> BasicAttack;
