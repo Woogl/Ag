@@ -7,6 +7,8 @@
 #include "AgSettings.generated.h"
 
 class UAgCameraData;
+class UAgCombatRules;
+class UTargetingPreset;
 
 /**
  * Project settings for Ag (Project Settings > Game > Ag).
@@ -31,4 +33,12 @@ public:
 	/** DA_Camera */
 	UPROPERTY(Config, EditAnywhere, Category = "Data")
 	TSoftObjectPtr<UAgCameraData> CameraData;
+
+	/** DA_CombatRules */
+	UPROPERTY(Config, EditAnywhere, Category = "Data")
+	TSoftObjectPtr<UAgCombatRules> CombatRules;
+
+	/** TP_Boss: finds boss candidates around the player for 공격 중 이동 and lock-on. Each use then checks its own range. */
+	UPROPERTY(Config, EditAnywhere, Category = "Data")
+	TSoftObjectPtr<UTargetingPreset> BossTargeting;
 };
