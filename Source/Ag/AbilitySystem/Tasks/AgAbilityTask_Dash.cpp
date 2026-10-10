@@ -8,8 +8,8 @@
 
 namespace
 {
-	/** A tick that moves less than this share of the expected distance counts as blocked. */
-	constexpr float BlockedMoveRatio = 0.3f;
+	/** A tick that gets less than this share of the expected distance along the dash counts as blocked. */
+	constexpr float BlockedMoveRatio = 0.7f;
 
 	/** Blocked ticks in a row before the dash stops (one short tick can be a step). */
 	constexpr int32 BlockedTicksToStop = 3;
@@ -71,11 +71,13 @@ void UAgAbilityTask_Dash::TickTask(float DeltaTime)
 		return;
 	}
 
-	// Blocked (a wall): stop where it is. Hitstop slows the owner's time, so those ticks expect almost no movement.
+	// Blocked (a wall): stop where it is. A wall hit at an angle makes the boss slide along it, so only the progress along
+	// the dash counts. Hitstop slows the owner's time, so those ticks expect almost no movement.
 	const float Expected = Speed * DeltaTime;
 	if (Expected >= MinJudgedMove)
 	{
-		BlockedTicks = FVector::Dist2D(LastLocation, Location) < Expected * BlockedMoveRatio ? BlockedTicks + 1 : 0;
+		const float Progress = FVector::DotProduct((Location - LastLocation) * FVector(1.f, 1.f, 0.f), Direction);
+		BlockedTicks = Progress < Expected * BlockedMoveRatio ? BlockedTicks + 1 : 0;
 	}
 	LastLocation = Location;
 	if (BlockedTicks >= BlockedTicksToStop)

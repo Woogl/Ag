@@ -31,10 +31,12 @@ void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	}
 
 	// 처형 사망: the 처형 사망 motion matches the 처형 피격 motion until after the final blow, so it continues from the
-	// same position without a jump. The ragdoll comes when it ends.
+	// same position without a jump. The ragdoll comes when it ends. Only the execution's own blow does this; any other hit
+	// that kills during the 처형 피격 motion is an ordinary death.
 	const UAgBossData* BossData = GetCharacterData<UAgBossData>();
 	const UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
-	if (BossData && BossData->ExecutedMontage && BossData->ExecutedDeathMontage && AnimInstance
+	const bool bKilledByExecution = TriggerEventData && TriggerEventData->InstigatorTags.HasTagExact(AgGameplayTags::Ability_Action_Execution);
+	if (bKilledByExecution && BossData && BossData->ExecutedMontage && BossData->ExecutedDeathMontage && AnimInstance
 		&& GetAbilitySystemComponentFromActorInfo()->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed))
 	{
 		const float Position = AnimInstance->Montage_GetPosition(BossData->ExecutedMontage);

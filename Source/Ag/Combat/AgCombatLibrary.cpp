@@ -349,7 +349,7 @@ void UAgCombatLibrary::PlayCameraShake(AAgCharacterBase* Context, EAgCameraShake
 
 const UAgCameraData* UAgCombatLibrary::GetCameraData()
 {
-	const UAgCameraData* Camera = UAgSettings::Get()->CameraData.LoadSynchronous();
+	const UAgCameraData* Camera = UAgSettings::Get()->GetCameraData();
 	if (!Camera)
 	{
 		UE_LOG(LogAg, Error, TEXT("Camera data is not set (Project Settings > Game > Ag)."));
@@ -359,7 +359,7 @@ const UAgCameraData* UAgCombatLibrary::GetCameraData()
 
 const UAgCombatRules* UAgCombatLibrary::GetCombatRules()
 {
-	const UAgCombatRules* Rules = UAgSettings::Get()->CombatRules.LoadSynchronous();
+	const UAgCombatRules* Rules = UAgSettings::Get()->GetCombatRules();
 	if (!Rules)
 	{
 		UE_LOG(LogAg, Error, TEXT("Combat rules are not set (Project Settings > Game > Ag)."));

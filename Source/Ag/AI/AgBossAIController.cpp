@@ -185,6 +185,19 @@ void AAgBossAIController::SelectPattern()
 		return;
 	}
 
+	// The tick checks these first, but a timer can fire later in the frame they come true.
+	const AAgCharacterBase* PlayerCharacter = Cast<AAgCharacterBase>(Player);
+	if (PlayerCharacter && PlayerCharacter->IsDead())
+	{
+		EnterNonCombat();
+		return;
+	}
+	TryStartPhaseTransition();
+	if (State == EState::PhaseTransition)
+	{
+		return;
+	}
+
 	// 1. Candidates: usable in the current distance band and phase, cooldown over.
 	const float Distance = UAgCombatLibrary::GetHorizontalDistance(Boss.Get(), Player);
 	const FGameplayAbilityActorInfo* ActorInfo = Boss->GetAbilitySystemComponent()->AbilityActorInfo.Get();
@@ -270,18 +283,14 @@ void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 		return;
 	}
 
-	// 백스텝이 끝나면 대기 없이 즉시 다음 패턴을 선택합니다. The phase transition still comes first if the backstep
-	// ended in its HP range: for that moment the boss is between patterns.
+	// 백스텝이 끝나면 대기 없이 즉시 다음 패턴을 선택합니다. For that moment the boss is between patterns, so the phase
+	// transition still comes first if the backstep ended in its HP range.
 	const bool bWasBackstep = RunningPattern == AgGameplayTags::Ability_Boss_Pattern_B1;
 	RunningPattern = FGameplayTag();
 	if (bWasBackstep)
 	{
 		State = EState::Waiting;
-		TryStartPhaseTransition();
-		if (State == EState::Waiting)
-		{
-			SelectPattern();
-		}
+		SelectPattern();
 		return;
 	}
 

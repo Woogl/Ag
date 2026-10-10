@@ -71,6 +71,9 @@ private:
 	void ApplyCameraData();
 
 	void Move(const FInputActionValue& Value);
+
+	/** 점프: moving after a standing landing ends the landing motion. */
+	void StopLandingMotion();
 	void MoveReleased();
 	void Look(const FInputActionValue& Value);
 	void AttackPressed();

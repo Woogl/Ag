@@ -25,6 +25,9 @@ private:
 	void SetRotationLocked(bool bLocked);
 
 	UFUNCTION()
+	void HandleRotationStop();
+
+	UFUNCTION()
 	void HandleLanded(EMovementMode NewMovementMode);
 
 	bool bRotationLocked = false;

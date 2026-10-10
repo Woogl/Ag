@@ -15,7 +15,8 @@ bool FAgDamageFormulaTest::RunTest(const FString& Parameters)
 	TestEqual(TEXT("DEF 100 halves the damage"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 100.f), 50);
 	TestEqual(TEXT("DEF 0 takes full damage"), UAgCombatLibrary::CalculateHPDamage(150.f, 1.f, 0.f), 150);
 	TestEqual(TEXT("Multiplier applies"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.6f, 100.f), 80);
-	TestEqual(TEXT("Rounds half up (66.67 -> 67)"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 50.f), 67);
+	TestEqual(TEXT("Rounds .5 up (50.5 -> 51)"), UAgCombatLibrary::CalculateHPDamage(101.f, 1.f, 100.f), 51);
+	TestEqual(TEXT("Rounds up above half (66.67 -> 67)"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 50.f), 67);
 	TestEqual(TEXT("Rounds down below half (93.33 -> 93)"), UAgCombatLibrary::CalculateHPDamage(140.f, 1.f, 50.f), 93);
 	TestEqual(TEXT("Guard reduction applies before rounding (25)"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 100.f, 0.5f), 25);
 	TestEqual(TEXT("Guard reduction rounding (33.33 -> 33)"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 50.f, 0.5f), 33);

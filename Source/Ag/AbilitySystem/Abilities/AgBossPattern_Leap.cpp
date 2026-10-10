@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/Abilities/AgBossPattern_Leap.h"
 
+#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
@@ -46,8 +47,21 @@ void UAgBossPattern_Leap::OnPatternStarted()
 	{
 		Boss->SetActorRotation(FRotator(0.f, Direction.Rotation().Yaw, 0.f));
 	}
-	SetRotationLocked(true);
 	Boss->LaunchCharacter(Launch, /*bXYOverride*/ true, /*bZOverride*/ true);
+
+	// 회전: the boss keeps turning toward the player in the air and stops 회전 정지 before the landing (its attack window).
+	// Phase 2 shortens both by the same ratio.
+	const float TurnTime = (Data->LeapAirTime - Data->RotationStopLead) / Boss->GetPatternSpeed();
+	if (TurnTime > 0.f)
+	{
+		UAbilityTask_WaitDelay* TurnTask = UAbilityTask_WaitDelay::WaitDelay(this, TurnTime);
+		TurnTask->OnFinish.AddDynamic(this, &ThisClass::HandleRotationStop);
+		TurnTask->ReadyForActivation();
+	}
+	else
+	{
+		SetRotationLocked(true);
+	}
 
 	UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
 	LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
@@ -84,6 +98,14 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	if (Player && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Data->LeapHitRadius && HeightGap <= Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.f)
 	{
 		UAgCombatLibrary::ProcessHit(Boss, Player, Pattern->Hits[0], Boss->GetActorLocation());
+	}
+}
+
+void UAgBossPattern_Leap::HandleRotationStop()
+{
+	if (!bLanded)
+	{
+		SetRotationLocked(true);
 	}
 }
 
