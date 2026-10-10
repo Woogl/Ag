@@ -19,6 +19,8 @@ UAgAbility_HitReaction::UAgAbility_HitReaction()
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_Down);
+	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardPushback);
+	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardBreak);
 
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executing);
@@ -148,4 +150,27 @@ void UAgAbility_Down::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	}
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+UAgAbility_GuardPushback::UAgAbility_GuardPushback()
+{
+	SetupReaction(AgGameplayTags::Ability_Reaction_GuardPushback, AgGameplayTags::Event_Guard_Pushback);
+	ActivationOwnedTags.AddTag(AgGameplayTags::State_Guarding);
+}
+
+UAnimMontage* UAgAbility_GuardPushback::GetReactionMontage() const
+{
+	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	return Data ? Data->GuardPushbackMontage.Get() : nullptr;
+}
+
+UAgAbility_GuardBreak::UAgAbility_GuardBreak()
+{
+	SetupReaction(AgGameplayTags::Ability_Reaction_GuardBreak, AgGameplayTags::Event_Guard_Break);
+}
+
+UAnimMontage* UAgAbility_GuardBreak::GetReactionMontage() const
+{
+	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	return Data ? Data->GuardBreakMontage.Get() : nullptr;
 }

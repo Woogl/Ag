@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "Data/AgAttackData.h"
 #include "GameFramework/Character.h"
 #include "AgCharacterBase.generated.h"
@@ -64,8 +65,9 @@ public:
 	 * Steers the attack warp target to StopDistance in front of Target every frame until StopApproach.
 	 * Stops following when Target goes beyond MaxRange (0 = no limit); MaxTravel (0 = no limit) caps how far
 	 * from the starting point the warp target may be. bFaceTarget also warps the facing toward Target.
+	 * Normally a character already closer stays put; bExactGap moves it back to the gap too (처형 alignment).
 	 */
-	void StartApproach(AActor* Target, float InStopDistance, float MaxRange, float MaxTravel, bool bFaceTarget);
+	void StartApproach(AActor* Target, float InStopDistance, float MaxRange, float MaxTravel, bool bFaceTarget, bool bExactGap = false);
 
 	/** Stops updating the warp target; the last one stays for the rest of the warp window. */
 	void StopApproach();
@@ -75,12 +77,19 @@ public:
 	/** 움찔: plays the additive flinch on top of the current motion. */
 	void PlayFlinch();
 
+	/** 가드 움찔: plays the additive guard flinch on the guard pose. Only characters that guard have one. */
+	virtual void PlayGuardFlinch() {}
+
 	/**
 	 * 사망 처리: stops every action, input and movement, removes this character's attack windows,
 	 * turns off character-to-character collision and switches to ragdoll moving with PushVelocity. Broadcasts OnDied.
-	 * DeathAbility is the ability running the death, which is not cancelled.
+	 * DeathAbility is the ability running the death, which is not cancelled. Without bRagdoll the current motion keeps
+	 * playing (처형 사망) and the caller starts the ragdoll later.
 	 */
-	virtual void Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility = nullptr);
+	virtual void Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility = nullptr, bool bRagdoll = true);
+
+	/** 사망 처리 6: switches the dead character to ragdoll, pushed with PushVelocity. */
+	void StartRagdoll(const FVector& PushVelocity);
 
 	/** HP를 0으로 만들어 사망 처리를 시작합니다. (Kill Z 낙하, 테스트용 콘솔 명령) */
 	void Kill();
@@ -100,6 +109,18 @@ protected:
 	/** Grants the character data's abilities. */
 	virtual void GrantAbilities();
 
+	/** Starts the regen effects (PP here; the player adds SP). */
+	virtual void StartRegen();
+
+	/** Movement speed as a multiple of MOV (the player's guard and sprint change it). */
+	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
+
+	/** Applies MOV times the current multiplier to the movement component. */
+	void UpdateMoveSpeed();
+
+	/** Restarts a regen delay from the beginning: removes the running one and applies a new one. */
+	void RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration);
+
 	/** DA_Player or DA_Boss. */
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	TObjectPtr<UAgCharacterData> CharacterData;
@@ -112,6 +133,9 @@ private:
 	void ApplyWeapon();
 
 	void HandleMOVChanged(const FOnAttributeChangeData& Data);
+
+	/** PP 리젠: any PP decrease restarts the regen delay. */
+	void HandlePPChanged(const FOnAttributeChangeData& Data);
 
 	/** The component holding the weapon mesh, or null. */
 	USceneComponent* GetWeaponComponent() const;
@@ -160,6 +184,9 @@ private:
 	float ApproachMaxRange = 0.f;
 	float ApproachMaxTravel = 0.f;
 	bool bApproachFacesTarget = false;
+	bool bApproachExactGap = false;
+
+	FActiveGameplayEffectHandle PPRegenDelay;
 
 	bool bDead = false;
 };

@@ -9,7 +9,7 @@
 class UAbilityTask_PlayMontageAndWait;
 
 /**
- * 넉백 and 다운 (전투 시스템 '피격 모션'), started by a hit event.
+ * 넉백, 다운, 가드 밀림 and 가드 브레이크 (전투 시스템 '피격 모션', '가드 반응'), started by a hit event.
  * Stops the current action, turns toward the attacker and plays the motion; no action is possible until it ends.
  * A new knockback or down restarts the motion with the new reaction.
  */
@@ -80,4 +80,30 @@ private:
 	void HandleGrounded(FGameplayEventData Payload);
 
 	bool bInvincible = false;
+};
+
+/** 가드 밀림: pushed back while keeping the guard; attacks during it are guarded too. */
+UCLASS()
+class UAgAbility_GuardPushback : public UAgAbility_HitReaction
+{
+	GENERATED_BODY()
+
+public:
+	UAgAbility_GuardPushback();
+
+protected:
+	virtual UAnimMontage* GetReactionMontage() const override;
+};
+
+/** 가드 브레이크: the guard is forced open and the character staggers. */
+UCLASS()
+class UAgAbility_GuardBreak : public UAgAbility_HitReaction
+{
+	GENERATED_BODY()
+
+public:
+	UAgAbility_GuardBreak();
+
+protected:
+	virtual UAnimMontage* GetReactionMontage() const override;
 };

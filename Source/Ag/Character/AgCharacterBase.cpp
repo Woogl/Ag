@@ -3,6 +3,7 @@
 #include "Character/AgCharacterBase.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgGameplayEffect_Regen.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -15,6 +16,7 @@
 #include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgCombatRules.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "Game/AgBossStageGameMode.h"
@@ -81,8 +83,10 @@ void AAgCharacterBase::BeginPlay()
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute()).AddUObject(this, &ThisClass::HandleMOVChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetPPAttribute()).AddUObject(this, &ThisClass::HandlePPChanged);
 	InitializeStats();
 	GrantAbilities();
+	StartRegen();
 	if (CharacterData && CharacterData->bAlwaysSuperArmor)
 	{
 		AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_SuperArmor);
@@ -146,7 +150,7 @@ void AAgCharacterBase::InitializeStats()
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMOVAttribute(), Stats.MOV);
 
 	// The change delegate only fires when the value changes, so apply MOV once here.
-	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV();
+	UpdateMoveSpeed();
 }
 
 void AAgCharacterBase::GrantAbilities()
@@ -166,7 +170,38 @@ void AAgCharacterBase::GrantAbilities()
 
 void AAgCharacterBase::HandleMOVChanged(const FOnAttributeChangeData& Data)
 {
-	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
+	UpdateMoveSpeed();
+}
+
+void AAgCharacterBase::UpdateMoveSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV() * GetMoveSpeedMultiplier();
+}
+
+void AAgCharacterBase::StartRegen()
+{
+	if (CharacterData && !CharacterData->Stats.bInfinitePP)
+	{
+		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_PPRegen::StaticClass(), AgGameplayTags::Data_PP, CharacterData->PPRegenRate);
+	}
+}
+
+void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
+{
+	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
+	if (Data.NewValue < Data.OldValue && Rules)
+	{
+		RestartRegenDelay(PPRegenDelay, AgGameplayTags::State_Regen_PPDelay, Rules->PPRegenDelay);
+	}
+}
+
+void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration)
+{
+	if (Handle.IsValid())
+	{
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Handle);
+	}
+	Handle = UAgCombatLibrary::ApplyTimedTag(AbilitySystemComponent, DelayTag, Duration);
 }
 
 void AAgCharacterBase::ApplyWeapon()
@@ -325,7 +360,7 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	return Clamped;
 }
 
-void AAgCharacterBase::StartApproach(AActor* Target, float InStopDistance, float MaxRange, float MaxTravel, bool bFaceTarget)
+void AAgCharacterBase::StartApproach(AActor* Target, float InStopDistance, float MaxRange, float MaxTravel, bool bFaceTarget, bool bExactGap)
 {
 	ApproachTarget = Target;
 	ApproachOrigin = GetActorLocation();
@@ -333,6 +368,7 @@ void AAgCharacterBase::StartApproach(AActor* Target, float InStopDistance, float
 	ApproachMaxRange = MaxRange;
 	ApproachMaxTravel = MaxTravel;
 	bApproachFacesTarget = bFaceTarget;
+	bApproachExactGap = bExactGap;
 	UpdateApproach();
 }
 
@@ -356,7 +392,7 @@ void AAgCharacterBase::UpdateApproach()
 	const FVector Location = GetActorLocation();
 	const FVector Direction = (Target->GetActorLocation() - Location).GetSafeNormal2D();
 	FVector Goal = Location;
-	if (Gap > ApproachStopDistance)
+	if (Gap > ApproachStopDistance || bApproachExactGap)
 	{
 		Goal = Target->GetActorLocation() - Direction * ApproachStopDistance;
 		Goal.Z = Location.Z;
@@ -380,7 +416,7 @@ void AAgCharacterBase::PlayFlinch()
 	}
 }
 
-void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility)
+void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility, bool bRagdoll)
 {
 	if (bDead)
 	{
@@ -391,12 +427,13 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	// 1-2. Stop every action; later hits do nothing (IsDead).
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
 	AbilitySystemComponent->CancelAllAbilities(DeathAbility);
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && bRagdoll)
 	{
 		AnimInstance->StopAllMontages(0.f);
 	}
 
-	// 3. Stop input (player) or AI (boss), and movement.
+	// 3. Stop input (player) or AI (boss), and movement. A death motion still moves the character by its root motion.
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PlayerController);
@@ -405,9 +442,7 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	{
 		AIController->StopMovement();
 	}
-	UCharacterMovementComponent* Movement = GetCharacterMovement();
-	Movement->StopMovementImmediately();
-	Movement->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
 
 	// 4. Remove this character's attack windows.
 	ClearActiveAttack();
@@ -418,6 +453,18 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	// 6. Ragdoll, pushed the way the last attack came from.
+	if (bRagdoll)
+	{
+		StartRagdoll(PushVelocity);
+	}
+
+	OnDied.Broadcast(this);
+}
+
+void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
+{
+	GetCharacterMovement()->DisableMovement();
+
 	USkeletalMeshComponent* MeshComponent = GetMesh();
 	MeshComponent->SetCollisionProfileName(RagdollProfileName);
 	MeshComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -426,8 +473,6 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	{
 		MeshComponent->AddImpulse(PushVelocity, NAME_None, /*bVelChange*/ true);
 	}
-
-	OnDied.Broadcast(this);
 }
 
 void AAgCharacterBase::Kill()

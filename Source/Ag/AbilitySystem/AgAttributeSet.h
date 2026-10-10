@@ -77,8 +77,8 @@ public:
 	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MOV)
 
 protected:
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
-	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 
 private:
 	/** Keeps every stat inside its range from 전투 시스템 '스탯' (resources between 0 and their max, the rest at least 0). */

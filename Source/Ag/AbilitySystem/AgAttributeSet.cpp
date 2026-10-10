@@ -2,23 +2,20 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 
-#include "GameplayEffectExtension.h"
+void UAgAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+
+	// Instant and periodic effects (damage, costs, regen) change the base value; keep it in range so a regen tick at
+	// the maximum doesn't pile up above it and swallow the next decrease.
+	ClampToRange(Attribute, NewValue);
+}
 
 void UAgAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 
 	ClampToRange(Attribute, NewValue);
-}
-
-void UAgAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
-{
-	Super::PostGameplayEffectExecute(Data);
-
-	// Instant effects change the base value, which PreAttributeChange doesn't see.
-	float Value = Data.EvaluatedData.Attribute.GetNumericValue(this);
-	ClampToRange(Data.EvaluatedData.Attribute, Value);
-	Data.EvaluatedData.Attribute.SetNumericValueChecked(Value, this);
 }
 
 void UAgAttributeSet::ClampToRange(const FGameplayAttribute& Attribute, float& Value) const
