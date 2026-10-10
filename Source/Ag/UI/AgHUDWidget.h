@@ -65,6 +65,10 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> SkillSlot;
 
+	/** 스킬 슬롯: 스킬 아이콘. A texture or material goes into its brush in the designer; without one it stays hidden. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UImage> SkillIconImage;
+
 	/** 스킬 슬롯: the skill's MP cost. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> SkillCostText;
@@ -72,6 +76,10 @@ protected:
 	/** 궁극기 슬롯, dimmed while the ultimate can't be used. The UP gauge is outside it and never dims. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> UltimateSlot;
+
+	/** 궁극기 슬롯: 궁극기 아이콘, set up like SkillIconImage. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UImage> UltimateIconImage;
 
 	/** 궁극기 슬롯: UP 게이지. Its material fills the slot border by the UP ratio. */
 	UPROPERTY(meta = (BindWidgetOptional))
