@@ -1,0 +1,33 @@
+{
+  "image": "보스 모션 처형 피격",
+  "character": "boss",
+  "rows": [
+    {
+      "title": "처형 피격 (처형 후 일어남)",
+      "note": "",
+      "frames": [
+        {"clip": "Samurai/Executed", "t": 0.0, "time": "0.00초", "label": "시작"},
+        {"clip": "Samurai/Executed", "t": 0.3667, "time": "0.37초", "label": "베임", "hit": true, "trail": false, "banner": [["처형 대미지 적용", "yellow"]]},
+        {"clip": "Samurai/Executed", "t": 0.5167, "time": "0.52초", "label": "베임", "hit": true, "trail": false, "banner": [["처형 대미지 적용", "yellow"]]},
+        {"clip": "Samurai/Executed", "t": 0.7, "time": "0.70초", "label": "무릎 꿇음"},
+        {"clip": "Samurai/Executed", "t": 1.25, "time": "1.25초", "label": "마지막 일격", "hit": true, "trail": false, "banner": [["처형 대미지 적용", "yellow"]]},
+        {"clip": "Samurai/Executed", "t": 1.65, "time": "1.65초", "label": "날아감"},
+        {"clip": "Samurai/Executed", "t": 2.0667, "time": "2.07초", "label": "쓰러짐"},
+        {"clip": "Samurai/Executed", "t": 2.8, "time": "2.80초", "label": "일어남"},
+        {"clip": "Samurai/Executed", "t": 3.2, "time": "3.20초", "label": ""},
+        {"clip": "Samurai/Executed", "t": 3.5167, "time": "3.52초", "label": "끝"}
+      ]
+    },
+    {
+      "title": "처형 사망 (2.27초까지 위와 같고, 쓰러진 채로 끝남)",
+      "note": "처형 대미지로 HP가 0 이하가 되면",
+      "frames": [
+        {"clip": "Samurai/Executed_Death", "t": 1.25, "time": "1.25초", "label": "마지막 일격", "hit": true, "trail": false, "banner": [["처형 대미지 적용", "yellow"]]},
+        {"clip": "Samurai/Executed_Death", "t": 1.65, "time": "1.65초", "label": "날아감"},
+        {"clip": "Samurai/Executed_Death", "t": 2.0667, "time": "2.07초", "label": "쓰러짐"},
+        {"clip": "Samurai/Executed_Death", "t": 2.3, "time": "2.30초", "label": ""},
+        {"clip": "Samurai/Executed_Death", "t": 2.5333, "time": "2.53초", "label": "끝"}
+      ]
+    }
+  ]
+}

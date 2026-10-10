@@ -1,0 +1,22 @@
+{
+  "image": "플레이어 모션 평타",
+  "character": "player",
+  "rows": [
+    {
+      "title": "평타 1 ~ 5타",
+      "note": "",
+      "frames": [
+        {"clip": "Samurai/Attack_Combo_B1", "t": 0.0, "time": "0.00초", "label": "시작"},
+        {"clip": "Samurai/Attack_Combo_B1", "t": 0.1667, "time": "0.17초", "label": ""},
+        {"clip": "Samurai/Attack_Combo_B1", "t": 0.2833, "time": "0.28초", "label": "1타 내려베기", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo_B2", "t": 0.3, "time": "0.60초", "label": "2타 사선 내려베기", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo_B3", "t": 0.2, "time": "0.97초", "label": ""},
+        {"clip": "Samurai/Attack_Combo_B3", "t": 0.3, "time": "1.07초", "label": "3타 올려베기", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo_B4", "t": 0.3, "time": "1.52초", "label": "4타 올려베기", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo_B5", "t": 0.2167, "time": "1.77초", "label": "들어 올림"},
+        {"clip": "Samurai/Attack_Combo_B5", "t": 0.3167, "time": "1.87초", "label": "5타 크게 내려베기", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo_B5", "t": 1.2167, "time": "2.77초", "label": "끝"}
+      ]
+    }
+  ]
+}

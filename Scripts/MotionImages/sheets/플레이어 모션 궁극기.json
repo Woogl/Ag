@@ -1,0 +1,22 @@
+{
+  "image": "플레이어 모션 궁극기",
+  "character": "player",
+  "rows": [
+    {
+      "title": "궁극기 난무",
+      "note": "시작부터 끝까지 무적",
+      "frames": [
+        {"clip": "Samurai/Attack_Dodge", "t": 0.0, "time": "0.00초", "label": "시작"},
+        {"clip": "Samurai/Attack_Dodge", "t": 0.4, "time": "0.40초", "label": "파고듦"},
+        {"clip": "Samurai/Attack_Dodge_to_Combo1", "t": 0.25, "time": "0.87초", "label": "1타", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo2", "t": 0.15, "time": "1.07초", "label": ""},
+        {"clip": "Samurai/Attack_Combo2", "t": 0.35, "time": "1.27초", "label": "2타", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo3", "t": 0.1, "time": "1.50초", "label": ""},
+        {"clip": "Samurai/Attack_Combo3", "t": 0.25, "time": "1.65초", "label": "3타", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo4", "t": 0.25, "time": "2.02초", "label": "들어 올림"},
+        {"clip": "Samurai/Attack_Combo4", "t": 0.45, "time": "2.22초", "label": "4타 마무리", "hit": true, "banner": [["넉백", "yellow"]]},
+        {"clip": "Samurai/Attack_Combo4", "t": 1.15, "time": "2.92초", "label": "끝"}
+      ]
+    }
+  ]
+}

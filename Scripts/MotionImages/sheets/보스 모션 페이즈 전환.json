@@ -1,0 +1,18 @@
+{
+  "image": "보스 모션 페이즈 전환",
+  "character": "boss",
+  "rows": [
+    {
+      "title": "페이즈 전환 포효",
+      "note": "연출 내내 무적",
+      "frames": [
+        {"clip": "Samurai/Buff", "t": 0.0, "time": "0.00초", "label": "시작"},
+        {"clip": "Samurai/Buff", "t": 0.1333, "time": "0.13초", "label": ""},
+        {"clip": "Samurai/Buff", "t": 0.2667, "time": "0.27초", "label": ""},
+        {"clip": "Samurai/Buff", "t": 0.4, "time": "0.40초", "label": ""},
+        {"clip": "Samurai/Buff", "t": 0.5333, "time": "0.53초", "label": ""},
+        {"clip": "Samurai/Buff", "t": 0.65, "time": "0.65초", "label": "끝"}
+      ]
+    }
+  ]
+}

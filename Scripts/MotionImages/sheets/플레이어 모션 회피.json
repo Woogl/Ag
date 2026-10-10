@@ -1,0 +1,28 @@
+{
+  "image": "플레이어 모션 회피",
+  "character": "player",
+  "rows": [
+    {
+      "title": "구르기 (이동 입력이 있을 때. 8방향 중 앞)",
+      "note": "",
+      "frames": [
+        {"clip": "Samurai/Evade_Forward", "t": 0.0, "time": "0.00초", "label": "시작", "banner": [["무적 · 극한 회피 구간", "cyan"]]},
+        {"clip": "Samurai/Evade_Forward", "t": 0.1, "time": "0.10초", "label": "몸을 날림", "banner": [["무적 · 극한 회피 구간", "cyan"]]},
+        {"clip": "Samurai/Evade_Forward", "t": 0.3, "time": "0.30초", "label": "구름", "banner": [["무적 끝", "cyan"]]},
+        {"clip": "Samurai/Evade_Forward", "t": 0.6, "time": "0.60초", "label": "무릎 세움", "banner": [["캔슬 가능", "cyan"]]},
+        {"clip": "Samurai/Evade_Forward", "t": 0.9, "time": "0.90초", "label": "끝"}
+      ]
+    },
+    {
+      "title": "뒤로 물러나기 (이동 입력이 없을 때)",
+      "note": "",
+      "frames": [
+        {"clip": "Samurai/Dodge", "t": 0.0, "time": "0.00초", "label": "시작", "banner": [["무적 · 극한 회피 구간", "cyan"]]},
+        {"clip": "Samurai/Dodge", "t": 0.1, "time": "0.10초", "label": "", "banner": [["무적 · 극한 회피 구간", "cyan"]]},
+        {"clip": "Samurai/Dodge", "t": 0.2, "time": "0.20초", "label": "", "banner": [["무적", "cyan"]]},
+        {"clip": "Samurai/Dodge", "t": 0.3667, "time": "0.37초", "label": "이동 끝"},
+        {"clip": "Samurai/Dodge", "t": 0.7, "time": "0.70초", "label": "끝"}
+      ]
+    }
+  ]
+}

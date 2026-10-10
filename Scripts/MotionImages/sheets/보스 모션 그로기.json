@@ -1,0 +1,22 @@
+{
+  "image": "보스 모션 그로기",
+  "character": "boss",
+  "rows": [
+    {
+      "title": "그로기",
+      "note": "아무 행동도 할 수 없음 · 처형 가능",
+      "frames": [
+        {"clip": "Samurai/Collide_To_Stun", "t": 0.0, "time": "0.00초", "label": "그로기 시작"},
+        {"clip": "Samurai/Collide_To_Stun", "t": 0.2, "time": "0.20초", "label": ""},
+        {"clip": "Samurai/Collide_To_Stun", "t": 0.4, "time": "0.40초", "label": ""},
+        {"clip": "Samurai/Collide_To_Stun", "t": 0.6, "time": "0.60초", "label": ""},
+        {"clip": "Samurai/Collide_To_Stun", "t": 0.9833, "time": "0.98초", "label": ""},
+        {"clip": "Samurai/Stun", "t": 0.0, "time": "반복", "label": "비틀거림"},
+        {"clip": "Samurai/Stun", "t": 0.5, "time": "반복", "label": ""},
+        {"clip": "Samurai/Stun_To_Idle1", "t": 0.0, "time": "4.68초", "label": "회복"},
+        {"clip": "Samurai/Stun_To_Idle1", "t": 0.1667, "time": "4.85초", "label": ""},
+        {"clip": "Samurai/Stun_To_Idle1", "t": 0.3167, "time": "5.00초", "label": "끝"}
+      ]
+    }
+  ]
+}
