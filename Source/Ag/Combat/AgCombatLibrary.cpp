@@ -16,6 +16,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Core/AgSettings.h"
 #include "Data/AgAttackData.h"
+#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 
@@ -48,8 +49,11 @@ namespace
 		return false;
 	}
 
-	/** 피격 반응: 움찔 plays on top; 넉백 and 다운 start a reaction ability unless super armor or groggy blocks them. */
-	void StartHitReaction(AAgCharacterBase* Attacker, AAgCharacterBase* Target, EAgHitReaction Reaction)
+	/**
+	 * 피격 반응: 움찔 plays on top; 넉백 and 다운 start a reaction ability unless super armor or groggy blocks them.
+	 * Instigator is what the target is pushed away from: the attacker, or its projectile.
+	 */
+	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, EAgHitReaction Reaction)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 		switch (Reaction)
@@ -69,7 +73,7 @@ namespace
 			Blockers.AddTag(AgGameplayTags::State_Groggy);
 			if (!TargetASC->HasAnyMatchingGameplayTags(Blockers))
 			{
-				SendEvent(Target, Reaction == EAgHitReaction::KnockBack ? AgGameplayTags::Event_Hit_KnockBack : AgGameplayTags::Event_Hit_Down, Attacker);
+				SendEvent(Target, Reaction == EAgHitReaction::KnockBack ? AgGameplayTags::Event_Hit_KnockBack : AgGameplayTags::Event_Hit_Down, Instigator);
 			}
 			break;
 		}
@@ -79,7 +83,7 @@ namespace
 	}
 
 	/** 가드 반응: 가드 움찔 plays on the guard pose; 넉백 and 다운 become 가드 밀림. */
-	void StartGuardReaction(AAgCharacterBase* Attacker, AAgCharacterBase* Target, EAgHitReaction Reaction)
+	void StartGuardReaction(AActor* Instigator, AAgCharacterBase* Target, EAgHitReaction Reaction)
 	{
 		switch (Reaction)
 		{
@@ -88,10 +92,33 @@ namespace
 			break;
 		case EAgHitReaction::KnockBack:
 		case EAgHitReaction::Down:
-			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Attacker);
+			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Instigator);
 			break;
 		default:
 			break;
+		}
+	}
+
+	/** 카메라 '상황별 단계' for a hit that connected. */
+	EAgCameraShake GetHitShake(const UAgCameraData& Camera, EAgHitResult Result, const FAgAttackHit& Hit, bool bPlayerAttacked)
+	{
+		const bool bHeavy = Hit.HitReaction == EAgHitReaction::KnockBack || Hit.HitReaction == EAgHitReaction::Down;
+		switch (Result)
+		{
+		case EAgHitResult::Hit:
+			if (bPlayerAttacked)
+			{
+				return Hit.bFinisher ? Camera.FinisherShake : (bHeavy ? Camera.PlayerHitHeavyShake : Camera.PlayerHitShake);
+			}
+			return bHeavy ? Camera.PlayerHurtHeavyShake : Camera.PlayerHurtShake;
+		case EAgHitResult::Parry:
+			return Camera.ParryShake;
+		case EAgHitResult::Guard:
+			return bHeavy ? Camera.GuardPushbackShake : Camera.GuardShake;
+		case EAgHitResult::GuardBreak:
+			return Camera.GuardBreakShake;
+		default:
+			return EAgCameraShake::None;
 		}
 	}
 }
@@ -125,18 +152,20 @@ float UAgCombatLibrary::GetHorizontalDistance(const AActor* A, const AActor* B)
 	return (A && B) ? FVector::Dist2D(A->GetActorLocation(), B->GetActorLocation()) : TNumericLimits<float>::Max();
 }
 
-EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharacterBase* Target, const FAgAttackHit& Hit, const FVector& HitLocation)
+EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharacterBase* Target, const FAgAttackHit& Hit, const FVector& HitLocation, AActor* HitSource)
 {
 	if (!AreHostile(Attacker, Target) || Target->IsDead())
 	{
 		return EAgHitResult::None;
 	}
 
+	// 공격 방향: a projectile pushes from where it is.
+	AActor* Instigator = HitSource ? HitSource : static_cast<AActor*>(Attacker);
 	UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 	if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_PerfectDodgeWindow))
 	{
 		// 극한 회피: the dodge ability gives the rewards, once per dodge.
-		SendEvent(Target, AgGameplayTags::Event_PerfectDodge, Attacker);
+		SendEvent(Target, AgGameplayTags::Event_PerfectDodge, Instigator);
 		return EAgHitResult::PerfectDodge;
 	}
 	if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Invincible))
@@ -187,35 +216,54 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 	// 사망·그로기 판정 comes before the reactions (상태 우선순위). The parry's PP loss is judged on the attacker.
 	if (TargetStats->GetHP() <= 0.f)
 	{
-		SendEvent(Target, AgGameplayTags::Event_Death, Attacker);
+		SendEvent(Target, AgGameplayTags::Event_Death, Instigator);
 	}
 	else
 	{
 		switch (Result)
 		{
 		case EAgHitResult::Parry:
-			SendEvent(Target, AgGameplayTags::Event_Parry, Attacker);
+			SendEvent(Target, AgGameplayTags::Event_Parry, Instigator);
 			StartGroggyIfBroken(Attacker, Target);
 			break;
 		case EAgHitResult::Guard:
-			StartGuardReaction(Attacker, Target, Hit.HitReaction);
+			StartGuardReaction(Instigator, Target, Hit.HitReaction);
 			break;
 		case EAgHitResult::GuardBreak:
-			SendEvent(Target, AgGameplayTags::Event_Guard_Break, Attacker);
+			SendEvent(Target, AgGameplayTags::Event_Guard_Break, Instigator);
 			break;
 		default:
-			if (!StartGroggyIfBroken(Target, Attacker))
+			if (!StartGroggyIfBroken(Target, Instigator))
 			{
-				StartHitReaction(Attacker, Target, Hit.HitReaction);
+				StartHitReaction(Instigator, Target, Hit.HitReaction);
 			}
 			break;
 		}
 	}
 
-	// 적중 후 처리: hitstop, MP·UP 충전
-	if (UAgTimeSubsystem* TimeSubsystem = UWorld::GetSubsystem<UAgTimeSubsystem>(Target->GetWorld()))
+	// 적중 후 처리: effect (the parry has its own), camera shake, hitstop, MP·UP 충전.
+	FGameplayCueParameters EffectParameters;
+	EffectParameters.Location = HitLocation;
+	TargetASC->ExecuteGameplayCue(Result == EAgHitResult::Parry ? AgGameplayTags::GameplayCue_Parry : AgGameplayTags::GameplayCue_Hit, EffectParameters);
+	if (const UAgCameraData* Camera = GetCameraData())
+	{
+		PlayCameraShake(Target, GetHitShake(*Camera, Result, Hit, Attacker->IsA<AAgPlayerCharacter>()));
+	}
+
+	// A projectile doesn't stop its shooter; only the character it reached stops.
+	UAgTimeSubsystem* TimeSubsystem = UWorld::GetSubsystem<UAgTimeSubsystem>(Target->GetWorld());
+	if (TimeSubsystem && HitSource)
+	{
+		TimeSubsystem->StartHitstop({ Target });
+	}
+	else if (TimeSubsystem)
 	{
 		TimeSubsystem->StartHitstop({ Attacker, Target });
+	}
+	if (TimeSubsystem && Result == EAgHitResult::Parry)
+	{
+		// 슬로우모션 starts right after the parry's hitstop.
+		TimeSubsystem->StartSlowMotion(DefenderData->SlowMotionSpeed, DefenderData->SlowMotionDuration);
 	}
 	if (Result == EAgHitResult::Hit && (Hit.MPCharge > 0.f || Hit.UPCharge > 0.f))
 	{
@@ -265,7 +313,7 @@ FActiveGameplayEffectHandle UAgCombatLibrary::ApplyTimedTag(UAbilitySystemCompon
 void UAgCombatLibrary::ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGameplayEffect> RegenClass, const FGameplayTag& DataTag, float RatePerSecond)
 {
 	const UAgCombatRules* Rules = GetCombatRules();
-	if (!Rules || !RegenClass || RatePerSecond <= 0.f)
+	if (!Rules || !RegenClass || RatePerSecond == 0.f)
 	{
 		return;
 	}
@@ -274,6 +322,39 @@ void UAgCombatLibrary::ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGame
 	Spec.Data->Period = Rules->RegenTickInterval;
 	Spec.Data->SetSetByCallerMagnitude(DataTag, RatePerSecond * Rules->RegenTickInterval);
 	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+}
+
+void UAgCombatLibrary::PlayCameraShake(AAgCharacterBase* Context, EAgCameraShake Shake)
+{
+	FGameplayTag Cue;
+	switch (Shake)
+	{
+	case EAgCameraShake::Small:
+		Cue = AgGameplayTags::GameplayCue_CameraShake_Small;
+		break;
+	case EAgCameraShake::Medium:
+		Cue = AgGameplayTags::GameplayCue_CameraShake_Medium;
+		break;
+	case EAgCameraShake::Large:
+		Cue = AgGameplayTags::GameplayCue_CameraShake_Large;
+		break;
+	default:
+		return;
+	}
+	if (Context)
+	{
+		Context->GetAbilitySystemComponent()->ExecuteGameplayCue(Cue, FGameplayCueParameters());
+	}
+}
+
+const UAgCameraData* UAgCombatLibrary::GetCameraData()
+{
+	const UAgCameraData* Camera = UAgSettings::Get()->CameraData.LoadSynchronous();
+	if (!Camera)
+	{
+		UE_LOG(LogAg, Error, TEXT("Camera data is not set (Project Settings > Game > Ag)."));
+	}
+	return Camera;
 }
 
 const UAgCombatRules* UAgCombatLibrary::GetCombatRules()

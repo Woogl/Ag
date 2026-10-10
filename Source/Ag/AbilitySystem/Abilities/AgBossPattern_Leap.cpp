@@ -10,6 +10,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAttackData.h"
+#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -70,8 +71,15 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 		AnimInstance->Montage_JumpToSection(LeapEndSection, GetMontage());
 	}
 
-	// The landing is the attack window: one check of the landing radius.
+	// The landing shakes the camera when the player is near enough (카메라 '상황별 단계').
 	AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0));
+	const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData();
+	if (Player && Camera && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Camera->LeapLandingShakeRange)
+	{
+		UAgCombatLibrary::PlayCameraShake(Boss, Camera->LeapLandingShake);
+	}
+
+	// The landing is the attack window: one check of the landing radius.
 	const float HeightGap = Player ? FMath::Abs(Player->GetActorLocation().Z - Boss->GetActorLocation().Z) : 0.f;
 	if (Player && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Data->LeapHitRadius && HeightGap <= Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.f)
 	{

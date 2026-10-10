@@ -6,6 +6,7 @@
 #include "AbilitySystem/Abilities/AgBossPatternAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
+#include "Animation/AgAnimNotify_GameplayEvent.h"
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -156,6 +157,7 @@ void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
 	NoTurning.AddTag(AgGameplayTags::State_Groggy);
 	NoTurning.AddTag(AgGameplayTags::State_Execution_Executed);
 	NoTurning.AddTag(AgGameplayTags::State_Boss_RotationLocked);
+	NoTurning.AddTag(AgGameplayTags::State_NonCombat);
 	if (GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(NoTurning))
 	{
 		return;
@@ -199,6 +201,14 @@ bool AAgBossCharacter::IsInRotationStopWindow() const
 		{
 			if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass)
 				&& Position >= Notify.GetTriggerTime() - LeadInMontageTime && Position <= Notify.GetEndTriggerTime())
+			{
+				return true;
+			}
+
+			// 보스 사양 'A6': each swing's release is its attack window.
+			const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
+			if (Event && Event->EventTag == AgGameplayTags::Event_Boss_SwordWave
+				&& Position >= Notify.GetTriggerTime() - LeadInMontageTime && Position <= Notify.GetTriggerTime())
 			{
 				return true;
 			}

@@ -30,6 +30,20 @@ void UAgHUDWidget::NativeConstruct()
 	{
 		PPColor = BossPPBar->GetFillColorAndOpacity();
 	}
+	for (UWidget* Flash : { ParryFlash.Get(), PerfectDodgeFlash.Get() })
+	{
+		if (Flash)
+		{
+			Flash->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
+}
+
+void UAgHUDWidget::NativeDestruct()
+{
+	UnbindPlayerEvents();
+
+	Super::NativeDestruct();
 }
 
 TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
@@ -41,9 +55,16 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
+	// The trails and screen effects run on game time, so the slow motion slows them too.
+	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();
+
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
-		UpdatePlayer(*Player);
+		if (!PlayerASC.IsValid())
+		{
+			BindPlayerEvents(Player->GetAbilitySystemComponent());
+		}
+		UpdatePlayer(*Player, GameDeltaTime);
 	}
 
 	if (!Boss.IsValid())
@@ -61,16 +82,22 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 	if (const AAgBossCharacter* BossCharacter = Boss.Get())
 	{
-		UpdateBoss(*BossCharacter);
+		UpdateBoss(*BossCharacter, GameDeltaTime);
 	}
+
+	UpdateFlash(ParryFlash, ParryFlashAge, ParryFlashTime, ParryFlashOpacity, GameDeltaTime);
+	UpdateFlash(PerfectDodgeFlash, PerfectDodgeFlashAge, PerfectDodgeFlashTime, PerfectDodgeFlashOpacity, GameDeltaTime);
 }
 
-void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player)
+void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime)
 {
 	const UAgAttributeSet* Stats = Player.GetAttributeSet();
 	SetBarRatio(PlayerHPBar, Stats->GetHP(), Stats->GetMaxHP());
 	SetBarRatio(PlayerMPBar, Stats->GetMP(), Stats->GetMaxMP());
 	SetBarRatio(PlayerSPBar, Stats->GetSP(), Stats->GetMaxSP());
+	SetValueText(PlayerHPText, Stats->GetHP(), Stats->GetMaxHP(), ShownHP);
+	SetValueText(PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
+	UpdateTrail(PlayerTrail, PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 	if (PlayerSPBar)
 	{
 		// Hidden keeps its place, so the HP and MP bars never move.
@@ -99,10 +126,11 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player)
 	}
 }
 
-void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter)
+void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime)
 {
 	const UAgAttributeSet* Stats = BossCharacter.GetAttributeSet();
 	SetBarRatio(BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
+	UpdateTrail(BossTrail, BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
 	if (BossPPBar)
 	{
@@ -152,4 +180,100 @@ void UAgHUDWidget::SetSlotUsable(UWidget* SlotWidget, bool bUsable) const
 	{
 		SlotWidget->SetRenderOpacity(bUsable ? 1.f : DisabledSlotOpacity);
 	}
+}
+
+void UAgHUDWidget::SetValueText(UTextBlock* Text, float Value, float MaxValue, FIntPoint& ShownValues)
+{
+	const FIntPoint Values(FMath::RoundToInt(Value), FMath::RoundToInt(MaxValue));
+	if (Text && Values != ShownValues)
+	{
+		ShownValues = Values;
+		const FNumberFormattingOptions& Format = FNumberFormattingOptions::DefaultNoGrouping();
+		Text->SetText(FText::Format(INVTEXT("{0} / {1}"), FText::AsNumber(Values.X, &Format), FText::AsNumber(Values.Y, &Format)));
+	}
+}
+
+void UAgHUDWidget::UpdateTrail(FHPTrail& Trail, UProgressBar* TrailBar, float HPRatio, float DeltaTime) const
+{
+	if (!TrailBar)
+	{
+		return;
+	}
+
+	if (Trail.LastHPRatio >= 0.f && HPRatio < Trail.LastHPRatio)
+	{
+		Trail.Wait = TrailDelay;
+		Trail.ShrinkElapsed = -1.f;
+	}
+	Trail.LastHPRatio = HPRatio;
+
+	if (Trail.Ratio <= HPRatio)
+	{
+		Trail.Ratio = HPRatio;
+		Trail.ShrinkElapsed = -1.f;
+	}
+	else if (Trail.ShrinkElapsed < 0.f)
+	{
+		Trail.Wait -= DeltaTime;
+		if (Trail.Wait <= 0.f)
+		{
+			Trail.ShrinkFrom = Trail.Ratio;
+			Trail.ShrinkElapsed = 0.f;
+		}
+	}
+	else
+	{
+		Trail.ShrinkElapsed += DeltaTime;
+		const float Alpha = TrailShrinkTime > 0.f ? FMath::Min(Trail.ShrinkElapsed / TrailShrinkTime, 1.f) : 1.f;
+		Trail.Ratio = FMath::Lerp(Trail.ShrinkFrom, HPRatio, Alpha);
+	}
+	TrailBar->SetPercent(Trail.Ratio);
+}
+
+void UAgHUDWidget::UpdateFlash(UWidget* Flash, float& Age, float Duration, float StartOpacity, float DeltaTime)
+{
+	if (!Flash || Age < 0.f)
+	{
+		return;
+	}
+	Age += DeltaTime;
+	if (Duration <= 0.f || Age >= Duration)
+	{
+		Age = -1.f;
+		Flash->SetVisibility(ESlateVisibility::Hidden);
+		return;
+	}
+	Flash->SetVisibility(ESlateVisibility::HitTestInvisible);
+	Flash->SetRenderOpacity(StartOpacity * (1.f - Age / Duration));
+}
+
+void UAgHUDWidget::BindPlayerEvents(UAbilitySystemComponent* ASC)
+{
+	if (!ASC)
+	{
+		return;
+	}
+	PlayerASC = ASC;
+	ParryHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Parry).AddUObject(this, &ThisClass::HandleParry);
+	PerfectDodgeHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_PerfectDodgeSucceeded).AddUObject(this, &ThisClass::HandlePerfectDodge);
+}
+
+void UAgHUDWidget::UnbindPlayerEvents()
+{
+	if (UAbilitySystemComponent* ASC = PlayerASC.Get())
+	{
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Parry).Remove(ParryHandle);
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_PerfectDodgeSucceeded).Remove(PerfectDodgeHandle);
+	}
+	PlayerASC.Reset();
+}
+
+void UAgHUDWidget::HandleParry(const FGameplayEventData* Payload)
+{
+	ParryFlashAge = 0.f;
+}
+
+void UAgHUDWidget::HandlePerfectDodge(const FGameplayEventData* Payload)
+{
+	PerfectDodgeFlashAge = 0.f;
 }

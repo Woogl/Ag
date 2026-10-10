@@ -54,7 +54,10 @@ private:
 	/** 회전: turns toward the player at the rotation speed, except during the rotation stop windows. */
 	void UpdateRotation(float DeltaSeconds);
 
-	/** True from the rotation stop lead before an attack window of a playing montage until the window ends. */
+	/**
+	 * True from the rotation stop lead before an attack window of a playing montage until the window ends.
+	 * A6's sword wave release counts as an attack window of no length.
+	 */
 	bool IsInRotationStopWindow() const;
 
 	/** Shows or hides the lock-on marker and the execution prompt (전투 HUD '상황별 표시 규칙'). */

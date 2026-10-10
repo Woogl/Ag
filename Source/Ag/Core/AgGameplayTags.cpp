@@ -13,6 +13,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Execute, "Input.Execute", "처형 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_GuardReleased, "Input.GuardReleased", "가드 키를 뗌");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_LockOn, "Input.LockOn", "락온 / 락온 해제 키");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_DodgeReleased, "Input.DodgeReleased", "회피·달리기 키를 뗌");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action, "Ability.Action", "플레이어의 일반 행동");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_BasicAttack, "Ability.Action.BasicAttack");
@@ -72,6 +73,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition, "Event.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PerfectDodge, "Event.PerfectDodge");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodgeSucceeded, "Event.PerfectDodgeSucceeded", "극한 회피가 발동함 (회피 한 번에 한 번)");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Parry, "Event.Parry");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타를 시작함 (B1 백스텝 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackWindowEnded, "Event.AttackWindowEnded", "판정 구간이 끝남. EventMagnitude는 몇 번째 타인지 (0부터)");
@@ -80,6 +82,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_ExecutionBlow, "Event.ExecutionBlow", "처형 모션의 마지막 일격 (대미지 적용)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashStart, "Event.Boss.DashStart", "A3 찌르기 모션에서 몸을 앞으로 내던지는 순간 (돌진 시작)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashHold, "Event.Boss.DashHold", "A3 창을 다 내지른 자세 (돌진이 끝날 때까지 유지)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_SwordWave, "Event.Boss.SwordWave", "A6 검기 발사 (판정 구간으로 봄)");
 
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Dodge, "Cooldown.Dodge");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill, "Cooldown.Skill");

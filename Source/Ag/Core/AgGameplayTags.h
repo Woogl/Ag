@@ -20,6 +20,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Execute);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_GuardReleased);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_LockOn);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_DodgeReleased);
 
 	// Ability identity tags, used to cancel or block abilities by group.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action);
@@ -82,6 +83,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Death);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PhaseTransition);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodge);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodgeSucceeded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BasicAttackStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackWindowEnded);
@@ -90,6 +92,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ExecutionBlow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_SwordWave);
 
 	// Cooldown tags granted by cooldown GameplayEffects.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dodge);

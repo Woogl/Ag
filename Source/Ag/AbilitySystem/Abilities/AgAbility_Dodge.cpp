@@ -6,10 +6,12 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatLibrary.h"
+#include "Combat/AgTimeSubsystem.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -125,6 +127,19 @@ void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 	bPerfectDodged = true;
 	UE_LOG(LogAg, Verbose, TEXT("Perfect dodge: SP +%.0f, MP +%.0f, UP +%.0f"), SPSpent, Data->PerfectDodgeMPCharge, Data->PerfectDodgeUPCharge);
 	UAgCombatLibrary::ApplyResourceChange(Character, { SPSpent, Data->PerfectDodgeMPCharge, Data->PerfectDodgeUPCharge });
+
+	// 회피 반격 기회 from this moment; it outlives the dodge.
+	UAgCombatLibrary::ApplyTimedTag(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_DodgeCounterChance, Data->DodgeCounterChanceTime);
+
+	if (UAgTimeSubsystem* TimeSubsystem = UWorld::GetSubsystem<UAgTimeSubsystem>(Character->GetWorld()))
+	{
+		TimeSubsystem->StartSlowMotion(Data->SlowMotionSpeed, Data->SlowMotionDuration);
+	}
+
+	// The HUD plays the 극한 회피 screen effect.
+	FGameplayEventData SucceededPayload;
+	SucceededPayload.EventTag = AgGameplayTags::Event_PerfectDodgeSucceeded;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Character, AgGameplayTags::Event_PerfectDodgeSucceeded, SucceededPayload);
 }
 
 void UAgAbility_Dodge::HandleMontageFinished()

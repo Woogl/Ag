@@ -23,6 +23,7 @@ UAgBossPatternAbility::UAgBossPatternAbility()
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executed);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);
+	ActivationBlockedTags.AddTag(AgGameplayTags::State_NonCombat);
 }
 
 FGameplayTag UAgBossPatternAbility::GetPatternTag(const FGameplayAbilitySpec& Spec)

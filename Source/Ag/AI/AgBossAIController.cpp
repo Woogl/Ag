@@ -99,6 +99,10 @@ void AAgBossAIController::OnUnPossess()
 	GetWorldTimerManager().ClearTimer(WaitTimer);
 	GetWorldTimerManager().ClearTimer(RetryTimer);
 	State = EState::Stopped;
+	if (PlayerASC.IsValid())
+	{
+		PlayerASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).Remove(BasicAttackHandle);
+	}
 
 	Super::OnUnPossess();
 }
@@ -107,14 +111,44 @@ void AAgBossAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	const AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0));
+	if (!Boss.IsValid() || Boss->IsDead() || !Player)
+	{
+		return;
+	}
+	BindPlayerEvents();
+
+	if (State != EState::NonCombat && Player->IsDead())
+	{
+		EnterNonCombat();
+		return;
+	}
+
 	TryStartPhaseTransition();
 
-	// No candidate: walk to the player (direct movement input, no NavMesh).
-	const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (State == EState::Approaching && Boss.IsValid() && Player)
+	// Movement is direct input every frame (no NavMesh).
+	if (State == EState::Approaching)
 	{
-		const FVector ToPlayer = (Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D();
-		Boss->AddMovementInput(ToPlayer, 1.f);
+		// No candidate: walk to the player.
+		Boss->AddMovementInput((Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D(), 1.f);
+	}
+	else if (State == EState::Waiting)
+	{
+		// 패턴 후딜레이: the boss turns toward the player by itself, so walking along its right side circles the player.
+		Boss->AddMovementInput(Boss->GetActorRightVector(), StrafeDirection);
+	}
+}
+
+void AAgBossAIController::BindPlayerEvents()
+{
+	if (PlayerASC.IsValid())
+	{
+		return;
+	}
+	if (const AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0)))
+	{
+		PlayerASC = Player->GetAbilitySystemComponent();
+		BasicAttackHandle = PlayerASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).AddUObject(this, &ThisClass::HandlePlayerBasicAttack);
 	}
 }
 
@@ -126,6 +160,7 @@ const UAgBossData* AAgBossAIController::GetBossData() const
 void AAgBossAIController::Wait(float Seconds)
 {
 	State = EState::Waiting;
+	StrafeDirection = FMath::RandBool() ? 1.f : -1.f;
 	GetWorldTimerManager().ClearTimer(RetryTimer);
 	if (Seconds > 0.f)
 	{
@@ -141,9 +176,12 @@ void AAgBossAIController::SelectPattern()
 {
 	const UAgBossData* Data = GetBossData();
 	const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!Data || !Boss.IsValid() || Boss->IsDead())
+	if (!Data || !Boss.IsValid() || Boss->IsDead() || State == EState::NonCombat)
 	{
-		State = EState::Stopped;
+		if (State != EState::NonCombat)
+		{
+			State = EState::Stopped;
+		}
 		return;
 	}
 
@@ -160,21 +198,51 @@ void AAgBossAIController::SelectPattern()
 
 	// 2. Pick by weight.
 	const int32 Picked = PickWeighted(Weights, FMath::FRand());
-	if (Picked != INDEX_NONE)
+	if (Picked != INDEX_NONE && StartPattern(Data->Patterns[Candidates[Picked]].Pattern))
 	{
-		const FAgBossPattern& Pattern = Data->Patterns[Candidates[Picked]];
-		RunningPattern = Pattern.Pattern;
-		State = EState::Pattern;
-		if (Boss->GetAbilitySystemComponent()->TryActivateAbility(Boss->FindPatternSpec(Pattern.Pattern)->Handle))
-		{
-			return;
-		}
-		RunningPattern = FGameplayTag();
+		return;
 	}
 
 	// 3. No candidate: walk to the player and try again shortly.
 	State = EState::Approaching;
 	GetWorldTimerManager().SetTimer(RetryTimer, this, &ThisClass::SelectPattern, Data->RetryInterval, false);
+}
+
+bool AAgBossAIController::StartPattern(const FGameplayTag& Pattern)
+{
+	const FGameplayAbilitySpec* Spec = Boss.IsValid() ? Boss->FindPatternSpec(Pattern) : nullptr;
+	if (!Spec)
+	{
+		return false;
+	}
+	GetWorldTimerManager().ClearTimer(WaitTimer);
+	GetWorldTimerManager().ClearTimer(RetryTimer);
+	RunningPattern = Pattern;
+	State = EState::Pattern;
+	if (Boss->GetAbilitySystemComponent()->TryActivateAbility(Spec->Handle))
+	{
+		return true;
+	}
+	RunningPattern = FGameplayTag();
+	return false;
+}
+
+void AAgBossAIController::HandlePlayerBasicAttack(const FGameplayEventData* Payload)
+{
+	// Only during the pattern recovery wait, with the player close, B1's cooldown over, and then by chance.
+	const UAgBossData* Data = GetBossData();
+	const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (State != EState::Waiting || !Data || !Boss.IsValid() || UAgCombatLibrary::GetHorizontalDistance(Boss.Get(), Player) > Data->BackstepRange)
+	{
+		return;
+	}
+	const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(AgGameplayTags::Ability_Boss_Pattern_B1);
+	const FGameplayAbilityActorInfo* ActorInfo = Boss->GetAbilitySystemComponent()->AbilityActorInfo.Get();
+	if (!Spec || !Spec->Ability || !Spec->Ability->CanActivateAbility(Spec->Handle, ActorInfo) || FMath::FRand() >= Data->BackstepChance)
+	{
+		return;
+	}
+	StartPattern(AgGameplayTags::Ability_Boss_Pattern_B1);
 }
 
 void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
@@ -202,8 +270,16 @@ void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 		return;
 	}
 
-	// 패턴 후딜레이
+	// 백스텝이 끝나면 대기 없이 즉시 다음 패턴을 선택합니다.
+	const bool bWasBackstep = RunningPattern == AgGameplayTags::Ability_Boss_Pattern_B1;
 	RunningPattern = FGameplayTag();
+	if (bWasBackstep)
+	{
+		SelectPattern();
+		return;
+	}
+
+	// 패턴 후딜레이
 	const FFloatInterval& WaitRange = GetPhase() == 1 ? Data->PatternRecoveryWaitPhase1 : Data->PatternRecoveryWaitPhase2;
 	Wait(FMath::FRandRange(WaitRange.Min, WaitRange.Max));
 }
@@ -211,6 +287,10 @@ void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 void AAgBossAIController::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	const UAgBossData* Data = GetBossData();
+	if (State == EState::NonCombat)
+	{
+		return;
+	}
 	if (NewCount > 0)
 	{
 		GetWorldTimerManager().ClearTimer(WaitTimer);
@@ -247,6 +327,20 @@ void AAgBossAIController::TryStartPhaseTransition()
 	Payload.EventTag = AgGameplayTags::Event_PhaseTransition;
 	Payload.Target = Boss.Get();
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss.Get(), AgGameplayTags::Event_PhaseTransition, Payload);
+}
+
+void AAgBossAIController::EnterNonCombat()
+{
+	GetWorldTimerManager().ClearTimer(WaitTimer);
+	GetWorldTimerManager().ClearTimer(RetryTimer);
+	State = EState::NonCombat;
+	RunningPattern = FGameplayTag();
+
+	// The tag blocks the patterns, groggy and the phase transition, and stops the boss turning.
+	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
+	ASC->AddLooseGameplayTag(AgGameplayTags::State_NonCombat);
+	const FGameplayTagContainer PatternTags(AgGameplayTags::Ability_Boss_Pattern);
+	ASC->CancelAbilities(&PatternTags);
 }
 
 void AAgBossAIController::HandleBossDied(AAgCharacterBase* DeadBoss)

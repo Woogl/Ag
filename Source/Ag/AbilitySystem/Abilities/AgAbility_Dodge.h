@@ -9,7 +9,8 @@
 /**
  * 회피: rolls toward the movement input (camera-relative), or steps back without input.
  * Invincible and in the 극한 회피 구간 from the start for the data's times, measured on the motion.
- * A boss attack touching the 극한 회피 구간 triggers 극한 회피 once per dodge: the SP spent comes back and MP and UP charge.
+ * A boss attack touching the 극한 회피 구간 triggers 극한 회피 once per dodge: the SP spent comes back, MP and UP charge,
+ * the 회피 반격 기회 opens and the slow motion starts.
  */
 UCLASS()
 class UAgAbility_Dodge : public UAgGameplayAbility

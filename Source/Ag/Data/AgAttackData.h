@@ -54,6 +54,10 @@ struct FAgAttackHit
 	/** 전투 HUD '대미지 숫자': this hit's number shows at the large size (스킬·궁극기·처형). Player attacks only. */
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	bool bLargeDamageNumber = false;
+
+	/** 카메라 '상황별 단계': this hit shakes the camera as a 마지막 일격 (궁극기) instead of an ordinary hit. Player attacks only. */
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	bool bFinisher = false;
 };
 
 /** A player attack action (평타 한 타, 회피 반격, 스킬, 궁극기). */
