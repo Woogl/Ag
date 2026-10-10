@@ -12,7 +12,7 @@ class UTargetingPreset;
 
 /**
  * Project settings for Ag (Project Settings > Game > Ag).
- * Points at levels and shared data assets so code never hardcodes asset paths.
+ * Points at levels, the common data files and shared assets so code never hardcodes their paths.
  */
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Ag"))
 class UAgSettings : public UDeveloperSettings
@@ -22,10 +22,10 @@ class UAgSettings : public UDeveloperSettings
 public:
 	static const UAgSettings* Get() { return GetDefault<UAgSettings>(); }
 
-	/** DA_Camera, loaded on first use and kept loaded from then on. */
+	/** Camera.json, read on first use into one object kept from then on (구현 계획서 '데이터'). */
 	const UAgCameraData* GetCameraData() const;
 
-	/** DA_CombatRules, loaded on first use and kept loaded from then on. */
+	/** CombatRules.json, read on first use into one object kept from then on. */
 	const UAgCombatRules* GetCombatRules() const;
 
 	/** TP_Boss, loaded on first use and kept loaded from then on. */
@@ -43,29 +43,27 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Maps")
 	TSoftObjectPtr<UWorld> BossStageMap;
 
-	/** DA_Camera */
+	/** Camera.json: a file in the project's Data folder. */
 	UPROPERTY(Config, EditAnywhere, Category = "Data")
-	TSoftObjectPtr<UAgCameraData> CameraData;
+	FString CameraDataFile;
 
-	/** DA_CombatRules */
+	/** CombatRules.json: a file in the project's Data folder. */
 	UPROPERTY(Config, EditAnywhere, Category = "Data")
-	TSoftObjectPtr<UAgCombatRules> CombatRules;
+	FString CombatRulesFile;
 
 	/** TP_Boss: finds boss candidates around the player for 공격 중 이동 and lock-on. Each use then checks its own range. */
 	UPROPERTY(Config, EditAnywhere, Category = "Data")
 	TSoftObjectPtr<UTargetingPreset> BossTargeting;
 
 private:
-	/**
-	 * The data assets above once loaded. Only soft pointers lead to them, so outside the editor every garbage collection
-	 * would unload them and the next use would load them again on the game thread.
-	 */
+	/** The common data read from the files above. A file read again fills the same object, so users keep their pointers. */
 	UPROPERTY(Transient)
 	mutable TObjectPtr<UAgCameraData> LoadedCameraData;
 
 	UPROPERTY(Transient)
 	mutable TObjectPtr<UAgCombatRules> LoadedCombatRules;
 
+	/** TP_Boss once loaded. Only a soft pointer leads to it, so outside the editor every garbage collection would unload it. */
 	UPROPERTY(Transient)
 	mutable TObjectPtr<UTargetingPreset> LoadedBossTargeting;
 };

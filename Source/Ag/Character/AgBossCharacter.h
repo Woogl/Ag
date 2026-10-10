@@ -48,6 +48,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GrantAbilities() override;
+	virtual void HandleDataReloaded() override;
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:
@@ -59,6 +60,9 @@ private:
 	 * A6's sword wave release counts as an attack window of no length.
 	 */
 	bool IsInRotationStopWindow() const;
+
+	/** Attaches the lock-on marker and the execution prompt to their bones in the character data. */
+	void AttachWorldWidgets();
 
 	/** Shows or hides the lock-on marker and the execution prompt (전투 HUD '상황별 표시 규칙'). */
 	void UpdateWorldWidgets();

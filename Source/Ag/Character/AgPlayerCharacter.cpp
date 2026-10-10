@@ -555,6 +555,13 @@ void AAgPlayerCharacter::StartRegen()
 	}
 }
 
+void AAgPlayerCharacter::HandleDataReloaded()
+{
+	Super::HandleDataReloaded();
+
+	ApplyCameraData();
+}
+
 void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
 {
 	const UAgPlayerData* PlayerData = Cast<UAgPlayerData>(GetCharacterData());

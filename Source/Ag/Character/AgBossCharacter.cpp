@@ -49,6 +49,18 @@ void AAgBossCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	AttachWorldWidgets();
+}
+
+void AAgBossCharacter::HandleDataReloaded()
+{
+	Super::HandleDataReloaded();
+
+	AttachWorldWidgets();
+}
+
+void AAgBossCharacter::AttachWorldWidgets()
+{
 	if (const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData()))
 	{
 		LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->LockOnBone);

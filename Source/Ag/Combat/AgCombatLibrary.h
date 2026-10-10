@@ -80,14 +80,14 @@ public:
 	static FActiveGameplayEffectHandle ApplyTimedTag(UAbilitySystemComponent* ASC, const FGameplayTag& Tag, float Duration);
 
 	/**
-	 * Starts a periodic effect that adds RatePerSecond (negative spends), in steps of DA_CombatRules' regen tick
-	 * interval: regen, and the sprint's SP cost.
+	 * Starts a periodic effect that adds RatePerSecond (negative spends), in steps of CombatRules.json's regen tick
+	 * interval: regen, and the sprint's SP cost. Replaces a running effect of the same class.
 	 */
 	static void ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGameplayEffect> RegenClass, const FGameplayTag& DataTag, float RatePerSecond);
 
-	/** DA_CombatRules, or null with an error when the project setting is empty. */
+	/** CombatRules.json's data (UAgSettings::GetCombatRules), or null with an error. */
 	static const UAgCombatRules* GetCombatRules();
 
-	/** DA_Camera, or null with an error when the project setting is empty. */
+	/** Camera.json's data (UAgSettings::GetCameraData), or null with an error. */
 	static const UAgCameraData* GetCameraData();
 };

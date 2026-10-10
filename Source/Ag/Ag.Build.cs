@@ -29,7 +29,10 @@ public class Ag : ModuleRules
 			"Niagara"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities" });
+
+		// The JSON data files the game reads at runtime (구현 계획서 '데이터'). They sit outside Content, so the cook doesn't know them.
+		RuntimeDependencies.Add("$(ProjectDir)/Data/*.json", StagedFileType.UFS);
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Ag"

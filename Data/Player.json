@@ -1,0 +1,277 @@
+{
+  "Stats": {
+    "HP": 1000,
+    "MaxHP": 1000,
+    "SP": 100,
+    "MaxSP": 100,
+    "MP": 0,
+    "MaxMP": 100,
+    "UP": 0,
+    "MaxUP": 100,
+    "PP": 0,
+    "MaxPP": 0,
+    "bInfinitePP": true,
+    "ATK": 100,
+    "DEF": 50,
+    "MOV": 400
+  },
+  "bAlwaysSuperArmor": false,
+  "PPRegenRate": 0,
+  "DeathPresentationTime": 3,
+  "WeaponEdgeStart": { "X": 0, "Y": 45, "Z": 0 },
+  "WeaponEdgeEnd": { "X": 0, "Y": -43, "Z": 0 },
+  "WeaponEdgeRadius": 3,
+  "GuardBlendInTime": 0.15,
+  "GuardBlendOutTime": 0.15,
+  "AirborneBlendTime": 0.1,
+  "Abilities": [
+    "/Script/Ag.AgAbility_BasicAttack",
+    "/Script/Ag.AgAbility_Dodge",
+    "/Script/Ag.AgAbility_Guard",
+    "/Script/Ag.AgAbility_Skill",
+    "/Script/Ag.AgAbility_Ultimate",
+    "/Script/Ag.AgAbility_Execution",
+    "/Script/Ag.AgAbility_KnockBack",
+    "/Script/Ag.AgAbility_Down",
+    "/Script/Ag.AgAbility_GuardPushback",
+    "/Script/Ag.AgAbility_GuardBreak",
+    "/Script/Ag.AgAbility_Death",
+    "/Script/Ag.AgAbility_Sprint",
+    "/Script/Ag.AgAbility_DodgeCounter",
+    "/Script/Ag.AgAbility_Jump",
+    "/Script/Ag.AgAbility_KnockUp"
+  ],
+  "WeaponSocket": "KatanaSocket",
+  "InputBufferTime": 0.3,
+  "BasicAttack": [
+    {
+      "Hits": [
+        {
+          "DamageMultiplier": 0.8,
+          "PoiseMultiplier": 0.8,
+          "HitReaction": "Flinch",
+          "bGuardable": true,
+          "bParryable": true,
+          "MPCharge": 4,
+          "UPCharge": 0,
+          "bLargeDamageNumber": false,
+          "bFinisher": false
+        }
+      ],
+      "TargetingRange": 400
+    },
+    {
+      "Hits": [
+        {
+          "DamageMultiplier": 0.8,
+          "PoiseMultiplier": 0.8,
+          "HitReaction": "Flinch",
+          "bGuardable": true,
+          "bParryable": true,
+          "MPCharge": 4,
+          "UPCharge": 0,
+          "bLargeDamageNumber": false,
+          "bFinisher": false
+        }
+      ],
+      "TargetingRange": 450
+    },
+    {
+      "Hits": [
+        {
+          "DamageMultiplier": 1,
+          "PoiseMultiplier": 1,
+          "HitReaction": "Flinch",
+          "bGuardable": true,
+          "bParryable": true,
+          "MPCharge": 4,
+          "UPCharge": 0,
+          "bLargeDamageNumber": false,
+          "bFinisher": false
+        }
+      ],
+      "TargetingRange": 500
+    },
+    {
+      "Hits": [
+        {
+          "DamageMultiplier": 1,
+          "PoiseMultiplier": 1,
+          "HitReaction": "Flinch",
+          "bGuardable": true,
+          "bParryable": true,
+          "MPCharge": 4,
+          "UPCharge": 0,
+          "bLargeDamageNumber": false,
+          "bFinisher": false
+        }
+      ],
+      "TargetingRange": 450
+    },
+    {
+      "Hits": [
+        {
+          "DamageMultiplier": 1.2,
+          "PoiseMultiplier": 2,
+          "HitReaction": "Flinch",
+          "bGuardable": true,
+          "bParryable": true,
+          "MPCharge": 4,
+          "UPCharge": 4,
+          "bLargeDamageNumber": false,
+          "bFinisher": false
+        }
+      ],
+      "TargetingRange": 500
+    }
+  ],
+  "AttackStopDistance": 100,
+  "SPRegenRate": 40,
+  "SPRegenRateGuarding": 20,
+  "SPRegenDelay": 1,
+  "SPRegenDelayEmpty": 1.5,
+  "PerfectDodgeMPCharge": 10,
+  "PerfectDodgeUPCharge": 6,
+  "ParryMPCharge": 15,
+  "ParryUPCharge": 4,
+  "DodgeSPCost": 20,
+  "DodgeCooldown": 0.4,
+  "DodgeInvincibleTime": 0.3,
+  "PerfectDodgeTime": 0.15,
+  "RollRecoveryStart": 0.6,
+  "BackstepRecoveryStart": 0.4,
+  "GuardSPCostRatio": 0.25,
+  "GuardMoveSpeedRatio": 0.65,
+  "ParryWindowTime": 0.3,
+  "ParryPPRatio": 0.08,
+  "Skill": {
+    "Hits": [
+      {
+        "DamageMultiplier": 3,
+        "PoiseMultiplier": 6,
+        "HitReaction": "KnockBack",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 10,
+        "bLargeDamageNumber": true,
+        "bFinisher": false
+      }
+    ],
+    "TargetingRange": 300
+  },
+  "SkillMPCost": 30,
+  "SkillCooldown": 5,
+  "Ultimate": {
+    "Hits": [
+      {
+        "DamageMultiplier": 2,
+        "PoiseMultiplier": 3,
+        "HitReaction": "Flinch",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 0,
+        "bLargeDamageNumber": true,
+        "bFinisher": false
+      },
+      {
+        "DamageMultiplier": 2,
+        "PoiseMultiplier": 3,
+        "HitReaction": "Flinch",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 0,
+        "bLargeDamageNumber": true,
+        "bFinisher": false
+      },
+      {
+        "DamageMultiplier": 2,
+        "PoiseMultiplier": 3,
+        "HitReaction": "Flinch",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 0,
+        "bLargeDamageNumber": true,
+        "bFinisher": false
+      },
+      {
+        "DamageMultiplier": 4,
+        "PoiseMultiplier": 6,
+        "HitReaction": "KnockBack",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 0,
+        "bLargeDamageNumber": true,
+        "bFinisher": true
+      }
+    ],
+    "TargetingRange": 450
+  },
+  "UltimateUPCost": 100,
+  "Execution": {
+    "Hits": [
+      {
+        "DamageMultiplier": 3,
+        "PoiseMultiplier": 0,
+        "HitReaction": "None",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 0,
+        "bLargeDamageNumber": true,
+        "bFinisher": false
+      },
+      {
+        "DamageMultiplier": 3,
+        "PoiseMultiplier": 0,
+        "HitReaction": "None",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 0,
+        "bLargeDamageNumber": true,
+        "bFinisher": false
+      },
+      {
+        "DamageMultiplier": 9,
+        "PoiseMultiplier": 0,
+        "HitReaction": "None",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 0,
+        "UPCharge": 0,
+        "bLargeDamageNumber": true,
+        "bFinisher": false
+      }
+    ],
+    "TargetingRange": 300
+  },
+  "ExecutionDistance": 70,
+  "LockOnRange": 2000,
+  "LockOnReleaseRange": 3000,
+  "SprintSpeedRatio": 1.5,
+  "SprintSPCost": 12,
+  "DodgeCounter": {
+    "Hits": [
+      {
+        "DamageMultiplier": 2.5,
+        "PoiseMultiplier": 5,
+        "HitReaction": "Flinch",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 8,
+        "UPCharge": 0,
+        "bLargeDamageNumber": false,
+        "bFinisher": false
+      }
+    ],
+    "TargetingRange": 800
+  },
+  "DodgeCounterChanceTime": 1,
+  "SlowMotionSpeed": 0.3,
+  "SlowMotionDuration": 0.3
+}

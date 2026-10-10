@@ -13,6 +13,11 @@ void UAgAnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 
 	Character = Cast<AAgCharacterBase>(TryGetPawnOwner());
+	ApplyCharacterData();
+}
+
+void UAgAnimInstance::ApplyCharacterData()
+{
 	if (const UAgCharacterData* Data = Character ? Character->GetCharacterData() : nullptr)
 	{
 		MoveBlendSpace = Data->MoveBlendSpace;

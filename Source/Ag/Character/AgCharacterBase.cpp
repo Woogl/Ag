@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "AIController.h"
+#include "Animation/AgAnimInstance.h"
 #include "Animation/AnimInstance.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
@@ -17,6 +18,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgDataFile.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "Game/AgBossStageGameMode.h"
@@ -115,6 +117,10 @@ void AAgCharacterBase::BeginPlay()
 	{
 		AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_SuperArmor);
 	}
+#if WITH_EDITOR
+	// The binding is weak, so it ends with the character.
+	AgDataFile::OnReloaded().AddUObject(this, &ThisClass::HandleDataReloaded);
+#endif
 
 	GetCharacterMovement()->ProcessRootMotionPostConvertToWorld.BindUObject(this, &ThisClass::ClampRootMotion);
 
@@ -207,6 +213,17 @@ void AAgCharacterBase::StartRegen()
 	if (CharacterData && !CharacterData->Stats.bInfinitePP)
 	{
 		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_PPRegen::StaticClass(), AgGameplayTags::Data_PP, CharacterData->PPRegenRate);
+	}
+}
+
+void AAgCharacterBase::HandleDataReloaded()
+{
+	StartRegen();
+	AbilitySystemComponent->SetLooseGameplayTagCount(AgGameplayTags::State_SuperArmor, CharacterData && CharacterData->bAlwaysSuperArmor ? 1 : 0);
+	ApplyWeapon();
+	if (UAgAnimInstance* AnimInstance = Cast<UAgAnimInstance>(GetMesh()->GetAnimInstance()))
+	{
+		AnimInstance->ApplyCharacterData();
 	}
 }
 

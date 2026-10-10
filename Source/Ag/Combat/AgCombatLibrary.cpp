@@ -326,12 +326,19 @@ FActiveGameplayEffectHandle UAgCombatLibrary::ApplyTimedTag(UAbilitySystemCompon
 
 void UAgCombatLibrary::ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGameplayEffect> RegenClass, const FGameplayTag& DataTag, float RatePerSecond)
 {
-	const UAgCombatRules* Rules = GetCombatRules();
-	if (!Rules || !RegenClass || RatePerSecond == 0.f)
+	if (!RegenClass)
 	{
 		return;
 	}
+	// Applying again replaces the running regen, so a data file read again changes the rate (구현 계획서 '데이터' 다시 읽기).
 	UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent();
+	ASC->RemoveActiveGameplayEffectBySourceEffect(RegenClass, nullptr);
+
+	const UAgCombatRules* Rules = GetCombatRules();
+	if (!Rules || RatePerSecond == 0.f)
+	{
+		return;
+	}
 	const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RegenClass, 1.f, ASC->MakeEffectContext());
 	Spec.Data->Period = Rules->RegenTickInterval;
 	Spec.Data->SetSetByCallerMagnitude(DataTag, RatePerSecond * Rules->RegenTickInterval);

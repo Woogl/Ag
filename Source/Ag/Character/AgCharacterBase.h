@@ -22,7 +22,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase*
 /**
  * Base for the player and the boss.
  * Owns the ability system and stats, the weapon and its attack windows, movement during attacks,
- * the character data asset and the death handling from 전투 시스템 '사망 처리'.
+ * the character data and the death handling from 전투 시스템 '사망 처리'.
  */
 UCLASS(Abstract)
 class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -112,8 +112,14 @@ protected:
 	/** Grants the character data's abilities. */
 	virtual void GrantAbilities();
 
-	/** Starts the regen effects (PP here; the player adds SP). */
+	/** Starts the regen effects (PP here; the player adds SP). Starting again replaces the running ones. */
 	virtual void StartRegen();
+
+	/**
+	 * A data file was read again in the editor: applies again the values set once at spawn, except the stats and the
+	 * granted abilities, which change on the next PIE start (구현 계획서 '데이터' 다시 읽기).
+	 */
+	virtual void HandleDataReloaded();
 
 	/** Movement speed as a multiple of MOV (the player's guard and sprint change it). */
 	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
@@ -124,7 +130,7 @@ protected:
 	/** Restarts a regen delay from the beginning: removes the running one and applies a new one. */
 	void RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration);
 
-	/** DA_Player or DA_Boss. */
+	/** DA_Player or DA_Boss. Its numbers come from its data file (Player.json, Boss.json). */
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	TObjectPtr<UAgCharacterData> CharacterData;
 

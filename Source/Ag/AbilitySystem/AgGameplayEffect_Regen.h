@@ -9,7 +9,7 @@
 /**
  * Regen (플레이어 사양 '자원 회복', 전투 시스템 'PP 리젠'): an endless periodic effect that adds the SetByCaller amount
  * every period. It pauses while its tag requirements fail, for example while the regen delay tag is on, and starts a
- * full period again when they pass. The caller sets the period and the amount per period from the data assets.
+ * full period again when they pass. The caller sets the period and the amount per period from the character and common data.
  * A negative amount spends instead (달리기의 SP 소모).
  */
 UCLASS(Abstract)

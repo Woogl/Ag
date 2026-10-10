@@ -17,7 +17,10 @@ public class AgEditor : ModuleRules
 			"UMGEditor",
 			"MovieScene",
 			"MovieSceneTracks",
-			"ToolsetRegistry"
+			"ToolsetRegistry",
+			"DirectoryWatcher",
+			"EditorSubsystem",
+			"Ag"
 		});
 	}
 }

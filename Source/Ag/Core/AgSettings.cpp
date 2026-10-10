@@ -4,13 +4,32 @@
 
 #include "Data/AgCameraData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgDataFile.h"
 #include "TargetingSystem/TargetingPreset.h"
+#include "UObject/Package.h"
+
+namespace
+{
+	/** Reads a common data file into the one object of its class (구현 계획서 '데이터'). */
+	template <typename TData>
+	TData* LoadCommonData(const TCHAR* ObjectName, const FString& FileName)
+	{
+		// A fixed name in the transient package keeps one object per session and makes it easy to find for inspection.
+		TData* Data = FindObject<TData>(GetTransientPackage(), ObjectName);
+		if (!Data)
+		{
+			Data = NewObject<TData>(GetTransientPackage(), ObjectName);
+		}
+		AgDataFile::Load(*Data, FileName);
+		return Data;
+	}
+}
 
 const UAgCameraData* UAgSettings::GetCameraData() const
 {
 	if (!LoadedCameraData)
 	{
-		LoadedCameraData = CameraData.LoadSynchronous();
+		LoadedCameraData = LoadCommonData<UAgCameraData>(TEXT("AgCameraData"), CameraDataFile);
 	}
 	return LoadedCameraData;
 }
@@ -19,7 +38,7 @@ const UAgCombatRules* UAgSettings::GetCombatRules() const
 {
 	if (!LoadedCombatRules)
 	{
-		LoadedCombatRules = CombatRules.LoadSynchronous();
+		LoadedCombatRules = LoadCommonData<UAgCombatRules>(TEXT("AgCombatRules"), CombatRulesFile);
 	}
 	return LoadedCombatRules;
 }
@@ -38,9 +57,16 @@ void UAgSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	// A changed asset is loaded on its next use.
-	LoadedCameraData = nullptr;
-	LoadedCombatRules = nullptr;
+	// A changed data file is read into the same object; a changed asset is loaded on its next use.
+	const FName Property = PropertyChangedEvent.GetMemberPropertyName();
+	if (Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CameraDataFile) && LoadedCameraData)
+	{
+		AgDataFile::Load(*LoadedCameraData, CameraDataFile);
+	}
+	if (Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CombatRulesFile) && LoadedCombatRules)
+	{
+		AgDataFile::Load(*LoadedCombatRules, CombatRulesFile);
+	}
 	LoadedBossTargeting = nullptr;
 }
 #endif

@@ -64,10 +64,11 @@ protected:
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void StartRegen() override;
+	virtual void HandleDataReloaded() override;
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:
-	/** Applies DA_Camera's 자유 시점 values to the spring arm and camera. */
+	/** Applies Camera.json's 자유 시점 values to the spring arm and camera. */
 	void ApplyCameraData();
 
 	void Move(const FInputActionValue& Value);

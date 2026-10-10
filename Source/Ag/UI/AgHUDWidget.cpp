@@ -13,6 +13,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgDataFile.h"
 #include "EngineUtils.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
@@ -30,6 +31,11 @@ void UAgHUDWidget::NativeConstruct()
 	{
 		PPColor = BossPPBar->GetFillColorAndOpacity();
 	}
+
+#if WITH_EDITOR
+	// A reloaded data file may change the boss name; finding the boss again sets it.
+	AgDataFile::OnReloaded().AddWeakLambda(this, [this]() { Boss = nullptr; });
+#endif
 
 	// An icon whose brush has no image would draw a plain box, so it stays hidden until one is put in.
 	for (UImage* Icon : { SkillIconImage.Get(), UltimateIconImage.Get() })
