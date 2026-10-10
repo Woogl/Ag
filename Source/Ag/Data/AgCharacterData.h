@@ -210,10 +210,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (ClampMin = 0))
 	float GuardSPCostRatio = 0.f;
 
-	/** 이동: 가드 중 이동 속도, as a multiple of MOV. */
-	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (ClampMin = 0))
-	float GuardMoveSpeedRatio = 1.f;
-
 	/** 패리: 패리 구간, from a new guard start. */
 	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (Units = "s", ClampMin = 0))
 	float ParryWindowTime = 0.f;
