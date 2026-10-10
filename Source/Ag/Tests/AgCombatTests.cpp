@@ -67,6 +67,7 @@ bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 		MakePattern(0.f, 40.f, 40.f, true),   // A4
 		MakePattern(40.f, 0.f, 0.f, false),   // A5, phase 2 only
 		MakePattern(0.f, 20.f, 60.f, false),  // A6, phase 2 only
+		MakePattern(0.f, 0.f, 0.f, true),     // B1: no weight anywhere, started by its own condition instead
 	};
 	constexpr float NearDistance = 300.f;
 	constexpr float FarDistance = 1000.f;
@@ -78,7 +79,7 @@ bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Phase 1 near: A1 and A2 only (A5 is phase 2 only)"), Indices == TArray<int32>{ 0, 1 } && Weights == TArray<float>{ 40.f, 30.f });
 
 	AAgBossAIController::GatherCandidates(Patterns, 300.f, NearDistance, FarDistance, 2, AllReady, Indices, Weights);
-	TestTrue(TEXT("3m is still near; phase 2 adds A5"), Indices == TArray<int32>{ 0, 1, 4 });
+	TestTrue(TEXT("3m is still near; phase 2 adds A5, never B1"), Indices == TArray<int32>{ 0, 1, 4 });
 
 	AAgBossAIController::GatherCandidates(Patterns, 1000.f, NearDistance, FarDistance, 1, AllReady, Indices, Weights);
 	TestTrue(TEXT("10m is still mid: A3 and A4 in phase 1"), Indices == TArray<int32>{ 2, 3 } && Weights == TArray<float>{ 40.f, 40.f });

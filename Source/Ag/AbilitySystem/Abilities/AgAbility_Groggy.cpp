@@ -37,6 +37,7 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardBreak);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);
+	ActivationBlockedTags.AddTag(AgGameplayTags::State_NonCombat);
 
 	FAbilityTriggerData& Trigger = AbilityTriggers.AddDefaulted_GetRef();
 	Trigger.TriggerTag = AgGameplayTags::Event_Groggy;

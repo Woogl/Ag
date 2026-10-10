@@ -17,6 +17,7 @@ UAgAbility_PhaseTransition::UAgAbility_PhaseTransition()
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);
+	ActivationBlockedTags.AddTag(AgGameplayTags::State_NonCombat);
 
 	FAbilityTriggerData& Trigger = AbilityTriggers.AddDefaulted_GetRef();
 	Trigger.TriggerTag = AgGameplayTags::Event_PhaseTransition;

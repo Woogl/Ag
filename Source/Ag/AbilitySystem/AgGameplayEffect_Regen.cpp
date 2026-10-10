@@ -49,3 +49,8 @@ UAgGameplayEffect_PPRegen::UAgGameplayEffect_PPRegen()
 {
 	SetupRegen(UAgAttributeSet::GetPPAttribute(), AgGameplayTags::Data_PP, FGameplayTagContainer(), FGameplayTagContainer(AgGameplayTags::State_Regen_PPDelay));
 }
+
+UAgGameplayEffect_SprintSPCost::UAgGameplayEffect_SprintSPCost()
+{
+	SetupRegen(UAgAttributeSet::GetSPAttribute(), AgGameplayTags::Data_SP, FGameplayTagContainer(AgGameplayTags::State_Sprinting), FGameplayTagContainer());
+}

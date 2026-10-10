@@ -8,11 +8,13 @@
 
 class AAgCharacterBase;
 class UAbilitySystemComponent;
+class UAgCameraData;
 class UAgCombatRules;
 class UGameplayEffect;
 struct FActiveGameplayEffectHandle;
 struct FAgAttackHit;
 struct FGameplayTag;
+enum class EAgCameraShake : uint8;
 
 /** Amounts of the player resources; positive adds, negative spends. */
 struct FAgResourceAmounts
@@ -59,9 +61,14 @@ public:
 	/**
 	 * Runs 피격 처리 순서 for one attack window that touched Target for the first time:
 	 * 극한 회피, 무적, 패리, 가드 or 가드 브레이크, 일반 피격, then 사망·그로기 판정 and 적중 후 처리
-	 * (hitstop, MP·UP 충전). Starts the reaction abilities through gameplay events.
+	 * (effect, camera shake, hitstop, MP·UP 충전, and 슬로우모션 after a parry). Starts the reaction abilities through
+	 * gameplay events. HitSource is the projectile that carried the attack, if any: the target's reactions push away
+	 * from it, and only the target stops for the hitstop.
 	 */
-	static EAgHitResult ProcessHit(AAgCharacterBase* Attacker, AAgCharacterBase* Target, const FAgAttackHit& Hit, const FVector& HitLocation);
+	static EAgHitResult ProcessHit(AAgCharacterBase* Attacker, AAgCharacterBase* Target, const FAgAttackHit& Hit, const FVector& HitLocation, AActor* HitSource = nullptr);
+
+	/** Plays a camera shake level through its GameplayCue (카메라 '카메라 셰이크'). Context is any character. */
+	static void PlayCameraShake(AAgCharacterBase* Context, EAgCameraShake Shake);
 
 	/** Applies an instant HP and PP change from Source to Target (negative lowers). */
 	static void ApplyStatChange(AAgCharacterBase* Source, AAgCharacterBase* Target, float HPChange, float PPChange);
@@ -69,12 +76,18 @@ public:
 	/** Applies an instant SP, MP and UP change to Character. */
 	static void ApplyResourceChange(AAgCharacterBase* Character, const FAgResourceAmounts& Change);
 
-	/** Gives ASC's owner Tag for Duration seconds of game time (cooldowns, regen delays, the parry window). */
+	/** Gives ASC's owner Tag for Duration seconds of game time (cooldowns, regen delays, the parry window, the 회피 반격 기회). */
 	static FActiveGameplayEffectHandle ApplyTimedTag(UAbilitySystemComponent* ASC, const FGameplayTag& Tag, float Duration);
 
-	/** Starts a regen effect that adds RatePerSecond, in steps of DA_CombatRules' regen tick interval. */
+	/**
+	 * Starts a periodic effect that adds RatePerSecond (negative spends), in steps of DA_CombatRules' regen tick
+	 * interval: regen, and the sprint's SP cost.
+	 */
 	static void ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGameplayEffect> RegenClass, const FGameplayTag& DataTag, float RatePerSecond);
 
 	/** DA_CombatRules, or null with an error when the project setting is empty. */
 	static const UAgCombatRules* GetCombatRules();
+
+	/** DA_Camera, or null with an error when the project setting is empty. */
+	static const UAgCameraData* GetCameraData();
 };

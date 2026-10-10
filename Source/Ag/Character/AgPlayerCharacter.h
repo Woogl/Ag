@@ -44,6 +44,9 @@ public:
 
 	bool IsGuardHeld() const { return bGuardHeld; }
 
+	/** The dodge / sprint key (Shift) is held. */
+	bool IsDodgeHeld() const { return bDodgeHeld; }
+
 	/**
 	 * True once when the guard starts again after a parry motion or a guard pushback with the key held,
 	 * which opens no parry window (플레이어 사양 '패리 구간').
@@ -71,6 +74,8 @@ private:
 	void GuardPressed();
 	void GuardReleased();
 	void DodgePressed();
+	void DodgeReleased();
+	void JumpPressed();
 	void SkillPressed();
 	void UltimatePressed();
 	void ExecutePressed();
@@ -79,20 +84,33 @@ private:
 	/** Handles a pressed action key by its input tag (플레이어 사양 '조작', '공통 입력 처리'). */
 	void HandleInputPressed(const FGameplayTag& InputTag);
 
-	/** Handles a released key (only the guard key cares). */
+	/** Handles a released key (the guard and dodge keys care). */
 	void HandleInputReleased(const FGameplayTag& InputTag);
 
 	/** False while an action motion, a hit reaction, groggy, execution or death ignores movement input. */
 	bool CanMove() const;
 
-	/** 가드 시작: with the guard key held, the guard starts again once an action or a hit reaction ends. */
+	/**
+	 * 가드 시작: with the guard key held, the guard starts again once an action or a hit reaction ends.
+	 * 달리기: a dodge motion that ends with Shift and movement held turns into a sprint.
+	 */
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
 	void TryResumeGuard();
 
-	/** Faces the movement direction normally; faces the camera (the lock-on target) while locked on or guarding. */
+	/** 회피 반격 기회 ends with any action other than moving, or a knockback or down. */
+	void HandleAbilityActivated(UGameplayAbility* Ability);
+
+	/** 달리기 ends when Shift is released, the movement input stops or SP runs out. */
+	void UpdateSprint();
+
+	/**
+	 * Faces the movement direction normally; faces the camera (the lock-on target) while locked on or guarding.
+	 * A sprint faces the movement direction even while locked on.
+	 */
 	void UpdateRotationMode();
 
-	void HandleGuardingChanged(const FGameplayTag Tag, int32 NewCount);
+	/** Guarding and sprinting change the facing and the movement speed. */
+	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
 	/** 자원 회복: any SP use restarts the SP regen delay, a longer one when SP reaches 0. */
 	void HandleSPChanged(const FOnAttributeChangeData& Data);
@@ -127,6 +145,9 @@ private:
 	TObjectPtr<UInputAction> DodgeAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> JumpAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> SkillAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
@@ -140,6 +161,7 @@ private:
 
 	FVector MoveInputDirection = FVector::ZeroVector;
 	bool bGuardHeld = false;
+	bool bDodgeHeld = false;
 	bool bGuardResumeWithoutParry = false;
 	FActiveGameplayEffectHandle SPRegenDelay;
 

@@ -8,6 +8,7 @@
 #include "Math/Interval.h"
 #include "AgCharacterData.generated.h"
 
+class AAgSwordWave;
 class UAnimMontage;
 class UAnimSequenceBase;
 class UBlendSpace;
@@ -260,6 +261,30 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
 	float LockOnReleaseRange = 0.f;
 
+	/** 이동 '달리기': speed as a multiple of MOV. */
+	UPROPERTY(EditDefaultsOnly, Category = "Sprint", meta = (ClampMin = 0))
+	float SprintSpeedRatio = 1.f;
+
+	/** SP 소모: 달리기, per second. Usable while SP is above 0. */
+	UPROPERTY(EditDefaultsOnly, Category = "Sprint", meta = (ClampMin = 0))
+	float SprintSPCost = 0.f;
+
+	/** 회피 반격 */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge Counter")
+	FAgPlayerAttack DodgeCounter;
+
+	/** 회피 반격 기회: 유효 시간, from the 극한 회피. */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge Counter", meta = (Units = "s", ClampMin = 0))
+	float DodgeCounterChanceTime = 0.f;
+
+	/** 슬로우모션: 속도, the scale of game time. */
+	UPROPERTY(EditDefaultsOnly, Category = "Slow Motion", meta = (ClampMin = 0.01, ClampMax = 1))
+	float SlowMotionSpeed = 1.f;
+
+	/** 슬로우모션: 지속 시간, in real time. */
+	UPROPERTY(EditDefaultsOnly, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
+	float SlowMotionDuration = 0.f;
+
 	/** 평타 montages, in the same order as BasicAttack. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TArray<TObjectPtr<UAnimMontage>> BasicAttackMontages;
@@ -291,6 +316,18 @@ public:
 	/** 스킬 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> SkillMontage;
+
+	/** 회피 반격 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> DodgeCounterMontage;
+
+	/** 점프: the take-off, played when jumping without movement input. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> JumpMontage;
+
+	/** 점프: the landing, played when landing without movement input. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> LandMontage;
 
 	/** 궁극기: montages played one after another, each blended into the next. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
@@ -414,6 +451,38 @@ public:
 	/** A4: the landing hits within this radius of the landing point. */
 	UPROPERTY(EditDefaultsOnly, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
 	float LeapHitRadius = 0.f;
+
+	/** B1 백스텝: the player must be this close (capsule centers, horizontal). */
+	UPROPERTY(EditDefaultsOnly, Category = "B1 Backstep", meta = (Units = "cm", ClampMin = 0))
+	float BackstepRange = 0.f;
+
+	/** B1 백스텝: chance, checked every time the player starts a basic attack hit. */
+	UPROPERTY(EditDefaultsOnly, Category = "B1 Backstep", meta = (ClampMin = 0, ClampMax = 1))
+	float BackstepChance = 0.f;
+
+	/** A6 검기: the projectile (BP_SwordWave). */
+	UPROPERTY(EditDefaultsOnly, Category = "A6 Sword Wave")
+	TSubclassOf<AAgSwordWave> SwordWaveClass;
+
+	/** A6 검기: 속도 */
+	UPROPERTY(EditDefaultsOnly, Category = "A6 Sword Wave", meta = (Units = "cm/s", ClampMin = 0))
+	float SwordWaveSpeed = 0.f;
+
+	/** A6 검기: 최대 사거리 */
+	UPROPERTY(EditDefaultsOnly, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
+	float SwordWaveRange = 0.f;
+
+	/** A6 검기: 폭 */
+	UPROPERTY(EditDefaultsOnly, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
+	float SwordWaveWidth = 0.f;
+
+	/** A6 검기: 높이, from the ground. */
+	UPROPERTY(EditDefaultsOnly, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
+	float SwordWaveHeight = 0.f;
+
+	/** A6 검기: thickness along its flight. The spec gives no number; an implementation value. */
+	UPROPERTY(EditDefaultsOnly, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
+	float SwordWaveDepth = 0.f;
 
 	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. The lock-on marker shows there too. */
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")

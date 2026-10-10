@@ -14,7 +14,7 @@ struct FAgBossPattern;
  * Shared boss pattern (A1, A2, A5): plays the pattern montage at the pattern play rate with its attack data,
  * keeps the stop distance (보스 사양 '이동') and, for A1 and A5, closes in during the first hit's windup.
  * Unguardable hits show the 붉은 섬광 before their attack window, and patterns with a cooldown start it on use.
- * Each granted spec carries its pattern ID as a dynamic tag. The special patterns (A3, A4) derive from this class.
+ * Each granted spec carries its pattern ID as a dynamic tag. The special patterns (A3, A4, A6, B1) derive from this class.
  */
 UCLASS()
 class UAgBossPatternAbility : public UAgGameplayAbility
@@ -36,7 +36,7 @@ protected:
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 	/** Pattern motion play rate: 모션 재생 속도 times the phase 2 패턴 진행 속도. */
-	float GetPatternPlayRate() const;
+	virtual float GetPatternPlayRate() const;
 
 	const FAgBossPattern* GetPattern() const;
 
