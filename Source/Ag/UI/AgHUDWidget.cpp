@@ -30,6 +30,15 @@ void UAgHUDWidget::NativeConstruct()
 	{
 		PPColor = BossPPBar->GetFillColorAndOpacity();
 	}
+
+	// An icon whose brush has no image would draw a plain box, so it stays hidden until one is put in.
+	for (UImage* Icon : { SkillIconImage.Get(), UltimateIconImage.Get() })
+	{
+		if (Icon && !Icon->GetBrush().GetResourceObject())
+		{
+			Icon->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
 }
 
 void UAgHUDWidget::HideStatus()
