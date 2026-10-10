@@ -103,18 +103,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Death", meta = (Units = "s", ClampMin = 0))
 	float DeathPresentationTime = 0.f;
 
-	/** Start of the weapon's damaging edge, in the weapon mesh's space. Attacks sweep the line from start to end. */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (Units = "cm"))
-	FVector WeaponEdgeStart = FVector::ZeroVector;
-
-	/** End (tip) of the weapon's damaging edge, in the weapon mesh's space. */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (Units = "cm"))
-	FVector WeaponEdgeEnd = FVector::ZeroVector;
-
-	/** Thickness of the swept edge (sphere radius). The spec gives no number; an implementation value for QA to tune. */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (Units = "cm", ClampMin = 0))
-	float WeaponEdgeRadius = 0.f;
-
 	/** Abilities granted at the start: actions, reactions, death. */
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> Abilities;

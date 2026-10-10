@@ -270,8 +270,9 @@ void AAgPlayerCharacter::HandleInputPressed(const FGameplayTag& InputTag)
 	}
 	if (InputTag == AgGameplayTags::Input_LockOn)
 	{
-		// The lock-on key isn't limited by the action state; it works until death (플레이어 입력 '공통 입력 처리').
-		LockOn->ToggleLockOn();
+		// The lock-on key isn't limited by the action state and isn't buffered; it works until death
+		// (플레이어 입력 '공통 입력 처리').
+		RunInput(InputTag);
 		return;
 	}
 
@@ -341,6 +342,11 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 	else if (InputTag == AgGameplayTags::Input_Jump)
 	{
 		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Jump));
+	}
+	else if (InputTag == AgGameplayTags::Input_LockOn)
+	{
+		// Locks on, or releases while locked on.
+		PressOrActivate(AgGameplayTags::Ability_LockOn);
 	}
 }
 

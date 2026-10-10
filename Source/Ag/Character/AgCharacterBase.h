@@ -10,6 +10,7 @@
 #include "AgCharacterBase.generated.h"
 
 class UAbilitySystemComponent;
+class UCapsuleComponent;
 class UAgAttributeSet;
 class UAgCharacterData;
 class UGameplayAbility;
@@ -141,7 +142,7 @@ private:
 	/** Sets the stats to the starting values in the character data. */
 	void InitializeStats();
 
-	/** Puts the character data's weapon mesh on the matching component and attaches it to the weapon socket. */
+	/** Puts the character data's weapon mesh on the matching component and attaches it and the edge to the weapon socket. */
 	void ApplyWeapon();
 
 	void HandleMOVChanged(const FOnAttributeChangeData& Data);
@@ -172,6 +173,13 @@ private:
 	/** Holds the weapon when it is a skeletal mesh (halberd). */
 	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	TObjectPtr<USkeletalMeshComponent> SkeletalWeapon;
+
+	/**
+	 * The weapon's damaging edge, on the weapon socket like the weapon. Attacks sweep the segment between the centers of
+	 * its two ends with a sphere of its radius; it has no collision of its own. Fitted to the blade in the blueprint.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	TObjectPtr<UCapsuleComponent> WeaponEdge;
 
 	/** 공격 보정 (Motion Warping). */
 	UPROPERTY(VisibleAnywhere, Category = "Movement")

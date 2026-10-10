@@ -79,6 +79,13 @@ AAgCharacterBase::AAgCharacterBase()
 	SkeletalWeapon->SetupAttachment(GetMesh());
 	SkeletalWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	WeaponEdge = CreateDefaultSubobject<UCapsuleComponent>(TEXT("WeaponEdge"));
+	WeaponEdge->SetupAttachment(GetMesh());
+	WeaponEdge->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponEdge->SetGenerateOverlapEvents(false);
+	WeaponEdge->SetCanEverAffectNavigation(false);
+	WeaponEdge->SetHiddenInGame(true);
+
 	// Characters never block the camera (카메라 '카메라 충돌').
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -249,6 +256,9 @@ void AAgCharacterBase::ApplyWeapon()
 
 	SkeletalWeapon->SetSkeletalMeshAsset(Cast<USkeletalMesh>(WeaponMesh));
 	SkeletalWeapon->AttachToComponent(GetMesh(), AttachRules, Socket);
+
+	// The edge keeps the place it is given in the blueprint, relative to the socket and so to the weapon.
+	WeaponEdge->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, Socket);
 }
 
 USceneComponent* AAgCharacterBase::GetWeaponComponent() const
@@ -262,14 +272,15 @@ USceneComponent* AAgCharacterBase::GetWeaponComponent() const
 
 bool AAgCharacterBase::GetWeaponEdge(FVector& OutStart, FVector& OutEnd) const
 {
-	const USceneComponent* Weapon = GetWeaponComponent();
-	if (!Weapon || !CharacterData)
+	if (!GetWeaponComponent())
 	{
 		return false;
 	}
-	const FTransform& WeaponTransform = Weapon->GetComponentTransform();
-	OutStart = WeaponTransform.TransformPosition(CharacterData->WeaponEdgeStart);
-	OutEnd = WeaponTransform.TransformPosition(CharacterData->WeaponEdgeEnd);
+	// The capsule's axis is its local Z.
+	const FVector Center = WeaponEdge->GetComponentLocation();
+	const FVector HalfSegment = WeaponEdge->GetUpVector() * WeaponEdge->GetScaledCapsuleHalfHeight_WithoutHemisphere();
+	OutStart = Center + HalfSegment;
+	OutEnd = Center - HalfSegment;
 	return true;
 }
 
@@ -333,7 +344,7 @@ void AAgCharacterBase::SweepWeapon()
 
 	const float Travel = FMath::Max(FVector::Dist(EdgeStart, LastEdgeStart), FVector::Dist(EdgeEnd, LastEdgeEnd));
 	const int32 Steps = FMath::Clamp(FMath::CeilToInt(Travel / SweepStepLength), 1, MaxSweepSteps);
-	const FCollisionShape Edge = FCollisionShape::MakeSphere(CharacterData->WeaponEdgeRadius);
+	const FCollisionShape Edge = FCollisionShape::MakeSphere(WeaponEdge->GetScaledCapsuleRadius());
 	const FCollisionQueryParams Params(SCENE_QUERY_STAT(AgWeaponSweep), /*bTraceComplex*/ false, this);
 	const FVector Center = GetActorLocation();
 
