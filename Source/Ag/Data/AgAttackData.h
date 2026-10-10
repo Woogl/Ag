@@ -84,6 +84,10 @@ struct FAgBossPattern
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "s", ClampMin = 0))
 	float Cooldown = 0.f;
 
+	/** The tag the cooldown gives while it runs. Patterns without a cooldown leave it empty. */
+	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Categories = "Cooldown.Boss"))
+	FGameplayTag CooldownTag;
+
 	/** 페이즈: usable in phase 1. */
 	UPROPERTY(EditAnywhere, Category = "Pattern")
 	bool bPhase1 = true;

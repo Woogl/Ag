@@ -32,6 +32,30 @@ namespace
 	/** The weapon edge is swept in steps no longer than this, so a fast swing can't skip over a body. */
 	constexpr float SweepStepLength = 10.f;
 	constexpr int32 MaxSweepSteps = 16;
+
+	/** Closer than this to the character's axis, the angle around it is unreliable, so a sub-step goes straight. */
+	constexpr float MinArcRadius = 20.f;
+
+	/**
+	 * A point between A and B for a sub-step. Swings travel around the body, so this follows the arc around the
+	 * character's vertical axis through Center rather than the straight chord: a sweep can turn a quarter turn in a frame.
+	 */
+	FVector ArcLerp(const FVector& Center, const FVector& A, const FVector& B, float Alpha)
+	{
+		const FVector2D RelA(A.X - Center.X, A.Y - Center.Y);
+		const FVector2D RelB(B.X - Center.X, B.Y - Center.Y);
+		const float RadiusA = RelA.Size();
+		const float RadiusB = RelB.Size();
+		if (RadiusA < MinArcRadius || RadiusB < MinArcRadius)
+		{
+			return FMath::Lerp(A, B, Alpha);
+		}
+
+		const float AngleA = FMath::Atan2(RelA.Y, RelA.X);
+		const float Angle = AngleA + FMath::FindDeltaAngleRadians(AngleA, FMath::Atan2(RelB.Y, RelB.X)) * Alpha;
+		const float Radius = FMath::Lerp(RadiusA, RadiusB, Alpha);
+		return FVector(Center.X + Radius * FMath::Cos(Angle), Center.Y + Radius * FMath::Sin(Angle), FMath::Lerp(A.Z, B.Z, Alpha));
+	}
 }
 
 const FName AAgCharacterBase::AttackWarpTarget(TEXT("AttackTarget"));
@@ -292,13 +316,14 @@ void AAgCharacterBase::SweepWeapon()
 	const int32 Steps = FMath::Clamp(FMath::CeilToInt(Travel / SweepStepLength), 1, MaxSweepSteps);
 	const FCollisionShape Edge = FCollisionShape::MakeSphere(CharacterData->WeaponEdgeRadius);
 	const FCollisionQueryParams Params(SCENE_QUERY_STAT(AgWeaponSweep), /*bTraceComplex*/ false, this);
+	const FVector Center = GetActorLocation();
 
 	TArray<FHitResult> Touches;
 	for (int32 Step = 1; Step <= Steps && OpenWindowHit != INDEX_NONE; ++Step)
 	{
 		const float Alpha = static_cast<float>(Step) / Steps;
-		const FVector From = FMath::Lerp(LastEdgeStart, EdgeStart, Alpha);
-		const FVector To = FMath::Lerp(LastEdgeEnd, EdgeEnd, Alpha);
+		const FVector From = ArcLerp(Center, LastEdgeStart, EdgeStart, Alpha);
+		const FVector To = ArcLerp(Center, LastEdgeEnd, EdgeEnd, Alpha);
 
 		Touches.Reset();
 		GetWorld()->SweepMultiByChannel(Touches, From, To, FQuat::Identity, ECC_AgWeapon, Edge, Params);

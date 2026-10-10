@@ -78,6 +78,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_DownGrounded, "Event.DownGrounded", "다운 모션에서 바닥에 쓰러진 순간 (무적 시작)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_RecoveryStarted, "Event.RecoveryStarted", "모션의 후딜이 시작됨 (판정 구간이 없는 행동: 패리 모션)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_ExecutionBlow, "Event.ExecutionBlow", "처형 모션의 마지막 일격 (대미지 적용)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashStart, "Event.Boss.DashStart", "A3 찌르기 모션에서 몸을 앞으로 내던지는 순간 (돌진 시작)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashHold, "Event.Boss.DashHold", "A3 창을 다 내지른 자세 (돌진이 끝날 때까지 유지)");
 
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Dodge, "Cooldown.Dodge");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill, "Cooldown.Skill");
