@@ -192,7 +192,7 @@
 | 회피 반격 | `Attack_Heavy1` | 2.9m를 0.2초 만에 다가가 벱니다. 웅크린 자세에서 시작하므로 구르는 중이나 대기 자세에서 이을 때는 블렌드가 필요합니다. (자세 차이 40cm 이상) |
 | 스킬 | `Attack_Sprint` | 달려들며 베는 돌진 공격 |
 | 궁극기 | `Attack_Dodge` → `Attack_Combo_B1` ~ `B5` → `Attack_HeavyB` | 파고든 뒤 5번 베고, 깊게 내딛는 일격으로 마무리 (6타). 평타와 모션이 겹치지 않습니다. 잇는 시점은 '연결'을 따릅니다. |
-| 처형 | `Execute` | 보스 쪽은 보스 팩의 `Executed_Samurai` |
+| 처형 | `Execute` | 보스 쪽은 짝 모션 `Executed`(처형 피격)·`Executed_Death`(처형 사망) |
 | 회피 | `Evade_*` 8방향, 이동 입력이 없으면 `Dodge` | |
 | 가드 / 가드 움찔 / 가드 밀림 / 가드 브레이크 | `Guard` 계열 / `Guard_Hit1` / `Guard_Hit2`·`3` / `Guard_Break` | |
 | 패리 | `Parry` | |
