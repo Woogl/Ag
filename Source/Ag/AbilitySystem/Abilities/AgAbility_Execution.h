@@ -12,8 +12,9 @@ class AAgPlayerCharacter;
 /**
  * 처형 (플레이어 사양 '처형'): a finishing move on a groggy boss within the 처형 타겟팅 범위, once per groggy.
  * The boss turns to the player and plays its 처형 피격 motion while the player closes in to the boss's front with
- * Motion Warping. The player is invincible until the execution ends or is cancelled. The final blow applies the damage
- * once, without hitstop, and the recovery (후딜) starts after it.
+ * Motion Warping. The player is invincible until the execution ends or is cancelled. Each strike of the motion (the two
+ * slashes and the final blow, one Execution hit each) applies its damage without hitstop, and the recovery (후딜) starts
+ * after the final blow.
  */
 UCLASS()
 class UAgAbility_Execution : public UAgGameplayAbility
@@ -35,7 +36,7 @@ private:
 	void SetExecuting(bool bNewExecuting);
 
 	UFUNCTION()
-	void HandleFinalBlow(FGameplayEventData Payload);
+	void HandleStrike(FGameplayEventData Payload);
 
 	UFUNCTION()
 	void HandleMontageFinished();
@@ -46,5 +47,7 @@ private:
 	TWeakObjectPtr<AAgBossCharacter> Target;
 	bool bExecuting = false;
 	bool bInvincible = false;
-	bool bBlowLanded = false;
+
+	/** Strikes so far in this execution; the last Execution hit is the final blow. */
+	int32 StrikeIndex = 0;
 };

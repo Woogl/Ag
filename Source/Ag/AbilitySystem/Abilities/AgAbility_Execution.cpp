@@ -54,7 +54,7 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		return;
 	}
 	Target = Boss;
-	bBlowLanded = false;
+	StrikeIndex = 0;
 
 	BeginBusy();
 	SetExecuting(true);
@@ -71,9 +71,9 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	// The player moves to the boss's front, to the gap where the two motions line up. No stop distance applies.
 	Player->StartApproach(Boss, Data->ExecutionDistance, 0.f, 0.f, /*bFaceTarget*/ true, /*bExactGap*/ true);
 
-	UAbilityTask_WaitGameplayEvent* BlowTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_ExecutionBlow);
-	BlowTask->EventReceived.AddDynamic(this, &ThisClass::HandleFinalBlow);
-	BlowTask->ReadyForActivation();
+	UAbilityTask_WaitGameplayEvent* StrikeTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_ExecutionBlow);
+	StrikeTask->EventReceived.AddDynamic(this, &ThisClass::HandleStrike);
+	StrikeTask->ReadyForActivation();
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->ExecutionMontage);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
@@ -99,44 +99,51 @@ void UAgAbility_Execution::SetExecuting(bool bNewExecuting)
 	}
 }
 
-void UAgAbility_Execution::HandleFinalBlow(FGameplayEventData Payload)
+void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 {
 	AAgCharacterBase* Player = GetAgCharacter();
 	AAgBossCharacter* Boss = Target.Get();
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (bBlowLanded || !Player || !Boss || !Data || Boss->IsDead())
+	if (!Player || !Data || !Data->Execution.Hits.IsValidIndex(StrikeIndex))
 	{
 		return;
 	}
-	bBlowLanded = true;
+	const FAgAttackHit& Hit = Data->Execution.Hits[StrikeIndex];
+	++StrikeIndex;
+	const bool bFinalBlow = StrikeIndex == Data->Execution.Hits.Num();
 
-	// The damage lands once on the executed boss, without hitstop.
-	const FAgAttackHit& Hit = Data->Execution.Hits[0];
-	const int32 HPDamage = UAgCombatLibrary::CalculateHPDamage(Player->GetAttributeSet()->GetATK(), Hit.DamageMultiplier, Boss->GetAttributeSet()->GetDEF());
-	UAgCombatLibrary::ApplyStatChange(Player, Boss, -HPDamage, 0.f);
-	Boss->ShowDamageNumber(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageNumber);
-	FGameplayCueParameters EffectParameters;
-	EffectParameters.Location = Boss->GetActorLocation();
-	Boss->GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Hit, EffectParameters);
-	if (const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData())
+	// Each strike lands on the executed boss, without hitstop. A boss already killed by an earlier strike takes no more.
+	if (Boss && !Boss->IsDead() && Boss->GetAttributeSet()->GetHP() > 0.f)
 	{
-		UAgCombatLibrary::PlayCameraShake(Player, Camera->ExecutionBlowShake);
-	}
-	UE_LOG(LogAg, Verbose, TEXT("Execution blow: HP -%d (now %.0f)"), HPDamage, Boss->GetAttributeSet()->GetHP());
-	if (Boss->GetAttributeSet()->GetHP() <= 0.f)
-	{
-		FGameplayEventData DeathPayload;
-		DeathPayload.EventTag = AgGameplayTags::Event_Death;
-		DeathPayload.Instigator = Player;
-		DeathPayload.Target = Boss;
-		DeathPayload.InstigatorTags.AddTag(AgGameplayTags::Ability_Action_Execution);
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Death, DeathPayload);
+		const int32 HPDamage = UAgCombatLibrary::CalculateHPDamage(Player->GetAttributeSet()->GetATK(), Hit.DamageMultiplier, Boss->GetAttributeSet()->GetDEF());
+		UAgCombatLibrary::ApplyStatChange(Player, Boss, -HPDamage, 0.f);
+		Boss->ShowDamageNumber(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageNumber);
+		FGameplayCueParameters EffectParameters;
+		EffectParameters.Location = Boss->GetActorLocation();
+		Boss->GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Hit, EffectParameters);
+		if (const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData())
+		{
+			UAgCombatLibrary::PlayCameraShake(Player, bFinalBlow ? Camera->ExecutionBlowShake : Camera->ExecutionSlashShake);
+		}
+		UE_LOG(LogAg, Verbose, TEXT("Execution strike %d: HP -%d (now %.0f)"), StrikeIndex, HPDamage, Boss->GetAttributeSet()->GetHP());
+		if (Boss->GetAttributeSet()->GetHP() <= 0.f)
+		{
+			FGameplayEventData DeathPayload;
+			DeathPayload.EventTag = AgGameplayTags::Event_Death;
+			DeathPayload.Instigator = Player;
+			DeathPayload.Target = Boss;
+			DeathPayload.InstigatorTags.AddTag(AgGameplayTags::Ability_Action_Execution);
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Death, DeathPayload);
+		}
 	}
 
-	// 후딜: after the final blow the player can cancel; the boss's motion plays on either way.
-	Player->StopApproach();
-	SetExecuting(false);
-	EndBusy();
+	if (bFinalBlow)
+	{
+		// 후딜: after the final blow the player can cancel; the boss's motion plays on either way.
+		Player->StopApproach();
+		SetExecuting(false);
+		EndBusy();
+	}
 }
 
 void UAgAbility_Execution::HandleMontageFinished()

@@ -91,6 +91,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera Shake")
 	EAgCameraShake GuardBreakShake = EAgCameraShake::None;
 
+	/** 상황별 단계: 처형의 베기 */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera Shake")
+	EAgCameraShake ExecutionSlashShake = EAgCameraShake::None;
+
 	/** 상황별 단계: 처형의 마지막 일격 */
 	UPROPERTY(EditDefaultsOnly, Category = "Camera Shake")
 	EAgCameraShake ExecutionBlowShake = EAgCameraShake::None;
