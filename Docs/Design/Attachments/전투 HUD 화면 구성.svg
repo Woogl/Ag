@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4553"/>
+      <stop offset="1" stop-color="#2a323d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 게임 화면 배경 (임시) -->
+  <rect width="1920" height="760" fill="url(#sky)"/>
+  <rect y="760" width="1920" height="320" fill="#222831"/>
+  <path d="M0 760 H1920" stroke="#4a5563" stroke-width="2"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.5"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">전투 HUD 화면 구성 (기준 해상도 1920 × 1080) · 점선은 화면 여백 48px</text>
+
+  <!-- 월드 참고용 실루엣: 보스 -->
+  <g fill="#4b5563">
+    <circle cx="960" cy="360" r="30"/>
+    <rect x="902" y="396" width="116" height="220" rx="24"/>
+    <rect x="912" y="606" width="40" height="150" rx="14"/>
+    <rect x="968" y="606" width="40" height="150" rx="14"/>
+    <rect x="1022" y="420" width="12" height="280" rx="3" fill="#6b7280" transform="rotate(18 1028 420)"/>
+  </g>
+  <text x="960" y="790" font-size="16" fill="#7b8696" text-anchor="middle">보스 (월드)</text>
+
+  <!-- 월드 참고용 실루엣: 플레이어 (뒷모습) -->
+  <g fill="#3f4753">
+    <circle cx="820" cy="660" r="34"/>
+    <rect x="756" y="700" width="128" height="200" rx="28"/>
+    <rect x="768" y="890" width="46" height="120" rx="16"/>
+    <rect x="826" y="890" width="46" height="120" rx="16"/>
+  </g>
+  <text x="820" y="1050" font-size="16" fill="#7b8696" text-anchor="middle">플레이어 (월드)</text>
+
+  <!-- [3] 보스 상태 -->
+  <text x="960" y="78" font-size="32" fill="#FFFFFF" text-anchor="middle">보스 이름</text>
+  <rect x="460" y="92" width="1000" height="14" fill="#000000" fill-opacity="0.5"/>
+  <rect x="460" y="92" width="620" height="14" fill="#B3261E"/>
+  <rect x="1080" y="92" width="60" height="14" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="660" y="114" width="600" height="6" fill="#000000" fill-opacity="0.5"/>
+  <rect x="660" y="114" width="270" height="6" fill="#F2A33A"/>
+
+  <!-- [4] 락온 마커 -->
+  <circle cx="960" cy="470" r="16" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+  <circle cx="960" cy="470" r="3" fill="#FFFFFF"/>
+
+  <!-- [5] 처형 안내 -->
+  <rect x="836" y="280" width="248" height="46" rx="23" fill="#000000" fill-opacity="0.55"/>
+  <text x="960" y="314" font-size="32" fill="#FFFFFF" text-anchor="middle">[F] 처형</text>
+  <text x="1128" y="336" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
+
+  <!-- [7] 대미지 숫자 -->
+  <text x="1075" y="525" font-size="32" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="3" paint-order="stroke">120</text>
+
+  <!-- [1] 플레이어 상태: SP (최대치가 아닐 때만) / HP / MP -->
+  <rect x="48" y="974" width="300" height="8" fill="#000000" fill-opacity="0.5"/>
+  <rect x="48" y="974" width="225" height="8" fill="#4CC38A"/>
+  <text x="360" y="982" font-size="14" fill="#9aa4b1">SP (최대치가 아닐 때만)</text>
+  <rect x="48" y="988" width="400" height="16" fill="#000000" fill-opacity="0.5"/>
+  <rect x="48" y="988" width="340" height="16" fill="#D94545"/>
+  <rect x="388" y="988" width="32" height="16" fill="#FFFFFF" fill-opacity="0.7"/>
+  <text x="460" y="1003" font-size="24" fill="#FFFFFF">850 / 1000</text>
+  <rect x="48" y="1012" width="300" height="10" fill="#000000" fill-opacity="0.5"/>
+  <rect x="48" y="1012" width="120" height="10" fill="#3D8BFD"/>
+  <text x="360" y="1026" font-size="24" fill="#FFFFFF">40 / 100</text>
+
+  <!-- [2] 슬롯: 스킬·궁극기 (오른쪽 아래) -->
+  <g font-size="14" fill="#FFFFFF" text-anchor="middle">
+    <rect x="1732" y="944" width="64" height="64" rx="8" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="2"/>
+    <line x1="1750" y1="984" x2="1778" y2="956" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+    <text x="1780" y="1002" font-size="20" text-anchor="end">30</text>
+    <text x="1764" y="1028" font-size="20">E</text>
+
+    <g opacity="0.5">
+      <rect x="1808" y="944" width="64" height="64" rx="8" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="2"/>
+      <polygon points="1840,954 1852,970 1840,986 1828,970" fill="#9aa4b1"/>
+    </g>
+    <path d="M1840 944 H1864 A8 8 0 0 1 1872 952 V1000 A8 8 0 0 1 1864 1008 H1816 A8 8 0 0 1 1808 1000 V952 A8 8 0 0 1 1816 944 Z" fill="none" stroke="#A970FF" stroke-width="4" stroke-dasharray="145 242" stroke-linecap="round"/>
+    <text x="1840" y="1028" font-size="20">R</text>
+  </g>
+
+  <!-- 번호 표시 -->
+  <g font-size="18" font-weight="700" text-anchor="middle" fill="#1b1f24">
+    <circle cx="624" cy="996" r="16" fill="#FFD23F"/>
+    <text x="624" y="1002">1</text>
+    <circle cx="1708" cy="944" r="16" fill="#FFD23F"/>
+    <text x="1708" y="950">2</text>
+    <circle cx="436" cy="99" r="16" fill="#FFD23F"/>
+    <text x="436" y="105">3</text>
+    <circle cx="1000" cy="450" r="16" fill="#FFD23F"/>
+    <text x="1000" y="456">4</text>
+    <circle cx="1108" cy="303" r="16" fill="#FFD23F"/>
+    <text x="1108" y="309">5</text>
+    <circle cx="1160" cy="514" r="16" fill="#FFD23F"/>
+    <text x="1160" y="520">7</text>
+  </g>
+</svg>

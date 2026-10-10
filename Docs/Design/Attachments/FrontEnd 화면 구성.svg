@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#2c3644"/>
+      <stop offset="1" stop-color="#11151b"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 배경 (임시) -->
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">타이틀 화면 (LV_FrontEnd) · 기준 해상도 1920 × 1080</text>
+
+  <!-- 게임 제목 -->
+  <text x="960" y="430" font-size="224" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="24">AG</text>
+
+  <!-- 버튼 (세로 배치) -->
+  <g font-size="32" text-anchor="middle">
+    <rect x="780" y="600" width="360" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <polygon points="804,624 804,648 822,636" fill="#FFFFFF"/>
+    <text x="960" y="647" fill="#FFFFFF" font-weight="700">Start</text>
+
+    <rect x="780" y="696" width="360" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="743" fill="#c9d1db">Quit</text>
+  </g>
+  <text x="1160" y="642" font-size="16" fill="#9aa4b1">← 처음 선택된 버튼</text>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, W·S, ↑·↓ / 실행: 좌클릭, Enter, Space</text>
+</svg>
