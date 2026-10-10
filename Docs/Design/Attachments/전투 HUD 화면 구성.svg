@@ -39,8 +39,8 @@
   <rect x="460" y="92" width="1000" height="14" fill="#000000" fill-opacity="0.5"/>
   <rect x="460" y="92" width="620" height="14" fill="#B3261E"/>
   <rect x="1080" y="92" width="60" height="14" fill="#FFFFFF" fill-opacity="0.7"/>
-  <rect x="660" y="114" width="600" height="6" fill="#000000" fill-opacity="0.5"/>
-  <rect x="660" y="114" width="270" height="6" fill="#F2A33A"/>
+  <rect x="460" y="114" width="1000" height="6" fill="#000000" fill-opacity="0.5"/>
+  <rect x="460" y="114" width="450" height="6" fill="#F2A33A"/>
 
   <!-- [4] 락온 마커 -->
   <circle cx="960" cy="470" r="16" fill="none" stroke="#FFFFFF" stroke-width="3"/>
@@ -51,35 +51,36 @@
   <text x="960" y="314" font-size="32" fill="#FFFFFF" text-anchor="middle">[F] 처형</text>
   <text x="1128" y="336" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
 
-  <!-- [7] 대미지 숫자 -->
+  <!-- [6] 대미지 숫자 -->
   <text x="1075" y="525" font-size="32" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="3" paint-order="stroke">120</text>
 
-  <!-- [1] 플레이어 상태: SP (최대치가 아닐 때만) / HP / MP -->
-  <rect x="48" y="974" width="300" height="8" fill="#000000" fill-opacity="0.5"/>
-  <rect x="48" y="974" width="225" height="8" fill="#4CC38A"/>
-  <text x="360" y="982" font-size="14" fill="#9aa4b1">SP (최대치가 아닐 때만)</text>
+  <!-- [1] 플레이어 상태: SP / HP / MP -->
+  <rect x="48" y="974" width="400" height="8" fill="#000000" fill-opacity="0.5"/>
+  <rect x="48" y="974" width="300" height="8" fill="#4CC38A"/>
   <rect x="48" y="988" width="400" height="16" fill="#000000" fill-opacity="0.5"/>
   <rect x="48" y="988" width="340" height="16" fill="#D94545"/>
   <rect x="388" y="988" width="32" height="16" fill="#FFFFFF" fill-opacity="0.7"/>
   <text x="460" y="1003" font-size="24" fill="#FFFFFF">850 / 1000</text>
-  <rect x="48" y="1012" width="300" height="10" fill="#000000" fill-opacity="0.5"/>
-  <rect x="48" y="1012" width="120" height="10" fill="#3D8BFD"/>
-  <text x="360" y="1026" font-size="24" fill="#FFFFFF">40 / 100</text>
+  <rect x="48" y="1012" width="400" height="10" fill="#000000" fill-opacity="0.5"/>
+  <rect x="48" y="1012" width="160" height="10" fill="#3D8BFD"/>
+  <text x="460" y="1026" font-size="24" fill="#FFFFFF">40 / 100</text>
 
   <!-- [2] 슬롯: 스킬·궁극기 (오른쪽 아래) -->
   <g font-size="14" fill="#FFFFFF" text-anchor="middle">
     <rect x="1732" y="944" width="64" height="64" rx="8" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="2"/>
-    <line x1="1750" y1="984" x2="1778" y2="956" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
-    <text x="1780" y="1002" font-size="20" text-anchor="end">30</text>
+    <rect x="1740" y="952" width="48" height="48" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="1791" y="1004" font-size="20" text-anchor="end">30</text>
     <text x="1764" y="1028" font-size="20">E</text>
 
     <g opacity="0.5">
       <rect x="1808" y="944" width="64" height="64" rx="8" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="2"/>
-      <polygon points="1840,954 1852,970 1840,986 1828,970" fill="#9aa4b1"/>
+      <rect x="1816" y="952" width="48" height="48" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="4 3"/>
     </g>
     <path d="M1840 944 H1864 A8 8 0 0 1 1872 952 V1000 A8 8 0 0 1 1864 1008 H1816 A8 8 0 0 1 1808 1000 V952 A8 8 0 0 1 1816 944 Z" fill="none" stroke="#A970FF" stroke-width="4" stroke-dasharray="145 242" stroke-linecap="round"/>
     <text x="1840" y="1028" font-size="20">R</text>
   </g>
+
+  <text x="1716" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
 
   <!-- 번호 표시 -->
   <g font-size="18" font-weight="700" text-anchor="middle" fill="#1b1f24">
