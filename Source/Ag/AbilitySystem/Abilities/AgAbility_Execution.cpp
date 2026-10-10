@@ -56,6 +56,7 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	Target = Boss;
 	StrikeIndex = 0;
 
+	// No recovery (후딜): 행동 중 lasts until the motion ends, so no action can cancel the execution.
 	BeginBusy();
 	SetExecuting(true);
 	bInvincible = true;
@@ -136,14 +137,6 @@ void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 			DeathPayload.InstigatorTags.AddTag(AgGameplayTags::Ability_Action_Execution);
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Death, DeathPayload);
 		}
-	}
-
-	if (bFinalBlow)
-	{
-		// 후딜: after the final blow the player can cancel; the boss's motion plays on either way.
-		Player->StopApproach();
-		SetExecuting(false);
-		EndBusy();
 	}
 }
 

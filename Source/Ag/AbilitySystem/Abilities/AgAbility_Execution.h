@@ -13,9 +13,9 @@ class AAgPlayerCharacter;
  * 처형 (플레이어 사양 '처형'): a finishing move on a groggy boss within the 처형 타겟팅 범위, once per groggy.
  * The boss turns to the player and starts its 처형 피격 montage in the same frame as the execution montage; that montage
  * waits on its first frame until the first slash, so the two motions stay in step frame by frame. By the first slash the
- * player closes in to the boss's front with Motion Warping. The player is invincible until the execution ends or is
- * cancelled. Each strike of the motion (the two slashes and the final blow, one Execution hit each) applies its damage
- * without hitstop, and the recovery (후딜) starts after the final blow.
+ * player closes in to the boss's front with Motion Warping. The player is invincible until the execution ends. Each
+ * strike of the motion (the two slashes and the final blow, one Execution hit each) applies its damage without hitstop.
+ * The execution has no recovery (후딜), so no action can cancel it before the motion ends.
  */
 UCLASS()
 class UAgAbility_Execution : public UAgGameplayAbility
