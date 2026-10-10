@@ -32,6 +32,13 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Death, "Ability.Reaction.Death");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern, "Ability.Boss.Pattern", "보스 패턴");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A1, "Ability.Boss.Pattern.A1", "2연격");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A2, "Ability.Boss.Pattern.A2", "휩쓸기");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A3, "Ability.Boss.Pattern.A3", "돌진 찌르기");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A4, "Ability.Boss.Pattern.A4", "도약 내려찍기");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A5, "Ability.Boss.Pattern.A5", "3연격");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A6, "Ability.Boss.Pattern.A6", "검기 발사");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_B1, "Ability.Boss.Pattern.B1", "백스텝");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Execution_Executing, "State.Execution.Executing", "상태 우선순위 2: 처형하는 중");
@@ -39,6 +46,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Groggy, "State.Groggy", "상태 우선순위 3: 그로기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_HitReaction, "State.HitReaction", "상태 우선순위 4: 넉백, 다운, 가드 밀림, 가드 브레이크");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Busy, "State.Busy", "행동 중. 후딜 전까지 다른 행동을 받지 않음");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Acting, "State.Acting", "행동 모션 재생 중 (후딜 포함). 이동 입력을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Invincible, "State.Invincible", "무적");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_PerfectDodgeWindow, "State.PerfectDodgeWindow", "극한 회피 구간");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Guarding, "State.Guarding", "가드 중");
@@ -64,6 +72,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_PerfectDodge, "Event.PerfectDodge");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Parry, "Event.Parry");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타를 시작함 (B1 백스텝 검사)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackWindowEnded, "Event.AttackWindowEnded", "판정 구간이 끝남. EventMagnitude는 몇 번째 타인지 (0부터)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_DownGrounded, "Event.DownGrounded", "다운 모션에서 바닥에 쓰러진 순간 (무적 시작)");
 
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Dodge, "Cooldown.Dodge");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill, "Cooldown.Skill");

@@ -10,7 +10,7 @@ void UAgCheatManager::AgKillPlayer()
 {
 	for (TActorIterator<AAgPlayerCharacter> It(GetWorld()); It; ++It)
 	{
-		It->Die(FVector::ZeroVector);
+		It->Kill();
 	}
 }
 
@@ -18,6 +18,6 @@ void UAgCheatManager::AgKillBoss()
 {
 	for (TActorIterator<AAgBossCharacter> It(GetWorld()); It; ++It)
 	{
-		It->Die(FVector::ZeroVector);
+		It->Kill();
 	}
 }
