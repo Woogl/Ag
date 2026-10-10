@@ -108,7 +108,7 @@
 |---|---|---|---|
 | `Execute` | 2.70 | 최대 2.0m 전진, 0.8m 지점에서 끝남 | 0.35·0.52초 베기 → 1.25초 마지막 일격 → 2.0초 마무리 동작 → `Idle1` |
 | `Execute_B` / `Execute_B2` | 1.47 | 최대 0.9m / 0.3m 전진 후 제자리로 돌아옴 | 0.25 ~ 0.73초 동안 찌른 채 유지하는 찌르기 처형 |
-| `Executed` | 3.52 | 뒤로 2.5m | Samurai가 `Execute`에 당함 |
+| `Executed` | 3.52 | 뒤로 2.5m | Samurai가 `Execute`에 당함. `Execute`의 첫 베기에 맞는 순간부터 시작 |
 | `Executed_Warrior` | 3.52 | 뒤로 2.4m | Samurai가 Warrior의 처형에 당함 |
 | `Executed2` | 1.62 | 뒤로 1.7m | |
 | `Executed_B` / `Executed_B_2` | 1.90 | 뒤로 0.8m / 앞으로 0.9m | `Execute_B`의 짝 |
@@ -117,6 +117,7 @@
 - 다른 팩에도 `Execute`에 당하는 모션이 있으며, 시작 자세가 Samurai의 `Executed`와 같습니다. Halberd 팩의 `Executed_Samurai`는 [할버드 애니메이션 조사](<할버드 애니메이션 조사.md>)를 따릅니다. Dual Wield 팩에는 `Executed_Samurai`(2.57초, 뒤로 4.6m)와 `Executed_Death_Samurai`(1.82초, 뒤로 4.1m)가 있습니다.
 - `Execute_B`의 짝(`Executed_B`, `Executed_B_2`)은 Samurai와 Warrior 팩에만 있습니다.
 - `Execute`의 루트는 첫 프레임에 0.12m 뒤, 처형 피격 모션의 루트는 0.54m 뒤에서 시작합니다. 루트 모션을 켤 때 위치가 어긋나지 않게 설정해야 합니다.
+- `Executed`는 `Execute`보다 0.35초(첫 베기) 늦게 시작해야 짝이 맞습니다. 이렇게 이으면 `Executed`의 자세가 갑자기 바뀌는 네 순간(시작, 0.46, 0.91, 1.6초)이 `Execute`의 첫 베기(0.35초), 발차기(0.82초), 찌르기(1.26초), 칼을 뽑는 순간(1.95초)과 맞고, 칼은 1.27 ~ 1.93초 동안 몸에 꽂혀 있습니다. 두 모션의 원점을 약 1.1m 떨어뜨려 서로 마주 보게 놓으면 칼과 발이 몸에 닿고, 이때 첫 베기 순간 두 루트 사이 거리는 약 0.7m입니다.
 
 ## 회피
 

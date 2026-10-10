@@ -61,14 +61,15 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	bInvincible = true;
 	GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Invincible);
 
-	// The boss turns to the player and plays its 처형 피격 motion.
+	// The boss turns to the player and starts its 처형 피격 montage in this same frame, so both montages share one timeline.
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_Executed;
 	Payload.Instigator = Player;
 	Payload.Target = Boss;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Executed, Payload);
 
-	// The player moves to the boss's front, to the gap where the two motions line up. No stop distance applies.
+	// By the first slash (the end of the warp window) the player stands at the boss's front, at the gap where the two
+	// motions line up. No stop distance applies.
 	Player->StartApproach(Boss, Data->ExecutionDistance, 0.f, 0.f, /*bFaceTarget*/ true, /*bExactGap*/ true);
 
 	UAbilityTask_WaitGameplayEvent* StrikeTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_ExecutionBlow);

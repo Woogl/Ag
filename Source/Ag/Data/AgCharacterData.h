@@ -263,8 +263,8 @@ public:
 	FAgPlayerAttack Execution;
 
 	/**
-	 * Gap (capsule centers) the player closes to in front of the boss so the two execution motions line up.
-	 * The spec gives no number; set by eye in the editor.
+	 * Gap (capsule centers) the player closes to in front of the boss by the execution's first slash, where the two
+	 * execution motions line up. The spec gives no number; measured from the two motions' authored placement.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Execution", meta = (Units = "cm", ClampMin = 0))
 	float ExecutionDistance = 0.f;
@@ -524,7 +524,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> GroggyMontage;
 
-	/** 처형 피격: the motion paired with the player's execution; the boss stands up at its end. */
+	/**
+	 * 처형 피격: the motion paired with the player's execution; the boss stands up at its end. It waits on its first frame
+	 * until the execution's first slash, so it starts in the same frame as the execution montage and stays in step.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> ExecutedMontage;
 
