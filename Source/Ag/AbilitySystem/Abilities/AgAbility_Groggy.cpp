@@ -33,6 +33,7 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_Down);
+	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardPushback);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardBreak);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);

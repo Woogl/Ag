@@ -361,9 +361,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> DownMontage;
 
-	/** 다운: getting up, blended in after DownMontage (the poses differ slightly). */
+	/** 다운, 넉업: getting up, blended in after DownMontage or KnockUpFallMontage (the poses differ slightly). */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> GetUpMontage;
+
+	/** 넉업: the rising pose, repeated until KnockUpFallMontage blends in around the top of the flight. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> KnockUpMontage;
+
+	/**
+	 * 넉업: section Fall (the falling pose, repeated) and section Land (hitting the ground), played on landing.
+	 * Its blend-in time is centered on the top of the flight.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> KnockUpFallMontage;
 };
 
 /** DA_Boss */

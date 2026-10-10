@@ -3,6 +3,17 @@
   "character": "player",
   "rows": [
     {
+      "title": "넉업",
+      "note": "",
+      "frames": [
+        {"clip": "Samurai/Hit_Air_Up", "t": 0.3, "time": "0.10초", "label": "떠오름"},
+        {"clip": "Samurai/Hit_Air_Down", "t": 0.3, "time": "0.45초", "label": "떨어짐"},
+        {"clip": "Samurai/Hit_knockdown2", "t": 0.1, "time": "0.70초", "label": "바닥에 닿음", "banner": [["무적", "cyan"]]},
+        {"clip": "Samurai/Hit_knockdown2", "t": 0.7333, "time": "1.33초", "label": "누움", "banner": [["무적", "cyan"]]},
+        {"clip": "Samurai/Getup2_Idle1", "t": 0.65, "time": "1.98초", "label": "끝"}
+      ]
+    },
+    {
       "title": "넉백",
       "note": "",
       "frames": [

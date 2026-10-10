@@ -16,6 +16,7 @@ enum class EAgHitReaction : uint8
 	Flinch UMETA(DisplayName = "움찔"),
 	KnockBack UMETA(DisplayName = "넉백"),
 	Down UMETA(DisplayName = "다운"),
+	KnockUp UMETA(DisplayName = "넉업"),
 };
 
 /** 전투 시스템 '공격 데이터': the values of one attack window (1타). */

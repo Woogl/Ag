@@ -49,8 +49,24 @@ namespace
 		return false;
 	}
 
+	/** The event that starts the reaction ability of 넉업, 넉백 or 다운. */
+	FGameplayTag GetReactionEvent(EAgHitReaction Reaction)
+	{
+		switch (Reaction)
+		{
+		case EAgHitReaction::KnockUp:
+			return AgGameplayTags::Event_Hit_KnockUp;
+		case EAgHitReaction::KnockBack:
+			return AgGameplayTags::Event_Hit_KnockBack;
+		case EAgHitReaction::Down:
+			return AgGameplayTags::Event_Hit_Down;
+		default:
+			return FGameplayTag();
+		}
+	}
+
 	/**
-	 * 피격 반응: 움찔 plays on top; 넉백 and 다운 start a reaction ability unless super armor or groggy blocks them.
+	 * 피격 반응: 움찔 plays on top; 넉업, 넉백 and 다운 start a reaction ability unless super armor or groggy blocks them.
 	 * Instigator is what the target is pushed away from: the attacker, or its projectile.
 	 */
 	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, EAgHitReaction Reaction)
@@ -59,12 +75,13 @@ namespace
 		switch (Reaction)
 		{
 		case EAgHitReaction::Flinch:
-			// 움찔 doesn't change a knockback or down already playing.
+			// 움찔 doesn't change a knockup, knockback or down already playing.
 			if (!TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
 			{
 				Target->PlayFlinch();
 			}
 			break;
+		case EAgHitReaction::KnockUp:
 		case EAgHitReaction::KnockBack:
 		case EAgHitReaction::Down:
 		{
@@ -73,7 +90,7 @@ namespace
 			Blockers.AddTag(AgGameplayTags::State_Groggy);
 			if (!TargetASC->HasAnyMatchingGameplayTags(Blockers))
 			{
-				SendEvent(Target, Reaction == EAgHitReaction::KnockBack ? AgGameplayTags::Event_Hit_KnockBack : AgGameplayTags::Event_Hit_Down, Instigator);
+				SendEvent(Target, GetReactionEvent(Reaction), Instigator);
 			}
 			break;
 		}
@@ -82,7 +99,7 @@ namespace
 		}
 	}
 
-	/** 가드 반응: 가드 움찔 plays on the guard pose; 넉백 and 다운 become 가드 밀림. */
+	/** 가드 반응: 가드 움찔 plays on the guard pose; 넉업, 넉백 and 다운 become 가드 밀림. */
 	void StartGuardReaction(AActor* Instigator, AAgCharacterBase* Target, EAgHitReaction Reaction)
 	{
 		switch (Reaction)
@@ -90,6 +107,7 @@ namespace
 		case EAgHitReaction::Flinch:
 			Target->PlayGuardFlinch();
 			break;
+		case EAgHitReaction::KnockUp:
 		case EAgHitReaction::KnockBack:
 		case EAgHitReaction::Down:
 			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Instigator);
@@ -102,7 +120,8 @@ namespace
 	/** 카메라 '상황별 단계' for a hit that connected. */
 	EAgCameraShake GetHitShake(const UAgCameraData& Camera, EAgHitResult Result, const FAgAttackHit& Hit, bool bPlayerAttacked)
 	{
-		const bool bHeavy = Hit.HitReaction == EAgHitReaction::KnockBack || Hit.HitReaction == EAgHitReaction::Down;
+		// 넉업, 넉백 and 다운 shake harder than 움찔.
+		const bool bHeavy = GetReactionEvent(Hit.HitReaction).IsValid();
 		switch (Result)
 		{
 		case EAgHitResult::Hit:

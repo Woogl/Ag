@@ -21,6 +21,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Hit", meta = (ClampMin = 0, ClampMax = 1))
 	float GuardReduction = 1.f;
 
+	/** 넉업: 체공 시간 when hit on the ground. The flight follows its own parabola, whatever the gravity. */
+	UPROPERTY(EditDefaultsOnly, Category = "Hit", meta = (Units = "s", ClampMin = 0))
+	float KnockUpAirTime = 0.f;
+
+	/** 넉업: 최고 높이 of the flight. */
+	UPROPERTY(EditDefaultsOnly, Category = "Hit", meta = (Units = "cm", ClampMin = 0))
+	float KnockUpHeight = 0.f;
+
 	/** PP 리젠: 리젠 대기 시간 after the last PP decrease. The same for every character. */
 	UPROPERTY(EditDefaultsOnly, Category = "Regen", meta = (Units = "s", ClampMin = 0))
 	float PPRegenDelay = 0.f;
