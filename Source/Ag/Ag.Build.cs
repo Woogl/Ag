@@ -27,7 +27,8 @@ public class Ag : ModuleRules
 			"MotionWarping",
 			"TargetingSystem",
 			"DeveloperSettings",
-			"SlateCore"
+			"SlateCore",
+			"Niagara"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

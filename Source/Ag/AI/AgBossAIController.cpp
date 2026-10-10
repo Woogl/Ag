@@ -3,6 +3,8 @@
 #include "AI/AgBossAIController.h"
 
 #include "AbilitySystem/Abilities/AgBossPatternAbility.h"
+#include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgCombatLibrary.h"
@@ -48,6 +50,30 @@ int32 AAgBossAIController::PickWeighted(TConstArrayView<float> Weights, float Ra
 	return LastPositive;
 }
 
+void AAgBossAIController::GatherCandidates(TConstArrayView<FAgBossPattern> Patterns, float Distance, float NearDistance, float FarDistance, int32 Phase,
+	TFunctionRef<bool(const FAgBossPattern&)> IsReady, TArray<int32>& OutIndices, TArray<float>& OutWeights)
+{
+	OutIndices.Reset();
+	OutWeights.Reset();
+	for (int32 Index = 0; Index < Patterns.Num(); ++Index)
+	{
+		// 거리 구간: 근거리 up to NearDistance, 중거리 up to FarDistance, 원거리 beyond.
+		const FAgBossPattern& Pattern = Patterns[Index];
+		const float Weight = Distance <= NearDistance ? Pattern.WeightNear : (Distance <= FarDistance ? Pattern.WeightMid : Pattern.WeightFar);
+		const bool bPhaseAllowed = Phase >= 2 ? Pattern.bPhase2 : Pattern.bPhase1;
+		if (Weight > 0.f && bPhaseAllowed && IsReady(Pattern))
+		{
+			OutIndices.Add(Index);
+			OutWeights.Add(Weight);
+		}
+	}
+}
+
+int32 AAgBossAIController::GetPhase() const
+{
+	return Boss.IsValid() ? Boss->GetPhase() : 1;
+}
+
 void AAgBossAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
@@ -80,6 +106,8 @@ void AAgBossAIController::OnUnPossess()
 void AAgBossAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	TryStartPhaseTransition();
 
 	// No candidate: walk to the player (direct movement input, no NavMesh).
 	const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
@@ -121,25 +149,20 @@ void AAgBossAIController::SelectPattern()
 
 	// 1. Candidates: usable in the current distance band and phase, cooldown over.
 	const float Distance = UAgCombatLibrary::GetHorizontalDistance(Boss.Get(), Player);
-	TArray<const FAgBossPattern*> Candidates;
+	const FGameplayAbilityActorInfo* ActorInfo = Boss->GetAbilitySystemComponent()->AbilityActorInfo.Get();
+	TArray<int32> Candidates;
 	TArray<float> Weights;
-	for (const FAgBossPattern& Pattern : Data->Patterns)
+	GatherCandidates(Data->Patterns, Distance, Data->NearDistance, Data->FarDistance, GetPhase(), [this, ActorInfo](const FAgBossPattern& Pattern)
 	{
-		const float Weight = Distance <= Data->NearDistance ? Pattern.WeightNear : (Distance <= Data->FarDistance ? Pattern.WeightMid : Pattern.WeightFar);
-		const bool bPhaseAllowed = GetPhase() == 1 ? Pattern.bPhase1 : Pattern.bPhase2;
 		const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(Pattern.Pattern);
-		if (Weight > 0.f && bPhaseAllowed && Spec && Spec->Ability && Spec->Ability->CanActivateAbility(Spec->Handle, Boss->GetAbilitySystemComponent()->AbilityActorInfo.Get()))
-		{
-			Candidates.Add(&Pattern);
-			Weights.Add(Weight);
-		}
-	}
+		return Spec && Spec->Ability && Spec->Ability->CanActivateAbility(Spec->Handle, ActorInfo);
+	}, Candidates, Weights);
 
 	// 2. Pick by weight.
 	const int32 Picked = PickWeighted(Weights, FMath::FRand());
 	if (Picked != INDEX_NONE)
 	{
-		const FAgBossPattern& Pattern = *Candidates[Picked];
+		const FAgBossPattern& Pattern = Data->Patterns[Candidates[Picked]];
 		RunningPattern = Pattern.Pattern;
 		State = EState::Pattern;
 		if (Boss->GetAbilitySystemComponent()->TryActivateAbility(Boss->FindPatternSpec(Pattern.Pattern)->Handle))
@@ -157,6 +180,17 @@ void AAgBossAIController::SelectPattern()
 void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 {
 	const UAgBossData* Data = GetBossData();
+
+	// 페이즈 전환 3: wait, then pick a phase 2 pattern.
+	if (State == EState::PhaseTransition && Data && EndedData.AbilityThatEnded && EndedData.AbilityThatEnded->GetAssetTags().HasTag(AgGameplayTags::Ability_Reaction_PhaseTransition))
+	{
+		if (Boss.IsValid() && !Boss->IsDead())
+		{
+			Wait(Data->FixedRecoveryWait);
+		}
+		return;
+	}
+
 	const FGameplayAbilitySpec* Spec = Boss.IsValid() ? Boss->GetAbilitySystemComponent()->FindAbilitySpecFromHandle(EndedData.AbilitySpecHandle) : nullptr;
 	if (State != EState::Pattern || !Data || !Spec || UAgBossPatternAbility::GetPatternTag(*Spec) != RunningPattern)
 	{
@@ -189,6 +223,30 @@ void AAgBossAIController::HandleGroggyChanged(const FGameplayTag Tag, int32 NewC
 		// 그로기가 끝나면 잠시 기다린 뒤 다음 패턴을 선택합니다.
 		Wait(Data->FixedRecoveryWait);
 	}
+}
+
+void AAgBossAIController::TryStartPhaseTransition()
+{
+	const UAgBossData* Data = GetBossData();
+	if (bPhaseTransitionStarted || !Data || !Boss.IsValid() || Boss->IsDead() || (State != EState::Waiting && State != EState::Approaching))
+	{
+		return;
+	}
+	const UAgAttributeSet* Stats = Boss->GetAttributeSet();
+	if (Stats->GetHP() > Stats->GetMaxHP() * Data->Phase2HPRatio || Boss->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+	{
+		return;
+	}
+
+	bPhaseTransitionStarted = true;
+	GetWorldTimerManager().ClearTimer(WaitTimer);
+	GetWorldTimerManager().ClearTimer(RetryTimer);
+	State = EState::PhaseTransition;
+
+	FGameplayEventData Payload;
+	Payload.EventTag = AgGameplayTags::Event_PhaseTransition;
+	Payload.Target = Boss.Get();
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss.Get(), AgGameplayTags::Event_PhaseTransition, Payload);
 }
 
 void AAgBossAIController::HandleBossDied(AAgCharacterBase* DeadBoss)

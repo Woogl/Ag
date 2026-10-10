@@ -88,6 +88,8 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_DownGrounded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_RecoveryStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ExecutionBlow);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashStart);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);
 
 	// Cooldown tags granted by cooldown GameplayEffects.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dodge);

@@ -27,6 +27,12 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 private:
+	/** Starts the groggy motion and its time (on the ground). */
+	void StartGroggy();
+
+	UFUNCTION()
+	void HandleLanded(EMovementMode NewMovementMode);
+
 	UAbilityTask_PlayMontageAndWait* PlayMontage(UAnimMontage* Montage);
 
 	/** Groggy ends: PP back to MaxPP. */

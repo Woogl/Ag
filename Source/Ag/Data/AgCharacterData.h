@@ -371,6 +371,50 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "AI", meta = (Units = "s", ClampMin = 0))
 	float FixedRecoveryWait = 0.f;
 
+	/** 페이즈: phase 2 starts once HP is at or below this share of MaxHP. */
+	UPROPERTY(EditDefaultsOnly, Category = "Phase", meta = (ClampMin = 0, ClampMax = 1))
+	float Phase2HPRatio = 0.f;
+
+	/** 2페이즈 변화: 패턴 진행 속도 (attack motions and the movement inside patterns). */
+	UPROPERTY(EditDefaultsOnly, Category = "Phase", meta = (ClampMin = 0.01))
+	float Phase2PatternSpeed = 1.f;
+
+	/** 2페이즈 변화: MOV multiplier (walking). */
+	UPROPERTY(EditDefaultsOnly, Category = "Phase", meta = (ClampMin = 0))
+	float Phase2MOVMultiplier = 1.f;
+
+	/** 공격 속성과 예고: the 붉은 섬광 starts this long before an unguardable attack window. */
+	UPROPERTY(EditDefaultsOnly, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
+	float UnblockableFlashLead = 0.f;
+
+	/** A3 돌진 규칙: 속도 */
+	UPROPERTY(EditDefaultsOnly, Category = "A3 Dash", meta = (Units = "cm/s", ClampMin = 0))
+	float DashSpeed = 0.f;
+
+	/** A3 돌진 규칙: 목표 지점, this far past the player. */
+	UPROPERTY(EditDefaultsOnly, Category = "A3 Dash", meta = (Units = "cm", ClampMin = 0))
+	float DashOvershoot = 0.f;
+
+	/** A3 돌진 규칙: 최대 이동 거리 */
+	UPROPERTY(EditDefaultsOnly, Category = "A3 Dash", meta = (Units = "cm", ClampMin = 0))
+	float DashMaxDistance = 0.f;
+
+	/** A4: 체공 시간 from the leap to the landing. */
+	UPROPERTY(EditDefaultsOnly, Category = "A4 Leap", meta = (Units = "s", ClampMin = 0.01))
+	float LeapAirTime = 1.f;
+
+	/** A4: 착지 목표, this far short of the player toward the boss. */
+	UPROPERTY(EditDefaultsOnly, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
+	float LeapTargetOffset = 0.f;
+
+	/** A4: 최대 도약 거리 (horizontal). */
+	UPROPERTY(EditDefaultsOnly, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
+	float LeapMaxDistance = 0.f;
+
+	/** A4: the landing hits within this radius of the landing point. */
+	UPROPERTY(EditDefaultsOnly, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
+	float LeapHitRadius = 0.f;
+
 	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. */
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
 	FName LockOnBone;
@@ -390,4 +434,8 @@ public:
 	/** 처형 사망: same as ExecutedMontage until after the final blow, then stays down. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> ExecutedDeathMontage;
+
+	/** 페이즈 전환: the roar. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> PhaseTransitionMontage;
 };

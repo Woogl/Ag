@@ -5,6 +5,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
@@ -15,6 +16,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 namespace
 {
@@ -55,6 +57,32 @@ void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	UAbilityTask_WaitGameplayEvent* ExecutedTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Executed);
 	ExecutedTask->EventReceived.AddDynamic(this, &ThisClass::HandleExecuted);
 	ExecutedTask->ReadyForActivation();
+
+	// Broken in the air (A4): the attack is already cancelled; groggy starts when the boss lands.
+	const AAgCharacterBase* Boss = GetAgCharacter();
+	if (Boss && Boss->GetCharacterMovement()->IsFalling())
+	{
+		UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
+		LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
+		LandTask->ReadyForActivation();
+		return;
+	}
+	StartGroggy();
+}
+
+void UAgAbility_Groggy::HandleLanded(EMovementMode NewMovementMode)
+{
+	StartGroggy();
+}
+
+void UAgAbility_Groggy::StartGroggy()
+{
+	const UAgBossData* Data = GetCharacterData<UAgBossData>();
+	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
+	if (!Data || !Rules || MontageTask)
+	{
+		return;
+	}
 
 	// The groggy time covers the whole motion, so the End section starts that long before the time is up.
 	// The time is counted in game time and keeps running during hitstop (전투 시스템 '히트스톱 중의 시간').

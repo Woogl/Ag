@@ -55,6 +55,24 @@ FGameplayAbilitySpec* AAgBossCharacter::FindPatternSpec(const FGameplayTag& Patt
 	return nullptr;
 }
 
+void AAgBossCharacter::EnterPhase2()
+{
+	Phase = 2;
+	UpdateMoveSpeed();
+}
+
+float AAgBossCharacter::GetPatternSpeed() const
+{
+	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
+	return (Data && Phase >= 2) ? Data->Phase2PatternSpeed : 1.f;
+}
+
+float AAgBossCharacter::GetMoveSpeedMultiplier() const
+{
+	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
+	return (Data && Phase >= 2) ? Data->Phase2MOVMultiplier : 1.f;
+}
+
 void AAgBossCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -74,6 +92,7 @@ void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
 	FGameplayTagContainer NoTurning;
 	NoTurning.AddTag(AgGameplayTags::State_Groggy);
 	NoTurning.AddTag(AgGameplayTags::State_Execution_Executed);
+	NoTurning.AddTag(AgGameplayTags::State_Boss_RotationLocked);
 	if (GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(NoTurning))
 	{
 		return;

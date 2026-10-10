@@ -13,6 +13,7 @@
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UAgAbility_Execution::UAgAbility_Execution()
 {
@@ -28,9 +29,10 @@ AAgBossCharacter* UAgAbility_Execution::FindExecutableBoss(const AAgPlayerCharac
 		return nullptr;
 	}
 
-	// Groggy, and not executed yet in this groggy.
+	// Groggy, not executed yet in this groggy, and on the ground (a boss broken in the air can't be executed before it lands).
 	const UAbilitySystemComponent* BossASC = Boss->GetAbilitySystemComponent();
-	const bool bExecutable = BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) && !BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed);
+	const bool bExecutable = BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) && !BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed)
+		&& !Boss->GetCharacterMovement()->IsFalling();
 	return bExecutable ? Boss : nullptr;
 }
 

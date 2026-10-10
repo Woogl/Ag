@@ -44,4 +44,53 @@ bool FAgPatternPickTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAgPatternCandidatesTest, "Ag.Boss.PatternCandidates",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter)
+
+bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
+{
+	// 보스 사양 '패턴 선택' 1 with the '패턴 목록' and '거리 구간별 가중치' tables as test data.
+	auto MakePattern = [](float Near, float Mid, float Far, bool bPhase1)
+	{
+		FAgBossPattern Pattern;
+		Pattern.WeightNear = Near;
+		Pattern.WeightMid = Mid;
+		Pattern.WeightFar = Far;
+		Pattern.bPhase1 = bPhase1;
+		Pattern.bPhase2 = true;
+		return Pattern;
+	};
+	const TArray<FAgBossPattern> Patterns = {
+		MakePattern(40.f, 0.f, 0.f, true),    // A1
+		MakePattern(30.f, 0.f, 0.f, true),    // A2
+		MakePattern(0.f, 40.f, 60.f, true),   // A3
+		MakePattern(0.f, 40.f, 40.f, true),   // A4
+		MakePattern(40.f, 0.f, 0.f, false),   // A5, phase 2 only
+		MakePattern(0.f, 20.f, 60.f, false),  // A6, phase 2 only
+	};
+	constexpr float NearDistance = 300.f;
+	constexpr float FarDistance = 1000.f;
+	auto AllReady = [](const FAgBossPattern&) { return true; };
+	TArray<int32> Indices;
+	TArray<float> Weights;
+
+	AAgBossAIController::GatherCandidates(Patterns, 200.f, NearDistance, FarDistance, 1, AllReady, Indices, Weights);
+	TestTrue(TEXT("Phase 1 near: A1 and A2 only (A5 is phase 2 only)"), Indices == TArray<int32>{ 0, 1 } && Weights == TArray<float>{ 40.f, 30.f });
+
+	AAgBossAIController::GatherCandidates(Patterns, 300.f, NearDistance, FarDistance, 2, AllReady, Indices, Weights);
+	TestTrue(TEXT("3m is still near; phase 2 adds A5"), Indices == TArray<int32>{ 0, 1, 4 });
+
+	AAgBossAIController::GatherCandidates(Patterns, 1000.f, NearDistance, FarDistance, 1, AllReady, Indices, Weights);
+	TestTrue(TEXT("10m is still mid: A3 and A4 in phase 1"), Indices == TArray<int32>{ 2, 3 } && Weights == TArray<float>{ 40.f, 40.f });
+
+	AAgBossAIController::GatherCandidates(Patterns, 1200.f, NearDistance, FarDistance, 2, AllReady, Indices, Weights);
+	TestTrue(TEXT("Phase 2 far: A3, A4 and A6 with the far weights"), Indices == TArray<int32>{ 2, 3, 5 } && Weights == TArray<float>{ 60.f, 40.f, 60.f });
+
+	// A pattern still on cooldown is left out.
+	auto A2OnCooldown = [&Patterns](const FAgBossPattern& Pattern) { return &Pattern != &Patterns[1]; };
+	AAgBossAIController::GatherCandidates(Patterns, 200.f, NearDistance, FarDistance, 1, A2OnCooldown, Indices, Weights);
+	TestTrue(TEXT("A2 on cooldown leaves A1"), Indices == TArray<int32>{ 0 });
+	return true;
+}
+
 #endif

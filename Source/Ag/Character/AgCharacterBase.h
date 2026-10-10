@@ -43,6 +43,9 @@ public:
 
 	UMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
 
+	/** The component holding the weapon mesh, or null. */
+	USceneComponent* GetWeaponComponent() const;
+
 	bool IsDead() const { return bDead; }
 
 	/** Sets the attack data the running action's attack windows use, one entry per window. */
@@ -136,9 +139,6 @@ private:
 
 	/** PP 리젠: any PP decrease restarts the regen delay. */
 	void HandlePPChanged(const FOnAttributeChangeData& Data);
-
-	/** The component holding the weapon mesh, or null. */
-	USceneComponent* GetWeaponComponent() const;
 
 	/** World positions of the weapon's damaging edge. */
 	bool GetWeaponEdge(FVector& OutStart, FVector& OutEnd) const;
