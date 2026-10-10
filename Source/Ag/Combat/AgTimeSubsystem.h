@@ -19,10 +19,7 @@ public:
 	 */
 	void StartHitstop(std::initializer_list<AActor*> Actors);
 
-	/**
-	 * Runs the whole game at Speed for RealDuration seconds of real time. Starting again while it runs restarts the
-	 * count. Started during a hitstop, it begins when the hitstop ends (패리).
-	 */
+	/** Runs the whole game at Speed for RealDuration seconds of real time. Starting again while it runs restarts the count. */
 	void StartSlowMotion(float Speed, float RealDuration);
 
 	virtual void Tick(float DeltaTime) override;
@@ -30,7 +27,6 @@ public:
 
 private:
 	void EndHitstop();
-	void ApplySlowMotion(float Speed, float RealDuration);
 	void EndSlowMotion();
 
 	TArray<TWeakObjectPtr<AActor>> FrozenActors;
@@ -38,9 +34,4 @@ private:
 
 	/** Real time the slow motion ends, or negative when none runs. */
 	double SlowMotionEndTime = -1.0;
-
-	/** A slow motion waiting for the hitstop to end. */
-	bool bSlowMotionPending = false;
-	float PendingSpeed = 1.f;
-	float PendingDuration = 0.f;
 };

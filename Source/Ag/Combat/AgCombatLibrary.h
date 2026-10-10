@@ -61,7 +61,7 @@ public:
 	/**
 	 * Runs 피격 처리 순서 for one attack window that touched Target for the first time:
 	 * 극한 회피, 무적, 패리, 가드 or 가드 브레이크, 일반 피격, then 사망·그로기 판정 and 적중 후 처리
-	 * (effect, camera shake, hitstop, MP·UP 충전, and 슬로우모션 after a parry). Starts the reaction abilities through
+	 * (effect, camera shake, hitstop, MP·UP 충전). Starts the reaction abilities through
 	 * gameplay events. HitSource is the projectile that carried the attack, if any: the target's reactions push away
 	 * from it, and only the target stops for the hitstop.
 	 */

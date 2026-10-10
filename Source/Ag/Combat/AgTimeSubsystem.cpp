@@ -44,12 +44,6 @@ void UAgTimeSubsystem::EndHitstop()
 		}
 	}
 	FrozenActors.Reset();
-
-	if (bSlowMotionPending)
-	{
-		bSlowMotionPending = false;
-		ApplySlowMotion(PendingSpeed, PendingDuration);
-	}
 }
 
 void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
@@ -58,18 +52,6 @@ void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 	{
 		return;
 	}
-	if (GetWorld()->GetTimerManager().IsTimerActive(HitstopTimer))
-	{
-		bSlowMotionPending = true;
-		PendingSpeed = Speed;
-		PendingDuration = RealDuration;
-		return;
-	}
-	ApplySlowMotion(Speed, RealDuration);
-}
-
-void UAgTimeSubsystem::ApplySlowMotion(float Speed, float RealDuration)
-{
 	// Global time dilation slows everything that runs on game time: motion, movement, timers, camera shakes, the HUD's
 	// HP trails and the damage numbers. The end is counted in real time.
 	GetWorld()->GetWorldSettings()->SetTimeDilation(Speed);

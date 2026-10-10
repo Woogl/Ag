@@ -260,11 +260,6 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 	{
 		TimeSubsystem->StartHitstop({ Attacker, Target });
 	}
-	if (TimeSubsystem && Result == EAgHitResult::Parry)
-	{
-		// 슬로우모션 starts right after the parry's hitstop.
-		TimeSubsystem->StartSlowMotion(DefenderData->SlowMotionSpeed, DefenderData->SlowMotionDuration);
-	}
 	if (Result == EAgHitResult::Hit && (Hit.MPCharge > 0.f || Hit.UPCharge > 0.f))
 	{
 		ApplyResourceChange(Attacker, { 0.f, Hit.MPCharge, Hit.UPCharge });
