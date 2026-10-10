@@ -42,6 +42,14 @@ struct FAgAttackHit
 	/** 패리 가능. An unguardable attack is never parryable. */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (EditCondition = "bGuardable"))
 	bool bParryable = true;
+
+	/** 플레이어 사양 'MP 충전': MP the attacker gains when this hit lands. Player attacks only. */
+	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
+	float MPCharge = 0.f;
+
+	/** 플레이어 사양 'UP 충전': UP the attacker gains when this hit lands. Player attacks only. */
+	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
+	float UPCharge = 0.f;
 };
 
 /** A player attack action (평타 한 타, 회피 반격, 스킬, 궁극기). */

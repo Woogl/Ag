@@ -7,8 +7,20 @@
 #include "AgCombatLibrary.generated.h"
 
 class AAgCharacterBase;
+class UAbilitySystemComponent;
 class UAgCombatRules;
+class UGameplayEffect;
+struct FActiveGameplayEffectHandle;
 struct FAgAttackHit;
+struct FGameplayTag;
+
+/** Amounts of the player resources; positive adds, negative spends. */
+struct FAgResourceAmounts
+{
+	float SP = 0.f;
+	float MP = 0.f;
+	float UP = 0.f;
+};
 
 /** Result of 전투 시스템 '피격 처리 순서'. */
 UENUM()
@@ -45,10 +57,23 @@ public:
 	static float GetHorizontalDistance(const AActor* A, const AActor* B);
 
 	/**
-	 * Runs 피격 처리 순서 for one attack window that touched Target for the first time.
-	 * Applies HP and PP changes, starts the death or hit reaction, and the after-hit effects (hitstop).
+	 * Runs 피격 처리 순서 for one attack window that touched Target for the first time:
+	 * 극한 회피, 무적, 패리, 가드 or 가드 브레이크, 일반 피격, then 사망·그로기 판정 and 적중 후 처리
+	 * (hitstop, MP·UP 충전). Starts the reaction abilities through gameplay events.
 	 */
 	static EAgHitResult ProcessHit(AAgCharacterBase* Attacker, AAgCharacterBase* Target, const FAgAttackHit& Hit, const FVector& HitLocation);
+
+	/** Applies an instant HP and PP change from Source to Target (negative lowers). */
+	static void ApplyStatChange(AAgCharacterBase* Source, AAgCharacterBase* Target, float HPChange, float PPChange);
+
+	/** Applies an instant SP, MP and UP change to Character. */
+	static void ApplyResourceChange(AAgCharacterBase* Character, const FAgResourceAmounts& Change);
+
+	/** Gives ASC's owner Tag for Duration seconds of game time (cooldowns, regen delays, the parry window). */
+	static FActiveGameplayEffectHandle ApplyTimedTag(UAbilitySystemComponent* ASC, const FGameplayTag& Tag, float Duration);
+
+	/** Starts a regen effect that adds RatePerSecond, in steps of DA_CombatRules' regen tick interval. */
+	static void ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGameplayEffect> RegenClass, const FGameplayTag& DataTag, float RatePerSecond);
 
 	/** DA_CombatRules, or null with an error when the project setting is empty. */
 	static const UAgCombatRules* GetCombatRules();

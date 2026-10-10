@@ -51,6 +51,9 @@ private:
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
 	void HandleBossDied(AAgCharacterBase* DeadBoss);
 
+	/** 그로기 stops the AI; when it ends (with or without an execution) the boss waits and picks again. */
+	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
+
 	const UAgBossData* GetBossData() const;
 
 	/** The current phase (1 or 2). */

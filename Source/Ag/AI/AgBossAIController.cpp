@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgCombatLibrary.h"
+#include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -59,7 +60,9 @@ void AAgBossAIController::OnPossess(APawn* InPawn)
 	}
 
 	Boss->OnDied.AddUObject(this, &ThisClass::HandleBossDied);
-	Boss->GetAbilitySystemComponent()->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
+	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
+	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleGroggyChanged);
 
 	// 레벨이 시작되면 패턴 후딜레이 대기 시간만큼 기다린 뒤 패턴 선택을 시작합니다.
 	Wait(Data->FixedRecoveryWait);
@@ -159,11 +162,33 @@ void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 	{
 		return;
 	}
+	// A pattern cut off by groggy waits for the groggy to end instead.
+	if (Boss->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+	{
+		return;
+	}
 
 	// 패턴 후딜레이
 	RunningPattern = FGameplayTag();
 	const FFloatInterval& WaitRange = GetPhase() == 1 ? Data->PatternRecoveryWaitPhase1 : Data->PatternRecoveryWaitPhase2;
 	Wait(FMath::FRandRange(WaitRange.Min, WaitRange.Max));
+}
+
+void AAgBossAIController::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	const UAgBossData* Data = GetBossData();
+	if (NewCount > 0)
+	{
+		GetWorldTimerManager().ClearTimer(WaitTimer);
+		GetWorldTimerManager().ClearTimer(RetryTimer);
+		RunningPattern = FGameplayTag();
+		State = EState::Stopped;
+	}
+	else if (Data && Boss.IsValid() && !Boss->IsDead())
+	{
+		// 그로기가 끝나면 잠시 기다린 뒤 다음 패턴을 선택합니다.
+		Wait(Data->FixedRecoveryWait);
+	}
 }
 
 void AAgBossAIController::HandleBossDied(AAgCharacterBase* DeadBoss)

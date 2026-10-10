@@ -27,6 +27,23 @@ struct FAgMontageSegment
 	float EndTime = 0.f;
 };
 
+/** One montage section: where it starts and which section plays after it. */
+USTRUCT(BlueprintType)
+struct FAgMontageSection
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
+	FName Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
+	float StartTime = 0.f;
+
+	/** The section that plays next: none ends the montage, the section's own name repeats it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
+	FName NextSection;
+};
+
 /**
  * Editor setup helpers for asset scripts (Python): engine settings the editor exposes only through its UI.
  * Not part of the game; the functions exist in editor builds only.
@@ -45,5 +62,9 @@ public:
 	/** Replaces the montage's track with the segments played back to back, in the given slot. */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
 	static bool SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments);
+
+	/** Replaces the montage's sections and their order (for example a looping middle section). */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	static bool SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections);
 #endif
 };

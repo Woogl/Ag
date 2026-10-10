@@ -85,6 +85,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Stats")
 	bool bAlwaysSuperArmor = false;
 
+	/** PP 리젠: 초당 회복량 after the regen delay (전투 시스템 'PP 리젠'). 0 for no regen. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stats", meta = (ClampMin = 0))
+	float PPRegenRate = 0.f;
+
 	/** 사망 연출 시간. 끝나면 결과 UI를 띄웁니다. (플레이어 사양·보스 사양 '사망') */
 	UPROPERTY(EditDefaultsOnly, Category = "Death", meta = (Units = "s", ClampMin = 0))
 	float DeathPresentationTime = 0.f;
@@ -145,9 +149,156 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Attack Movement", meta = (Units = "cm", ClampMin = 0))
 	float AttackStopDistance = 0.f;
 
+	/** 자원 회복: SP regained per second after the regen delay, while not guarding. */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (ClampMin = 0))
+	float SPRegenRate = 0.f;
+
+	/** 자원 회복: SP regained per second while guarding. */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (ClampMin = 0))
+	float SPRegenRateGuarding = 0.f;
+
+	/** 자원 회복: regen delay after the last SP use. */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (Units = "s", ClampMin = 0))
+	float SPRegenDelay = 0.f;
+
+	/** 자원 회복: regen delay when SP reaches 0. */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (Units = "s", ClampMin = 0))
+	float SPRegenDelayEmpty = 0.f;
+
+	/** MP 충전: 극한 회피 성공 */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (ClampMin = 0))
+	float PerfectDodgeMPCharge = 0.f;
+
+	/** UP 충전: 극한 회피 성공 */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (ClampMin = 0))
+	float PerfectDodgeUPCharge = 0.f;
+
+	/** MP 충전: 패리 성공 */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (ClampMin = 0))
+	float ParryMPCharge = 0.f;
+
+	/** UP 충전: 패리 성공 */
+	UPROPERTY(EditDefaultsOnly, Category = "Resources", meta = (ClampMin = 0))
+	float ParryUPCharge = 0.f;
+
+	/** SP 소모: 회피. Usable while SP is above 0 even if lower. */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge", meta = (ClampMin = 0))
+	float DodgeSPCost = 0.f;
+
+	/** 회피: 쿨다운 */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
+	float DodgeCooldown = 0.f;
+
+	/** 회피: 무적 구간, from the start. */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
+	float DodgeInvincibleTime = 0.f;
+
+	/** 회피: 극한 회피 구간, from the start. */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
+	float PerfectDodgeTime = 0.f;
+
+	/** 회피: 후딜 시작 when rolling. */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
+	float RollRecoveryStart = 0.f;
+
+	/** 회피: 후딜 시작 when stepping back. */
+	UPROPERTY(EditDefaultsOnly, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
+	float BackstepRecoveryStart = 0.f;
+
+	/** SP 소모: a guarded attack costs this share of its HP damage before the guard reduction. */
+	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (ClampMin = 0))
+	float GuardSPCostRatio = 0.f;
+
+	/** 이동: 가드 중 이동 속도, as a multiple of MOV. */
+	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (ClampMin = 0))
+	float GuardMoveSpeedRatio = 1.f;
+
+	/** 패리: 패리 구간, from a new guard start. */
+	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (Units = "s", ClampMin = 0))
+	float ParryWindowTime = 0.f;
+
+	/** 패리: the attacker loses this share of its MaxPP. */
+	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (ClampMin = 0, ClampMax = 1))
+	float ParryPPRatio = 0.f;
+
+	/** 스킬 (돌진 베기) */
+	UPROPERTY(EditDefaultsOnly, Category = "Skill")
+	FAgPlayerAttack Skill;
+
+	/** 스킬: MP 소모 */
+	UPROPERTY(EditDefaultsOnly, Category = "Skill", meta = (ClampMin = 0))
+	float SkillMPCost = 0.f;
+
+	/** 스킬: 쿨다운 */
+	UPROPERTY(EditDefaultsOnly, Category = "Skill", meta = (Units = "s", ClampMin = 0))
+	float SkillCooldown = 0.f;
+
+	/** 궁극기 (난무) */
+	UPROPERTY(EditDefaultsOnly, Category = "Ultimate")
+	FAgPlayerAttack Ultimate;
+
+	/** 궁극기: UP 소모. Usable only when UP is at MaxUP. */
+	UPROPERTY(EditDefaultsOnly, Category = "Ultimate", meta = (ClampMin = 0))
+	float UltimateUPCost = 0.f;
+
+	/** 처형. The targeting range is the 처형 타겟팅 범위. */
+	UPROPERTY(EditDefaultsOnly, Category = "Execution")
+	FAgPlayerAttack Execution;
+
+	/**
+	 * Gap (capsule centers) the player closes to in front of the boss so the two execution motions line up.
+	 * The spec gives no number; set by eye in the editor.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Execution", meta = (Units = "cm", ClampMin = 0))
+	float ExecutionDistance = 0.f;
+
+	/** 락온 타겟팅 범위 */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
+	float LockOnRange = 0.f;
+
+	/** 락온 해제 조건: the lock-on ends when the target is farther than this. */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
+	float LockOnReleaseRange = 0.f;
+
 	/** 평타 montages, in the same order as BasicAttack. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TArray<TObjectPtr<UAnimMontage>> BasicAttackMontages;
+
+	/** 회피: rolling (toward the movement input). */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> RollMontage;
+
+	/** 회피: stepping back (no movement input). */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> BackstepMontage;
+
+	/** 가드 움찔: additive montage played on the guard pose. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> GuardFlinchMontage;
+
+	/** 가드 밀림 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> GuardPushbackMontage;
+
+	/** 가드 브레이크 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> GuardBreakMontage;
+
+	/** 패리 모션 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> ParryMontage;
+
+	/** 스킬 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> SkillMontage;
+
+	/** 궁극기: montages played one after another, each blended into the next. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TArray<TObjectPtr<UAnimMontage>> UltimateMontages;
+
+	/** 처형 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> ExecutionMontage;
 
 	/** 넉백 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
@@ -220,7 +371,23 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "AI", meta = (Units = "s", ClampMin = 0))
 	float FixedRecoveryWait = 0.f;
 
+	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
+	FName LockOnBone;
+
 	/** Pattern montages, by pattern ID. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages", meta = (Categories = "Ability.Boss.Pattern"))
 	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> PatternMontages;
+
+	/** 그로기: sections Start, Loop (repeats) and End; End is jumped to so the motion ends with the groggy time. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> GroggyMontage;
+
+	/** 처형 피격: the motion paired with the player's execution; the boss stands up at its end. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> ExecutedMontage;
+
+	/** 처형 사망: same as ExecutedMontage until after the final blow, then stays down. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> ExecutedDeathMontage;
 };

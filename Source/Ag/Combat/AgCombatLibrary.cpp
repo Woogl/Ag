@@ -4,6 +4,8 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayEffect_Damage.h"
+#include "AbilitySystem/AgGameplayEffect_Resource.h"
+#include "AbilitySystem/AgGameplayEffect_TimedTag.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -27,16 +29,22 @@ namespace
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Target, EventTag, Payload);
 	}
 
-	void ApplyDamage(AAgCharacterBase* Attacker, AAgCharacterBase* Target, int32 HPDamage, int32 PPDamage)
+	/** PP can drop unless the character has infinite PP or is groggy (전투 시스템 'PP 감소량 계산식'). */
+	bool CanLosePP(const AAgCharacterBase* Character)
 	{
-		UAbilitySystemComponent* SourceASC = Attacker->GetAbilitySystemComponent();
-		FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
-		Context.AddInstigator(Attacker, Attacker);
+		return !Character->GetCharacterData()->Stats.bInfinitePP
+			&& !Character->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	}
 
-		const FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(UAgGameplayEffect_Damage::StaticClass(), 1.f, Context);
-		Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::Data_HP, -HPDamage);
-		Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::Data_PP, -PPDamage);
-		SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
+	/** 그로기 판정: PP at 0 or below starts groggy, once. */
+	bool StartGroggyIfBroken(AAgCharacterBase* Character, AActor* Instigator)
+	{
+		if (Character->GetAttributeSet()->GetPP() <= 0.f && CanLosePP(Character))
+		{
+			SendEvent(Character, AgGameplayTags::Event_Groggy, Instigator);
+			return true;
+		}
+		return false;
 	}
 
 	/** 피격 반응: 움찔 plays on top; 넉백 and 다운 start a reaction ability unless super armor or groggy blocks them. */
@@ -64,6 +72,23 @@ namespace
 			}
 			break;
 		}
+		default:
+			break;
+		}
+	}
+
+	/** 가드 반응: 가드 움찔 plays on the guard pose; 넉백 and 다운 become 가드 밀림. */
+	void StartGuardReaction(AAgCharacterBase* Attacker, AAgCharacterBase* Target, EAgHitReaction Reaction)
+	{
+		switch (Reaction)
+		{
+		case EAgHitReaction::Flinch:
+			Target->PlayGuardFlinch();
+			break;
+		case EAgHitReaction::KnockBack:
+		case EAgHitReaction::Down:
+			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Attacker);
+			break;
 		default:
 			break;
 		}
@@ -107,36 +132,141 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 	}
 
 	UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
+	if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_PerfectDodgeWindow))
+	{
+		// 극한 회피: the dodge ability gives the rewards, once per dodge.
+		SendEvent(Target, AgGameplayTags::Event_PerfectDodge, Attacker);
+		return EAgHitResult::PerfectDodge;
+	}
 	if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Invincible))
 	{
 		return EAgHitResult::None;
 	}
 
-	// 일반 피격
+	const UAgCombatRules* Rules = GetCombatRules();
 	const UAgAttributeSet* SourceStats = Attacker->GetAttributeSet();
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
+	const UAgPlayerData* DefenderData = Cast<UAgPlayerData>(Target->GetCharacterData());
 	const int32 HPDamage = CalculateHPDamage(SourceStats->GetATK(), Hit.DamageMultiplier, TargetStats->GetDEF());
-	const bool bLosesPP = !Target->GetCharacterData()->Stats.bInfinitePP && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
-	const int32 PPDamage = bLosesPP ? CalculatePPDamage(SourceStats->GetATK(), Hit.PoiseMultiplier, TargetStats->GetDEF()) : 0;
-	ApplyDamage(Attacker, Target, HPDamage, PPDamage);
-	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, HP -%d (now %.0f), PP -%d"), *Attacker->GetName(), *Target->GetName(), HPDamage, TargetStats->GetHP(), PPDamage);
 
-	// 사망·그로기 판정 comes before the hit reaction (상태 우선순위).
+	EAgHitResult Result = EAgHitResult::Hit;
+	if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_ParryWindow) && Hit.bGuardable && Hit.bParryable && DefenderData)
+	{
+		// 패리: the defender takes nothing; the attacker loses a share of its MaxPP.
+		Result = EAgHitResult::Parry;
+		if (CanLosePP(Attacker))
+		{
+			ApplyStatChange(Target, Attacker, 0.f, -FMath::RoundToFloat(SourceStats->GetMaxPP() * DefenderData->ParryPPRatio));
+		}
+	}
+	else if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding) && Hit.bGuardable && DefenderData)
+	{
+		// 가드 or 가드 브레이크: reduced HP damage and no PP damage; SP pays for the guard.
+		const float GuardSPCost = HPDamage * DefenderData->GuardSPCostRatio;
+		const int32 GuardedHPDamage = CalculateHPDamage(SourceStats->GetATK(), Hit.DamageMultiplier, TargetStats->GetDEF(), Rules ? Rules->GuardReduction : 1.f);
+		Result = TargetStats->GetSP() >= GuardSPCost ? EAgHitResult::Guard : EAgHitResult::GuardBreak;
+		ApplyStatChange(Attacker, Target, -GuardedHPDamage, 0.f);
+		ApplyResourceChange(Target, { Result == EAgHitResult::Guard ? -GuardSPCost : -TargetStats->GetSP(), 0.f, 0.f });
+	}
+	else
+	{
+		// 일반 피격
+		const int32 PPDamage = CanLosePP(Target) ? CalculatePPDamage(SourceStats->GetATK(), Hit.PoiseMultiplier, TargetStats->GetDEF()) : 0;
+		ApplyStatChange(Attacker, Target, -HPDamage, -PPDamage);
+	}
+	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, result %d, HP now %.0f, PP now %.0f, SP now %.0f, attacker PP now %.0f"),
+		*Attacker->GetName(), *Target->GetName(), static_cast<int32>(Result), TargetStats->GetHP(), TargetStats->GetPP(), TargetStats->GetSP(), SourceStats->GetPP());
+
+	// 사망·그로기 판정 comes before the reactions (상태 우선순위). The parry's PP loss is judged on the attacker.
 	if (TargetStats->GetHP() <= 0.f)
 	{
 		SendEvent(Target, AgGameplayTags::Event_Death, Attacker);
 	}
 	else
 	{
-		StartHitReaction(Attacker, Target, Hit.HitReaction);
+		switch (Result)
+		{
+		case EAgHitResult::Parry:
+			SendEvent(Target, AgGameplayTags::Event_Parry, Attacker);
+			StartGroggyIfBroken(Attacker, Target);
+			break;
+		case EAgHitResult::Guard:
+			StartGuardReaction(Attacker, Target, Hit.HitReaction);
+			break;
+		case EAgHitResult::GuardBreak:
+			SendEvent(Target, AgGameplayTags::Event_Guard_Break, Attacker);
+			break;
+		default:
+			if (!StartGroggyIfBroken(Target, Attacker))
+			{
+				StartHitReaction(Attacker, Target, Hit.HitReaction);
+			}
+			break;
+		}
 	}
 
-	// 적중 후 처리
+	// 적중 후 처리: hitstop, MP·UP 충전
 	if (UAgTimeSubsystem* TimeSubsystem = UWorld::GetSubsystem<UAgTimeSubsystem>(Target->GetWorld()))
 	{
 		TimeSubsystem->StartHitstop({ Attacker, Target });
 	}
-	return EAgHitResult::Hit;
+	if (Result == EAgHitResult::Hit && (Hit.MPCharge > 0.f || Hit.UPCharge > 0.f))
+	{
+		ApplyResourceChange(Attacker, { 0.f, Hit.MPCharge, Hit.UPCharge });
+	}
+	else if (Result == EAgHitResult::Parry)
+	{
+		ApplyResourceChange(Target, { 0.f, DefenderData->ParryMPCharge, DefenderData->ParryUPCharge });
+	}
+	return Result;
+}
+
+void UAgCombatLibrary::ApplyStatChange(AAgCharacterBase* Source, AAgCharacterBase* Target, float HPChange, float PPChange)
+{
+	UAbilitySystemComponent* SourceASC = Source->GetAbilitySystemComponent();
+	FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
+	Context.AddInstigator(Source, Source);
+
+	const FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(UAgGameplayEffect_Damage::StaticClass(), 1.f, Context);
+	Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::Data_HP, HPChange);
+	Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::Data_PP, PPChange);
+	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
+}
+
+void UAgCombatLibrary::ApplyResourceChange(AAgCharacterBase* Character, const FAgResourceAmounts& Change)
+{
+	UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent();
+	const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(UAgGameplayEffect_Resource::StaticClass(), 1.f, ASC->MakeEffectContext());
+	Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::Data_SP, Change.SP);
+	Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::Data_MP, Change.MP);
+	Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::Data_UP, Change.UP);
+	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+}
+
+FActiveGameplayEffectHandle UAgCombatLibrary::ApplyTimedTag(UAbilitySystemComponent* ASC, const FGameplayTag& Tag, float Duration)
+{
+	if (!ASC || !Tag.IsValid() || Duration <= 0.f)
+	{
+		return FActiveGameplayEffectHandle();
+	}
+	const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(UAgGameplayEffect_TimedTag::StaticClass(), 1.f, ASC->MakeEffectContext());
+	Spec.Data->SetDuration(Duration, /*bLockDuration*/ true);
+	Spec.Data->DynamicGrantedTags.AddTag(Tag);
+	return ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+}
+
+void UAgCombatLibrary::ApplyRegen(AAgCharacterBase* Character, TSubclassOf<UGameplayEffect> RegenClass, const FGameplayTag& DataTag, float RatePerSecond)
+{
+	const UAgCombatRules* Rules = GetCombatRules();
+	if (!Rules || !RegenClass || RatePerSecond <= 0.f)
+	{
+		return;
+	}
+	UAbilitySystemComponent* ASC = Character->GetAbilitySystemComponent();
+	const FGameplayEffectSpecHandle Spec = ASC->MakeOutgoingSpec(RegenClass, 1.f, ASC->MakeEffectContext());
+	Spec.Data->Period = Rules->RegenTickInterval;
+	Spec.Data->SetSetByCallerMagnitude(DataTag, RatePerSecond * Rules->RegenTickInterval);
+	ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 }
 
 const UAgCombatRules* UAgCombatLibrary::GetCombatRules()

@@ -3,10 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/Abilities/AgAbility_PlayerAttack.h"
 #include "AgAbility_BasicAttack.generated.h"
-
-class UAbilityTask_PlayMontageAndWait;
 
 /**
  * 평타: a combo of up to four hits, each its own action.
@@ -14,7 +12,7 @@ class UAbilityTask_PlayMontageAndWait;
  * when a recovery ends without input, or when another action or a knockback/down cancels it.
  */
 UCLASS()
-class UAgAbility_BasicAttack : public UAgGameplayAbility
+class UAgAbility_BasicAttack : public UAgAbility_PlayerAttack
 {
 	GENERATED_BODY()
 
@@ -23,7 +21,6 @@ public:
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 private:
 	void StartHit(int32 Index);
@@ -32,18 +29,5 @@ private:
 	UFUNCTION()
 	void HandleAttackInput(FGameplayEventData Payload);
 
-	UFUNCTION()
-	void HandleAttackWindowEnded(FGameplayEventData Payload);
-
-	UFUNCTION()
-	void HandleMontageFinished();
-
-	UFUNCTION()
-	void HandleMontageCancelled();
-
-	UPROPERTY()
-	TObjectPtr<UAbilityTask_PlayMontageAndWait> MontageTask;
-
 	int32 HitIndex = 0;
-	bool bInRecovery = false;
 };

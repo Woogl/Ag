@@ -65,4 +65,34 @@ bool UAgEditorUtilities::SetMontageSegments(UAnimMontage* Montage, FName SlotNam
 	return true;
 }
 
+bool UAgEditorUtilities::SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections)
+{
+	if (!Montage || Sections.IsEmpty())
+	{
+		return false;
+	}
+
+	Montage->Modify();
+	Montage->CompositeSections.Reset();
+	for (const FAgMontageSection& Section : Sections)
+	{
+		if (Montage->AddAnimCompositeSection(Section.Name, Section.StartTime) == INDEX_NONE)
+		{
+			return false;
+		}
+	}
+	for (const FAgMontageSection& Section : Sections)
+	{
+		const int32 Index = Montage->GetSectionIndex(Section.Name);
+		if (Index == INDEX_NONE)
+		{
+			return false;
+		}
+		Montage->CompositeSections[Index].NextSectionName = Section.NextSection;
+	}
+	Montage->PostEditChange();
+	Montage->MarkPackageDirty();
+	return true;
+}
+
 #endif

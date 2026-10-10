@@ -28,4 +28,20 @@ public:
 	/** 자유 시점: 위치 추적의 따라잡는 시간. 0 follows without delay. */
 	UPROPERTY(EditDefaultsOnly, Category = "Free", meta = (Units = "s", ClampMin = 0))
 	float FollowLagTime = 0.f;
+
+	/** 락온 카메라 '구도': lowest pitch of the direction from the pivot to the lock-on point (negative looks down). */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "deg"))
+	float LockOnPitchMin = 0.f;
+
+	/** 락온 카메라 '구도': highest pitch of that direction. */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "deg"))
+	float LockOnPitchMax = 0.f;
+
+	/** 락온 카메라 '구도': how much further down the camera looks after the clamp. */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "deg"))
+	float LockOnLookDown = 0.f;
+
+	/** 락온 카메라 '회전': maximum turning speed toward the target direction. */
+	UPROPERTY(EditDefaultsOnly, Category = "Lock-On", meta = (Units = "deg/s", ClampMin = 0))
+	float LockOnRotationSpeed = 0.f;
 };

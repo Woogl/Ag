@@ -2,11 +2,15 @@
 
 #include "Character/AgPlayerCharacter.h"
 
+#include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgGameplayEffect_Regen.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
+#include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Character/AgBossCharacter.h"
+#include "Character/AgLockOnComponent.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Core/AgSettings.h"
@@ -22,6 +26,7 @@
 #include "MotionWarpingComponent.h"
 #include "TargetingSystem/TargetingPreset.h"
 #include "TargetingSystem/TargetingSubsystem.h"
+#include "TimerManager.h"
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
@@ -36,6 +41,8 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	LockOn = CreateDefaultSubobject<UAgLockOnComponent>(TEXT("LockOn"));
 }
 
 void AAgPlayerCharacter::BeginPlay()
@@ -43,6 +50,13 @@ void AAgPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	ApplyCameraData();
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleGuardingChanged);
+	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandleSPChanged);
+	LockOn->OnLockOnChanged.AddUObject(this, &ThisClass::UpdateRotationMode);
+	UpdateRotationMode();
 }
 
 void AAgPlayerCharacter::Tick(float DeltaSeconds)
@@ -55,14 +69,33 @@ void AAgPlayerCharacter::Tick(float DeltaSeconds)
 		const FGameplayTag InputTag = DevPressInput;
 		DevPressInput = FGameplayTag();
 		HandleInputPressed(InputTag);
+		HandleInputReleased(InputTag);
 	}
 	if (DevMashInput.IsValid())
 	{
 		HandleInputPressed(DevMashInput);
 	}
+	if (DevHoldInput != DevHeldInput)
+	{
+		if (DevHeldInput.IsValid())
+		{
+			HandleInputReleased(DevHeldInput);
+		}
+		DevHeldInput = DevHoldInput;
+		if (DevHeldInput.IsValid())
+		{
+			HandleInputPressed(DevHeldInput);
+		}
+	}
 	if (!DevMoveInput.IsZero())
 	{
+		bDevMoving = true;
 		Move(FInputActionValue(DevMoveInput));
+	}
+	else if (bDevMoving)
+	{
+		bDevMoving = false;
+		MoveReleased();
 	}
 #endif
 }
@@ -106,8 +139,16 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	UEnhancedInputComponent* EnhancedInput = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
 	EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+	EnhancedInput->BindAction(MoveAction, ETriggerEvent::Completed, this, &ThisClass::MoveReleased);
 	EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::AttackPressed);
+	EnhancedInput->BindAction(GuardAction, ETriggerEvent::Started, this, &ThisClass::GuardPressed);
+	EnhancedInput->BindAction(GuardAction, ETriggerEvent::Completed, this, &ThisClass::GuardReleased);
+	EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Started, this, &ThisClass::DodgePressed);
+	EnhancedInput->BindAction(SkillAction, ETriggerEvent::Started, this, &ThisClass::SkillPressed);
+	EnhancedInput->BindAction(UltimateAction, ETriggerEvent::Started, this, &ThisClass::UltimatePressed);
+	EnhancedInput->BindAction(ExecuteAction, ETriggerEvent::Started, this, &ThisClass::ExecutePressed);
+	EnhancedInput->BindAction(LockOnAction, ETriggerEvent::Started, this, &ThisClass::LockOnPressed);
 }
 
 bool AAgPlayerCharacter::CanMove() const
@@ -123,21 +164,40 @@ bool AAgPlayerCharacter::CanMove() const
 
 void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 {
-	// Movement input never cancels an action motion; it is ignored until the motion ends (플레이어 사양 '모션 캔슬').
-	if (!Controller || !CanMove())
+	if (!Controller)
 	{
 		return;
 	}
 
-	// X is right, Y is forward, relative to where the camera looks.
+	// X is right, Y is forward, relative to where the camera looks. The direction is kept even when movement is
+	// ignored, because the dodge rolls toward the keys held.
 	const FVector2D Input = Value.Get<FVector2D>();
 	const FRotationMatrix YawMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f));
-	AddMovementInput(YawMatrix.GetUnitAxis(EAxis::X), Input.Y);
-	AddMovementInput(YawMatrix.GetUnitAxis(EAxis::Y), Input.X);
+	const FVector Forward = YawMatrix.GetUnitAxis(EAxis::X);
+	const FVector Right = YawMatrix.GetUnitAxis(EAxis::Y);
+	MoveInputDirection = (Forward * Input.Y + Right * Input.X).GetSafeNormal2D();
+
+	// Movement input never cancels an action motion; it is ignored until the motion ends (플레이어 사양 '모션 캔슬').
+	if (CanMove())
+	{
+		AddMovementInput(Forward, Input.Y);
+		AddMovementInput(Right, Input.X);
+	}
+}
+
+void AAgPlayerCharacter::MoveReleased()
+{
+	MoveInputDirection = FVector::ZeroVector;
 }
 
 void AAgPlayerCharacter::Look(const FInputActionValue& Value)
 {
+	// The lock-on camera ignores look input (카메라 '카메라 모드').
+	if (LockOn->IsLockedOn())
+	{
+		return;
+	}
+
 	// Applied directly with no smoothing (카메라 '자유 시점' 회전 반응).
 	const FVector2D Input = Value.Get<FVector2D>();
 	AddControllerYawInput(Input.X);
@@ -149,17 +209,67 @@ void AAgPlayerCharacter::AttackPressed()
 	HandleInputPressed(AgGameplayTags::Input_Attack);
 }
 
+void AAgPlayerCharacter::GuardPressed()
+{
+	HandleInputPressed(AgGameplayTags::Input_Guard);
+}
+
+void AAgPlayerCharacter::GuardReleased()
+{
+	HandleInputReleased(AgGameplayTags::Input_Guard);
+}
+
+void AAgPlayerCharacter::DodgePressed()
+{
+	HandleInputPressed(AgGameplayTags::Input_Dodge);
+}
+
+void AAgPlayerCharacter::SkillPressed()
+{
+	HandleInputPressed(AgGameplayTags::Input_Skill);
+}
+
+void AAgPlayerCharacter::UltimatePressed()
+{
+	HandleInputPressed(AgGameplayTags::Input_Ultimate);
+}
+
+void AAgPlayerCharacter::ExecutePressed()
+{
+	HandleInputPressed(AgGameplayTags::Input_Execute);
+}
+
+void AAgPlayerCharacter::LockOnPressed()
+{
+	HandleInputPressed(AgGameplayTags::Input_LockOn);
+}
+
 void AAgPlayerCharacter::HandleInputPressed(const FGameplayTag& InputTag)
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (InputTag == AgGameplayTags::Input_Attack)
+	if (IsDead())
 	{
-		// 평타 키의 처리 순서: a running basic attack takes the press itself (next hit during recovery); otherwise hit 1.
-		const FGameplayTagContainer BasicAttackTag(AgGameplayTags::Ability_Action_BasicAttack);
+		return;
+	}
+	if (InputTag == AgGameplayTags::Input_Guard)
+	{
+		bGuardHeld = true;
+	}
+	if (InputTag == AgGameplayTags::Input_LockOn)
+	{
+		// The lock-on key isn't limited by the action state; it works until death (플레이어 사양 '공통 입력 처리').
+		LockOn->ToggleLockOn();
+		return;
+	}
+
+	// A running ability that handles this key itself gets the press: the basic attack's next hit, or the guard's new
+	// start during a parry motion. Otherwise the key starts its action, which checks whether it is allowed now.
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	auto PressOrActivate = [this, ASC, &InputTag](const FGameplayTag& AbilityTag)
+	{
+		const FGameplayTagContainer AbilityTags(AbilityTag);
 		TArray<FGameplayAbilitySpec*> Specs;
-		ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(BasicAttackTag, Specs, false);
-		const bool bRunning = Specs.ContainsByPredicate([](const FGameplayAbilitySpec* Spec) { return Spec->IsActive(); });
-		if (bRunning)
+		ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(AbilityTags, Specs, false);
+		if (Specs.ContainsByPredicate([](const FGameplayAbilitySpec* Spec) { return Spec->IsActive(); }))
 		{
 			FGameplayEventData Payload;
 			Payload.EventTag = InputTag;
@@ -167,8 +277,138 @@ void AAgPlayerCharacter::HandleInputPressed(const FGameplayTag& InputTag)
 		}
 		else
 		{
-			ASC->TryActivateAbilitiesByTag(BasicAttackTag);
+			ASC->TryActivateAbilitiesByTag(AbilityTags);
 		}
+	};
+
+	if (InputTag == AgGameplayTags::Input_Attack)
+	{
+		PressOrActivate(AgGameplayTags::Ability_Action_BasicAttack);
+	}
+	else if (InputTag == AgGameplayTags::Input_Guard)
+	{
+		PressOrActivate(AgGameplayTags::Ability_Action_Guard);
+	}
+	else if (InputTag == AgGameplayTags::Input_Dodge)
+	{
+		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Dodge));
+	}
+	else if (InputTag == AgGameplayTags::Input_Skill)
+	{
+		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Skill));
+	}
+	else if (InputTag == AgGameplayTags::Input_Ultimate)
+	{
+		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Ultimate));
+	}
+	else if (InputTag == AgGameplayTags::Input_Execute)
+	{
+		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Execution));
+	}
+}
+
+void AAgPlayerCharacter::HandleInputReleased(const FGameplayTag& InputTag)
+{
+	if (InputTag == AgGameplayTags::Input_Guard && bGuardHeld)
+	{
+		bGuardHeld = false;
+		FGameplayEventData Payload;
+		Payload.EventTag = AgGameplayTags::Input_GuardReleased;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgGameplayTags::Input_GuardReleased, Payload);
+	}
+}
+
+void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
+{
+	const UGameplayAbility* Ended = EndedData.AbilityThatEnded;
+	if (!bGuardHeld || IsDead() || !Ended)
+	{
+		return;
+	}
+	const FGameplayTagContainer& EndedTags = Ended->GetAssetTags();
+	if (EndedTags.HasTag(AgGameplayTags::Ability_Action_Guard) || (!EndedTags.HasTag(AgGameplayTags::Ability_Action) && !EndedTags.HasTag(AgGameplayTags::Ability_Reaction)))
+	{
+		return;
+	}
+
+	// After a guard pushback the guard comes back without a parry window. Check next frame, once whatever cancelled
+	// this ability has started.
+	bGuardResumeWithoutParry = EndedTags.HasTag(AgGameplayTags::Ability_Reaction_GuardPushback);
+	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryResumeGuard);
+}
+
+void AAgPlayerCharacter::TryResumeGuard()
+{
+	// Only from standing or moving: nothing else may be running.
+	FGameplayTagContainer Running;
+	Running.AddTag(AgGameplayTags::State_Acting);
+	Running.AddTag(AgGameplayTags::State_Busy);
+	Running.AddTag(AgGameplayTags::State_HitReaction);
+	Running.AddTag(AgGameplayTags::State_Guarding);
+	Running.AddTag(AgGameplayTags::State_Execution_Executing);
+	if (bGuardHeld && !IsDead() && !GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Running))
+	{
+		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Guard));
+	}
+	bGuardResumeWithoutParry = false;
+}
+
+bool AAgPlayerCharacter::TakeGuardResume()
+{
+	const bool bResume = bGuardResumeWithoutParry;
+	bGuardResumeWithoutParry = false;
+	return bResume;
+}
+
+void AAgPlayerCharacter::UpdateRotationMode()
+{
+	// 이동: while locked on the character faces the target (the camera looks at it); while guarding it faces the target
+	// or the camera's front. Otherwise it faces where it moves.
+	const bool bFaceCamera = LockOn->IsLockedOn() || GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
+	GetCharacterMovement()->bOrientRotationToMovement = !bFaceCamera;
+	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
+}
+
+void AAgPlayerCharacter::HandleGuardingChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	UpdateRotationMode();
+	UpdateMoveSpeed();
+}
+
+float AAgPlayerCharacter::GetMoveSpeedMultiplier() const
+{
+	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
+	const bool bGuarding = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
+	return (Data && bGuarding) ? Data->GuardMoveSpeedRatio : 1.f;
+}
+
+void AAgPlayerCharacter::StartRegen()
+{
+	Super::StartRegen();
+
+	if (const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData()))
+	{
+		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_SPRegen::StaticClass(), AgGameplayTags::Data_SP, Data->SPRegenRate);
+		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_SPRegenGuarding::StaticClass(), AgGameplayTags::Data_SP, Data->SPRegenRateGuarding);
+	}
+}
+
+void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
+{
+	const UAgPlayerData* PlayerData = Cast<UAgPlayerData>(GetCharacterData());
+	if (PlayerData && Data.NewValue < Data.OldValue)
+	{
+		RestartRegenDelay(SPRegenDelay, AgGameplayTags::State_Regen_SPDelay, Data.NewValue <= 0.f ? PlayerData->SPRegenDelayEmpty : PlayerData->SPRegenDelay);
+	}
+}
+
+void AAgPlayerCharacter::PlayGuardFlinch()
+{
+	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (Data && Data->GuardFlinchMontage && AnimInstance)
+	{
+		AnimInstance->Montage_Play(Data->GuardFlinchMontage);
 	}
 }
 
@@ -217,12 +457,19 @@ void AAgPlayerCharacter::PrepareAttackMovement(float TargetingRange)
 	if (Boss && UAgCombatLibrary::GetHorizontalDistance(this, Boss) <= TargetingRange)
 	{
 		StartApproach(Boss, Data->AttackStopDistance, TargetingRange, 0.f, /*bFaceTarget*/ true);
+		return;
 	}
-	else
+
+	// No target in range: the motion plays as made, toward the lock-on target when locked on, otherwise straight ahead.
+	StopApproach();
+	GetMotionWarping()->RemoveWarpTarget(AttackWarpTarget);
+	if (const AActor* LockOnTarget = LockOn->GetTarget())
 	{
-		// No target: the motion plays as made, toward the character's front.
-		StopApproach();
-		GetMotionWarping()->RemoveWarpTarget(AttackWarpTarget);
+		const FVector ToTarget = UAgCombatLibrary::GetAttackDirection(this, LockOnTarget);
+		if (!ToTarget.IsNearlyZero())
+		{
+			SetActorRotation(FRotator(0.f, ToTarget.Rotation().Yaw, 0.f));
+		}
 	}
 }
 
