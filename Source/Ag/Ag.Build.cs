@@ -15,8 +15,6 @@ public class Ag : ModuleRules
 			"InputCore",
 			"EnhancedInput",
 			"AIModule",
-			"StateTreeModule",
-			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
 			"GameplayAbilities",
@@ -40,20 +38,7 @@ public class Ag : ModuleRules
 		}
 
 		PublicIncludePaths.AddRange(new string[] {
-			"Ag",
-			"Ag/Variant_Platforming",
-			"Ag/Variant_Platforming/Animation",
-			"Ag/Variant_Combat",
-			"Ag/Variant_Combat/AI",
-			"Ag/Variant_Combat/Animation",
-			"Ag/Variant_Combat/Gameplay",
-			"Ag/Variant_Combat/Interfaces",
-			"Ag/Variant_Combat/UI",
-			"Ag/Variant_SideScrolling",
-			"Ag/Variant_SideScrolling/AI",
-			"Ag/Variant_SideScrolling/Gameplay",
-			"Ag/Variant_SideScrolling/Interfaces",
-			"Ag/Variant_SideScrolling/UI"
+			"Ag"
 		});
 
 		// Uncomment if you are using Slate UI
