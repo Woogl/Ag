@@ -10,8 +10,8 @@ class UNiagaraComponent;
 class UNiagaraSystem;
 
 /**
- * Plays a looping effect on the target's weapon while the cue is active (붉은 섬광).
- * The effect is data on the cue blueprint; the weapon comes in the cue parameters (TargetAttachComponent).
+ * Plays a looping effect on the target's weapon while the cue is active (붉은 섬광, 예고 섬광).
+ * The effect and its tint are data on the cue blueprint; the weapon comes in the cue parameters (TargetAttachComponent).
  */
 UCLASS(Abstract)
 class AAgGameplayCue_WeaponEffect : public AGameplayCueNotify_Actor
@@ -31,6 +31,17 @@ protected:
 	/** Socket on the weapon to attach to; none attaches at the weapon's origin. */
 	UPROPERTY(EditDefaultsOnly, Category = "Effect")
 	FName AttachSocket;
+
+	/** Tints the effect through one of its color user parameters, so cues can share an effect and differ in color. */
+	UPROPERTY(EditDefaultsOnly, Category = "Effect")
+	bool bSetColor = false;
+
+	/** The effect's color user parameter. */
+	UPROPERTY(EditDefaultsOnly, Category = "Effect", meta = (EditCondition = "bSetColor"))
+	FName ColorParameter = TEXT("Color");
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effect", meta = (EditCondition = "bSetColor"))
+	FLinearColor Color = FLinearColor::White;
 
 private:
 	UPROPERTY()

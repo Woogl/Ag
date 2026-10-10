@@ -19,6 +19,21 @@ void UAgBossPattern_SwordWave::OnPatternStarted()
 	ReleaseTask->ReadyForActivation();
 }
 
+void UAgBossPattern_SwordWave::GetParryableHitStarts(TArray<float>& OutTimes) const
+{
+	// Each wave's launch is its attack window (보스 사양 'A6').
+	const FAgBossPattern* Pattern = GetPattern();
+	TArray<float> Launches;
+	FindEventNotifyTimes(AgGameplayTags::Event_Boss_SwordWave, Launches);
+	for (int32 Index = 0; Index < Launches.Num(); ++Index)
+	{
+		if (Pattern && Pattern->Hits.IsValidIndex(Index) && Pattern->Hits[Index].bParryable)
+		{
+			OutTimes.Add(Launches[Index]);
+		}
+	}
+}
+
 void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = GetBoss();
