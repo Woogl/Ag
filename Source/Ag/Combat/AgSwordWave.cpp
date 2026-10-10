@@ -71,24 +71,23 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 	QueryParams.AddIgnoredActor(ShooterCharacter);
 	const FVector Start = GetActorLocation();
 	const float Step = Speed * DeltaSeconds;
-	const FVector End = Start + FlightDirection * Step;
+	FVector End = Start + FlightDirection * Step;
 	FHitResult WallHit;
-	if (GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams))
+	const bool bHitWall = GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
+	if (bHitWall)
 	{
-		Destroy();
-		return;
+		End = WallHit.Location;
 	}
-	SetActorLocation(End);
-	Traveled += Step;
 
-	// A character inside the box is judged once, when the wave first reaches it. Invincibility lets the wave pass that
-	// character for good, even if it is still inside when the invincibility ends; the wave keeps flying.
-	TArray<FOverlapResult> Overlaps;
+	// A character the box reaches is judged once, when the wave first reaches it. The box sweeps the whole way it moves
+	// this tick, so a long frame can't skip a character. Invincibility lets the wave pass that character for good, even if
+	// it is still inside when the invincibility ends; the wave keeps flying.
+	TArray<FHitResult> Reached;
 	const FCollisionShape Box = FCollisionShape::MakeBox(HitBox->GetScaledBoxExtent());
-	GetWorld()->OverlapMultiByObjectType(Overlaps, End, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Box, QueryParams);
-	for (const FOverlapResult& Overlap : Overlaps)
+	GetWorld()->SweepMultiByObjectType(Reached, Start, End, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Box, QueryParams);
+	for (const FHitResult& Contact : Reached)
 	{
-		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Overlap.GetActor());
+		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
 		if (!Target || !UAgCombatLibrary::AreHostile(ShooterCharacter, Target) || TouchedActors.Contains(Target))
 		{
 			continue;
@@ -103,6 +102,13 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 		}
 	}
 
+	if (bHitWall)
+	{
+		Destroy();
+		return;
+	}
+	SetActorLocation(End);
+	Traveled += Step;
 	if (Traveled >= Range)
 	{
 		Destroy();

@@ -98,7 +98,7 @@ void UAgLockOnComponent::UpdateCamera(float DeltaTime)
 {
 	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwner());
 	APlayerController* PlayerController = Player ? Cast<APlayerController>(Player->GetController()) : nullptr;
-	const UAgCameraData* CameraData = UAgSettings::Get()->CameraData.LoadSynchronous();
+	const UAgCameraData* CameraData = UAgSettings::Get()->GetCameraData();
 	if (!PlayerController || !CameraData)
 	{
 		return;

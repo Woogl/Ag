@@ -106,7 +106,7 @@ void AAgPlayerCharacter::Tick(float DeltaSeconds)
 
 void AAgPlayerCharacter::ApplyCameraData()
 {
-	const UAgCameraData* CameraData = UAgSettings::Get()->CameraData.LoadSynchronous();
+	const UAgCameraData* CameraData = UAgSettings::Get()->GetCameraData();
 	if (!CameraData)
 	{
 		UE_LOG(LogAg, Error, TEXT("Camera data is not set (Project Settings > Game > Ag)."));
@@ -188,6 +188,19 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 	{
 		AddMovementInput(Forward, Input.Y);
 		AddMovementInput(Right, Input.X);
+		StopLandingMotion();
+	}
+}
+
+void AAgPlayerCharacter::StopLandingMotion()
+{
+	// The landing motion stays in place through its root motion, which would hold the character still. It is no action,
+	// so moving ends it.
+	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (Data && Data->LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(Data->LandMontage))
+	{
+		AnimInstance->Montage_Stop(0.2f, Data->LandMontage);
 	}
 }
 
@@ -497,7 +510,7 @@ void AAgPlayerCharacter::PlayGuardFlinch()
 
 AAgBossCharacter* AAgPlayerCharacter::FindBoss(float Range) const
 {
-	const UTargetingPreset* Preset = UAgSettings::Get()->BossTargeting.LoadSynchronous();
+	const UTargetingPreset* Preset = UAgSettings::Get()->GetBossTargeting();
 	UTargetingSubsystem* Targeting = UTargetingSubsystem::Get(GetWorld());
 	if (!Preset || !Targeting)
 	{

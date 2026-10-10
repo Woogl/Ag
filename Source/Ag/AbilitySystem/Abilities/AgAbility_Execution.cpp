@@ -129,6 +129,7 @@ void UAgAbility_Execution::HandleFinalBlow(FGameplayEventData Payload)
 		DeathPayload.EventTag = AgGameplayTags::Event_Death;
 		DeathPayload.Instigator = Player;
 		DeathPayload.Target = Boss;
+		DeathPayload.InstigatorTags.AddTag(AgGameplayTags::Ability_Action_Execution);
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Death, DeathPayload);
 	}
 
