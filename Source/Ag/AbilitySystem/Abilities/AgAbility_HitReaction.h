@@ -11,8 +11,8 @@ class UAbilityTask_PlayMontageAndWait;
 
 /**
  * 넉업, 넉백, 다운, 가드 밀림 and 가드 브레이크 (전투 시스템 '피격 모션', '가드 반응'), started by a hit event.
- * Stops the current action, turns toward the attacker and plays the motion; no action is possible until it ends. The
- * reaction ends when the last motion ends, not when it starts blending out.
+ * Stops the current action or boss pattern, turns toward the attacker and plays the motion; no action is possible until
+ * it ends. The reaction ends when the last motion ends, not when it starts blending out.
  * A new knockup, knockback or down restarts the motion with the new reaction.
  * A motion that marks the moment the body hits the ground (Event.DownGrounded: 다운, 넉업) is invincible from then until
  * the reaction ends.
@@ -63,7 +63,7 @@ private:
 	bool bInvincible = false;
 };
 
-/** 넉백: 뒤로 크게 밀려남. */
+/** 넉백: 뒤로 크게 밀려남. The player and the boss both have it. */
 UCLASS()
 class UAgAbility_KnockBack : public UAgAbility_HitReaction
 {

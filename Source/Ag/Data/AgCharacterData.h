@@ -93,10 +93,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Stats", meta = (ShowOnlyInnerProperties))
 	FAgStats Stats;
 
-	/** 슈퍼아머 상시 적용 (전투 시스템 '슈퍼아머'): knockback and down never happen. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Stats")
-	bool bAlwaysSuperArmor = false;
-
 	/** PP 리젠: 초당 회복량 after the regen delay (전투 시스템 'PP 리젠'). 0 for no regen. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Stats", meta = (ClampMin = 0))
 	float PPRegenRate = 0.f;
@@ -124,6 +120,10 @@ public:
 	/** 움찔: additive montage played on top of whatever the character is doing. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> FlinchMontage;
+
+	/** 넉백 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> KnockBackMontage;
 
 	/** Locomotion while not guarding. Axes: movement direction relative to facing (deg), ground speed (cm/s). */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Animation")
@@ -352,10 +352,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> ExecutionMontage;
 
-	/** 넉백 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> KnockBackMontage;
-
 	/** 다운: falling down. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> DownMontage;
@@ -430,7 +426,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PatternRecoveryWaitPhase2 = FFloatInterval(0.f, 0.f);
 
-	/** 패턴 후딜레이 대기 시간 after the level start, the phase transition, groggy and being executed. */
+	/** 패턴 후딜레이 대기 시간 after the level start, a knockback, the phase transition, groggy and being executed. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s", ClampMin = 0))
 	float FixedRecoveryWait = 0.f;
 

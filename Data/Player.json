@@ -15,7 +15,6 @@
     "DEF": 50,
     "MOV": 400
   },
-  "bAlwaysSuperArmor": false,
   "PPRegenRate": 0,
   "DeathPresentationTime": 3,
   "WeaponEdgeStart": { "X": 0, "Y": 45, "Z": 0 },

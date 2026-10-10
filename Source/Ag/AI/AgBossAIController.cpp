@@ -13,6 +13,18 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
+namespace
+{
+	/** 넉백 (상태 우선순위 4) and 그로기 (3): the AI stops until they end. */
+	FGameplayTagContainer GetStoppingStates()
+	{
+		FGameplayTagContainer States;
+		States.AddTag(AgGameplayTags::State_HitReaction);
+		States.AddTag(AgGameplayTags::State_Groggy);
+		return States;
+	}
+}
+
 AAgBossAIController::AAgBossAIController()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -88,7 +100,8 @@ void AAgBossAIController::OnPossess(APawn* InPawn)
 	Boss->OnDied.AddUObject(this, &ThisClass::HandleBossDied);
 	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleGroggyChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleReactionChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleReactionChanged);
 
 	// 레벨이 시작되면 패턴 후딜레이 대기 시간만큼 기다린 뒤 패턴 선택을 시작합니다.
 	Wait(Data->FixedRecoveryWait);
@@ -277,8 +290,8 @@ void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 	{
 		return;
 	}
-	// A pattern cut off by groggy waits for the groggy to end instead.
-	if (Boss->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+	// A pattern cut off by a knockback or groggy waits for it to end instead.
+	if (Boss->GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(GetStoppingStates()))
 	{
 		return;
 	}
@@ -299,10 +312,10 @@ void AAgBossAIController::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 	Wait(FMath::FRandRange(WaitRange.Min, WaitRange.Max));
 }
 
-void AAgBossAIController::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount)
+void AAgBossAIController::HandleReactionChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	const UAgBossData* Data = GetBossData();
-	if (State == EState::NonCombat)
+	if (State == EState::NonCombat || !Boss.IsValid())
 	{
 		return;
 	}
@@ -313,9 +326,9 @@ void AAgBossAIController::HandleGroggyChanged(const FGameplayTag Tag, int32 NewC
 		RunningPattern = FGameplayTag();
 		State = EState::Stopped;
 	}
-	else if (Data && Boss.IsValid() && !Boss->IsDead())
+	else if (Data && !Boss->IsDead() && !Boss->GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(GetStoppingStates()))
 	{
-		// 그로기가 끝나면 잠시 기다린 뒤 다음 패턴을 선택합니다.
+		// 넉백이나 그로기가 끝나면 잠시 기다린 뒤 다음 패턴을 선택합니다.
 		Wait(Data->FixedRecoveryWait);
 	}
 }

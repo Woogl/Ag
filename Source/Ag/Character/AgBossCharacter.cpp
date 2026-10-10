@@ -166,6 +166,7 @@ void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
 	}
 
 	FGameplayTagContainer NoTurning;
+	NoTurning.AddTag(AgGameplayTags::State_HitReaction);
 	NoTurning.AddTag(AgGameplayTags::State_Groggy);
 	NoTurning.AddTag(AgGameplayTags::State_Execution_Executed);
 	NoTurning.AddTag(AgGameplayTags::State_Boss_RotationLocked);

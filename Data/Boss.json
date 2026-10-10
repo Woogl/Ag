@@ -15,13 +15,13 @@
     "DEF": 100,
     "MOV": 250
   },
-  "bAlwaysSuperArmor": true,
   "PPRegenRate": 50,
   "DeathPresentationTime": 4,
   "WeaponEdgeStart": { "X": 0, "Y": 0, "Z": 0 },
   "WeaponEdgeEnd": { "X": 0, "Y": -127.07886505126953, "Z": 0 },
   "WeaponEdgeRadius": 8,
   "Abilities": [
+    "/Script/Ag.AgAbility_KnockBack",
     "/Script/Ag.AgAbility_Groggy",
     "/Script/Ag.AgAbility_PhaseTransition",
     "/Script/Ag.AgAbility_Death"

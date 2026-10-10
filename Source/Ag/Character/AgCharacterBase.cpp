@@ -113,10 +113,6 @@ void AAgCharacterBase::BeginPlay()
 	InitializeStats();
 	GrantAbilities();
 	StartRegen();
-	if (CharacterData && CharacterData->bAlwaysSuperArmor)
-	{
-		AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_SuperArmor);
-	}
 #if WITH_EDITOR
 	// The binding is weak, so it ends with the character.
 	AgDataFile::OnReloaded().AddUObject(this, &ThisClass::HandleDataReloaded);
@@ -219,7 +215,6 @@ void AAgCharacterBase::StartRegen()
 void AAgCharacterBase::HandleDataReloaded()
 {
 	StartRegen();
-	AbilitySystemComponent->SetLooseGameplayTagCount(AgGameplayTags::State_SuperArmor, CharacterData && CharacterData->bAlwaysSuperArmor ? 1 : 0);
 	ApplyWeapon();
 	if (UAgAnimInstance* AnimInstance = Cast<UAgAnimInstance>(GetMesh()->GetAnimInstance()))
 	{

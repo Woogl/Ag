@@ -66,36 +66,21 @@ namespace
 	}
 
 	/**
-	 * 피격 반응: 움찔 plays on top; 넉업, 넉백 and 다운 start a reaction ability unless super armor or groggy blocks them.
+	 * 피격 반응: 움찔 plays on top; 넉업, 넉백 and 다운 start a reaction ability, or play 움찔 instead during groggy.
 	 * Instigator is what the target is pushed away from: the attacker, or its projectile.
 	 */
 	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, EAgHitReaction Reaction)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
-		switch (Reaction)
+		const FGameplayTag Event = GetReactionEvent(Reaction);
+		if (Event.IsValid() && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 		{
-		case EAgHitReaction::Flinch:
-			// 움찔 doesn't change a knockup, knockback or down already playing.
-			if (!TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
-			{
-				Target->PlayFlinch();
-			}
-			break;
-		case EAgHitReaction::KnockUp:
-		case EAgHitReaction::KnockBack:
-		case EAgHitReaction::Down:
-		{
-			FGameplayTagContainer Blockers;
-			Blockers.AddTag(AgGameplayTags::State_SuperArmor);
-			Blockers.AddTag(AgGameplayTags::State_Groggy);
-			if (!TargetASC->HasAnyMatchingGameplayTags(Blockers))
-			{
-				SendEvent(Target, GetReactionEvent(Reaction), Instigator);
-			}
-			break;
+			SendEvent(Target, Event, Instigator);
 		}
-		default:
-			break;
+		// 움찔 doesn't change a knockup, knockback or down already playing.
+		else if (Reaction != EAgHitReaction::None && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
+		{
+			Target->PlayFlinch();
 		}
 	}
 

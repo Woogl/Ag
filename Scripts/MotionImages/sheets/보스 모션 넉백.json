@@ -1,0 +1,17 @@
+{
+  "image": "보스 모션 넉백",
+  "character": "boss",
+  "rows": [
+    {
+      "title": "넉백",
+      "note": "",
+      "frames": [
+        {"clip": "Halberd/Hit3", "t": 0.0, "time": "0.00초", "label": "맞음"},
+        {"clip": "Halberd/Hit3", "t": 0.1167, "time": "0.12초", "label": "젖혀짐"},
+        {"clip": "Halberd/Hit3", "t": 0.25, "time": "0.25초", "label": "밀려남"},
+        {"clip": "Halberd/Hit3", "t": 0.45, "time": "0.45초", "label": ""},
+        {"clip": "Halberd/Hit3", "t": 0.8167, "time": "0.82초", "label": "끝"}
+      ]
+    }
+  ]
+}

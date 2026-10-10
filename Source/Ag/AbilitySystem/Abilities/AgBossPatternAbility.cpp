@@ -20,6 +20,7 @@ UAgBossPatternAbility::UAgBossPatternAbility()
 {
 	SetAssetTags(FGameplayTagContainer(AgGameplayTags::Ability_Boss_Pattern));
 
+	ActivationBlockedTags.AddTag(AgGameplayTags::State_HitReaction);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executed);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);

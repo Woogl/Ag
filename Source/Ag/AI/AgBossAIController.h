@@ -19,7 +19,8 @@ struct FGameplayEventData;
  * Boss AI (보스 사양 'AI 행동 규칙', '전투 시작과 행동 전환'):
  * wait → pick a pattern → run it → pattern recovery wait → pick again.
  * During the wait the boss walks sideways around the player. With no candidate it walks to the player and retries.
- * Groggy, execution, phase transition and death are state abilities. After the player dies the boss stops (비전투).
+ * Knockback, groggy, execution, phase transition and death are state abilities. After the player dies the boss stops
+ * (비전투).
  */
 UCLASS()
 class AAgBossAIController : public AAIController
@@ -69,10 +70,16 @@ private:
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
 	void HandleBossDied(AAgCharacterBase* DeadBoss);
 
-	/** 그로기 stops the AI; when it ends (with or without an execution) the boss waits and picks again. */
-	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
+	/**
+	 * 넉백 and 그로기 stop the AI. Once neither is left (after an execution too), the boss waits and picks again; groggy
+	 * takes over a knockback it cuts off.
+	 */
+	void HandleReactionChanged(const FGameplayTag Tag, int32 NewCount);
 
-	/** 전투 시작과 행동 전환 5: starts the phase transition once phase 2 HP is reached outside a pattern and groggy. */
+	/**
+	 * 전투 시작과 행동 전환 5: starts the phase transition once phase 2 HP is reached outside a pattern, a knockback and
+	 * groggy.
+	 */
 	void TryStartPhaseTransition();
 
 	/** 전투 시작과 행동 전환 2: the running pattern stops at once and nothing but the boss's own death applies anymore. */

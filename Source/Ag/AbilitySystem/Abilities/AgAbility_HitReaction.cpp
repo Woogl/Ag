@@ -27,8 +27,9 @@ UAgAbility_HitReaction::UAgAbility_HitReaction()
 	bRetriggerInstancedAbility = true;
 
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_HitReaction);
-	// Same priority (상태 우선순위 4): the newer reaction replaces the older one. Actions stop.
+	// Same priority (상태 우선순위 4): the newer reaction replaces the older one. Actions and boss patterns stop.
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
+	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_Down);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
@@ -156,7 +157,7 @@ UAgAbility_KnockBack::UAgAbility_KnockBack()
 
 UAnimMontage* UAgAbility_KnockBack::GetReactionMontage() const
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	const UAgCharacterData* Data = GetCharacterData<UAgCharacterData>();
 	return Data ? Data->KnockBackMontage.Get() : nullptr;
 }
 
