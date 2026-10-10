@@ -159,8 +159,10 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 bool AAgPlayerCharacter::CanMove() const
 {
+	// Actions, reactions and the guard hold the character in place (플레이어 사양 '이동', '모션 캔슬').
 	FGameplayTagContainer Blockers;
 	Blockers.AddTag(AgGameplayTags::State_Acting);
+	Blockers.AddTag(AgGameplayTags::State_Guarding);
 	Blockers.AddTag(AgGameplayTags::State_HitReaction);
 	Blockers.AddTag(AgGameplayTags::State_Groggy);
 	Blockers.AddTag(AgGameplayTags::State_Execution_Executing);
@@ -469,10 +471,6 @@ float AAgPlayerCharacter::GetMoveSpeedMultiplier() const
 	if (!Data)
 	{
 		return 1.f;
-	}
-	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding))
-	{
-		return Data->GuardMoveSpeedRatio;
 	}
 	return ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) ? Data->SprintSpeedRatio : 1.f;
 }
