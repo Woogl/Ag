@@ -43,6 +43,10 @@ private:
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	TWeakObjectPtr<AAgCharacterBase> Shooter;
+
+	/** Characters the wave already reached; each is judged once. */
+	TArray<TWeakObjectPtr<AActor>> TouchedActors;
+
 	FAgAttackHit Hit;
 	FVector FlightDirection = FVector::ForwardVector;
 	float Speed = 0.f;

@@ -33,6 +33,12 @@ public class Ag : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
+		// Editor-only asset helpers (UAgEditorUtilities).
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "UMGEditor", "MovieScene", "MovieSceneTracks" });
+		}
+
 		PublicIncludePaths.AddRange(new string[] {
 			"Ag",
 			"Ag/Variant_Platforming",

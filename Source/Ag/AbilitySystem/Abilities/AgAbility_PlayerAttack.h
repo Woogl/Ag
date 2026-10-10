@@ -36,8 +36,13 @@ private:
 	UFUNCTION()
 	void HandleAttackWindowEnded(FGameplayEventData Payload);
 
+	/** A chained montage starts as the previous one blends out (chained montages blend out from their very end). */
 	UFUNCTION()
-	void HandleMontageFinished();
+	void HandleMontageBlendingOut();
+
+	/** The motion has ended: the recovery (후딜) lasts to here, through the blend-out. */
+	UFUNCTION()
+	void HandleMontageCompleted();
 
 	UFUNCTION()
 	void HandleMontageCancelled();

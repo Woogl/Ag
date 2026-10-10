@@ -19,6 +19,9 @@ UAgAbility_Dodge::UAgAbility_Dodge()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Dodge);
 	SetCooldownTag(AgGameplayTags::Cooldown_Dodge);
+
+	// 회피 후딜 allows a new dodge: pressing it again restarts this ability.
+	bRetriggerInstancedAbility = true;
 }
 
 void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -60,7 +63,6 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
@@ -144,7 +146,13 @@ void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 
 void UAgAbility_Dodge::HandleMontageFinished()
 {
+	// The dodge lasts to the end of its motion; with Shift and movement still held it turns into a sprint.
+	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
 	EndSelf(false);
+	if (Player)
+	{
+		Player->TryStartSprint();
+	}
 }
 
 void UAgAbility_Dodge::HandleMontageCancelled()

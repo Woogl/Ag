@@ -362,14 +362,6 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 		return;
 	}
 	const FGameplayTagContainer& EndedTags = Ended->GetAssetTags();
-
-	// 달리기: Shift still held and moving when the dodge motion ends. With the guard key held the guard starts instead.
-	if (EndedTags.HasTag(AgGameplayTags::Ability_Action_Dodge) && !EndedData.bWasCancelled && bDodgeHeld && !bGuardHeld && !MoveInputDirection.IsNearlyZero())
-	{
-		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Sprint));
-		return;
-	}
-
 	if (!bGuardHeld || EndedTags.HasTag(AgGameplayTags::Ability_Action_Guard) || (!EndedTags.HasTag(AgGameplayTags::Ability_Action) && !EndedTags.HasTag(AgGameplayTags::Ability_Reaction)))
 	{
 		return;
@@ -411,6 +403,15 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	if (Ability && Ability->GetAssetTags().HasAny(Enders))
 	{
 		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_DodgeCounterChance));
+	}
+}
+
+void AAgPlayerCharacter::TryStartSprint()
+{
+	// With the guard key held the guard starts instead (플레이어 사양 '가드').
+	if (!IsDead() && bDodgeHeld && !bGuardHeld && !MoveInputDirection.IsNearlyZero())
+	{
+		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Sprint));
 	}
 }
 

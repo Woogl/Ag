@@ -55,7 +55,7 @@ void AAgPlayerController::HideHUD()
 {
 	if (HUDWidget)
 	{
-		HUDWidget->SetVisibility(ESlateVisibility::Collapsed);
+		HUDWidget->HideStatus();
 	}
 }
 

@@ -14,6 +14,7 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "EngineUtils.h"
+#include "GameFramework/WorldSettings.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
 namespace
@@ -30,12 +31,17 @@ void UAgHUDWidget::NativeConstruct()
 	{
 		PPColor = BossPPBar->GetFillColorAndOpacity();
 	}
-	for (UWidget* Flash : { ParryFlash.Get(), PerfectDodgeFlash.Get() })
+}
+
+void UAgHUDWidget::HideStatus()
+{
+	if (StatusPanel)
 	{
-		if (Flash)
-		{
-			Flash->SetVisibility(ESlateVisibility::Hidden);
-		}
+		StatusPanel->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	else
+	{
+		SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
 
@@ -57,6 +63,14 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 	// The trails and screen effects run on game time, so the slow motion slows them too.
 	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();
+	const float GameSpeed = GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation();
+	for (UWidgetAnimation* Effect : { ParryFlashAnimation.Get(), PerfectDodgeFlashAnimation.Get() })
+	{
+		if (Effect && IsAnimationPlaying(Effect))
+		{
+			SetPlaybackSpeed(Effect, GameSpeed);
+		}
+	}
 
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
@@ -84,9 +98,6 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	{
 		UpdateBoss(*BossCharacter, GameDeltaTime);
 	}
-
-	UpdateFlash(ParryFlash, ParryFlashAge, ParryFlashTime, ParryFlashOpacity, GameDeltaTime);
-	UpdateFlash(PerfectDodgeFlash, PerfectDodgeFlashAge, PerfectDodgeFlashTime, PerfectDodgeFlashOpacity, GameDeltaTime);
 }
 
 void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime)
@@ -230,21 +241,12 @@ void UAgHUDWidget::UpdateTrail(FHPTrail& Trail, UProgressBar* TrailBar, float HP
 	TrailBar->SetPercent(Trail.Ratio);
 }
 
-void UAgHUDWidget::UpdateFlash(UWidget* Flash, float& Age, float Duration, float StartOpacity, float DeltaTime)
+void UAgHUDWidget::PlayScreenEffect(UWidgetAnimation* Animation)
 {
-	if (!Flash || Age < 0.f)
+	if (Animation)
 	{
-		return;
+		PlayAnimation(Animation, 0.f, 1, EUMGSequencePlayMode::Forward, GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation());
 	}
-	Age += DeltaTime;
-	if (Duration <= 0.f || Age >= Duration)
-	{
-		Age = -1.f;
-		Flash->SetVisibility(ESlateVisibility::Hidden);
-		return;
-	}
-	Flash->SetVisibility(ESlateVisibility::HitTestInvisible);
-	Flash->SetRenderOpacity(StartOpacity * (1.f - Age / Duration));
 }
 
 void UAgHUDWidget::BindPlayerEvents(UAbilitySystemComponent* ASC)
@@ -270,10 +272,10 @@ void UAgHUDWidget::UnbindPlayerEvents()
 
 void UAgHUDWidget::HandleParry(const FGameplayEventData* Payload)
 {
-	ParryFlashAge = 0.f;
+	PlayScreenEffect(ParryFlashAnimation);
 }
 
 void UAgHUDWidget::HandlePerfectDodge(const FGameplayEventData* Payload)
 {
-	PerfectDodgeFlashAge = 0.f;
+	PlayScreenEffect(PerfectDodgeFlashAnimation);
 }

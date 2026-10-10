@@ -9,6 +9,7 @@
 class UAnimMontage;
 class UAnimSequenceBase;
 class USkeleton;
+class UWidgetBlueprint;
 
 /** One piece of a montage: a time range of an animation. */
 USTRUCT(BlueprintType)
@@ -66,5 +67,12 @@ public:
 	/** Replaces the montage's sections and their order (for example a looping middle section). */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
 	static bool SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections);
+
+	/**
+	 * Creates or replaces the widget animation AnimationName: WidgetName's render opacity goes from StartOpacity to
+	 * EndOpacity over Duration seconds in a straight line. The editor tools can't make widget animations.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	static bool SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName, FName WidgetName, float Duration, float StartOpacity, float EndOpacity);
 #endif
 };

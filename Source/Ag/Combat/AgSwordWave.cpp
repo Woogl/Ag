@@ -81,17 +81,19 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 	SetActorLocation(End);
 	Traveled += Step;
 
-	// A character inside the box takes the hit. Invincibility lets the wave pass through and it keeps flying.
+	// A character inside the box is judged once, when the wave first reaches it. Invincibility lets the wave pass that
+	// character for good, even if it is still inside when the invincibility ends; the wave keeps flying.
 	TArray<FOverlapResult> Overlaps;
 	const FCollisionShape Box = FCollisionShape::MakeBox(HitBox->GetScaledBoxExtent());
 	GetWorld()->OverlapMultiByObjectType(Overlaps, End, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Box, QueryParams);
 	for (const FOverlapResult& Overlap : Overlaps)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Overlap.GetActor());
-		if (!Target || !UAgCombatLibrary::AreHostile(ShooterCharacter, Target))
+		if (!Target || !UAgCombatLibrary::AreHostile(ShooterCharacter, Target) || TouchedActors.Contains(Target))
 		{
 			continue;
 		}
+		TouchedActors.Add(Target);
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
 		const EAgHitResult Result = UAgCombatLibrary::ProcessHit(ShooterCharacter, Target, Hit, HitLocation, this);
 		if (Result == EAgHitResult::Hit || Result == EAgHitResult::Guard || Result == EAgHitResult::GuardBreak || Result == EAgHitResult::Parry)
