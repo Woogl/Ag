@@ -18,8 +18,8 @@
 
 namespace
 {
-	/** Scalar parameter of the UP gauge material: the filled share of the border, 0 to 1. */
-	const FName UPRatioParameter(TEXT("Ratio"));
+	/** Scalar parameter of the UP gauge and cooldown sweep materials: the filled or covered share, 0 to 1. */
+	const FName RatioParameter(TEXT("Ratio"));
 }
 
 void UAgHUDWidget::NativeConstruct()
@@ -98,16 +98,18 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 	SetValueText(PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
 	UpdateTrail(PlayerTrail, PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
+	// A slot dims only for MP·UP shortage; the skill's cooldown shows in its cooldown display instead.
 	const UAbilitySystemComponent* ASC = Player.GetAbilitySystemComponent();
-	SetSlotUsable(SkillSlot, CanUseAbility(*ASC, AgGameplayTags::Ability_Action_Skill));
-	SetSlotUsable(UltimateSlot, CanUseAbility(*ASC, AgGameplayTags::Ability_Action_Ultimate));
+	SetSlotUsable(SkillSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Skill));
+	SetSlotUsable(UltimateSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Ultimate));
+	UpdateCooldown(*ASC, AgGameplayTags::Ability_Action_Skill, SkillCooldownSweep, SkillCooldownText);
 
 	// The material fills the border from the top center clockwise by this ratio.
 	if (UltimateGauge)
 	{
 		if (UMaterialInstanceDynamic* Gauge = UltimateGauge->GetDynamicMaterial())
 		{
-			Gauge->SetScalarParameterValue(UPRatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
+			Gauge->SetScalarParameterValue(RatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
 		}
 	}
 
@@ -146,18 +148,63 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	}
 }
 
-bool UAgHUDWidget::CanUseAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag)
+const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
 {
 	for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
 	{
 		const UGameplayAbility* Ability = Spec.GetPrimaryInstance();
 		if (Ability && Ability->GetAssetTags().HasTagExact(AbilityTag))
 		{
-			const FGameplayAbilityActorInfo* ActorInfo = ASC.AbilityActorInfo.Get();
-			return Ability->CheckCost(Spec.Handle, ActorInfo) && Ability->CheckCooldown(Spec.Handle, ActorInfo);
+			OutHandle = Spec.Handle;
+			return Ability;
 		}
 	}
-	return false;
+	return nullptr;
+}
+
+bool UAgHUDWidget::CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag)
+{
+	FGameplayAbilitySpecHandle Handle;
+	const UGameplayAbility* Ability = FindAbility(ASC, AbilityTag, Handle);
+	return Ability && Ability->CheckCost(Handle, ASC.AbilityActorInfo.Get());
+}
+
+void UAgHUDWidget::UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage* Sweep, UTextBlock* Text)
+{
+	float Remaining = 0.f;
+	float Duration = 0.f;
+	FGameplayAbilitySpecHandle Handle;
+	if (const UGameplayAbility* Ability = FindAbility(ASC, AbilityTag, Handle))
+	{
+		Ability->GetCooldownTimeRemainingAndDuration(Handle, ASC.AbilityActorInfo.Get(), Remaining, Duration);
+	}
+	const bool bCoolingDown = Remaining > 0.f && Duration > 0.f;
+	const ESlateVisibility CooldownVisibility = bCoolingDown ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
+
+	if (Sweep)
+	{
+		Sweep->SetVisibility(CooldownVisibility);
+		UMaterialInstanceDynamic* Material = bCoolingDown ? Sweep->GetDynamicMaterial() : nullptr;
+		if (Material)
+		{
+			Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
+		}
+	}
+	if (Text)
+	{
+		Text->SetVisibility(CooldownVisibility);
+		// 1초 이상은 정수, 1초 미만은 소수 한 자리, 둘 다 올림 (전투 HUD '스킬·궁극기 슬롯').
+		const int32 Tenths = FMath::CeilToInt(Remaining * 10.f);
+		const int32 Key = Remaining >= 1.f ? 1000 + FMath::CeilToInt(Remaining) : Tenths;
+		if (bCoolingDown && Key != ShownCooldownKey)
+		{
+			ShownCooldownKey = Key;
+			FNumberFormattingOptions OneDecimal;
+			OneDecimal.MinimumFractionalDigits = 1;
+			OneDecimal.MaximumFractionalDigits = 1;
+			Text->SetText(Remaining >= 1.f ? FText::AsNumber(FMath::CeilToInt(Remaining)) : FText::AsNumber(Tenths / 10.f, &OneDecimal));
+		}
+	}
 }
 
 void UAgHUDWidget::SetBarRatio(UProgressBar* Bar, float Value, float MaxValue)

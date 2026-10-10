@@ -4,6 +4,9 @@
       <stop offset="0" stop-color="#3a4553"/>
       <stop offset="1" stop-color="#2a323d"/>
     </linearGradient>
+    <clipPath id="skillSlotInside">
+      <rect x="1670" y="914" width="92" height="92" rx="10"/>
+    </clipPath>
   </defs>
 
   <!-- 게임 화면 배경 (임시) -->
@@ -69,6 +72,9 @@
   <g font-size="14" fill="#FFFFFF" text-anchor="middle">
     <rect x="1668" y="912" width="96" height="96" rx="12" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.7" stroke-width="3"/>
     <rect x="1680" y="924" width="72" height="72" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <!-- 쿨다운 표시: 남은 비율만큼 덮개, 경계는 위쪽 가운데부터 시계 방향으로 돎 -->
+    <path d="M1716 960 L1763.02 1024.72 A80 80 0 1 1 1716 880 Z" fill="#FFFFFF" fill-opacity="0.35" clip-path="url(#skillSlotInside)"/>
+    <text x="1716" y="971" font-size="32" font-weight="700" stroke="#000000" stroke-width="3" paint-order="stroke">3</text>
     <text x="1757" y="1002" font-size="20" text-anchor="end">30</text>
     <text x="1716" y="1028" font-size="20">E</text>
 
@@ -80,6 +86,7 @@
     <text x="1824" y="1028" font-size="20">R</text>
   </g>
 
+  <text x="1652" y="980" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 슬롯: 쿨다운 중인 모습</text>
   <text x="1652" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
 
   <!-- 번호 표시 -->

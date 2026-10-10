@@ -9,9 +9,11 @@
 class AAgBossCharacter;
 class AAgPlayerCharacter;
 class UAbilitySystemComponent;
+class UGameplayAbility;
 class UImage;
 class UProgressBar;
 class UTextBlock;
+struct FGameplayAbilitySpecHandle;
 struct FGameplayTag;
 
 /**
@@ -61,7 +63,7 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> PlayerMPText;
 
-	/** 스킬 슬롯, dimmed while the skill can't be used. */
+	/** 스킬 슬롯, dimmed while the skill's MP cost can't be paid. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> SkillSlot;
 
@@ -73,7 +75,15 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> SkillCostText;
 
-	/** 궁극기 슬롯, dimmed while the ultimate can't be used. The UP gauge is outside it and never dims. */
+	/** 스킬 슬롯: 쿨다운 표시의 원형 표시. Its material covers the slot by the remaining share of the cooldown. Outside SkillSlot, so it never dims. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UImage> SkillCooldownSweep;
+
+	/** 스킬 슬롯: 쿨다운 표시의 숫자 (remaining cooldown). Outside SkillSlot, so it never dims. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> SkillCooldownText;
+
+	/** 궁극기 슬롯, dimmed while UP isn't full. The UP gauge is outside it and never dims. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> UltimateSlot;
 
@@ -136,8 +146,14 @@ private:
 	void UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime);
 	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);
 
-	/** Whether the ability with AbilityTag passes its own cost and cooldown checks (사용할 수 없는 슬롯: MP·UP 부족, 쿨다운 중). */
-	static bool CanUseAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
+	/** The granted ability with AbilityTag and its spec handle, or null. */
+	static const UGameplayAbility* FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
+
+	/** Whether the ability passes its own cost check (흐린 슬롯: MP·UP 부족). */
+	static bool CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
+
+	/** 쿨다운 표시: the remaining share and time of the ability's cooldown, hidden while it is ready. */
+	void UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage* Sweep, UTextBlock* Text);
 
 	static void SetBarRatio(UProgressBar* Bar, float Value, float MaxValue);
 	void SetSlotUsable(UWidget* SlotWidget, bool bUsable) const;
@@ -154,6 +170,7 @@ private:
 	FLinearColor PPColor = FLinearColor::White;
 
 	int32 ShownSkillCost = INDEX_NONE;
+	int32 ShownCooldownKey = INDEX_NONE;
 	FIntPoint ShownHP = FIntPoint(INDEX_NONE, INDEX_NONE);
 	FIntPoint ShownMP = FIntPoint(INDEX_NONE, INDEX_NONE);
 	FHPTrail PlayerTrail;
