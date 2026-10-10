@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Woogle. All Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -23,8 +23,11 @@ public class Ag : ModuleRules
 			"GameplayTags",
 			"GameplayTasks",
 			"CommonUI",
+			"CommonInput",
 			"MotionWarping",
-			"TargetingSystem"
+			"TargetingSystem",
+			"DeveloperSettings",
+			"SlateCore"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
