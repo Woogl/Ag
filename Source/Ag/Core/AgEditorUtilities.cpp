@@ -57,7 +57,7 @@ bool UAgEditorUtilities::SetMontageSegments(UAnimMontage* Montage, FName SlotNam
 		AnimSegment.SetAnimReference(Segment.Animation, /*bInitialize*/ true);
 		AnimSegment.AnimStartTime = Segment.StartTime;
 		AnimSegment.AnimEndTime = Segment.EndTime > 0.f ? Segment.EndTime : Segment.Animation->GetPlayLength();
-		AnimSegment.AnimPlayRate = 1.f;
+		AnimSegment.AnimPlayRate = FMath::Max(Segment.PlayRate, UE_KINDA_SMALL_NUMBER);
 		AnimSegment.LoopingCount = 1;
 		AnimSegment.StartPos = Position;
 		Position += AnimSegment.GetLength();

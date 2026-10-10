@@ -26,6 +26,10 @@ struct FAgMontageSegment
 	/** 0 plays to the end of the animation. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
 	float EndTime = 0.f;
+
+	/** How fast this piece plays; below 1 it lasts longer in the montage (A1's slowed 예비 동작). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (ClampMin = 0.01))
+	float PlayRate = 1.f;
 };
 
 /** One montage section: where it starts and which section plays after it. */
