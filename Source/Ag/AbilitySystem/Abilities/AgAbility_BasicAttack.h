@@ -7,7 +7,7 @@
 #include "AgAbility_BasicAttack.generated.h"
 
 /**
- * 평타: a combo of up to four hits, each its own action.
+ * 평타: a combo with one hit per BasicAttack entry in the character data, each its own action.
  * Pressing attack during a hit's recovery (후딜) starts the next hit (after the last, the first again). The combo resets
  * when a recovery ends without input, or when another action or a knockback/down cancels it.
  */
