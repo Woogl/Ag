@@ -20,7 +20,7 @@ class UAgAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
-	/** Copies the blend spaces, airborne loop and blend times from the character data. */
+	/** Copies the blend spaces and airborne loop from the character data. */
 	void ApplyCharacterData();
 
 protected:
@@ -38,18 +38,6 @@ protected:
 	/** From the character data. */
 	UPROPERTY(BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
-
-	/** From the character data. The guard blend's True Blend Time. */
-	UPROPERTY(BlueprintReadOnly, Category = "Blend")
-	float GuardBlendInTime = 0.f;
-
-	/** From the character data. The guard blend's False Blend Time. */
-	UPROPERTY(BlueprintReadOnly, Category = "Blend")
-	float GuardBlendOutTime = 0.f;
-
-	/** From the character data. Both blend times of the airborne blend. */
-	UPROPERTY(BlueprintReadOnly, Category = "Blend")
-	float AirborneBlendTime = 0.f;
 
 	/** Horizontal speed (cm/s). */
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")

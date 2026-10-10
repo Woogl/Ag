@@ -23,9 +23,6 @@ void UAgAnimInstance::ApplyCharacterData()
 		MoveBlendSpace = Data->MoveBlendSpace;
 		GuardMoveBlendSpace = Data->GuardMoveBlendSpace;
 		AirborneAnimation = Data->AirborneAnimation;
-		GuardBlendInTime = Data->GuardBlendInTime;
-		GuardBlendOutTime = Data->GuardBlendOutTime;
-		AirborneBlendTime = Data->AirborneBlendTime;
 	}
 }
 

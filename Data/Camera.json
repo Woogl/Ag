@@ -1,8 +1,4 @@
 {
-  "Distance": 400,
-  "PivotHeight": 60,
-  "FieldOfView": 90,
-  "FollowLagTime": 0.1,
   "LockOnPitchMin": -10,
   "LockOnPitchMax": 35,
   "LockOnLookDown": 15,

@@ -14,7 +14,8 @@ class UStaticMeshComponent;
 /**
  * A6 검기 (보스 사양 'A6', '검기'): flies along the ground in a straight line and judges the player once, then flies on
  * through. It vanishes when it touches a wall, reaches its range, or its shooter dies; other changes to the shooter don't
- * stop it. The look (mesh, material) is set on the blueprint; size, speed and range come at launch.
+ * stop it. The hit box size (폭, 높이) and the look (mesh, material) are set on the blueprint; speed and range come at
+ * launch.
  */
 UCLASS(Abstract)
 class AAgSwordWave : public AActor
@@ -24,21 +25,18 @@ class AAgSwordWave : public AActor
 public:
 	AAgSwordWave();
 
-	/**
-	 * Starts the wave from Location toward Direction (horizontal). Size is the hit box (depth along the flight, width,
-	 * height from the ground); Location is on the ground.
-	 */
-	void Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange, const FVector& Size);
+	/** Starts the wave toward Direction (horizontal). It was spawned on the ground; the box rises to stand on it. */
+	void Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange);
 
 protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	/** The attack box, its bottom on the ground. Only used for queries. */
+	/** The attack box, its bottom on the ground. Only used for queries. X is the depth along the flight, Y the width. */
 	UPROPERTY(VisibleAnywhere, Category = "Sword Wave")
 	TObjectPtr<UBoxComponent> HitBox;
 
-	/** The look, fitted to the box size at launch. */
+	/** The look, placed over the box on the blueprint. */
 	UPROPERTY(VisibleAnywhere, Category = "Sword Wave")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 

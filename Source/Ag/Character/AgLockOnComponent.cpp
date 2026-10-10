@@ -10,6 +10,7 @@
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
 
 namespace
 {
@@ -127,8 +128,8 @@ void UAgLockOnComponent::UpdateCamera(float DeltaTime)
 		return;
 	}
 
-	// 구도: from the camera pivot toward the lock-on point, pitch limited, then tilted further down.
-	const FVector Pivot = Player->GetActorLocation() + FVector(0.f, 0.f, CameraData->PivotHeight);
+	// 구도: from the camera pivot (the spring arm's origin) toward the lock-on point, pitch limited, then tilted further down.
+	const FVector Pivot = Player->GetCameraBoom()->GetComponentLocation();
 	FRotator Goal = (GetLockOnPoint() - Pivot).Rotation();
 	Goal.Pitch = FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), CameraData->LockOnPitchMin, CameraData->LockOnPitchMax) - CameraData->LockOnLookDown;
 	Goal.Roll = 0.f;

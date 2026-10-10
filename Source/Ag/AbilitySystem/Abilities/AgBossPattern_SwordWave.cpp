@@ -55,8 +55,7 @@ void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	if (AAgSwordWave* Wave = GetWorld()->SpawnActor<AAgSwordWave>(Data->SwordWaveClass, Location, Direction.Rotation(), SpawnParameters))
 	{
-		const FVector Size(Data->SwordWaveDepth, Data->SwordWaveWidth, Data->SwordWaveHeight);
-		Wave->Launch(Boss, Pattern->Hits[WaveIndex], Direction, Data->SwordWaveSpeed, Data->SwordWaveRange, Size);
+		Wave->Launch(Boss, Pattern->Hits[WaveIndex], Direction, Data->SwordWaveSpeed, Data->SwordWaveRange);
 	}
 	++WaveIndex;
 }

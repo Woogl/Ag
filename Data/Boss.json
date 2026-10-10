@@ -21,9 +21,6 @@
   "WeaponEdgeStart": { "X": 0, "Y": 0, "Z": 0 },
   "WeaponEdgeEnd": { "X": 0, "Y": -127.07886505126953, "Z": 0 },
   "WeaponEdgeRadius": 8,
-  "GuardBlendInTime": 0,
-  "GuardBlendOutTime": 0,
-  "AirborneBlendTime": 0.1,
   "Abilities": [
     "/Script/Ag.AgAbility_Groggy",
     "/Script/Ag.AgAbility_PhaseTransition",
@@ -277,9 +274,6 @@
   "BackstepChance": 0.3,
   "SwordWaveSpeed": 1500,
   "SwordWaveRange": 2000,
-  "SwordWaveWidth": 200,
-  "SwordWaveHeight": 100,
-  "SwordWaveDepth": 40,
   "LockOnBone": "spine_05",
   "DisplayName": "커스터",
   "ExecutionPromptBone": "head"

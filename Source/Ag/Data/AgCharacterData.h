@@ -117,18 +117,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Weapon", meta = (Units = "cm", ClampMin = 0))
 	float WeaponEdgeRadius = 0.f;
 
-	/** Blend into the guard locomotion when the guard starts. The spec gives no number; an implementation value. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Animation", meta = (Units = "s", ClampMin = 0))
-	float GuardBlendInTime = 0.f;
-
-	/** Blend back to the normal locomotion when the guard ends. The spec gives no number; an implementation value. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Animation", meta = (Units = "s", ClampMin = 0))
-	float GuardBlendOutTime = 0.f;
-
-	/** Blend into the airborne loop and back out on landing. The spec gives no number; an implementation value. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Animation", meta = (Units = "s", ClampMin = 0))
-	float AirborneBlendTime = 0.f;
-
 	/** Abilities granted at the start: actions, reactions, death. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> Abilities;
@@ -502,7 +490,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "B1 Backstep", meta = (ClampMin = 0, ClampMax = 1))
 	float BackstepChance = 0.f;
 
-	/** A6 검기: the projectile (BP_SwordWave). */
+	/** A6 검기: the projectile (BP_SwordWave). Its hit box (폭, 높이) and look are set on the blueprint. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|A6 Sword Wave")
 	TSubclassOf<AAgSwordWave> SwordWaveClass;
 
@@ -513,18 +501,6 @@ public:
 	/** A6 검기: 최대 사거리 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
 	float SwordWaveRange = 0.f;
-
-	/** A6 검기: 폭 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
-	float SwordWaveWidth = 0.f;
-
-	/** A6 검기: 높이, from the ground. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
-	float SwordWaveHeight = 0.f;
-
-	/** A6 검기: thickness along its flight. The spec gives no number; an implementation value. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
-	float SwordWaveDepth = 0.f;
 
 	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. The lock-on marker shows there too. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On")

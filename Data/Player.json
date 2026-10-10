@@ -21,9 +21,6 @@
   "WeaponEdgeStart": { "X": 0, "Y": 45, "Z": 0 },
   "WeaponEdgeEnd": { "X": 0, "Y": -43, "Z": 0 },
   "WeaponEdgeRadius": 3,
-  "GuardBlendInTime": 0.15,
-  "GuardBlendOutTime": 0.15,
-  "AirborneBlendTime": 0.1,
   "Abilities": [
     "/Script/Ag.AgAbility_BasicAttack",
     "/Script/Ag.AgAbility_Dodge",

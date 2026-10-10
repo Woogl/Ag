@@ -8,7 +8,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/OverlapResult.h"
-#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 
 AAgSwordWave::AAgSwordWave()
@@ -28,7 +27,7 @@ AAgSwordWave::AAgSwordWave()
 	Mesh->SetCastShadow(false);
 }
 
-void AAgSwordWave::Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange, const FVector& Size)
+void AAgSwordWave::Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange)
 {
 	Shooter = InShooter;
 	Hit = InHit;
@@ -38,20 +37,7 @@ void AAgSwordWave::Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit
 	Traveled = 0.f;
 
 	// The box stands on the ground, facing its flight.
-	const FVector Extent = Size * 0.5f;
-	HitBox->SetBoxExtent(Extent);
-	SetActorLocationAndRotation(GetActorLocation() + FVector(0.f, 0.f, Extent.Z), FlightDirection.Rotation());
-
-	// The mesh is stretched over the box, whatever its own size and pivot.
-	const UStaticMesh* StaticMesh = Mesh->GetStaticMesh();
-	const FBox Bounds = StaticMesh ? StaticMesh->GetBoundingBox() : FBox(ForceInit);
-	const FVector MeshSize = Bounds.GetSize();
-	if (MeshSize.X > 0.f && MeshSize.Y > 0.f && MeshSize.Z > 0.f)
-	{
-		const FVector Scale = Size / MeshSize;
-		Mesh->SetRelativeScale3D(Scale);
-		Mesh->SetRelativeLocation(-Bounds.GetCenter() * Scale);
-	}
+	SetActorLocationAndRotation(GetActorLocation() + FVector(0.f, 0.f, HitBox->GetScaledBoxExtent().Z), FlightDirection.Rotation());
 }
 
 void AAgSwordWave::Tick(float DeltaSeconds)

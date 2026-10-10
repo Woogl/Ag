@@ -17,7 +17,8 @@ enum class EAgCameraShake : uint8
 };
 
 /**
- * Camera.json: the values of the 카메라 spec (구현 계획서 '데이터').
+ * Camera.json: the 락온 카메라 and 셰이크 values of the 카메라 spec (구현 계획서 '데이터'). The 자유 시점 values are
+ * set on BP_AgPlayer's spring arm and camera.
  * Every field is Transient and comes from the data file (AgDataFile); UAgSettings holds the one object.
  */
 UCLASS(BlueprintType)
@@ -26,22 +27,6 @@ class UAgCameraData : public UObject
 	GENERATED_BODY()
 
 public:
-	/** 자유 시점: 카메라 거리 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Free", meta = (Units = "cm", ClampMin = 0))
-	float Distance = 0.f;
-
-	/** 자유 시점: 회전 중심 높이 (캐릭터 캡슐 중심에서 위로) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Free", meta = (Units = "cm"))
-	float PivotHeight = 0.f;
-
-	/** 자유 시점: 시야각 (FOV) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Free", meta = (Units = "deg", ClampMin = 5, ClampMax = 170))
-	float FieldOfView = 90.f;
-
-	/** 자유 시점: 위치 추적의 따라잡는 시간. 0 follows without delay. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Free", meta = (Units = "s", ClampMin = 0))
-	float FollowLagTime = 0.f;
-
 	/** 락온 카메라 '구도': lowest pitch of the direction from the pivot to the lock-on point (negative looks down). */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "deg"))
 	float LockOnPitchMin = 0.f;

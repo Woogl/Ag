@@ -14,7 +14,6 @@
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Core/AgSettings.h"
-#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -48,8 +47,6 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 void AAgPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	ApplyCameraData();
 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
@@ -104,26 +101,6 @@ void AAgPlayerCharacter::Tick(float DeltaSeconds)
 		MoveReleased();
 	}
 #endif
-}
-
-void AAgPlayerCharacter::ApplyCameraData()
-{
-	const UAgCameraData* CameraData = UAgSettings::Get()->GetCameraData();
-	if (!CameraData)
-	{
-		UE_LOG(LogAg, Error, TEXT("Camera data is not set (Project Settings > Game > Ag)."));
-		return;
-	}
-
-	CameraBoom->TargetArmLength = CameraData->Distance;
-	CameraBoom->SetRelativeLocation(FVector(0.f, 0.f, CameraData->PivotHeight));
-
-	// The arm lags exponentially; the follow lag time is its time constant (about 63% caught up after that time).
-	CameraBoom->bEnableCameraLag = CameraData->FollowLagTime > 0.f;
-	CameraBoom->CameraLagSpeed = CameraBoom->bEnableCameraLag ? 1.f / CameraData->FollowLagTime : 0.f;
-	CameraBoom->bEnableCameraRotationLag = false;
-
-	FollowCamera->SetFieldOfView(CameraData->FieldOfView);
 }
 
 void AAgPlayerCharacter::NotifyControllerChanged()
@@ -553,13 +530,6 @@ void AAgPlayerCharacter::StartRegen()
 		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_SPRegenGuarding::StaticClass(), AgGameplayTags::Data_SP, Data->SPRegenRateGuarding);
 		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_SprintSPCost::StaticClass(), AgGameplayTags::Data_SP, -Data->SprintSPCost);
 	}
-}
-
-void AAgPlayerCharacter::HandleDataReloaded()
-{
-	Super::HandleDataReloaded();
-
-	ApplyCameraData();
 }
 
 void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)

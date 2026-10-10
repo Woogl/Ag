@@ -39,6 +39,9 @@ public:
 
 	UAgLockOnComponent* GetLockOn() const { return LockOn; }
 
+	/** The camera's spring arm. Its origin is the camera's 회전 중심. */
+	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
 	/** The direction the movement keys point, relative to the camera (zero without movement input). */
 	FVector GetMoveInputDirection() const { return MoveInputDirection; }
 
@@ -64,13 +67,9 @@ protected:
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void StartRegen() override;
-	virtual void HandleDataReloaded() override;
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:
-	/** Applies Camera.json's 자유 시점 values to the spring arm and camera. */
-	void ApplyCameraData();
-
 	void Move(const FInputActionValue& Value);
 
 	/** 점프: moving after a standing landing ends the landing motion. */
@@ -129,7 +128,10 @@ private:
 	/** 자원 회복: any SP use restarts the SP regen delay, a longer one when SP reaches 0. */
 	void HandleSPChanged(const FOnAttributeChangeData& Data);
 
-	/** Pulls the camera in when terrain blocks it (카메라 '카메라 충돌'). */
+	/**
+	 * 카메라 '자유 시점': distance, pivot height and follow lag are set on BP_AgPlayer, like the camera's FOV.
+	 * Pulls the camera in when terrain blocks it (카메라 '카메라 충돌').
+	 */
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
