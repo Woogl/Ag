@@ -420,6 +420,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
 	float UnblockableFlashLead = 0.f;
 
+	/** 공격 속성과 예고: the 예고 섬광 starts this long before a parryable attack window. */
+	UPROPERTY(EditDefaultsOnly, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
+	float ParryFlashLead = 0.f;
+
 	/** A3 돌진 규칙: 속도 */
 	UPROPERTY(EditDefaultsOnly, Category = "A3 Dash", meta = (Units = "cm/s", ClampMin = 0))
 	float DashSpeed = 0.f;

@@ -53,20 +53,41 @@ protected:
 	/** Montage times at which unguardable hits start (for the 붉은 섬광). By default, their attack windows. */
 	virtual void GetUnguardableHitStarts(TArray<float>& OutTimes) const;
 
+	/** Montage times at which parryable hits start (for the 예고 섬광). By default, their attack windows. */
+	virtual void GetParryableHitStarts(TArray<float>& OutTimes) const;
+
 	/** Montage time of the first gameplay event notify with EventTag, or a negative value. */
 	float FindEventNotifyTime(const FGameplayTag& EventTag) const;
+
+	/** Montage times of every gameplay event notify with EventTag, in order. */
+	void FindEventNotifyTimes(const FGameplayTag& EventTag, TArray<float>& OutTimes) const;
+
+	/** 예고 섬광 on the weapon, for a hit that isn't a montage window (A4's landing). */
+	void SetParryFlash(bool bOn);
 
 private:
 	/** How far the montage's own root motion moves forward before the first attack window. */
 	static float GetForwardTravelBeforeFirstWindow(const UAnimMontage* Montage);
 
+	/** Shows a flash from Lead (montage time) before each hit start until the hit starts. */
+	void ScheduleFlashes(const TArray<float>& HitStarts, float Lead, bool bParryFlash);
+
 	void SetFlash(bool bOn);
+
+	/** Turns a weapon flash cue on or off; bActive tracks whether it is on. */
+	void SetWeaponFlash(const FGameplayTag& Cue, bool& bActive, bool bOn);
 
 	UFUNCTION()
 	void HandleFlashStart();
 
 	UFUNCTION()
 	void HandleFlashEnd();
+
+	UFUNCTION()
+	void HandleParryFlashStart();
+
+	UFUNCTION()
+	void HandleParryFlashEnd();
 
 	UFUNCTION()
 	void HandleMontageFinished();
@@ -78,4 +99,5 @@ private:
 	TObjectPtr<UAnimMontage> Montage;
 
 	bool bFlashing = false;
+	bool bParryFlashing = false;
 };

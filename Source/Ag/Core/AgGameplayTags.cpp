@@ -103,6 +103,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Hit, "GameplayCue.Hit", "피격 이펙트");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Parry, "GameplayCue.Parry", "패리 전용 이펙트");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UnblockableFlash, "GameplayCue.UnblockableFlash", "붉은 섬광");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_ParryFlash, "GameplayCue.ParryFlash", "예고 섬광");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_CameraShake_Small, "GameplayCue.CameraShake.Small", "카메라 셰이크 작음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_CameraShake_Medium, "GameplayCue.CameraShake.Medium", "카메라 셰이크 보통");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_CameraShake_Large, "GameplayCue.CameraShake.Large", "카메라 셰이크 큼");

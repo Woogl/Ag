@@ -25,6 +25,9 @@ private:
 	void SetRotationLocked(bool bLocked);
 
 	UFUNCTION()
+	void HandleParryFlashTime();
+
+	UFUNCTION()
 	void HandleRotationStop();
 
 	UFUNCTION()

@@ -116,6 +116,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Hit);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableFlash);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryFlash);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Small);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Medium);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Large);

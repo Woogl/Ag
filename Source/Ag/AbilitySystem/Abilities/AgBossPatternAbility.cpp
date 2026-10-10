@@ -122,23 +122,38 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
 
-	// 붉은 섬광: from the lead before each unguardable hit until its attack window starts. The lead is in seconds at
-	// phase 1 speed; in montage time it is the same in both phases because phase 2 shortens both by the same ratio.
+	// 붉은 섬광 before each unguardable hit, 예고 섬광 before each parryable one, until its attack window starts. The
+	// leads are in seconds at phase 1 speed; in montage time they are the same in both phases because phase 2 shortens
+	// both by the same ratio.
 	TArray<float> HitStarts;
 	GetUnguardableHitStarts(HitStarts);
-	const float LeadInMontageTime = Data->UnblockableFlashLead * Data->PatternPlayRate;
-	for (const float HitStart : HitStarts)
-	{
-		UAgAbilityTask_WaitMontagePosition* FlashStart = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, FMath::Max(0.f, HitStart - LeadInMontageTime));
-		FlashStart->OnReached.AddDynamic(this, &ThisClass::HandleFlashStart);
-		FlashStart->ReadyForActivation();
-
-		UAgAbilityTask_WaitMontagePosition* FlashEnd = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, HitStart);
-		FlashEnd->OnReached.AddDynamic(this, &ThisClass::HandleFlashEnd);
-		FlashEnd->ReadyForActivation();
-	}
+	ScheduleFlashes(HitStarts, Data->UnblockableFlashLead * Data->PatternPlayRate, /*bParryFlash*/ false);
+	HitStarts.Reset();
+	GetParryableHitStarts(HitStarts);
+	ScheduleFlashes(HitStarts, Data->ParryFlashLead * Data->PatternPlayRate, /*bParryFlash*/ true);
 
 	OnPatternStarted();
+}
+
+void UAgBossPatternAbility::ScheduleFlashes(const TArray<float>& HitStarts, float Lead, bool bParryFlash)
+{
+	for (const float HitStart : HitStarts)
+	{
+		UAgAbilityTask_WaitMontagePosition* FlashStart = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, FMath::Max(0.f, HitStart - Lead));
+		UAgAbilityTask_WaitMontagePosition* FlashEnd = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, HitStart);
+		if (bParryFlash)
+		{
+			FlashStart->OnReached.AddDynamic(this, &ThisClass::HandleParryFlashStart);
+			FlashEnd->OnReached.AddDynamic(this, &ThisClass::HandleParryFlashEnd);
+		}
+		else
+		{
+			FlashStart->OnReached.AddDynamic(this, &ThisClass::HandleFlashStart);
+			FlashEnd->OnReached.AddDynamic(this, &ThisClass::HandleFlashEnd);
+		}
+		FlashStart->ReadyForActivation();
+		FlashEnd->ReadyForActivation();
+	}
 }
 
 void UAgBossPatternAbility::GetUnguardableHitStarts(TArray<float>& OutTimes) const
@@ -155,6 +170,39 @@ void UAgBossPatternAbility::GetUnguardableHitStarts(TArray<float>& OutTimes) con
 		{
 			OutTimes.Add(Notify.GetTriggerTime());
 		}
+	}
+}
+
+void UAgBossPatternAbility::GetParryableHitStarts(TArray<float>& OutTimes) const
+{
+	const FAgBossPattern* Pattern = GetPattern();
+	if (!Montage || !Pattern)
+	{
+		return;
+	}
+	for (const FAnimNotifyEvent& Notify : Montage->Notifies)
+	{
+		const UAgAnimNotifyState_AttackWindow* Window = Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass);
+		if (Window && Pattern->Hits.IsValidIndex(Window->HitIndex) && Pattern->Hits[Window->HitIndex].bParryable)
+		{
+			OutTimes.Add(Notify.GetTriggerTime());
+		}
+	}
+}
+
+void UAgBossPatternAbility::FindEventNotifyTimes(const FGameplayTag& EventTag, TArray<float>& OutTimes) const
+{
+	if (Montage)
+	{
+		for (const FAnimNotifyEvent& Notify : Montage->Notifies)
+		{
+			const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
+			if (Event && Event->EventTag == EventTag)
+			{
+				OutTimes.Add(Notify.GetTriggerTime());
+			}
+		}
+		OutTimes.Sort();
 	}
 }
 
@@ -190,25 +238,36 @@ float UAgBossPatternAbility::GetForwardTravelBeforeFirstWindow(const UAnimMontag
 
 void UAgBossPatternAbility::SetFlash(bool bOn)
 {
+	SetWeaponFlash(AgGameplayTags::GameplayCue_UnblockableFlash, bFlashing, bOn);
+}
+
+void UAgBossPatternAbility::SetParryFlash(bool bOn)
+{
+	SetWeaponFlash(AgGameplayTags::GameplayCue_ParryFlash, bParryFlashing, bOn);
+}
+
+void UAgBossPatternAbility::SetWeaponFlash(const FGameplayTag& Cue, bool& bActive, bool bOn)
+{
 	AAgCharacterBase* Boss = GetAgCharacter();
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (bFlashing == bOn || !Boss || !ASC)
+	if (bActive == bOn || !Boss || !ASC)
 	{
 		return;
 	}
-	bFlashing = bOn;
+	bActive = bOn;
 	if (bOn)
 	{
 		FGameplayCueParameters Parameters;
 		Parameters.Instigator = Boss;
 		Parameters.EffectCauser = Boss;
 		Parameters.TargetAttachComponent = Boss->GetWeaponComponent();
-		ASC->AddGameplayCue(AgGameplayTags::GameplayCue_UnblockableFlash, Parameters);
+		ASC->AddGameplayCue(Cue, Parameters);
 	}
 	else
 	{
-		ASC->RemoveGameplayCue(AgGameplayTags::GameplayCue_UnblockableFlash);
+		ASC->RemoveGameplayCue(Cue);
 	}
+	UE_LOG(LogAg, Verbose, TEXT("%s %s"), *Cue.ToString(), bOn ? TEXT("on") : TEXT("off"));
 }
 
 void UAgBossPatternAbility::HandleFlashStart()
@@ -219,6 +278,16 @@ void UAgBossPatternAbility::HandleFlashStart()
 void UAgBossPatternAbility::HandleFlashEnd()
 {
 	SetFlash(false);
+}
+
+void UAgBossPatternAbility::HandleParryFlashStart()
+{
+	SetParryFlash(true);
+}
+
+void UAgBossPatternAbility::HandleParryFlashEnd()
+{
+	SetParryFlash(false);
 }
 
 void UAgBossPatternAbility::HandleMontageFinished()
@@ -234,6 +303,7 @@ void UAgBossPatternAbility::HandleMontageCancelled()
 void UAgBossPatternAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	SetFlash(false);
+	SetParryFlash(false);
 	if (AAgCharacterBase* Boss = GetAgCharacter())
 	{
 		Boss->ClearActiveAttack();

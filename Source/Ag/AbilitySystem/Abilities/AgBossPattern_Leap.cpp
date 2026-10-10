@@ -63,6 +63,23 @@ void UAgBossPattern_Leap::OnPatternStarted()
 		SetRotationLocked(true);
 	}
 
+	// 예고 섬광: the lead before the landing, until it lands (the same phase 2 rule).
+	const FAgBossPattern* Pattern = GetPattern();
+	if (Pattern && !Pattern->Hits.IsEmpty() && Pattern->Hits[0].bParryable)
+	{
+		const float FlashTime = (Data->LeapAirTime - Data->ParryFlashLead) / Boss->GetPatternSpeed();
+		if (FlashTime > 0.f)
+		{
+			UAbilityTask_WaitDelay* FlashTask = UAbilityTask_WaitDelay::WaitDelay(this, FlashTime);
+			FlashTask->OnFinish.AddDynamic(this, &ThisClass::HandleParryFlashTime);
+			FlashTask->ReadyForActivation();
+		}
+		else
+		{
+			SetParryFlash(true);
+		}
+	}
+
 	UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
 	LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
 	LandTask->ReadyForActivation();
@@ -79,6 +96,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	}
 	bLanded = true;
 	SetRotationLocked(false);
+	SetParryFlash(false);
 
 	if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
 	{
@@ -98,6 +116,14 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	if (Player && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Data->LeapHitRadius && HeightGap <= Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.f)
 	{
 		UAgCombatLibrary::ProcessHit(Boss, Player, Pattern->Hits[0], Boss->GetActorLocation());
+	}
+}
+
+void UAgBossPattern_Leap::HandleParryFlashTime()
+{
+	if (!bLanded)
+	{
+		SetParryFlash(true);
 	}
 }
 
