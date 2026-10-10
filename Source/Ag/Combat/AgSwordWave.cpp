@@ -79,9 +79,9 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 		End = WallHit.Location;
 	}
 
-	// A character the box reaches is judged once, when the wave first reaches it. The box sweeps the whole way it moves
-	// this tick, so a long frame can't skip a character. Invincibility lets the wave pass that character for good, even if
-	// it is still inside when the invincibility ends; the wave keeps flying.
+	// A character the box reaches is judged once, when the wave first reaches it, and the wave flies on through whatever
+	// the result (hit, guard, parry, or invincible). The box sweeps the whole way it moves this tick, so a long frame
+	// can't skip a character.
 	TArray<FHitResult> Reached;
 	const FCollisionShape Box = FCollisionShape::MakeBox(HitBox->GetScaledBoxExtent());
 	GetWorld()->SweepMultiByObjectType(Reached, Start, End, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Box, QueryParams);
@@ -94,12 +94,7 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 		}
 		TouchedActors.Add(Target);
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
-		const EAgHitResult Result = UAgCombatLibrary::ProcessHit(ShooterCharacter, Target, Hit, HitLocation, this);
-		if (Result == EAgHitResult::Hit || Result == EAgHitResult::Guard || Result == EAgHitResult::GuardBreak || Result == EAgHitResult::Parry)
-		{
-			Destroy();
-			return;
-		}
+		UAgCombatLibrary::ProcessHit(ShooterCharacter, Target, Hit, HitLocation, this);
 	}
 
 	if (bHitWall)

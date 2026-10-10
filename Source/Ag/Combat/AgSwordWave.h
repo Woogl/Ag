@@ -12,9 +12,9 @@ class UBoxComponent;
 class UStaticMeshComponent;
 
 /**
- * A6 검기 (보스 사양 'A6', '검기'): flies along the ground in a straight line and hits the player once.
- * It vanishes when it hits, is guarded or parried, touches a wall, reaches its range, or its shooter dies; other changes
- * to the shooter don't stop it. The look (mesh, material) is set on the blueprint; size, speed and range come at launch.
+ * A6 검기 (보스 사양 'A6', '검기'): flies along the ground in a straight line and judges the player once, then flies on
+ * through. It vanishes when it touches a wall, reaches its range, or its shooter dies; other changes to the shooter don't
+ * stop it. The look (mesh, material) is set on the blueprint; size, speed and range come at launch.
  */
 UCLASS(Abstract)
 class AAgSwordWave : public AActor
