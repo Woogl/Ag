@@ -1,12 +1,10 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "Core/AgEditorUtilities.h"
+#include "AgAssetToolset.h"
 
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/Skeleton.h"
-
-#if WITH_EDITOR
 #include "Animation/WidgetAnimation.h"
 #include "Blueprint/WidgetTree.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -15,11 +13,8 @@
 #include "Tracks/MovieSceneFloatTrack.h"
 #include "UMGEditorProjectSettings.h"
 #include "WidgetBlueprint.h"
-#endif
 
-#if WITH_EDITOR
-
-bool UAgEditorUtilities::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName GroupName)
+bool UAgAssetToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName GroupName)
 {
 	if (!Skeleton || SlotName.IsNone() || GroupName.IsNone())
 	{
@@ -34,7 +29,7 @@ bool UAgEditorUtilities::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName
 	return Skeleton->GetSlotGroupName(SlotName) == GroupName;
 }
 
-bool UAgEditorUtilities::SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments)
+bool UAgAssetToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments)
 {
 	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Segments.IsEmpty())
 	{
@@ -76,7 +71,7 @@ bool UAgEditorUtilities::SetMontageSegments(UAnimMontage* Montage, FName SlotNam
 	return true;
 }
 
-bool UAgEditorUtilities::SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections)
+bool UAgAssetToolset::SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections)
 {
 	if (!Montage || Sections.IsEmpty())
 	{
@@ -106,7 +101,7 @@ bool UAgEditorUtilities::SetMontageSections(UAnimMontage* Montage, const TArray<
 	return true;
 }
 
-bool UAgEditorUtilities::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName, FName WidgetName, float Duration, float StartOpacity, float EndOpacity)
+bool UAgAssetToolset::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName, FName WidgetName, float Duration, float StartOpacity, float EndOpacity)
 {
 	UWidget* Widget = (WidgetBlueprint && WidgetBlueprint->WidgetTree) ? WidgetBlueprint->WidgetTree->FindWidget(WidgetName) : nullptr;
 	if (!Widget || AnimationName.IsNone() || Duration <= 0.f)
@@ -148,7 +143,7 @@ bool UAgEditorUtilities::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FNa
 	return true;
 }
 
-bool UAgEditorUtilities::RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName)
+bool UAgAssetToolset::RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName)
 {
 	if (!WidgetBlueprint || AnimationName.IsNone())
 	{
@@ -175,5 +170,3 @@ bool UAgEditorUtilities::RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint
 	}
 	return bRemoved;
 }
-
-#endif

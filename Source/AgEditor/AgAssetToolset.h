@@ -3,8 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
-#include "AgEditorUtilities.generated.h"
+#include "UObject/Object.h"
+#include "ToolsetRegistry/ToolsetDefinition.h"
+#include "AgAssetToolset.generated.h"
 
 class UAnimMontage;
 class UAnimSequenceBase;
@@ -50,37 +51,49 @@ struct FAgMontageSection
 };
 
 /**
- * Editor setup helpers for asset scripts (Python): engine settings the editor exposes only through its UI.
- * Not part of the game; the functions exist in editor builds only.
+ * Asset edits that the engine's MCP tools and editor Python can't make: montage sections, montage segments together
+ * with the montage length, skeleton slot groups, widget animations. Registered as an MCP toolset by the AgEditor module.
+ * Changed assets are left unsaved; save them with the asset tools.
  */
-UCLASS()
-class UAgEditorUtilities : public UBlueprintFunctionLibrary
+UCLASS(Hidden)
+class UAgAssetToolset : public UToolsetDefinition
 {
 	GENERATED_BODY()
 
 public:
-#if WITH_EDITOR
-	/** Puts a montage slot in its own slot group on the skeleton, so montages in different groups don't stop each other. */
-	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	/**
+	 * Puts a montage slot in its own slot group on the skeleton, so montages in different groups don't stop each other.
+	 * @return False if an argument is missing or the slot didn't end up in the group.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName GroupName);
 
-	/** Replaces the montage's track with the segments played back to back, in the given slot. */
-	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	/**
+	 * Replaces the montage's track with the segments played back to back, in the given slot.
+	 * Sections that would start past the new end move to the start.
+	 * @param Segments StartTime and EndTime are times in the segment's animation.
+	 * @return False if the montage has no slot track, Segments is empty or a segment has no animation.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments);
 
-	/** Replaces the montage's sections and their order (for example a looping middle section). */
-	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	/**
+	 * Replaces the montage's sections and their order (for example a looping middle section).
+	 * @param Sections StartTime is a time in the montage.
+	 * @return False if Sections is empty or a section name repeats.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections);
 
 	/**
 	 * Creates or replaces the widget animation AnimationName: WidgetName's render opacity goes from StartOpacity to
-	 * EndOpacity over Duration seconds in a straight line. The editor tools can't make widget animations.
+	 * EndOpacity over Duration seconds in a straight line.
+	 * @return False if the widget isn't in the widget tree or Duration isn't positive.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName, FName WidgetName, float Duration, float StartOpacity, float EndOpacity);
 
 	/** Deletes the widget animation AnimationName the way the widget designer does. False if there was none. */
-	UFUNCTION(BlueprintCallable, Category = "Ag|Editor")
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName);
-#endif
 };
