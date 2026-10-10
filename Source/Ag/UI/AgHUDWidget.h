@@ -6,11 +6,17 @@
 #include "CommonActivatableWidget.h"
 #include "AgHUDWidget.generated.h"
 
-class AAgCharacterBase;
+class AAgBossCharacter;
+class AAgPlayerCharacter;
+class UAbilitySystemComponent;
+class UImage;
 class UProgressBar;
+class UTextBlock;
+struct FGameplayTag;
 
 /**
  * Combat HUD (전투 HUD). Parent of WBP_HUD: the layout lives in the widget, this class only feeds it values.
+ * The parts shown in the world (lock-on marker, execution prompt, damage numbers) are on the boss.
  * While it is active, input goes to the game only and the cursor is hidden (게임 플로우 'Boss Stage').
  */
 UCLASS(Abstract)
@@ -19,19 +25,72 @@ class UAgHUDWidget : public UCommonActivatableWidget
 	GENERATED_BODY()
 
 protected:
+	virtual void NativeConstruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+	/** 플레이어 상태: SP 바, shown only while SP is below MaxSP. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UProgressBar> PlayerSPBar;
 
 	/** 플레이어 상태: HP 바 */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> PlayerHPBar;
 
+	/** 플레이어 상태: MP 바 */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UProgressBar> PlayerMPBar;
+
+	/** 스킬 슬롯, dimmed while the skill can't be used. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UWidget> SkillSlot;
+
+	/** 스킬 슬롯: the skill's MP cost. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> SkillCostText;
+
+	/** 궁극기 슬롯, dimmed while the ultimate can't be used. The UP gauge is outside it and never dims. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UWidget> UltimateSlot;
+
+	/** 궁극기 슬롯: UP 게이지. Its material fills the slot border by the UP ratio. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UImage> UltimateGauge;
+
+	/** 보스 상태: 보스 이름 */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> BossNameText;
+
 	/** 보스 상태: HP 바 */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> BossHPBar;
 
-private:
-	static void SetHPRatio(UProgressBar* Bar, const AAgCharacterBase* Character);
+	/** 보스 상태: PP 바. Its fill color in the designer is the normal color. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UProgressBar> BossPPBar;
 
-	TWeakObjectPtr<AAgCharacterBase> Boss;
+	/** 보스 상태: the PP bar color during groggy, while the bar refills over the groggy time. */
+	UPROPERTY(EditAnywhere, Category = "HUD")
+	FLinearColor GroggyPPColor = FLinearColor::White;
+
+	/** 스킬·궁극기 슬롯: opacity of a slot that can't be used. */
+	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
+	float DisabledSlotOpacity = 1.f;
+
+private:
+	void UpdatePlayer(const AAgPlayerCharacter& Player);
+	void UpdateBoss(const AAgBossCharacter& BossCharacter);
+
+	/** Whether the ability with AbilityTag passes its own cost and cooldown checks (사용할 수 없는 슬롯: MP·UP 부족, 쿨다운 중). */
+	static bool CanUseAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
+
+	static void SetBarRatio(UProgressBar* Bar, float Value, float MaxValue);
+	void SetSlotUsable(UWidget* SlotWidget, bool bUsable) const;
+
+	TWeakObjectPtr<AAgBossCharacter> Boss;
+
+	/** The PP bar's fill color from the designer. */
+	FLinearColor PPColor = FLinearColor::White;
+
+	int32 ShownSkillCost = INDEX_NONE;
 };

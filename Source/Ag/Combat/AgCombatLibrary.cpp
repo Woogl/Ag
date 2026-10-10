@@ -9,6 +9,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
+#include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgTimeSubsystem.h"
@@ -173,6 +174,12 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 		// 일반 피격
 		const int32 PPDamage = CanLosePP(Target) ? CalculatePPDamage(SourceStats->GetATK(), Hit.PoiseMultiplier, TargetStats->GetDEF()) : 0;
 		ApplyStatChange(Attacker, Target, -HPDamage, -PPDamage);
+
+		// 전투 HUD '대미지 숫자': the HP the boss lost, where the attack touched it. The player's damage shows no number.
+		if (const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Target))
+		{
+			Boss->ShowDamageNumber(HPDamage, HitLocation, Hit.bLargeDamageNumber);
+		}
 	}
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, result %d, HP now %.0f, PP now %.0f, SP now %.0f, attacker PP now %.0f"),
 		*Attacker->GetName(), *Target->GetName(), static_cast<int32>(Result), TargetStats->GetHP(), TargetStats->GetPP(), TargetStats->GetSP(), SourceStats->GetPP());

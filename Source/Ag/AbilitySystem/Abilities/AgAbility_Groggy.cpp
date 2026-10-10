@@ -10,7 +10,7 @@
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Character/AgCharacterBase.h"
+#include "Character/AgBossCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
@@ -90,6 +90,10 @@ void UAgAbility_Groggy::StartGroggy()
 	const int32 EndSection = Montage->GetSectionIndex(GroggyEndSection);
 	const float EndLength = EndSection != INDEX_NONE ? Montage->GetSectionLength(EndSection) : 0.f;
 	MontageTask = PlayMontage(Data->GroggyMontage);
+	if (AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter()))
+	{
+		Boss->SetGroggyTimerRunning(true);
+	}
 	EndSectionTask = UAbilityTask_WaitDelay::WaitDelay(this, FMath::Max(0.f, Rules->GroggyDuration - EndLength));
 	EndSectionTask->OnFinish.AddDynamic(this, &ThisClass::HandleEndSectionDue);
 	EndSectionTask->ReadyForActivation();
@@ -184,6 +188,10 @@ void UAgAbility_Groggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 		{
 			Boss->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 		}
+	}
+	if (AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter()))
+	{
+		Boss->SetGroggyTimerRunning(false);
 	}
 	MontageTask = nullptr;
 	EndSectionTask = nullptr;

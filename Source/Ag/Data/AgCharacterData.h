@@ -415,9 +415,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
 	float LeapHitRadius = 0.f;
 
-	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. */
+	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. The lock-on marker shows there too. */
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
 	FName LockOnBone;
+
+	/** 이름, shown in 전투 HUD '보스 상태'. */
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	FText DisplayName;
+
+	/** 전투 HUD '처형 안내': the prompt shows above this bone (보스 머리 위). */
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	FName ExecutionPromptBone;
 
 	/** Pattern montages, by pattern ID. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages", meta = (Categories = "Ability.Boss.Pattern"))

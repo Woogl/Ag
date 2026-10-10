@@ -2,16 +2,21 @@
 
 #include "Character/AgBossCharacter.h"
 
+#include "AbilitySystem/Abilities/AgAbility_Execution.h"
 #include "AbilitySystem/Abilities/AgBossPatternAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Character/AgLockOnComponent.h"
+#include "Character/AgPlayerCharacter.h"
+#include "Components/WidgetComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/AgDamageNumber.h"
 
 AAgBossCharacter::AAgBossCharacter()
 {
@@ -21,6 +26,33 @@ AAgBossCharacter::AAgBossCharacter()
 	// The boss turns toward the player by itself, not toward where it walks.
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	// Screen space: the widgets keep their own size at any distance. They attach to the data's bones on BeginPlay.
+	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
+	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
+	for (UWidgetComponent* WorldWidget : { LockOnMarker.Get(), ExecutionPrompt.Get() })
+	{
+		WorldWidget->SetupAttachment(GetMesh());
+		WorldWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		WorldWidget->SetDrawAtDesiredSize(true);
+		WorldWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WorldWidget->SetGenerateOverlapEvents(false);
+		WorldWidget->SetHiddenInGame(true);
+	}
+
+	// The prompt stands on its bone: 보스 머리 위.
+	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
+}
+
+void AAgBossCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData()))
+	{
+		LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->LockOnBone);
+		ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->ExecutionPromptBone);
+	}
 }
 
 void AAgBossCharacter::GrantAbilities()
@@ -73,11 +105,42 @@ float AAgBossCharacter::GetMoveSpeedMultiplier() const
 	return (Data && Phase >= 2) ? Data->Phase2MOVMultiplier : 1.f;
 }
 
+void AAgBossCharacter::SetGroggyTimerRunning(bool bRunning)
+{
+	GroggyStartTime = bRunning ? GetWorld()->GetTimeSeconds() : -1.0;
+}
+
+float AAgBossCharacter::GetGroggyElapsedTime() const
+{
+	return GroggyStartTime >= 0.0 ? static_cast<float>(GetWorld()->GetTimeSeconds() - GroggyStartTime) : -1.f;
+}
+
+void AAgBossCharacter::ShowDamageNumber(int32 Amount, const FVector& Location, bool bLarge) const
+{
+	AAgDamageNumber::Spawn(GetWorld(), DamageNumberWidget, Location, Amount, bLarge);
+}
+
 void AAgBossCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
 	UpdateRotation(DeltaSeconds);
+	UpdateWorldWidgets();
+}
+
+void AAgBossCharacter::UpdateWorldWidgets()
+{
+	// Both hide from the moment either death presentation starts, and during 처형.
+	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	const bool bInCombat = Player && !Player->IsDead() && !IsDead()
+		&& !GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed);
+
+	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOn()->GetTarget() == this));
+
+	// 처형 발동 조건 1 and 2 (groggy, in range). Shown even while the player's current action holds off the execution key.
+	// The range check runs a targeting query, so it only runs during groggy.
+	const bool bGroggy = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && UAgAbility_Execution::FindExecutableBoss(Player) == this));
 }
 
 void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
