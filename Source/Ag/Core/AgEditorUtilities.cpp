@@ -115,18 +115,7 @@ bool UAgEditorUtilities::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FNa
 	}
 
 	WidgetBlueprint->Modify();
-
-	// An animation of that name is deleted the way the widget designer deletes one (moved out of the way, then forgotten).
-	for (int32 Index = WidgetBlueprint->Animations.Num() - 1; Index >= 0; --Index)
-	{
-		UWidgetAnimation* Existing = WidgetBlueprint->Animations[Index];
-		if (Existing && Existing->GetFName() == AnimationName)
-		{
-			Existing->Rename(nullptr, GetTransientPackage());
-			WidgetBlueprint->Animations.RemoveAt(Index);
-		}
-	}
-	WidgetBlueprint->OnVariableRemoved(AnimationName);
+	RemoveWidgetAnimation(WidgetBlueprint, AnimationName);
 
 	// Set up like a new animation made in the widget designer.
 	UWidgetAnimation* Animation = NewObject<UWidgetAnimation>(WidgetBlueprint, AnimationName, RF_Transactional);
@@ -157,6 +146,34 @@ bool UAgEditorUtilities::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FNa
 	WidgetBlueprint->OnVariableAdded(Animation->GetFName());
 	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(WidgetBlueprint);
 	return true;
+}
+
+bool UAgEditorUtilities::RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName)
+{
+	if (!WidgetBlueprint || AnimationName.IsNone())
+	{
+		return false;
+	}
+
+	// Moved out of the way so the name is free again, then forgotten.
+	WidgetBlueprint->Modify();
+	bool bRemoved = false;
+	for (int32 Index = WidgetBlueprint->Animations.Num() - 1; Index >= 0; --Index)
+	{
+		UWidgetAnimation* Existing = WidgetBlueprint->Animations[Index];
+		if (Existing && Existing->GetFName() == AnimationName)
+		{
+			Existing->Rename(nullptr, GetTransientPackage());
+			WidgetBlueprint->Animations.RemoveAt(Index);
+			bRemoved = true;
+		}
+	}
+	WidgetBlueprint->OnVariableRemoved(AnimationName);
+	if (bRemoved)
+	{
+		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(WidgetBlueprint);
+	}
+	return bRemoved;
 }
 
 #endif

@@ -83,7 +83,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Death);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PhaseTransition);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodge);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodgeSucceeded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BasicAttackStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackWindowEnded);

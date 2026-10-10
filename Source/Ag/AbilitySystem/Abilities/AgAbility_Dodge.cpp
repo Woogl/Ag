@@ -6,7 +6,6 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
-#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Character/AgPlayerCharacter.h"
@@ -137,11 +136,6 @@ void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 	{
 		TimeSubsystem->StartSlowMotion(Data->SlowMotionSpeed, Data->SlowMotionDuration);
 	}
-
-	// The HUD plays the 극한 회피 screen effect.
-	FGameplayEventData SucceededPayload;
-	SucceededPayload.EventTag = AgGameplayTags::Event_PerfectDodgeSucceeded;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Character, AgGameplayTags::Event_PerfectDodgeSucceeded, SucceededPayload);
 }
 
 void UAgAbility_Dodge::HandleMontageFinished()
