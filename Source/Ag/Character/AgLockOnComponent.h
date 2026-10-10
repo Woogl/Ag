@@ -48,4 +48,8 @@ private:
 	void UpdateCamera(float DeltaTime);
 
 	TWeakObjectPtr<AAgBossCharacter> Target;
+
+	/** The camera's turning speeds (degrees per second). Each lock-on starts from rest. */
+	float PitchRate = 0.f;
+	float YawRate = 0.f;
 };
