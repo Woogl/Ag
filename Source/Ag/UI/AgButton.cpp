@@ -49,7 +49,8 @@ void UAgButton::HandleFocusLost()
 {
 	Super::HandleFocusLost();
 
-	SetIsSelected(false, false);
+	// Only the focused button stays selected. SetIsSelected(false) deselects only toggleable buttons, so it would leave this one selected.
+	ClearSelection();
 }
 
 void UAgButton::NativeOnSelected(bool bBroadcast)
