@@ -85,32 +85,28 @@ struct FAgPlayerAttack
 	float TargetingRange = 0.f;
 };
 
-/** One boss pattern (보스 사양 '패턴 목록', '거리 구간별 가중치', '패턴 상세'). */
+/** 보스 패턴 하나 (보스 사양 '패턴 목록', '거리 구간별 가중치', '패턴 상세') */
 USTRUCT(BlueprintType)
 struct FAgBossPattern
 {
 	GENERATED_BODY()
 
-	/** Pattern ID. The pattern's montage, ability and cooldown tag are found in DA_Boss by this tag. */
+	/** 패턴 ID. 이 태그로 DA_Boss에서 패턴의 몽타주, 어빌리티, 쿨다운 태그를 찾습니다. */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Categories = "Ability.Boss.Pattern"))
 	FGameplayTag Pattern;
 
-	/** One entry per attack window, in montage order. */
+	/** 판정 구간마다 하나씩, 몽타주 순서대로 */
 	UPROPERTY(EditAnywhere, Category = "Pattern")
 	TArray<FAgAttackHit> Hits;
 
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "s", ClampMin = 0))
 	float Cooldown = 0.f;
 
-	/** 페이즈: usable in phase 1. */
-	UPROPERTY(EditAnywhere, Category = "Pattern")
-	bool bPhase1 = true;
+	/** 페이즈: 이 패턴을 쓸 수 있는 페이즈 번호. 비어 있으면 어느 페이즈에서도 쓰지 않습니다. */
+	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (ClampMin = 1))
+	TArray<int32> Phases;
 
-	/** 페이즈: usable in phase 2. */
-	UPROPERTY(EditAnywhere, Category = "Pattern")
-	bool bPhase2 = true;
-
-	/** 거리 구간별 가중치 (근거리). 0 leaves the pattern out of that band. */
+	/** 거리 구간별 가중치 (근거리). 0이면 그 구간의 후보에서 빠집니다. */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (ClampMin = 0))
 	float WeightNear = 0.f;
 
@@ -122,7 +118,7 @@ struct FAgBossPattern
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (ClampMin = 0))
 	float WeightFar = 0.f;
 
-	/** 보스 사양 '이동': during the first hit's windup the boss closes in on the stop distance (A1, A5). */
+	/** 보스 사양 '이동': 1타 선딜 동안 정지 간격까지 추가로 다가갑니다 (A1, A5). */
 	UPROPERTY(EditAnywhere, Category = "Pattern")
 	bool bApproachFirstHit = false;
 };

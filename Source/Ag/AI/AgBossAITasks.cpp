@@ -196,8 +196,7 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgBossPattern> 
 		// 거리 구간: NearDistance까지 근거리, FarDistance까지 중거리, 그보다 멀면 원거리
 		const FAgBossPattern& Pattern = Patterns[Index];
 		const float Weight = Distance <= NearDistance ? Pattern.WeightNear : (Distance <= FarDistance ? Pattern.WeightMid : Pattern.WeightFar);
-		const bool bPhaseAllowed = Phase >= 2 ? Pattern.bPhase2 : Pattern.bPhase1;
-		if (Weight > 0.f && bPhaseAllowed && IsReady(Pattern))
+		if (Weight > 0.f && Pattern.Phases.Contains(Phase) && IsReady(Pattern))
 		{
 			OutIndices.Add(Index);
 			OutWeights.Add(Weight);

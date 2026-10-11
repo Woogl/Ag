@@ -51,25 +51,24 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAgPatternCandidatesTest, "Ag.Boss.PatternCandi
 bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 {
 	// 보스 사양 '패턴 선택' 1. '패턴 목록'과 '거리 구간별 가중치' 표를 테스트 데이터로 씁니다.
-	auto MakePattern = [](float Near, float Mid, float Far, bool bPhase1)
+	auto MakePattern = [](float Near, float Mid, float Far, TArray<int32> Phases)
 	{
 		FAgBossPattern Pattern;
 		Pattern.WeightNear = Near;
 		Pattern.WeightMid = Mid;
 		Pattern.WeightFar = Far;
-		Pattern.bPhase1 = bPhase1;
-		Pattern.bPhase2 = true;
+		Pattern.Phases = MoveTemp(Phases);
 		return Pattern;
 	};
 	const TArray<FAgBossPattern> Patterns = {
-		MakePattern(40.f, 0.f, 0.f, true),    // A1
-		MakePattern(30.f, 0.f, 0.f, true),    // A2
-		MakePattern(0.f, 40.f, 60.f, true),   // A3
-		MakePattern(0.f, 40.f, 40.f, false),  // A4, 2페이즈 전용
-		MakePattern(40.f, 0.f, 0.f, false),   // A5, 2페이즈 전용
-		MakePattern(0.f, 20.f, 60.f, false),  // A6, 2페이즈 전용
-		MakePattern(30.f, 0.f, 0.f, true),    // A7
-		MakePattern(0.f, 0.f, 0.f, true),     // B1: 가중치가 없고, 자기 발동 조건으로 시작합니다
+		MakePattern(40.f, 0.f, 0.f, { 1, 2 }),   // A1
+		MakePattern(30.f, 0.f, 0.f, { 1, 2 }),   // A2
+		MakePattern(0.f, 40.f, 60.f, { 1, 2 }),  // A3
+		MakePattern(0.f, 40.f, 40.f, { 2 }),     // A4, 2페이즈 전용
+		MakePattern(40.f, 0.f, 0.f, { 2 }),      // A5, 2페이즈 전용
+		MakePattern(0.f, 20.f, 60.f, { 2 }),     // A6, 2페이즈 전용
+		MakePattern(30.f, 0.f, 0.f, { 1, 2 }),   // A7
+		MakePattern(0.f, 0.f, 0.f, { 1, 2 }),    // B1: 가중치가 없고, 자기 발동 조건으로 시작합니다
 	};
 	constexpr float NearDistance = 300.f;
 	constexpr float FarDistance = 1000.f;
