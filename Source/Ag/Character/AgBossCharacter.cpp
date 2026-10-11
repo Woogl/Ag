@@ -13,6 +13,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 AAgBossCharacter::AAgBossCharacter()
@@ -155,11 +156,13 @@ AAgCharacterBase* AAgBossCharacter::GetTarget() const
 
 void AAgBossCharacter::UpdateWorldWidgets()
 {
-	// 둘 다 어느 쪽이든 사망 연출이 시작되는 순간부터, 그리고 처형 중에 숨깁니다. 플레이어 화면에 관한 것이라 AI의 대상이 아니라
-	// 로컬 플레이어를 기준으로 합니다.
+	// 둘 다 어느 쪽이든 사망 연출이 시작되는 순간부터, 처형 중에, 그리고 궁극기 컷신(플레이어 컨트롤러의 시네마틱 모드) 동안
+	// 숨깁니다. 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
 	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	const bool bInCombat = Player && !Player->IsDead() && !IsDead()
-		&& !GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed);
+		&& !GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed)
+		&& !(PlayerController && PlayerController->bCinematicMode);
 
 	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOn()->GetTarget() == this));
 

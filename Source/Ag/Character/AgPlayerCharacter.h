@@ -11,6 +11,7 @@ class UAgLockOnComponent;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
+class UPostProcessComponent;
 class USpringArmComponent;
 struct FAbilityEndedData;
 struct FInputActionValue;
@@ -30,8 +31,8 @@ public:
 	 */
 	AAgCharacterBase* FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const;
 
-	/** 다른 조건 없이 Range 안에서 가장 가까운 적입니다. */
-	AAgCharacterBase* FindEnemy(float Range) const;
+	/** 대상 찾기: TP_Enemy가 모은 후보 가운데 적대 관계이고 살아 있고, 캡슐 중심 사이 수평 거리가 Range 안인 적 모두입니다. */
+	TArray<AAgCharacterBase*> FindEnemies(float Range) const;
 
 	/** 공격 중 이동의 대상은 거리와 관계없이 가장 가까운 적입니다. 타겟팅 범위는 공격 중 이동 태스크가 공격마다 따집니다. */
 	virtual AAgCharacterBase* FindAttackTarget() const override;
@@ -108,6 +109,9 @@ private:
 	/** 자원 회복: any SP use restarts the SP regen delay, a longer one when SP reaches 0. */
 	void HandleSPChanged(const FOnAttributeChangeData& Data);
 
+	/** 시간 정지 동안 화면을 흑백으로 합니다. */
+	void HandleTimeStopChanged(bool bStopped);
+
 	/**
 	 * 카메라 '자유 시점': distance, pivot height and follow lag are set on BP_AgPlayer, like the camera's FOV.
 	 * Pulls the camera in when terrain blocks it (카메라 '카메라 충돌').
@@ -120,6 +124,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Lock-On")
 	TObjectPtr<UAgLockOnComponent> LockOn;
+
+	/** 플레이어 사양 '시간 정지'의 화면 흑백. 흑백 설정은 BP_AgPlayer에 두고, 코드는 시간 정지 동안 가중치만 1로 올립니다. */
+	UPROPERTY(VisibleAnywhere, Category = "Time Stop")
+	TObjectPtr<UPostProcessComponent> TimeStopScreen;
 
 	/** IMC_Ag: the key layout of 플레이어 입력 '키 배치'. */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")

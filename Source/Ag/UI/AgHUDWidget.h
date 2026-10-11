@@ -184,6 +184,12 @@ private:
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 
+	/** 사망 연출로 StatusPanel을 숨겼습니다. 궁극기 컷신과 달리 다시 표시하지 않습니다. */
+	bool bStatusHidden = false;
+
+	/** WBP_HUD에 정한 StatusPanel의 표시 방식. 궁극기 컷신이 끝나면 되돌립니다. */
+	ESlateVisibility StatusPanelVisibility = ESlateVisibility::SelfHitTestInvisible;
+
 	int32 ShownSkillCost = INDEX_NONE;
 	int32 ShownCooldownKey = INDEX_NONE;
 	FIntPoint ShownHP = FIntPoint(INDEX_NONE, INDEX_NONE);

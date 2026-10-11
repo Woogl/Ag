@@ -9,6 +9,8 @@
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Character/AgLockOnComponent.h"
+#include "Combat/AgTimeSubsystem.h"
+#include "Components/PostProcessComponent.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -41,6 +43,11 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	LockOn = CreateDefaultSubobject<UAgLockOnComponent>(TEXT("LockOn"));
+
+	TimeStopScreen = CreateDefaultSubobject<UPostProcessComponent>(TEXT("TimeStopScreen"));
+	TimeStopScreen->SetupAttachment(RootComponent);
+	TimeStopScreen->bUnbound = true;
+	TimeStopScreen->BlendWeight = 0.f;
 }
 
 void AAgPlayerCharacter::BeginPlay()
@@ -58,6 +65,7 @@ void AAgPlayerCharacter::BeginPlay()
 	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandleSPChanged);
 	LockOn->OnLockOnChanged.AddUObject(this, &ThisClass::UpdateRotationMode);
 	UpdateRotationMode();
+	GetWorld()->GetSubsystem<UAgTimeSubsystem>()->OnTimeStopChanged.AddUObject(this, &ThisClass::HandleTimeStopChanged);
 }
 
 void AAgPlayerCharacter::Tick(float DeltaSeconds)
@@ -501,12 +509,29 @@ AActor* AAgPlayerCharacter::GetFallbackFacingTarget() const
 
 AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const
 {
+	// 기획서의 거리는 수평 거리라, 프리셋의 정렬(3D 거리)을 따르지 않고 가장 가까운 적을 직접 고릅니다.
+	AAgCharacterBase* Nearest = nullptr;
+	float NearestDistance = Range;
+	for (AAgCharacterBase* Enemy : FindEnemies(Range))
+	{
+		const float Distance = UAgCombatLibrary::GetHorizontalDistance(this, Enemy);
+		if (Distance <= NearestDistance && Condition(*Enemy))
+		{
+			Nearest = Enemy;
+			NearestDistance = Distance;
+		}
+	}
+	return Nearest;
+}
+
+TArray<AAgCharacterBase*> AAgPlayerCharacter::FindEnemies(float Range) const
+{
 	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
 	UTargetingSubsystem* Targeting = UTargetingSubsystem::Get(GetWorld());
 	if (!Data->EnemyTargeting || !Targeting)
 	{
 		UE_LOG(LogAg, Error, TEXT("Enemy targeting preset is not set (DA_Player > EnemyTargeting)."));
-		return nullptr;
+		return {};
 	}
 
 	FTargetingSourceContext Source;
@@ -518,22 +543,19 @@ AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(c
 	Targeting->GetTargetingResultsActors(Request, Candidates);
 	UTargetingSubsystem::ReleaseTargetRequestHandle(Request);
 
-	// 기획서의 거리는 수평 거리라, 프리셋의 정렬(3D 거리)을 따르지 않고 가장 가까운 적을 직접 고릅니다.
-	AAgCharacterBase* Nearest = nullptr;
-	float NearestDistance = Range;
+	TArray<AAgCharacterBase*> Enemies;
 	for (AActor* Candidate : Candidates)
 	{
 		AAgCharacterBase* Enemy = Cast<AAgCharacterBase>(Candidate);
-		if (!Enemy || Enemy->IsDead() || !UAgCombatLibrary::AreHostile(this, Enemy))
+		if (Enemy && !Enemy->IsDead() && UAgCombatLibrary::AreHostile(this, Enemy) && UAgCombatLibrary::GetHorizontalDistance(this, Enemy) <= Range)
 		{
-			continue;
-		}
-		const float Distance = UAgCombatLibrary::GetHorizontalDistance(this, Enemy);
-		if (Distance <= NearestDistance && Condition(*Enemy))
-		{
-			Nearest = Enemy;
-			NearestDistance = Distance;
+			Enemies.Add(Enemy);
 		}
 	}
-	return Nearest;
+	return Enemies;
+}
+
+void AAgPlayerCharacter::HandleTimeStopChanged(bool bStopped)
+{
+	TimeStopScreen->BlendWeight = bStopped ? 1.f : 0.f;
 }

@@ -13,6 +13,7 @@ class UAgGameplayAbility;
 class UAgEffect_Regen;
 class UAnimMontage;
 class UAnimSequenceBase;
+class ULevelSequence;
 class UBlendSpace;
 class UGameplayAbility;
 class UStateTree;
@@ -264,9 +265,37 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Skill", meta = (Units = "s", ClampMin = 0))
 	float SkillCooldown = 0.f;
 
-	/** 궁극기 (난무) */
+	/** 궁극기 (심판): 마무리의 1타 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
-	FAgPlayerAttack Ultimate;
+	FAgPlayerAttackHit UltimateHit;
+
+	/** 궁극기: 범위 (플레이어와 적의 캡슐 중심 사이 수평 거리) */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (Units = "cm", ClampMin = 0))
+	float UltimateRadius = 0.f;
+
+	/** 베기 선: 개수 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (ClampMin = 0))
+	int32 UltimateSlashCount = 0;
+
+	/** 베기 선: 위치. 카메라가 보는 쪽으로 플레이어 앞 이 거리 안 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
+	FFloatInterval UltimateSlashDistance = FFloatInterval(0.f, 0.f);
+
+	/** 베기 선: 위치. 바닥에서 이 높이 안 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
+	FFloatInterval UltimateSlashHeight = FFloatInterval(0.f, 0.f);
+
+	/** 슬로우모션: 궁극기 마무리 적중의 속도 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (ClampMin = 0.01, ClampMax = 1))
+	float UltimateSlowMotionSpeed = 1.f;
+
+	/** 슬로우모션: 궁극기 마무리 적중의 지속 시간 (실제 시간) */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (Units = "s", ClampMin = 0))
+	float UltimateSlowMotionDuration = 0.f;
+
+	/** 궁극기 컷신(LS_UltimateCutscene). 카메라만 담고, 플레이어 위치·방향을 기준으로 재생합니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Ultimate")
+	TObjectPtr<ULevelSequence> UltimateCutscene;
 
 	/** 처형. The targeting range is the 처형 타겟팅 범위. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Execution")
@@ -355,9 +384,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> LandMontage;
 
-	/** 궁극기: montages played one after another, each blended into the next. */
+	/**
+	 * 궁극기: 섹션 Start(발도 자세) → Hold(기다림, 반복) → Judgment(칼 넣기) → Draw(칼 뽑기). 컷신이 끝나면 Judgment로 넘기고,
+	 * Judgment가 끝나는 순간의 노티파이(Event.UltimateFinish)가 마무리입니다.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TArray<TObjectPtr<UAnimMontage>> UltimateMontages;
+	TObjectPtr<UAnimMontage> UltimateMontage;
 
 	/** 처형 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")

@@ -14,6 +14,7 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "EngineUtils.h"
+#include "GameFramework/PlayerController.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -27,6 +28,8 @@ namespace
 void UAgHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+	StatusPanelVisibility = StatusPanel->GetVisibility();
 
 	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로, 이미지를 넣기 전까지 숨깁니다.
 	for (UImage* Icon : { SkillIconImage.Get(), UltimateIconImage.Get() })
@@ -83,6 +86,7 @@ void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
 
 void UAgHUDWidget::HideStatus()
 {
+	bStatusHidden = true;
 	StatusPanel->SetVisibility(ESlateVisibility::Collapsed);
 }
 
@@ -94,6 +98,11 @@ TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
 void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	// 상황별 표시 규칙 '궁극기 컷신': 컷신은 재생 설정으로 플레이어 컨트롤러를 시네마틱 모드로 두므로, 그동안 숨깁니다.
+	const APlayerController* PlayerController = GetOwningPlayer();
+	const bool bCutscene = PlayerController && PlayerController->bCinematicMode;
+	StatusPanel->SetVisibility(bStatusHidden || bCutscene ? ESlateVisibility::Collapsed : StatusPanelVisibility);
 
 	// 잔상은 게임 시간으로 흘러 슬로우모션에 함께 느려집니다.
 	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();

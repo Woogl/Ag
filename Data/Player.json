@@ -135,48 +135,21 @@
   },
   "SkillMPCost": 30,
   "SkillCooldown": 3,
-  "Ultimate": {
-    "Hits": [
-      {
-        "DamageMultiplier": 2,
-        "PoiseMultiplier": 3,
-        "HitReaction": "Flinch",
-        "bGuardable": true,
-        "bParryable": true,
-        "MPCharge": 0,
-        "UPCharge": 0
-      },
-      {
-        "DamageMultiplier": 2,
-        "PoiseMultiplier": 3,
-        "HitReaction": "Flinch",
-        "bGuardable": true,
-        "bParryable": true,
-        "MPCharge": 0,
-        "UPCharge": 0
-      },
-      {
-        "DamageMultiplier": 2,
-        "PoiseMultiplier": 3,
-        "HitReaction": "Flinch",
-        "bGuardable": true,
-        "bParryable": true,
-        "MPCharge": 0,
-        "UPCharge": 0
-      },
-      {
-        "DamageMultiplier": 4,
-        "PoiseMultiplier": 6,
-        "HitReaction": "KnockBack",
-        "bGuardable": true,
-        "bParryable": true,
-        "MPCharge": 0,
-        "UPCharge": 0
-      }
-    ],
-    "TargetingRange": 450,
-    "MaxApproachDistance": 40
+  "UltimateHit": {
+    "DamageMultiplier": 5,
+    "PoiseMultiplier": 5,
+    "HitReaction": "KnockBack",
+    "bGuardable": true,
+    "bParryable": true,
+    "MPCharge": 0,
+    "UPCharge": 0
   },
+  "UltimateRadius": 1000,
+  "UltimateSlashCount": 12,
+  "UltimateSlashDistance": { "Min": 300, "Max": 1000 },
+  "UltimateSlashHeight": { "Min": 0, "Max": 300 },
+  "UltimateSlowMotionSpeed": 0.3,
+  "UltimateSlowMotionDuration": 0.8,
   "Execution": {
     "Hits": [
       {

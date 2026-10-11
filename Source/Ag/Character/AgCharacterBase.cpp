@@ -229,7 +229,19 @@ void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
 void AAgCharacterBase::HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	// 멈춘 동안 다시 맞으면 태그가 하나 더 붙고, 마지막 것이 끝날 때 풀립니다.
-	CustomTimeDilation = NewCount > 0 ? HitstopTimeDilation : 1.f;
+	UpdateTimeDilation();
+}
+
+void AAgCharacterBase::SetTimeCompensation(float Compensation)
+{
+	TimeCompensation = Compensation;
+	UpdateTimeDilation();
+}
+
+void AAgCharacterBase::UpdateTimeDilation()
+{
+	const bool bHitstop = AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Hitstop);
+	CustomTimeDilation = (bHitstop ? HitstopTimeDilation : 1.f) * TimeCompensation;
 }
 
 void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration)

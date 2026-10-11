@@ -92,6 +92,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_DownGrounded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_RecoveryStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ExecutionBlow);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_UltimateFinish);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_SwordWave);
@@ -131,6 +132,8 @@ namespace AgGameplayTags
 	// GameplayCues for effects and camera shakes.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Hit);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Parry);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateFinish);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateSlashes);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_DamageNumber);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryTelegraph);

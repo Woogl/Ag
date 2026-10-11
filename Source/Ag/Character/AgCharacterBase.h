@@ -111,6 +111,9 @@ public:
 	/** HP를 0으로 만드는 GE를 적용해 사망 판정을 일으킵니다. (Kill Z 낙하, 테스트용 콘솔 명령) */
 	void Kill();
 
+	/** 시간 정지 중에 이 캐릭터만 정상 속도로 돌도록 시간 배율에 곱하는 값. 시간 서브시스템이 정하고, 평소에는 1입니다. */
+	void SetTimeCompensation(float Compensation);
+
 	/** Broadcast once when this character dies. */
 	FAgCharacterDiedSignature OnDied;
 
@@ -160,6 +163,12 @@ private:
 
 	/** 히트스톱 태그가 붙고 빠질 때 이 캐릭터의 시간 배율을 바꿉니다. */
 	void HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount);
+
+	/** 시간 배율 = 히트스톱 배율 × 시간 정지 보정 */
+	void UpdateTimeDilation();
+
+	/** SetTimeCompensation으로 정한 시간 정지 보정 */
+	float TimeCompensation = 1.f;
 
 	/** 무기 판정 캡슐 축의 양 끝(월드 위치) */
 	bool GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const;

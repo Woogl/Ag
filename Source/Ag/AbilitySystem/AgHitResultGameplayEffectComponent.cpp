@@ -11,9 +11,11 @@
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatLibrary.h"
+#include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCameraData.h"
+#include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 
 namespace
@@ -169,12 +171,14 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target);
 	}
 
-	// 적중 후 처리: 이펙트(패리는 패리 이펙트), 카메라 셰이크, 대미지 숫자, 히트스톱, MP·UP 충전.
+	// 적중 후 처리: 이펙트(패리는 패리 이펙트, 궁극기 마무리는 궁극기 마무리 이펙트), 카메라 셰이크, 대미지 숫자, 히트스톱,
+	// 슬로우모션(궁극기 마무리), MP·UP 충전.
+	const bool bUltimate = SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Ultimate);
 	FGameplayCueParameters CueParameters;
 	CueParameters.Location = Context.GetOrigin();
 	CueParameters.Instigator = Attacker;
 	CueParameters.EffectCauser = Causer;
-	TargetASC->ExecuteGameplayCue(bParry ? AgGameplayTags::GameplayCue_Parry : AgGameplayTags::GameplayCue_Hit, CueParameters);
+	TargetASC->ExecuteGameplayCue(bParry ? AgGameplayTags::GameplayCue_Parry : (bUltimate ? AgGameplayTags::GameplayCue_UltimateFinish : AgGameplayTags::GameplayCue_Hit), CueParameters);
 	UAgCombatLibrary::PlayCameraShake(Target, GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>()));
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
@@ -193,6 +197,13 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		{
 			UAgEffect_TimedTag::Apply(Attacker->GetAbilitySystemComponent(), AgGameplayTags::State_Hitstop, HitstopTime);
 		}
+	}
+
+	// 적이 궁극기 마무리에 맞는 순간을 슬로우모션으로 강조합니다. 여러 적이 맞아도 같은 값으로 다시 시작할 뿐입니다.
+	if (bHit && bUltimate)
+	{
+		const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Attacker->GetCharacterData());
+		Target->GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->UltimateSlowMotionSpeed, Data->UltimateSlowMotionDuration);
 	}
 
 	// 일반 피격이면 공격한 쪽이 공격 데이터의 MP·UP를 얻습니다.
