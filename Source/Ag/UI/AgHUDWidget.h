@@ -112,6 +112,10 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> BossPPBar;
 
+	/** 보스 상태: PP 바의 감소 잔상. PP 바 뒤에 둡니다. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UProgressBar> BossPPTrailBar;
+
 	/** 조작 안내: 키 열. 한 줄에 행동 하나의 키를 표시합니다. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> ControlsGuideKeys;
@@ -128,27 +132,27 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;
 
-	/** 감소 잔상: the trail waits this long after HP drops, ... */
-	UPROPERTY(EditAnywhere, Category = "HUD|HP Trail", meta = (Units = "s", ClampMin = 0))
+	/** 감소 잔상: 바가 줄어든 뒤 잔상이 기다리는 시간 */
+	UPROPERTY(EditAnywhere, Category = "HUD|Trail", meta = (Units = "s", ClampMin = 0))
 	float TrailDelay = 0.f;
 
-	/** 감소 잔상: ... then shrinks to the current HP over this time. */
-	UPROPERTY(EditAnywhere, Category = "HUD|HP Trail", meta = (Units = "s", ClampMin = 0))
+	/** 감소 잔상: 기다린 뒤 바의 현재 값까지 줄어드는 시간 */
+	UPROPERTY(EditAnywhere, Category = "HUD|Trail", meta = (Units = "s", ClampMin = 0))
 	float TrailShrinkTime = 0.f;
 
 private:
-	/** 감소 잔상 of one HP bar. */
-	struct FHPTrail
+	/** 바 하나의 감소 잔상 */
+	struct FTrail
 	{
-		/** The trail's current length (0 to 1). */
+		/** 잔상의 현재 길이 (0~1) */
 		float Ratio = 1.f;
-		/** The HP ratio last frame, negative before the first. */
-		float LastHPRatio = -1.f;
-		/** Time left before the trail shrinks. */
+		/** 지난 프레임에 바가 표시한 비율. 첫 프레임 전에는 음수입니다. */
+		float LastBarRatio = -1.f;
+		/** 잔상이 줄어들기 시작할 때까지 남은 시간 */
 		float Wait = 0.f;
-		/** Length when the shrink started. */
+		/** 줄어들기 시작할 때의 길이 */
 		float ShrinkFrom = 1.f;
-		/** Time into the shrink, negative while not shrinking. */
+		/** 줄어들기 시작한 뒤 지난 시간. 줄어들지 않는 동안은 음수입니다. */
 		float ShrinkElapsed = -1.f;
 	};
 
@@ -173,8 +177,8 @@ private:
 	/** Sets '현재값 / 최대값' when the whole numbers change. */
 	static void SetValueText(UTextBlock* Text, float Value, float MaxValue, FIntPoint& ShownValues);
 
-	/** HP dropped: the trail stays (even mid-shrink) and waits again; then it shrinks to the current HP. */
-	void UpdateTrail(FHPTrail& Trail, UProgressBar* TrailBar, float HPRatio, float DeltaTime) const;
+	/** 바가 줄면 잔상은 (줄어드는 중이라도) 그 자리에서 다시 기다린 뒤 바의 현재 값까지 줄어듭니다. */
+	void UpdateTrail(FTrail& Trail, UProgressBar* TrailBar, float BarRatio, float DeltaTime) const;
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 
@@ -182,6 +186,7 @@ private:
 	int32 ShownCooldownKey = INDEX_NONE;
 	FIntPoint ShownHP = FIntPoint(INDEX_NONE, INDEX_NONE);
 	FIntPoint ShownMP = FIntPoint(INDEX_NONE, INDEX_NONE);
-	FHPTrail PlayerTrail;
-	FHPTrail BossTrail;
+	FTrail PlayerHPTrail;
+	FTrail BossHPTrail;
+	FTrail BossPPTrail;
 };
