@@ -3,10 +3,9 @@
 #include "AbilitySystem/Abilities/AgAbility_PhaseTransition.h"
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgEffect_PPRefill.h"
 #include "Ag.h"
 #include "Character/AgBossCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -49,11 +48,10 @@ void UAgAbility_PhaseTransition::ActivateAbility(const FGameplayAbilitySpecHandl
 
 void UAgAbility_PhaseTransition::HandleRoarFinished()
 {
-	// 2. PP refills, and phase 2 starts once the transition ends. (3. The AI waits and picks a phase 2 pattern.)
+	// 2. PP가 가득 차고, 전환이 끝나면 2페이즈가 시작됩니다. (3. AI는 기다렸다가 2페이즈 패턴을 고릅니다.)
+	ApplyGameplayEffectToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), GetDefault<UAgEffect_PPRefill>(), 1.f);
 	if (AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter()))
 	{
-		const UAgAttributeSet* Stats = Boss->GetAttributeSet();
-		UAgCombatLibrary::ApplyStatChange(Boss, Boss, 0.f, Stats->GetMaxPP() - Stats->GetPP());
 		Boss->EnterPhase2();
 	}
 	EndSelf(false);

@@ -50,12 +50,6 @@ public:
 	/** The dodge / sprint key (Shift) is held. */
 	bool IsDodgeHeld() const { return bDodgeHeld; }
 
-	/**
-	 * True once when the guard starts again after a parry motion or a guard pushback with the key held,
-	 * which opens no parry window (플레이어 사양 '패리 구간').
-	 */
-	bool TakeGuardResume();
-
 	virtual void PlayGuardFlinch() override;
 
 protected:
@@ -63,7 +57,6 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	virtual void StartRegen() override;
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:
@@ -73,25 +66,15 @@ private:
 	void StopLandingMotion();
 	void MoveReleased();
 	void Look(const FInputActionValue& Value);
-	void AttackPressed();
-	void GuardPressed();
-	void GuardReleased();
-	void DodgePressed();
-	void DodgeReleased();
-	void JumpPressed();
-	void SkillPressed();
-	void UltimatePressed();
-	void ExecutePressed();
-	void LockOnPressed();
 
-	/** Handles a pressed action key by its input tag (플레이어 입력 '키 배치', '공통 입력 처리'). */
-	void HandleInputPressed(const FGameplayTag& InputTag);
+	/** 누른 행동 키를 입력 태그로 처리합니다(플레이어 입력 '키 배치', '공통 입력 처리'). 입력 바인딩이 태그를 함께 넘깁니다. */
+	void HandleInputPressed(FGameplayTag InputTag);
 
 	/** Runs an action key: a running ability that takes the key gets it, otherwise its action starts if allowed. */
 	void RunInput(const FGameplayTag& InputTag);
 
-	/** Handles a released key (the guard and dodge keys care). */
-	void HandleInputReleased(const FGameplayTag& InputTag);
+	/** 뗀 키를 처리합니다(가드 키와 회피·달리기 키만 봅니다). */
+	void HandleInputReleased(FGameplayTag InputTag);
 
 	/** 선입력: true while action keys aren't allowed (an action before its recovery, the air, a hit reaction). */
 	bool IsActionInputBlocked() const;
@@ -103,9 +86,9 @@ private:
 	/** False while an action motion, a hit reaction, groggy, execution or death ignores movement input. */
 	bool CanMove() const;
 
-	/** 가드 시작: with the guard key held, the guard starts again once an action or a hit reaction ends. */
+	/** 가드 시작: 가드 키를 누른 채 행동이나 피격 반응이 끝나면 가드를 다시 시작합니다. 가드 밀림 뒤에는 패리 구간을 열지 않습니다. */
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
-	void TryResumeGuard();
+	void TryResumeGuard(bool bAfterGuardPushback);
 
 	/** 회피 반격 기회 ends with any action other than moving, or a knockback or down. */
 	void HandleAbilityActivated(UGameplayAbility* Ability);
@@ -184,7 +167,6 @@ private:
 
 	bool bGuardHeld = false;
 	bool bDodgeHeld = false;
-	bool bGuardResumeWithoutParry = false;
 	FActiveGameplayEffectHandle SPRegenDelay;
 
 #if WITH_EDITORONLY_DATA

@@ -9,7 +9,8 @@
 #include "AgCharacterData.generated.h"
 
 class AAgSwordWave;
-class UAgBossPatternAbility;
+class UAgGameplayAbility;
+class UAgEffect_Regen;
 class UAnimMontage;
 class UAnimSequenceBase;
 class UBlendSpace;
@@ -107,6 +108,10 @@ public:
 	/** Abilities granted at the start: actions, reactions, death. */
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> Abilities;
+
+	/** 시작할 때 거는 리젠 효과(SP·PP 리젠, 달리기의 SP 소모). 회복량은 각 효과가 이 데이터에서 읽습니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+	TArray<TSubclassOf<UAgEffect_Regen>> RegenEffects;
 
 	/** 움찔: additive montage played on top of whatever the character is doing. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
@@ -240,10 +245,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
 	FAgPlayerAttack Ultimate;
 
-	/** 궁극기: UP 소모. Usable only when UP is at MaxUP. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (ClampMin = 0))
-	float UltimateUPCost = 0.f;
-
 	/** 처형. The targeting range is the 처형 타겟팅 범위. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Execution")
 	FAgPlayerAttack Execution;
@@ -364,10 +365,13 @@ class UAgBossData : public UAgCharacterData
 public:
 	const FAgBossPattern* FindPattern(const FGameplayTag& Pattern) const;
 	UAnimMontage* FindPatternMontage(const FGameplayTag& Pattern) const;
-	TSubclassOf<UAgBossPatternAbility> FindPatternAbility(const FGameplayTag& Pattern) const;
+	TSubclassOf<UAgGameplayAbility> FindPatternAbility(const FGameplayTag& Pattern) const;
 
-	/** The tag the pattern's cooldown gives while it runs, or none for a pattern without a cooldown. */
+	/** 패턴의 쿨다운이 도는 동안 붙는 태그 */
 	FGameplayTag FindPatternCooldownTag(const FGameplayTag& Pattern) const;
+
+	/** 회전 정지 시간(1페이즈 재생 속도의 초)을 패턴 몽타주의 시간으로 바꾼 값. 2페이즈에서는 몽타주와 함께 빨라지므로 그대로입니다. */
+	float GetRotationStopLeadInMontage() const { return RotationStopLead * PatternPlayRate; }
 
 	/** 패턴 목록 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Patterns")
@@ -485,11 +489,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	FName ExecutionPromptBone;
 
-	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. A1, A2, A5, A7은 공용 패턴 어빌리티를 씁니다. */
+	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. A1, A2, A5, A7은 공용 패턴 어빌리티(UAgBossPattern_Common)를 씁니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Patterns", meta = (Categories = "Ability.Boss.Pattern"))
-	TMap<FGameplayTag, TSubclassOf<UAgBossPatternAbility>> PatternAbilities;
+	TMap<FGameplayTag, TSubclassOf<UAgGameplayAbility>> PatternAbilities;
 
-	/** The tag each pattern's cooldown gives while it runs, by pattern ID. Patterns without a cooldown have none. */
+	/** 패턴 ID마다 그 패턴의 쿨다운이 도는 동안 붙는 태그. 모든 패턴에 두고, 쿨다운이 있는지는 쿨다운 시간(0이면 없음)이 정합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Patterns")
 	TMap<FGameplayTag, FGameplayTag> PatternCooldownTags;
 

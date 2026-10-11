@@ -3,7 +3,6 @@
 #include "Character/AgPlayerCharacter.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgGameplayEffect_Regen.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -127,16 +126,24 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnhancedInput->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 	EnhancedInput->BindAction(MoveAction, ETriggerEvent::Completed, this, &ThisClass::MoveReleased);
 	EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
-	EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &ThisClass::AttackPressed);
-	EnhancedInput->BindAction(GuardAction, ETriggerEvent::Started, this, &ThisClass::GuardPressed);
-	EnhancedInput->BindAction(GuardAction, ETriggerEvent::Completed, this, &ThisClass::GuardReleased);
-	EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Started, this, &ThisClass::DodgePressed);
-	EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Completed, this, &ThisClass::DodgeReleased);
-	EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::JumpPressed);
-	EnhancedInput->BindAction(SkillAction, ETriggerEvent::Started, this, &ThisClass::SkillPressed);
-	EnhancedInput->BindAction(UltimateAction, ETriggerEvent::Started, this, &ThisClass::UltimatePressed);
-	EnhancedInput->BindAction(ExecuteAction, ETriggerEvent::Started, this, &ThisClass::ExecutePressed);
-	EnhancedInput->BindAction(LockOnAction, ETriggerEvent::Started, this, &ThisClass::LockOnPressed);
+
+	// 행동 키를 누르면 그 입력 태그를 넘깁니다. 키를 뗀 것은 가드와 회피·달리기 키만 봅니다.
+	const TPair<const UInputAction*, FGameplayTag> ActionKeys[] = {
+		{ AttackAction, AgGameplayTags::Input_Attack },
+		{ GuardAction, AgGameplayTags::Input_Guard },
+		{ DodgeAction, AgGameplayTags::Input_Dodge },
+		{ JumpAction, AgGameplayTags::Input_Jump },
+		{ SkillAction, AgGameplayTags::Input_Skill },
+		{ UltimateAction, AgGameplayTags::Input_Ultimate },
+		{ ExecuteAction, AgGameplayTags::Input_Execute },
+		{ LockOnAction, AgGameplayTags::Input_LockOn },
+	};
+	for (const TPair<const UInputAction*, FGameplayTag>& ActionKey : ActionKeys)
+	{
+		EnhancedInput->BindAction(ActionKey.Key, ETriggerEvent::Started, this, &ThisClass::HandleInputPressed, ActionKey.Value);
+	}
+	EnhancedInput->BindAction(GuardAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Guard));
+	EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Dodge));
 }
 
 bool AAgPlayerCharacter::CanMove() const
@@ -178,13 +185,12 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 
 void AAgPlayerCharacter::StopLandingMotion()
 {
-	// The landing motion stays in place through its root motion, which would hold the character still. It is no action,
-	// so moving ends it.
+	// 착지 모션은 루트 모션으로 제자리에 머물러 캐릭터를 붙잡습니다. 행동이 아니므로 움직이면 끝냅니다. 블렌드 아웃은 몽타주의 값입니다.
 	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (Data && Data->LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(Data->LandMontage))
 	{
-		AnimInstance->Montage_Stop(0.2f, Data->LandMontage);
+		AnimInstance->Montage_StopWithBlendOut(Data->LandMontage->GetBlendOutArgs(), Data->LandMontage);
 	}
 }
 
@@ -207,57 +213,7 @@ void AAgPlayerCharacter::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(Input.Y);
 }
 
-void AAgPlayerCharacter::AttackPressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_Attack);
-}
-
-void AAgPlayerCharacter::GuardPressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_Guard);
-}
-
-void AAgPlayerCharacter::GuardReleased()
-{
-	HandleInputReleased(AgGameplayTags::Input_Guard);
-}
-
-void AAgPlayerCharacter::DodgePressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_Dodge);
-}
-
-void AAgPlayerCharacter::DodgeReleased()
-{
-	HandleInputReleased(AgGameplayTags::Input_Dodge);
-}
-
-void AAgPlayerCharacter::JumpPressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_Jump);
-}
-
-void AAgPlayerCharacter::SkillPressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_Skill);
-}
-
-void AAgPlayerCharacter::UltimatePressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_Ultimate);
-}
-
-void AAgPlayerCharacter::ExecutePressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_Execute);
-}
-
-void AAgPlayerCharacter::LockOnPressed()
-{
-	HandleInputPressed(AgGameplayTags::Input_LockOn);
-}
-
-void AAgPlayerCharacter::HandleInputPressed(const FGameplayTag& InputTag)
+void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 {
 	if (IsDead())
 	{
@@ -273,18 +229,16 @@ void AAgPlayerCharacter::HandleInputPressed(const FGameplayTag& InputTag)
 	}
 	if (InputTag == AgGameplayTags::Input_LockOn)
 	{
-		// The lock-on key isn't limited by the action state and isn't buffered; it works until death
-		// (플레이어 입력 '공통 입력 처리').
+		// 락온 키는 행동 상태의 제한을 받지 않고 기억하지도 않으며, 사망 전까지 동작합니다(플레이어 입력 '공통 입력 처리').
 		RunInput(InputTag);
 		return;
 	}
 
-	// 선입력: a key pressed while actions aren't allowed is remembered and runs once they are. A new press replaces it.
+	// 선입력: 행동이 허용되지 않을 때 누른 키를 기억했다가 허용되면 실행합니다. 새로 누른 키가 대신합니다.
 	BufferedInput = IsActionInputBlocked() ? InputTag : FGameplayTag();
 	BufferedInputTime = GetWorld()->GetTimeSeconds();
 
-	// The key goes in now as well: an action that isn't allowed yet doesn't start, but a running ability may still take
-	// it (the guard follows its key during the parry motion).
+	// 키는 지금도 넣습니다. 아직 허용되지 않은 행동은 시작하지 않지만, 실행 중인 어빌리티는 받을 수 있습니다(패리 모션 중의 가드).
 	RunInput(InputTag);
 }
 
@@ -353,7 +307,7 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 	}
 }
 
-void AAgPlayerCharacter::HandleInputReleased(const FGameplayTag& InputTag)
+void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 {
 	if (InputTag == AgGameplayTags::Input_Guard && bGuardHeld)
 	{
@@ -390,7 +344,7 @@ void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 N
 
 void AAgPlayerCharacter::TryRunBufferedInput()
 {
-	// Still not allowed: the key waits for the next change and is dropped then if it has expired.
+	// 아직 허용되지 않으면 다음 변화를 기다리고, 그때 시간이 지났으면 버립니다.
 	if (!BufferedInput.IsValid() || IsActionInputBlocked())
 	{
 		return;
@@ -400,18 +354,13 @@ void AAgPlayerCharacter::TryRunBufferedInput()
 	BufferedInput = FGameplayTag();
 	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
 	const bool bExpired = !Data || GetWorld()->GetTimeSeconds() - BufferedInputTime > Data->InputBufferTime;
-	// The guard runs only while its key is still held.
+	// 가드는 그때도 가드 키를 누르고 있을 때만 실행합니다.
 	if (IsDead() || bExpired || (InputTag == AgGameplayTags::Input_Guard && !bGuardHeld))
 	{
 		return;
 	}
 
 	UE_LOG(LogAg, Verbose, TEXT("Buffered input runs: %s"), *InputTag.ToString());
-	if (InputTag == AgGameplayTags::Input_Guard)
-	{
-		// A new press, so the guard opens a parry window even right after a guard pushback.
-		bGuardResumeWithoutParry = false;
-	}
 	RunInput(InputTag);
 }
 
@@ -428,42 +377,48 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 		return;
 	}
 
-	// After a guard pushback the guard comes back without a parry window. Check next frame, once whatever cancelled
-	// this ability has started.
-	bGuardResumeWithoutParry = EndedTags.HasTag(AgGameplayTags::Ability_Reaction_GuardPushback);
-	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryResumeGuard);
+	// 이 어빌리티를 취소한 행동이 시작된 뒤에 보도록 다음 프레임에 확인합니다. 가드 밀림 뒤에는 패리 구간 없이 가드로 돌아옵니다.
+	const bool bAfterGuardPushback = EndedTags.HasTag(AgGameplayTags::Ability_Reaction_HitReaction_GuardPushback);
+	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::TryResumeGuard, bAfterGuardPushback));
 }
 
-void AAgPlayerCharacter::TryResumeGuard()
+void AAgPlayerCharacter::TryResumeGuard(bool bAfterGuardPushback)
 {
-	// A remembered key is a newer press than the held guard key, so it goes first.
+	// 기억한 입력은 누르고 있는 가드 키보다 나중에 누른 것이므로 먼저 처리합니다.
 	TryRunBufferedInput();
 
-	// Only from standing or moving: nothing else may be running.
+	// 대기나 이동에서만 돌아옵니다. 다른 것이 돌고 있으면 안 됩니다.
 	FGameplayTagContainer Running;
 	Running.AddTag(AgGameplayTags::State_Acting);
 	Running.AddTag(AgGameplayTags::State_Busy);
 	Running.AddTag(AgGameplayTags::State_HitReaction);
 	Running.AddTag(AgGameplayTags::State_Guarding);
 	Running.AddTag(AgGameplayTags::State_Execution_Executing);
-	if (bGuardHeld && !IsDead() && !GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Running))
+	if (!bGuardHeld || IsDead() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Running))
+	{
+		return;
+	}
+
+	// 가드 밀림 뒤에는 패리 구간 없이 가드로 돌아옵니다(플레이어 사양 '패리 구간'). 그때만 이벤트로 시작해 가드 어빌리티가 구분합니다.
+	if (bAfterGuardPushback)
+	{
+		FGameplayEventData Payload;
+		Payload.EventTag = AgGameplayTags::Event_Guard_Resume;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgGameplayTags::Event_Guard_Resume, Payload);
+	}
+	else
 	{
 		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Guard));
 	}
-	bGuardResumeWithoutParry = false;
 }
 
 void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 {
+	// 이동 외의 행동(회피 반격 포함)이나 넉업·넉백이 시작되면 회피 반격 기회가 사라집니다(플레이어 사양 '회피 반격 기회').
 	FGameplayTagContainer Enders;
-	Enders.AddTag(AgGameplayTags::Ability_Action_Dodge);
-	Enders.AddTag(AgGameplayTags::Ability_Action_Guard);
-	Enders.AddTag(AgGameplayTags::Ability_Action_Jump);
-	Enders.AddTag(AgGameplayTags::Ability_Action_Skill);
-	Enders.AddTag(AgGameplayTags::Ability_Action_Ultimate);
-	Enders.AddTag(AgGameplayTags::Ability_Action_Execution);
-	Enders.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
-	Enders.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
+	Enders.AddTag(AgGameplayTags::Ability_Action);
+	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockBack);
+	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockUp);
 	if (Ability && Ability->GetAssetTags().HasAny(Enders))
 	{
 		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_DodgeCounterChance));
@@ -478,7 +433,7 @@ void AAgPlayerCharacter::UpdateSprint()
 	{
 		if (!bWantsSprint || GetAttributeSet()->GetSP() <= 0.f)
 		{
-			const FGameplayTagContainer SprintTags(AgGameplayTags::Ability_Action_Sprint);
+			const FGameplayTagContainer SprintTags(AgGameplayTags::Ability_Sprint);
 			ASC->CancelAbilities(&SprintTags);
 		}
 		return;
@@ -494,15 +449,8 @@ void AAgPlayerCharacter::UpdateSprint()
 	ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Dodge), DodgeSpecs, false);
 	if (DodgeSpecs.ContainsByPredicate([](const FGameplayAbilitySpec* Spec) { return Spec->IsActive(); }))
 	{
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Sprint));
+		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Sprint));
 	}
-}
-
-bool AAgPlayerCharacter::TakeGuardResume()
-{
-	const bool bResume = bGuardResumeWithoutParry;
-	bGuardResumeWithoutParry = false;
-	return bResume;
 }
 
 void AAgPlayerCharacter::UpdateRotationMode()
@@ -536,18 +484,6 @@ float AAgPlayerCharacter::GetMoveSpeedMultiplier() const
 		return Data->GuardMoveSpeedRatio;
 	}
 	return ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) ? Data->SprintSpeedRatio : 1.f;
-}
-
-void AAgPlayerCharacter::StartRegen()
-{
-	Super::StartRegen();
-
-	if (const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData()))
-	{
-		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_SPRegen::StaticClass(), AgGameplayTags::Data_SP, Data->SPRegenRate);
-		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_SPRegenGuarding::StaticClass(), AgGameplayTags::Data_SP, Data->SPRegenRateGuarding);
-		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_SprintSPCost::StaticClass(), AgGameplayTags::Data_SP, -Data->SprintSPCost);
-	}
 }
 
 void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)

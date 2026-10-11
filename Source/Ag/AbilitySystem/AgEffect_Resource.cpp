@@ -1,11 +1,11 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "AbilitySystem/AgGameplayEffect_Resource.h"
+#include "AbilitySystem/AgEffect_Resource.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "Core/AgGameplayTags.h"
 
-UAgGameplayEffect_Resource::UAgGameplayEffect_Resource()
+UAgEffect_Resource::UAgEffect_Resource()
 {
 	DurationPolicy = EGameplayEffectDurationType::Instant;
 
@@ -23,4 +23,11 @@ UAgGameplayEffect_Resource::UAgGameplayEffect_Resource()
 	AddSetByCallerModifier(UAgAttributeSet::GetSPAttribute(), AgGameplayTags::Data_SP);
 	AddSetByCallerModifier(UAgAttributeSet::GetMPAttribute(), AgGameplayTags::Data_MP);
 	AddSetByCallerModifier(UAgAttributeSet::GetUPAttribute(), AgGameplayTags::Data_UP);
+}
+
+void UAgEffect_Resource::SetAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP)
+{
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_SP, SP);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_MP, MP);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_UP, UP);
 }

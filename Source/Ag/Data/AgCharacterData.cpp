@@ -2,7 +2,7 @@
 
 #include "Data/AgCharacterData.h"
 
-#include "AbilitySystem/Abilities/AgBossPatternAbility.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "Animation/AnimMontage.h"
 #include "Data/AgDataFile.h"
 
@@ -45,7 +45,7 @@ UAnimMontage* UAgBossData::FindPatternMontage(const FGameplayTag& Pattern) const
 	return Montage ? Montage->Get() : nullptr;
 }
 
-TSubclassOf<UAgBossPatternAbility> UAgBossData::FindPatternAbility(const FGameplayTag& Pattern) const
+TSubclassOf<UAgGameplayAbility> UAgBossData::FindPatternAbility(const FGameplayTag& Pattern) const
 {
 	return PatternAbilities.FindRef(Pattern);
 }

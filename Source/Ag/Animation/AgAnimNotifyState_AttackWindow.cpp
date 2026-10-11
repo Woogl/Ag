@@ -3,9 +3,24 @@
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgGameplayTags.h"
+
+float UAgAnimNotifyState_AttackWindow::GetTravelBeforeFirstWindow(const UAnimMontage* Montage)
+{
+	float FirstWindowStart = Montage->GetPlayLength();
+	for (const FAnimNotifyEvent& Notify : Montage->Notifies)
+	{
+		if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass))
+		{
+			FirstWindowStart = FMath::Min(FirstWindowStart, Notify.GetTriggerTime());
+		}
+	}
+	const FTransform RootMotion = Montage->ExtractRootMotionFromTrackRange(0.f, FirstWindowStart, FAnimExtractContext());
+	return FMath::Max(0.f, RootMotion.GetTranslation().Size2D());
+}
 
 void UAgAnimNotifyState_AttackWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {

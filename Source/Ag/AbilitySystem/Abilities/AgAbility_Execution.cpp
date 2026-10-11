@@ -5,22 +5,23 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
-#include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
-#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UAgAbility_Execution::UAgAbility_Execution()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Execution);
+
+	// 처형하는 동안(상태 우선순위 2) 무적입니다.
+	ActivationOwnedTags.AddTag(AgGameplayTags::State_Execution_Executing);
+	ActivationOwnedTags.AddTag(AgGameplayTags::State_Invincible);
 }
 
 AAgCharacterBase* UAgAbility_Execution::FindExecutionTarget(const AAgPlayerCharacter* Player)
@@ -61,9 +62,6 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 	// 후딜이 없습니다. 행동 중이 모션 끝까지 이어져 어떤 행동도 처형을 끊지 못합니다.
 	BeginBusy();
-	SetExecuting(true);
-	bInvincible = true;
-	GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Invincible);
 
 	// 대상은 같은 프레임에 플레이어를 향하고 처형 피격 몽타주를 시작하므로, 두 몽타주가 한 타임라인을 따릅니다.
 	FGameplayEventData Payload;
@@ -86,61 +84,27 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	MontageTask->ReadyForActivation();
 }
 
-void UAgAbility_Execution::SetExecuting(bool bNewExecuting)
-{
-	if (bExecuting == bNewExecuting)
-	{
-		return;
-	}
-	bExecuting = bNewExecuting;
-	if (bExecuting)
-	{
-		GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Execution_Executing);
-	}
-	else
-	{
-		GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(AgGameplayTags::State_Execution_Executing);
-	}
-}
-
 void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 {
-	AAgCharacterBase* Player = GetAgCharacter();
 	AAgCharacterBase* Enemy = Target.Get();
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Player || !Data || !Data->Execution.Hits.IsValidIndex(StrikeIndex))
+	if (!Data || !Data->Execution.Hits.IsValidIndex(StrikeIndex))
 	{
 		return;
 	}
-	const FAgPlayerAttackHit& Hit = Data->Execution.Hits[StrikeIndex];
+	FAgPlayerAttackHit Hit = Data->Execution.Hits[StrikeIndex];
 	++StrikeIndex;
-	const bool bFinalBlow = StrikeIndex == Data->Execution.Hits.Num();
+	Hit.bFinisher = StrikeIndex == Data->Execution.Hits.Num();
 
-	// 타격마다 처형 대상에게 히트스톱 없이 적용합니다. 앞 타격에 이미 죽은 대상은 더 받지 않습니다.
-	if (Enemy && !Enemy->IsDead() && Enemy->GetAttributeSet()->GetHP() > 0.f)
+	// 타격마다 처형 대상(보스의 캡슐 중심)에 대미지 GE를 적용합니다. 이 어빌리티가 만든 스펙에는 엔진이 어빌리티 태그
+	// (Ability.Action.Execution)를 넣어, 대미지 GE가 처형의 셰이크를 쓰고 히트스톱을 걸지 않으며, 처형으로 죽으면 사망
+	// 어빌리티가 처형 사망 모션을 이어서 재생합니다. 앞 타격에 이미 죽은 대상에는 적용되지 않습니다.
+	if (Enemy)
 	{
-		const int32 HPDamage = UAgCombatLibrary::CalculateHPDamage(Player->GetAttributeSet()->GetATK(), Hit.DamageMultiplier, Enemy->GetAttributeSet()->GetDEF());
-		UAgCombatLibrary::ApplyStatChange(Player, Enemy, -HPDamage, 0.f);
-		// 대미지 숫자는 보스에게만 표시합니다(전투 HUD '대미지 숫자').
-		if (const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Enemy))
-		{
-			Boss->ShowDamageFloater(HPDamage, Boss->GetActorLocation());
-		}
-		FGameplayCueParameters EffectParameters;
-		EffectParameters.Location = Enemy->GetActorLocation();
-		Enemy->GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Hit, EffectParameters);
-		const UAgCameraData& Camera = UAgSettings::Get()->GetCameraData();
-		UAgCombatLibrary::PlayCameraShake(Player, bFinalBlow ? Camera.ExecutionBlowShake : Camera.ExecutionSlashShake);
-		UE_LOG(LogAg, Verbose, TEXT("Execution strike %d: HP -%d (now %.0f)"), StrikeIndex, HPDamage, Enemy->GetAttributeSet()->GetHP());
-		if (Enemy->GetAttributeSet()->GetHP() <= 0.f)
-		{
-			FGameplayEventData DeathPayload;
-			DeathPayload.EventTag = AgGameplayTags::Event_Death;
-			DeathPayload.Instigator = Player;
-			DeathPayload.Target = Enemy;
-			DeathPayload.InstigatorTags.AddTag(AgGameplayTags::Ability_Action_Execution);
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Enemy, AgGameplayTags::Event_Death, DeathPayload);
-		}
+		const FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(UAgEffect_Damage::StaticClass());
+		UAgEffect_Damage::SetAttack(*Spec.Data, Hit, Enemy->GetActorLocation());
+		GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Spec.Data, Enemy->GetAbilitySystemComponent());
+		UE_LOG(LogAg, Verbose, TEXT("Execution strike %d: HP now %.0f"), StrikeIndex, Enemy->GetAttributeSet()->GetHP());
 	}
 }
 
@@ -152,17 +116,4 @@ void UAgAbility_Execution::HandleMontageFinished()
 void UAgAbility_Execution::HandleMontageCancelled()
 {
 	EndSelf(true);
-}
-
-void UAgAbility_Execution::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	SetExecuting(false);
-	if (bInvincible)
-	{
-		bInvincible = false;
-		GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(AgGameplayTags::State_Invincible);
-	}
-	Target.Reset();
-
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

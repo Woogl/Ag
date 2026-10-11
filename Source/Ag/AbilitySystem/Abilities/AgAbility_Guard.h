@@ -8,6 +8,7 @@
 #include "AgAbility_Guard.generated.h"
 
 class UAbilityTask_PlayMontageAndWait;
+class UAgAbilityTask_HoldTag;
 
 /**
  * 가드 and 패리 (플레이어 사양 '가드', '패리'): guards while the guard key is held, and the player can move slowly.
@@ -30,7 +31,7 @@ protected:
 private:
 	void StartGuard(bool bOpenParryWindow);
 
-	/** State.Guarding: hits are guarded (전투 시스템 '피격 처리 순서'). */
+	/** State.Guarding: 이 태그가 있으면 공격을 가드합니다(전투 시스템 '피격 처리 순서'). */
 	void SetGuarding(bool bGuarding);
 
 	void CloseParryWindow();
@@ -60,9 +61,15 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> ParryTask;
 
+	/** 가드 중(State.Guarding)인 동안 있습니다. 패리 모션 중에 가드 키를 떼면 없어집니다. */
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_HoldTag> GuardingTag;
+
+	/** 패리 모션이 재생되는 동안 있고, 그동안 이동 입력을 막습니다(State.Acting). */
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_HoldTag> ParryMotionTag;
+
 	FActiveGameplayEffectHandle ParryWindow;
 	FActiveGameplayEffectHandle MoveLock;
-	bool bGuarding = false;
-	bool bInParryMotion = false;
 	bool bInParryRecovery = false;
 };

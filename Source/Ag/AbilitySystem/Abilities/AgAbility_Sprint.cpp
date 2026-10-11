@@ -7,8 +7,8 @@
 
 UAgAbility_Sprint::UAgAbility_Sprint()
 {
-	// Movement stays with the player; only the speed and facing change.
-	SetupPlayerAction(AgGameplayTags::Ability_Action_Sprint, /*bIgnoresMovement*/ false);
+	// 이동은 그대로 플레이어가 하고, 속도와 바라보는 방향만 바뀝니다.
+	SetupPlayerAction(AgGameplayTags::Ability_Sprint, /*bIgnoresMovement*/ false);
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_Sprinting);
 }
 

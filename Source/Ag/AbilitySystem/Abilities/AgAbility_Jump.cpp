@@ -12,16 +12,8 @@ UAgAbility_Jump::UAgAbility_Jump()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Jump, /*bIgnoresMovement*/ false);
 
-	// A sprint keeps going through the jump (플레이어 사양 '점프'), so the jump cancels every other action but not the sprint.
-	CancelAbilitiesWithTag.RemoveTag(AgGameplayTags::Ability_Action);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action_BasicAttack);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action_Dodge);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action_DodgeCounter);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action_Guard);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action_Skill);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action_Ultimate);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action_Execution);
-	ActivationOwnedTags.AddTag(AgGameplayTags::State_InAir);
+	// 달리기는 점프 중에도 이어지므로(플레이어 사양 '점프') 점프는 달리기를 취소하지 않습니다.
+	CancelAbilitiesWithTag.RemoveTag(AgGameplayTags::Ability_Sprint);
 }
 
 void UAgAbility_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -60,7 +52,7 @@ void UAgAbility_Jump::HandleLanded(EMovementMode NewMovementMode)
 	}
 	else if (Data && Data->JumpMontage && AnimInstance)
 	{
-		AnimInstance->Montage_Stop(0.1f, Data->JumpMontage);
+		AnimInstance->Montage_StopWithBlendOut(Data->JumpMontage->GetBlendOutArgs(), Data->JumpMontage);
 	}
 	EndSelf(false);
 }

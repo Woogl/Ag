@@ -50,7 +50,11 @@ public:
 	/** 블루프린트의 무기 메시 컴포넌트(WeaponTag). 없으면 null입니다. */
 	USceneComponent* GetWeaponComponent() const { return WeaponComponent; }
 
-	bool IsDead() const { return bDead; }
+	/** 사망 처리를 시작했습니다(State.Dead). */
+	bool IsDead() const;
+
+	/** PP를 잃을 수 있습니다: 무한 PP가 아니고 그로기 중이 아닙니다(전투 시스템 'PP 감소량 계산식'). */
+	bool CanLosePP() const;
 
 	/** Sets the attack data the running action's attack windows use, one entry per window. */
 	void SetActiveAttack(TConstArrayView<FAgPlayerAttackHit> Hits);
@@ -94,7 +98,7 @@ public:
 	/** 사망 처리 6: switches the dead character to ragdoll, pushed with PushVelocity. */
 	void StartRagdoll(const FVector& PushVelocity);
 
-	/** HP를 0으로 만들어 사망 처리를 시작합니다. (Kill Z 낙하, 테스트용 콘솔 명령) */
+	/** HP를 0으로 만드는 GE를 적용해 사망 판정을 일으킵니다. (Kill Z 낙하, 테스트용 콘솔 명령) */
 	void Kill();
 
 	/** Broadcast once when this character dies. */
@@ -103,6 +107,10 @@ public:
 protected:
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
+
+	/** 플레이가 끝나면 어빌리티를 모두 취소해, 컴포넌트가 등록 해제되는 동안 어빌리티가 돌지 않게 합니다. */
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void PossessedBy(AController* NewController) override;
 
@@ -112,14 +120,8 @@ protected:
 	/** Grants the character data's abilities. */
 	virtual void GrantAbilities();
 
-	/** Starts the regen effects (PP here; the player adds SP). Starting again replaces the running ones. */
-	virtual void StartRegen();
-
-	/**
-	 * A data file was read again in the editor: starts the regen again with the new rates. The stats change on the next
-	 * PIE start (구현 계획서 '데이터' 다시 읽기).
-	 */
-	virtual void HandleDataReloaded();
+	/** 캐릭터 데이터의 리젠 효과(RegenEffects)를 겁니다. */
+	void StartRegen();
 
 	/** Movement speed as a multiple of MOV (the player's guard and sprint change it). */
 	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
@@ -140,8 +142,11 @@ private:
 
 	void HandleMOVChanged(const FOnAttributeChangeData& Data);
 
-	/** PP 리젠: any PP decrease restarts the regen delay. */
+	/** PP 리젠: PP가 줄 때마다 리젠 대기를 다시 시작합니다. */
 	void HandlePPChanged(const FOnAttributeChangeData& Data);
+
+	/** 히트스톱 태그가 붙고 빠질 때 이 캐릭터의 시간 배율을 바꿉니다. */
+	void HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount);
 
 	/** 무기 판정 캡슐 축의 양 끝(월드 위치) */
 	bool GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const;
@@ -183,6 +188,4 @@ private:
 	float StopDistance = 0.f;
 
 	FActiveGameplayEffectHandle PPRegenDelay;
-
-	bool bDead = false;
 };

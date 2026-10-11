@@ -37,7 +37,7 @@ void UAgHUDWidget::NativeConstruct()
 	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로, 이미지를 넣기 전까지 숨깁니다.
 	for (UImage* Icon : { SkillIconImage.Get(), UltimateIconImage.Get() })
 	{
-		if (Icon && !Icon->GetBrush().GetResourceObject())
+		if (!Icon->GetBrush().GetResourceObject())
 		{
 			Icon->SetVisibility(ESlateVisibility::Collapsed);
 		}
@@ -52,7 +52,7 @@ void UAgHUDWidget::NativeConstruct()
 void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
 {
 	const UInputMappingContext* Mapping = Player.GetInputMapping();
-	if (!ControlsGuideKeys || !ControlsGuideActions || !Mapping)
+	if (!Mapping)
 	{
 		return;
 	}
@@ -89,14 +89,7 @@ void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
 
 void UAgHUDWidget::HideStatus()
 {
-	if (StatusPanel)
-	{
-		StatusPanel->SetVisibility(ESlateVisibility::Collapsed);
-	}
-	else
-	{
-		SetVisibility(ESlateVisibility::Collapsed);
-	}
+	StatusPanel->SetVisibility(ESlateVisibility::Collapsed);
 }
 
 TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
@@ -108,7 +101,7 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	// The trails run on game time, so the slow motion slows them too.
+	// 잔상은 게임 시간으로 흘러 슬로우모션에 함께 느려집니다.
 	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
@@ -120,8 +113,7 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		for (TActorIterator<AAgBossCharacter> It(GetWorld()); It; ++It)
 		{
 			Boss = *It;
-			const UAgBossData* Data = Cast<UAgBossData>(It->GetCharacterData());
-			if (BossNameText && Data)
+			if (const UAgBossData* Data = Cast<UAgBossData>(It->GetCharacterData()))
 			{
 				BossNameText->SetText(Data->DisplayName);
 			}
@@ -137,31 +129,28 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime)
 {
 	const UAgAttributeSet* Stats = Player.GetAttributeSet();
-	SetBarRatio(PlayerHPBar, Stats->GetHP(), Stats->GetMaxHP());
-	SetBarRatio(PlayerMPBar, Stats->GetMP(), Stats->GetMaxMP());
-	SetBarRatio(PlayerSPBar, Stats->GetSP(), Stats->GetMaxSP());
-	SetValueText(PlayerHPText, Stats->GetHP(), Stats->GetMaxHP(), ShownHP);
-	SetValueText(PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
-	UpdateTrail(PlayerHPTrail, PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
+	SetBarRatio(*PlayerHPBar, Stats->GetHP(), Stats->GetMaxHP());
+	SetBarRatio(*PlayerMPBar, Stats->GetMP(), Stats->GetMaxMP());
+	SetBarRatio(*PlayerSPBar, Stats->GetSP(), Stats->GetMaxSP());
+	SetValueText(*PlayerHPText, Stats->GetHP(), Stats->GetMaxHP(), ShownHP);
+	SetValueText(*PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
+	UpdateTrail(PlayerHPTrail, *PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
 	// 슬롯은 MP·UP가 부족할 때만 흐리게 합니다. 스킬 쿨다운은 쿨다운 표시로 보여 줍니다.
 	const UAbilitySystemComponent* ASC = Player.GetAbilitySystemComponent();
-	SetSlotUsable(SkillSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Skill));
-	SetSlotUsable(UltimateSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Ultimate));
-	UpdateCooldown(*ASC, AgGameplayTags::Ability_Action_Skill, SkillCooldownSweep, SkillCooldownText);
+	SetSlotUsable(*SkillSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Skill));
+	SetSlotUsable(*UltimateSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Ultimate));
+	UpdateCooldown(*ASC, AgGameplayTags::Ability_Action_Skill, *SkillCooldownSweep, *SkillCooldownText);
 
 	// 머티리얼이 이 비율만큼 테두리를 위쪽 가운데부터 시계 방향으로 채웁니다.
-	if (UltimateGauge)
+	if (UMaterialInstanceDynamic* Gauge = UltimateGauge->GetDynamicMaterial())
 	{
-		if (UMaterialInstanceDynamic* Gauge = UltimateGauge->GetDynamicMaterial())
-		{
-			Gauge->SetScalarParameterValue(RatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
-		}
+		Gauge->SetScalarParameterValue(RatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
 	}
 
 	const UAgPlayerData* Data = Cast<UAgPlayerData>(Player.GetCharacterData());
 	const int32 SkillCost = Data ? FMath::RoundToInt(Data->SkillMPCost) : 0;
-	if (SkillCostText && SkillCost != ShownSkillCost)
+	if (SkillCost != ShownSkillCost)
 	{
 		ShownSkillCost = SkillCost;
 		SkillCostText->SetText(FText::AsNumber(SkillCost));
@@ -171,8 +160,8 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime)
 {
 	const UAgAttributeSet* Stats = BossCharacter.GetAttributeSet();
-	SetBarRatio(BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
-	UpdateTrail(BossHPTrail, BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
+	SetBarRatio(*BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
+	UpdateTrail(BossHPTrail, *BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
 	// 그로기: 빈 바를 그로기 지속 시간 동안 다시 채웁니다. 처형으로 그로기가 길어지면 끝날 때까지 가득 찬 채로 둡니다.
 	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
@@ -183,12 +172,9 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 		const bool bCounting = GroggyDuration > 0.f && Elapsed >= 0.f;
 		PPBarRatio = bCounting ? FMath::Min(Elapsed / GroggyDuration, 1.f) : 0.f;
 	}
-	if (BossPPBar)
-	{
-		BossPPBar->SetPercent(PPBarRatio);
-	}
+	BossPPBar->SetPercent(PPBarRatio);
 	// 잔상은 바에 표시한 값을 따라갑니다. 그로기 중에는 다시 채우는 값입니다.
-	UpdateTrail(BossPPTrail, BossPPTrailBar, PPBarRatio, GameDeltaTime);
+	UpdateTrail(BossPPTrail, *BossPPTrailBar, PPBarRatio, GameDeltaTime);
 }
 
 const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
@@ -212,7 +198,7 @@ bool UAgHUDWidget::CanPayCost(const UAbilitySystemComponent& ASC, const FGamepla
 	return Ability && Ability->CheckCost(Handle, ASC.AbilityActorInfo.Get());
 }
 
-void UAgHUDWidget::UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage* Sweep, UTextBlock* Text)
+void UAgHUDWidget::UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage& Sweep, UTextBlock& Text)
 {
 	float Remaining = 0.f;
 	float Duration = 0.f;
@@ -224,66 +210,50 @@ void UAgHUDWidget::UpdateCooldown(const UAbilitySystemComponent& ASC, const FGam
 	const bool bCoolingDown = Remaining > 0.f && Duration > 0.f;
 	const ESlateVisibility CooldownVisibility = bCoolingDown ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
 
-	if (Sweep)
+	Sweep.SetVisibility(CooldownVisibility);
+	UMaterialInstanceDynamic* Material = bCoolingDown ? Sweep.GetDynamicMaterial() : nullptr;
+	if (Material)
 	{
-		Sweep->SetVisibility(CooldownVisibility);
-		UMaterialInstanceDynamic* Material = bCoolingDown ? Sweep->GetDynamicMaterial() : nullptr;
-		if (Material)
-		{
-			Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
-		}
+		Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
 	}
-	if (Text)
+
+	Text.SetVisibility(CooldownVisibility);
+	// 1초 이상은 정수, 1초 미만은 소수 한 자리, 둘 다 올림 (전투 HUD '스킬·궁극기 슬롯').
+	const int32 Tenths = FMath::CeilToInt(Remaining * 10.f);
+	const int32 Key = Remaining >= 1.f ? 1000 + FMath::CeilToInt(Remaining) : Tenths;
+	if (bCoolingDown && Key != ShownCooldownKey)
 	{
-		Text->SetVisibility(CooldownVisibility);
-		// 1초 이상은 정수, 1초 미만은 소수 한 자리, 둘 다 올림 (전투 HUD '스킬·궁극기 슬롯').
-		const int32 Tenths = FMath::CeilToInt(Remaining * 10.f);
-		const int32 Key = Remaining >= 1.f ? 1000 + FMath::CeilToInt(Remaining) : Tenths;
-		if (bCoolingDown && Key != ShownCooldownKey)
-		{
-			ShownCooldownKey = Key;
-			FNumberFormattingOptions OneDecimal;
-			OneDecimal.MinimumFractionalDigits = 1;
-			OneDecimal.MaximumFractionalDigits = 1;
-			Text->SetText(Remaining >= 1.f ? FText::AsNumber(FMath::CeilToInt(Remaining)) : FText::AsNumber(Tenths / 10.f, &OneDecimal));
-		}
+		ShownCooldownKey = Key;
+		FNumberFormattingOptions OneDecimal;
+		OneDecimal.MinimumFractionalDigits = 1;
+		OneDecimal.MaximumFractionalDigits = 1;
+		Text.SetText(Remaining >= 1.f ? FText::AsNumber(FMath::CeilToInt(Remaining)) : FText::AsNumber(Tenths / 10.f, &OneDecimal));
 	}
 }
 
-void UAgHUDWidget::SetBarRatio(UProgressBar* Bar, float Value, float MaxValue)
+void UAgHUDWidget::SetBarRatio(UProgressBar& Bar, float Value, float MaxValue)
 {
-	if (Bar)
-	{
-		Bar->SetPercent(MaxValue > 0.f ? Value / MaxValue : 0.f);
-	}
+	Bar.SetPercent(MaxValue > 0.f ? Value / MaxValue : 0.f);
 }
 
-void UAgHUDWidget::SetSlotUsable(UWidget* SlotWidget, bool bUsable) const
+void UAgHUDWidget::SetSlotUsable(UWidget& SlotWidget, bool bUsable) const
 {
-	if (SlotWidget)
-	{
-		SlotWidget->SetRenderOpacity(bUsable ? 1.f : DisabledSlotOpacity);
-	}
+	SlotWidget.SetRenderOpacity(bUsable ? 1.f : DisabledSlotOpacity);
 }
 
-void UAgHUDWidget::SetValueText(UTextBlock* Text, float Value, float MaxValue, FIntPoint& ShownValues)
+void UAgHUDWidget::SetValueText(UTextBlock& Text, float Value, float MaxValue, FIntPoint& ShownValues)
 {
 	const FIntPoint Values(FMath::RoundToInt(Value), FMath::RoundToInt(MaxValue));
-	if (Text && Values != ShownValues)
+	if (Values != ShownValues)
 	{
 		ShownValues = Values;
 		const FNumberFormattingOptions& Format = FNumberFormattingOptions::DefaultNoGrouping();
-		Text->SetText(FText::Format(INVTEXT("{0} / {1}"), FText::AsNumber(Values.X, &Format), FText::AsNumber(Values.Y, &Format)));
+		Text.SetText(FText::Format(INVTEXT("{0} / {1}"), FText::AsNumber(Values.X, &Format), FText::AsNumber(Values.Y, &Format)));
 	}
 }
 
-void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar* TrailBar, float BarRatio, float DeltaTime) const
+void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime) const
 {
-	if (!TrailBar)
-	{
-		return;
-	}
-
 	if (Trail.LastBarRatio >= 0.f && BarRatio < Trail.LastBarRatio)
 	{
 		Trail.Wait = TrailDelay;
@@ -311,5 +281,5 @@ void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar* TrailBar, float Ba
 		const float Alpha = TrailShrinkTime > 0.f ? FMath::Min(Trail.ShrinkElapsed / TrailShrinkTime, 1.f) : 1.f;
 		Trail.Ratio = FMath::Lerp(Trail.ShrinkFrom, BarRatio, Alpha);
 	}
-	TrailBar->SetPercent(Trail.Ratio);
+	TrailBar.SetPercent(Trail.Ratio);
 }

@@ -7,9 +7,10 @@
 #include "GameplayTagContainer.h"
 #include "AgBossCharacter.generated.h"
 
-class UAgDamageFloaterWidget;
 class UWidgetComponent;
+struct FAgBossPattern;
 struct FGameplayAbilitySpec;
+struct FGameplayAbilitySpecHandle;
 
 /**
  * 보스 커스터(보스 사양). AI의 대상을 향해 스스로 돌고, AI가 고른 패턴을 실행합니다.
@@ -26,6 +27,15 @@ public:
 	/** The granted spec of a pattern, or null. */
 	FGameplayAbilitySpec* FindPatternSpec(const FGameplayTag& Pattern) const;
 
+	/**
+	 * 부여된 패턴 스펙(Handle)이 실행하는 패턴의 데이터(Boss.json). 패턴 스펙이 아니면 null입니다.
+	 * 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다(구현 계획서 '다시 읽기').
+	 */
+	const FAgBossPattern* FindPattern(const FGameplayAbilitySpecHandle Handle) const;
+
+	/** 공격 패턴(A1 ~ A7) 몽타주의 재생 속도: 보스 사양 '모션 재생 속도'에 2페이즈 '패턴 진행 속도'를 곱합니다. */
+	float GetPatternPlayRate() const;
+
 	/** 페이즈: 1, or 2 after the phase transition ends. */
 	int32 GetPhase() const { return Phase; }
 
@@ -40,9 +50,6 @@ public:
 
 	/** Game time since the groggy time started counting, or a negative value when it isn't counting. */
 	float GetGroggyElapsedTime() const;
-
-	/** 대미지 숫자: 플레이어 공격으로 보스가 잃은 HP를 Location에 띄웁니다. */
-	void ShowDamageFloater(int32 Amount, const FVector& Location) const;
 
 	/** 보스 AI의 현재 대상(구현 계획서 'AI 대상'). AI가 없거나 대상이 아직 없으면 null입니다. */
 	AAgCharacterBase* GetTarget() const;
@@ -60,13 +67,13 @@ protected:
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:
+	/** 스펙이 실행하는 패턴 ID. 패턴을 부여할 때 스펙의 동적 태그로 넣습니다. 패턴 스펙이 아니면 빈 태그입니다. */
+	static FGameplayTag GetPatternTag(const FGameplayAbilitySpec& Spec);
+
 	/** 회전: 바라보는 방향이 고정되지 않은 동안 회전 속도로 AI의 대상을 향해 돕니다. */
 	void UpdateRotation(float DeltaSeconds);
 
-	/**
-	 * True from the rotation stop lead before an attack window of a playing montage until the window ends.
-	 * A6's sword wave release counts as an attack window of no length.
-	 */
+	/** 재생 중인 몽타주의 판정 구간보다 회전 정지 시간만큼 앞선 때부터 그 판정 구간이 끝날 때까지 참입니다. */
 	bool IsInRotationStopWindow() const;
 
 	/** Attaches the lock-on marker and the execution prompt to their bones in the character data. */
@@ -82,10 +89,6 @@ private:
 	/** 처형 안내: above the head while the player can execute this boss. */
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
-
-	/** 대미지 숫자 위젯(WBP_DamageFloater). */
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UAgDamageFloaterWidget> DamageFloaterWidget;
 
 	int32 Phase = 1;
 

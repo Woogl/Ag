@@ -6,7 +6,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
-#include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgEffect_PPRefill.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -29,13 +29,11 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 	SetAssetTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_Groggy));
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_Groggy);
 
-	// 상태 우선순위 3: 패턴, 행동, 그보다 낮은 피격 반응을 멈춥니다.
+	// 상태 우선순위 3: 패턴, 행동, 달리기, 그보다 낮은 피격 반응을 멈춥니다.
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardPushback);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardBreak);
+	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Sprint);
+	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_HitReaction);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_NonCombat);
@@ -170,11 +168,8 @@ void UAgAbility_Groggy::HandleMontageCancelled()
 
 void UAgAbility_Groggy::FinishGroggy()
 {
-	if (AAgCharacterBase* Boss = GetAgCharacter())
-	{
-		const UAgAttributeSet* Stats = Boss->GetAttributeSet();
-		UAgCombatLibrary::ApplyStatChange(Boss, Boss, 0.f, Stats->GetMaxPP() - Stats->GetPP());
-	}
+	// 그로기가 끝나면 PP가 가득 찹니다.
+	ApplyGameplayEffectToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), GetDefault<UAgEffect_PPRefill>(), 1.f);
 	EndSelf(false);
 }
 

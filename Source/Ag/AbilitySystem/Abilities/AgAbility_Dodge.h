@@ -6,6 +6,8 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AgAbility_Dodge.generated.h"
 
+class UAgAbilityTask_HoldTag;
+
 /**
  * 회피: rolls toward the movement input (camera-relative), or steps back without input.
  * Invincible and in the 극한 회피 구간 from the start for the data's times, measured on the motion.
@@ -22,15 +24,11 @@ public:
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual float GetCooldownDuration() const override;
 	virtual bool CanPayCost(const UAgAttributeSet& Stats) const override;
-	virtual FAgResourceAmounts GetCost() const override;
+	virtual FAgAbilityCost GetCost() const override;
 
 private:
-	/** Adds or removes a loose state tag this ability owns for part of the dodge. */
-	void SetStateTag(const FGameplayTag& Tag, bool& bHasTag, bool bWanted);
-
 	UFUNCTION()
 	void HandlePerfectDodgeWindowEnded();
 
@@ -49,10 +47,15 @@ private:
 	UFUNCTION()
 	void HandleMontageCancelled();
 
+	/** 회피 무적 구간과 극한 회피 구간: 회피 시작부터 데이터의 시간까지 태그를 붙여 둡니다. */
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_HoldTag> InvincibleTag;
+
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_HoldTag> PerfectDodgeWindowTag;
+
 	/** SP actually spent by this dodge (less than the cost when SP was low), returned on 극한 회피. */
 	float SPSpent = 0.f;
 
 	bool bPerfectDodged = false;
-	bool bInPerfectDodgeWindow = false;
-	bool bInvincible = false;
 };

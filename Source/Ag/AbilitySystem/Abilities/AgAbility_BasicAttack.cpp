@@ -3,6 +3,7 @@
 #include "AbilitySystem/Abilities/AgAbility_BasicAttack.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_PlayerAttack.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Ag.h"
 #include "Character/AgCharacterBase.h"
@@ -16,9 +17,9 @@ UAgAbility_BasicAttack::UAgAbility_BasicAttack()
 
 void UAgAbility_BasicAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-	if (!IsActive())
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
@@ -40,22 +41,47 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 
 	HitIndex = Index;
 	UE_LOG(LogAg, Verbose, TEXT("Basic attack: hit %d starts"), Index + 1);
-	StartAttack(Data->BasicAttack[Index], MakeArrayView(&Data->BasicAttackMontages[Index], 1));
+	if (AttackTask)
+	{
+		AttackTask->EndTask();
+	}
+	BeginBusy();
+	AttackTask = UAgAbilityTask_PlayerAttack::PlayAttack(this, Data->BasicAttack[Index], MakeArrayView(&Data->BasicAttackMontages[Index], 1));
+	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
+	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
+	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
+	AttackTask->ReadyForActivation();
 
 	// 평타의 각 타를 시작할 때마다, 그 타의 대상인 보스가 백스텝(B1)을 검사합니다.
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_BasicAttackStarted;
 	Payload.Instigator = GetAvatarActorFromActorInfo();
-	Payload.Target = GetHitTarget();
+	Payload.Target = AttackTask->GetHitTarget();
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetAvatarActorFromActorInfo(), AgGameplayTags::Event_BasicAttackStarted, Payload);
 }
 
 void UAgAbility_BasicAttack::HandleAttackInput(FGameplayEventData Payload)
 {
-	// 평타 키의 처리 순서: during a hit's recovery the next hit starts; before it, the input is ignored.
+	// 평타 키의 처리 순서: 후딜 중이면(행동 중이 풀림) 다음 타를 시작하고, 그 전이면 무시합니다.
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (IsInRecovery() && Data && Data->BasicAttack.Num() > 0)
+	if (!IsBusy() && Data && Data->BasicAttack.Num() > 0)
 	{
 		StartHit((HitIndex + 1) % Data->BasicAttack.Num());
 	}
+}
+
+void UAgAbility_BasicAttack::HandleLastWindowEnded()
+{
+	// 마지막 판정 구간이 끝나면 후딜이 시작됩니다.
+	EndBusy();
+}
+
+void UAgAbility_BasicAttack::HandleAttackCompleted()
+{
+	EndSelf(false);
+}
+
+void UAgAbility_BasicAttack::HandleAttackInterrupted()
+{
+	EndSelf(true);
 }

@@ -4,6 +4,10 @@
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "AbilitySystem/AgEffect_ParryPPLoss.h"
+#include "AbilitySystem/AgEffect_Resource.h"
+#include "AbilitySystem/AgEffect_TimedTag.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatLibrary.h"
@@ -12,13 +16,18 @@
 
 UAgAbility_Guard::UAgAbility_Guard()
 {
-	// Guarding allows movement, so it doesn't own State.Acting.
+	// 가드 중에도 움직일 수 있어 State.Acting을 갖지 않습니다.
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Guard, /*bIgnoresMovement*/ false);
+
+	// 가드 키를 누른 채 가드 밀림이 끝나면 플레이어 캐릭터가 이 이벤트로 가드를 다시 시작합니다(패리 구간 없음).
+	FAbilityTriggerData& Trigger = AbilityTriggers.AddDefaulted_GetRef();
+	Trigger.TriggerTag = AgGameplayTags::Event_Guard_Resume;
+	Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 }
 
 void UAgAbility_Guard::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
+	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
 	if (!Player || !Player->IsGuardHeld() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -41,8 +50,9 @@ void UAgAbility_Guard::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	RecoveryTask->EventReceived.AddDynamic(this, &ThisClass::HandleParryRecoveryStarted);
 	RecoveryTask->ReadyForActivation();
 
-	// 패리 구간: opened by a new guard start, not by returning to guard after a parry motion or a guard pushback.
-	StartGuard(!Player->TakeGuardResume());
+	// 패리 구간: 새 가드 시작이 엽니다. 패리 모션이나 가드 밀림 뒤에 가드로 돌아올 때는 열지 않습니다.
+	const bool bResumedAfterPushback = TriggerEventData && TriggerEventData->EventTag == AgGameplayTags::Event_Guard_Resume;
+	StartGuard(!bResumedAfterPushback);
 }
 
 void UAgAbility_Guard::StartGuard(bool bOpenParryWindow)
@@ -54,25 +64,22 @@ void UAgAbility_Guard::StartGuard(bool bOpenParryWindow)
 	if (bOpenParryWindow && Data)
 	{
 		// 패리 구간이 생기는 가드 시작은 이동할 수 없는 시간도 함께 시작합니다(플레이어 입력 '상태별 허용 입력').
-		ParryWindow = UAgCombatLibrary::ApplyTimedTag(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_ParryWindow, Data->ParryWindowTime);
-		MoveLock = UAgCombatLibrary::ApplyTimedTag(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_GuardMoveLock, Data->GuardMoveLockTime);
+		ParryWindow = UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_ParryWindow, Data->ParryWindowTime);
+		MoveLock = UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_GuardMoveLock, Data->GuardMoveLockTime);
 	}
 }
 
-void UAgAbility_Guard::SetGuarding(bool bNewGuarding)
+void UAgAbility_Guard::SetGuarding(bool bGuarding)
 {
-	if (bGuarding == bNewGuarding)
+	if (bGuarding && !GuardingTag)
 	{
-		return;
+		GuardingTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Guarding);
+		GuardingTag->ReadyForActivation();
 	}
-	bGuarding = bNewGuarding;
-	if (bGuarding)
+	else if (!bGuarding && GuardingTag)
 	{
-		GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Guarding);
-	}
-	else
-	{
-		GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(AgGameplayTags::State_Guarding);
+		GuardingTag->EndTask();
+		GuardingTag = nullptr;
 	}
 }
 
@@ -96,7 +103,7 @@ void UAgAbility_Guard::CloseMoveLock()
 
 void UAgAbility_Guard::HandleGuardPressed(FGameplayEventData Payload)
 {
-	if (!bInParryMotion)
+	if (!ParryMotionTag)
 	{
 		return;
 	}
@@ -120,8 +127,8 @@ void UAgAbility_Guard::HandleGuardPressed(FGameplayEventData Payload)
 
 void UAgAbility_Guard::HandleGuardReleased(FGameplayEventData Payload)
 {
-	// Releasing during the parry motion only drops the guard; the motion plays on.
-	if (bInParryMotion)
+	// 패리 모션 중에 떼면 가드만 풀리고 모션은 이어집니다.
+	if (ParryMotionTag)
 	{
 		SetGuarding(false);
 		return;
@@ -132,12 +139,27 @@ void UAgAbility_Guard::HandleGuardReleased(FGameplayEventData Payload)
 void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (bInParryMotion || !Data || !Data->ParryMontage)
+	if (ParryMotionTag || !Data)
 	{
 		return;
 	}
 
-	// The parry motion faces where the attack came from (전투 시스템 '피격 반응').
+	// 패리 보상(플레이어 사양 '패리'): 막은 쪽은 MP·UP를 얻고, 공격한 쪽(대미지 GE 컨텍스트의 Instigator)은 PP를 잃습니다.
+	// 공격한 쪽의 그로기 판정은 그쪽 어트리뷰트 세트가 합니다.
+	const FGameplayEffectSpecHandle Charge = MakeOutgoingGameplayEffectSpec(UAgEffect_Resource::StaticClass());
+	UAgEffect_Resource::SetAmounts(*Charge.Data, 0.f, Data->ParryMPCharge, Data->ParryUPCharge);
+	ApplyGameplayEffectSpecToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), Charge);
+	if (const AAgCharacterBase* AttackingCharacter = Cast<AAgCharacterBase>(Payload.ContextHandle.GetInstigator()))
+	{
+		const FGameplayEffectSpecHandle PPLoss = MakeOutgoingGameplayEffectSpec(UAgEffect_ParryPPLoss::StaticClass());
+		GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*PPLoss.Data, AttackingCharacter->GetAbilitySystemComponent());
+	}
+	if (!Data->ParryMontage)
+	{
+		return;
+	}
+
+	// 패리 모션은 공격이 온 쪽을 바라봅니다(전투 시스템 '피격 반응').
 	AAgCharacterBase* Character = GetAgCharacter();
 	if (const AActor* Attacker = Payload.Instigator.Get(); Character && Attacker)
 	{
@@ -148,12 +170,12 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 		}
 	}
 
-	// The parry window ends once the parry motion starts. The motion is an action: no movement, no input until its recovery.
+	// 패리 모션이 시작되면 패리 구간이 끝납니다. 패리 모션은 행동이라 후딜 전까지 이동도 입력도 받지 않습니다.
 	CloseParryWindow();
-	bInParryMotion = true;
 	bInParryRecovery = false;
 	BeginBusy();
-	GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Acting);
+	ParryMotionTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Acting);
+	ParryMotionTag->ReadyForActivation();
 
 	ParryTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->ParryMontage);
 	ParryTask->OnCompleted.AddDynamic(this, &ThisClass::HandleParryMotionFinished);
@@ -164,7 +186,7 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 
 void UAgAbility_Guard::HandleParryRecoveryStarted(FGameplayEventData Payload)
 {
-	if (bInParryMotion)
+	if (ParryMotionTag)
 	{
 		bInParryRecovery = true;
 		EndBusy();
@@ -173,10 +195,10 @@ void UAgAbility_Guard::HandleParryRecoveryStarted(FGameplayEventData Payload)
 
 void UAgAbility_Guard::HandleParryMotionFinished()
 {
-	// Back to guard without a parry window while the key is held; otherwise back to standing.
+	// 가드 키를 누르고 있으면 패리 구간 없이 가드로, 아니면 대기로 돌아갑니다.
 	ParryTask = nullptr;
 	EndParryMotion();
-	if (!bGuarding)
+	if (!GuardingTag)
 	{
 		EndSelf(false);
 	}
@@ -190,22 +212,24 @@ void UAgAbility_Guard::HandleParryMotionCancelled()
 
 void UAgAbility_Guard::EndParryMotion()
 {
-	if (bInParryMotion)
+	if (ParryMotionTag)
 	{
-		bInParryMotion = false;
+		ParryMotionTag->EndTask();
+		ParryMotionTag = nullptr;
 		bInParryRecovery = false;
 		EndBusy();
-		GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(AgGameplayTags::State_Acting);
 	}
 }
 
 void UAgAbility_Guard::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// 패리 구간과 이동할 수 없는 시간은 효과라 어빌리티가 끝나도 남으므로 지웁니다. 태그를 붙여 둔 태스크는 어빌리티와 함께 끝납니다.
 	CloseParryWindow();
 	CloseMoveLock();
-	EndParryMotion();
-	SetGuarding(false);
 	ParryTask = nullptr;
+	GuardingTag = nullptr;
+	ParryMotionTag = nullptr;
+	bInParryRecovery = false;
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

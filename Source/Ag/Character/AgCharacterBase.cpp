@@ -3,8 +3,10 @@
 #include "Character/AgCharacterBase.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgGameplayEffect_Regen.h"
-#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/AgEffect_Damage.h"
+#include "AbilitySystem/AgEffect_Kill.h"
+#include "AbilitySystem/AgEffect_Regen.h"
+#include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "AIController.h"
@@ -17,7 +19,6 @@
 #include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
-#include "Data/AgDataFile.h"
 #include "Game/AgBossStageGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -34,6 +35,9 @@ namespace
 
 	/** Closer than this to the character's axis, the angle around it is unreliable, so a sub-step goes straight. */
 	constexpr float MinArcRadius = 20.f;
+
+	/** 히트스톱 중의 시간 배율: 모션, 몽타주, 이동이 거의 멈춥니다. */
+	constexpr float HitstopTimeDilation = 1.e-4f;
 
 	/**
 	 * A point between A and B for a sub-step. Swings travel around the body, so this follows the arc around the
@@ -87,6 +91,16 @@ UAbilitySystemComponent* AAgCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+bool AAgCharacterBase::IsDead() const
+{
+	return AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Dead);
+}
+
+bool AAgCharacterBase::CanLosePP() const
+{
+	return !CharacterData->Stats.bInfinitePP && !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+}
+
 void AAgCharacterBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -102,13 +116,10 @@ void AAgCharacterBase::BeginPlay()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute()).AddUObject(this, &ThisClass::HandleMOVChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetPPAttribute()).AddUObject(this, &ThisClass::HandlePPChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleHitstopChanged);
 	InitializeStats();
 	GrantAbilities();
 	StartRegen();
-#if WITH_EDITOR
-	// 약한 바인딩이라 캐릭터가 사라지면 함께 끝납니다.
-	AgDataFile::OnReloaded().AddUObject(this, &ThisClass::HandleDataReloaded);
-#endif
 
 	GetCharacterMovement()->ProcessRootMotionPostConvertToWorld.BindUObject(this, &ThisClass::ClampRootMotion);
 
@@ -116,6 +127,15 @@ void AAgCharacterBase::BeginPlay()
 	{
 		GameMode->RegisterCombatant(this);
 	}
+}
+
+void AAgCharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// ASC는 자기가 등록 해제될 때에야 어빌리티를 취소합니다. 그 전에 메시가 등록 해제되며 몽타주를 끊으면, 살아 있는
+	// 어빌리티가 그 콜백에서 메시를 바꿉니다(처형 사망의 래그돌이 이미 지운 물리 상태를 다시 만듦).
+	AbilitySystemComponent->CancelAllAbilities();
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AAgCharacterBase::Tick(float DeltaSeconds)
@@ -194,15 +214,17 @@ void AAgCharacterBase::UpdateMoveSpeed()
 
 void AAgCharacterBase::StartRegen()
 {
-	if (CharacterData && !CharacterData->Stats.bInfinitePP)
+	if (!CharacterData)
 	{
-		UAgCombatLibrary::ApplyRegen(this, UAgGameplayEffect_PPRegen::StaticClass(), AgGameplayTags::Data_PP, CharacterData->PPRegenRate);
+		return;
 	}
-}
-
-void AAgCharacterBase::HandleDataReloaded()
-{
-	StartRegen();
+	for (const TSubclassOf<UAgEffect_Regen>& Regen : CharacterData->RegenEffects)
+	{
+		if (Regen)
+		{
+			UAgEffect_Regen::Apply(*AbilitySystemComponent, Regen);
+		}
+	}
 }
 
 void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
@@ -213,13 +235,19 @@ void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
 	}
 }
 
+void AAgCharacterBase::HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// 멈춘 동안 다시 맞으면 태그가 하나 더 붙고, 마지막 것이 끝날 때 풀립니다.
+	CustomTimeDilation = NewCount > 0 ? HitstopTimeDilation : 1.f;
+}
+
 void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration)
 {
 	if (Handle.IsValid())
 	{
 		AbilitySystemComponent->RemoveActiveGameplayEffect(Handle);
 	}
-	Handle = UAgCombatLibrary::ApplyTimedTag(AbilitySystemComponent, DelayTag, Duration);
+	Handle = UAgEffect_TimedTag::Apply(AbilitySystemComponent, DelayTag, Duration);
 }
 
 bool AAgCharacterBase::GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const
@@ -260,7 +288,7 @@ void AAgCharacterBase::ClearActiveAttack()
 
 void AAgCharacterBase::BeginAttackWindow(int32 HitIndex)
 {
-	if (bDead || !ActiveAttackHits.IsValidIndex(HitIndex))
+	if (IsDead() || !ActiveAttackHits.IsValidIndex(HitIndex))
 	{
 		return;
 	}
@@ -317,7 +345,7 @@ void AAgCharacterBase::SweepWeapon()
 			// 판정 구간 하나에서 대상마다 한 번만 닿습니다. 아무 일도 없었어도(무적) 다시 맞지 않습니다.
 			WindowTouchedActors.Add(Target);
 			const FVector HitLocation = Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint;
-			UAgCombatLibrary::ProcessHit(this, Target, ActiveAttackHits[OpenWindowHit], HitLocation);
+			UAgEffect_Damage::ApplyAttack(this, this, Target, ActiveAttackHits[OpenWindowHit], HitLocation);
 			if (OpenWindowHit == INDEX_NONE)
 			{
 				break;
@@ -375,11 +403,10 @@ void AAgCharacterBase::PlayFlinch()
 
 void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility, bool bRagdoll)
 {
-	if (bDead)
+	if (IsDead())
 	{
 		return;
 	}
-	bDead = true;
 
 	// 1-2. 모든 행동을 멈추고, 이후의 피격은 무시합니다(IsDead). 행동의 공격 중 이동 태스크도 함께 끝납니다.
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
@@ -432,23 +459,12 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 
 void AAgCharacterBase::Kill()
 {
-	if (bDead)
+	if (IsDead())
 	{
 		return;
 	}
 
-	AbilitySystemComponent->SetNumericAttributeBase(UAgAttributeSet::GetHPAttribute(), 0.f);
-
-	FGameplayEventData Payload;
-	Payload.EventTag = AgGameplayTags::Event_Death;
-	Payload.Target = this;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgGameplayTags::Event_Death, Payload);
-
-	// Without a death ability (no character data), die right away.
-	if (!bDead)
-	{
-		Die(FVector::ZeroVector);
-	}
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(GetDefault<UAgEffect_Kill>(), 1.f, AbilitySystemComponent->MakeEffectContext());
 }
 
 void AAgCharacterBase::FellOutOfWorld(const UDamageType& DamageType)

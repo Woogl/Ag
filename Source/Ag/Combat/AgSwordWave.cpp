@@ -2,6 +2,7 @@
 
 #include "Combat/AgSwordWave.h"
 
+#include "AbilitySystem/AgEffect_Damage.h"
 #include "Character/AgCharacterBase.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Components/BoxComponent.h"
@@ -65,9 +66,8 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 		End = WallHit.Location;
 	}
 
-	// A character the box reaches is judged once, when the wave first reaches it, and the wave flies on through whatever
-	// the result (hit, guard, parry, or invincible). The box sweeps the whole way it moves this tick, so a long frame
-	// can't skip a character.
+	// 상자가 닿은 캐릭터는 처음 닿을 때 한 번 맞고, 결과(피격, 가드, 패리, 무적)와 관계없이 검기는 계속 날아갑니다.
+	// 상자는 이번 틱에 움직인 거리 전체를 쓸어, 긴 프레임에도 캐릭터를 건너뛰지 않습니다.
 	TArray<FHitResult> Reached;
 	const FCollisionShape Box = FCollisionShape::MakeBox(HitBox->GetScaledBoxExtent());
 	GetWorld()->SweepMultiByObjectType(Reached, Start, End, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Box, QueryParams);
@@ -80,7 +80,7 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 		}
 		TouchedActors.Add(Target);
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
-		UAgCombatLibrary::ProcessHit(ShooterCharacter, Target, FAgPlayerAttackHit(Hit), HitLocation, this);
+		UAgEffect_Damage::ApplyAttack(ShooterCharacter, this, Target, FAgPlayerAttackHit(Hit), HitLocation);
 	}
 
 	if (bHitWall)

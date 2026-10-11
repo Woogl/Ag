@@ -3,46 +3,9 @@
 #include "Combat/AgTimeSubsystem.h"
 
 #include "Ag.h"
-#include "Core/AgSettings.h"
-#include "Data/AgCombatRules.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
 #include "TimerManager.h"
-
-namespace
-{
-	/** Per-actor time scale during hitstop: motion, montages and movement all but stop. */
-	constexpr float HitstopTimeDilation = 1.e-4f;
-}
-
-void UAgTimeSubsystem::StartHitstop(std::initializer_list<AActor*> Actors)
-{
-	const UAgCombatRules& Rules = UAgSettings::Get()->GetCombatRules();
-	if (Rules.HitstopTime <= 0.f)
-	{
-		return;
-	}
-
-	// 캐릭터마다 따로 셉니다. 다른 캐릭터의 적중이 이미 멈춘 캐릭터의 히트스톱을 늘리지 않습니다.
-	for (AActor* Actor : Actors)
-	{
-		if (Actor)
-		{
-			Actor->CustomTimeDilation = HitstopTimeDilation;
-			FTimerHandle& Timer = HitstopTimers.FindOrAdd(Actor);
-			GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::EndHitstop, TWeakObjectPtr<AActor>(Actor)), Rules.HitstopTime, false);
-		}
-	}
-}
-
-void UAgTimeSubsystem::EndHitstop(TWeakObjectPtr<AActor> Actor)
-{
-	HitstopTimers.Remove(Actor);
-	if (Actor.IsValid())
-	{
-		Actor->CustomTimeDilation = 1.f;
-	}
-}
 
 void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 {
@@ -50,31 +13,16 @@ void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 	{
 		return;
 	}
-	// Global time dilation slows everything that runs on game time: motion, movement, timers, camera shakes, the HUD's
-	// HP trails and the damage numbers. The end is counted in real time.
-	GetWorld()->GetWorldSettings()->SetTimeDilation(Speed);
-	SlowMotionEndTime = FPlatformTime::Seconds() + RealDuration;
+	// 게임 전체 시간 배율은 게임 시간으로 흐르는 모든 것을 늦춥니다: 모션, 이동, 타이머, 카메라 셰이크, HUD의 HP 잔상.
+	// 그동안 게임 시간은 실제 시간에 배율을 곱한 만큼 흐르므로, 게임 시간 타이머를 RealDuration × 배율로 걸면 실제 시간 RealDuration 뒤에 끝납니다.
+	AWorldSettings* WorldSettings = GetWorld()->GetWorldSettings();
+	WorldSettings->SetTimeDilation(Speed);
+	GetWorld()->GetTimerManager().SetTimer(SlowMotionTimer, this, &ThisClass::EndSlowMotion, RealDuration * WorldSettings->GetEffectiveTimeDilation(), false);
 	UE_LOG(LogAg, Verbose, TEXT("Slow motion starts: speed %.2f for %.2f s of real time"), Speed, RealDuration);
 }
 
 void UAgTimeSubsystem::EndSlowMotion()
 {
-	SlowMotionEndTime = -1.0;
 	GetWorld()->GetWorldSettings()->SetTimeDilation(1.f);
 	UE_LOG(LogAg, Verbose, TEXT("Slow motion ends"));
-}
-
-void UAgTimeSubsystem::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (SlowMotionEndTime >= 0.0 && FPlatformTime::Seconds() >= SlowMotionEndTime)
-	{
-		EndSlowMotion();
-	}
-}
-
-TStatId UAgTimeSubsystem::GetStatId() const
-{
-	RETURN_QUICK_DECLARE_CYCLE_STAT(UAgTimeSubsystem, STATGROUP_Tickables);
 }

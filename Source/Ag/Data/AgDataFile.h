@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 
 /**
- * The JSON data files in the project's Data folder (구현 계획서 '데이터').
- * A file fills the Transient properties of its data object: every one of them must be in the file, and nothing else.
- * Keys are the property names; tags are written as tag names, classes as class paths and enums as value names.
+ * 프로젝트 Data 폴더의 JSON 데이터 파일(구현 계획서 '데이터').
+ * 파일 하나가 데이터 객체의 Transient 속성을 채웁니다. 그 속성은 모두 파일에 있어야 하고, 다른 키는 없어야 합니다.
+ * 키는 속성 이름이고, 태그는 태그 이름으로, 열거형은 값 이름으로 적습니다.
  */
 namespace AgDataFile
 {

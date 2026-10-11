@@ -55,7 +55,7 @@ namespace AgDataFile
 			return NumericProperty ? NumericProperty->GetIntPropertyEnum() : nullptr;
 		}
 
-		/** The JSON type a property's value is written as. */
+		/** 속성 값을 JSON에 적는 형식 */
 		EJson GetJsonType(const FProperty* Property)
 		{
 			if (Property->IsA<FArrayProperty>())
@@ -74,7 +74,7 @@ namespace AgDataFile
 			{
 				return EJson::Object;
 			}
-			// Enums, names, strings, text, tags and classes.
+			// 열거형, 텍스트, 태그
 			return EJson::String;
 		}
 
@@ -97,7 +97,7 @@ namespace AgDataFile
 
 		void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors);
 
-		/** 값을 속성에 맞춰 검사합니다: JSON 형식, 그다음 그 형식에 필요한 것(필드, 태그, 클래스, 열거형 값, 정수, 범위). */
+		/** 값을 속성에 맞춰 검사합니다: JSON 형식, 그다음 그 형식에 필요한 것(필드, 태그, 열거형 값, 정수, 범위). */
 		void CheckValue(const TSharedPtr<FJsonValue>& Value, const FProperty* Property, const FString& Path, TArray<FString>& Errors)
 		{
 			const EJson Type = GetJsonType(Property);
@@ -130,16 +130,6 @@ namespace AgDataFile
 				if (!TagName.IsEmpty() && !FGameplayTag::RequestGameplayTag(FName(*TagName), /*ErrorIfNotFound*/ false).IsValid())
 				{
 					Errors.Add(FString::Printf(TEXT("%s: %s is not a gameplay tag"), *Path, *TagName));
-				}
-			}
-			else if (const FClassProperty* ClassProperty = CastField<FClassProperty>(Property))
-			{
-				// 데이터 파일에는 C++ 클래스만 둡니다. 에디터에서 만든 클래스는 에셋 참조라 데이터 에셋에 둡니다.
-				const FString ClassPath = Value->AsString();
-				const UClass* Class = ClassPath.IsEmpty() ? nullptr : FindObject<UClass>(nullptr, *ClassPath);
-				if (!ClassPath.IsEmpty() && (!Class || !Class->HasAnyClassFlags(CLASS_Native) || !Class->IsChildOf(ClassProperty->MetaClass)))
-				{
-					Errors.Add(FString::Printf(TEXT("%s: %s is not a C++ class of %s"), *Path, *ClassPath, *ClassProperty->MetaClass->GetName()));
 				}
 			}
 			else if (const UEnum* Enum = GetEnum(Property))
@@ -205,27 +195,16 @@ namespace AgDataFile
 			}
 		}
 
-		/** Tags, classes and names from plain strings. CheckValue has validated them already. */
-		bool ImportString(const TSharedPtr<FJsonValue>& JsonValue, FProperty* Property, void* Value)
+		/** 태그 이름 문자열로 태그를 채웁니다. 엔진 변환기는 태그를 구조체로 읽기 때문입니다. CheckValue가 이미 검사했습니다. */
+		bool ImportTag(const TSharedPtr<FJsonValue>& JsonValue, FProperty* Property, void* Value)
 		{
-			if (IsTagProperty(Property))
+			if (!IsTagProperty(Property))
 			{
-				const FString TagName = JsonValue->AsString();
-				*static_cast<FGameplayTag*>(Value) = TagName.IsEmpty() ? FGameplayTag() : FGameplayTag::RequestGameplayTag(FName(*TagName));
-				return true;
+				return false;
 			}
-			if (const FClassProperty* ClassProperty = CastField<FClassProperty>(Property))
-			{
-				const FString ClassPath = JsonValue->AsString();
-				ClassProperty->SetObjectPropertyValue(Value, ClassPath.IsEmpty() ? nullptr : FindObject<UClass>(nullptr, *ClassPath));
-				return true;
-			}
-			if (const FNameProperty* NameProperty = CastField<FNameProperty>(Property))
-			{
-				NameProperty->SetPropertyValue(Value, FName(*JsonValue->AsString()));
-				return true;
-			}
-			return false;
+			const FString TagName = JsonValue->AsString();
+			*static_cast<FGameplayTag*>(Value) = TagName.IsEmpty() ? FGameplayTag() : FGameplayTag::RequestGameplayTag(FName(*TagName));
+			return true;
 		}
 
 		void Report(const UObject& Target, const FString& FileName, const TArray<FString>& Errors)
@@ -303,7 +282,7 @@ namespace AgDataFile
 		TArray<FDefaultConstructedPropertyElement> Values;
 		if (Errors.IsEmpty())
 		{
-			const FJsonObjectConverter::CustomImportCallback ImportCallback = FJsonObjectConverter::CustomImportCallback::CreateStatic(&ImportString);
+			const FJsonObjectConverter::CustomImportCallback ImportCallback = FJsonObjectConverter::CustomImportCallback::CreateStatic(&ImportTag);
 			Values.Reserve(Properties.Num());
 			for (const FProperty* Property : Properties)
 			{

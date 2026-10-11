@@ -36,92 +36,94 @@ protected:
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
+	// 아래 위젯은 모두 WBP_HUD에 있어야 합니다(BindWidget). 빠지면 위젯 블루프린트 컴파일이 오류로 알립니다.
+
 	/** 사망 연출에 숨기는 요소(플레이어 상태, 슬롯, 보스 상태, 조작 안내)를 모두 담습니다. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> StatusPanel;
 
 	/** 플레이어 상태: SP 바 */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> PlayerSPBar;
 
 	/** 플레이어 상태: HP 바 */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> PlayerHPBar;
 
-	/** 플레이어 상태: the HP bar's 감소 잔상, behind it. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 플레이어 상태: HP 바 뒤에 두는 감소 잔상 */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> PlayerHPTrailBar;
 
 	/** 플레이어 상태: HP 수치 (현재값 / 최대값) */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> PlayerHPText;
 
 	/** 플레이어 상태: MP 바 */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> PlayerMPBar;
 
 	/** 플레이어 상태: MP 수치 (현재값 / 최대값) */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> PlayerMPText;
 
-	/** 스킬 슬롯, dimmed while the skill's MP cost can't be paid. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 스킬 슬롯. 스킬의 MP 소모를 치를 수 없는 동안 흐려집니다. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> SkillSlot;
 
-	/** 스킬 슬롯: 스킬 아이콘. A texture or material goes into its brush in the designer; without one it stays hidden. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 스킬 슬롯: 스킬 아이콘. 디자이너에서 브러시에 텍스처나 머티리얼을 넣고, 넣지 않으면 숨깁니다. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> SkillIconImage;
 
-	/** 스킬 슬롯: the skill's MP cost. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 스킬 슬롯: 스킬의 MP 소모 */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> SkillCostText;
 
-	/** 스킬 슬롯: 쿨다운 표시의 원형 표시. Its material covers the slot by the remaining share of the cooldown. Outside SkillSlot, so it never dims. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 스킬 슬롯: 쿨다운 표시의 원형 표시. 머티리얼이 남은 쿨다운 비율만큼 슬롯을 덮습니다. 스킬 슬롯 밖에 있어 흐려지지 않습니다. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> SkillCooldownSweep;
 
-	/** 스킬 슬롯: 쿨다운 표시의 숫자 (remaining cooldown). Outside SkillSlot, so it never dims. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 스킬 슬롯: 쿨다운 표시의 숫자(남은 쿨다운). 스킬 슬롯 밖에 있어 흐려지지 않습니다. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> SkillCooldownText;
 
-	/** 궁극기 슬롯, dimmed while UP isn't full. The UP gauge is outside it and never dims. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 궁극기 슬롯. UP가 가득 차지 않은 동안 흐려집니다. UP 게이지는 그 밖에 있어 흐려지지 않습니다. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> UltimateSlot;
 
-	/** 궁극기 슬롯: 궁극기 아이콘, set up like SkillIconImage. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 궁극기 슬롯: 궁극기 아이콘. 스킬 아이콘과 같이 다룹니다. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> UltimateIconImage;
 
-	/** 궁극기 슬롯: UP 게이지. Its material fills the slot border by the UP ratio. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 궁극기 슬롯: UP 게이지. 머티리얼이 UP 비율만큼 슬롯 테두리를 채웁니다. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> UltimateGauge;
 
 	/** 보스 상태: 보스 이름 */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> BossNameText;
 
 	/** 보스 상태: HP 바 */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossHPBar;
 
-	/** 보스 상태: the HP bar's 감소 잔상, behind it. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	/** 보스 상태: HP 바 뒤에 두는 감소 잔상 */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossHPTrailBar;
 
 	/** 보스 상태: PP 바 */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossPPBar;
 
 	/** 보스 상태: PP 바의 감소 잔상. PP 바 뒤에 둡니다. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossPPTrailBar;
 
 	/** 조작 안내: 키 열. 한 줄에 행동 하나의 키를 표시합니다. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> ControlsGuideKeys;
 
 	/** 조작 안내: 행동 이름 열. 키 열과 같은 줄 순서입니다. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> ControlsGuideActions;
 
 	/** UI 스타일 '입력 키 표시': 엔진 키 이름과 다르게 표시하는 키(마우스 입력 등)의 표시 이름 */
@@ -168,17 +170,17 @@ private:
 	/** Whether the ability passes its own cost check (흐린 슬롯: MP·UP 부족). */
 	static bool CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
 
-	/** 쿨다운 표시: the remaining share and time of the ability's cooldown, hidden while it is ready. */
-	void UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage* Sweep, UTextBlock* Text);
+	/** 쿨다운 표시: 어빌리티 쿨다운의 남은 비율과 시간. 쓸 수 있는 동안은 숨깁니다. */
+	void UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage& Sweep, UTextBlock& Text);
 
-	static void SetBarRatio(UProgressBar* Bar, float Value, float MaxValue);
-	void SetSlotUsable(UWidget* SlotWidget, bool bUsable) const;
+	static void SetBarRatio(UProgressBar& Bar, float Value, float MaxValue);
+	void SetSlotUsable(UWidget& SlotWidget, bool bUsable) const;
 
-	/** Sets '현재값 / 최대값' when the whole numbers change. */
-	static void SetValueText(UTextBlock* Text, float Value, float MaxValue, FIntPoint& ShownValues);
+	/** 정수로 바뀌었을 때만 '현재값 / 최대값'을 씁니다. */
+	static void SetValueText(UTextBlock& Text, float Value, float MaxValue, FIntPoint& ShownValues);
 
 	/** 바가 줄면 잔상은 (줄어드는 중이라도) 그 자리에서 다시 기다린 뒤 바의 현재 값까지 줄어듭니다. */
-	void UpdateTrail(FAgTrail& Trail, UProgressBar* TrailBar, float BarRatio, float DeltaTime) const;
+	void UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime) const;
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 

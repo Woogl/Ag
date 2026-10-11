@@ -1,7 +1,7 @@
 // Copyright Woogle. All Rights Reserved.
 
+#include "AbilitySystem/AgDamageExecution.h"
 #include "AI/AgBossAITasks.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Misc/AutomationTest.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -12,18 +12,18 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAgDamageFormulaTest, "Ag.Combat.DamageFormula"
 bool FAgDamageFormulaTest::RunTest(const FString& Parameters)
 {
 	// 전투 시스템 'HP 감소량 계산식': ATK × DamageMultiplier × 100 / (100 + DEF), rounded.
-	TestEqual(TEXT("DEF 100 halves the damage"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 100.f), 50);
-	TestEqual(TEXT("DEF 0 takes full damage"), UAgCombatLibrary::CalculateHPDamage(150.f, 1.f, 0.f), 150);
-	TestEqual(TEXT("Multiplier applies"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.6f, 100.f), 80);
-	TestEqual(TEXT("Rounds .5 up (50.5 -> 51)"), UAgCombatLibrary::CalculateHPDamage(101.f, 1.f, 100.f), 51);
-	TestEqual(TEXT("Rounds up above half (66.67 -> 67)"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 50.f), 67);
-	TestEqual(TEXT("Rounds down below half (93.33 -> 93)"), UAgCombatLibrary::CalculateHPDamage(140.f, 1.f, 50.f), 93);
-	TestEqual(TEXT("Guard reduction applies before rounding (25)"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 100.f, 0.5f), 25);
-	TestEqual(TEXT("Guard reduction rounding (33.33 -> 33)"), UAgCombatLibrary::CalculateHPDamage(100.f, 1.f, 50.f, 0.5f), 33);
+	TestEqual(TEXT("DEF 100 halves the damage"), UAgDamageExecution::CalculateHPDamage(100.f, 1.f, 100.f), 50);
+	TestEqual(TEXT("DEF 0 takes full damage"), UAgDamageExecution::CalculateHPDamage(150.f, 1.f, 0.f), 150);
+	TestEqual(TEXT("Multiplier applies"), UAgDamageExecution::CalculateHPDamage(100.f, 1.6f, 100.f), 80);
+	TestEqual(TEXT("Rounds .5 up (50.5 -> 51)"), UAgDamageExecution::CalculateHPDamage(101.f, 1.f, 100.f), 51);
+	TestEqual(TEXT("Rounds up above half (66.67 -> 67)"), UAgDamageExecution::CalculateHPDamage(100.f, 1.f, 50.f), 67);
+	TestEqual(TEXT("Rounds down below half (93.33 -> 93)"), UAgDamageExecution::CalculateHPDamage(140.f, 1.f, 50.f), 93);
+	TestEqual(TEXT("Guard reduction applies before rounding (25)"), UAgDamageExecution::CalculateHPDamage(100.f, 1.f, 100.f, 0.5f), 25);
+	TestEqual(TEXT("Guard reduction rounding (33.33 -> 33)"), UAgDamageExecution::CalculateHPDamage(100.f, 1.f, 50.f, 0.5f), 33);
 
 	// 'PP 감소량 계산식': ATK × PoiseMultiplier × 100 / (100 + DEF), rounded.
-	TestEqual(TEXT("PP with multiplier 2.4 vs DEF 100"), UAgCombatLibrary::CalculatePPDamage(100.f, 2.4f, 100.f), 120);
-	TestEqual(TEXT("PP multiplier is separate from damage"), UAgCombatLibrary::CalculatePPDamage(100.f, 1.f, 100.f), 50);
+	TestEqual(TEXT("PP with multiplier 2.4 vs DEF 100"), UAgDamageExecution::CalculatePPDamage(100.f, 2.4f, 100.f), 120);
+	TestEqual(TEXT("PP multiplier is separate from damage"), UAgDamageExecution::CalculatePPDamage(100.f, 1.f, 100.f), 50);
 	return true;
 }
 

@@ -5,11 +5,14 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgEffect_Cost.h"
+#include "AbilitySystem/AgEffect_Resource.h"
+#include "AbilitySystem/AgEffect_TimedTag.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -18,6 +21,7 @@ UAgAbility_Dodge::UAgAbility_Dodge()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Dodge);
 	SetCooldownTag(AgGameplayTags::Cooldown_Dodge);
+	CostGameplayEffectClass = UAgEffect_Cost::StaticClass();
 
 	// 회피 후딜 allows a new dodge: pressing it again restarts this ability.
 	bRetriggerInstancedAbility = true;
@@ -57,8 +61,10 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	}
 
 	BeginBusy();
-	SetStateTag(AgGameplayTags::State_Invincible, bInvincible, true);
-	SetStateTag(AgGameplayTags::State_PerfectDodgeWindow, bInPerfectDodgeWindow, true);
+	InvincibleTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Invincible);
+	InvincibleTag->ReadyForActivation();
+	PerfectDodgeWindowTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_PerfectDodgeWindow);
+	PerfectDodgeWindowTag->ReadyForActivation();
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
@@ -83,32 +89,14 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	PerfectDodgeEvent->ReadyForActivation();
 }
 
-void UAgAbility_Dodge::SetStateTag(const FGameplayTag& Tag, bool& bHasTag, bool bWanted)
-{
-	if (bHasTag == bWanted)
-	{
-		return;
-	}
-	bHasTag = bWanted;
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (bWanted)
-	{
-		ASC->AddLooseGameplayTag(Tag);
-	}
-	else
-	{
-		ASC->RemoveLooseGameplayTag(Tag);
-	}
-}
-
 void UAgAbility_Dodge::HandlePerfectDodgeWindowEnded()
 {
-	SetStateTag(AgGameplayTags::State_PerfectDodgeWindow, bInPerfectDodgeWindow, false);
+	PerfectDodgeWindowTag->EndTask();
 }
 
 void UAgAbility_Dodge::HandleInvincibilityEnded()
 {
-	SetStateTag(AgGameplayTags::State_Invincible, bInvincible, false);
+	InvincibleTag->EndTask();
 }
 
 void UAgAbility_Dodge::HandleRecoveryStarted()
@@ -118,7 +106,7 @@ void UAgAbility_Dodge::HandleRecoveryStarted()
 
 void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 {
-	// Once per dodge; later attacks are still dodged but give nothing.
+	// 회피 한 번에 한 번만 받습니다. 그 뒤의 공격도 피하지만 아무것도 주지 않습니다.
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	AAgCharacterBase* Character = GetAgCharacter();
 	if (bPerfectDodged || !Data || !Character)
@@ -127,10 +115,12 @@ void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 	}
 	bPerfectDodged = true;
 	UE_LOG(LogAg, Verbose, TEXT("Perfect dodge: SP +%.0f, MP +%.0f, UP +%.0f"), SPSpent, Data->PerfectDodgeMPCharge, Data->PerfectDodgeUPCharge);
-	UAgCombatLibrary::ApplyResourceChange(Character, { SPSpent, Data->PerfectDodgeMPCharge, Data->PerfectDodgeUPCharge });
+	const FGameplayEffectSpecHandle Reward = MakeOutgoingGameplayEffectSpec(UAgEffect_Resource::StaticClass());
+	UAgEffect_Resource::SetAmounts(*Reward.Data, SPSpent, Data->PerfectDodgeMPCharge, Data->PerfectDodgeUPCharge);
+	ApplyGameplayEffectSpecToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), Reward);
 
-	// 회피 반격 기회 from this moment; it outlives the dodge.
-	UAgCombatLibrary::ApplyTimedTag(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_DodgeCounterChance, Data->DodgeCounterChanceTime);
+	// 회피 반격 기회는 이때부터 시작해 회피가 끝나도 이어집니다.
+	UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_DodgeCounterChance, Data->DodgeCounterChanceTime);
 
 	if (UAgTimeSubsystem* TimeSubsystem = UWorld::GetSubsystem<UAgTimeSubsystem>(Character->GetWorld()))
 	{
@@ -149,14 +139,6 @@ void UAgAbility_Dodge::HandleMontageCancelled()
 	EndSelf(true);
 }
 
-void UAgAbility_Dodge::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	SetStateTag(AgGameplayTags::State_PerfectDodgeWindow, bInPerfectDodgeWindow, false);
-	SetStateTag(AgGameplayTags::State_Invincible, bInvincible, false);
-
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
-
 float UAgAbility_Dodge::GetCooldownDuration() const
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
@@ -169,7 +151,7 @@ bool UAgAbility_Dodge::CanPayCost(const UAgAttributeSet& Stats) const
 	return Stats.GetSP() > 0.f;
 }
 
-FAgResourceAmounts UAgAbility_Dodge::GetCost() const
+FAgAbilityCost UAgAbility_Dodge::GetCost() const
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	return { Data ? Data->DodgeSPCost : 0.f, 0.f, 0.f };

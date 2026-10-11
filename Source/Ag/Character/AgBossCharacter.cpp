@@ -3,11 +3,10 @@
 #include "Character/AgBossCharacter.h"
 
 #include "AbilitySystem/Abilities/AgAbility_Execution.h"
-#include "AbilitySystem/Abilities/AgBossPatternAbility.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "AI/AgBossAIController.h"
-#include "Animation/AgAnimNotify_GameplayEvent.h"
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -18,7 +17,6 @@
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/AgDamageFloater.h"
 
 AAgBossCharacter::AAgBossCharacter()
 {
@@ -73,11 +71,15 @@ void AAgBossCharacter::GrantAbilities()
 	}
 	for (const FAgBossPattern& Pattern : Data->Patterns)
 	{
-		const TSubclassOf<UAgBossPatternAbility> AbilityClass = Data->FindPatternAbility(Pattern.Pattern);
+		const TSubclassOf<UAgGameplayAbility> AbilityClass = Data->FindPatternAbility(Pattern.Pattern);
 		if (!AbilityClass)
 		{
 			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no ability in %s's PatternAbilities."), *GetName(), *Pattern.Pattern.ToString(), *Data->GetName());
 			continue;
+		}
+		if (!Data->FindPatternCooldownTag(Pattern.Pattern).IsValid())
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no cooldown tag in %s's PatternCooldownTags."), *GetName(), *Pattern.Pattern.ToString(), *Data->GetName());
 		}
 		FGameplayAbilitySpec Spec(AbilityClass);
 		Spec.GetDynamicSpecSourceTags().AddTag(Pattern.Pattern);
@@ -85,16 +87,41 @@ void AAgBossCharacter::GrantAbilities()
 	}
 }
 
+FGameplayTag AAgBossCharacter::GetPatternTag(const FGameplayAbilitySpec& Spec)
+{
+	for (const FGameplayTag& Tag : Spec.GetDynamicSpecSourceTags())
+	{
+		if (Tag.MatchesTag(AgGameplayTags::Ability_Boss_Pattern))
+		{
+			return Tag;
+		}
+	}
+	return FGameplayTag();
+}
+
 FGameplayAbilitySpec* AAgBossCharacter::FindPatternSpec(const FGameplayTag& Pattern) const
 {
 	for (FGameplayAbilitySpec& Spec : GetAbilitySystemComponent()->GetActivatableAbilities())
 	{
-		if (UAgBossPatternAbility::GetPatternTag(Spec) == Pattern)
+		if (GetPatternTag(Spec) == Pattern)
 		{
 			return &Spec;
 		}
 	}
 	return nullptr;
+}
+
+const FAgBossPattern* AAgBossCharacter::FindPattern(const FGameplayAbilitySpecHandle Handle) const
+{
+	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
+	const FGameplayAbilitySpec* Spec = GetAbilitySystemComponent()->FindAbilitySpecFromHandle(Handle);
+	return (Data && Spec) ? Data->FindPattern(GetPatternTag(*Spec)) : nullptr;
+}
+
+float AAgBossCharacter::GetPatternPlayRate() const
+{
+	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
+	return (Data ? Data->PatternPlayRate : 1.f) * GetPatternSpeed();
 }
 
 void AAgBossCharacter::EnterPhase2()
@@ -123,11 +150,6 @@ void AAgBossCharacter::SetGroggyTimerRunning(bool bRunning)
 float AAgBossCharacter::GetGroggyElapsedTime() const
 {
 	return GroggyStartTime >= 0.0 ? static_cast<float>(GetWorld()->GetTimeSeconds() - GroggyStartTime) : -1.f;
-}
-
-void AAgBossCharacter::ShowDamageFloater(int32 Amount, const FVector& Location) const
-{
-	AAgDamageFloater::Spawn(GetWorld(), DamageFloaterWidget, Location, Amount);
 }
 
 void AAgBossCharacter::Tick(float DeltaSeconds)
@@ -197,9 +219,8 @@ bool AAgBossCharacter::IsInRotationStopWindow() const
 		return false;
 	}
 
-	// The lead is in seconds at the pattern play rate; in montage time it scales with that rate.
-	// Phase 2 speeds up both the montage and the lead by the same factor, so this montage-time lead doesn't change.
-	const float LeadInMontageTime = Data->RotationStopLead * Data->PatternPlayRate;
+	// 판정 구간보다 회전 정지 시간만큼 앞서 멈추고, 판정 구간이 끝나면 다시 돕니다.
+	const float LeadInMontage = Data->GetRotationStopLeadInMontage();
 	for (const FAnimMontageInstance* Instance : AnimInstance->MontageInstances)
 	{
 		if (!Instance || !Instance->Montage || !Instance->IsActive())
@@ -210,15 +231,7 @@ bool AAgBossCharacter::IsInRotationStopWindow() const
 		for (const FAnimNotifyEvent& Notify : Instance->Montage->Notifies)
 		{
 			if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass)
-				&& Position >= Notify.GetTriggerTime() - LeadInMontageTime && Position <= Notify.GetEndTriggerTime())
-			{
-				return true;
-			}
-
-			// 보스 사양 'A6': each swing's release is its attack window.
-			const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
-			if (Event && Event->EventTag == AgGameplayTags::Event_Boss_SwordWave
-				&& Position >= Notify.GetTriggerTime() - LeadInMontageTime && Position <= Notify.GetTriggerTime())
+				&& Position >= Notify.GetTriggerTime() - LeadInMontage && Position <= Notify.GetEndTriggerTime())
 			{
 				return true;
 			}

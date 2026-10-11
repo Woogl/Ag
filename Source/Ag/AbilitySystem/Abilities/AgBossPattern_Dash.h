@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/Abilities/AgBossPatternAbility.h"
-#include "Animation/AnimEnums.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AgBossPattern_Dash.generated.h"
 
 class UAgAbilityTask_Dash;
+class UAnimMontage;
 
 /**
  * A3 돌진 찌르기 (보스 사양 '돌진 규칙', '돌진과 모션'): 돌진을 시작할 때까지 플레이어를 따라 돈 뒤, 회전 없이 플레이어를
@@ -16,17 +16,19 @@ class UAgAbilityTask_Dash;
  * 루트 모션이 있으면 다른 루트 모션을 쓰지 않으므로, 돌진부터는 모션 자체의 루트 모션을 무시합니다.
  */
 UCLASS()
-class UAgBossPattern_Dash : public UAgBossPatternAbility
+class UAgBossPattern_Dash : public UAgGameplayAbility
 {
 	GENERATED_BODY()
 
+public:
+	UAgBossPattern_Dash();
+
 protected:
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-	virtual bool UsesSharedMovement() const override { return false; }
-	virtual void OnPatternStarted() override;
 
 private:
-	/** Turns the dash state on or off: no turning, no blocking the player, the attack window open. */
+	/** 돌진 상태를 켜고 끕니다: 판정 구간이 열려 회전하지 않고, 플레이어를 막지 않습니다. */
 	void SetDashing(bool bNewDashing);
 
 	UFUNCTION()
@@ -41,11 +43,18 @@ private:
 	UFUNCTION()
 	void HandleAttackBlocked(FGameplayEventData Payload);
 
+	UFUNCTION()
+	void HandleMontageFinished();
+
+	UFUNCTION()
+	void HandleMontageCancelled();
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> Montage;
+
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_Dash> DashTask;
 
 	bool bDashing = false;
 	bool bHolding = false;
-	bool bRootMotionIgnored = false;
-	TEnumAsByte<ERootMotionMode::Type> SavedRootMotionMode = ERootMotionMode::RootMotionFromMontagesOnly;
 };
