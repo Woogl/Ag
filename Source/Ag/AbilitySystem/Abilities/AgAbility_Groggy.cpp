@@ -13,8 +13,8 @@
 #include "Character/AgBossCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Combat/AgCombatLibrary.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -84,7 +84,7 @@ void UAgAbility_Groggy::StartGroggy()
 
 	// 그로기 시간은 모션 전체를 덮으므로, End 섹션은 시간이 끝나기 그 길이만큼 전에 시작합니다.
 	// 시간은 게임 시간으로 세며 히트스톱 중에도 흐릅니다(전투 시스템 '히트스톱 중의 시간').
-	const UAgCombatRules& Rules = UAgSettings::Get()->GetCombatRules();
+	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const UAnimMontage* Montage = Data->GroggyMontage;
 	const int32 EndSection = Montage->GetSectionIndex(GroggyEndSection);
 	const float EndLength = EndSection != INDEX_NONE ? Montage->GetSectionLength(EndSection) : 0.f;

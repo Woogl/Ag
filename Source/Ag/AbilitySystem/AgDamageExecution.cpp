@@ -5,8 +5,8 @@
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 
@@ -107,7 +107,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 		const float GuardSPCost = HPDamage * DefenderData->GuardSPCostRatio;
 		const bool bGuardBreak = TargetSP < GuardSPCost;
 		Spec.AddDynamicAssetTag(bGuardBreak ? AgGameplayTags::Effect_Damage_Result_GuardBreak : AgGameplayTags::Effect_Damage_Result_Guard);
-		const float GuardReduction = UAgSettings::Get()->GetCombatRules().GuardReduction;
+		const float GuardReduction = UAgAssetManager::Get().GetCombatRules().GuardReduction;
 		AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, GuardReduction));
 		AddOutput(OutExecutionOutput, UAgAttributeSet::GetSPAttribute(), bGuardBreak ? -TargetSP : -GuardSPCost);
 		return;

@@ -71,11 +71,10 @@ struct FAgStats
 };
 
 /**
- * Data shared by the player and the boss (구현 계획서 '데이터').
- * The data asset (DA_Player, DA_Boss) saves asset references and the values the specs don't give (implementation values,
- * abilities, sockets and bones). The Transient fields are the spec values the planner tunes: they come from the data file
- * ValuesFile each time the asset loads (AgDataFile).
- * The 데이터 위치표 (Docs/Program/데이터 위치표.md) maps each field to its spec item.
+ * 플레이어와 보스가 함께 쓰는 데이터(구현 계획서 '데이터').
+ * 데이터 에셋(DA_Player, DA_Boss)에는 에셋 참조와 기획서에 없는 값(구현 값, 어빌리티, 소켓과 본)을 저장합니다.
+ * Transient 필드는 기획자가 조절하는 기획 값이고, 에셋이 로드될 때마다 에셋 매니저가 ValuesFile의 JSON에서 채웁니다.
+ * 필드마다 기획서의 어느 항목인지는 데이터 위치표(Docs/Program/데이터 위치표.md)를 따릅니다.
  */
 UCLASS(Abstract, BlueprintType)
 class UAgCharacterData : public UDataAsset

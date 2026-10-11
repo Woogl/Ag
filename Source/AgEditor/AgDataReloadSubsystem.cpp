@@ -2,8 +2,8 @@
 
 #include "AgDataReloadSubsystem.h"
 
+#include "Core/AgAssetManager.h"
 #include "CoreGlobals.h"
-#include "Data/AgDataFile.h"
 #include "DirectoryWatcherModule.h"
 #include "IDirectoryWatcher.h"
 #include "Misc/Paths.h"
@@ -19,7 +19,7 @@ void UAgDataReloadSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	WatchedFolder = FPaths::ConvertRelativePathToFull(AgDataFile::GetFolder());
+	WatchedFolder = FPaths::ConvertRelativePathToFull(UAgAssetManager::GetJsonFolder());
 	FDirectoryWatcherModule& DirectoryWatcher = FModuleManager::LoadModuleChecked<FDirectoryWatcherModule>(TEXT("DirectoryWatcher"));
 	if (IDirectoryWatcher* Watcher = DirectoryWatcher.Get())
 	{
@@ -53,6 +53,6 @@ void UAgDataReloadSubsystem::HandleFilesChanged(const TArray<FFileChangeData>& C
 	}
 	if (!FileNames.IsEmpty())
 	{
-		AgDataFile::ReloadFiles(FileNames);
+		UAgAssetManager::Get().ReloadJsonFiles(FileNames);
 	}
 }

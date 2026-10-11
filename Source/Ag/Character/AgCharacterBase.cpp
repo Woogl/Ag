@@ -14,9 +14,9 @@
 #include "Combat/AgCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Game/AgBossStageGameMode.h"
@@ -231,7 +231,7 @@ void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
 {
 	if (Data.NewValue < Data.OldValue)
 	{
-		RestartRegenDelay(PPRegenDelay, AgGameplayTags::State_Regen_PPDelay, UAgSettings::Get()->GetCombatRules().PPRegenDelay);
+		RestartRegenDelay(PPRegenDelay, AgGameplayTags::State_Regen_PPDelay, UAgAssetManager::Get().GetCombatRules().PPRegenDelay);
 	}
 }
 

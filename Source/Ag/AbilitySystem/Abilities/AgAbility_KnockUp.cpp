@@ -11,8 +11,8 @@
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "Combat/AgCombatLibrary.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -36,7 +36,7 @@ UAnimMontage* UAgAbility_KnockUp::GetFallMontage() const
 void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	const UAgCombatRules& Rules = UAgSettings::Get()->GetCombatRules();
+	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const UAnimMontage* FallMontage = GetFallMontage();
 	AAgCharacterBase* Character = GetAgCharacter();
 	if (!Data || !Data->KnockUpMontage || !FallMontage || !Character || Rules.KnockUpAirTime <= 0.f || !CommitAbility(Handle, ActorInfo, ActivationInfo))

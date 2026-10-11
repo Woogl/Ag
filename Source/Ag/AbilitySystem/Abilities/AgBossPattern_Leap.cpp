@@ -12,8 +12,8 @@
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgCombatLibrary.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
@@ -164,7 +164,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	// 플레이어가 가까우면 착지가 카메라를 흔듭니다(카메라 '상황별 단계'). 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를
 	// 기준으로 합니다.
 	const AActor* ViewPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-	const UAgCameraData& Camera = UAgSettings::Get()->GetCameraData();
+	const UAgCameraData& Camera = UAgAssetManager::Get().GetCameraData();
 	if (ViewPlayer && UAgCombatLibrary::GetHorizontalDistance(Boss, ViewPlayer) <= Camera.LeapLandingShakeRange)
 	{
 		UAgCombatLibrary::PlayCameraShake(Boss, Camera.LeapLandingShake);

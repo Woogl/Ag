@@ -4,7 +4,7 @@
 
 #include "Character/AgLockOnComponent.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Core/AgSettings.h"
+#include "Core/AgAssetManager.h"
 #include "Data/AgCameraData.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -67,7 +67,7 @@ void UAgAbilityTask_LockOn::UpdateCamera(float DeltaTime)
 	{
 		return;
 	}
-	const UAgCameraData& CameraData = UAgSettings::Get()->GetCameraData();
+	const UAgCameraData& CameraData = UAgAssetManager::Get().GetCameraData();
 
 	// 구도: 카메라 중심(스프링 암의 시작점)에서 락온 지점을 보되, 피치를 제한한 뒤 더 내려다봅니다.
 	const FVector Pivot = Player->GetCameraBoom()->GetComponentLocation();

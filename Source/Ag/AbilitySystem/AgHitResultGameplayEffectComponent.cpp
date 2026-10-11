@@ -11,8 +11,8 @@
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatLibrary.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCombatRules.h"
 
@@ -173,7 +173,7 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	CueParameters.Instigator = Attacker;
 	CueParameters.EffectCauser = Causer;
 	TargetASC->ExecuteGameplayCue(bParry ? AgGameplayTags::GameplayCue_Parry : AgGameplayTags::GameplayCue_Hit, CueParameters);
-	UAgCombatLibrary::PlayCameraShake(Target, GetHitShake(UAgSettings::Get()->GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>()));
+	UAgCombatLibrary::PlayCameraShake(Target, GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>()));
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
 	{
@@ -185,7 +185,7 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	// 히트스톱은 캐릭터마다 태그로 겁니다. 투사체는 쏜 캐릭터를 멈추지 않고, 처형에는 히트스톱이 없습니다.
 	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 	{
-		const float HitstopTime = UAgSettings::Get()->GetCombatRules().HitstopTime;
+		const float HitstopTime = UAgAssetManager::Get().GetCombatRules().HitstopTime;
 		UAgEffect_TimedTag::Apply(TargetASC, AgGameplayTags::State_Hitstop, HitstopTime);
 		if (Causer == Attacker)
 		{

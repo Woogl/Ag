@@ -9,11 +9,10 @@
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
-#include "Data/AgDataFile.h"
 #include "EngineUtils.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
@@ -31,7 +30,7 @@ void UAgHUDWidget::NativeConstruct()
 
 #if WITH_EDITOR
 	// 다시 읽은 데이터 파일이 보스 이름을 바꿀 수 있으므로, 보스를 다시 찾아 이름을 정합니다.
-	AgDataFile::OnReloaded().AddWeakLambda(this, [this]() { Boss = nullptr; });
+	UAgAssetManager::Get().OnJsonValuesReloaded.AddWeakLambda(this, [this]() { Boss = nullptr; });
 #endif
 
 	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로, 이미지를 넣기 전까지 숨깁니다.
@@ -167,7 +166,7 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
 	if (BossCharacter.GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
-		const float GroggyDuration = UAgSettings::Get()->GetCombatRules().GroggyDuration;
+		const float GroggyDuration = UAgAssetManager::Get().GetCombatRules().GroggyDuration;
 		const float Elapsed = BossCharacter.GetGroggyElapsedTime();
 		const bool bCounting = GroggyDuration > 0.f && Elapsed >= 0.f;
 		PPBarRatio = bCounting ? FMath::Min(Elapsed / GroggyDuration, 1.f) : 0.f;
