@@ -97,6 +97,23 @@
       "MaxApproachDistance": 130
     }
   ],
+  "JumpAttack": {
+    "Hits": [
+      {
+        "DamageMultiplier": 1.5,
+        "PoiseMultiplier": 1.5,
+        "HitReaction": "Flinch",
+        "bGuardable": true,
+        "bParryable": true,
+        "MPCharge": 4,
+        "UPCharge": 0
+      }
+    ],
+    "TargetingRange": 300,
+    "MaxApproachDistance": 0
+  },
+  "JumpAttackPlungeSpeed": 1000,
+  "JumpAttackRecoveryStart": 0.35,
   "SPRegenRate": 40,
   "SPRegenRateGuarding": 20,
   "SPRegenDelay": 1,

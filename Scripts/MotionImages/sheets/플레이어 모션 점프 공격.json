@@ -1,0 +1,19 @@
+{
+  "image": "플레이어 모션 점프 공격",
+  "character": "player",
+  "rows": [
+    {
+      "title": "점프 공격",
+      "note": "판정 구간은 내려베기부터 착지해 바닥을 찍을 때까지 1타",
+      "frames": [
+        {"clip": "Samurai/Attack_Airborne_Start", "t": 0.0, "time": "0.00초", "label": "시작"},
+        {"clip": "Samurai/Attack_Airborne_Start", "t": 0.15, "time": "0.15초", "label": "칼을 뒤로 젖힘"},
+        {"clip": "Samurai/Attack_Airborne_Start", "t": 0.2833, "time": "0.28초", "label": "내려베기", "hit": true, "banner": [["움찔", "yellow"]]},
+        {"clip": "Samurai/Attack_Airborne_Mid", "t": 0.5, "time": "0.32초 ~", "label": "내리꽂기", "banner": [["판정 구간", "cyan"]]},
+        {"clip": "Samurai/Attack_Airborne_End", "t": 0.0333, "time": "착지", "label": "바닥 찍기", "banner": [["판정 구간", "cyan"]]},
+        {"clip": "Samurai/Attack_Airborne_End", "t": 0.35, "time": "착지 후 0.35초", "label": "칼을 뽑고 일어섬", "banner": [["캔슬 가능", "cyan"]]},
+        {"clip": "Samurai/Attack_Airborne_End", "t": 0.6333, "time": "착지 후 0.63초", "label": "끝", "banner": [["캔슬 가능", "cyan"]]}
+      ]
+    }
+  ]
+}

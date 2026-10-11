@@ -48,10 +48,10 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	/** 대상이 스폰된 뒤 그 평타 시작 이벤트를 받습니다. */
+	/** 대상이 스폰된 뒤 그 평타·점프 공격 시작 이벤트를 받습니다. */
 	void BindTargetEvents();
 
-	/** 대상이 평타의 한 타를 시작함: 그 타의 대상이 이 보스일 때만 StateTree 이벤트로 넘깁니다. */
+	/** 대상이 평타의 한 타나 점프 공격을 시작함: 그 공격의 대상이 이 보스일 때만 StateTree 이벤트로 넘깁니다. */
 	void HandleTargetBasicAttack(const FGameplayEventData* Payload);
 
 	UPROPERTY(VisibleAnywhere, Category = "AI")

@@ -14,6 +14,9 @@ UAgAbility_Jump::UAgAbility_Jump()
 
 	// 달리기는 점프 중에도 이어지므로(플레이어 사양 '점프') 점프는 달리기를 취소하지 않습니다.
 	CancelAbilitiesWithTag.RemoveTag(AgGameplayTags::Ability_Sprint);
+
+	// 점프 중에는 행동 중이지만 점프 공격은 시작할 수 있습니다(플레이어 입력 '상태별 허용 입력'의 공중).
+	ActivationOwnedTags.AddTag(AgGameplayTags::State_Jumping);
 }
 
 void UAgAbility_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -25,7 +28,7 @@ void UAgAbility_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, c
 		return;
 	}
 
-	// 공중: 착지할 때까지 이동만 합니다.
+	// 공중: 착지할 때까지 이동과 점프 공격만 합니다.
 	BeginBusy();
 	Player->Jump();
 

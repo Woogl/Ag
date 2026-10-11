@@ -241,7 +241,7 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 	}
 
 	// 선입력: 행동이 허용되지 않을 때 누른 키를 기억했다가 허용되면 실행합니다. 새로 누른 키가 대신합니다.
-	BufferedInput = IsActionInputBlocked() ? InputTag : FGameplayTag();
+	BufferedInput = IsActionInputBlocked(InputTag) ? InputTag : FGameplayTag();
 	BufferedInputTime = GetWorld()->GetTimeSeconds();
 
 	// 키는 지금도 넣습니다. 아직 허용되지 않은 행동은 시작하지 않지만, 실행 중인 어빌리티는 받을 수 있습니다(패리 모션 중의 가드).
@@ -250,8 +250,8 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 
 void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 {
-	// A running ability that handles this key itself gets the press: the basic attack's next hit, or the guard's new
-	// start during a parry motion. Otherwise the key starts its action, which checks whether it is allowed now.
+	// 이 키를 직접 받는 어빌리티가 실행 중이면 그 어빌리티가 받습니다(평타의 다음 타, 패리 모션 중의 새 가드 시작). 아니면 키가
+	// 그 행동을 시작하고, 지금 허용되는지는 행동이 확인합니다.
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	auto PressOrActivate = [this, ASC, &InputTag](const FGameplayTag& AbilityTag)
 	{
@@ -272,8 +272,12 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 
 	if (InputTag == AgGameplayTags::Input_Attack)
 	{
-		// 평타 키의 처리 순서 1: while the 회피 반격 기회 lasts, the key is the dodge counter (ignored if it can't start now).
-		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_DodgeCounterChance))
+		// 평타 키의 처리 순서: 공중이면 점프 공격, 회피 반격 기회가 남아 있으면 회피 반격(지금 시작할 수 없으면 무시), 그 밖에는 평타입니다.
+		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Jumping))
+		{
+			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_JumpAttack));
+		}
+		else if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_DodgeCounterChance))
 		{
 			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_DodgeCounter));
 		}
@@ -308,7 +312,7 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 	}
 	else if (InputTag == AgGameplayTags::Input_LockOn)
 	{
-		// Locks on, or releases while locked on.
+		// 락온하거나, 락온 중이면 해제합니다.
 		PressOrActivate(AgGameplayTags::Ability_LockOn);
 	}
 }
@@ -328,14 +332,19 @@ void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 	}
 }
 
-bool AAgPlayerCharacter::IsActionInputBlocked() const
+bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) const
 {
-	// The 상태별 허용 입력 rows without action keys: an action before its recovery (the air too) and the hit reactions
-	// that stop actions.
+	// 상태별 허용 입력에서 행동 키가 없는 줄: 후딜 전의 행동(공중 포함)과 행동을 멈추는 피격 반응입니다. 공중에서는 평타 키(점프 공격)만
+	// 허용됩니다.
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (InputTag == AgGameplayTags::Input_Attack && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Jumping))
+	{
+		return false;
+	}
 	FGameplayTagContainer Blockers;
 	Blockers.AddTag(AgGameplayTags::State_Busy);
 	Blockers.AddTag(AgGameplayTags::State_HitReaction);
-	return GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Blockers);
+	return ASC->HasAnyMatchingGameplayTags(Blockers);
 }
 
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
@@ -351,7 +360,7 @@ void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 N
 void AAgPlayerCharacter::TryRunBufferedInput()
 {
 	// 아직 허용되지 않으면 다음 변화를 기다리고, 그때 시간이 지났으면 버립니다.
-	if (!BufferedInput.IsValid() || IsActionInputBlocked())
+	if (!BufferedInput.IsValid() || IsActionInputBlocked(BufferedInput))
 	{
 		return;
 	}

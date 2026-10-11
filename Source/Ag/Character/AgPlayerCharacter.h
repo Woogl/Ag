@@ -71,14 +71,14 @@ private:
 	/** 누른 행동 키를 입력 태그로 처리합니다(플레이어 입력 '키 배치', '공통 입력 처리'). 입력 바인딩이 태그를 함께 넘깁니다. */
 	void HandleInputPressed(FGameplayTag InputTag);
 
-	/** Runs an action key: a running ability that takes the key gets it, otherwise its action starts if allowed. */
+	/** 행동 키를 처리합니다. 그 키를 받는 어빌리티가 실행 중이면 그 어빌리티가 받고, 아니면 허용될 때 그 행동을 시작합니다. */
 	void RunInput(const FGameplayTag& InputTag);
 
 	/** 뗀 키를 처리합니다(가드 키와 회피·달리기 키만 봅니다). */
 	void HandleInputReleased(FGameplayTag InputTag);
 
-	/** 선입력: true while action keys aren't allowed (an action before its recovery, the air, a hit reaction). */
-	bool IsActionInputBlocked() const;
+	/** 선입력: 이 행동 키가 지금 허용되지 않으면 true입니다(후딜 전의 행동, 피격 반응, 공중에서는 평타 키 밖의 키). */
+	bool IsActionInputBlocked(const FGameplayTag& InputTag) const;
 
 	/** 선입력: once action keys are allowed again, the remembered key runs. */
 	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);

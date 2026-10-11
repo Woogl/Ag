@@ -165,6 +165,18 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Basic Attack")
 	TArray<FAgPlayerAttack> BasicAttack;
 
+	/** 점프 공격 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Jump Attack")
+	FAgPlayerAttack JumpAttack;
+
+	/** 점프 공격 '내리꽂기': 내려베기가 끝난 뒤 떨어지는 속도 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Jump Attack", meta = (Units = "cm/s", ClampMin = 0))
+	float JumpAttackPlungeSpeed = 0.f;
+
+	/** 점프 공격 '착지': 착지부터 후딜이 시작될 때까지의 시간 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Jump Attack", meta = (Units = "s", ClampMin = 0))
+	float JumpAttackRecoveryStart = 0.f;
+
 	/** 자원 회복: SP regained per second after the regen delay, while not guarding. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
 	float SPRegenRate = 0.f;
@@ -383,6 +395,14 @@ public:
 	/** 점프: the landing, played when landing without movement input. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> LandMontage;
+
+	/**
+	 * 점프 공격: 섹션 Start(내려베기) → Fall(떨어지는 자세, 반복) → Land(착지해 바닥을 찍음). 착지하면 Land로 넘깁니다.
+	 * 판정 구간 하나가 내려베기부터 착지해 바닥을 찍을 때까지 이어지고, 내려베기가 끝날 때의 노티파이(Event.JumpAttackPlunge)가
+	 * 내리꽂기를 시작합니다.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> JumpAttackMontage;
 
 	/**
 	 * 궁극기: 섹션 Start(발도 자세) → Hold(기다림, 반복) → Judgment(칼 넣기) → Draw(칼 뽑기). 컷신이 끝나면 Judgment로 넘기고,
