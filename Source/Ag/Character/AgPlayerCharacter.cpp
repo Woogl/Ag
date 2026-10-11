@@ -489,14 +489,14 @@ void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
 	}
 }
 
-AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range) const
-{
-	return FindEnemy(Range, [](const AAgCharacterBase&) { return true; });
-}
-
 AAgCharacterBase* AAgPlayerCharacter::FindAttackTarget() const
 {
-	return FindEnemy(TNumericLimits<float>::Max());
+	return FindEnemy(TNumericLimits<float>::Max(), [](const AAgCharacterBase&) { return true; });
+}
+
+AActor* AAgPlayerCharacter::GetFallbackFacingTarget() const
+{
+	return LockOn->GetTarget();
 }
 
 AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const

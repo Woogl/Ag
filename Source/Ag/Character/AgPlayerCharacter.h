@@ -36,6 +36,9 @@ public:
 	/** 공격 중 이동의 대상은 거리와 관계없이 가장 가까운 적입니다. 타겟팅 범위는 공격 중 이동 태스크가 공격마다 따집니다. */
 	virtual AAgCharacterBase* FindAttackTarget() const override;
 
+	/** 범위 안에 공격 대상이 없는 타는 락온 중일 때만 락온 대상 쪽으로 돕니다. */
+	virtual AActor* GetFallbackFacingTarget() const override;
+
 	UAgLockOnComponent* GetLockOn() const { return LockOn; }
 
 	/** IMC_Ag: 전투 HUD의 조작 안내가 이 매핑을 표시합니다. */

@@ -79,6 +79,9 @@ public:
 	/** 전투 시스템 '공격 중 이동'의 대상: 타를 시작할 때 이 캐릭터가 공격할 적입니다. 없으면 null입니다. */
 	virtual AAgCharacterBase* FindAttackTarget() const { return nullptr; }
 
+	/** 플레이어 사양 '공격 방향': 타겟팅 범위 안에 공격 대상이 없는 타에서 향해 돌 대상입니다. 없으면 null(정면)입니다. */
+	virtual AActor* GetFallbackFacingTarget() const { return nullptr; }
+
 	/** 회전: 바라보는 방향이 고정되지 않은 동안 Target을 향해 캐릭터 무브먼트의 회전 속도로 돕니다. null이면 돌지 않습니다. */
 	void SetFacingTarget(AActor* Target);
 

@@ -33,7 +33,6 @@ void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle H
 	const float RootMotionScale = MotionDistance > UE_KINDA_SMALL_NUMBER ? Data->BackstepDistance / MotionDistance : 1.f;
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternSpeed(), NAME_None, /*bStopWhenAbilityEnds*/ true, RootMotionScale);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();

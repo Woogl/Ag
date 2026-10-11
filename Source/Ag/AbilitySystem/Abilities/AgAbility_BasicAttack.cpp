@@ -3,7 +3,7 @@
 #include "AbilitySystem/Abilities/AgAbility_BasicAttack.h"
 
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_PlayerAttack.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Ag.h"
 #include "Character/AgCharacterBase.h"
@@ -46,7 +46,7 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 		AttackTask->EndTask();
 	}
 	BeginBusy();
-	AttackTask = UAgAbilityTask_PlayerAttack::PlayAttack(this, Data->BasicAttack[Index], MakeArrayView(&Data->BasicAttackMontages[Index], 1));
+	AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->BasicAttack[Index], Data->BasicAttackMontages[Index]);
 	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);

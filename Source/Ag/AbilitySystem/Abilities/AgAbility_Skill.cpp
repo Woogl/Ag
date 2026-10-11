@@ -4,7 +4,7 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgEffect_Cost.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_PlayerAttack.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -25,7 +25,7 @@ void UAgAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	}
 
 	BeginBusy();
-	UAgAbilityTask_PlayerAttack* AttackTask = UAgAbilityTask_PlayerAttack::PlayAttack(this, Data->Skill, MakeArrayView(&Data->SkillMontage, 1));
+	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->Skill, Data->SkillMontage);
 	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);

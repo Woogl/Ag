@@ -90,12 +90,9 @@ void UAgAbilityTask_AttackMovement::StartHit()
 	}
 	else
 	{
+		// 범위 안에 대상이 없으면 모션을 만든 그대로 재생하고, 캐릭터가 정한 대체 대상 쪽으로만 돕니다(플레이어 사양 '공격 방향').
 		StopTracking();
-	}
-
-	if (ShouldBroadcastAbilityTaskDelegates())
-	{
-		OnHitStarted.Broadcast();
+		Owner->SetFacingTarget(Owner->GetFallbackFacingTarget());
 	}
 }
 

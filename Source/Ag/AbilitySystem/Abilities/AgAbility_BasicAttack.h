@@ -6,7 +6,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AgAbility_BasicAttack.generated.h"
 
-class UAgAbilityTask_PlayerAttack;
+class UAgAbilityTask_Attack;
 
 /**
  * 평타: 캐릭터 데이터의 BasicAttack 항목마다 한 타인 연속 공격이며, 타마다 하나의 행동입니다.
@@ -42,7 +42,7 @@ private:
 	void HandleAttackInterrupted();
 
 	UPROPERTY()
-	TObjectPtr<UAgAbilityTask_PlayerAttack> AttackTask;
+	TObjectPtr<UAgAbilityTask_Attack> AttackTask;
 
 	int32 HitIndex = 0;
 };

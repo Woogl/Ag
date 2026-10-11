@@ -2,9 +2,8 @@
 
 #include "AbilitySystem/Abilities/AgAbility_DodgeCounter.h"
 
-#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_PlayerAttack.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -28,7 +27,7 @@ void UAgAbility_DodgeCounter::ActivateAbility(const FGameplayAbilitySpecHandle H
 	InvincibleTag->ReadyForActivation();
 
 	BeginBusy();
-	UAgAbilityTask_PlayerAttack* AttackTask = UAgAbilityTask_PlayerAttack::PlayAttack(this, Data->DodgeCounter, MakeArrayView(&Data->DodgeCounterMontage, 1));
+	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->DodgeCounter, Data->DodgeCounterMontage);
 	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);

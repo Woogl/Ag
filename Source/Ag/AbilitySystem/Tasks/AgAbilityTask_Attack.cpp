@@ -1,37 +1,44 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "AbilitySystem/Tasks/AgAbilityTask_PlayerAttack.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
 #include "AbilitySystemComponent.h"
-#include "Character/AgLockOnComponent.h"
-#include "Character/AgPlayerCharacter.h"
+#include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
 
-UAgAbilityTask_PlayerAttack* UAgAbilityTask_PlayerAttack::PlayAttack(UGameplayAbility* OwningAbility, const FAgPlayerAttack& Attack, TConstArrayView<TObjectPtr<UAnimMontage>> InMontages)
+UAgAbilityTask_Attack* UAgAbilityTask_Attack::PlayAttack(UGameplayAbility* OwningAbility, const FAgPlayerAttack& Attack, UAnimMontage* InMontage)
 {
-	UAgAbilityTask_PlayerAttack* Task = NewAbilityTask<UAgAbilityTask_PlayerAttack>(OwningAbility);
+	UAgAbilityTask_Attack* Task = NewAbilityTask<UAgAbilityTask_Attack>(OwningAbility);
 	Task->Hits = Attack.Hits;
 	Task->TargetingRange = Attack.TargetingRange;
 	Task->MaxApproachDistance = Attack.MaxApproachDistance;
-	for (const TObjectPtr<UAnimMontage>& Montage : InMontages)
-	{
-		if (Montage)
-		{
-			Task->Montages.Add(Montage);
-		}
-	}
+	Task->Montage = InMontage;
 	return Task;
 }
 
-void UAgAbilityTask_PlayerAttack::Activate()
+UAgAbilityTask_Attack* UAgAbilityTask_Attack::PlayAttack(UGameplayAbility* OwningAbility, const FAgBossPattern& Pattern, UAnimMontage* InMontage, float InPlayRate)
+{
+	UAgAbilityTask_Attack* Task = NewAbilityTask<UAgAbilityTask_Attack>(OwningAbility);
+	Task->Hits.Reserve(Pattern.Hits.Num());
+	for (const FAgAttackHit& Hit : Pattern.Hits)
+	{
+		Task->Hits.Emplace(Hit);
+	}
+	Task->MaxApproachDistance = Pattern.MaxApproachDistance;
+	Task->PlayRate = InPlayRate;
+	Task->Montage = InMontage;
+	return Task;
+}
+
+void UAgAbilityTask_Attack::Activate()
 {
 	Super::Activate();
 
-	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAvatarActor());
+	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
 	UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
-	if (!Player || !ASC || Montages.IsEmpty() || Hits.IsEmpty())
+	if (!Character || !ASC || !Montage || Hits.IsEmpty())
 	{
 		if (ShouldBroadcastAbilityTaskDelegates())
 		{
@@ -42,8 +49,12 @@ void UAgAbilityTask_PlayerAttack::Activate()
 	}
 
 	WindowEndedHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackWindowEnded).AddUObject(this, &ThisClass::HandleAttackWindowEnded);
-	Player->SetActiveAttack(Hits);
-	PlayMontageAt(0);
+	Character->SetActiveAttack(Hits);
+	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(Ability, NAME_None, Montage, PlayRate);
+	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageCompleted);
+	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
+	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
+	MontageTask->ReadyForActivation();
 
 	// 몽타주를 재생하지 못하면 태스크가 그 자리에서 끝납니다. 공격 중 이동은 재생 중인 몽타주에서 접근 상한을 잽니다.
 	if (IsFinished())
@@ -51,42 +62,15 @@ void UAgAbilityTask_PlayerAttack::Activate()
 		return;
 	}
 	MovementTask = UAgAbilityTask_AttackMovement::Attack(Ability, Hits.Num(), TargetingRange, MaxApproachDistance);
-	MovementTask->OnHitStarted.AddDynamic(this, &ThisClass::HandleHitStarted);
 	MovementTask->ReadyForActivation();
 }
 
-AAgCharacterBase* UAgAbilityTask_PlayerAttack::GetHitTarget() const
+AAgCharacterBase* UAgAbilityTask_Attack::GetHitTarget() const
 {
 	return MovementTask ? MovementTask->GetTarget() : nullptr;
 }
 
-void UAgAbilityTask_PlayerAttack::HandleHitStarted()
-{
-	// 범위 안에 대상이 없으면 모션을 만든 그대로 재생합니다. 락온 중이면 락온 대상 쪽으로 돌고, 아니면 정면으로 갑니다.
-	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAvatarActor());
-	if (Player && MovementTask && !MovementTask->IsTracking())
-	{
-		Player->SetFacingTarget(Player->GetLockOn()->GetTarget());
-	}
-}
-
-void UAgAbilityTask_PlayerAttack::PlayMontageAt(int32 Index)
-{
-	// 바꾼 몽타주 태스크는 그 몽타주가 멈춰도 공격을 끝내지 않습니다.
-	if (MontageTask)
-	{
-		MontageTask->EndTask();
-	}
-	MontageIndex = Index;
-	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(Ability, NAME_None, Montages[Index]);
-	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageCompleted);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageBlendingOut);
-	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
-	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
-	MontageTask->ReadyForActivation();
-}
-
-void UAgAbilityTask_PlayerAttack::HandleAttackWindowEnded(const FGameplayEventData* Payload)
+void UAgAbilityTask_Attack::HandleAttackWindowEnded(const FGameplayEventData* Payload)
 {
 	// 마지막 판정 구간이 끝나면 후딜이 시작됩니다(플레이어 입력 '모션 캔슬'). 타마다 다시 다가가는 것은 공격 중 이동 태스크가 합니다.
 	if (FMath::RoundToInt(Payload->EventMagnitude) >= Hits.Num() - 1 && ShouldBroadcastAbilityTaskDelegates())
@@ -95,15 +79,7 @@ void UAgAbilityTask_PlayerAttack::HandleAttackWindowEnded(const FGameplayEventDa
 	}
 }
 
-void UAgAbilityTask_PlayerAttack::HandleMontageBlendingOut()
-{
-	if (Montages.IsValidIndex(MontageIndex + 1))
-	{
-		PlayMontageAt(MontageIndex + 1);
-	}
-}
-
-void UAgAbilityTask_PlayerAttack::HandleMontageCompleted()
+void UAgAbilityTask_Attack::HandleMontageCompleted()
 {
 	MontageTask = nullptr;
 	if (ShouldBroadcastAbilityTaskDelegates())
@@ -113,7 +89,7 @@ void UAgAbilityTask_PlayerAttack::HandleMontageCompleted()
 	EndTask();
 }
 
-void UAgAbilityTask_PlayerAttack::HandleMontageCancelled()
+void UAgAbilityTask_Attack::HandleMontageCancelled()
 {
 	MontageTask = nullptr;
 	if (ShouldBroadcastAbilityTaskDelegates())
@@ -123,7 +99,7 @@ void UAgAbilityTask_PlayerAttack::HandleMontageCancelled()
 	EndTask();
 }
 
-void UAgAbilityTask_PlayerAttack::OnDestroy(bool bInOwnerFinished)
+void UAgAbilityTask_Attack::OnDestroy(bool bInOwnerFinished)
 {
 	if (UAbilitySystemComponent* ASC = AbilitySystemComponent.Get(); ASC && WindowEndedHandle.IsValid())
 	{

@@ -2,8 +2,7 @@
 
 #include "AbilitySystem/Abilities/AgBossPattern_Common.h"
 
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "Ag.h"
 #include "Character/AgBossCharacter.h"
 #include "Data/AgCharacterData.h"
@@ -27,19 +26,11 @@ void UAgBossPattern_Common::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Pattern.ToString(), Boss->GetPatternPlayRate());
 
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternPlayRate());
-	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	MontageTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
-	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
-	MontageTask->ReadyForActivation();
-
-	// 몽타주를 재생하지 못하면 OnCancelled가 그 자리에서 어빌리티를 끝냅니다. 공격 중 이동은 재생 중인 몽타주에서 접근 상한을
-	// 잽니다. 보스는 타겟팅 범위가 없고, 몽타주에 워핑 구간이 있는 타(A1·A5 1타 선딜, A7 체공)만 다가갑니다.
-	if (IsActive())
-	{
-		UAgAbilityTask_AttackMovement::Attack(this, Pattern->Hits.Num(), /*InTargetingRange*/ -1.f, Pattern->MaxApproachDistance)->ReadyForActivation();
-	}
+	// 보스는 타겟팅 범위가 없고, 몽타주에 워핑 구간이 있는 타(A1·A5 1타 선딜, A7 체공)만 다가갑니다.
+	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Pattern, Montage, Boss->GetPatternPlayRate());
+	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
+	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
+	AttackTask->ReadyForActivation();
 }
 
 void UAgBossPattern_Common::HandleAttackCompleted()
