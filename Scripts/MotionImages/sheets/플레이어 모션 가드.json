@@ -4,11 +4,10 @@
   "rows": [
     {
       "title": "가드",
-      "note": "패리 구간은 가드를 새로 시작한 직후 잠깐뿐, 그 뒤는 일반 가드",
+      "note": "패리 구간은 가드를 새로 시작한 직후 잠깐뿐, 그 뒤는 일반 가드이며 이동할 수 있음",
       "frames": [
-        {"clip": "Samurai/Guard_Start", "t": 0.0, "time": "0.00초", "label": "시작", "banner": [["패리 구간", "cyan"]]},
-        {"clip": "Samurai/Guard_Start", "t": 0.0667, "time": "0.06초", "label": "", "banner": [["패리 구간", "cyan"]]},
-        {"clip": "Samurai/Guard_Start", "t": 0.1167, "time": "0.12초", "label": "가드 자세", "banner": [["패리 구간", "cyan"]]}
+        {"clip": "Samurai/Guard", "t": 0.0, "time": "가드 자세", "label": "", "banner": [["패리 구간", "cyan"]]},
+        {"clip": "Samurai/Guard_Walk_Forward_IPC", "t": 0.3, "time": "가드 중 이동", "label": ""}
       ]
     },
     {
