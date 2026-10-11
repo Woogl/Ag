@@ -31,7 +31,6 @@ UAgAbility_HitReaction::UAgAbility_HitReaction()
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockDown);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardPushback);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardBreak);
@@ -61,7 +60,7 @@ void UAgAbility_HitReaction::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 		return;
 	}
 
-	// 넉다운, 넉업: invincible from the moment the body is on the ground until getting up ends.
+	// 넉백, 넉업: 바닥에 쓰러진 순간부터 기상이 끝날 때까지 무적.
 	UAbilityTask_WaitGameplayEvent* GroundedTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_DownGrounded, nullptr, /*OnlyTriggerOnce*/ true);
 	GroundedTask->EventReceived.AddDynamic(this, &ThisClass::HandleGrounded);
 	GroundedTask->ReadyForActivation();
@@ -109,8 +108,8 @@ bool UAgAbility_HitReaction::PlayFollowUp()
 
 void UAgAbility_HitReaction::HandleMontageBlendingOut()
 {
-	// The follow-up (getting up) cross-fades in as the motion blends out. The reaction itself lasts until the last motion
-	// ends (전투 시스템 '피격 모션': no action and, for 넉다운 and 넉업, invincible until getting up ends).
+	// 모션이 블렌드 아웃되는 동안 이어지는 몽타주(기상)를 블렌드합니다. 반응 자체는 마지막 모션이 끝날 때까지 이어집니다
+	// (전투 시스템 '피격 모션': 행동 불가, 넉백·넉업은 기상이 끝날 때까지 무적).
 	PlayFollowUp();
 }
 
@@ -139,6 +138,29 @@ void UAgAbility_HitReaction::HandleGrounded(FGameplayEventData Payload)
 	}
 }
 
+void UAgAbility_HitReaction::IgnoreMotionRootMotion()
+{
+	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
+	if (!bRootMotionIgnored && AnimInstance)
+	{
+		bRootMotionIgnored = true;
+		SavedRootMotionMode = AnimInstance->RootMotionMode;
+		AnimInstance->SetRootMotionMode(ERootMotionMode::IgnoreRootMotion);
+	}
+}
+
+void UAgAbility_HitReaction::RestoreMotionRootMotion()
+{
+	if (bRootMotionIgnored)
+	{
+		bRootMotionIgnored = false;
+		if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
+		{
+			AnimInstance->SetRootMotionMode(SavedRootMotionMode);
+		}
+	}
+}
+
 void UAgAbility_HitReaction::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	if (bInvincible)
@@ -146,6 +168,7 @@ void UAgAbility_HitReaction::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		bInvincible = false;
 		GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(AgGameplayTags::State_Invincible);
 	}
+	RestoreMotionRootMotion();
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
@@ -159,23 +182,6 @@ UAnimMontage* UAgAbility_KnockBack::GetReactionMontage() const
 {
 	const UAgCharacterData* Data = GetCharacterData<UAgCharacterData>();
 	return Data ? Data->KnockBackMontage.Get() : nullptr;
-}
-
-UAgAbility_KnockDown::UAgAbility_KnockDown()
-{
-	SetupReaction(AgGameplayTags::Ability_Reaction_KnockDown, AgGameplayTags::Event_Hit_KnockDown);
-}
-
-UAnimMontage* UAgAbility_KnockDown::GetReactionMontage() const
-{
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return Data ? Data->KnockDownMontage.Get() : nullptr;
-}
-
-UAnimMontage* UAgAbility_KnockDown::GetFollowUpMontage() const
-{
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return Data ? Data->GetUpMontage.Get() : nullptr;
 }
 
 UAgAbility_KnockUp::UAgAbility_KnockUp()
@@ -219,28 +225,24 @@ void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		return;
 	}
 
-	// The character movement drops other root motion while a montage gives root motion, so the motions' own root motion
-	// is set aside until the reaction ends: the jump moves the character, and the landing plays where it fell.
-	bRootMotionIgnored = true;
-	SavedRootMotionMode = AnimInstance->RootMotionMode;
-	AnimInstance->SetRootMotionMode(ERootMotionMode::IgnoreRootMotion);
+	// 반응이 끝날 때까지 모션의 루트 이동을 꺼서, 점프가 캐릭터를 옮기고 착지는 떨어진 자리에서 재생합니다.
+	IgnoreMotionRootMotion();
 
-	// 전투 시스템 '넉업': straight up from where the hit landed and back down along a parabola of the height and air time,
-	// whatever the gravity. A landing ends the jump; a hit in the air keeps falling at the path's last speed until then.
+	// 전투 시스템 '넉업': 맞은 자리에서 높이와 체공 시간의 포물선으로 곧게 오르내립니다(중력과 무관).
+	// 착지하면 점프가 끝나고, 공중에서 맞았으면 착지할 때까지 경로의 마지막 속도로 떨어집니다.
 	const float AirTime = Rules->KnockUpAirTime;
 	UAbilityTask_ApplyRootMotionJumpForce* JumpTask = UAbilityTask_ApplyRootMotionJumpForce::ApplyRootMotionJumpForce(this, NAME_None,
 		GetAgCharacter()->GetActorRotation(), /*Distance*/ 0.f, Rules->KnockUpHeight, AirTime, /*MinimumLandedTriggerTime*/ 0.5f,
 		/*bFinishOnLanded*/ true, ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, nullptr, nullptr);
 	JumpTask->ReadyForActivation();
 
-	// The jump steers the velocity from the next movement update. Start the flight now at the path's first speed so the
-	// fall check below never sees the speed from before the hit.
+	// 점프는 다음 이동 갱신부터 속도를 정하므로, 지금 경로의 첫 속도로 날기 시작해 아래 낙하 검사가 맞기 전 속도를 보지 않게 합니다.
 	UCharacterMovementComponent* Movement = GetAgCharacter()->GetCharacterMovement();
 	Movement->SetMovementMode(MOVE_Falling);
 	Movement->Velocity = FVector(0.f, 0.f, 4.f * Rules->KnockUpHeight / AirTime);
 
-	// The falling pose's blend is centered on the top of the flight: it starts that half a blend before the top. The
-	// path's rise slows like gravity of 8 × height ÷ air time².
+	// 낙하 자세의 블렌드는 정점이 가운데에 오도록 정점보다 블렌드 시간의 절반 먼저 시작합니다.
+	// 경로의 상승은 8 × 높이 ÷ 체공 시간² 의 중력처럼 느려집니다.
 	const float PathGravity = 8.f * Rules->KnockUpHeight / FMath::Square(AirTime);
 	const float FallBlendSpeed = PathGravity * FallMontage->BlendIn.GetBlendTime() * 0.5f;
 	UAbilityTask_WaitVelocityChange* FallTask = UAbilityTask_WaitVelocityChange::CreateWaitVelocityChange(this, FVector::DownVector, -FallBlendSpeed);
@@ -274,20 +276,6 @@ void UAgAbility_KnockUp::HandleLanded(EMovementMode NewMovementMode)
 	}
 	bFalling = true;
 	PlayMontage(FallMontage, KnockUpLandSection);
-}
-
-void UAgAbility_KnockUp::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	if (bRootMotionIgnored)
-	{
-		bRootMotionIgnored = false;
-		if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
-		{
-			AnimInstance->SetRootMotionMode(SavedRootMotionMode);
-		}
-	}
-
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 UAgAbility_GuardPushback::UAgAbility_GuardPushback()

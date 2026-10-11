@@ -44,7 +44,7 @@ void UAgAbilityTask_Dash::Activate()
 
 	StartLocation = LastLocation = Character->GetActorLocation();
 
-	// The dash velocity overrides everything else, including the motion's own root motion, until it is removed.
+	// 제거할 때까지 다른 속도를 덮어씁니다. 모션의 루트 이동은 덮지 못하므로 쓰는 쪽에서 꺼야 합니다.
 	TSharedPtr<FRootMotionSource_ConstantForce> Source = MakeShared<FRootMotionSource_ConstantForce>();
 	Source->InstanceName = TEXT("AgDash");
 	Source->AccumulateMode = ERootMotionAccumulateMode::Override;

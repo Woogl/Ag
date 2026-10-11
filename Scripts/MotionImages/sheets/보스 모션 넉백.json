@@ -6,11 +6,11 @@
       "title": "넉백",
       "note": "",
       "frames": [
-        {"clip": "Halberd/Hit3", "t": 0.0, "time": "0.00초", "label": "맞음"},
-        {"clip": "Halberd/Hit3", "t": 0.1167, "time": "0.12초", "label": "젖혀짐"},
-        {"clip": "Halberd/Hit3", "t": 0.25, "time": "0.25초", "label": "밀려남"},
-        {"clip": "Halberd/Hit3", "t": 0.45, "time": "0.45초", "label": ""},
-        {"clip": "Halberd/Hit3", "t": 0.8167, "time": "0.82초", "label": "끝"}
+        {"clip": "Halberd/Hit_knockdown", "t": 0.0, "time": "0.00초", "label": "맞음"},
+        {"clip": "Halberd/Hit_knockdown", "t": 0.1, "time": "0.10초", "label": "쓰러짐", "banner": [["무적", "cyan"]]},
+        {"clip": "Halberd/Hit_knockdown", "t": 0.4, "time": "0.40초", "label": "뒤로 구름", "banner": [["무적", "cyan"]]},
+        {"clip": "Halberd/Hit_knockdown", "t": 0.8, "time": "0.80초", "label": "일어남", "banner": [["무적", "cyan"]]},
+        {"clip": "Halberd/Hit_knockdown", "t": 1.3167, "time": "1.32초", "label": "끝"}
       ]
     }
   ]

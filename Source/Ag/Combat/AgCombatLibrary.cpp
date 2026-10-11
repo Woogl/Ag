@@ -49,7 +49,7 @@ namespace
 		return false;
 	}
 
-	/** The event that starts the reaction ability of 넉업, 넉백 or 넉다운. */
+	/** 넉업, 넉백 어빌리티를 시작하는 이벤트 */
 	FGameplayTag GetReactionEvent(EAgHitReaction Reaction)
 	{
 		switch (Reaction)
@@ -58,16 +58,14 @@ namespace
 			return AgGameplayTags::Event_Hit_KnockUp;
 		case EAgHitReaction::KnockBack:
 			return AgGameplayTags::Event_Hit_KnockBack;
-		case EAgHitReaction::KnockDown:
-			return AgGameplayTags::Event_Hit_KnockDown;
 		default:
 			return FGameplayTag();
 		}
 	}
 
 	/**
-	 * 피격 반응: 움찔 plays on top; 넉업, 넉백 and 넉다운 start a reaction ability, or play 움찔 instead during groggy.
-	 * Instigator is what the target is pushed away from: the attacker, or its projectile.
+	 * 피격 반응: 움찔은 하던 동작 위에 덧입히고, 넉업·넉백은 반응 어빌리티를 시작합니다(그로기 중에는 움찔).
+	 * Instigator는 밀려나는 기준(공격자 또는 투사체)입니다.
 	 */
 	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, EAgHitReaction Reaction)
 	{
@@ -84,7 +82,7 @@ namespace
 		}
 	}
 
-	/** 가드 반응: 가드 움찔 plays on the guard pose; 넉업, 넉백 and 넉다운 become 가드 밀림. */
+	/** 가드 반응: 움찔은 가드 움찔, 넉업·넉백은 가드 밀림이 됩니다. */
 	void StartGuardReaction(AActor* Instigator, AAgCharacterBase* Target, EAgHitReaction Reaction)
 	{
 		switch (Reaction)
@@ -94,7 +92,6 @@ namespace
 			break;
 		case EAgHitReaction::KnockUp:
 		case EAgHitReaction::KnockBack:
-		case EAgHitReaction::KnockDown:
 			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Instigator);
 			break;
 		default:
@@ -105,7 +102,7 @@ namespace
 	/** 카메라 '상황별 단계' for a hit that connected. */
 	EAgCameraShake GetHitShake(const UAgCameraData& Camera, EAgHitResult Result, const FAgPlayerAttackHit& Hit, bool bPlayerAttacked)
 	{
-		// 넉업, 넉백 and 넉다운 shake harder than 움찔.
+		// 넉업·넉백은 움찔보다 크게 흔듭니다.
 		const bool bHeavy = GetReactionEvent(Hit.HitReaction).IsValid();
 		switch (Result)
 		{

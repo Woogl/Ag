@@ -112,7 +112,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> FlinchMontage;
 
-	/** 넉백 */
+	/** 넉백: 밀려나 쓰러졌다가 일어남 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> KnockBackMontage;
 
@@ -343,11 +343,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> ExecutionMontage;
 
-	/** 넉다운: falling down. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> KnockDownMontage;
-
-	/** 넉다운, 넉업: getting up, blended in after KnockDownMontage or KnockUpFallMontage (the poses differ slightly). */
+	/** 넉업: 기상. KnockUpFallMontage 뒤에 블렌드해 잇습니다(자세가 조금 다름). */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> GetUpMontage;
 

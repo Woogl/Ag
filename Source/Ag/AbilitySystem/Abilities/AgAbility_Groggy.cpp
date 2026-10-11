@@ -32,7 +32,6 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockDown);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardPushback);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardBreak);

@@ -51,7 +51,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake PlayerHitShake = EAgCameraShake::None;
 
-	/** 상황별 단계: 플레이어의 공격 적중 (피격 반응 넉백·넉다운) */
+	/** 상황별 단계: 플레이어의 공격 적중 (피격 반응 넉업·넉백) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake PlayerHitHeavyShake = EAgCameraShake::None;
 
@@ -63,7 +63,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake PlayerHurtShake = EAgCameraShake::None;
 
-	/** 상황별 단계: 플레이어 피격 (넉백·넉다운) */
+	/** 상황별 단계: 플레이어 피격 (넉업·넉백) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake PlayerHurtHeavyShake = EAgCameraShake::None;
 

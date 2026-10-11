@@ -10,12 +10,10 @@
 class UAbilityTask_PlayMontageAndWait;
 
 /**
- * 넉업, 넉백, 넉다운, 가드 밀림 and 가드 브레이크 (전투 시스템 '피격 모션', '가드 반응'), started by a hit event.
- * Stops the current action or boss pattern, turns toward the attacker and plays the motion; no action is possible until
- * it ends. The reaction ends when the last motion ends, not when it starts blending out.
- * A new knockup, knockback or down restarts the motion with the new reaction.
- * A motion that marks the moment the body hits the ground (Event.DownGrounded: 넉다운, 넉업) is invincible from then until
- * the reaction ends.
+ * 넉업, 넉백, 가드 밀림, 가드 브레이크 (전투 시스템 '피격 모션', '가드 반응'). 피격 이벤트로 시작합니다.
+ * 하던 행동이나 보스 패턴을 멈추고 공격자 쪽으로 돌아 모션을 재생하며, 끝날 때까지 아무 행동도 할 수 없습니다.
+ * 반응은 블렌드 아웃 시작이 아니라 마지막 모션이 끝날 때 끝납니다. 새 넉업·넉백은 새 반응으로 모션을 처음부터 재생합니다.
+ * 바닥에 쓰러진 순간을 표시한 모션(Event.DownGrounded: 넉백, 넉업)은 그때부터 반응이 끝날 때까지 무적입니다.
  */
 UCLASS(Abstract)
 class UAgAbility_HitReaction : public UAgGameplayAbility
@@ -31,7 +29,7 @@ protected:
 
 	virtual UAnimMontage* GetReactionMontage() const PURE_VIRTUAL(UAgAbility_HitReaction::GetReactionMontage, return nullptr;);
 
-	/** Played after the reaction montage ends, if any (넉다운, 넉업: getting up). */
+	/** 반응 몽타주가 끝나면 이어서 재생하는 몽타주(넉업: 기상) */
 	virtual UAnimMontage* GetFollowUpMontage() const { return nullptr; }
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
@@ -39,6 +37,12 @@ protected:
 
 	/** Plays a montage of this reaction from StartSection (none: the start); the follow-up plays when it ends. */
 	void PlayMontage(UAnimMontage* Montage, FName StartSection = NAME_None);
+
+	/** 모션의 루트 이동을 끕니다. 루트 모션 소스로 옮기는 동안 씁니다(몽타주의 루트 이동이 소스보다 우선합니다). */
+	void IgnoreMotionRootMotion();
+
+	/** 꺼 둔 모션의 루트 이동을 되돌립니다. 반응이 끝날 때도 되돌립니다. */
+	void RestoreMotionRootMotion();
 
 private:
 	/** Plays the follow-up once, if there is one. */
@@ -61,9 +65,14 @@ private:
 
 	bool bPlayingFollowUp = false;
 	bool bInvincible = false;
+	bool bRootMotionIgnored = false;
+	TEnumAsByte<ERootMotionMode::Type> SavedRootMotionMode = ERootMotionMode::RootMotionFromMontagesOnly;
 };
 
-/** 넉백: 뒤로 크게 밀려남. The player and the boss both have it. */
+/**
+ * 넉백: 뒤로 크게 밀려나며 쓰러졌다가 일어남 (전투 시스템 '피격 반응'). 플레이어와 보스 모두 씁니다.
+ * 넉백 모션 하나에 쓰러짐과 기상이 다 들어 있고, 모션의 루트 이동대로 물러납니다.
+ */
 UCLASS()
 class UAgAbility_KnockBack : public UAgAbility_HitReaction
 {
@@ -76,26 +85,10 @@ protected:
 	virtual UAnimMontage* GetReactionMontage() const override;
 };
 
-/** 넉다운: 쓰러졌다가 일어남. */
-UCLASS()
-class UAgAbility_KnockDown : public UAgAbility_HitReaction
-{
-	GENERATED_BODY()
-
-public:
-	UAgAbility_KnockDown();
-
-protected:
-	virtual UAnimMontage* GetReactionMontage() const override;
-	virtual UAnimMontage* GetFollowUpMontage() const override;
-};
-
 /**
  * 넉업: 공중으로 떠올랐다가 떨어진 뒤 일어남 (전투 시스템 '넉업').
- * A root motion jump moves the character straight up and down along a parabola of the height and air time, whatever the
- * gravity. The motions' own root motion is ignored meanwhile, so the landing plays where the character fell. The rising
- * pose blends into the falling pose around the top of the flight; landing plays the fall montage's Land section, then the
- * 넉다운 get-up.
+ * 루트 모션 점프로 중력과 관계없이 높이와 체공 시간의 포물선을 따라 곧게 오르내립니다. 그동안 모션의 루트 이동은 꺼서
+ * 떨어진 자리에서 착지합니다. 정점 무렵 상승 자세가 낙하 자세로 바뀌고, 착지하면 낙하 몽타주의 Land 섹션과 기상을 잇습니다.
  */
 UCLASS()
 class UAgAbility_KnockUp : public UAgAbility_HitReaction
@@ -109,7 +102,6 @@ protected:
 	virtual UAnimMontage* GetReactionMontage() const override;
 	virtual UAnimMontage* GetFollowUpMontage() const override;
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 private:
 	UFUNCTION()
@@ -121,8 +113,6 @@ private:
 	UAnimMontage* GetFallMontage() const;
 
 	bool bFalling = false;
-	bool bRootMotionIgnored = false;
-	TEnumAsByte<ERootMotionMode::Type> SavedRootMotionMode = ERootMotionMode::RootMotionFromMontagesOnly;
 };
 
 /** 가드 밀림: pushed back while keeping the guard; attacks during it are guarded too. */

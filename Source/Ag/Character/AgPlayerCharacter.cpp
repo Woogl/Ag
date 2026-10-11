@@ -463,7 +463,6 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	Enders.AddTag(AgGameplayTags::Ability_Action_Ultimate);
 	Enders.AddTag(AgGameplayTags::Ability_Action_Execution);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
-	Enders.AddTag(AgGameplayTags::Ability_Reaction_KnockDown);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
 	if (Ability && Ability->GetAssetTags().HasAny(Enders))
 	{

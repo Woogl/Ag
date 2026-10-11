@@ -28,7 +28,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_LockOn, "Ability.LockOn", "락온. 행동이 아니라 행동 상태의 제한과 취소를 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction, "Ability.Reaction", "이벤트로 발동하는 상태 어빌리티");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_KnockBack, "Ability.Reaction.KnockBack");
-	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_KnockDown, "Ability.Reaction.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_KnockUp, "Ability.Reaction.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_GuardPushback, "Ability.Reaction.GuardPushback");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_GuardBreak, "Ability.Reaction.GuardBreak");
@@ -49,7 +48,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Execution_Executing, "State.Execution.Executing", "상태 우선순위 2: 처형하는 중");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Execution_Executed, "State.Execution.Executed", "상태 우선순위 2: 처형당하는 중");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Groggy, "State.Groggy", "상태 우선순위 3: 그로기");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_HitReaction, "State.HitReaction", "상태 우선순위 4: 넉업, 넉백, 넉다운, 가드 밀림, 가드 브레이크");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_HitReaction, "State.HitReaction", "상태 우선순위 4: 넉업, 넉백, 가드 밀림, 가드 브레이크");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Busy, "State.Busy", "행동 중. 후딜 전까지 다른 행동을 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Acting, "State.Acting", "행동 모션 재생 중 (후딜 포함). 이동 입력을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Invincible, "State.Invincible", "무적");
@@ -66,7 +65,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Boss_PatternRecovery, "State.Boss.PatternRecovery", "패턴 후딜레이");
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockBack, "Event.Hit.KnockBack");
-	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockDown, "Event.Hit.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockUp, "Event.Hit.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Pushback, "Event.Guard.Pushback");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Break, "Event.Guard.Break");
@@ -78,7 +76,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Parry, "Event.Parry");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타를 시작함 (B1 백스텝 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackWindowEnded, "Event.AttackWindowEnded", "판정 구간이 끝남. EventMagnitude는 몇 번째 타인지 (0부터)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_DownGrounded, "Event.DownGrounded", "넉다운·넉업 모션에서 바닥에 쓰러진 순간 (무적 시작)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_DownGrounded, "Event.DownGrounded", "넉백·넉업 모션에서 바닥에 쓰러진 순간 (무적 시작)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_RecoveryStarted, "Event.RecoveryStarted", "모션의 후딜이 시작됨 (판정 구간이 없는 행동: 패리 모션)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_ExecutionBlow, "Event.ExecutionBlow", "처형 모션의 타격: 베기 2번과 마지막 일격 (대미지 적용)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashStart, "Event.Boss.DashStart", "A3 찌르기 모션에서 몸을 앞으로 내던지는 순간 (돌진 시작)");

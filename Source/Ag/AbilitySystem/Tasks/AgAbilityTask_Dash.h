@@ -9,8 +9,8 @@
 class UCharacterMovementComponent;
 
 /**
- * Moves the owner in a straight line at a constant speed with a root motion source (A3 돌진), until it has covered
- * the distance or something blocks it. Collision still applies, so a wall stops it where it is.
+ * 루트 모션 소스로 주인을 일정한 속도로 곧게 옮깁니다(A3 돌진). 거리를 다 가거나 막히면 끝납니다.
+ * 충돌은 그대로 적용되어 벽에 막히면 그 자리에서 멈춥니다.
  */
 UCLASS()
 class UAgAbilityTask_Dash : public UAbilityTask
