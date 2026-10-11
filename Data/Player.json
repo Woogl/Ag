@@ -191,7 +191,7 @@
   "Execution": {
     "Hits": [
       {
-        "DamageMultiplier": 3,
+        "DamageMultiplier": 1.5,
         "PoiseMultiplier": 0,
         "HitReaction": "None",
         "bGuardable": true,
@@ -202,7 +202,7 @@
         "bFinisher": false
       },
       {
-        "DamageMultiplier": 3,
+        "DamageMultiplier": 1.5,
         "PoiseMultiplier": 0,
         "HitReaction": "None",
         "bGuardable": true,
@@ -213,7 +213,7 @@
         "bFinisher": false
       },
       {
-        "DamageMultiplier": 9,
+        "DamageMultiplier": 4.5,
         "PoiseMultiplier": 0,
         "HitReaction": "None",
         "bGuardable": true,
