@@ -22,7 +22,8 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase*
 
 /**
  * 플레이어와 보스의 공통 부모.
- * 어빌리티 시스템과 스탯, 무기와 판정 구간, 정지 간격, 캐릭터 데이터, 전투 시스템 '사망 처리'를 맡습니다.
+ * 어빌리티 시스템과 스탯, 무기와 판정 구간, 정지 간격과 회전(전투 시스템 '공격 중 이동'), 캐릭터 데이터, 전투 시스템 '사망 처리'를
+ * 맡습니다.
  */
 UCLASS(Abstract)
 class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -75,11 +76,17 @@ public:
 	void SetStopTarget(AActor* Target, float InStopDistance);
 	void ClearStopTarget();
 
+	/** 전투 시스템 '공격 중 이동'의 대상: 타를 시작할 때 이 캐릭터가 공격할 적입니다. 없으면 null입니다. */
+	virtual AAgCharacterBase* FindAttackTarget() const { return nullptr; }
+
+	/** 회전: 바라보는 방향이 고정되지 않은 동안 Target을 향해 캐릭터 무브먼트의 회전 속도로 돕니다. null이면 돌지 않습니다. */
+	void SetFacingTarget(AActor* Target);
+
 	/**
-	 * 바라보는 방향이 고정된 동안 참입니다. 기본은 판정 구간 동안입니다(플레이어 사양 '공격 중 이동').
+	 * 바라보는 방향이 고정된 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간이 해당합니다(전투 시스템 '공격 중 이동').
 	 * 공격 중 이동 태스크는 이 순간 접근 목표를 고정합니다.
 	 */
-	virtual bool IsFacingFixed() const { return OpenWindowHit != INDEX_NONE; }
+	virtual bool IsFacingFixed() const;
 
 	/** 움찔: plays the additive flinch on top of the current motion. */
 	void PlayFlinch();
@@ -126,6 +133,9 @@ protected:
 	/** Movement speed as a multiple of MOV (the player's guard and sprint change it). */
 	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
 
+	/** 지금 향해 돌 대상. 기본은 SetFacingTarget으로 정한 대상입니다. */
+	virtual AActor* GetFacingTarget() const { return FacingTarget.Get(); }
+
 	/** Applies MOV times the current multiplier to the movement component. */
 	void UpdateMoveSpeed();
 
@@ -155,6 +165,12 @@ private:
 	void SweepWeapon();
 
 	FTransform ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds);
+
+	/** 회전: 바라보는 방향이 고정되지 않은 동안 GetFacingTarget을 향해 돕니다. */
+	void UpdateFacing(float DeltaSeconds);
+
+	/** 재생 중인 몽타주의 판정 구간보다 회전 정지 시간만큼 앞선 때부터 그 판정 구간이 끝날 때까지 참입니다. */
+	bool IsInRotationStopWindow() const;
 
 	UPROPERTY(VisibleAnywhere, Category = "Abilities")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -186,6 +202,8 @@ private:
 
 	TWeakObjectPtr<AActor> StopTarget;
 	float StopDistance = 0.f;
+
+	TWeakObjectPtr<AActor> FacingTarget;
 
 	FActiveGameplayEffectHandle PPRegenDelay;
 };

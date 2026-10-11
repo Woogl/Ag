@@ -3,23 +3,37 @@
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgGameplayTags.h"
 
-float UAgAnimNotifyState_AttackWindow::GetTravelBeforeFirstWindow(const UAnimMontage* Montage)
+float UAgAnimNotifyState_AttackWindow::GetTravelToNextWindow(const UAnimInstance& AnimInstance)
 {
-	float FirstWindowStart = Montage->GetPlayLength();
-	for (const FAnimNotifyEvent& Notify : Montage->Notifies)
+	// 판정 구간이 있는 몽타주가 공격 몽타주입니다. 덧입히는 움찔 몽타주에는 판정 구간이 없습니다.
+	for (const FAnimMontageInstance* Instance : AnimInstance.MontageInstances)
 	{
-		if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass))
+		if (!Instance || !Instance->IsActive())
 		{
-			FirstWindowStart = FMath::Min(FirstWindowStart, Notify.GetTriggerTime());
+			continue;
+		}
+		const float Position = Instance->GetPosition();
+		float NextWindowStart = -1.f;
+		for (const FAnimNotifyEvent& Notify : Instance->Montage->Notifies)
+		{
+			const float WindowStart = Notify.GetTriggerTime();
+			if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass) && WindowStart >= Position && (NextWindowStart < 0.f || WindowStart < NextWindowStart))
+			{
+				NextWindowStart = WindowStart;
+			}
+		}
+		if (NextWindowStart >= 0.f)
+		{
+			return Instance->Montage->ExtractRootMotionFromTrackRange(Position, NextWindowStart, FAnimExtractContext()).GetTranslation().Size2D();
 		}
 	}
-	const FTransform RootMotion = Montage->ExtractRootMotionFromTrackRange(0.f, FirstWindowStart, FAnimExtractContext());
-	return RootMotion.GetTranslation().Size2D();
+	return 0.f;
 }
 
 void UAgAnimNotifyState_AttackWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)

@@ -17,6 +17,8 @@
   },
   "PPRegenRate": 50,
   "DeathPresentationTime": 4,
+  "StopDistance": 150,
+  "RotationStopLead": 0.2,
   "Patterns": [
     {
       "Pattern": "Ability.Boss.Pattern.A1",
@@ -191,9 +193,6 @@
     }
   ],
   "PatternPlayRate": 0.8,
-  "StopDistance": 150,
-  "RotationSpeed": 180,
-  "RotationStopLead": 0.2,
   "NearDistance": 300,
   "FarDistance": 1000,
   "RetryInterval": 0.5,

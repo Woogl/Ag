@@ -65,19 +65,23 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	bool bFinisher = false;
 };
 
-/** A player attack action (평타 한 타, 회피 반격, 스킬, 궁극기). */
+/** 플레이어 공격 하나 (평타 한 타, 회피 반격, 스킬, 궁극기) */
 USTRUCT(BlueprintType)
 struct FAgPlayerAttack
 {
 	GENERATED_BODY()
 
-	/** One entry per attack window, in montage order. */
+	/** 판정 구간마다 하나씩, 몽타주 순서대로 */
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TArray<FAgPlayerAttackHit> Hits;
 
-	/** 타겟팅 범위: a boss this close (capsule centers, horizontal) becomes the target of 공격 방향 and 공격 중 이동. */
+	/** 타겟팅 범위: 이 거리(캡슐 중심 사이 수평 거리) 안의 보스에게 돌고 다가갑니다(공격 방향, 공격 중 이동). */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (Units = "cm", ClampMin = 0))
 	float TargetingRange = 0.f;
+
+	/** 공격 중 이동: 최대 접근 거리. 각 타의 판정 구간 시작까지 모션 자체의 전진에 더해 다가갈 수 있는 거리의 상한입니다. */
+	UPROPERTY(EditAnywhere, Category = "Attack", meta = (Units = "cm", ClampMin = 0))
+	float MaxApproachDistance = 0.f;
 };
 
 /** 보스 패턴 하나 (보스 사양 '패턴 목록', '패턴 상세') */
@@ -114,8 +118,8 @@ struct FAgBossPattern
 	float WeightFar = 0.f;
 
 	/**
-	 * 보스 사양 '이동': 최대 접근 거리. 몽타주의 워핑 구간 동안 모션 자체의 전진에 더해 다가갈 수 있는 거리의 상한입니다.
-	 * 워핑 구간이 없는 패턴은 쓰지 않습니다.
+	 * 공격 중 이동: 최대 접근 거리. 각 타의 판정 구간 시작까지 모션 자체의 전진에 더해 다가갈 수 있는 거리의 상한입니다.
+	 * 몽타주에 워핑 구간이 있는 타만 다가가므로, 워핑 구간이 없는 패턴은 쓰지 않습니다.
 	 */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "cm", ClampMin = 0))
 	float MaxApproachDistance = 0.f;

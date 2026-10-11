@@ -13,7 +13,7 @@ struct FGameplayAbilitySpec;
 struct FGameplayAbilitySpecHandle;
 
 /**
- * 보스 커스터(보스 사양). AI의 대상을 향해 스스로 돌고, AI가 고른 패턴을 실행합니다.
+ * 보스 커스터(보스 사양). 늘 AI의 대상을 향해 돌고(보스 사양 '회전'), AI가 고른 패턴을 실행합니다.
  * 월드에 표시하는 HUD(전투 HUD '락온 마커', '처형 안내')를 들고 있으며, 위젯은 BP_AgBoss에서 정합니다.
  */
 UCLASS(Abstract)
@@ -54,6 +54,9 @@ public:
 	/** 보스 AI의 현재 대상(구현 계획서 'AI 대상'). AI가 없거나 대상이 아직 없으면 null입니다. */
 	AAgCharacterBase* GetTarget() const;
 
+	/** 공격 중 이동의 대상은 AI의 대상입니다. */
+	virtual AAgCharacterBase* FindAttackTarget() const override { return GetTarget(); }
+
 	/**
 	 * 보스 사양 '회전': 회전하지 않는 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간, 회전하지 않는 상태(피격 반응, 그로기,
 	 * 처형 피격, 회전 고정, 비전투)가 해당합니다.
@@ -66,15 +69,12 @@ protected:
 	virtual void GrantAbilities() override;
 	virtual float GetMoveSpeedMultiplier() const override;
 
+	/** 보스는 패턴 밖(이동, 패턴 후딜레이)에서도 늘 AI의 대상을 향해 돕니다. */
+	virtual AActor* GetFacingTarget() const override { return GetTarget(); }
+
 private:
 	/** 스펙이 실행하는 패턴 ID. 패턴을 부여할 때 스펙의 동적 태그로 넣습니다. 패턴 스펙이 아니면 빈 태그입니다. */
 	static FGameplayTag GetPatternTag(const FGameplayAbilitySpec& Spec);
-
-	/** 회전: 바라보는 방향이 고정되지 않은 동안 회전 속도로 AI의 대상을 향해 돕니다. */
-	void UpdateRotation(float DeltaSeconds);
-
-	/** 재생 중인 몽타주의 판정 구간보다 회전 정지 시간만큼 앞선 때부터 그 판정 구간이 끝날 때까지 참입니다. */
-	bool IsInRotationStopWindow() const;
 
 	/** Attaches the lock-on marker and the execution prompt to their bones in the character data. */
 	void AttachWorldWidgets();

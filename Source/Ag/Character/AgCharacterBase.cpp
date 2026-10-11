@@ -9,7 +9,9 @@
 #include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
+#include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -145,6 +147,7 @@ void AAgCharacterBase::Tick(float DeltaSeconds)
 	{
 		SweepWeapon();
 	}
+	UpdateFacing(DeltaSeconds);
 }
 
 void AAgCharacterBase::PossessedBy(AController* NewController)
@@ -354,6 +357,62 @@ void AAgCharacterBase::SetStopTarget(AActor* Target, float InStopDistance)
 void AAgCharacterBase::ClearStopTarget()
 {
 	StopTarget.Reset();
+}
+
+void AAgCharacterBase::SetFacingTarget(AActor* Target)
+{
+	FacingTarget = Target;
+}
+
+bool AAgCharacterBase::IsFacingFixed() const
+{
+	return OpenWindowHit != INDEX_NONE || IsInRotationStopWindow();
+}
+
+bool AAgCharacterBase::IsInRotationStopWindow() const
+{
+	const UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance)
+	{
+		return false;
+	}
+
+	// 판정 구간보다 회전 정지 시간만큼 앞서 멈추고, 판정 구간이 끝나면 다시 돕니다.
+	const float LeadInMontage = CharacterData->GetRotationStopLeadInMontage();
+	for (const FAnimMontageInstance* Instance : AnimInstance->MontageInstances)
+	{
+		if (!Instance || !Instance->IsActive())
+		{
+			continue;
+		}
+		const float Position = Instance->GetPosition();
+		for (const FAnimNotifyEvent& Notify : Instance->Montage->Notifies)
+		{
+			if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass)
+				&& Position >= Notify.GetTriggerTime() - LeadInMontage && Position <= Notify.GetEndTriggerTime())
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
+{
+	const AActor* Target = GetFacingTarget();
+	if (IsDead() || !Target || IsFacingFixed())
+	{
+		return;
+	}
+
+	// 회전 속도는 캐릭터 무브먼트의 회전 속도(엔진 기본값)입니다.
+	const FVector ToTarget = UAgCombatLibrary::GetHorizontalDirection(this, Target);
+	if (!ToTarget.IsNearlyZero())
+	{
+		const FRotator Goal(0.f, ToTarget.Rotation().Yaw, 0.f);
+		SetActorRotation(FMath::RInterpConstantTo(GetActorRotation(), Goal, DeltaSeconds, GetCharacterMovement()->RotationRate.Yaw));
+	}
 }
 
 FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds)

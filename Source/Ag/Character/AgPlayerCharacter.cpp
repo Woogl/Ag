@@ -496,6 +496,11 @@ AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range) const
 	return FindEnemy(Range, [](const AAgCharacterBase&) { return true; });
 }
 
+AAgCharacterBase* AAgPlayerCharacter::FindAttackTarget() const
+{
+	return FindEnemy(TNumericLimits<float>::Max());
+}
+
 AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const
 {
 	UTargetingSubsystem* Targeting = UTargetingSubsystem::Get(GetWorld());

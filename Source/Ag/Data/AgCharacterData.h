@@ -104,6 +104,17 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Death", meta = (Units = "s", ClampMin = 0))
 	float DeathPresentationTime = 0.f;
 
+	/** 공격 중 이동: 정지 간격 (캡슐 중심 사이 수평 거리) */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "cm", ClampMin = 0))
+	float StopDistance = 0.f;
+
+	/** 공격 중 이동: 회전 정지. 각 판정 구간이 시작되기 이만큼 전부터 그 판정 구간이 끝날 때까지 돌지 않습니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "s", ClampMin = 0))
+	float RotationStopLead = 0.f;
+
+	/** 회전 정지 시간을 공격 몽타주의 시간으로 바꾼 값 */
+	virtual float GetRotationStopLeadInMontage() const { return RotationStopLead; }
+
 	/** Abilities granted at the start: actions, reactions, death. */
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> Abilities;
@@ -151,10 +162,6 @@ public:
 	/** 평타: one action per hit, from the first hit. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Basic Attack")
 	TArray<FAgPlayerAttack> BasicAttack;
-
-	/** 공격 중 이동: the gap the player keeps from the target (capsule centers, horizontal). */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "cm", ClampMin = 0))
-	float AttackStopDistance = 0.f;
 
 	/** 자원 회복: SP regained per second after the regen delay, while not guarding. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
@@ -370,7 +377,7 @@ public:
 	FGameplayTag FindPatternCooldownTag(const FGameplayTag& Pattern) const;
 
 	/** 회전 정지 시간(1페이즈 재생 속도의 초)을 패턴 몽타주의 시간으로 바꾼 값. 2페이즈에서는 몽타주와 함께 빨라지므로 그대로입니다. */
-	float GetRotationStopLeadInMontage() const { return RotationStopLead * PatternPlayRate; }
+	virtual float GetRotationStopLeadInMontage() const override { return RotationStopLead * PatternPlayRate; }
 
 	/** 패턴 목록 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Patterns")
@@ -379,18 +386,6 @@ public:
 	/** 모션 재생 속도: pattern motions play at this rate in phase 1. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (ClampMin = 0.01))
 	float PatternPlayRate = 1.f;
-
-	/** 이동: 정지 간격 (capsule centers, horizontal). */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "cm", ClampMin = 0))
-	float StopDistance = 0.f;
-
-	/** 회전: turning speed toward the player. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "deg/s", ClampMin = 0))
-	float RotationSpeed = 0.f;
-
-	/** 회전: the boss stops turning this long before each attack window starts, until it ends. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
-	float RotationStopLead = 0.f;
 
 	/** 패턴 선택: 근거리의 상한 (캡슐 중심 사이 수평 거리) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))

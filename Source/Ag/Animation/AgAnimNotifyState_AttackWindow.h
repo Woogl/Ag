@@ -6,7 +6,7 @@
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "AgAnimNotifyState_AttackWindow.generated.h"
 
-class UAnimMontage;
+class UAnimInstance;
 
 /**
  * 판정 구간: while active, the owner's weapon edge sweeps for hits.
@@ -23,8 +23,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	int32 HitIndex = 0;
 
-	/** Montage 자체의 루트 모션이 첫 판정 구간 시작 전까지 수평으로 가는 거리. 판정 구간이 없으면 몽타주 끝까지 잽니다. */
-	static float GetTravelBeforeFirstWindow(const UAnimMontage* Montage);
+	/**
+	 * 재생 중인 공격 몽타주에서, 지금 위치부터 다음 판정 구간이 시작될 때까지 몽타주 자체의 루트 모션이 수평으로 가는 거리.
+	 * 남은 판정 구간이 없으면 0입니다.
+	 */
+	static float GetTravelToNextWindow(const UAnimInstance& AnimInstance);
 
 	virtual void NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;

@@ -13,8 +13,8 @@ class UAgAbilityTask_AttackMovement;
 class UAnimMontage;
 
 /**
- * 플레이어 공격 하나(평타 한 타, 회피 반격, 스킬, 궁극기): 공격 데이터를 판정 구간에 걸고 몽타주를 이어 재생하며, 타마다 공격
- * 방향과 공격 중 이동을 정합니다(플레이어 사양 '공격 방향', '공격 중 이동').
+ * 플레이어 공격 하나(평타 한 타, 회피 반격, 스킬, 궁극기): 공격 데이터를 판정 구간에 걸고 몽타주를 이어 재생하며, 공격 중
+ * 이동 태스크를 돌리고 범위 안에 적이 없는 타의 공격 방향을 정합니다(플레이어 사양 '공격 방향', '공격 중 이동').
  * 마지막 판정 구간이 끝나면 OnLastWindowEnded, 마지막 모션이 끝나면 OnCompleted, 모션이 끊기면 OnInterrupted를 보냅니다.
  * 행동 중과 후딜, 어빌리티를 끝낼지는 어빌리티가 정합니다. 끝나면(어빌리티가 끝날 때 포함) 공격 데이터를 지웁니다.
  */
@@ -37,7 +37,7 @@ public:
 	static UAgAbilityTask_PlayerAttack* PlayAttack(UGameplayAbility* OwningAbility, const FAgPlayerAttack& Attack, TConstArrayView<TObjectPtr<UAnimMontage>> InMontages);
 
 	/** 지금 타의 대상: 타를 시작할 때 가장 가까운 적(정지 간격의 대상)입니다. 없으면 null입니다. */
-	AAgCharacterBase* GetHitTarget() const { return HitTarget.Get(); }
+	AAgCharacterBase* GetHitTarget() const;
 
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
@@ -45,11 +45,9 @@ public:
 private:
 	void PlayMontageAt(int32 Index);
 
-	/**
-	 * 한 타의 공격 방향과 공격 중 이동: 가장 가까운 적과 정지 간격을 지키고, 그 적이 이 타의 타겟팅 범위 안이면 선딜 동안
-	 * 다가가며 그쪽을 바라봅니다. 범위 안에 적이 없으면 락온 중일 때만 락온 대상 쪽으로 돕니다.
-	 */
-	void StartHitMovement();
+	/** 공격 방향: 타겟팅 범위 안에 적이 없으면 락온 중일 때만 락온 대상 쪽으로 돌고, 아니면 정면으로 갑니다. */
+	UFUNCTION()
+	void HandleHitStarted();
 
 	void HandleAttackWindowEnded(const FGameplayEventData* Payload);
 
@@ -66,6 +64,7 @@ private:
 
 	TArray<FAgPlayerAttackHit> Hits;
 	float TargetingRange = 0.f;
+	float MaxApproachDistance = 0.f;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UAnimMontage>> Montages;
@@ -76,7 +75,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_AttackMovement> MovementTask;
 
-	TWeakObjectPtr<AAgCharacterBase> HitTarget;
 	int32 MontageIndex = 0;
 	FDelegateHandle WindowEndedHandle;
 };

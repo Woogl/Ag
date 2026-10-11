@@ -9,7 +9,6 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "Ag.h"
 #include "Animation/AgAnimNotify_GameplayEvent.h"
-#include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgSwordWave.h"
@@ -37,12 +36,6 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 	}
 
 	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Pattern.ToString(), Boss->GetPatternPlayRate());
-	if (AAgCharacterBase* Target = Boss->GetTarget())
-	{
-		// 정지 간격과 접근은 공용 패턴과 같은 규칙입니다(UAgBossPattern_Common).
-		const float MaxTravel = UAgAnimNotifyState_AttackWindow::GetTravelBeforeFirstWindow(Montage) + Pattern->MaxApproachDistance;
-		UAgAbilityTask_AttackMovement::KeepGap(this, Target, Data->StopDistance, MaxTravel)->ReadyForActivation();
-	}
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternPlayRate());
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
@@ -56,6 +49,9 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 	{
 		return;
 	}
+
+	// 정지 간격과 접근은 공용 패턴과 같은 규칙입니다(UAgBossPattern_Common).
+	UAgAbilityTask_AttackMovement::Attack(this, Pattern->Hits.Num(), /*InTargetingRange*/ -1.f, Pattern->MaxApproachDistance)->ReadyForActivation();
 
 	WaveIndex = 0;
 	RotationLockTag = nullptr;

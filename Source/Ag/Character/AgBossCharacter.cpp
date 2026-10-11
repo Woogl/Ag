@@ -7,9 +7,6 @@
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "AI/AgBossAIController.h"
-#include "Animation/AgAnimNotifyState_AttackWindow.h"
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
 #include "Character/AgLockOnComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Components/WidgetComponent.h"
@@ -147,7 +144,6 @@ void AAgBossCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	UpdateRotation(DeltaSeconds);
 	UpdateWorldWidgets();
 }
 
@@ -173,23 +169,6 @@ void AAgBossCharacter::UpdateWorldWidgets()
 	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && UAgAbility_Execution::FindExecutionTarget(Player) == this));
 }
 
-void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
-{
-	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
-	const AActor* Target = GetTarget();
-	if (IsDead() || !Target || IsFacingFixed())
-	{
-		return;
-	}
-
-	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-	if (!ToTarget.IsNearlyZero())
-	{
-		const FRotator Goal(0.f, ToTarget.Rotation().Yaw, 0.f);
-		SetActorRotation(FMath::RInterpConstantTo(GetActorRotation(), Goal, DeltaSeconds, Data->RotationSpeed));
-	}
-}
-
 bool AAgBossCharacter::IsFacingFixed() const
 {
 	FGameplayTagContainer NoTurning;
@@ -198,35 +177,5 @@ bool AAgBossCharacter::IsFacingFixed() const
 	NoTurning.AddTag(AgGameplayTags::State_Execution_Executed);
 	NoTurning.AddTag(AgGameplayTags::State_Boss_RotationLocked);
 	NoTurning.AddTag(AgGameplayTags::State_NonCombat);
-	return Super::IsFacingFixed() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(NoTurning) || IsInRotationStopWindow();
-}
-
-bool AAgBossCharacter::IsInRotationStopWindow() const
-{
-	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
-	const UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (!AnimInstance)
-	{
-		return false;
-	}
-
-	// 판정 구간보다 회전 정지 시간만큼 앞서 멈추고, 판정 구간이 끝나면 다시 돕니다.
-	const float LeadInMontage = Data->GetRotationStopLeadInMontage();
-	for (const FAnimMontageInstance* Instance : AnimInstance->MontageInstances)
-	{
-		if (!Instance || !Instance->Montage || !Instance->IsActive())
-		{
-			continue;
-		}
-		const float Position = Instance->GetPosition();
-		for (const FAnimNotifyEvent& Notify : Instance->Montage->Notifies)
-		{
-			if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass)
-				&& Position >= Notify.GetTriggerTime() - LeadInMontage && Position <= Notify.GetEndTriggerTime())
-			{
-				return true;
-			}
-		}
-	}
-	return false;
+	return Super::IsFacingFixed() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(NoTurning);
 }

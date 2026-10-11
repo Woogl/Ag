@@ -17,6 +17,8 @@
   },
   "PPRegenRate": 0,
   "DeathPresentationTime": 3,
+  "StopDistance": 100,
+  "RotationStopLead": 0,
   "InputBufferTime": 0.3,
   "BasicAttack": [
     {
@@ -31,7 +33,8 @@
           "UPCharge": 0
         }
       ],
-      "TargetingRange": 150
+      "TargetingRange": 150,
+      "MaxApproachDistance": 20
     },
     {
       "Hits": [
@@ -45,7 +48,8 @@
           "UPCharge": 0
         }
       ],
-      "TargetingRange": 200
+      "TargetingRange": 200,
+      "MaxApproachDistance": 40
     },
     {
       "Hits": [
@@ -59,7 +63,8 @@
           "UPCharge": 0
         }
       ],
-      "TargetingRange": 250
+      "TargetingRange": 250,
+      "MaxApproachDistance": 130
     },
     {
       "Hits": [
@@ -73,7 +78,8 @@
           "UPCharge": 0
         }
       ],
-      "TargetingRange": 210
+      "TargetingRange": 210,
+      "MaxApproachDistance": 40
     },
     {
       "Hits": [
@@ -87,10 +93,10 @@
           "UPCharge": 10
         }
       ],
-      "TargetingRange": 270
+      "TargetingRange": 270,
+      "MaxApproachDistance": 130
     }
   ],
-  "AttackStopDistance": 100,
   "SPRegenRate": 40,
   "SPRegenRateGuarding": 20,
   "SPRegenDelay": 1,
@@ -122,7 +128,8 @@
         "UPCharge": 25
       }
     ],
-    "TargetingRange": 300
+    "TargetingRange": 300,
+    "MaxApproachDistance": 0
   },
   "SkillMPCost": 30,
   "SkillCooldown": 3,
@@ -165,7 +172,8 @@
         "UPCharge": 0
       }
     ],
-    "TargetingRange": 450
+    "TargetingRange": 450,
+    "MaxApproachDistance": 40
   },
   "Execution": {
     "Hits": [
@@ -197,7 +205,8 @@
         "UPCharge": 0
       }
     ],
-    "TargetingRange": 300
+    "TargetingRange": 300,
+    "MaxApproachDistance": 0
   },
   "LockOnRange": 2000,
   "LockOnReleaseRange": 3000,
@@ -215,7 +224,8 @@
         "UPCharge": 0
       }
     ],
-    "TargetingRange": 800
+    "TargetingRange": 800,
+    "MaxApproachDistance": 510
   },
   "DodgeCounterChanceTime": 1,
   "SlowMotionSpeed": 0.3,
