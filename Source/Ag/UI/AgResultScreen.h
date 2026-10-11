@@ -58,9 +58,6 @@ protected:
 
 private:
 	void FinishFadeIn();
-	void HandleTryAgainClicked();
-	void HandleReturnToTitleClicked();
-	void HandleQuitClicked();
 
 	float FadeElapsed = 0.f;
 	bool bFadingIn = false;

@@ -24,8 +24,4 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> QuitButton;
-
-private:
-	void HandleStartClicked();
-	void HandleQuitClicked();
 };

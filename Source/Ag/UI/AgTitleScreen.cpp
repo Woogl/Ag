@@ -9,8 +9,11 @@ void UAgTitleScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	StartButton->OnClicked().AddUObject(this, &ThisClass::HandleStartClicked);
-	QuitButton->OnClicked().AddUObject(this, &ThisClass::HandleQuitClicked);
+	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
+	{
+		StartButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenBossStage);
+		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
+	}
 }
 
 UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
@@ -22,20 +25,4 @@ UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
 TOptional<FUIInputConfig> UAgTitleScreen::GetDesiredInputConfig() const
 {
 	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
-}
-
-void UAgTitleScreen::HandleStartClicked()
-{
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
-	{
-		GameMode->OpenBossStage();
-	}
-}
-
-void UAgTitleScreen::HandleQuitClicked()
-{
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
-	{
-		GameMode->QuitGame();
-	}
 }

@@ -15,9 +15,12 @@ void UAgResultScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	TryAgainButton->OnClicked().AddUObject(this, &ThisClass::HandleTryAgainClicked);
-	ReturnToTitleButton->OnClicked().AddUObject(this, &ThisClass::HandleReturnToTitleClicked);
-	QuitButton->OnClicked().AddUObject(this, &ThisClass::HandleQuitClicked);
+	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
+	{
+		TryAgainButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenBossStage);
+		ReturnToTitleButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenFrontEnd);
+		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
+	}
 }
 
 void UAgResultScreen::NativeOnActivated()
@@ -68,28 +71,4 @@ UWidget* UAgResultScreen::NativeGetDesiredFocusTarget() const
 TOptional<FUIInputConfig> UAgResultScreen::GetDesiredInputConfig() const
 {
 	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
-}
-
-void UAgResultScreen::HandleTryAgainClicked()
-{
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
-	{
-		GameMode->OpenBossStage();
-	}
-}
-
-void UAgResultScreen::HandleReturnToTitleClicked()
-{
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
-	{
-		GameMode->OpenFrontEnd();
-	}
-}
-
-void UAgResultScreen::HandleQuitClicked()
-{
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
-	{
-		GameMode->QuitGame();
-	}
 }
