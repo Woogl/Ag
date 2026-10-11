@@ -189,7 +189,7 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UCapsuleComponent> WeaponCollisionComponent;
 
-	/** 공격 보정 (Motion Warping). */
+	/** 공격 중 이동 (Motion Warping). */
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
 

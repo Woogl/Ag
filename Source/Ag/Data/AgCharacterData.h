@@ -287,7 +287,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
 	float LockOnReleaseRange = 0.f;
 
-	/** TP_Enemy: 공격 보정, 락온, 처형의 대상 후보(플레이어 주변의 캐릭터)를 모읍니다. 범위와 조건은 쓰는 곳마다 따로 확인합니다. */
+	/** TP_Enemy: 공격 중 이동, 락온, 처형의 대상 후보(플레이어 주변의 캐릭터)를 모읍니다. 범위와 조건은 쓰는 곳마다 따로 확인합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Targeting")
 	TObjectPtr<UTargetingPreset> EnemyTargeting;
 
