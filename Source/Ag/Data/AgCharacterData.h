@@ -496,7 +496,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	FName ExecutionPromptBone;
 
-	/** The ability that runs each pattern, by pattern ID. A1, A2 and A5 use the shared pattern ability. */
+	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. A1, A2, A5, A7은 공용 패턴 어빌리티를 씁니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Patterns", meta = (Categories = "Ability.Boss.Pattern"))
 	TMap<FGameplayTag, TSubclassOf<UAgBossPatternAbility>> PatternAbilities;
 

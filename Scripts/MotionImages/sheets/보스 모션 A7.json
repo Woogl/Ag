@@ -1,0 +1,18 @@
+{
+  "image": "보스 모션 A7",
+  "character": "boss",
+  "rows": [
+    {
+      "title": "A7. 뛰어 내려찍기",
+      "note": "",
+      "frames": [
+        {"clip": "Halberd/Attack_Heavy2", "t": 0.0, "time": "0.00초", "label": "시작"},
+        {"clip": "Halberd/Attack_Heavy2", "t": 0.15, "time": "0.19초", "label": "뛰어오름"},
+        {"clip": "Halberd/Attack_Heavy2", "t": 0.3, "time": "0.53초", "label": "머리 위로 치켜듦"},
+        {"clip": "Halberd/Attack_Heavy2", "t": 0.4, "time": "0.73초", "label": "내려찍기", "hit": true, "banner": [["넉백 · 가드·패리 가능", "yellow"]]},
+        {"clip": "Halberd/Attack_Heavy2", "t": 0.7, "time": "1.10초", "label": ""},
+        {"clip": "Halberd/Attack_Heavy2", "t": 1.15, "time": "1.67초", "label": "끝"}
+      ]
+    }
+  ]
+}

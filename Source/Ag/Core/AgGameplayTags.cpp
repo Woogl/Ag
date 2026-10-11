@@ -42,6 +42,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A4, "Ability.Boss.Pattern.A4", "도약 내려찍기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A5, "Ability.Boss.Pattern.A5", "3연격");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A6, "Ability.Boss.Pattern.A6", "검기 발사");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A7, "Ability.Boss.Pattern.A7", "뛰어 내려찍기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_B1, "Ability.Boss.Pattern.B1", "백스텝");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
@@ -91,6 +92,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A4, "Cooldown.Boss.A4");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A5, "Cooldown.Boss.A5");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A6, "Cooldown.Boss.A6");
+	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A7, "Cooldown.Boss.A7");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_B1, "Cooldown.Boss.B1");
 
 	UE_DEFINE_GAMEPLAY_TAG(Data_HP, "Data.HP");

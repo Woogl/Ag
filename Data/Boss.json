@@ -168,6 +168,25 @@
       "bApproachFirstHit": false
     },
     {
+      "Pattern": "Ability.Boss.Pattern.A7",
+      "Hits": [
+        {
+          "DamageMultiplier": 1.6,
+          "PoiseMultiplier": 1,
+          "HitReaction": "KnockBack",
+          "bGuardable": true,
+          "bParryable": true
+        }
+      ],
+      "Cooldown": 6,
+      "bPhase1": true,
+      "bPhase2": true,
+      "WeightNear": 30,
+      "WeightMid": 0,
+      "WeightFar": 0,
+      "bApproachFirstHit": false
+    },
+    {
       "Pattern": "Ability.Boss.Pattern.B1",
       "Hits": [],
       "Cooldown": 8,

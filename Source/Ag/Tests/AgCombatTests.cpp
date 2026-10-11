@@ -68,6 +68,7 @@ bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 		MakePattern(0.f, 40.f, 40.f, false),  // A4, 2페이즈 전용
 		MakePattern(40.f, 0.f, 0.f, false),   // A5, 2페이즈 전용
 		MakePattern(0.f, 20.f, 60.f, false),  // A6, 2페이즈 전용
+		MakePattern(30.f, 0.f, 0.f, true),    // A7
 		MakePattern(0.f, 0.f, 0.f, true),     // B1: 가중치가 없고, 자기 발동 조건으로 시작합니다
 	};
 	constexpr float NearDistance = 300.f;
@@ -77,10 +78,10 @@ bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 	TArray<float> Weights;
 
 	FAgBossAITask_RunPattern::GatherCandidates(Patterns, 200.f, NearDistance, FarDistance, 1, AllReady, Indices, Weights);
-	TestTrue(TEXT("Phase 1 near: A1 and A2 only (A5 is phase 2 only)"), Indices == TArray<int32>{ 0, 1 } && Weights == TArray<float>{ 40.f, 30.f });
+	TestTrue(TEXT("Phase 1 near: A1, A2 and A7 (A5 is phase 2 only)"), Indices == TArray<int32>{ 0, 1, 6 } && Weights == TArray<float>{ 40.f, 30.f, 30.f });
 
 	FAgBossAITask_RunPattern::GatherCandidates(Patterns, 300.f, NearDistance, FarDistance, 2, AllReady, Indices, Weights);
-	TestTrue(TEXT("3m is still near; phase 2 adds A5, never B1"), Indices == TArray<int32>{ 0, 1, 4 });
+	TestTrue(TEXT("3m is still near; phase 2 adds A5, never B1"), Indices == TArray<int32>{ 0, 1, 4, 6 });
 
 	FAgBossAITask_RunPattern::GatherCandidates(Patterns, 1000.f, NearDistance, FarDistance, 1, AllReady, Indices, Weights);
 	TestTrue(TEXT("10m is still mid: only A3 in phase 1 (A4 is phase 2 only)"), Indices == TArray<int32>{ 2 } && Weights == TArray<float>{ 40.f });
@@ -91,7 +92,7 @@ bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 	// 쿨다운 중인 패턴은 빠집니다.
 	auto A2OnCooldown = [&Patterns](const FAgBossPattern& Pattern) { return &Pattern != &Patterns[1]; };
 	FAgBossAITask_RunPattern::GatherCandidates(Patterns, 200.f, NearDistance, FarDistance, 1, A2OnCooldown, Indices, Weights);
-	TestTrue(TEXT("A2 on cooldown leaves A1"), Indices == TArray<int32>{ 0 });
+	TestTrue(TEXT("A2 on cooldown leaves A1 and A7"), Indices == TArray<int32>{ 0, 6 });
 	return true;
 }
 

@@ -11,10 +11,9 @@ class UAnimMontage;
 struct FAgBossPattern;
 
 /**
- * Shared boss pattern (A1, A2, A5): plays the pattern montage at the pattern play rate with its attack data,
- * keeps the stop distance (보스 사양 '이동') and, for A1 and A5, closes in during the first hit's windup.
- * Unguardable hits show the 붉은 섬광 before their attack window, and patterns with a cooldown start it on use.
- * Each granted spec carries its pattern ID as a dynamic tag. The special patterns (A3, A4, A6, B1) derive from this class.
+ * 보스 공용 패턴(A1, A2, A5, A7): 패턴 몽타주를 패턴 재생 속도로 공격 데이터와 함께 재생하고, 정지 간격(보스 사양 '이동')을
+ * 지키며, A1·A5는 1타 선딜 동안 추가로 다가갑니다. 판정 구간 전에 섬광을 켜고, 쿨다운이 있는 패턴은 시작할 때 쿨다운을 겁니다.
+ * 부여된 스펙마다 패턴 ID를 동적 태그로 갖습니다. 특수 패턴(A3, A4, A6, B1)은 이 클래스를 상속합니다.
  */
 UCLASS()
 class UAgBossPatternAbility : public UAgGameplayAbility
