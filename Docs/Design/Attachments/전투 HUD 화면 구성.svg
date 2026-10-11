@@ -56,7 +56,7 @@
   <text x="1128" y="336" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
 
   <!-- [6] 대미지 숫자 -->
-  <text x="1075" y="525" font-size="43" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="3" paint-order="stroke">120</text>
+  <text x="1075" y="525" font-size="44" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="3" paint-order="stroke">120</text>
 
   <!-- [1] 플레이어 상태: SP / HP / MP -->
   <rect x="48" y="974" width="400" height="8" fill="#000000" fill-opacity="0.5"/>
