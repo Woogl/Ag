@@ -69,10 +69,10 @@ public:
 	void ClearStopTarget();
 
 	/**
-	 * Steers the attack warp target to StopDistance in front of Target every frame until StopApproach.
-	 * Stops following when Target goes beyond MaxRange (0 = no limit); MaxTravel (0 = no limit) caps how far
-	 * from the starting point the warp target may be. bFaceTarget also warps the facing toward Target.
-	 * Normally a character already closer stays put; bExactGap moves it back to the gap too (처형 alignment).
+	 * StopApproach까지 매 프레임 공격 워프 목표를 Target 앞 StopDistance 지점으로 옮깁니다.
+	 * Target이 MaxRange(0이면 제한 없음)를 벗어나면 따라가기를 멈춥니다. MaxTravel(음수면 제한 없음)은 워프 목표가
+	 * 시작 위치에서 떨어질 수 있는 최대 거리입니다. bFaceTarget이면 바라보는 방향도 Target 쪽으로 워프합니다.
+	 * 이미 더 가까우면 보통 그 자리에 머물고, bExactGap이면 그 간격까지 물러납니다(처형 맞춤).
 	 */
 	void StartApproach(AActor* Target, float InStopDistance, float MaxRange, float MaxTravel, bool bFaceTarget, bool bExactGap = false);
 

@@ -438,7 +438,7 @@ void AAgCharacterBase::UpdateApproach()
 	const float Gap = UAgCombatLibrary::GetHorizontalDistance(this, Target);
 	if (!Target || (ApproachMaxRange > 0.f && Gap > ApproachMaxRange))
 	{
-		// Out of range: stop following and let the motion carry on in its last direction.
+		// 범위 밖: 따라가기를 멈추고, 모션은 마지막 방향으로 계속합니다.
 		StopApproach();
 		MotionWarping->RemoveWarpTarget(AttackWarpTarget);
 		return;
@@ -452,7 +452,7 @@ void AAgCharacterBase::UpdateApproach()
 		Goal = Target->GetActorLocation() - Direction * ApproachStopDistance;
 		Goal.Z = Location.Z;
 	}
-	if (ApproachMaxTravel > 0.f)
+	if (ApproachMaxTravel >= 0.f)
 	{
 		const FVector Offset = (Goal - ApproachOrigin).GetClampedToMaxSize2D(ApproachMaxTravel);
 		Goal = FVector(ApproachOrigin.X + Offset.X, ApproachOrigin.Y + Offset.Y, Location.Z);

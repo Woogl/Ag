@@ -69,9 +69,8 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	Payload.Target = Boss;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Executed, Payload);
 
-	// By the first slash (the end of the warp window) the player stands at the boss's front, at the gap where the two
-	// motions line up. No stop distance applies.
-	Player->StartApproach(Boss, Data->ExecutionDistance, 0.f, 0.f, /*bFaceTarget*/ true, /*bExactGap*/ true);
+	// 첫 베기(워프 구간의 끝)까지 플레이어는 보스 정면, 두 모션이 맞물리는 간격에 섭니다. 정지 간격은 적용하지 않습니다.
+	Player->StartApproach(Boss, Data->ExecutionDistance, 0.f, /*MaxTravel*/ -1.f, /*bFaceTarget*/ true, /*bExactGap*/ true);
 
 	UAbilityTask_WaitGameplayEvent* StrikeTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_ExecutionBlow);
 	StrikeTask->EventReceived.AddDynamic(this, &ThisClass::HandleStrike);
