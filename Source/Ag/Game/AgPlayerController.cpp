@@ -4,10 +4,8 @@
 
 #include "Ag.h"
 #include "CommonActivatableWidget.h"
-#include "Framework/Application/SlateApplication.h"
 #include "Game/AgCheatManager.h"
 #include "UI/AgHUDWidget.h"
-#include "UI/AgNavigationConfig.h"
 #include "UI/AgResultScreen.h"
 
 namespace
@@ -19,17 +17,6 @@ namespace
 AAgPlayerController::AAgPlayerController()
 {
 	CheatClass = UAgCheatManager::StaticClass();
-}
-
-void AAgPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// W·S move between buttons on top of the arrow keys (게임 플로우 'UI 조작').
-	if (IsLocalController() && FSlateApplication::IsInitialized())
-	{
-		FSlateApplication::Get().SetNavigationConfig(MakeShared<FAgNavigationConfig>());
-	}
 }
 
 UCommonActivatableWidget* AAgPlayerController::PushScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass, int32 ZOrder)

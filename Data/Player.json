@@ -84,7 +84,7 @@
           "bGuardable": true,
           "bParryable": true,
           "MPCharge": 4,
-          "UPCharge": 4
+          "UPCharge": 10
         }
       ],
       "TargetingRange": 270
@@ -96,9 +96,9 @@
   "SPRegenDelay": 1,
   "SPRegenDelayEmpty": 1.5,
   "PerfectDodgeMPCharge": 10,
-  "PerfectDodgeUPCharge": 6,
+  "PerfectDodgeUPCharge": 10,
   "ParryMPCharge": 15,
-  "ParryUPCharge": 4,
+  "ParryUPCharge": 10,
   "DodgeSPCost": 20,
   "DodgeCooldown": 0.4,
   "DodgeInvincibleTime": 0.3,
@@ -119,13 +119,13 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 10
+        "UPCharge": 25
       }
     ],
     "TargetingRange": 300
   },
   "SkillMPCost": 30,
-  "SkillCooldown": 5,
+  "SkillCooldown": 3,
   "Ultimate": {
     "Hits": [
       {

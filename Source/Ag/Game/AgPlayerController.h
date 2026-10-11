@@ -10,7 +10,7 @@ class UCommonActivatableWidget;
 class UAgHUDWidget;
 class UAgResultScreen;
 
-/** Player controller. Owns the screens (title, HUD, result UI) and the test console commands. */
+/** 플레이어 컨트롤러. 화면(타이틀, HUD, 결과 UI)과 테스트용 콘솔 명령을 맡습니다. */
 UCLASS()
 class AAgPlayerController : public APlayerController
 {
@@ -27,9 +27,6 @@ public:
 
 	/** Shows Stage Clear UI or Game Over UI. */
 	void ShowResult(TSubclassOf<UAgResultScreen> ResultScreenClass, bool bStageCleared);
-
-protected:
-	virtual void BeginPlay() override;
 
 private:
 	UPROPERTY()
