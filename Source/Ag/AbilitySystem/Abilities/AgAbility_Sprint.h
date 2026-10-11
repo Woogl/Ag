@@ -7,9 +7,9 @@
 #include "AgAbility_Sprint.generated.h"
 
 /**
- * 달리기: starts when a dodge motion ends with Shift and movement held, and runs until the player character cancels it
- * (Shift released, no movement input, SP at 0) or another action starts. While it runs, State.Sprinting raises the
- * speed, turns the character toward its movement and lets the sprint SP cost effect run.
+ * 달리기: 회피 후딜에 Shift와 이동 입력이 있으면 회피를 캔슬하고 시작해, 플레이어 캐릭터가 취소하거나(Shift를 뗌,
+ * 이동 입력 없음, SP 0) 다른 행동이 시작될 때까지 이어집니다. 실행 중에는 State.Sprinting이 속도를 올리고,
+ * 캐릭터를 이동 방향으로 돌리고, 달리기 SP 소모 효과를 돌립니다.
  */
 UCLASS()
 class UAgAbility_Sprint : public UAgGameplayAbility

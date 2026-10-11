@@ -44,9 +44,6 @@ public:
 	/** The dodge / sprint key (Shift) is held. */
 	bool IsDodgeHeld() const { return bDodgeHeld; }
 
-	/** 달리기: a dodge motion just ended. Starts the sprint if Shift and movement are still held and the guard key isn't. */
-	void TryStartSprint();
-
 	/**
 	 * True once when the guard starts again after a parry motion or a guard pushback with the key held,
 	 * which opens no parry window (플레이어 사양 '패리 구간').
@@ -107,7 +104,7 @@ private:
 	/** 회피 반격 기회 ends with any action other than moving, or a knockback or down. */
 	void HandleAbilityActivated(UGameplayAbility* Ability);
 
-	/** 달리기 ends when Shift is released, the movement input stops or SP runs out. */
+	/** 달리기: 회피 후딜에 Shift와 이동 입력이 있으면 시작하고, Shift를 떼거나 이동 입력이 없거나 SP가 0이 되면 끝냅니다. */
 	void UpdateSprint();
 
 	/**

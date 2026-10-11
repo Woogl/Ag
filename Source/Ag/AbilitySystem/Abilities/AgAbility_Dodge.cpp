@@ -140,13 +140,8 @@ void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 
 void UAgAbility_Dodge::HandleMontageFinished()
 {
-	// The dodge lasts to the end of its motion; with Shift and movement still held it turns into a sprint.
-	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
+	// 회피는 모션이 끝날 때 끝납니다. 달리기 전환은 후딜에서 플레이어 캐릭터가 맡습니다.
 	EndSelf(false);
-	if (Player)
-	{
-		Player->TryStartSprint();
-	}
 }
 
 void UAgAbility_Dodge::HandleMontageCancelled()

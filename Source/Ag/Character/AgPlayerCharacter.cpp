@@ -470,22 +470,31 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	}
 }
 
-void AAgPlayerCharacter::TryStartSprint()
-{
-	// With the guard key held the guard starts instead (플레이어 사양 '가드').
-	if (!IsDead() && bDodgeHeld && !bGuardHeld && !MoveInputDirection.IsNearlyZero())
-	{
-		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Sprint));
-	}
-}
-
 void AAgPlayerCharacter::UpdateSprint()
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) && (!bDodgeHeld || MoveInputDirection.IsNearlyZero() || GetAttributeSet()->GetSP() <= 0.f))
+	const bool bWantsSprint = bDodgeHeld && !MoveInputDirection.IsNearlyZero();
+	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting))
 	{
-		const FGameplayTagContainer SprintTags(AgGameplayTags::Ability_Action_Sprint);
-		ASC->CancelAbilities(&SprintTags);
+		if (!bWantsSprint || GetAttributeSet()->GetSP() <= 0.f)
+		{
+			const FGameplayTagContainer SprintTags(AgGameplayTags::Ability_Action_Sprint);
+			ASC->CancelAbilities(&SprintTags);
+		}
+		return;
+	}
+
+	// 회피 후딜(회피 중이고 행동 중 태그가 풀림)이면 달리기가 회피를 캔슬하고 시작합니다. 가드 키를 누르고 있으면
+	// 가드를 따릅니다(플레이어 사양 '달리기', '가드').
+	if (!bWantsSprint || bGuardHeld || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy))
+	{
+		return;
+	}
+	TArray<FGameplayAbilitySpec*> DodgeSpecs;
+	ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Dodge), DodgeSpecs, false);
+	if (DodgeSpecs.ContainsByPredicate([](const FGameplayAbilitySpec* Spec) { return Spec->IsActive(); }))
+	{
+		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Sprint));
 	}
 }
 
