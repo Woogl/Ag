@@ -56,6 +56,7 @@ void AAgPlayerCharacter::BeginPlay()
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandleSPChanged);
@@ -498,13 +499,14 @@ bool AAgPlayerCharacter::TakeGuardResume()
 
 void AAgPlayerCharacter::UpdateRotationMode()
 {
-	// 이동: while locked on the character faces the target (the camera looks at it); while guarding it faces the target
-	// or the camera's front. Otherwise, and while sprinting even when locked on, it faces where it moves.
+	// 이동: 락온 중에는 대상(카메라가 보는 쪽)을, 가드 중에는 대상이나 카메라 정면을 바라봅니다. 그 밖에는, 그리고 락온 중이라도
+	// 달릴 때는 이동 방향을 바라봅니다. 피격 반응 중에는 공격 쪽으로 돈 방향을 유지합니다(전투 시스템 '피격 모션').
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const bool bReacting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction);
 	const bool bSprinting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting);
 	const bool bFaceCamera = (LockOn->IsLockedOn() && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
-	GetCharacterMovement()->bOrientRotationToMovement = !bFaceCamera;
-	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
+	GetCharacterMovement()->bOrientRotationToMovement = !bReacting && !bFaceCamera;
+	GetCharacterMovement()->bUseControllerDesiredRotation = !bReacting && bFaceCamera;
 }
 
 void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount)
