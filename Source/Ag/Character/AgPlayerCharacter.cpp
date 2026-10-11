@@ -141,10 +141,10 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 bool AAgPlayerCharacter::CanMove() const
 {
-	// Actions, reactions and the parry window hold the character in place (플레이어 입력 '상태별 허용 입력', '모션 캔슬').
+	// 행동, 피격 반응, 가드 시작 직후에는 움직이지 않습니다(플레이어 입력 '상태별 허용 입력', '모션 캔슬').
 	FGameplayTagContainer Blockers;
 	Blockers.AddTag(AgGameplayTags::State_Acting);
-	Blockers.AddTag(AgGameplayTags::State_ParryWindow);
+	Blockers.AddTag(AgGameplayTags::State_GuardMoveLock);
 	Blockers.AddTag(AgGameplayTags::State_HitReaction);
 	Blockers.AddTag(AgGameplayTags::State_Groggy);
 	Blockers.AddTag(AgGameplayTags::State_Execution_Executing);

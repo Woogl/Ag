@@ -118,6 +118,7 @@
   "GuardSPCostRatio": 0.25,
   "GuardMoveSpeedRatio": 0.65,
   "ParryWindowTime": 0.3,
+  "GuardMoveLockTime": 0.5,
   "ParryPPRatio": 0.08,
   "Skill": {
     "Hits": [

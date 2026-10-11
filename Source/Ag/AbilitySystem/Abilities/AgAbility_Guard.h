@@ -34,6 +34,9 @@ private:
 	void SetGuarding(bool bGuarding);
 
 	void CloseParryWindow();
+
+	/** 가드 시작 후 이동할 수 없는 시간을 끝냅니다. */
+	void CloseMoveLock();
 	void EndParryMotion();
 
 	UFUNCTION()
@@ -58,6 +61,7 @@ private:
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> ParryTask;
 
 	FActiveGameplayEffectHandle ParryWindow;
+	FActiveGameplayEffectHandle MoveLock;
 	bool bGuarding = false;
 	bool bInParryMotion = false;
 	bool bInParryRecovery = false;

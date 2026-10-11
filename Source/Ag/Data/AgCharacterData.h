@@ -215,6 +215,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (Units = "s", ClampMin = 0))
 	float ParryWindowTime = 0.f;
 
+	/** 상태별 허용 입력: 패리 구간이 생기는 가드 시작 후 이동할 수 없는 시간 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (Units = "s", ClampMin = 0))
+	float GuardMoveLockTime = 0.f;
+
 	/** 패리: the attacker loses this share of its MaxPP. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0, ClampMax = 1))
 	float ParryPPRatio = 0.f;

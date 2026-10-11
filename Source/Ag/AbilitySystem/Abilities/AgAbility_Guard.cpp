@@ -49,10 +49,13 @@ void UAgAbility_Guard::StartGuard(bool bOpenParryWindow)
 {
 	SetGuarding(true);
 	CloseParryWindow();
+	CloseMoveLock();
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	if (bOpenParryWindow && Data)
 	{
+		// 패리 구간이 생기는 가드 시작은 이동할 수 없는 시간도 함께 시작합니다(플레이어 입력 '상태별 허용 입력').
 		ParryWindow = UAgCombatLibrary::ApplyTimedTag(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_ParryWindow, Data->ParryWindowTime);
+		MoveLock = UAgCombatLibrary::ApplyTimedTag(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_GuardMoveLock, Data->GuardMoveLockTime);
 	}
 }
 
@@ -79,6 +82,15 @@ void UAgAbility_Guard::CloseParryWindow()
 	{
 		GetAbilitySystemComponentFromActorInfo()->RemoveActiveGameplayEffect(ParryWindow);
 		ParryWindow.Invalidate();
+	}
+}
+
+void UAgAbility_Guard::CloseMoveLock()
+{
+	if (MoveLock.IsValid())
+	{
+		GetAbilitySystemComponentFromActorInfo()->RemoveActiveGameplayEffect(MoveLock);
+		MoveLock.Invalidate();
 	}
 }
 
@@ -186,6 +198,7 @@ void UAgAbility_Guard::EndParryMotion()
 void UAgAbility_Guard::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	CloseParryWindow();
+	CloseMoveLock();
 	EndParryMotion();
 	SetGuarding(false);
 	ParryTask = nullptr;
