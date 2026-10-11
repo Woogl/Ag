@@ -5,6 +5,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Ag.h"
+#include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -41,10 +42,11 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 	UE_LOG(LogAg, Verbose, TEXT("Basic attack: hit %d starts"), Index + 1);
 	StartAttack(Data->BasicAttack[Index], MakeArrayView(&Data->BasicAttackMontages[Index], 1));
 
-	// The boss checks its 백스텝 (B1) every time a basic attack hit starts.
+	// 평타의 각 타를 시작할 때마다, 그 타의 대상인 보스가 백스텝(B1)을 검사합니다.
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_BasicAttackStarted;
 	Payload.Instigator = GetAvatarActorFromActorInfo();
+	Payload.Target = GetHitTarget();
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetAvatarActorFromActorInfo(), AgGameplayTags::Event_BasicAttackStarted, Payload);
 }
 

@@ -43,13 +43,13 @@ const UAgCombatRules* UAgSettings::GetCombatRules() const
 	return LoadedCombatRules;
 }
 
-const UTargetingPreset* UAgSettings::GetBossTargeting() const
+const UTargetingPreset* UAgSettings::GetEnemyTargeting() const
 {
-	if (!LoadedBossTargeting)
+	if (!LoadedEnemyTargeting)
 	{
-		LoadedBossTargeting = BossTargeting.LoadSynchronous();
+		LoadedEnemyTargeting = EnemyTargeting.LoadSynchronous();
 	}
-	return LoadedBossTargeting;
+	return LoadedEnemyTargeting;
 }
 
 #if WITH_EDITOR
@@ -67,6 +67,6 @@ void UAgSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 	{
 		AgDataFile::Load(*LoadedCombatRules, CombatRulesFile);
 	}
-	LoadedBossTargeting = nullptr;
+	LoadedEnemyTargeting = nullptr;
 }
 #endif

@@ -11,8 +11,8 @@ class UAgHUDWidget;
 class UAgResultScreen;
 
 /**
- * Game mode of LV_BossStage (게임 플로우 'Boss Stage', 'Stage Clear', 'Game Over').
- * The death processed first decides the result; the result UI follows the dead character's death presentation.
+ * LV_BossStage의 게임 모드(게임 플로우 'Boss Stage', 'Stage Clear', 'Game Over').
+ * 플레이어와 보스의 사망 가운데 먼저 처리된 것이 결과를 정하고, 결과 UI는 그 캐릭터의 사망 연출 뒤에 띄웁니다.
  */
 UCLASS(Abstract)
 class AAgBossStageGameMode : public AAgGameMode

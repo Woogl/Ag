@@ -23,27 +23,25 @@ void UAgTimeSubsystem::StartHitstop(std::initializer_list<AActor*> Actors)
 		return;
 	}
 
+	// 캐릭터마다 따로 셉니다. 다른 캐릭터의 적중이 이미 멈춘 캐릭터의 히트스톱을 늘리지 않습니다.
 	for (AActor* Actor : Actors)
 	{
 		if (Actor)
 		{
 			Actor->CustomTimeDilation = HitstopTimeDilation;
-			FrozenActors.AddUnique(Actor);
+			FTimerHandle& Timer = HitstopTimers.FindOrAdd(Actor);
+			GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::EndHitstop, TWeakObjectPtr<AActor>(Actor)), Rules->HitstopTime, false);
 		}
 	}
-	GetWorld()->GetTimerManager().SetTimer(HitstopTimer, this, &ThisClass::EndHitstop, Rules->HitstopTime, false);
 }
 
-void UAgTimeSubsystem::EndHitstop()
+void UAgTimeSubsystem::EndHitstop(TWeakObjectPtr<AActor> Actor)
 {
-	for (const TWeakObjectPtr<AActor>& Actor : FrozenActors)
+	HitstopTimers.Remove(Actor);
+	if (Actor.IsValid())
 	{
-		if (Actor.IsValid())
-		{
-			Actor->CustomTimeDilation = 1.f;
-		}
+		Actor->CustomTimeDilation = 1.f;
 	}
-	FrozenActors.Reset();
 }
 
 void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)

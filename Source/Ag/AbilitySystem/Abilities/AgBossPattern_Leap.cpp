@@ -29,7 +29,7 @@ void UAgBossPattern_Leap::OnPatternStarted()
 	AAgBossCharacter* Boss = GetBoss();
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = GetPattern();
-	if (!Boss || !Data || !Pattern || Pattern->Hits.IsEmpty() || !UGameplayStatics::GetPlayerPawn(this, 0))
+	if (!Boss || !Data || !Pattern || Pattern->Hits.IsEmpty() || !GetTarget())
 	{
 		EndSelf(true);
 		return;
@@ -49,7 +49,7 @@ void UAgBossPattern_Leap::OnPatternStarted()
 	Boss->LaunchCharacter(ToTarget / AirTime + FVector(0.f, 0.f, Gravity * AirTime * 0.5f), /*bXYOverride*/ true, /*bZOverride*/ true);
 	LandingTime = Boss->GetWorld()->GetTimeSeconds() + AirTime;
 
-	// 회전: 공중에서도 플레이어를 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 2페이즈에서는 둘 다
+	// 회전: 공중에서도 대상을 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 2페이즈에서는 둘 다
 	// 같은 비율로 짧아집니다.
 	const float TurnTime = (Data->LeapAirTime - Data->RotationStopLead) / PatternSpeed;
 	if (TurnTime > 0.f)
@@ -64,7 +64,7 @@ void UAgBossPattern_Leap::OnPatternStarted()
 	}
 
 	// 섬광: 가드 불가면 붉은 섬광, 패리 가능하면 예고 섬광을 착지보다 그 시간만큼 앞서 켭니다(2페이즈 규칙도 같음).
-	// 그때까지는 착지 목표를 플레이어 쪽으로 다시 맞춥니다.
+	// 그때까지는 착지 목표를 대상 쪽으로 다시 맞춥니다.
 	const FAgAttackHit& Hit = Pattern->Hits[0];
 	const float TelegraphLead = !Hit.bGuardable ? Data->UnblockableTelegraphLead : (Hit.bParryable ? Data->ParryTelegraphLead : 0.f);
 	const float TelegraphTime = (Data->LeapAirTime - TelegraphLead) / PatternSpeed;
@@ -89,14 +89,14 @@ void UAgBossPattern_Leap::OnPatternStarted()
 FVector UAgBossPattern_Leap::GetLandingTarget() const
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const AActor* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!Data || !Player)
+	const AActor* Target = GetTarget();
+	if (!Data || !Target)
 	{
 		return LeapStart;
 	}
-	const FVector ToPlayer = (Player->GetActorLocation() - LeapStart) * FVector(1.f, 1.f, 0.f);
-	const float Distance = FMath::Clamp(ToPlayer.Size() - Data->LeapTargetOffset, 0.f, Data->LeapMaxDistance);
-	return LeapStart + ToPlayer.GetSafeNormal() * Distance;
+	const FVector ToTarget = (Target->GetActorLocation() - LeapStart) * FVector(1.f, 1.f, 0.f);
+	const float Distance = FMath::Clamp(ToTarget.Size() - Data->LeapTargetOffset, 0.f, Data->LeapMaxDistance);
+	return LeapStart + ToTarget.GetSafeNormal() * Distance;
 }
 
 void UAgBossPattern_Leap::HandleAim(int32 ActionNumber)
@@ -159,18 +159,20 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 		AnimInstance->Montage_JumpToSection(LeapEndSection, GetMontage());
 	}
 
-	// 플레이어가 가까우면 착지가 카메라를 흔듭니다(카메라 '상황별 단계').
-	AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0));
+	// 플레이어가 가까우면 착지가 카메라를 흔듭니다(카메라 '상황별 단계'). 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를
+	// 기준으로 합니다.
+	const AActor* ViewPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
 	const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData();
-	if (Player && Camera && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Camera->LeapLandingShakeRange)
+	if (ViewPlayer && Camera && UAgCombatLibrary::GetHorizontalDistance(Boss, ViewPlayer) <= Camera->LeapLandingShakeRange)
 	{
 		UAgCombatLibrary::PlayCameraShake(Boss, Camera->LeapLandingShake);
 	}
 
 	// 착지가 판정 구간입니다. 착지 지점 반경 안에서 땅에 있는 대상만 한 번 맞습니다(점프 중이면 맞지 않음).
-	if (Player && !Player->GetCharacterMovement()->IsFalling() && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Data->LeapHitRadius)
+	AAgCharacterBase* Target = GetTarget();
+	if (Target && !Target->GetCharacterMovement()->IsFalling() && UAgCombatLibrary::GetHorizontalDistance(Boss, Target) <= Data->LeapHitRadius)
 	{
-		UAgCombatLibrary::ProcessHit(Boss, Player, FAgPlayerAttackHit(Pattern->Hits[0]), Boss->GetActorLocation());
+		UAgCombatLibrary::ProcessHit(Boss, Target, FAgPlayerAttackHit(Pattern->Hits[0]), Boss->GetActorLocation());
 	}
 }
 

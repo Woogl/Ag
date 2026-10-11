@@ -14,8 +14,8 @@ class UAgTimeSubsystem : public UTickableWorldSubsystem
 
 public:
 	/**
-	 * Stops the given characters' motion and movement for the hitstop time, counted in game time.
-	 * Calling it again while it runs restarts the count.
+	 * 히트스톱 시간 동안 주어진 캐릭터들의 모션과 이동을 멈춥니다. 시간은 게임 시간으로 캐릭터마다 따로 세며, 이미 멈춘
+	 * 캐릭터가 다시 걸리면 그 캐릭터만 처음부터 다시 셉니다.
 	 */
 	void StartHitstop(std::initializer_list<AActor*> Actors);
 
@@ -26,11 +26,12 @@ public:
 	virtual TStatId GetStatId() const override;
 
 private:
-	void EndHitstop();
+	/** 그 캐릭터의 히트스톱을 끝냅니다. */
+	void EndHitstop(TWeakObjectPtr<AActor> Actor);
 	void EndSlowMotion();
 
-	TArray<TWeakObjectPtr<AActor>> FrozenActors;
-	FTimerHandle HitstopTimer;
+	/** 히트스톱 중인 캐릭터마다 끝나는 시점을 세는 타이머 */
+	TMap<TWeakObjectPtr<AActor>, FTimerHandle> HitstopTimers;
 
 	/** Real time the slow motion ends, or negative when none runs. */
 	double SlowMotionEndTime = -1.0;

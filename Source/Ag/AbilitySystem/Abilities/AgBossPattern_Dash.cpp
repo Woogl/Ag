@@ -11,7 +11,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
-#include "Kismet/GameplayStatics.h"
 
 void UAgBossPattern_Dash::OnPatternStarted()
 {
@@ -52,22 +51,22 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = GetBoss();
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const AActor* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!Boss || !Data || !Player)
+	const AActor* Target = GetTarget();
+	if (!Boss || !Data || !Target)
 	{
 		return;
 	}
 
-	// 방향: fixed toward the player at this moment. 목표 지점: past the player, up to the maximum distance.
-	const FVector Direction = UAgCombatLibrary::GetAttackDirection(Boss, Player);
+	// 방향: 이 순간의 대상 쪽으로 고정합니다. 목표 지점: 대상을 지나, 최대 이동 거리까지.
+	const FVector Direction = UAgCombatLibrary::GetAttackDirection(Boss, Target);
 	if (!Direction.IsNearlyZero())
 	{
 		Boss->SetActorRotation(FRotator(0.f, Direction.Rotation().Yaw, 0.f));
 	}
-	const float Distance = FMath::Min(UAgCombatLibrary::GetHorizontalDistance(Boss, Player) + Data->DashOvershoot, Data->DashMaxDistance);
+	const float Distance = FMath::Min(UAgCombatLibrary::GetHorizontalDistance(Boss, Target) + Data->DashOvershoot, Data->DashMaxDistance);
 
-	// The character movement ignores other root motion while a montage gives root motion, so the motion's own root
-	// motion is set aside from here: the dash moves the boss, and the rest of the motion only draws the spear back.
+	// 몽타주가 루트 모션을 주는 동안 캐릭터 무브먼트는 다른 루트 모션을 쓰지 않으므로, 여기서부터 모션 자체의 루트 모션은
+	// 무시합니다. 돌진이 보스를 움직이고, 나머지 모션은 창을 거두기만 합니다.
 	if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
 	{
 		bRootMotionIgnored = true;

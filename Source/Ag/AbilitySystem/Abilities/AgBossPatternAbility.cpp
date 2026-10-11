@@ -14,7 +14,6 @@
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
-#include "Kismet/GameplayStatics.h"
 
 UAgBossPatternAbility::UAgBossPatternAbility()
 {
@@ -49,6 +48,12 @@ const FAgBossPattern* UAgBossPatternAbility::GetPattern() const
 AAgBossCharacter* UAgBossPatternAbility::GetBoss() const
 {
 	return Cast<AAgBossCharacter>(GetAgCharacter());
+}
+
+AAgCharacterBase* UAgBossPatternAbility::GetTarget() const
+{
+	const AAgBossCharacter* Boss = GetBoss();
+	return Boss ? Boss->GetTarget() : nullptr;
 }
 
 float UAgBossPatternAbility::GetPatternPlayRate() const
@@ -101,14 +106,14 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	}
 
 	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Pattern.ToString(), GetPatternPlayRate());
-	AActor* Player = UGameplayStatics::GetPlayerPawn(Boss, 0);
+	AAgCharacterBase* Target = GetTarget();
 	Boss->SetActiveAttack(Pattern->Hits);
-	if (UsesSharedMovement() && Player)
+	if (UsesSharedMovement() && Target)
 	{
 		// 정지 간격을 지키고, 몽타주에 워핑 구간이 있으면(A1·A5 1타 선딜, A7 체공) 그동안 다가갑니다. 다가가는 거리는 모션
 		// 자체의 전진에 패턴의 최대 접근 거리까지만 더하고, 방향은 보스가 직접 돌립니다.
 		const float MaxTravel = GetForwardTravelBeforeFirstWindow(Montage) + Pattern->MaxApproachDistance;
-		UAgAbilityTask_AttackMovement::KeepGap(this, Player, Data->StopDistance, MaxTravel)->ReadyForActivation();
+		UAgAbilityTask_AttackMovement::KeepGap(this, Target, Data->StopDistance, MaxTravel)->ReadyForActivation();
 	}
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, GetPatternPlayRate());

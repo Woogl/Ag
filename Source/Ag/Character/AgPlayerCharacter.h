@@ -7,7 +7,6 @@
 #include "GameplayTagContainer.h"
 #include "AgPlayerCharacter.generated.h"
 
-class AAgBossCharacter;
 class UAgLockOnComponent;
 class UCameraComponent;
 class UInputAction;
@@ -25,8 +24,14 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
-	/** The living boss whose capsule center is within Range (horizontal), found through TP_Boss. */
-	AAgBossCharacter* FindBoss(float Range) const;
+	/**
+	 * 대상 찾기(구현 계획서 '대상 찾기'): TP_Enemy가 모은 후보 가운데 적대 관계이고 살아 있고, 캡슐 중심 사이 수평 거리가
+	 * Range 안이며 Condition을 만족하는 가장 가까운 적입니다. 없으면 null입니다.
+	 */
+	AAgCharacterBase* FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const;
+
+	/** 다른 조건 없이 Range 안에서 가장 가까운 적입니다. */
+	AAgCharacterBase* FindEnemy(float Range) const;
 
 	UAgLockOnComponent* GetLockOn() const { return LockOn; }
 

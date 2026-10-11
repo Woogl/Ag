@@ -138,34 +138,41 @@ void AAgBossCharacter::Tick(float DeltaSeconds)
 	UpdateWorldWidgets();
 }
 
+AAgCharacterBase* AAgBossCharacter::GetTarget() const
+{
+	const AAgBossAIController* AIController = Cast<AAgBossAIController>(GetController());
+	return AIController ? AIController->GetTarget() : nullptr;
+}
+
 void AAgBossCharacter::UpdateWorldWidgets()
 {
-	// Both hide from the moment either death presentation starts, and during 처형.
+	// 둘 다 어느 쪽이든 사망 연출이 시작되는 순간부터, 그리고 처형 중에 숨깁니다. 플레이어 화면에 관한 것이라 AI의 대상이 아니라
+	// 로컬 플레이어를 기준으로 합니다.
 	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	const bool bInCombat = Player && !Player->IsDead() && !IsDead()
 		&& !GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed);
 
 	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOn()->GetTarget() == this));
 
-	// 처형 발동 조건 1 and 2 (groggy, in range). Shown even while the player's current action holds off the execution key.
-	// The range check runs a targeting query, so it only runs during groggy.
+	// 처형 발동 조건 1, 2(그로기, 범위 안)를 만족하는 처형 대상이면 표시합니다. 지금 하는 행동 때문에 처형 키를 받지 않는 동안에도
+	// 표시합니다. 범위 확인은 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
 	const bool bGroggy = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
-	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && UAgAbility_Execution::FindExecutableBoss(Player) == this));
+	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && UAgAbility_Execution::FindExecutionTarget(Player) == this));
 }
 
 void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
 {
 	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
-	const AActor* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (IsDead() || !Data || !Player || IsFacingFixed())
+	const AActor* Target = GetTarget();
+	if (IsDead() || !Data || !Target || IsFacingFixed())
 	{
 		return;
 	}
 
-	const FVector ToPlayer = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-	if (!ToPlayer.IsNearlyZero())
+	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+	if (!ToTarget.IsNearlyZero())
 	{
-		const FRotator Goal(0.f, ToPlayer.Rotation().Yaw, 0.f);
+		const FRotator Goal(0.f, ToTarget.Rotation().Yaw, 0.f);
 		SetActorRotation(FMath::RInterpConstantTo(GetActorRotation(), Goal, DeltaSeconds, Data->RotationSpeed));
 	}
 }

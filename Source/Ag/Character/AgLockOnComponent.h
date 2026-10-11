@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "AgLockOnComponent.generated.h"
 
-class AAgBossCharacter;
+class AAgCharacterBase;
 
 DECLARE_MULTICAST_DELEGATE(FAgLockOnChangedSignature);
 
@@ -20,18 +20,18 @@ class UAgLockOnComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	/** 락온 대상: a living boss within the lock-on range and on screen, or null. */
-	AAgBossCharacter* FindTarget() const;
+	/** 락온 대상: 락온 타겟팅 범위 안에서 화면 안에 있는 가장 가까운 적('대상 찾기'). 없으면 null입니다. */
+	AAgCharacterBase* FindTarget() const;
 
-	/** Starts the lock-on on NewTarget, or ends it with null. */
-	void SetTarget(AAgBossCharacter* NewTarget);
+	/** NewTarget에 락온하고, null이면 락온을 끝냅니다. */
+	void SetTarget(AAgCharacterBase* NewTarget);
 
 	/** 락온 해제 조건 other than the key: the target died or went beyond the release range. */
 	bool IsTargetLost() const;
 
 	bool IsLockedOn() const { return Target.IsValid(); }
 
-	AAgBossCharacter* GetTarget() const { return Target.Get(); }
+	AAgCharacterBase* GetTarget() const { return Target.Get(); }
 
 	/** Where the camera looks: the target's lock-on bone (chest height). */
 	FVector GetLockOnPoint() const;
@@ -40,5 +40,5 @@ public:
 	FAgLockOnChangedSignature OnLockOnChanged;
 
 private:
-	TWeakObjectPtr<AAgBossCharacter> Target;
+	TWeakObjectPtr<AAgCharacterBase> Target;
 };

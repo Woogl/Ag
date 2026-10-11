@@ -22,8 +22,8 @@ bool FAgBossAICondition_BossDead::TestCondition(FStateTreeExecutionContext& Cont
 bool FAgBossAICondition_PlayerDead::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
-	const AAgCharacterBase* Player = Controller ? Controller->GetPlayer() : nullptr;
-	return Player && Player->IsDead();
+	const AAgCharacterBase* Target = Controller ? Controller->GetTarget() : nullptr;
+	return Target && Target->IsDead();
 }
 
 bool FAgBossAICondition_Reacting::TestCondition(FStateTreeExecutionContext& Context) const
@@ -51,7 +51,7 @@ bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext&
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
 	const AAgBossCharacter* Boss = Controller ? Controller->GetBoss() : nullptr;
 	const UAgBossData* Data = Controller ? Controller->GetBossData() : nullptr;
-	if (!Boss || !Data || UAgCombatLibrary::GetHorizontalDistance(Boss, Controller->GetPlayer()) > Data->BackstepRange)
+	if (!Boss || !Data || UAgCombatLibrary::GetHorizontalDistance(Boss, Controller->GetTarget()) > Data->BackstepRange)
 	{
 		return false;
 	}

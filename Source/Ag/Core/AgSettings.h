@@ -28,8 +28,8 @@ public:
 	/** CombatRules.json, read on first use into one object kept from then on. */
 	const UAgCombatRules* GetCombatRules() const;
 
-	/** TP_Boss, loaded on first use and kept loaded from then on. */
-	const UTargetingPreset* GetBossTargeting() const;
+	/** TP_Enemy. 처음 쓸 때 로드해 계속 들고 있습니다. */
+	const UTargetingPreset* GetEnemyTargeting() const;
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -51,9 +51,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Data")
 	FString CombatRulesFile;
 
-	/** TP_Boss: finds boss candidates around the player for 공격 중 이동 and lock-on. Each use then checks its own range. */
+	/** TP_Enemy: 공격 보정, 락온, 처형의 대상 후보(플레이어 주변의 캐릭터)를 모읍니다. 범위와 조건은 쓰는 곳마다 따로 확인합니다. */
 	UPROPERTY(Config, EditAnywhere, Category = "Data")
-	TSoftObjectPtr<UTargetingPreset> BossTargeting;
+	TSoftObjectPtr<UTargetingPreset> EnemyTargeting;
 
 	/**
 	 * Regen is applied in steps this long (rate per second × interval each step).
@@ -77,7 +77,7 @@ private:
 	UPROPERTY(Transient)
 	mutable TObjectPtr<UAgCombatRules> LoadedCombatRules;
 
-	/** TP_Boss once loaded. Only a soft pointer leads to it, so outside the editor every garbage collection would unload it. */
+	/** 로드한 TP_Enemy. 소프트 포인터만 가리키므로, 에디터 밖에서는 가비지 컬렉션마다 언로드됩니다. */
 	UPROPERTY(Transient)
-	mutable TObjectPtr<UTargetingPreset> LoadedBossTargeting;
+	mutable TObjectPtr<UTargetingPreset> LoadedEnemyTargeting;
 };

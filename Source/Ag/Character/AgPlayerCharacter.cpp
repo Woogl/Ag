@@ -9,7 +9,6 @@
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
-#include "Character/AgBossCharacter.h"
 #include "Character/AgLockOnComponent.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
@@ -569,13 +568,18 @@ void AAgPlayerCharacter::PlayGuardFlinch()
 	}
 }
 
-AAgBossCharacter* AAgPlayerCharacter::FindBoss(float Range) const
+AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range) const
 {
-	const UTargetingPreset* Preset = UAgSettings::Get()->GetBossTargeting();
+	return FindEnemy(Range, [](const AAgCharacterBase&) { return true; });
+}
+
+AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const
+{
+	const UTargetingPreset* Preset = UAgSettings::Get()->GetEnemyTargeting();
 	UTargetingSubsystem* Targeting = UTargetingSubsystem::Get(GetWorld());
 	if (!Preset || !Targeting)
 	{
-		UE_LOG(LogAg, Error, TEXT("Boss targeting preset is not set (Project Settings > Game > Ag)."));
+		UE_LOG(LogAg, Error, TEXT("Enemy targeting preset is not set (Project Settings > Game > Ag)."));
 		return nullptr;
 	}
 
@@ -588,13 +592,22 @@ AAgBossCharacter* AAgPlayerCharacter::FindBoss(float Range) const
 	Targeting->GetTargetingResultsActors(Request, Candidates);
 	UTargetingSubsystem::ReleaseTargetRequestHandle(Request);
 
+	// 기획서의 거리는 수평 거리라, 프리셋의 정렬(3D 거리)을 따르지 않고 가장 가까운 적을 직접 고릅니다.
+	AAgCharacterBase* Nearest = nullptr;
+	float NearestDistance = Range;
 	for (AActor* Candidate : Candidates)
 	{
-		AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Candidate);
-		if (Boss && !Boss->IsDead() && UAgCombatLibrary::GetHorizontalDistance(this, Boss) <= Range)
+		AAgCharacterBase* Enemy = Cast<AAgCharacterBase>(Candidate);
+		if (!Enemy || Enemy->IsDead() || !UAgCombatLibrary::AreHostile(this, Enemy))
 		{
-			return Boss;
+			continue;
+		}
+		const float Distance = UAgCombatLibrary::GetHorizontalDistance(this, Enemy);
+		if (Distance <= NearestDistance && Condition(*Enemy))
+		{
+			Nearest = Enemy;
+			NearestDistance = Distance;
 		}
 	}
-	return nullptr;
+	return Nearest;
 }

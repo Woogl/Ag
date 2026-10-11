@@ -68,7 +68,7 @@ struct FAgBossAITask_ApproachInstanceData
 	float Elapsed = 0.f;
 };
 
-/** 보스 사양 '패턴 선택' 3: 후보가 없으면 플레이어에게 걸어가고, 재시도 간격이 지나면 성공합니다. */
+/** 보스 사양 '패턴 선택' 3: 후보가 없으면 AI의 대상(플레이어)에게 걸어가고, 재시도 간격이 지나면 성공합니다. */
 USTRUCT(meta = (DisplayName = "보스: 다가가기", Category = "Ag|Boss AI"))
 struct FAgBossAITask_Approach : public FStateTreeAITaskBase
 {

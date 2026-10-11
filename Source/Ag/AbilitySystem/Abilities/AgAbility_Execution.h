@@ -6,7 +6,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AgAbility_Execution.generated.h"
 
-class AAgBossCharacter;
+class AAgCharacterBase;
 class AAgPlayerCharacter;
 
 /**
@@ -25,8 +25,8 @@ class UAgAbility_Execution : public UAgGameplayAbility
 public:
 	UAgAbility_Execution();
 
-	/** The boss the player can execute now (발동 조건 1 and 2), or null. */
-	static AAgBossCharacter* FindExecutableBoss(const AAgPlayerCharacter* Player);
+	/** 지금 처형할 수 있는 대상: 발동 조건 1, 2를 만족하는 가장 가까운 적('대상 찾기'). 없으면 null입니다. */
+	static AAgCharacterBase* FindExecutionTarget(const AAgPlayerCharacter* Player);
 
 protected:
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const override;
@@ -45,7 +45,7 @@ private:
 	UFUNCTION()
 	void HandleMontageCancelled();
 
-	TWeakObjectPtr<AAgBossCharacter> Target;
+	TWeakObjectPtr<AAgCharacterBase> Target;
 	bool bExecuting = false;
 	bool bInvincible = false;
 

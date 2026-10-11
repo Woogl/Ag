@@ -12,8 +12,8 @@ class UWidgetComponent;
 struct FGameplayAbilitySpec;
 
 /**
- * The boss 커스터 (보스 사양). Turns toward the player on its own and runs the patterns its AI picks.
- * Carries the HUD shown on it in the world (전투 HUD '락온 마커', '처형 안내', '대미지 숫자'); the widgets are set in BP_AgBoss.
+ * 보스 커스터(보스 사양). AI의 대상을 향해 스스로 돌고, AI가 고른 패턴을 실행합니다.
+ * 월드에 표시하는 HUD(전투 HUD '락온 마커', '처형 안내', '대미지 숫자')를 들고 있으며, 위젯은 BP_AgBoss에서 정합니다.
  */
 UCLASS(Abstract)
 class AAgBossCharacter : public AAgCharacterBase
@@ -44,6 +44,9 @@ public:
 	/** 대미지 숫자: shows the HP this boss lost from a player attack at Location. */
 	void ShowDamageNumber(int32 Amount, const FVector& Location, bool bLarge) const;
 
+	/** 보스 AI의 현재 대상(구현 계획서 'AI 대상'). AI가 없거나 대상이 아직 없으면 null입니다. */
+	AAgCharacterBase* GetTarget() const;
+
 	/**
 	 * 보스 사양 '회전': 회전하지 않는 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간, 회전하지 않는 상태(피격 반응, 그로기,
 	 * 처형 피격, 회전 고정, 비전투)가 해당합니다.
@@ -57,7 +60,7 @@ protected:
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:
-	/** 회전: 바라보는 방향이 고정되지 않은 동안 회전 속도로 플레이어를 향해 돕니다. */
+	/** 회전: 바라보는 방향이 고정되지 않은 동안 회전 속도로 AI의 대상을 향해 돕니다. */
 	void UpdateRotation(float DeltaSeconds);
 
 	/**

@@ -31,7 +31,7 @@ struct FAgBossAICondition_BossDead : public FStateTreeAIConditionBase
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
-/** 보스 사양 '전투 시작과 행동 전환' 2: 플레이어가 사망했습니다. */
+/** 보스 사양 '전투 시작과 행동 전환' 2: AI의 대상(플레이어)이 사망했습니다. */
 USTRUCT(meta = (DisplayName = "보스: 플레이어 사망", Category = "Ag|Boss AI"))
 struct FAgBossAICondition_PlayerDead : public FStateTreeAIConditionBase
 {
@@ -70,7 +70,7 @@ struct FAgBossAICondition_PhaseTransitionReady : public FStateTreeAIConditionBas
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
-/** 보스 사양 'B1. 백스텝'의 발동 조건: 플레이어가 가깝고, B1 쿨다운이 끝났고, 확률을 통과했습니다. */
+/** 보스 사양 'B1. 백스텝'의 발동 조건: AI의 대상(플레이어)이 가깝고, B1 쿨다운이 끝났고, 확률을 통과했습니다. */
 USTRUCT(meta = (DisplayName = "보스: B1 발동 조건", Category = "Ag|Boss AI"))
 struct FAgBossAICondition_BackstepReady : public FStateTreeAIConditionBase
 {

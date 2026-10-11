@@ -88,9 +88,9 @@ EStateTreeRunStatus FAgBossAITask_Approach::Tick(FStateTreeExecutionContext& Con
 		return EStateTreeRunStatus::Failed;
 	}
 
-	if (const AAgCharacterBase* Player = InstanceData.Controller->GetPlayer())
+	if (const AAgCharacterBase* Target = InstanceData.Controller->GetTarget())
 	{
-		Boss->AddMovementInput((Player->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D(), 1.f);
+		Boss->AddMovementInput((Target->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D(), 1.f);
 	}
 	InstanceData.Elapsed += DeltaTime;
 	return InstanceData.Elapsed >= Data->RetryInterval ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
@@ -114,7 +114,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 	if (!Pattern.IsValid())
 	{
 		// 1. 후보: 지금 거리 구간과 페이즈에서 쓸 수 있고 쿨다운이 끝난 패턴
-		const float Distance = UAgCombatLibrary::GetHorizontalDistance(Boss, InstanceData.Controller->GetPlayer());
+		const float Distance = UAgCombatLibrary::GetHorizontalDistance(Boss, InstanceData.Controller->GetTarget());
 		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
 		TArray<int32> Candidates;
 		TArray<float> Weights;

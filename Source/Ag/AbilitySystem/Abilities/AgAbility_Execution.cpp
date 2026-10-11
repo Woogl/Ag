@@ -22,39 +22,40 @@ UAgAbility_Execution::UAgAbility_Execution()
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Execution);
 }
 
-AAgBossCharacter* UAgAbility_Execution::FindExecutableBoss(const AAgPlayerCharacter* Player)
+AAgCharacterBase* UAgAbility_Execution::FindExecutionTarget(const AAgPlayerCharacter* Player)
 {
 	const UAgPlayerData* Data = Player ? Cast<UAgPlayerData>(Player->GetCharacterData()) : nullptr;
-	AAgBossCharacter* Boss = Data ? Player->FindBoss(Data->Execution.TargetingRange) : nullptr;
-	if (!Boss)
+	if (!Data)
 	{
 		return nullptr;
 	}
 
-	// Groggy, not executed yet in this groggy, and on the ground (a boss broken in the air can't be executed before it lands).
-	const UAbilitySystemComponent* BossASC = Boss->GetAbilitySystemComponent();
-	const bool bExecutable = BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) && !BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed)
-		&& !Boss->GetCharacterMovement()->IsFalling();
-	return bExecutable ? Boss : nullptr;
+	// 그로기 중이고, 이번 그로기에 아직 처형되지 않았고, 땅에 있는 적입니다(공중에서 그로기가 되면 착지 전에는 처형할 수 없음).
+	return Player->FindEnemy(Data->Execution.TargetingRange, [](const AAgCharacterBase& Enemy)
+	{
+		const UAbilitySystemComponent* EnemyASC = Enemy.GetAbilitySystemComponent();
+		return EnemyASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) && !EnemyASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed)
+			&& !Enemy.GetCharacterMovement()->IsFalling();
+	});
 }
 
 bool UAgAbility_Execution::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	const AAgPlayerCharacter* Player = ActorInfo ? Cast<AAgPlayerCharacter>(ActorInfo->AvatarActor.Get()) : nullptr;
-	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) && FindExecutableBoss(Player);
+	return Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) && FindExecutionTarget(Player);
 }
 
 void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	AAgBossCharacter* Boss = FindExecutableBoss(Player);
-	if (!Boss || !Data || !Data->ExecutionMontage || Data->Execution.Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	AAgCharacterBase* Enemy = FindExecutionTarget(Player);
+	if (!Enemy || !Data || !Data->ExecutionMontage || Data->Execution.Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	Target = Boss;
+	Target = Enemy;
 	StrikeIndex = 0;
 
 	// 후딜이 없습니다. 행동 중이 모션 끝까지 이어져 어떤 행동도 처형을 끊지 못합니다.
@@ -63,15 +64,15 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	bInvincible = true;
 	GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Invincible);
 
-	// 보스는 같은 프레임에 플레이어를 향하고 처형 피격 몽타주를 시작하므로, 두 몽타주가 한 타임라인을 따릅니다.
+	// 대상은 같은 프레임에 플레이어를 향하고 처형 피격 몽타주를 시작하므로, 두 몽타주가 한 타임라인을 따릅니다.
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_Executed;
 	Payload.Instigator = Player;
-	Payload.Target = Boss;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Executed, Payload);
+	Payload.Target = Enemy;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Enemy, AgGameplayTags::Event_Executed, Payload);
 
-	// 첫 베기(워프 구간의 끝)까지 플레이어는 보스 정면, 두 모션이 맞물리는 간격에 섭니다. 정지 간격은 적용하지 않습니다.
-	UAgAbilityTask_AttackMovement::FitGap(this, Boss, Data->ExecutionDistance)->ReadyForActivation();
+	// 첫 베기(워프 구간의 끝)까지 플레이어는 대상 정면, 두 모션이 맞물리는 간격에 섭니다. 정지 간격은 적용하지 않습니다.
+	UAgAbilityTask_AttackMovement::FitGap(this, Enemy, Data->ExecutionDistance)->ReadyForActivation();
 
 	UAbilityTask_WaitGameplayEvent* StrikeTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_ExecutionBlow);
 	StrikeTask->EventReceived.AddDynamic(this, &ThisClass::HandleStrike);
@@ -104,7 +105,7 @@ void UAgAbility_Execution::SetExecuting(bool bNewExecuting)
 void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 {
 	AAgCharacterBase* Player = GetAgCharacter();
-	AAgBossCharacter* Boss = Target.Get();
+	AAgCharacterBase* Enemy = Target.Get();
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	if (!Player || !Data || !Data->Execution.Hits.IsValidIndex(StrikeIndex))
 	{
@@ -114,28 +115,32 @@ void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 	++StrikeIndex;
 	const bool bFinalBlow = StrikeIndex == Data->Execution.Hits.Num();
 
-	// Each strike lands on the executed boss, without hitstop. A boss already killed by an earlier strike takes no more.
-	if (Boss && !Boss->IsDead() && Boss->GetAttributeSet()->GetHP() > 0.f)
+	// 타격마다 처형 대상에게 히트스톱 없이 적용합니다. 앞 타격에 이미 죽은 대상은 더 받지 않습니다.
+	if (Enemy && !Enemy->IsDead() && Enemy->GetAttributeSet()->GetHP() > 0.f)
 	{
-		const int32 HPDamage = UAgCombatLibrary::CalculateHPDamage(Player->GetAttributeSet()->GetATK(), Hit.DamageMultiplier, Boss->GetAttributeSet()->GetDEF());
-		UAgCombatLibrary::ApplyStatChange(Player, Boss, -HPDamage, 0.f);
-		Boss->ShowDamageNumber(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageNumber);
+		const int32 HPDamage = UAgCombatLibrary::CalculateHPDamage(Player->GetAttributeSet()->GetATK(), Hit.DamageMultiplier, Enemy->GetAttributeSet()->GetDEF());
+		UAgCombatLibrary::ApplyStatChange(Player, Enemy, -HPDamage, 0.f);
+		// 대미지 숫자는 보스에게만 표시합니다(전투 HUD '대미지 숫자').
+		if (const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Enemy))
+		{
+			Boss->ShowDamageNumber(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageNumber);
+		}
 		FGameplayCueParameters EffectParameters;
-		EffectParameters.Location = Boss->GetActorLocation();
-		Boss->GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Hit, EffectParameters);
+		EffectParameters.Location = Enemy->GetActorLocation();
+		Enemy->GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Hit, EffectParameters);
 		if (const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData())
 		{
 			UAgCombatLibrary::PlayCameraShake(Player, bFinalBlow ? Camera->ExecutionBlowShake : Camera->ExecutionSlashShake);
 		}
-		UE_LOG(LogAg, Verbose, TEXT("Execution strike %d: HP -%d (now %.0f)"), StrikeIndex, HPDamage, Boss->GetAttributeSet()->GetHP());
-		if (Boss->GetAttributeSet()->GetHP() <= 0.f)
+		UE_LOG(LogAg, Verbose, TEXT("Execution strike %d: HP -%d (now %.0f)"), StrikeIndex, HPDamage, Enemy->GetAttributeSet()->GetHP());
+		if (Enemy->GetAttributeSet()->GetHP() <= 0.f)
 		{
 			FGameplayEventData DeathPayload;
 			DeathPayload.EventTag = AgGameplayTags::Event_Death;
 			DeathPayload.Instigator = Player;
-			DeathPayload.Target = Boss;
+			DeathPayload.Target = Enemy;
 			DeathPayload.InstigatorTags.AddTag(AgGameplayTags::Ability_Action_Execution);
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Death, DeathPayload);
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Enemy, AgGameplayTags::Event_Death, DeathPayload);
 		}
 	}
 }

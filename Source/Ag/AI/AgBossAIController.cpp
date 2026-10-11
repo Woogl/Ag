@@ -23,8 +23,9 @@ const UAgBossData* AAgBossAIController::GetBossData() const
 	return Boss.IsValid() ? Cast<UAgBossData>(Boss->GetCharacterData()) : nullptr;
 }
 
-AAgCharacterBase* AAgBossAIController::GetPlayer() const
+AAgCharacterBase* AAgBossAIController::GetTarget() const
 {
+	// 지금은 플레이어 한 명과만 싸우므로 대상은 플레이어입니다.
 	return Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0));
 }
 
@@ -61,9 +62,9 @@ void AAgBossAIController::OnPossess(APawn* InPawn)
 void AAgBossAIController::OnUnPossess()
 {
 	StateTreeComponent->StopLogic(TEXT("UnPossess"));
-	if (PlayerASC.IsValid())
+	if (TargetASC.IsValid())
 	{
-		PlayerASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).Remove(BasicAttackHandle);
+		TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).Remove(BasicAttackHandle);
 	}
 
 	Super::OnUnPossess();
@@ -73,24 +74,27 @@ void AAgBossAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	BindPlayerEvents();
+	BindTargetEvents();
 }
 
-void AAgBossAIController::BindPlayerEvents()
+void AAgBossAIController::BindTargetEvents()
 {
-	if (PlayerASC.IsValid())
+	if (TargetASC.IsValid())
 	{
 		return;
 	}
-	if (const AAgCharacterBase* Player = GetPlayer())
+	if (const AAgCharacterBase* Target = GetTarget())
 	{
-		PlayerASC = Player->GetAbilitySystemComponent();
-		BasicAttackHandle = PlayerASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).AddUObject(this, &ThisClass::HandlePlayerBasicAttack);
+		TargetASC = Target->GetAbilitySystemComponent();
+		BasicAttackHandle = TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).AddUObject(this, &ThisClass::HandleTargetBasicAttack);
 	}
 }
 
-void AAgBossAIController::HandlePlayerBasicAttack(const FGameplayEventData* Payload)
+void AAgBossAIController::HandleTargetBasicAttack(const FGameplayEventData* Payload)
 {
-	// B1 백스텝의 발동 조건과 확률은 StateTree의 패턴 후딜레이 전환이 검사합니다.
-	StateTreeComponent->SendStateTreeEvent(AgGameplayTags::Event_BasicAttackStarted);
+	// 다른 적을 친 평타는 넘기지 않습니다. B1 백스텝의 발동 조건과 확률은 StateTree의 패턴 후딜레이 전환이 검사합니다.
+	if (Payload && Boss.IsValid() && Payload->Target.Get() == Boss.Get())
+	{
+		StateTreeComponent->SendStateTreeEvent(AgGameplayTags::Event_BasicAttackStarted);
+	}
 }

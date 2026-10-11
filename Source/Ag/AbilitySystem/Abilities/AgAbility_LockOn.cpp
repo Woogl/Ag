@@ -4,7 +4,6 @@
 
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_LockOn.h"
-#include "Character/AgBossCharacter.h"
 #include "Character/AgLockOnComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgGameplayTags.h"
@@ -18,7 +17,7 @@ void UAgAbility_LockOn::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 {
 	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAvatarActorFromActorInfo());
 	UAgLockOnComponent* LockOn = Player ? Player->GetLockOn() : nullptr;
-	AAgBossCharacter* Target = LockOn ? LockOn->FindTarget() : nullptr;
+	AAgCharacterBase* Target = LockOn ? LockOn->FindTarget() : nullptr;
 	if (!Target || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

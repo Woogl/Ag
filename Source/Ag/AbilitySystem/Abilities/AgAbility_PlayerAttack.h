@@ -6,6 +6,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AgAbility_PlayerAttack.generated.h"
 
+class AAgCharacterBase;
 class UAbilityTask_PlayMontageAndWait;
 class UAgAbilityTask_AttackMovement;
 class UAnimMontage;
@@ -30,12 +31,15 @@ protected:
 
 	bool IsInRecovery() const { return bInRecovery; }
 
+	/** 지금 타의 대상: 타를 시작할 때 가장 가까운 적(정지 간격의 대상)입니다. 없으면 null입니다. */
+	AAgCharacterBase* GetHitTarget() const { return HitTarget.Get(); }
+
 private:
 	void PlayMontageAt(int32 Index);
 
 	/**
-	 * 한 타의 공격 방향과 공격 중 이동: 보스와 정지 간격을 지키고, 보스가 이 타의 타겟팅 범위 안이면 선딜 동안 다가가며 그쪽을
-	 * 바라봅니다. 범위 안에 보스가 없으면 락온 중일 때만 락온 대상 쪽으로 돕니다.
+	 * 한 타의 공격 방향과 공격 중 이동: 가장 가까운 적과 정지 간격을 지키고, 그 적이 이 타의 타겟팅 범위 안이면 선딜 동안
+	 * 다가가며 그쪽을 바라봅니다. 범위 안에 적이 없으면 락온 중일 때만 락온 대상 쪽으로 돕니다.
 	 */
 	void StartHitMovement();
 
@@ -62,6 +66,7 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UAnimMontage>> Montages;
 
+	TWeakObjectPtr<AAgCharacterBase> HitTarget;
 	int32 MontageIndex = 0;
 	int32 HitCount = 0;
 	float TargetingRange = 0.f;

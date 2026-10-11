@@ -7,6 +7,7 @@
 #include "AgBossPatternAbility.generated.h"
 
 class AAgBossCharacter;
+class AAgCharacterBase;
 class UAnimMontage;
 struct FAgBossPattern;
 
@@ -41,6 +42,9 @@ protected:
 	const FAgBossPattern* GetPattern() const;
 
 	AAgBossCharacter* GetBoss() const;
+
+	/** 보스 AI의 현재 대상(구현 계획서 'AI 대상'). 패턴은 이 대상을 향해 움직이고 겨눕니다. */
+	AAgCharacterBase* GetTarget() const;
 
 	UAnimMontage* GetMontage() const { return Montage; }
 

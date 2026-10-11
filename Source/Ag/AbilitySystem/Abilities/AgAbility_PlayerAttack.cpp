@@ -5,7 +5,6 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
-#include "Character/AgBossCharacter.h"
 #include "Character/AgLockOnComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatLibrary.h"
@@ -55,6 +54,7 @@ void UAgAbility_PlayerAttack::StartHitMovement()
 		MovementTask->EndTask();
 		MovementTask = nullptr;
 	}
+	HitTarget.Reset();
 
 	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
@@ -63,14 +63,15 @@ void UAgAbility_PlayerAttack::StartHitMovement()
 		return;
 	}
 
-	// 정지 간격은 보스가 타겟팅 범위 안에 있든 없든 지킵니다. 다가가는 거리는 타를 시작할 때의 접근 목표까지라,
-	// 선딜 중 보스가 물러나면(B1) 끝까지 쫓지 않고 그만큼 간격이 벌어집니다.
-	AAgBossCharacter* Boss = Player->FindBoss(TNumericLimits<float>::Max());
-	const float Gap = UAgCombatLibrary::GetHorizontalDistance(Player, Boss);
-	if (Boss)
+	// 정지 간격은 가장 가까운 적이 타겟팅 범위 안에 있든 없든 지킵니다. 다가가는 거리는 타를 시작할 때의 접근 목표까지라,
+	// 선딜 중 대상이 물러나면(B1) 끝까지 쫓지 않고 그만큼 간격이 벌어집니다.
+	AAgCharacterBase* Enemy = Player->FindEnemy(TNumericLimits<float>::Max());
+	HitTarget = Enemy;
+	const float Gap = UAgCombatLibrary::GetHorizontalDistance(Player, Enemy);
+	if (Enemy)
 	{
 		const float MaxTravel = FMath::Max(0.f, Gap - Data->AttackStopDistance);
-		MovementTask = UAgAbilityTask_AttackMovement::KeepGap(this, Boss, Data->AttackStopDistance, MaxTravel, TargetingRange);
+		MovementTask = UAgAbilityTask_AttackMovement::KeepGap(this, Enemy, Data->AttackStopDistance, MaxTravel, TargetingRange);
 		MovementTask->ReadyForActivation();
 	}
 
@@ -148,6 +149,7 @@ void UAgAbility_PlayerAttack::EndAbility(const FGameplayAbilitySpecHandle Handle
 	bInRecovery = false;
 	MontageTask = nullptr;
 	MovementTask = nullptr;
+	HitTarget.Reset();
 	if (AAgCharacterBase* Character = GetAgCharacter())
 	{
 		Character->ClearActiveAttack();
