@@ -31,15 +31,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Effect")
 	FName AttachSocket;
 
-	/** Tints the effect through one of its color user parameters, so cues can share an effect and differ in color. */
+	/** 이펙트의 색 사용자 파라미터. 큐마다 같은 이펙트를 다른 색으로 재생합니다(구현 계획서 '연출'). */
 	UPROPERTY(EditDefaultsOnly, Category = "Effect")
-	bool bSetColor = false;
-
-	/** The effect's color user parameter. */
-	UPROPERTY(EditDefaultsOnly, Category = "Effect", meta = (EditCondition = "bSetColor"))
 	FName ColorParameter = TEXT("Color");
 
-	UPROPERTY(EditDefaultsOnly, Category = "Effect", meta = (EditCondition = "bSetColor"))
+	UPROPERTY(EditDefaultsOnly, Category = "Effect")
 	FLinearColor Color = FLinearColor::White;
 
 private:

@@ -15,43 +15,42 @@
 bool FAgBossAICondition_BossDead::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
-	const AAgBossCharacter* Boss = Controller ? Controller->GetBoss() : nullptr;
-	return Boss && Boss->IsDead();
+	return Controller->GetBoss()->IsDead();
 }
 
 bool FAgBossAICondition_PlayerDead::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
-	const AAgCharacterBase* Target = Controller ? Controller->GetTarget() : nullptr;
+	const AAgCharacterBase* Target = Controller->GetTarget();
 	return Target && Target->IsDead();
 }
 
 bool FAgBossAICondition_Reacting::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
-	return Controller && Controller->IsBossReacting();
+	return Controller->IsBossReacting();
 }
 
 bool FAgBossAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
-	const AAgBossCharacter* Boss = Controller ? Controller->GetBoss() : nullptr;
-	const UAgBossData* Data = Controller ? Controller->GetBossData() : nullptr;
-	if (!Boss || !Data || Boss->IsDead() || Controller->HasStartedPhaseTransition() || Controller->IsBossReacting())
+	const AAgBossCharacter* Boss = Controller->GetBoss();
+	const UAgBossData* Data = Controller->GetBossData();
+	if (Boss->IsDead() || Controller->HasStartedPhaseTransition() || Controller->IsBossReacting())
 	{
 		return false;
 	}
 
 	const UAgAttributeSet* Stats = Boss->GetAttributeSet();
-	return Stats && Stats->GetHP() <= Stats->GetMaxHP() * Data->Phase2HPRatio;
+	return Stats->GetHP() <= Stats->GetMaxHP() * Data->Phase2HPRatio;
 }
 
 bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
-	const AAgBossCharacter* Boss = Controller ? Controller->GetBoss() : nullptr;
-	const UAgBossData* Data = Controller ? Controller->GetBossData() : nullptr;
-	if (!Boss || !Data || UAgCombatLibrary::GetHorizontalDistance(Boss, Controller->GetTarget()) > Data->BackstepRange)
+	const AAgBossCharacter* Boss = Controller->GetBoss();
+	const UAgBossData* Data = Controller->GetBossData();
+	if (UAgCombatLibrary::GetHorizontalDistance(Boss, Controller->GetTarget()) > Data->BackstepRange)
 	{
 		return false;
 	}

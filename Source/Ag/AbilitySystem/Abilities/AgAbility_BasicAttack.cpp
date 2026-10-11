@@ -35,7 +35,7 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	if (!Data || !Data->BasicAttack.IsValidIndex(Index) || !Data->BasicAttackMontages.IsValidIndex(Index))
 	{
-		EndSelf(true);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
 
@@ -78,10 +78,10 @@ void UAgAbility_BasicAttack::HandleLastWindowEnded()
 
 void UAgAbility_BasicAttack::HandleAttackCompleted()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_BasicAttack::HandleAttackInterrupted()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }

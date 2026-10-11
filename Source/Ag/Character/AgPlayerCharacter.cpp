@@ -186,9 +186,9 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 void AAgPlayerCharacter::StopLandingMotion()
 {
 	// 착지 모션은 루트 모션으로 제자리에 머물러 캐릭터를 붙잡습니다. 행동이 아니므로 움직이면 끝냅니다. 블렌드 아웃은 몽타주의 값입니다.
-	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
+	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (Data && Data->LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(Data->LandMontage))
+	if (Data->LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(Data->LandMontage))
 	{
 		AnimInstance->Montage_StopWithBlendOut(Data->LandMontage->GetBlendOutArgs(), Data->LandMontage);
 	}
@@ -352,8 +352,8 @@ void AAgPlayerCharacter::TryRunBufferedInput()
 
 	const FGameplayTag InputTag = BufferedInput;
 	BufferedInput = FGameplayTag();
-	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
-	const bool bExpired = !Data || GetWorld()->GetTimeSeconds() - BufferedInputTime > Data->InputBufferTime;
+	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
+	const bool bExpired = GetWorld()->GetTimeSeconds() - BufferedInputTime > Data->InputBufferTime;
 	// 가드는 그때도 가드 키를 누르고 있을 때만 실행합니다.
 	if (IsDead() || bExpired || (InputTag == AgGameplayTags::Input_Guard && !bGuardHeld))
 	{
@@ -473,12 +473,8 @@ void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 Ne
 
 float AAgPlayerCharacter::GetMoveSpeedMultiplier() const
 {
-	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
+	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (!Data)
-	{
-		return 1.f;
-	}
 	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding))
 	{
 		return Data->GuardMoveSpeedRatio;
@@ -488,20 +484,10 @@ float AAgPlayerCharacter::GetMoveSpeedMultiplier() const
 
 void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
 {
-	const UAgPlayerData* PlayerData = Cast<UAgPlayerData>(GetCharacterData());
-	if (PlayerData && Data.NewValue < Data.OldValue)
+	const UAgPlayerData* PlayerData = CastChecked<UAgPlayerData>(GetCharacterData());
+	if (Data.NewValue < Data.OldValue)
 	{
 		RestartRegenDelay(SPRegenDelay, AgGameplayTags::State_Regen_SPDelay, Data.NewValue <= 0.f ? PlayerData->SPRegenDelayEmpty : PlayerData->SPRegenDelay);
-	}
-}
-
-void AAgPlayerCharacter::PlayGuardFlinch()
-{
-	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (Data && Data->GuardFlinchMontage && AnimInstance)
-	{
-		AnimInstance->Montage_Play(Data->GuardFlinchMontage);
 	}
 }
 

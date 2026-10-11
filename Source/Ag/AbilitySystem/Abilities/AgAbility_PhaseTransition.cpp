@@ -37,10 +37,10 @@ void UAgAbility_PhaseTransition::ActivateAbility(const FGameplayAbilitySpecHandl
 
 	UE_LOG(LogAg, Verbose, TEXT("Boss phase transition starts"));
 
-	// 1. Invincible (owned tag) while the roar plays.
+	// 1. 포효하는 동안 무적입니다(ActivationOwnedTags).
 	UAbilityTask_PlayMontageAndWait* RoarTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->PhaseTransitionMontage);
+	// 페이즈 전환은 블렌드 아웃이 시작될 때가 아니라 포효 모션이 끝날 때 끝납니다(구현 계획서 '모션 캔슬').
 	RoarTask->OnCompleted.AddDynamic(this, &ThisClass::HandleRoarFinished);
-	RoarTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleRoarFinished);
 	RoarTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleRoarCancelled);
 	RoarTask->OnCancelled.AddDynamic(this, &ThisClass::HandleRoarCancelled);
 	RoarTask->ReadyForActivation();
@@ -54,10 +54,10 @@ void UAgAbility_PhaseTransition::HandleRoarFinished()
 	{
 		Boss->EnterPhase2();
 	}
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_PhaseTransition::HandleRoarCancelled()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }

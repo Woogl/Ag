@@ -29,7 +29,7 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(Handle) : nullptr;
-	Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	UAnimMontage* Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
 	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -83,7 +83,7 @@ void UAgBossPattern_SwordWave::WaitRotationStop()
 	{
 		return;
 	}
-	UAgAbilityTask_WaitMontagePosition* StopTask = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, ReleaseTimes[WaveIndex] - Data->GetRotationStopLeadInMontage());
+	UAgAbilityTask_WaitMontagePosition* StopTask = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, GetCurrentMontage(), ReleaseTimes[WaveIndex] - Data->GetRotationStopLeadInMontage());
 	StopTask->OnReached.AddDynamic(this, &ThisClass::HandleRotationStop);
 	StopTask->ReadyForActivation();
 }
@@ -127,16 +127,16 @@ void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	if (AAgSwordWave* Wave = GetWorld()->SpawnActor<AAgSwordWave>(Data->SwordWaveClass, Location, Direction.Rotation(), SpawnParameters))
 	{
-		Wave->Launch(Boss, Pattern->Hits[Index], Direction, Data->SwordWaveSpeed, Data->SwordWaveRange);
+		Wave->Launch(Pattern->Hits[Index], Direction, Data->SwordWaveSpeed, Data->SwordWaveRange);
 	}
 }
 
 void UAgBossPattern_SwordWave::HandleMontageFinished()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgBossPattern_SwordWave::HandleMontageCancelled()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }

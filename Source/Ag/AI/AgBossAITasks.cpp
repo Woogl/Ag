@@ -31,13 +31,8 @@ namespace
 EStateTreeRunStatus FAgBossAITask_Wait::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	const UAgBossData* Data = InstanceData.Controller ? InstanceData.Controller->GetBossData() : nullptr;
-	if (!Boss || !Data)
-	{
-		return EStateTreeRunStatus::Failed;
-	}
-
+	const AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
+	const UAgBossData* Data = InstanceData.Controller->GetBossData();
 	if (InstanceData.Wait == EAgBossWait::Fixed)
 	{
 		InstanceData.Duration = Data->FixedRecoveryWait;
@@ -55,11 +50,7 @@ EStateTreeRunStatus FAgBossAITask_Wait::EnterState(FStateTreeExecutionContext& C
 EStateTreeRunStatus FAgBossAITask_Wait::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	if (!Boss)
-	{
-		return EStateTreeRunStatus::Failed;
-	}
+	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
 
 	// 보스는 스스로 플레이어를 향해 돌므로, 옆으로 걸으면 플레이어 주위를 돕니다. 길찾기 없이 이동 입력을 직접 줍니다.
 	Boss->AddMovementInput(Boss->GetActorRightVector(), InstanceData.StrafeDirection);
@@ -70,10 +61,6 @@ EStateTreeRunStatus FAgBossAITask_Wait::Tick(FStateTreeExecutionContext& Context
 EStateTreeRunStatus FAgBossAITask_Approach::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	if (!InstanceData.Controller || !InstanceData.Controller->GetBossData())
-	{
-		return EStateTreeRunStatus::Failed;
-	}
 	InstanceData.Elapsed = 0.f;
 	return EStateTreeRunStatus::Running;
 }
@@ -81,13 +68,8 @@ EStateTreeRunStatus FAgBossAITask_Approach::EnterState(FStateTreeExecutionContex
 EStateTreeRunStatus FAgBossAITask_Approach::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	const UAgBossData* Data = InstanceData.Controller ? InstanceData.Controller->GetBossData() : nullptr;
-	if (!Boss || !Data)
-	{
-		return EStateTreeRunStatus::Failed;
-	}
-
+	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
+	const UAgBossData* Data = InstanceData.Controller->GetBossData();
 	if (const AAgCharacterBase* Target = InstanceData.Controller->GetTarget())
 	{
 		Boss->AddMovementInput((Target->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D(), 1.f);
@@ -102,13 +84,9 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 	InstanceData.RunningPattern = FGameplayTag();
 	InstanceData.Handle = FGameplayAbilitySpecHandle();
 
-	AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	const UAgBossData* Data = InstanceData.Controller ? InstanceData.Controller->GetBossData() : nullptr;
-	UAbilitySystemComponent* ASC = Boss ? Boss->GetAbilitySystemComponent() : nullptr;
-	if (!Data || !ASC)
-	{
-		return EStateTreeRunStatus::Failed;
-	}
+	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
+	const UAgBossData* Data = InstanceData.Controller->GetBossData();
+	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
 
 	FGameplayTag Pattern = InstanceData.Pattern;
 	if (!Pattern.IsValid())
@@ -148,9 +126,8 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::Tick(FStateTreeExecutionContext& C
 {
 	// 패턴이 넉백이나 그로기로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이 먼저 적용됩니다.
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	const UAbilitySystemComponent* ASC = Boss ? Boss->GetAbilitySystemComponent() : nullptr;
-	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindAbilitySpecFromHandle(InstanceData.Handle) : nullptr;
+	const UAbilitySystemComponent* ASC = InstanceData.Controller->GetBoss()->GetAbilitySystemComponent();
+	const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(InstanceData.Handle);
 	return Spec && Spec->IsActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
@@ -207,12 +184,8 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgBossPattern> 
 EStateTreeRunStatus FAgBossAITask_PhaseTransition::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	const UAbilitySystemComponent* ASC = Boss ? Boss->GetAbilitySystemComponent() : nullptr;
-	if (!ASC)
-	{
-		return EStateTreeRunStatus::Failed;
-	}
+	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
+	const UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
 
 	// 시작하지 못해도 다시 시도하지 않습니다. 보스전에서 한 번만 시작합니다.
 	InstanceData.Controller->MarkPhaseTransitionStarted();
@@ -226,22 +199,20 @@ EStateTreeRunStatus FAgBossAITask_PhaseTransition::EnterState(FStateTreeExecutio
 EStateTreeRunStatus FAgBossAITask_PhaseTransition::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	const UAbilitySystemComponent* ASC = Boss ? Boss->GetAbilitySystemComponent() : nullptr;
-	return ASC && IsPhaseTransitionActive(*ASC) ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	return IsPhaseTransitionActive(*InstanceData.Controller->GetBoss()->GetAbilitySystemComponent()) ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 EStateTreeRunStatus FAgBossAITask_WaitReaction::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return InstanceData.Controller && InstanceData.Controller->IsBossReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	return InstanceData.Controller->IsBossReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 EStateTreeRunStatus FAgBossAITask_WaitReaction::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	// 넉백 중에 그로기가 되면 그로기가 이어받으므로, 둘 다 끝날 때까지 기다립니다.
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return InstanceData.Controller && InstanceData.Controller->IsBossReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	return InstanceData.Controller->IsBossReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 FAgBossAITask_NonCombat::FAgBossAITask_NonCombat()
@@ -252,13 +223,7 @@ FAgBossAITask_NonCombat::FAgBossAITask_NonCombat()
 EStateTreeRunStatus FAgBossAITask_NonCombat::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgBossCharacter* Boss = InstanceData.Controller ? InstanceData.Controller->GetBoss() : nullptr;
-	UAbilitySystemComponent* ASC = Boss ? Boss->GetAbilitySystemComponent() : nullptr;
-	if (!ASC)
-	{
-		return EStateTreeRunStatus::Failed;
-	}
-
+	UAbilitySystemComponent* ASC = InstanceData.Controller->GetBoss()->GetAbilitySystemComponent();
 	ASC->AddLooseGameplayTag(AgGameplayTags::State_NonCombat);
 	const FGameplayTagContainer PatternTags(AgGameplayTags::Ability_Boss_Pattern);
 	ASC->CancelAbilities(&PatternTags);

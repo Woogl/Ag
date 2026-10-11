@@ -14,7 +14,7 @@ struct FGameplayAbilitySpecHandle;
 
 /**
  * 보스 커스터(보스 사양). AI의 대상을 향해 스스로 돌고, AI가 고른 패턴을 실행합니다.
- * 월드에 표시하는 HUD(전투 HUD '락온 마커', '처형 안내', '대미지 숫자')를 들고 있으며, 위젯은 BP_AgBoss에서 정합니다.
+ * 월드에 표시하는 HUD(전투 HUD '락온 마커', '처형 안내')를 들고 있으며, 위젯은 BP_AgBoss에서 정합니다.
  */
 UCLASS(Abstract)
 class AAgBossCharacter : public AAgCharacterBase

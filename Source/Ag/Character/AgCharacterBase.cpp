@@ -9,7 +9,6 @@
 #include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
-#include "AIController.h"
 #include "Animation/AnimInstance.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
@@ -158,11 +157,8 @@ void AAgCharacterBase::PossessedBy(AController* NewController)
 
 void AAgCharacterBase::InitializeStats()
 {
-	if (!CharacterData)
-	{
-		UE_LOG(LogAg, Error, TEXT("%s has no character data; its stats stay at 0."), *GetName());
-		return;
-	}
+	// 캐릭터 데이터는 캐릭터 블루프린트가 정하는 필수 데이터입니다. 여기서 한 번 확인하고, 다른 곳은 있다고 보고 씁니다.
+	checkf(CharacterData, TEXT("%s has no character data. Set it on the character blueprint."), *GetName());
 
 	const FAgStats& Stats = CharacterData->Stats;
 	UAbilitySystemComponent& ASC = *AbilitySystemComponent;
@@ -189,10 +185,6 @@ void AAgCharacterBase::InitializeStats()
 
 void AAgCharacterBase::GrantAbilities()
 {
-	if (!CharacterData)
-	{
-		return;
-	}
 	for (const TSubclassOf<UGameplayAbility>& Ability : CharacterData->Abilities)
 	{
 		if (Ability)
@@ -214,10 +206,6 @@ void AAgCharacterBase::UpdateMoveSpeed()
 
 void AAgCharacterBase::StartRegen()
 {
-	if (!CharacterData)
-	{
-		return;
-	}
 	for (const TSubclassOf<UAgEffect_Regen>& Regen : CharacterData->RegenEffects)
 	{
 		if (Regen)
@@ -395,9 +383,18 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 void AAgCharacterBase::PlayFlinch()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && CharacterData && CharacterData->FlinchMontage)
+	if (AnimInstance && CharacterData->FlinchMontage)
 	{
 		AnimInstance->Montage_Play(CharacterData->FlinchMontage);
+	}
+}
+
+void AAgCharacterBase::PlayGuardFlinch()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && CharacterData->GuardFlinchMontage)
+	{
+		AnimInstance->Montage_Play(CharacterData->GuardFlinchMontage);
 	}
 }
 
@@ -417,14 +414,11 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 		AnimInstance->StopAllMontages(0.f);
 	}
 
-	// 3. 입력(플레이어)이나 AI(보스)와 이동을 멈춥니다. 사망 모션은 루트 모션으로 계속 움직입니다.
+	// 3. 입력(플레이어)과 이동을 멈춥니다. 보스의 AI는 사망 상태로 넘어가 이동 입력을 더 주지 않습니다. 사망 모션은 루트 모션으로
+	// 계속 움직입니다.
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PlayerController);
-	}
-	else if (AAIController* AIController = Cast<AAIController>(GetController()))
-	{
-		AIController->StopMovement();
 	}
 	GetCharacterMovement()->StopMovementImmediately();
 

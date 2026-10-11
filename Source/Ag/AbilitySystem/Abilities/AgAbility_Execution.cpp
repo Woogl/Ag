@@ -110,10 +110,10 @@ void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 
 void UAgAbility_Execution::HandleMontageFinished()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_Execution::HandleMontageCancelled()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }

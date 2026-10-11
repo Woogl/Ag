@@ -45,28 +45,17 @@ void UAgAbilityTask_PlayReaction::PlayMontage(UAnimMontage* InMontage, FName Sta
 	MontageTask->ReadyForActivation();
 }
 
-bool UAgAbilityTask_PlayReaction::PlayFollowUp()
-{
-	if (bPlayingFollowUp || !FollowUpMontage)
-	{
-		return false;
-	}
-	bPlayingFollowUp = true;
-	PlayMontage(FollowUpMontage);
-	return true;
-}
-
 void UAgAbilityTask_PlayReaction::HandleMontageBlendingOut()
 {
-	PlayFollowUp();
+	if (!bPlayingFollowUp && FollowUpMontage)
+	{
+		bPlayingFollowUp = true;
+		PlayMontage(FollowUpMontage);
+	}
 }
 
 void UAgAbilityTask_PlayReaction::HandleMontageCompleted()
 {
-	if (PlayFollowUp())
-	{
-		return;
-	}
 	MontageTask = nullptr;
 	if (ShouldBroadcastAbilityTaskDelegates())
 	{

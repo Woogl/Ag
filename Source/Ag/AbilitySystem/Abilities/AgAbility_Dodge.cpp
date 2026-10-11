@@ -56,7 +56,7 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	UAnimMontage* Montage = bRoll ? Data->RollMontage.Get() : Data->BackstepMontage.Get();
 	if (!Montage)
 	{
-		EndSelf(true);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
 	}
 
@@ -131,12 +131,12 @@ void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 void UAgAbility_Dodge::HandleMontageFinished()
 {
 	// 회피는 모션이 끝날 때 끝납니다. 달리기 전환은 후딜에서 플레이어 캐릭터가 맡습니다.
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_Dodge::HandleMontageCancelled()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 float UAgAbility_Dodge::GetCooldownDuration() const

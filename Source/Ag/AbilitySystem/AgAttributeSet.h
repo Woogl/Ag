@@ -7,12 +7,6 @@
 #include "AttributeSet.h"
 #include "AgAttributeSet.generated.h"
 
-#define AG_ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
-	GAMEPLAYATTRIBUTE_PROPERTY_GETTER(ClassName, PropertyName) \
-	GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
-	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
-	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
-
 /**
  * The stats of 전투 시스템 '스탯', named as in the spec.
  * A resource a character doesn't use (the boss's SP, MP, UP) stays at 0.
@@ -25,56 +19,56 @@ class UAgAttributeSet : public UAttributeSet
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData HP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, HP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, HP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MaxHP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MaxHP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxHP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData SP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, SP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, SP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MaxSP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MaxSP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxSP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MaxMP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MaxMP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxMP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData UP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, UP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, UP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MaxUP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MaxUP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxUP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData PP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, PP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, PP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MaxPP;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MaxPP)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxPP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData ATK;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, ATK)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, ATK)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData DEF;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, DEF)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, DEF)
 
 	/** 이동 속도 (cm/s). The character movement's max walk speed follows it. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MOV;
-	AG_ATTRIBUTE_ACCESSORS(UAgAttributeSet, MOV)
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MOV)
 
 protected:
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;

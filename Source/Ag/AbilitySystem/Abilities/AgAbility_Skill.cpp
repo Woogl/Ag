@@ -40,12 +40,12 @@ void UAgAbility_Skill::HandleLastWindowEnded()
 
 void UAgAbility_Skill::HandleAttackCompleted()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_Skill::HandleAttackInterrupted()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 float UAgAbility_Skill::GetCooldownDuration() const

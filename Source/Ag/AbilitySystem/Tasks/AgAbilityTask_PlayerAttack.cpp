@@ -81,7 +81,11 @@ void UAgAbilityTask_PlayerAttack::StartHitMovement()
 	const AActor* LockOnTarget = Player->GetLockOn()->GetTarget();
 	if (Gap > TargetingRange && LockOnTarget)
 	{
-		UAgCombatLibrary::TurnToward(Player, LockOnTarget);
+		const FVector ToTarget = UAgCombatLibrary::GetHorizontalDirection(Player, LockOnTarget);
+		if (!ToTarget.IsNearlyZero())
+		{
+			Player->SetActorRotation(FRotator(0.f, ToTarget.Rotation().Yaw, 0.f));
+		}
 	}
 }
 
@@ -129,11 +133,6 @@ void UAgAbilityTask_PlayerAttack::HandleMontageBlendingOut()
 
 void UAgAbilityTask_PlayerAttack::HandleMontageCompleted()
 {
-	if (Montages.IsValidIndex(MontageIndex + 1))
-	{
-		PlayMontageAt(MontageIndex + 1);
-		return;
-	}
 	MontageTask = nullptr;
 	if (ShouldBroadcastAbilityTaskDelegates())
 	{

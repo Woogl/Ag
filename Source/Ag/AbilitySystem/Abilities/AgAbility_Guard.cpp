@@ -110,7 +110,7 @@ void UAgAbility_Guard::HandleGuardPressed(FGameplayEventData Payload)
 
 	// 패리 모션 중에는 가드가 키를 따릅니다. 후딜에 새로 누르면 패리 모션을 모션 캔슬하고 가드를 새로 시작합니다(플레이어 사양 '가드 시작').
 	SetGuarding(true);
-	if (bInParryRecovery)
+	if (!IsBusy())
 	{
 		// 몽타주 태스크를 끝내는 것만으로는 몽타주가 멈추지 않으므로 직접 멈춥니다. 태스크를 먼저 끝내야, 몽타주가 멈출 때
 		// 태스크의 OnInterrupted가 가드 자체를 끝내지 않습니다.
@@ -133,7 +133,7 @@ void UAgAbility_Guard::HandleGuardReleased(FGameplayEventData Payload)
 		SetGuarding(false);
 		return;
 	}
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
@@ -163,7 +163,7 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 	AAgCharacterBase* Character = GetAgCharacter();
 	if (const AActor* Attacker = Payload.Instigator.Get(); Character && Attacker)
 	{
-		const FVector ToAttacker = -UAgCombatLibrary::GetAttackDirection(Attacker, Character);
+		const FVector ToAttacker = -UAgCombatLibrary::GetHorizontalDirection(Attacker, Character);
 		if (!ToAttacker.IsNearlyZero())
 		{
 			Character->SetActorRotation(FRotator(0.f, ToAttacker.Rotation().Yaw, 0.f));
@@ -172,7 +172,6 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 
 	// 패리 모션이 시작되면 패리 구간이 끝납니다. 패리 모션은 행동이라 후딜 전까지 이동도 입력도 받지 않습니다.
 	CloseParryWindow();
-	bInParryRecovery = false;
 	BeginBusy();
 	ParryMotionTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Acting);
 	ParryMotionTag->ReadyForActivation();
@@ -188,7 +187,6 @@ void UAgAbility_Guard::HandleParryRecoveryStarted(FGameplayEventData Payload)
 {
 	if (ParryMotionTag)
 	{
-		bInParryRecovery = true;
 		EndBusy();
 	}
 }
@@ -200,14 +198,14 @@ void UAgAbility_Guard::HandleParryMotionFinished()
 	EndParryMotion();
 	if (!GuardingTag)
 	{
-		EndSelf(false);
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	}
 }
 
 void UAgAbility_Guard::HandleParryMotionCancelled()
 {
 	ParryTask = nullptr;
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UAgAbility_Guard::EndParryMotion()
@@ -216,7 +214,6 @@ void UAgAbility_Guard::EndParryMotion()
 	{
 		ParryMotionTag->EndTask();
 		ParryMotionTag = nullptr;
-		bInParryRecovery = false;
 		EndBusy();
 	}
 }
@@ -229,7 +226,6 @@ void UAgAbility_Guard::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 	ParryTask = nullptr;
 	GuardingTag = nullptr;
 	ParryMotionTag = nullptr;
-	bInParryRecovery = false;
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

@@ -7,13 +7,14 @@
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCameraData.h"
+#include "Kismet/GameplayStatics.h"
 
 bool UAgCombatLibrary::AreHostile(const AAgCharacterBase* A, const AAgCharacterBase* B)
 {
 	return A && B && A->IsA<AAgPlayerCharacter>() != B->IsA<AAgPlayerCharacter>();
 }
 
-FVector UAgCombatLibrary::GetAttackDirection(const AActor* Source, const AActor* Target)
+FVector UAgCombatLibrary::GetHorizontalDirection(const AActor* Source, const AActor* Target)
 {
 	if (!Source || !Target)
 	{
@@ -22,21 +23,12 @@ FVector UAgCombatLibrary::GetAttackDirection(const AActor* Source, const AActor*
 	return (Target->GetActorLocation() - Source->GetActorLocation()).GetSafeNormal2D();
 }
 
-void UAgCombatLibrary::TurnToward(AActor* Actor, const AActor* Target)
-{
-	const FVector Direction = GetAttackDirection(Actor, Target);
-	if (!Direction.IsNearlyZero())
-	{
-		Actor->SetActorRotation(FRotator(0.f, Direction.Rotation().Yaw, 0.f));
-	}
-}
-
 float UAgCombatLibrary::GetHorizontalDistance(const AActor* A, const AActor* B)
 {
 	return (A && B) ? FVector::Dist2D(A->GetActorLocation(), B->GetActorLocation()) : TNumericLimits<float>::Max();
 }
 
-void UAgCombatLibrary::PlayCameraShake(AAgCharacterBase* Context, EAgCameraShake Shake)
+void UAgCombatLibrary::PlayCameraShake(const UObject* WorldContext, EAgCameraShake Shake)
 {
 	FGameplayTag Cue;
 	switch (Shake)
@@ -53,8 +45,9 @@ void UAgCombatLibrary::PlayCameraShake(AAgCharacterBase* Context, EAgCameraShake
 	default:
 		return;
 	}
-	if (Context)
+	// 엔진 Burst 큐는 큐를 실행한 캐릭터가 로컬 플레이어일 때 그 카메라를 흔들므로, 로컬 플레이어 캐릭터에서 실행합니다.
+	if (const AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(WorldContext, 0)))
 	{
-		Context->GetAbilitySystemComponent()->ExecuteGameplayCue(Cue, FGameplayCueParameters());
+		Player->GetAbilitySystemComponent()->ExecuteGameplayCue(Cue, FGameplayCueParameters());
 	}
 }

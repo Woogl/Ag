@@ -36,12 +36,10 @@ public:
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	/** 이어지는 몽타주가 있고 아직 재생하지 않았으면 재생합니다. */
-	bool PlayFollowUp();
-
 	void HandleGrounded(const FGameplayEventData* Payload);
 
-	/** 모션이 블렌드 아웃되는 동안 이어지는 몽타주를 블렌드합니다. 반응 자체는 마지막 모션이 끝날 때까지 이어집니다. */
+	/** 모션이 블렌드 아웃되는 동안, 이어지는 몽타주가 있고 아직 재생하지 않았으면 재생해 블렌드합니다. 반응 자체는 마지막 모션이
+	끝날 때까지 이어집니다. */
 	UFUNCTION()
 	void HandleMontageBlendingOut();
 

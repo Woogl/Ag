@@ -30,7 +30,7 @@ public:
 	AG_API static FString GetJsonFolder();
 
 	/**
-	 * FileName으로 Target의 Transient 속성을 채웁니다. 오류(문법, 모르는 키나 빠진 키, 잘못된 형식, 없는 태그나 클래스, 정수가 아닌 값,
+	 * FileName으로 Target의 Transient 속성을 채웁니다. 오류(문법, 모르는 키나 빠진 키, 잘못된 형식, 없는 태그, 정수가 아닌 값,
 	 * 범위 밖의 값)가 하나라도 있으면 모든 값을 그대로 두고, 오류는 로그와 화면에 알립니다. 범위는 에디터에서만 검사합니다.
 	 */
 	bool LoadJsonValues(UObject& Target, const FString& FileName);
@@ -42,11 +42,8 @@ public:
 	const UAgCameraData& GetCameraData() const;
 
 #if WITH_EDITOR
-	/** 이 파일들로 채운 객체를 모두 다시 채우고, 그런 객체가 있었으면 OnJsonValuesReloaded를 한 번 알립니다. Data 폴더 감시가 부릅니다. */
+	/** 이 파일들로 채운 객체를 모두 다시 채웁니다. Data 폴더 감시가 부릅니다. */
 	AG_API void ReloadJsonFiles(const TArray<FString>& FileNames);
-
-	/** 데이터 파일을 다시 읽은 뒤. 스폰할 때 한 번 넣는 값을 다시 넣게 합니다. */
-	FSimpleMulticastDelegate OnJsonValuesReloaded;
 #endif
 
 protected:

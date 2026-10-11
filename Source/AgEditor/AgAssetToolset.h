@@ -113,19 +113,13 @@ public:
 
 	/**
 	 * 스키마 클래스로 새 StateTree 에셋을 만듭니다. 'Root' 상태 하나가 들어 있습니다.
+	 * 스키마의 속성(AI 스키마의 AIControllerClass, ContextActorClass 등)은 엔진의 ObjectTools.set_properties로
+	 * 에디터 데이터의 Schema 하위 객체에 씁니다.
 	 * @param AssetPath 예: /Game/AI/ST_Boss
 	 * @return 만든 에셋. 그 경로에 에셋이 이미 있거나 만들지 못하면 null입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static UStateTree* CreateStateTree(const FString& AssetPath, TSubclassOf<UStateTreeSchema> Schema);
-
-	/**
-	 * StateTree 스키마의 속성 하나를 텍스트 값으로 바꾸고, 에디터에서 고친 것처럼 변경을 알립니다.
-	 * 예: AI 스키마의 AIControllerClass, ContextActorClass에 클래스 경로(/Script/Ag.AgBossAIController).
-	 * @return 속성이 없거나 값을 읽지 못하면 false입니다.
-	 */
-	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
-	static bool SetStateTreeSchemaProperty(UStateTree* StateTree, FName PropertyName, const FString& Value);
 
 	/**
 	 * ParentPath 상태의 마지막 자식으로 상태를 더합니다.

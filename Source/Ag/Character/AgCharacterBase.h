@@ -84,8 +84,8 @@ public:
 	/** 움찔: plays the additive flinch on top of the current motion. */
 	void PlayFlinch();
 
-	/** 가드 움찔: plays the additive guard flinch on the guard pose. Only characters that guard have one. */
-	virtual void PlayGuardFlinch() {}
+	/** 가드 움찔: 가드 자세 위에 가드 움찔을 덧입혀 재생합니다. 가드 움찔 몽타주가 없는 캐릭터는 재생하지 않습니다. */
+	void PlayGuardFlinch();
 
 	/**
 	 * 사망 처리: stops every action, input and movement, removes this character's attack windows,

@@ -7,6 +7,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "AbilitySystem/AgEffect_PPRefill.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -51,7 +52,6 @@ void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	bExecuted = false;
 
 	UAbilityTask_WaitGameplayEvent* ExecutedTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Executed);
 	ExecutedTask->EventReceived.AddDynamic(this, &ThisClass::HandleExecuted);
@@ -113,7 +113,7 @@ void UAgAbility_Groggy::HandleEndSectionDue()
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (!bExecuted && Data && AnimInstance)
+	if (Data && AnimInstance)
 	{
 		AnimInstance->Montage_JumpToSection(GroggyEndSection, Data->GroggyMontage);
 	}
@@ -123,27 +123,27 @@ void UAgAbility_Groggy::HandleExecuted(FGameplayEventData Payload)
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	AAgCharacterBase* Boss = GetAgCharacter();
-	if (bExecuted || !Data || !Data->ExecutedMontage || !Boss)
+	if (!Data || !Data->ExecutedMontage || !Boss)
 	{
 		return;
 	}
-	bExecuted = true;
-	GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Execution_Executed);
+	ExecutedTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Execution_Executed);
+	ExecutedTag->ReadyForActivation();
 
-	// The two execution motions bring the characters closer than their capsules allow, so the boss stops blocking.
+	// 두 처형 모션은 캡슐 반지름보다 가깝게 붙으므로, 보스가 플레이어를 막지 않게 합니다.
 	Boss->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
 	// 처형을 시작하면 보스가 플레이어를 바라보도록 돌립니다.
 	if (const AActor* Executioner = Payload.Instigator.Get())
 	{
-		const FVector ToExecutioner = UAgCombatLibrary::GetAttackDirection(Boss, Executioner);
+		const FVector ToExecutioner = UAgCombatLibrary::GetHorizontalDirection(Boss, Executioner);
 		if (!ToExecutioner.IsNearlyZero())
 		{
 			Boss->SetActorRotation(FRotator(0.f, ToExecutioner.Rotation().Yaw, 0.f));
 		}
 	}
 
-	// Groggy now ends with the 처형 피격 motion, whatever time is left.
+	// 이제 그로기는 남은 시간과 관계없이 처형 피격 모션이 끝날 때 끝납니다.
 	if (EndSectionTask)
 	{
 		EndSectionTask->EndTask();
@@ -163,22 +163,22 @@ void UAgAbility_Groggy::HandleMontageFinished()
 
 void UAgAbility_Groggy::HandleMontageCancelled()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UAgAbility_Groggy::FinishGroggy()
 {
 	// 그로기가 끝나면 PP가 가득 찹니다.
 	ApplyGameplayEffectToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), GetDefault<UAgEffect_PPRefill>(), 1.f);
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_Groggy::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	if (bExecuted)
+	// 처형 피격 태그는 그 태스크가 어빌리티와 함께 끝나며 뗍니다.
+	if (ExecutedTag)
 	{
-		bExecuted = false;
-		GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(AgGameplayTags::State_Execution_Executed);
+		ExecutedTag = nullptr;
 		AAgCharacterBase* Boss = GetAgCharacter();
 		if (Boss && !Boss->IsDead())
 		{

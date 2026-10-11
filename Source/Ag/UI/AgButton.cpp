@@ -10,7 +10,6 @@ UAgButton::UAgButton(const FObjectInitializer& ObjectInitializer)
 	bSelectable = true;
 	bShouldSelectUponReceivingFocus = true;
 	bInteractableWhenSelected = true;
-	bToggleable = false;
 }
 
 void UAgButton::NativePreConstruct()

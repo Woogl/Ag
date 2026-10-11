@@ -10,10 +10,10 @@
 
 AAgCharacterBase* UAgLockOnComponent::FindTarget() const
 {
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwner());
-	const UAgPlayerData* Data = Player ? Cast<UAgPlayerData>(Player->GetCharacterData()) : nullptr;
-	const APlayerController* PlayerController = Player ? Cast<APlayerController>(Player->GetController()) : nullptr;
-	if (!Data || !PlayerController)
+	const AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetOwner());
+	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Player->GetCharacterData());
+	const APlayerController* PlayerController = Cast<APlayerController>(Player->GetController());
+	if (!PlayerController)
 	{
 		return nullptr;
 	}
@@ -42,10 +42,10 @@ void UAgLockOnComponent::SetTarget(AAgCharacterBase* NewTarget)
 
 bool UAgLockOnComponent::IsTargetLost() const
 {
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwner());
-	const UAgPlayerData* Data = Player ? Cast<UAgPlayerData>(Player->GetCharacterData()) : nullptr;
+	const AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetOwner());
+	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Player->GetCharacterData());
 	const AAgCharacterBase* TargetCharacter = Target.Get();
-	return !TargetCharacter || !Data || TargetCharacter->IsDead() || UAgCombatLibrary::GetHorizontalDistance(Player, TargetCharacter) > Data->LockOnReleaseRange;
+	return !TargetCharacter || TargetCharacter->IsDead() || UAgCombatLibrary::GetHorizontalDistance(Player, TargetCharacter) > Data->LockOnReleaseRange;
 }
 
 FVector UAgLockOnComponent::GetLockOnPoint() const

@@ -19,15 +19,12 @@ public:
 	/** Attacks only hit the other side (player <-> boss). */
 	static bool AreHostile(const AAgCharacterBase* A, const AAgCharacterBase* B);
 
-	/** 공격 방향: horizontal unit vector from the source's capsule center to the target's. */
-	static FVector GetAttackDirection(const AActor* Source, const AActor* Target);
-
-	/** Actor를 Target 쪽(캡슐 중심 사이의 수평 방향)으로 돌립니다. 둘이 겹쳐 방향이 없으면 그대로 둡니다. */
-	static void TurnToward(AActor* Actor, const AActor* Target);
+	/** Source에서 Target으로 향하는 수평 단위 벡터. 캐릭터는 캡슐 중심 기준이며, 전투 시스템의 피격 방향도 이것으로 구합니다. */
+	static FVector GetHorizontalDirection(const AActor* Source, const AActor* Target);
 
 	/** Horizontal distance between two actors' capsule centers (대상과의 간격, 거리 구간). */
 	static float GetHorizontalDistance(const AActor* A, const AActor* B);
 
-	/** Plays a camera shake level through its GameplayCue (카메라 '카메라 셰이크'). Context is any character. */
-	static void PlayCameraShake(AAgCharacterBase* Context, EAgCameraShake Shake);
+	/** 셰이크 단계 하나를 그 GameplayCue로 로컬 플레이어의 카메라에 재생합니다(카메라 '카메라 셰이크'). */
+	static void PlayCameraShake(const UObject* WorldContext, EAgCameraShake Shake);
 };

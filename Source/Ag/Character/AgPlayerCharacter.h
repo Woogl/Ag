@@ -47,11 +47,6 @@ public:
 
 	bool IsGuardHeld() const { return bGuardHeld; }
 
-	/** The dodge / sprint key (Shift) is held. */
-	bool IsDodgeHeld() const { return bDodgeHeld; }
-
-	virtual void PlayGuardFlinch() override;
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -90,7 +85,7 @@ private:
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
 	void TryResumeGuard(bool bAfterGuardPushback);
 
-	/** 회피 반격 기회 ends with any action other than moving, or a knockback or down. */
+	/** 회피 반격 기회: 이동 외의 행동이나 넉업·넉백이 시작되면 사라집니다. */
 	void HandleAbilityActivated(UGameplayAbility* Ability);
 
 	/** 달리기: 회피 후딜에 Shift와 이동 입력이 있으면 시작하고, Shift를 떼거나 이동 입력이 없거나 SP가 0이 되면 끝냅니다. */

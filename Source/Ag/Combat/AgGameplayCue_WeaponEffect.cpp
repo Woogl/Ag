@@ -28,7 +28,7 @@ bool AAgGameplayCue_WeaponEffect::OnActive_Implementation(AActor* MyTarget, cons
 	if (Effect && AttachTo)
 	{
 		SpawnedEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect, AttachTo, AttachSocket, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, /*bAutoDestroy*/ false);
-		if (SpawnedEffect && bSetColor)
+		if (SpawnedEffect)
 		{
 			SpawnedEffect->SetVariableLinearColor(ColorParameter, Color);
 		}

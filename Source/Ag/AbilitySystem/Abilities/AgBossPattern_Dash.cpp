@@ -25,7 +25,7 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(Handle) : nullptr;
-	Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	UAnimMontage* Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
 	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -74,7 +74,11 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 	}
 
 	// 방향: 이 순간의 대상 쪽으로 고정합니다. 목표 지점: 대상을 지나, 최대 이동 거리까지.
-	UAgCombatLibrary::TurnToward(Boss, Target);
+	const FVector Direction = UAgCombatLibrary::GetHorizontalDirection(Boss, Target);
+	if (!Direction.IsNearlyZero())
+	{
+		Boss->SetActorRotation(FRotator(0.f, Direction.Rotation().Yaw, 0.f));
+	}
 	const float Distance = FMath::Min(UAgCombatLibrary::GetHorizontalDistance(Boss, Target) + Data->DashOvershoot, Data->DashMaxDistance);
 
 	// 몽타주가 루트 모션을 주는 동안 캐릭터 무브먼트는 다른 루트 모션을 쓰지 않으므로, 여기서부터 모션 자체의 루트 모션은
@@ -96,8 +100,10 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 void UAgBossPattern_Dash::HandleDashHold(FGameplayEventData Payload)
 {
 	// 창을 내지른 자세는 돌진이 끝날 때까지 유지합니다.
+	// 몽타주를 넘기지 않으면 모든 몽타주가 멈추므로, 이 어빌리티가 재생 중인 몽타주가 있을 때만 멈춥니다.
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (bDashing && AnimInstance)
+	UAnimMontage* Montage = GetCurrentMontage();
+	if (bDashing && AnimInstance && Montage)
 	{
 		bHolding = true;
 		AnimInstance->Montage_Pause(Montage);
@@ -110,7 +116,8 @@ void UAgBossPattern_Dash::HandleDashFinished()
 	SetDashing(false);
 
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (bHolding && AnimInstance)
+	UAnimMontage* Montage = GetCurrentMontage();
+	if (bHolding && AnimInstance && Montage)
 	{
 		bHolding = false;
 		AnimInstance->Montage_Resume(Montage);
@@ -153,12 +160,12 @@ void UAgBossPattern_Dash::SetDashing(bool bNewDashing)
 
 void UAgBossPattern_Dash::HandleMontageFinished()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgBossPattern_Dash::HandleMontageCancelled()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 void UAgBossPattern_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
@@ -167,7 +174,8 @@ void UAgBossPattern_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, co
 	if (bHolding)
 	{
 		bHolding = false;
-		if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
+		UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
+		if (UAnimMontage* Montage = GetCurrentMontage(); AnimInstance && Montage)
 		{
 			AnimInstance->Montage_Resume(Montage);
 		}
@@ -176,7 +184,6 @@ void UAgBossPattern_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, co
 	{
 		Boss->ClearActiveAttack();
 	}
-	Montage = nullptr;
 
 	// 몽타주의 루트 모션 무시와 돌진은 태스크가 어빌리티와 함께 끝나며 되돌립니다.
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

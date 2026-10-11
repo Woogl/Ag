@@ -54,7 +54,7 @@ void UAgAbility_Jump::HandleLanded(EMovementMode NewMovementMode)
 	{
 		AnimInstance->Montage_StopWithBlendOut(Data->JumpMontage->GetBlendOutArgs(), Data->JumpMontage);
 	}
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 bool UAgAbility_Jump::IsMoving() const

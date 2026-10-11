@@ -88,9 +88,6 @@ protected:
 	/** 행동 중인지. 실행 중인 행동은 이것이 풀린 뒤가 후딜입니다. */
 	bool IsBusy() const { return BusyTag != nullptr; }
 
-	/** Ends this ability from a callback, cancelled or not. */
-	void EndSelf(bool bWasCancelled);
-
 private:
 	const UAgCharacterData* GetCharacterDataBase() const;
 

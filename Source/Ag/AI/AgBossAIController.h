@@ -26,7 +26,7 @@ class AAgBossAIController : public AAIController
 public:
 	AAgBossAIController();
 
-	AAgBossCharacter* GetBoss() const { return Boss.Get(); }
+	AAgBossCharacter* GetBoss() const;
 	const UAgBossData* GetBossData() const;
 
 	/**
@@ -57,7 +57,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
 
-	TWeakObjectPtr<AAgBossCharacter> Boss;
 	TWeakObjectPtr<UAbilitySystemComponent> TargetASC;
 	FDelegateHandle BasicAttackHandle;
 	bool bPhaseTransitionStarted = false;

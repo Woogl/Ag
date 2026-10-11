@@ -30,9 +30,9 @@ void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 		return;
 	}
 
-	// 처형 사망: the 처형 사망 motion matches the 처형 피격 motion until after the final blow, so it continues from the
-	// same position without a jump. The ragdoll comes when it ends. Only the execution's own blow does this; any other hit
-	// that kills during the 처형 피격 motion is an ordinary death.
+	// 처형 사망: 처형 사망 모션은 마지막 일격 뒤까지 처형 피격 모션과 같아, 같은 위치에서 튀지 않고 이어집니다.
+	// 래그돌은 모션이 끝날 때 바꿉니다. 처형의 일격으로 죽었을 때만 이렇게 하고, 처형 피격 모션 중 다른 공격으로 죽으면
+	// 일반 사망입니다.
 	const UAgBossData* BossData = GetCharacterData<UAgBossData>();
 	const UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
 	const bool bKilledByExecution = TriggerEventData && TriggerEventData->InstigatorTags.HasTagExact(AgGameplayTags::Ability_Action_Execution);
@@ -51,9 +51,9 @@ void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 		return;
 	}
 
-	// Pushed the way the last attack came from.
+	// 마지막 공격의 피격 방향으로 밀려납니다.
 	const AActor* Attacker = TriggerEventData ? TriggerEventData->Instigator.Get() : nullptr;
-	const FVector Push = UAgCombatLibrary::GetAttackDirection(Attacker, Character) * UAgSettings::Get()->DeathPushSpeed;
+	const FVector Push = UAgCombatLibrary::GetHorizontalDirection(Attacker, Character) * UAgSettings::Get()->DeathPushSpeed;
 	Character->Die(Push, this);
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -65,5 +65,5 @@ void UAgAbility_Death::HandleExecutedDeathEnded()
 	{
 		Character->StartRagdoll(FVector::ZeroVector);
 	}
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

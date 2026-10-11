@@ -7,7 +7,6 @@
 #include "AgBossPattern_SwordWave.generated.h"
 
 class UAgAbilityTask_HoldTag;
-class UAnimMontage;
 
 /**
  * A6 검기 발사: 세 번 휘두르며, 휘두를 때마다 발사 노티파이에서 그 타의 공격 데이터로 검기 하나를 정면으로 쏩니다.
@@ -40,9 +39,6 @@ private:
 
 	UFUNCTION()
 	void HandleMontageCancelled();
-
-	UPROPERTY()
-	TObjectPtr<UAnimMontage> Montage;
 
 	/** 발사 노티파이의 몽타주 시각 (빠른 순) */
 	TArray<float> ReleaseTimes;

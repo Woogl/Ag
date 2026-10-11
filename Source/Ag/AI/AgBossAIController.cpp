@@ -18,9 +18,15 @@ AAgBossAIController::AAgBossAIController()
 	StateTreeComponent->SetStartLogicAutomatically(false);
 }
 
+AAgBossCharacter* AAgBossAIController::GetBoss() const
+{
+	return GetPawn<AAgBossCharacter>();
+}
+
 const UAgBossData* AAgBossAIController::GetBossData() const
 {
-	return Boss.IsValid() ? Cast<UAgBossData>(Boss->GetCharacterData()) : nullptr;
+	const AAgBossCharacter* Boss = GetBoss();
+	return Boss ? Cast<UAgBossData>(Boss->GetCharacterData()) : nullptr;
 }
 
 AAgCharacterBase* AAgBossAIController::GetTarget() const
@@ -31,7 +37,8 @@ AAgCharacterBase* AAgBossAIController::GetTarget() const
 
 bool AAgBossAIController::IsBossReacting() const
 {
-	const UAbilitySystemComponent* ASC = Boss.IsValid() ? Boss->GetAbilitySystemComponent() : nullptr;
+	const AAgBossCharacter* Boss = GetBoss();
+	const UAbilitySystemComponent* ASC = Boss ? Boss->GetAbilitySystemComponent() : nullptr;
 	if (!ASC)
 	{
 		return false;
@@ -48,9 +55,8 @@ void AAgBossAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	Boss = Cast<AAgBossCharacter>(InPawn);
 	const UAgBossData* Data = GetBossData();
-	if (!Boss.IsValid() || !Data || !Data->AIStateTree)
+	if (!Data || !Data->AIStateTree)
 	{
 		return;
 	}
@@ -93,7 +99,8 @@ void AAgBossAIController::BindTargetEvents()
 void AAgBossAIController::HandleTargetBasicAttack(const FGameplayEventData* Payload)
 {
 	// 다른 적을 친 평타는 넘기지 않습니다. B1 백스텝의 발동 조건과 확률은 StateTree의 패턴 후딜레이 전환이 검사합니다.
-	if (Payload && Boss.IsValid() && Payload->Target.Get() == Boss.Get())
+	const AAgBossCharacter* Boss = GetBoss();
+	if (Payload && Boss && Payload->Target.Get() == Boss)
 	{
 		StateTreeComponent->SendStateTreeEvent(AgGameplayTags::Event_BasicAttackStarted);
 	}

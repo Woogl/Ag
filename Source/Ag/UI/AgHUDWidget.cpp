@@ -28,11 +28,6 @@ void UAgHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-#if WITH_EDITOR
-	// 다시 읽은 데이터 파일이 보스 이름을 바꿀 수 있으므로, 보스를 다시 찾아 이름을 정합니다.
-	UAgAssetManager::Get().OnJsonValuesReloaded.AddWeakLambda(this, [this]() { Boss = nullptr; });
-#endif
-
 	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로, 이미지를 넣기 전까지 숨깁니다.
 	for (UImage* Icon : { SkillIconImage.Get(), UltimateIconImage.Get() })
 	{
@@ -112,10 +107,6 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		for (TActorIterator<AAgBossCharacter> It(GetWorld()); It; ++It)
 		{
 			Boss = *It;
-			if (const UAgBossData* Data = Cast<UAgBossData>(It->GetCharacterData()))
-			{
-				BossNameText->SetText(Data->DisplayName);
-			}
 			break;
 		}
 	}
@@ -158,6 +149,13 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 
 void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime)
 {
+	// 이름은 매 프레임 데이터에서 읽어 바뀌었을 때만 넣습니다. 에디터에서 데이터 파일을 다시 읽으면 바뀝니다.
+	const FText& BossName = CastChecked<UAgBossData>(BossCharacter.GetCharacterData())->DisplayName;
+	if (!BossNameText->GetText().IdenticalTo(BossName))
+	{
+		BossNameText->SetText(BossName);
+	}
+
 	const UAgAttributeSet* Stats = BossCharacter.GetAttributeSet();
 	SetBarRatio(*BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
 	UpdateTrail(BossHPTrail, *BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);

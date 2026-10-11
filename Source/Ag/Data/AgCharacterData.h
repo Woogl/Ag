@@ -116,6 +116,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> FlinchMontage;
 
+	/** 가드 움찔: 가드 자세 위에 덧입혀 재생하는 몽타주. 가드하지 않는 캐릭터는 비워 둡니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> GuardFlinchMontage;
+
 	/** 넉백: 밀려나 쓰러졌다가 일어남 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> KnockBackMontage;
@@ -298,10 +302,6 @@ public:
 	/** 회피: stepping back (no movement input). */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> BackstepMontage;
-
-	/** 가드 움찔: additive montage played on the guard pose. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> GuardFlinchMontage;
 
 	/** 가드 밀림 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")

@@ -51,11 +51,11 @@ void UAgAbility_DodgeCounter::HandleLastWindowEnded()
 
 void UAgAbility_DodgeCounter::HandleAttackCompleted()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_DodgeCounter::HandleAttackInterrupted()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 

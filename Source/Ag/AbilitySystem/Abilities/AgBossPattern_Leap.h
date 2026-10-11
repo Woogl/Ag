@@ -7,7 +7,6 @@
 #include "AgBossPattern_Leap.generated.h"
 
 class UAgAbilityTask_HoldTag;
-class UAnimMontage;
 
 /**
  * A4 도약 내려찍기 (보스 사양 'A4'): 엔진 기본 중력으로 포물선을 그리며 체공 시간 뒤 착지합니다. 최고점에서 수평 속도를
@@ -26,7 +25,6 @@ public:
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 private:
 	void SetRotationLocked(bool bLocked);
@@ -57,9 +55,6 @@ private:
 	UFUNCTION()
 	void HandleMontageCancelled();
 
-	UPROPERTY()
-	TObjectPtr<UAnimMontage> Montage;
-
 	FVector LeapStart = FVector::ZeroVector;
 
 	/** 체공 시간(2페이즈에서는 짧아짐)과 중력 가속도 */
@@ -72,6 +67,4 @@ private:
 	/** 착지 전 회전 정지 (State.Boss.RotationLocked) */
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_HoldTag> RotationLockTag;
-
-	bool bLanded = false;
 };

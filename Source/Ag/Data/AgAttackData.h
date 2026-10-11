@@ -61,7 +61,7 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float UPCharge = 0.f;
 
-	/** 카메라 '상황별 단계': 궁극기의 마지막 일격. 데이터가 아니라 궁극기 어빌리티가 마지막 타에 켭니다. */
+	/** 카메라 '상황별 단계': 처형과 궁극기의 마지막 일격. 데이터가 아니라 그 어빌리티가 마지막 타에 켭니다. */
 	bool bFinisher = false;
 };
 

@@ -8,7 +8,6 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Engine/OverlapResult.h"
 #include "Engine/World.h"
 
 AAgSwordWave::AAgSwordWave()
@@ -27,16 +26,15 @@ AAgSwordWave::AAgSwordWave()
 	Mesh->SetGenerateOverlapEvents(false);
 }
 
-void AAgSwordWave::Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange)
+void AAgSwordWave::Launch(const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange)
 {
-	Shooter = InShooter;
 	Hit = InHit;
 	FlightDirection = Direction.GetSafeNormal2D();
 	Speed = InSpeed;
 	Range = InRange;
 	Traveled = 0.f;
 
-	// The box stands on the ground, facing its flight.
+	// 상자는 바닥 위에 서서 날아가는 쪽을 바라봅니다.
 	SetActorLocationAndRotation(GetActorLocation() + FVector(0.f, 0.f, HitBox->GetScaledBoxExtent().Z), FlightDirection.Rotation());
 }
 
@@ -44,15 +42,15 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// 사망 처리: the shooter's projectiles vanish with it.
-	AAgCharacterBase* ShooterCharacter = Shooter.Get();
+	// 사망 처리: 쏜 캐릭터가 죽으면 검기도 사라집니다.
+	AAgCharacterBase* ShooterCharacter = GetInstigator<AAgCharacterBase>();
 	if (!ShooterCharacter || ShooterCharacter->IsDead())
 	{
 		Destroy();
 		return;
 	}
 
-	// A wall stops it, invisible walls too. The line runs through the box middle, so the floor never counts.
+	// 벽(보이지 않는 벽 포함)에 닿으면 멈춥니다. 선은 상자 가운데 높이로 지나가 바닥은 벽으로 치지 않습니다.
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgSwordWave), false, this);
 	QueryParams.AddIgnoredActor(ShooterCharacter);
 	const FVector Start = GetActorLocation();

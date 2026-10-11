@@ -18,9 +18,9 @@ struct FGameplayAbilitySpecHandle;
 struct FGameplayTag;
 
 /**
- * Combat HUD (전투 HUD). Parent of WBP_HUD: the layout lives in the widget, this class only feeds it values.
- * The parts shown in the world (lock-on marker, execution prompt, damage numbers) are on the boss.
- * While it is active, input goes to the game only and the cursor is hidden (게임 플로우 'Boss Stage').
+ * 전투 HUD. WBP_HUD의 부모로, 배치는 위젯에 있고 이 클래스는 값만 넣습니다.
+ * 월드에 표시하는 락온 마커와 처형 안내는 보스에 있고, 대미지 숫자는 대미지 숫자 큐(GC_DamageNumber)가 띄웁니다.
+ * 활성인 동안 입력은 게임에만 가고 커서는 숨깁니다(게임 플로우 'Boss Stage').
  */
 UCLASS(Abstract)
 class UAgHUDWidget : public UCommonActivatableWidget

@@ -5,7 +5,6 @@
 #include "Ag.h"
 #include "Core/AgSettings.h"
 #include "Data/AgCameraData.h"
-#include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
@@ -181,18 +180,6 @@ namespace
 		}
 	}
 
-	/** 태그 이름 문자열로 태그를 채웁니다. 엔진 변환기는 태그를 구조체로 읽기 때문입니다. CheckValue가 이미 검사했습니다. */
-	bool ImportTag(const TSharedPtr<FJsonValue>& JsonValue, FProperty* Property, void* Value)
-	{
-		if (!IsTagProperty(Property))
-		{
-			return false;
-		}
-		const FString TagName = JsonValue->AsString();
-		*static_cast<FGameplayTag*>(Value) = TagName.IsEmpty() ? FGameplayTag() : FGameplayTag::RequestGameplayTag(FName(*TagName));
-		return true;
-	}
-
 	void Report(const UObject& Target, const FString& FileName, const TArray<FString>& Errors)
 	{
 		const FString File = FileName.IsEmpty() ? Target.GetName() : FString::Printf(TEXT("Data/%s"), *FileName);
@@ -309,13 +296,12 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 	TArray<FDefaultConstructedPropertyElement> Values;
 	if (Errors.IsEmpty())
 	{
-		const FJsonObjectConverter::CustomImportCallback ImportCallback = FJsonObjectConverter::CustomImportCallback::CreateStatic(&ImportTag);
 		Values.Reserve(Properties.Num());
 		for (const FProperty* Property : Properties)
 		{
 			const FDefaultConstructedPropertyElement& Value = Values.Emplace_GetRef(Property);
 			FText FailReason;
-			if (!FJsonObjectConverter::JsonValueToUProperty(Json->TryGetField(Property->GetName()), const_cast<FProperty*>(Property), Value.GetObjAddress(), 0, 0, false, &FailReason, &ImportCallback))
+			if (!FJsonObjectConverter::JsonValueToUProperty(Json->TryGetField(Property->GetName()), const_cast<FProperty*>(Property), Value.GetObjAddress(), 0, 0, false, &FailReason))
 			{
 				Errors.Add(FString::Printf(TEXT("%s: %s"), *Property->GetName(), *FailReason.ToString()));
 			}
@@ -337,7 +323,6 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 #if WITH_EDITOR
 void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 {
-	bool bReloaded = false;
 	for (const FString& FileName : FileNames)
 	{
 		// 다시 읽으면 기록이 바뀌므로 대상을 먼저 모읍니다.
@@ -354,8 +339,6 @@ void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 		{
 			continue;
 		}
-		bReloaded = true;
-
 		bool bSucceeded = true;
 		for (UObject* Object : Objects)
 		{
@@ -363,16 +346,10 @@ void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 		}
 		if (bSucceeded && GEngine)
 		{
-			// 스탯은 스폰할 때 한 번 넣고 다시 넣지 않습니다(구현 계획서 '데이터' 다시 읽기).
-			const bool bCharacterData = Objects.ContainsByPredicate([](const UObject* Object) { return Object->IsA<UAgCharacterData>(); });
-			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green, FString::Printf(TEXT("Data/%s reloaded.%s"), *FileName,
-				bCharacterData ? TEXT(" Stats change on the next PIE start.") : TEXT("")));
+			// 스탯은 스폰할 때 한 번 넣고 다시 넣지 않으므로 다음 PIE부터 바뀝니다(구현 계획서 '데이터' 다시 읽기).
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
+				FString::Printf(TEXT("Data/%s reloaded. Stats change on the next PIE start."), *FileName));
 		}
-	}
-
-	if (bReloaded)
-	{
-		OnJsonValuesReloaded.Broadcast();
 	}
 }
 

@@ -53,22 +53,16 @@ void AAgBossCharacter::BeginPlay()
 
 void AAgBossCharacter::AttachWorldWidgets()
 {
-	if (const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData()))
-	{
-		LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->LockOnBone);
-		ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->ExecutionPromptBone);
-	}
+	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
+	LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->LockOnBone);
+	ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->ExecutionPromptBone);
 }
 
 void AAgBossCharacter::GrantAbilities()
 {
 	Super::GrantAbilities();
 
-	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
-	if (!Data)
-	{
-		return;
-	}
+	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
 	for (const FAgBossPattern& Pattern : Data->Patterns)
 	{
 		const TSubclassOf<UAgGameplayAbility> AbilityClass = Data->FindPatternAbility(Pattern.Pattern);
@@ -113,15 +107,14 @@ FGameplayAbilitySpec* AAgBossCharacter::FindPatternSpec(const FGameplayTag& Patt
 
 const FAgBossPattern* AAgBossCharacter::FindPattern(const FGameplayAbilitySpecHandle Handle) const
 {
-	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
+	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
 	const FGameplayAbilitySpec* Spec = GetAbilitySystemComponent()->FindAbilitySpecFromHandle(Handle);
-	return (Data && Spec) ? Data->FindPattern(GetPatternTag(*Spec)) : nullptr;
+	return Spec ? Data->FindPattern(GetPatternTag(*Spec)) : nullptr;
 }
 
 float AAgBossCharacter::GetPatternPlayRate() const
 {
-	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
-	return (Data ? Data->PatternPlayRate : 1.f) * GetPatternSpeed();
+	return CastChecked<UAgBossData>(GetCharacterData())->PatternPlayRate * GetPatternSpeed();
 }
 
 void AAgBossCharacter::EnterPhase2()
@@ -132,14 +125,12 @@ void AAgBossCharacter::EnterPhase2()
 
 float AAgBossCharacter::GetPatternSpeed() const
 {
-	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
-	return (Data && Phase >= 2) ? Data->Phase2PatternSpeed : 1.f;
+	return Phase >= 2 ? CastChecked<UAgBossData>(GetCharacterData())->Phase2PatternSpeed : 1.f;
 }
 
 float AAgBossCharacter::GetMoveSpeedMultiplier() const
 {
-	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
-	return (Data && Phase >= 2) ? Data->Phase2MOVMultiplier : 1.f;
+	return Phase >= 2 ? CastChecked<UAgBossData>(GetCharacterData())->Phase2MOVMultiplier : 1.f;
 }
 
 void AAgBossCharacter::SetGroggyTimerRunning(bool bRunning)
@@ -184,9 +175,9 @@ void AAgBossCharacter::UpdateWorldWidgets()
 
 void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
 {
-	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
+	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
 	const AActor* Target = GetTarget();
-	if (IsDead() || !Data || !Target || IsFacingFixed())
+	if (IsDead() || !Target || IsFacingFixed())
 	{
 		return;
 	}
@@ -212,9 +203,9 @@ bool AAgBossCharacter::IsFacingFixed() const
 
 bool AAgBossCharacter::IsInRotationStopWindow() const
 {
-	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
+	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
 	const UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (!Data || !AnimInstance)
+	if (!AnimInstance)
 	{
 		return false;
 	}

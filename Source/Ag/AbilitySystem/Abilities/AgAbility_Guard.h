@@ -71,5 +71,4 @@ private:
 
 	FActiveGameplayEffectHandle ParryWindow;
 	FActiveGameplayEffectHandle MoveLock;
-	bool bInParryRecovery = false;
 };

@@ -49,12 +49,12 @@ void UAgAbility_Ultimate::HandleLastWindowEnded()
 
 void UAgAbility_Ultimate::HandleAttackCompleted()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_Ultimate::HandleAttackInterrupted()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
 bool UAgAbility_Ultimate::CanPayCost(const UAgAttributeSet& Stats) const

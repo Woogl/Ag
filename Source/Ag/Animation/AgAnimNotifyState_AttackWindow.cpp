@@ -19,7 +19,7 @@ float UAgAnimNotifyState_AttackWindow::GetTravelBeforeFirstWindow(const UAnimMon
 		}
 	}
 	const FTransform RootMotion = Montage->ExtractRootMotionFromTrackRange(0.f, FirstWindowStart, FAnimExtractContext());
-	return FMath::Max(0.f, RootMotion.GetTranslation().Size2D());
+	return RootMotion.GetTranslation().Size2D();
 }
 
 void UAgAnimNotifyState_AttackWindow::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)

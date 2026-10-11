@@ -41,10 +41,10 @@ void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle H
 
 void UAgBossPattern_Backstep::HandleMontageFinished()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgBossPattern_Backstep::HandleMontageCancelled()
 {
-	EndSelf(true);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }

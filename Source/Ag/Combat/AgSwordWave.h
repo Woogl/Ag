@@ -25,8 +25,8 @@ class AAgSwordWave : public AActor
 public:
 	AAgSwordWave();
 
-	/** Starts the wave toward Direction (horizontal). It was spawned on the ground; the box rises to stand on it. */
-	void Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange);
+	/** Direction(수평) 쪽으로 검기를 날립니다. 쏜 캐릭터는 스폰할 때 넣은 Instigator입니다. 바닥에 스폰되며, 상자를 바닥 위로 올립니다. */
+	void Launch(const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange);
 
 protected:
 	virtual void Tick(float DeltaSeconds) override;
@@ -39,8 +39,6 @@ private:
 	/** The look, placed over the box on the blueprint. */
 	UPROPERTY(VisibleAnywhere, Category = "Sword Wave")
 	TObjectPtr<UStaticMeshComponent> Mesh;
-
-	TWeakObjectPtr<AAgCharacterBase> Shooter;
 
 	/** Characters the wave already reached; each is judged once. */
 	TArray<TWeakObjectPtr<AActor>> TouchedActors;

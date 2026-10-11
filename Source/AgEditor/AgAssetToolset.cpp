@@ -291,32 +291,6 @@ UStateTree* UAgAssetToolset::CreateStateTree(const FString& AssetPath, TSubclass
 	return Cast<UStateTree>(AssetTools.CreateAsset(FPackageName::GetLongPackageAssetName(AssetPath), FPackageName::GetLongPackagePath(AssetPath), UStateTree::StaticClass(), Factory));
 }
 
-bool UAgAssetToolset::SetStateTreeSchemaProperty(UStateTree* StateTree, FName PropertyName, const FString& Value)
-{
-	UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
-	UStateTreeSchema* Schema = EditorData ? EditorData->Schema.Get() : nullptr;
-	FProperty* Property = Schema ? Schema->GetClass()->FindPropertyByName(PropertyName) : nullptr;
-	if (!Property)
-	{
-		return false;
-	}
-
-	Schema->Modify();
-	Schema->PreEditChange(Property);
-	FStringOutputDevice Errors;
-	const TCHAR* End = Property->ImportText_InContainer(*Value, Schema, Schema, PPF_None, &Errors);
-
-	// 스키마는 클래스가 바뀔 때 컨텍스트 데이터(Actor, AIController)의 타입을 고치므로, 에디터와 같은 변경 알림을 보냅니다.
-	FEditPropertyChain Chain;
-	Chain.AddHead(Property);
-	Chain.SetActivePropertyNode(Property);
-	FPropertyChangedEvent ChangedEvent(Property, EPropertyChangeType::ValueSet);
-	FPropertyChangedChainEvent ChainEvent(Chain, ChangedEvent);
-	Schema->PostEditChangeChainProperty(ChainEvent);
-	UStateTreeEditingSubsystem::MarkAsModified(StateTree);
-	return End && Errors.IsEmpty();
-}
-
 bool UAgAssetToolset::AddStateTreeState(UStateTree* StateTree, const FString& ParentPath, FName Name, FName SelectionBehavior)
 {
 	UStateTreeState* Parent = FindStateTreeState(StateTree, ParentPath);

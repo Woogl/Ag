@@ -8,7 +8,6 @@
 #include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "Ag.h"
-#include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgCombatLibrary.h"
@@ -35,7 +34,7 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(Handle) : nullptr;
-	Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	UAnimMontage* Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
 	if (!Montage || Pattern->Hits.IsEmpty() || !Boss->GetTarget() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -55,7 +54,6 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	{
 		return;
 	}
-	bLanded = false;
 	RotationLockTag = nullptr;
 	LeapStart = Boss->GetActorLocation();
 
@@ -111,11 +109,6 @@ float UAgBossPattern_Leap::GetDescentSpeedAt(float RemainingTime) const
 
 void UAgBossPattern_Leap::HandleTakeOff(EMovementMode NewMovementMode)
 {
-	if (bLanded)
-	{
-		return;
-	}
-
 	// 시각을 시간이 아니라 보스의 수직 속도로 판정합니다. 히트스톱은 보스의 이동을 멈추므로, 공중에서 맞으면 이 시각들도 비행과
 	// 함께 늦어집니다(전투 시스템 '히트스톱 중의 시간').
 	if (RotationStopLead < AirTime)
@@ -136,7 +129,7 @@ void UAgBossPattern_Leap::HandleApex()
 	// 남은 체공 시간도 수직 속도로 셉니다(GetDescentSpeedAt의 식을 거꾸로 푼 것).
 	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
 	const float Remaining = Boss ? AirTime * 0.5f + Boss->GetCharacterMovement()->Velocity.Z / Gravity : 0.f;
-	if (bLanded || !Boss || Remaining <= UE_KINDA_SMALL_NUMBER)
+	if (!Boss || Remaining <= UE_KINDA_SMALL_NUMBER)
 	{
 		return;
 	}
@@ -149,17 +142,13 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(GetCurrentAbilitySpecHandle()) : nullptr;
-	if (bLanded || !Data || !Pattern || Pattern->Hits.IsEmpty())
+	if (!Data || !Pattern || Pattern->Hits.IsEmpty())
 	{
 		return;
 	}
-	bLanded = true;
 	SetRotationLocked(false);
 
-	if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
-	{
-		AnimInstance->Montage_JumpToSection(LeapEndSection, Montage);
-	}
+	MontageJumpToSection(LeapEndSection);
 
 	// 플레이어가 가까우면 착지가 카메라를 흔듭니다(카메라 '상황별 단계'). 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를
 	// 기준으로 합니다.
@@ -180,10 +169,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 
 void UAgBossPattern_Leap::HandleRotationStop()
 {
-	if (!bLanded)
-	{
-		SetRotationLocked(true);
-	}
+	SetRotationLocked(true);
 }
 
 void UAgBossPattern_Leap::SetRotationLocked(bool bLocked)
@@ -202,19 +188,10 @@ void UAgBossPattern_Leap::SetRotationLocked(bool bLocked)
 
 void UAgBossPattern_Leap::HandleMontageFinished()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgBossPattern_Leap::HandleMontageCancelled()
 {
-	EndSelf(true);
-}
-
-void UAgBossPattern_Leap::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	// 공중에서 끊기면(사망, 그로기 등) 그때의 속도로 중력에 맡겨 떨어집니다. 회전 정지 태그는 그 태스크가 어빌리티와 함께
-	// 끝나며 뗍니다.
-	Montage = nullptr;
-
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }

@@ -119,11 +119,6 @@ void UAgGameplayAbility::EndBusy()
 	}
 }
 
-void UAgGameplayAbility::EndSelf(bool bWasCancelled)
-{
-	EndAbility(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), true, bWasCancelled);
-}
-
 void UAgGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	// 행동 중 태그는 그 태스크가 어빌리티와 함께 끝나며 뗍니다. 다음 실행이 새 태스크를 만들도록 가리키던 것만 지웁니다.

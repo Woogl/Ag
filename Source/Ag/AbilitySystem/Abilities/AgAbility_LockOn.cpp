@@ -49,10 +49,10 @@ void UAgAbility_LockOn::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 void UAgAbility_LockOn::HandleLockOnInput(FGameplayEventData Payload)
 {
 	// 락온 해제 조건: 락온 키 재입력
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UAgAbility_LockOn::HandleTargetLost()
 {
-	EndSelf(false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
