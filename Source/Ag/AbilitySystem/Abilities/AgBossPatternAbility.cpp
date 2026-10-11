@@ -130,32 +130,32 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	// both by the same ratio.
 	TArray<float> HitStarts;
 	GetUnguardableHitStarts(HitStarts);
-	ScheduleFlashes(HitStarts, Data->UnblockableFlashLead * Data->PatternPlayRate, /*bParryFlash*/ false);
+	ScheduleTelegraphs(HitStarts, Data->UnblockableTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ false);
 	HitStarts.Reset();
 	GetParryableHitStarts(HitStarts);
-	ScheduleFlashes(HitStarts, Data->ParryFlashLead * Data->PatternPlayRate, /*bParryFlash*/ true);
+	ScheduleTelegraphs(HitStarts, Data->ParryTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ true);
 
 	OnPatternStarted();
 }
 
-void UAgBossPatternAbility::ScheduleFlashes(const TArray<float>& HitStarts, float Lead, bool bParryFlash)
+void UAgBossPatternAbility::ScheduleTelegraphs(const TArray<float>& HitStarts, float Lead, bool bParryTelegraph)
 {
 	for (const float HitStart : HitStarts)
 	{
-		UAgAbilityTask_WaitMontagePosition* FlashStart = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, FMath::Max(0.f, HitStart - Lead));
-		UAgAbilityTask_WaitMontagePosition* FlashEnd = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, HitStart);
-		if (bParryFlash)
+		UAgAbilityTask_WaitMontagePosition* TelegraphStart = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, FMath::Max(0.f, HitStart - Lead));
+		UAgAbilityTask_WaitMontagePosition* TelegraphEnd = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, HitStart);
+		if (bParryTelegraph)
 		{
-			FlashStart->OnReached.AddDynamic(this, &ThisClass::HandleParryFlashStart);
-			FlashEnd->OnReached.AddDynamic(this, &ThisClass::HandleParryFlashEnd);
+			TelegraphStart->OnReached.AddDynamic(this, &ThisClass::HandleParryTelegraphStart);
+			TelegraphEnd->OnReached.AddDynamic(this, &ThisClass::HandleParryTelegraphEnd);
 		}
 		else
 		{
-			FlashStart->OnReached.AddDynamic(this, &ThisClass::HandleFlashStart);
-			FlashEnd->OnReached.AddDynamic(this, &ThisClass::HandleFlashEnd);
+			TelegraphStart->OnReached.AddDynamic(this, &ThisClass::HandleUnblockableTelegraphStart);
+			TelegraphEnd->OnReached.AddDynamic(this, &ThisClass::HandleUnblockableTelegraphEnd);
 		}
-		FlashStart->ReadyForActivation();
-		FlashEnd->ReadyForActivation();
+		TelegraphStart->ReadyForActivation();
+		TelegraphEnd->ReadyForActivation();
 	}
 }
 
@@ -239,17 +239,17 @@ float UAgBossPatternAbility::GetForwardTravelBeforeFirstWindow(const UAnimMontag
 	return FMath::Max(0.f, RootMotion.GetTranslation().Size2D());
 }
 
-void UAgBossPatternAbility::SetFlash(bool bOn)
+void UAgBossPatternAbility::SetUnblockableTelegraph(bool bOn)
 {
-	SetWeaponFlash(AgGameplayTags::GameplayCue_UnblockableFlash, bFlashing, bOn);
+	SetWeaponTelegraph(AgGameplayTags::GameplayCue_UnblockableTelegraph, bUnblockableTelegraphOn, bOn);
 }
 
-void UAgBossPatternAbility::SetParryFlash(bool bOn)
+void UAgBossPatternAbility::SetParryTelegraph(bool bOn)
 {
-	SetWeaponFlash(AgGameplayTags::GameplayCue_ParryFlash, bParryFlashing, bOn);
+	SetWeaponTelegraph(AgGameplayTags::GameplayCue_ParryTelegraph, bParryTelegraphOn, bOn);
 }
 
-void UAgBossPatternAbility::SetWeaponFlash(const FGameplayTag& Cue, bool& bActive, bool bOn)
+void UAgBossPatternAbility::SetWeaponTelegraph(const FGameplayTag& Cue, bool& bActive, bool bOn)
 {
 	AAgCharacterBase* Boss = GetAgCharacter();
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
@@ -273,24 +273,24 @@ void UAgBossPatternAbility::SetWeaponFlash(const FGameplayTag& Cue, bool& bActiv
 	UE_LOG(LogAg, Verbose, TEXT("%s %s"), *Cue.ToString(), bOn ? TEXT("on") : TEXT("off"));
 }
 
-void UAgBossPatternAbility::HandleFlashStart()
+void UAgBossPatternAbility::HandleUnblockableTelegraphStart()
 {
-	SetFlash(true);
+	SetUnblockableTelegraph(true);
 }
 
-void UAgBossPatternAbility::HandleFlashEnd()
+void UAgBossPatternAbility::HandleUnblockableTelegraphEnd()
 {
-	SetFlash(false);
+	SetUnblockableTelegraph(false);
 }
 
-void UAgBossPatternAbility::HandleParryFlashStart()
+void UAgBossPatternAbility::HandleParryTelegraphStart()
 {
-	SetParryFlash(true);
+	SetParryTelegraph(true);
 }
 
-void UAgBossPatternAbility::HandleParryFlashEnd()
+void UAgBossPatternAbility::HandleParryTelegraphEnd()
 {
-	SetParryFlash(false);
+	SetParryTelegraph(false);
 }
 
 void UAgBossPatternAbility::HandleMontageFinished()
@@ -305,8 +305,8 @@ void UAgBossPatternAbility::HandleMontageCancelled()
 
 void UAgBossPatternAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	SetFlash(false);
-	SetParryFlash(false);
+	SetUnblockableTelegraph(false);
+	SetParryTelegraph(false);
 	if (AAgCharacterBase* Boss = GetAgCharacter())
 	{
 		Boss->ClearActiveAttack();

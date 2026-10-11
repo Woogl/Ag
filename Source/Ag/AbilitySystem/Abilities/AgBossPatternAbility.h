@@ -63,31 +63,31 @@ protected:
 	void FindEventNotifyTimes(const FGameplayTag& EventTag, TArray<float>& OutTimes) const;
 
 	/** 예고 섬광 on the weapon, for a hit that isn't a montage window (A4's landing). */
-	void SetParryFlash(bool bOn);
+	void SetParryTelegraph(bool bOn);
 
 private:
 	/** How far the montage's own root motion moves forward before the first attack window. */
 	static float GetForwardTravelBeforeFirstWindow(const UAnimMontage* Montage);
 
-	/** Shows a flash from Lead (montage time) before each hit start until the hit starts. */
-	void ScheduleFlashes(const TArray<float>& HitStarts, float Lead, bool bParryFlash);
+	/** Shows a telegraph from Lead (montage time) before each hit start until the hit starts. */
+	void ScheduleTelegraphs(const TArray<float>& HitStarts, float Lead, bool bParryTelegraph);
 
-	void SetFlash(bool bOn);
+	void SetUnblockableTelegraph(bool bOn);
 
-	/** Turns a weapon flash cue on or off; bActive tracks whether it is on. */
-	void SetWeaponFlash(const FGameplayTag& Cue, bool& bActive, bool bOn);
-
-	UFUNCTION()
-	void HandleFlashStart();
+	/** Turns a weapon telegraph cue on or off; bActive tracks whether it is on. */
+	void SetWeaponTelegraph(const FGameplayTag& Cue, bool& bActive, bool bOn);
 
 	UFUNCTION()
-	void HandleFlashEnd();
+	void HandleUnblockableTelegraphStart();
 
 	UFUNCTION()
-	void HandleParryFlashStart();
+	void HandleUnblockableTelegraphEnd();
 
 	UFUNCTION()
-	void HandleParryFlashEnd();
+	void HandleParryTelegraphStart();
+
+	UFUNCTION()
+	void HandleParryTelegraphEnd();
 
 	UFUNCTION()
 	void HandleMontageFinished();
@@ -98,6 +98,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> Montage;
 
-	bool bFlashing = false;
-	bool bParryFlashing = false;
+	bool bUnblockableTelegraphOn = false;
+	bool bParryTelegraphOn = false;
 };

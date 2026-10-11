@@ -25,7 +25,7 @@ private:
 	void SetRotationLocked(bool bLocked);
 
 	UFUNCTION()
-	void HandleParryFlashTime();
+	void HandleParryTelegraphTime();
 
 	UFUNCTION()
 	void HandleRotationStop();

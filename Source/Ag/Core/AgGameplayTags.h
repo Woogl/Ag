@@ -36,7 +36,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LockOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_KnockBack);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Down);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_GuardPushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_GuardBreak);
@@ -76,7 +76,7 @@ namespace AgGameplayTags
 
 	// Gameplay events that start state abilities or report combat results.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockBack);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Down);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Break);
@@ -117,8 +117,8 @@ namespace AgGameplayTags
 	// GameplayCues for effects and camera shakes.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Hit);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Parry);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableFlash);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryFlash);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableTelegraph);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Small);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Medium);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Large);

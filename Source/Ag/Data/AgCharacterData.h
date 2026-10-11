@@ -342,11 +342,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> ExecutionMontage;
 
-	/** 다운: falling down. */
+	/** 넉다운: falling down. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> DownMontage;
+	TObjectPtr<UAnimMontage> KnockDownMontage;
 
-	/** 다운, 넉업: getting up, blended in after DownMontage or KnockUpFallMontage (the poses differ slightly). */
+	/** 넉다운, 넉업: getting up, blended in after KnockDownMontage or KnockUpFallMontage (the poses differ slightly). */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> GetUpMontage;
 
@@ -438,11 +438,11 @@ public:
 
 	/** 공격 속성과 예고: the 붉은 섬광 starts this long before an unguardable attack window. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
-	float UnblockableFlashLead = 0.f;
+	float UnblockableTelegraphLead = 0.f;
 
 	/** 공격 속성과 예고: the 예고 섬광 starts this long before a parryable attack window. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
-	float ParryFlashLead = 0.f;
+	float ParryTelegraphLead = 0.f;
 
 	/** A3 돌진 규칙: 속도 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "A3 Dash", meta = (Units = "cm/s", ClampMin = 0))

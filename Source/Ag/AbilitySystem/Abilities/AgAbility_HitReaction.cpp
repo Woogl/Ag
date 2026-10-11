@@ -31,7 +31,7 @@ UAgAbility_HitReaction::UAgAbility_HitReaction()
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_Down);
+	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockDown);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockUp);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardPushback);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_GuardBreak);
@@ -61,7 +61,7 @@ void UAgAbility_HitReaction::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 		return;
 	}
 
-	// 다운, 넉업: invincible from the moment the body is on the ground until getting up ends.
+	// 넉다운, 넉업: invincible from the moment the body is on the ground until getting up ends.
 	UAbilityTask_WaitGameplayEvent* GroundedTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_DownGrounded, nullptr, /*OnlyTriggerOnce*/ true);
 	GroundedTask->EventReceived.AddDynamic(this, &ThisClass::HandleGrounded);
 	GroundedTask->ReadyForActivation();
@@ -110,7 +110,7 @@ bool UAgAbility_HitReaction::PlayFollowUp()
 void UAgAbility_HitReaction::HandleMontageBlendingOut()
 {
 	// The follow-up (getting up) cross-fades in as the motion blends out. The reaction itself lasts until the last motion
-	// ends (전투 시스템 '피격 모션': no action and, for 다운 and 넉업, invincible until getting up ends).
+	// ends (전투 시스템 '피격 모션': no action and, for 넉다운 and 넉업, invincible until getting up ends).
 	PlayFollowUp();
 }
 
@@ -161,18 +161,18 @@ UAnimMontage* UAgAbility_KnockBack::GetReactionMontage() const
 	return Data ? Data->KnockBackMontage.Get() : nullptr;
 }
 
-UAgAbility_Down::UAgAbility_Down()
+UAgAbility_KnockDown::UAgAbility_KnockDown()
 {
-	SetupReaction(AgGameplayTags::Ability_Reaction_Down, AgGameplayTags::Event_Hit_Down);
+	SetupReaction(AgGameplayTags::Ability_Reaction_KnockDown, AgGameplayTags::Event_Hit_KnockDown);
 }
 
-UAnimMontage* UAgAbility_Down::GetReactionMontage() const
+UAnimMontage* UAgAbility_KnockDown::GetReactionMontage() const
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return Data ? Data->DownMontage.Get() : nullptr;
+	return Data ? Data->KnockDownMontage.Get() : nullptr;
 }
 
-UAnimMontage* UAgAbility_Down::GetFollowUpMontage() const
+UAnimMontage* UAgAbility_KnockDown::GetFollowUpMontage() const
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	return Data ? Data->GetUpMontage.Get() : nullptr;

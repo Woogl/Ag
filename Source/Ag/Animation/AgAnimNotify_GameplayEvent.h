@@ -8,7 +8,7 @@
 #include "AgAnimNotify_GameplayEvent.generated.h"
 
 /**
- * Marks a moment in a motion by sending a gameplay event to the owner (for example, 다운 lying down: Event.DownGrounded).
+ * Marks a moment in a motion by sending a gameplay event to the owner (for example, 넉다운 lying down: Event.DownGrounded).
  * The running ability waits for the event.
  */
 UCLASS(meta = (DisplayName = "Gameplay Event"))

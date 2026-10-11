@@ -50,7 +50,7 @@
         {
           "DamageMultiplier": 1.5,
           "PoiseMultiplier": 1,
-          "HitReaction": "Down",
+          "HitReaction": "KnockDown",
           "bGuardable": true,
           "bParryable": true
         }
@@ -193,8 +193,8 @@
   "Phase2HPRatio": 0.5,
   "Phase2PatternSpeed": 1.1,
   "Phase2MOVMultiplier": 1.2,
-  "UnblockableFlashLead": 0.5,
-  "ParryFlashLead": 0.3,
+  "UnblockableTelegraphLead": 0.5,
+  "ParryTelegraphLead": 0.3,
   "DashSpeed": 2000,
   "DashOvershoot": 200,
   "DashMaxDistance": 2000,

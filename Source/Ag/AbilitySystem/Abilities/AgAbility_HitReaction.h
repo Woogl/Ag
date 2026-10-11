@@ -10,11 +10,11 @@
 class UAbilityTask_PlayMontageAndWait;
 
 /**
- * 넉업, 넉백, 다운, 가드 밀림 and 가드 브레이크 (전투 시스템 '피격 모션', '가드 반응'), started by a hit event.
+ * 넉업, 넉백, 넉다운, 가드 밀림 and 가드 브레이크 (전투 시스템 '피격 모션', '가드 반응'), started by a hit event.
  * Stops the current action or boss pattern, turns toward the attacker and plays the motion; no action is possible until
  * it ends. The reaction ends when the last motion ends, not when it starts blending out.
  * A new knockup, knockback or down restarts the motion with the new reaction.
- * A motion that marks the moment the body hits the ground (Event.DownGrounded: 다운, 넉업) is invincible from then until
+ * A motion that marks the moment the body hits the ground (Event.DownGrounded: 넉다운, 넉업) is invincible from then until
  * the reaction ends.
  */
 UCLASS(Abstract)
@@ -31,7 +31,7 @@ protected:
 
 	virtual UAnimMontage* GetReactionMontage() const PURE_VIRTUAL(UAgAbility_HitReaction::GetReactionMontage, return nullptr;);
 
-	/** Played after the reaction montage ends, if any (다운, 넉업: getting up). */
+	/** Played after the reaction montage ends, if any (넉다운, 넉업: getting up). */
 	virtual UAnimMontage* GetFollowUpMontage() const { return nullptr; }
 
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
@@ -76,14 +76,14 @@ protected:
 	virtual UAnimMontage* GetReactionMontage() const override;
 };
 
-/** 다운: 쓰러졌다가 일어남. */
+/** 넉다운: 쓰러졌다가 일어남. */
 UCLASS()
-class UAgAbility_Down : public UAgAbility_HitReaction
+class UAgAbility_KnockDown : public UAgAbility_HitReaction
 {
 	GENERATED_BODY()
 
 public:
-	UAgAbility_Down();
+	UAgAbility_KnockDown();
 
 protected:
 	virtual UAnimMontage* GetReactionMontage() const override;
@@ -95,7 +95,7 @@ protected:
  * A root motion jump moves the character straight up and down along a parabola of the height and air time, whatever the
  * gravity. The motions' own root motion is ignored meanwhile, so the landing plays where the character fell. The rising
  * pose blends into the falling pose around the top of the flight; landing plays the fall montage's Land section, then the
- * 다운 get-up.
+ * 넉다운 get-up.
  */
 UCLASS()
 class UAgAbility_KnockUp : public UAgAbility_HitReaction

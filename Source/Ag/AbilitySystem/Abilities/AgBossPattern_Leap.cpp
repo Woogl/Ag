@@ -67,16 +67,16 @@ void UAgBossPattern_Leap::OnPatternStarted()
 	const FAgBossPattern* Pattern = GetPattern();
 	if (Pattern && !Pattern->Hits.IsEmpty() && Pattern->Hits[0].bParryable)
 	{
-		const float FlashTime = (Data->LeapAirTime - Data->ParryFlashLead) / Boss->GetPatternSpeed();
-		if (FlashTime > 0.f)
+		const float TelegraphTime = (Data->LeapAirTime - Data->ParryTelegraphLead) / Boss->GetPatternSpeed();
+		if (TelegraphTime > 0.f)
 		{
-			UAbilityTask_WaitDelay* FlashTask = UAbilityTask_WaitDelay::WaitDelay(this, FlashTime);
-			FlashTask->OnFinish.AddDynamic(this, &ThisClass::HandleParryFlashTime);
-			FlashTask->ReadyForActivation();
+			UAbilityTask_WaitDelay* TelegraphTask = UAbilityTask_WaitDelay::WaitDelay(this, TelegraphTime);
+			TelegraphTask->OnFinish.AddDynamic(this, &ThisClass::HandleParryTelegraphTime);
+			TelegraphTask->ReadyForActivation();
 		}
 		else
 		{
-			SetParryFlash(true);
+			SetParryTelegraph(true);
 		}
 	}
 
@@ -96,7 +96,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	}
 	bLanded = true;
 	SetRotationLocked(false);
-	SetParryFlash(false);
+	SetParryTelegraph(false);
 
 	if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
 	{
@@ -119,11 +119,11 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	}
 }
 
-void UAgBossPattern_Leap::HandleParryFlashTime()
+void UAgBossPattern_Leap::HandleParryTelegraphTime()
 {
 	if (!bLanded)
 	{
-		SetParryFlash(true);
+		SetParryTelegraph(true);
 	}
 }
 
