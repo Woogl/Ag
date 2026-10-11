@@ -39,6 +39,9 @@ public:
 
 	UAgLockOnComponent* GetLockOn() const { return LockOn; }
 
+	/** IMC_Ag: 전투 HUD의 조작 안내가 이 매핑을 표시합니다. */
+	const UInputMappingContext* GetInputMapping() const { return InputMapping; }
+
 	/** The camera's spring arm. Its origin is the camera's 회전 중심. */
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 

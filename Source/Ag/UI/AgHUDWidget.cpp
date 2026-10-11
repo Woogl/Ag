@@ -15,6 +15,8 @@
 #include "Data/AgCombatRules.h"
 #include "Data/AgDataFile.h"
 #include "EngineUtils.h"
+#include "InputAction.h"
+#include "InputMappingContext.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
 namespace
@@ -40,6 +42,49 @@ void UAgHUDWidget::NativeConstruct()
 			Icon->SetVisibility(ESlateVisibility::Collapsed);
 		}
 	}
+
+	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
+	{
+		ShowControlsGuide(*Player);
+	}
+}
+
+void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
+{
+	const UInputMappingContext* Mapping = Player.GetInputMapping();
+	if (!ControlsGuideKeys || !ControlsGuideActions || !Mapping)
+	{
+		return;
+	}
+
+	// 한 행동에 매핑이 여럿이면(이동의 W, A, S, D) 그 행동의 줄에 키를 모읍니다.
+	TArray<const UInputAction*> Actions;
+	TMap<const UInputAction*, TArray<FText>> KeysByAction;
+	for (const FEnhancedActionKeyMapping& KeyMapping : Mapping->GetMappings())
+	{
+		if (!KeyMapping.Action)
+		{
+			continue;
+		}
+		TArray<FText>& Keys = KeysByAction.FindOrAdd(KeyMapping.Action);
+		if (Keys.IsEmpty())
+		{
+			Actions.Add(KeyMapping.Action);
+		}
+		const FText* DisplayName = KeyDisplayNames.Find(KeyMapping.Key);
+		Keys.Add(DisplayName ? *DisplayName : KeyMapping.Key.GetDisplayName(/*bLongDisplayName*/ false));
+	}
+
+	TArray<FText> KeyLines;
+	TArray<FText> ActionLines;
+	for (const UInputAction* Action : Actions)
+	{
+		KeyLines.Add(FText::Join(FText::FromString(TEXT(", ")), KeysByAction[Action]));
+		ActionLines.Add(Action->ActionDescription);
+	}
+	const FText LineBreak = FText::FromString(TEXT("\n"));
+	ControlsGuideKeys->SetText(FText::Join(LineBreak, KeyLines));
+	ControlsGuideActions->SetText(FText::Join(LineBreak, ActionLines));
 }
 
 void UAgHUDWidget::HideStatus()

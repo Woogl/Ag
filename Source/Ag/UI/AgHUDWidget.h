@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
+#include "InputCoreTypes.h"
 #include "AgHUDWidget.generated.h"
 
 class AAgBossCharacter;
@@ -27,7 +28,7 @@ class UAgHUDWidget : public UCommonActivatableWidget
 	GENERATED_BODY()
 
 public:
-	/** 상황별 표시 규칙 '사망 연출': hides the player status, slots and boss status. */
+	/** 상황별 표시 규칙 '사망 연출': 플레이어 상태, 슬롯, 보스 상태, 조작 안내를 숨깁니다. */
 	void HideStatus();
 
 protected:
@@ -35,7 +36,7 @@ protected:
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-	/** Holds every status element (플레이어 상태, 슬롯, 보스 상태). */
+	/** 사망 연출에 숨기는 요소(플레이어 상태, 슬롯, 보스 상태, 조작 안내)를 모두 담습니다. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UWidget> StatusPanel;
 
@@ -111,6 +112,18 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> BossPPBar;
 
+	/** 조작 안내: 키 열. 한 줄에 행동 하나의 키를 표시합니다. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> ControlsGuideKeys;
+
+	/** 조작 안내: 행동 이름 열. 키 열과 같은 줄 순서입니다. */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> ControlsGuideActions;
+
+	/** UI 스타일 '입력 키 표시': 엔진 키 이름과 다르게 표시하는 키(마우스 입력 등)의 표시 이름 */
+	UPROPERTY(EditAnywhere, Category = "HUD|Controls Guide")
+	TMap<FKey, FText> KeyDisplayNames;
+
 	/** 스킬·궁극기 슬롯: opacity of a slot that can't be used. */
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;
@@ -138,6 +151,9 @@ private:
 		/** Time into the shrink, negative while not shrinking. */
 		float ShrinkElapsed = -1.f;
 	};
+
+	/** 조작 안내: 플레이어 입력 매핑의 행동마다 키와 행동 이름(입력 액션의 설명)을 매핑 순서대로 한 줄씩 채웁니다. */
+	void ShowControlsGuide(const AAgPlayerCharacter& Player);
 
 	void UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime);
 	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);
