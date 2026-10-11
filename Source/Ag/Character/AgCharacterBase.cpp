@@ -12,14 +12,11 @@
 #include "Combat/AgCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgDataFile.h"
-#include "Engine/SkeletalMesh.h"
-#include "Engine/StaticMesh.h"
 #include "Game/AgBossStageGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -60,6 +57,8 @@ namespace
 }
 
 const FName AAgCharacterBase::AttackWarpTarget(TEXT("AttackTarget"));
+const FName AAgCharacterBase::WeaponTag(TEXT("Weapon"));
+const FName AAgCharacterBase::WeaponCollisionTag(TEXT("WeaponCollision"));
 
 AAgCharacterBase::AAgCharacterBase()
 {
@@ -70,21 +69,6 @@ AAgCharacterBase::AAgCharacterBase()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
 	AttributeSet = CreateDefaultSubobject<UAgAttributeSet>(TEXT("AttributeSet"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
-
-	StaticWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticWeapon"));
-	StaticWeapon->SetupAttachment(GetMesh());
-	StaticWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	SkeletalWeapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalWeapon"));
-	SkeletalWeapon->SetupAttachment(GetMesh());
-	SkeletalWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	WeaponEdge = CreateDefaultSubobject<UCapsuleComponent>(TEXT("WeaponEdge"));
-	WeaponEdge->SetupAttachment(GetMesh());
-	WeaponEdge->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WeaponEdge->SetGenerateOverlapEvents(false);
-	WeaponEdge->SetCanEverAffectNavigation(false);
-	WeaponEdge->SetHiddenInGame(true);
 
 	// Characters never block the camera (카메라 '카메라 충돌').
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -102,20 +86,17 @@ UAbilitySystemComponent* AAgCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void AAgCharacterBase::OnConstruction(const FTransform& Transform)
+void AAgCharacterBase::PostInitializeComponents()
 {
-	Super::OnConstruction(Transform);
+	Super::PostInitializeComponents();
 
-	ApplyWeapon();
+	WeaponComponent = FindComponentByTag<USceneComponent>(WeaponTag);
+	WeaponCollisionComponent = FindComponentByTag<UCapsuleComponent>(WeaponCollisionTag);
 }
 
 void AAgCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Again at play: a character placed in the level keeps the weapon of its last construction, even after the data
-	// asset changed.
-	ApplyWeapon();
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute()).AddUObject(this, &ThisClass::HandleMOVChanged);
@@ -245,40 +226,15 @@ void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, co
 	Handle = UAgCombatLibrary::ApplyTimedTag(AbilitySystemComponent, DelayTag, Duration);
 }
 
-void AAgCharacterBase::ApplyWeapon()
+bool AAgCharacterBase::GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const
 {
-	UStreamableRenderAsset* WeaponMesh = CharacterData ? CharacterData->WeaponMesh.Get() : nullptr;
-	const FName Socket = CharacterData ? CharacterData->WeaponSocket : NAME_None;
-	const FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false);
-
-	StaticWeapon->SetStaticMesh(Cast<UStaticMesh>(WeaponMesh));
-	StaticWeapon->AttachToComponent(GetMesh(), AttachRules, Socket);
-
-	SkeletalWeapon->SetSkeletalMeshAsset(Cast<USkeletalMesh>(WeaponMesh));
-	SkeletalWeapon->AttachToComponent(GetMesh(), AttachRules, Socket);
-
-	// The edge keeps the place it is given in the blueprint, relative to the socket and so to the weapon.
-	WeaponEdge->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, Socket);
-}
-
-USceneComponent* AAgCharacterBase::GetWeaponComponent() const
-{
-	if (StaticWeapon->GetStaticMesh())
-	{
-		return StaticWeapon;
-	}
-	return SkeletalWeapon->GetSkeletalMeshAsset() ? SkeletalWeapon.Get() : nullptr;
-}
-
-bool AAgCharacterBase::GetWeaponEdge(FVector& OutStart, FVector& OutEnd) const
-{
-	if (!GetWeaponComponent())
+	if (!WeaponCollisionComponent)
 	{
 		return false;
 	}
-	// The capsule's axis is its local Z.
-	const FVector Center = WeaponEdge->GetComponentLocation();
-	const FVector HalfSegment = WeaponEdge->GetUpVector() * WeaponEdge->GetScaledCapsuleHalfHeight_WithoutHemisphere();
+	// 캡슐의 축은 로컬 Z입니다.
+	const FVector Center = WeaponCollisionComponent->GetComponentLocation();
+	const FVector HalfSegment = WeaponCollisionComponent->GetUpVector() * WeaponCollisionComponent->GetScaledCapsuleHalfHeight_WithoutHemisphere();
 	OutStart = Center + HalfSegment;
 	OutEnd = Center - HalfSegment;
 	return true;
@@ -313,13 +269,13 @@ void AAgCharacterBase::BeginAttackWindow(int32 HitIndex)
 		return;
 	}
 
-	// The facing and approach target are fixed once the attack window starts (플레이어 사양 '공격 중 이동').
+	// 판정 구간이 시작되면 바라보는 방향과 접근 목표를 고정합니다(플레이어 사양 '공격 중 이동').
 	StopApproach();
 
 	OpenWindowHit = HitIndex;
 	WindowTouchedActors.Reset();
 	UE_LOG(LogAg, Verbose, TEXT("%s: attack window %d opens"), *GetName(), HitIndex + 1);
-	if (GetWeaponEdge(LastEdgeStart, LastEdgeEnd))
+	if (GetWeaponCollision(LastEdgeStart, LastEdgeEnd))
 	{
 		SweepWeapon();
 	}
@@ -337,14 +293,14 @@ void AAgCharacterBase::EndAttackWindow(int32 HitIndex)
 void AAgCharacterBase::SweepWeapon()
 {
 	FVector EdgeStart, EdgeEnd;
-	if (!GetWeaponEdge(EdgeStart, EdgeEnd))
+	if (!GetWeaponCollision(EdgeStart, EdgeEnd))
 	{
 		return;
 	}
 
 	const float Travel = FMath::Max(FVector::Dist(EdgeStart, LastEdgeStart), FVector::Dist(EdgeEnd, LastEdgeEnd));
 	const int32 Steps = FMath::Clamp(FMath::CeilToInt(Travel / SweepStepLength), 1, MaxSweepSteps);
-	const FCollisionShape Edge = FCollisionShape::MakeSphere(WeaponEdge->GetScaledCapsuleRadius());
+	const FCollisionShape Edge = FCollisionShape::MakeSphere(WeaponCollisionComponent->GetScaledCapsuleRadius());
 	const FCollisionQueryParams Params(SCENE_QUERY_STAT(AgWeaponSweep), /*bTraceComplex*/ false, this);
 	const FVector Center = GetActorLocation();
 
@@ -365,7 +321,7 @@ void AAgCharacterBase::SweepWeapon()
 				continue;
 			}
 
-			// One touch per target per window, even when it does nothing (an invincible target stays missed).
+			// 판정 구간 하나에서 대상마다 한 번만 닿습니다. 아무 일도 없었어도(무적) 다시 맞지 않습니다.
 			WindowTouchedActors.Add(Target);
 			const FVector HitLocation = Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint;
 			UAgCombatLibrary::ProcessHit(this, Target, ActiveAttackHits[OpenWindowHit], HitLocation);

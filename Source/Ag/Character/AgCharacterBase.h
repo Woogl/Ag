@@ -36,6 +36,10 @@ public:
 	/** Motion warping target the attack montages warp toward. */
 	static const FName AttackWarpTarget;
 
+	/** 블루프린트에서 무기 메시 컴포넌트와 무기 판정 캡슐에 다는 컴포넌트 태그 */
+	static const FName WeaponTag;
+	static const FName WeaponCollisionTag;
+
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UAgAttributeSet* GetAttributeSet() const { return AttributeSet; }
@@ -44,8 +48,8 @@ public:
 
 	UMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
 
-	/** The component holding the weapon mesh, or null. */
-	USceneComponent* GetWeaponComponent() const;
+	/** 블루프린트의 무기 메시 컴포넌트(WeaponTag). 없으면 null입니다. */
+	USceneComponent* GetWeaponComponent() const { return WeaponComponent; }
 
 	bool IsDead() const { return bDead; }
 
@@ -105,7 +109,7 @@ public:
 	FAgCharacterDiedSignature OnDied;
 
 protected:
-	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -142,18 +146,15 @@ private:
 	/** Sets the stats to the starting values in the character data. */
 	void InitializeStats();
 
-	/** Puts the character data's weapon mesh on the matching component and attaches it and the edge to the weapon socket. */
-	void ApplyWeapon();
-
 	void HandleMOVChanged(const FOnAttributeChangeData& Data);
 
 	/** PP 리젠: any PP decrease restarts the regen delay. */
 	void HandlePPChanged(const FOnAttributeChangeData& Data);
 
-	/** World positions of the weapon's damaging edge. */
-	bool GetWeaponEdge(FVector& OutStart, FVector& OutEnd) const;
+	/** 무기 판정 캡슐 축의 양 끝(월드 위치) */
+	bool GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const;
 
-	/** Sweeps the weapon edge from its last position to the current one, in small steps so fast swings don't skip. */
+	/** 무기 판정 캡슐을 지난 위치에서 지금 위치까지 잘게 나눠 스윕합니다. 빠르게 휘둘러도 건너뛰지 않습니다. */
 	void SweepWeapon();
 
 	void UpdateApproach();
@@ -166,20 +167,16 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAgAttributeSet> AttributeSet;
 
-	/** Holds the weapon when it is a static mesh (katana). */
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	TObjectPtr<UStaticMeshComponent> StaticWeapon;
-
-	/** Holds the weapon when it is a skeletal mesh (halberd). */
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	TObjectPtr<USkeletalMeshComponent> SkeletalWeapon;
+	/** 무기 메시. 블루프린트에서 메시와 붙일 소켓(Parent Socket)을 정합니다. */
+	UPROPERTY(Transient)
+	TObjectPtr<USceneComponent> WeaponComponent;
 
 	/**
-	 * The weapon's damaging edge, on the weapon socket like the weapon. Attacks sweep the segment between the centers of
-	 * its two ends with a sphere of its radius; it has no collision of its own. Fitted to the blade in the blueprint.
+	 * 무기 판정 캡슐. 블루프린트에서 무기 컴포넌트의 자식으로 두고 날 전체를 덮게 맞춥니다. 공격은 캡슐 양 끝 중심을 잇는
+	 * 선분을 캡슐 반지름의 구로 스윕하며, 캡슐 자체의 충돌은 쓰지 않습니다.
 	 */
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	TObjectPtr<UCapsuleComponent> WeaponEdge;
+	UPROPERTY(Transient)
+	TObjectPtr<UCapsuleComponent> WeaponCollisionComponent;
 
 	/** 공격 보정 (Motion Warping). */
 	UPROPERTY(VisibleAnywhere, Category = "Movement")

@@ -8,8 +8,12 @@
 #include "Animation/WidgetAnimation.h"
 #include "AssetToolsModule.h"
 #include "Blueprint/WidgetTree.h"
+#include "Engine/Blueprint.h"
+#include "Engine/SCS_Node.h"
+#include "Engine/SimpleConstructionScript.h"
 #include "IAssetTools.h"
 #include "Kismet2/BlueprintEditorUtils.h"
+#include "Kismet2/KismetEditorUtilities.h"
 #include "Logging/TokenizedMessage.h"
 #include "Misc/PackageName.h"
 #include "Misc/StringOutputDevice.h"
@@ -87,6 +91,22 @@ namespace
 		const UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
 		return NodeStruct && NodeStruct->IsChildOf(Base) && EditorData && EditorData->Schema && EditorData->Schema->IsStructAllowed(NodeStruct);
 	}
+}
+
+bool UAgAssetToolset::SetComponentParentSocket(UBlueprint* Blueprint, FName ComponentName, FName SocketName)
+{
+	USCS_Node* Node = Blueprint && Blueprint->SimpleConstructionScript ? Blueprint->SimpleConstructionScript->FindSCSNode(ComponentName) : nullptr;
+	if (!Node)
+	{
+		return false;
+	}
+
+	// 에디터의 Parent Socket 선택과 같은 처리입니다.
+	Node->Modify();
+	Node->AttachToName = SocketName;
+	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
+	FKismetEditorUtilities::CompileBlueprint(Blueprint);
+	return true;
 }
 
 bool UAgAssetToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName GroupName)

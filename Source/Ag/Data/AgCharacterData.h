@@ -15,7 +15,6 @@ class UAnimSequenceBase;
 class UBlendSpace;
 class UGameplayAbility;
 class UStateTree;
-class UStreamableRenderAsset;
 
 /** The '스탯' tables of 플레이어 사양 and 보스 사양: starting value and maximum of each stat. */
 USTRUCT(BlueprintType)
@@ -127,14 +126,6 @@ public:
 	/** Loop played while falling. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Animation")
 	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
-
-	/** Weapon mesh: the katana is a static mesh, the halberd a skeletal mesh. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Weapon", meta = (AllowedClasses = "/Script/Engine.StaticMesh,/Script/Engine.SkeletalMesh"))
-	TObjectPtr<UStreamableRenderAsset> WeaponMesh;
-
-	/** Socket on SK_Mannequin the weapon attaches to. */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
-	FName WeaponSocket;
 };
 
 /** DA_Player, Player.json */

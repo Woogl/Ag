@@ -11,6 +11,7 @@
 #include "AgAssetToolset.generated.h"
 
 class UAnimMontage;
+class UBlueprint;
 class UAnimSequenceBase;
 class USkeleton;
 class UStateTree;
@@ -57,7 +58,7 @@ struct FAgMontageSection
 
 /**
  * 엔진 MCP 도구와 에디터 파이썬으로 할 수 없는 에셋 편집: 몽타주 섹션, 몽타주 구간과 몽타주 길이, 스켈레톤 슬롯 그룹,
- * 위젯 애니메이션, StateTree 에셋의 생성과 상태·태스크·전환 편집과 컴파일. AgEditor 모듈이 MCP 툴셋으로 등록합니다.
+ * 위젯 애니메이션, 블루프린트 컴포넌트의 Parent Socket, StateTree 에셋의 생성과 상태·태스크·전환 편집과 컴파일. AgEditor 모듈이 MCP 툴셋으로 등록합니다.
  * 고친 에셋은 저장하지 않으므로 에셋 도구로 저장합니다. StateTree는 경로로 상태를 가리키고(이름을 '/'로 이음, 예:
  * Root/전투), 엔진의 StateTree 조회 도구로 읽습니다.
  */
@@ -67,6 +68,14 @@ class UAgAssetToolset : public UToolsetDefinition
 	GENERATED_BODY()
 
 public:
+	/**
+	 * 블루프린트에서 더한 컴포넌트를 부모 컴포넌트의 소켓에 붙입니다(디테일 패널의 Parent Socket과 같음).
+	 * C++에서 만든 상속 컴포넌트는 에디터처럼 바꿀 수 없습니다. 블루프린트를 컴파일합니다.
+	 * @return 블루프린트에 그 이름의 컴포넌트가 없으면 false입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool SetComponentParentSocket(UBlueprint* Blueprint, FName ComponentName, FName SocketName);
+
 	/**
 	 * Puts a montage slot in its own slot group on the skeleton, so montages in different groups don't stop each other.
 	 * @return False if an argument is missing or the slot didn't end up in the group.
