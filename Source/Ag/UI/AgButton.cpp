@@ -21,7 +21,6 @@ void UAgButton::NativePreConstruct()
 	{
 		LabelText->SetText(ButtonText);
 	}
-	UpdateSelectionMarker();
 }
 
 void UAgButton::NativeOnCurrentTextStyleChanged()
@@ -51,26 +50,4 @@ void UAgButton::HandleFocusLost()
 
 	// Only the focused button stays selected. SetIsSelected(false) deselects only toggleable buttons, so it would leave this one selected.
 	ClearSelection();
-}
-
-void UAgButton::NativeOnSelected(bool bBroadcast)
-{
-	Super::NativeOnSelected(bBroadcast);
-
-	UpdateSelectionMarker();
-}
-
-void UAgButton::NativeOnDeselected(bool bBroadcast)
-{
-	Super::NativeOnDeselected(bBroadcast);
-
-	UpdateSelectionMarker();
-}
-
-void UAgButton::UpdateSelectionMarker()
-{
-	if (SelectionMarker)
-	{
-		SelectionMarker->SetVisibility(GetSelected() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
-	}
 }
