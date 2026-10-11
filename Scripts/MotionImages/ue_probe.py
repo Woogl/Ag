@@ -9,7 +9,7 @@ import os
 
 import unreal
 
-BONES = ["root", "pelvis", "hand_r", "weapon_r"]
+BONES = ["root", "pelvis", "hand_r"]
 
 
 def main():

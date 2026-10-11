@@ -120,24 +120,20 @@ def quat_to_rotator(q):
 
 # ------------------------------------------------------------------ characters and weapons
 class Katana:
-    """The player's katana on hand_r, placed from the weapon_r bone (Samurai 애니메이션 조사 '무기')."""
-    bone = "weapon_r"
+    """플레이어 카타나. 게임과 같이 hand_r의 소켓 KatanaSocket에 붙입니다(Samurai 애니메이션 조사 '무기')."""
+    bone = "hand_r"
     mesh = "/Game/Fab/ARPG_Pack/ARPG_Samurai/Demo/Weapon/Mesh/katana.katana"
     component = "/Script/Engine.StaticMeshComponent"
     mesh_property = "staticMesh"
-    BLADE = norm((-0.01, -0.541, 0.841))   # blade direction in weapon_r space, away from the left hand
-    EDGE = (-0.8645472843746747, -0.4179083592043054, -0.2791155151440153)   # edge side in weapon_r space (down in Idle1)
-    GRIP_Y = 55.0                           # mesh Y held by the right hand, just past the tsuba
-    TIP = (2.7, -43.2, 0.0)                 # mesh point of the tip
+    SOCKET_LOC = (-26.83, -26.36, 40.79)   # SK_Mannequin KatanaSocket 위치(hand_r 기준)
+    SOCKET_Q = (-0.48580840364876876, -0.315088429192808, -0.014223640429174067, 0.8151730888504507)   # 회전(Pitch 31.84, Yaw 19.46, Roll 67.18)
+    TIP = (2.7, -43.2, 0.0)                 # 메시의 칼끝
 
     @classmethod
-    def transform(cls, wr):
-        """Mesh pivot (component space) and rotation for a weapon_r transform."""
-        b = norm(qrot(tuple(wr[3:7]), cls.BLADE))
-        e = qrot(tuple(wr[3:7]), cls.EDGE)
-        e = norm(sub(e, scale(b, dot(e, b))))
-        y_axis, x_axis = scale(b, -1), scale(e, -1)   # mesh +Y points to the pommel, mesh -X is the edge
-        return sub(tuple(wr[0:3]), scale(y_axis, cls.GRIP_Y)), mat_to_quat(x_axis, y_axis, cross(x_axis, y_axis))
+    def transform(cls, hr):
+        """hand_r 변환에서 메시 피벗(컴포넌트 공간)과 회전을 구합니다."""
+        q = tuple(hr[3:7])
+        return add(tuple(hr[0:3]), qrot(q, cls.SOCKET_LOC)), qmul(q, cls.SOCKET_Q)
 
     @classmethod
     def tip(cls, wr):
