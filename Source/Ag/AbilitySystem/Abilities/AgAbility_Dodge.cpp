@@ -23,19 +23,14 @@ UAgAbility_Dodge::UAgAbility_Dodge()
 	SetCooldownTag(AgGameplayTags::Cooldown_Dodge);
 	CostGameplayEffectClass = UAgEffect_Cost::StaticClass();
 
-	// 회피 후딜 allows a new dodge: pressing it again restarts this ability.
+	// 회피 후딜에 회피를 다시 누르면 이 어빌리티를 처음부터 다시 시작합니다.
 	bRetriggerInstancedAbility = true;
 }
 
 void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
+	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Player || !Data)
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
 
 	const float SPBefore = Player->GetAttributeSet()->GetSP();
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
@@ -46,7 +41,7 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	SPSpent = SPBefore - Player->GetAttributeSet()->GetSP();
 	bPerfectDodged = false;
 
-	// 방향: toward the movement input whether locked on or not; without input, step back from where the character faces.
+	// 방향: 락온 여부와 관계없이 이동 입력 쪽으로 구르고, 입력이 없으면 바라보는 방향에서 뒤로 물러납니다.
 	const FVector InputDirection = Player->GetMoveInputDirection();
 	const bool bRoll = !InputDirection.IsNearlyZero();
 	if (bRoll)
@@ -109,7 +104,7 @@ void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 	// 회피 한 번에 한 번만 받습니다. 그 뒤의 공격도 피하지만 아무것도 주지 않습니다.
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (bPerfectDodged || !Data || !Character)
+	if (bPerfectDodged)
 	{
 		return;
 	}
@@ -141,8 +136,7 @@ void UAgAbility_Dodge::HandleMontageCancelled()
 
 float UAgAbility_Dodge::GetCooldownDuration() const
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return Data ? Data->DodgeCooldown : 0.f;
+	return GetCharacterData<UAgPlayerData>()->DodgeCooldown;
 }
 
 bool UAgAbility_Dodge::CanPayCost(const UAgAttributeSet& Stats) const
@@ -153,6 +147,5 @@ bool UAgAbility_Dodge::CanPayCost(const UAgAttributeSet& Stats) const
 
 FAgAbilityCost UAgAbility_Dodge::GetCost() const
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return { Data ? Data->DodgeSPCost : 0.f, 0.f, 0.f };
+	return { GetCharacterData<UAgPlayerData>()->DodgeSPCost, 0.f, 0.f };
 }

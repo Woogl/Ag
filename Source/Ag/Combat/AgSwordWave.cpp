@@ -14,7 +14,7 @@ AAgSwordWave::AAgSwordWave()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// The box is queried by hand every tick, so it needs no collision of its own.
+	// 상자는 매 틱 코드에서 직접 검사하므로 자체 충돌이 필요 없습니다.
 	HitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
 	HitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HitBox->SetGenerateOverlapEvents(false);

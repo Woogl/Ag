@@ -29,16 +29,11 @@ UAgAbility_Death::UAgAbility_Death()
 void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Character)
-	{
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
-		return;
-	}
 
 	// 처형 사망: 처형 사망 모션은 마지막 일격 뒤까지 처형 피격 모션과 같아, 같은 위치에서 튀지 않고 이어집니다.
 	// 래그돌은 모션이 끝날 때 바꿉니다. 처형의 일격으로 죽었을 때만 이렇게 하고, 처형 피격 모션 중 다른 공격으로 죽으면
-	// 일반 사망입니다.
-	const UAgBossData* BossData = GetCharacterData<UAgBossData>();
+	// 일반 사망입니다. 플레이어도 이 어빌리티를 쓰므로 보스 데이터인지 확인합니다.
+	const UAgBossData* BossData = Cast<UAgBossData>(Character->GetCharacterData());
 	const UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
 	const bool bKilledByExecution = TriggerEventData && TriggerEventData->InstigatorTags.HasTagExact(AgGameplayTags::Ability_Action_Execution);
 	if (bKilledByExecution && BossData && BossData->ExecutedMontage && BossData->ExecutedDeathMontage && AnimInstance
@@ -66,9 +61,6 @@ void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 
 void UAgAbility_Death::HandleExecutedDeathEnded()
 {
-	if (AAgCharacterBase* Character = GetAgCharacter())
-	{
-		Character->StartRagdoll(FVector::ZeroVector);
-	}
+	GetAgCharacter()->StartRagdoll(FVector::ZeroVector);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

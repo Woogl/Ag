@@ -8,7 +8,6 @@
 
 class UAgCameraData;
 class UAgCombatRules;
-struct FPropertyChangedEvent;
 
 /**
  * 프로젝트의 에셋 매니저(구현 계획서 '데이터' 읽는 방법). DefaultEngine.ini의 AssetManagerClassName으로 지정합니다.

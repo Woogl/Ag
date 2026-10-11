@@ -22,10 +22,10 @@ UAgBossPattern_Dash::UAgBossPattern_Dash()
 
 void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
+	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(Handle) : nullptr;
-	UAnimMontage* Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
+	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
 	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -65,10 +65,10 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 
 void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 {
-	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
+	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const AActor* Target = Boss ? Boss->GetTarget() : nullptr;
-	if (!Data || !Target)
+	const AActor* Target = Boss->GetTarget();
+	if (!Target)
 	{
 		return;
 	}
@@ -135,12 +135,12 @@ void UAgBossPattern_Dash::HandleAttackBlocked(FGameplayEventData Payload)
 
 void UAgBossPattern_Dash::SetDashing(bool bNewDashing)
 {
-	AAgCharacterBase* Boss = GetAgCharacter();
-	if (bDashing == bNewDashing || !Boss)
+	if (bDashing == bNewDashing)
 	{
 		return;
 	}
 	bDashing = bNewDashing;
+	AAgCharacterBase* Boss = GetAgCharacter();
 
 	// 돌진하는 동안이 판정 구간이라 회전하지 않고, 플레이어를 뚫고 지나갑니다.
 	if (bDashing)
@@ -180,10 +180,7 @@ void UAgBossPattern_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, co
 			AnimInstance->Montage_Resume(Montage);
 		}
 	}
-	if (AAgCharacterBase* Boss = GetAgCharacter())
-	{
-		Boss->ClearActiveAttack();
-	}
+	GetAgCharacter()->ClearActiveAttack();
 
 	// 몽타주의 루트 모션 무시와 돌진은 태스크가 어빌리티와 함께 끝나며 되돌립니다.
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

@@ -166,7 +166,7 @@ void AAgCharacterBase::InitializeStats()
 	const FAgStats& Stats = CharacterData->Stats;
 	UAbilitySystemComponent& ASC = *AbilitySystemComponent;
 
-	// Maximums first: the current values are clamped to them.
+	// 최대치를 먼저 넣습니다. 현재 값이 최대치에 맞춰 잘리기 때문입니다.
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxHPAttribute(), Stats.MaxHP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxSPAttribute(), Stats.MaxSP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxMPAttribute(), Stats.MaxMP);
@@ -182,7 +182,7 @@ void AAgCharacterBase::InitializeStats()
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetDEFAttribute(), Stats.DEF);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMOVAttribute(), Stats.MOV);
 
-	// The change delegate only fires when the value changes, so apply MOV once here.
+	// 변경 델리게이트는 값이 바뀔 때만 불리므로, MOV는 여기서 한 번 적용합니다.
 	UpdateMoveSpeed();
 }
 

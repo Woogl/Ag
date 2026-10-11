@@ -15,9 +15,8 @@ UAgAbility_LockOn::UAgAbility_LockOn()
 
 void UAgAbility_LockOn::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAvatarActorFromActorInfo());
-	UAgLockOnComponent* LockOn = Player ? Player->GetLockOn() : nullptr;
-	AAgCharacterBase* Target = LockOn ? LockOn->FindTarget() : nullptr;
+	UAgLockOnComponent* LockOn = CastChecked<AAgPlayerCharacter>(GetAgCharacter())->GetLockOn();
+	AAgCharacterBase* Target = LockOn->FindTarget();
 	if (!Target || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -37,11 +36,7 @@ void UAgAbility_LockOn::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 void UAgAbility_LockOn::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAvatarActorFromActorInfo());
-	if (UAgLockOnComponent* LockOn = Player ? Player->GetLockOn() : nullptr)
-	{
-		LockOn->SetTarget(nullptr);
-	}
+	CastChecked<AAgPlayerCharacter>(GetAgCharacter())->GetLockOn()->SetTarget(nullptr);
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

@@ -17,7 +17,7 @@ void UAgAbility_GuardBreak::ActivateAbility(const FGameplayAbilitySpecHandle Han
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data || !Data->GuardBreakMontage || !Character || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data->GuardBreakMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;

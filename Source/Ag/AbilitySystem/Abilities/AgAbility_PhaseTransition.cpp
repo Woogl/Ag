@@ -29,7 +29,7 @@ UAgAbility_PhaseTransition::UAgAbility_PhaseTransition()
 void UAgAbility_PhaseTransition::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	if (!Data || !Data->PhaseTransitionMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data->PhaseTransitionMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -50,10 +50,7 @@ void UAgAbility_PhaseTransition::HandleRoarFinished()
 {
 	// 2. PP가 가득 차고, 전환이 끝나면 2페이즈가 시작됩니다. (3. AI는 기다렸다가 2페이즈 패턴을 고릅니다.)
 	ApplyGameplayEffectToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), GetDefault<UAgEffect_PPRefill>(), 1.f);
-	if (AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter()))
-	{
-		Boss->EnterPhase2();
-	}
+	CastChecked<AAgBossCharacter>(GetAgCharacter())->EnterPhase2();
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

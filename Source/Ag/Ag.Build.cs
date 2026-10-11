@@ -24,7 +24,6 @@ public class Ag : ModuleRules
 			"CommonInput",
 			"MotionWarping",
 			"TargetingSystem",
-			"DeveloperSettings",
 			"SlateCore",
 			"Niagara",
 			"StateTreeModule",
@@ -33,7 +32,7 @@ public class Ag : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "Json", "JsonUtilities" });
 
-		// The JSON data files the game reads at runtime (구현 계획서 '데이터'). They sit outside Content, so the cook doesn't know them.
+		// 게임이 실행 중에 읽는 JSON 데이터 파일(구현 계획서 '데이터'). Content 밖에 있어 쿡이 알지 못하므로 따로 넣습니다.
 		RuntimeDependencies.Add("$(ProjectDir)/Data/*.json", StagedFileType.UFS);
 
 		PublicIncludePaths.AddRange(new string[] {

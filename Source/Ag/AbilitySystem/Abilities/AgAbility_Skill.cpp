@@ -18,7 +18,7 @@ UAgAbility_Skill::UAgAbility_Skill()
 void UAgAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Data || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -50,18 +50,15 @@ void UAgAbility_Skill::HandleAttackInterrupted()
 
 float UAgAbility_Skill::GetCooldownDuration() const
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return Data ? Data->SkillCooldown : 0.f;
+	return GetCharacterData<UAgPlayerData>()->SkillCooldown;
 }
 
 bool UAgAbility_Skill::CanPayCost(const UAgAttributeSet& Stats) const
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return Data && Stats.GetMP() >= Data->SkillMPCost;
+	return Stats.GetMP() >= GetCharacterData<UAgPlayerData>()->SkillMPCost;
 }
 
 FAgAbilityCost UAgAbility_Skill::GetCost() const
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return { 0.f, Data ? Data->SkillMPCost : 0.f, 0.f };
+	return { 0.f, GetCharacterData<UAgPlayerData>()->SkillMPCost, 0.f };
 }

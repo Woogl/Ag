@@ -29,8 +29,8 @@ UAgAbility_Guard::UAgAbility_Guard()
 
 void UAgAbility_Guard::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
-	if (!Player || !Player->IsGuardHeld() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
+	if (!Player->IsGuardHeld() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -67,7 +67,7 @@ void UAgAbility_Guard::StartGuard(bool bOpenParryWindow)
 	CloseParryWindow();
 	CloseMoveLock();
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (bOpenParryWindow && Data)
+	if (bOpenParryWindow)
 	{
 		// 패리 구간이 생기는 가드 시작은 이동할 수 없는 시간도 함께 시작합니다(플레이어 입력 '상태별 허용 입력').
 		ParryWindow = UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_ParryWindow, Data->ParryWindowTime);
@@ -145,7 +145,7 @@ void UAgAbility_Guard::HandleGuardReleased(FGameplayEventData Payload)
 void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (ParryMotionTag || !Data)
+	if (ParryMotionTag)
 	{
 		return;
 	}
@@ -167,7 +167,7 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 
 	// 패리 모션은 공격이 온 쪽을 바라봅니다(전투 시스템 '피격 반응').
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (const AActor* Attacker = Payload.Instigator.Get(); Character && Attacker)
+	if (const AActor* Attacker = Payload.Instigator.Get())
 	{
 		const FVector ToAttacker = -UAgCombatLibrary::GetHorizontalDirection(Attacker, Character);
 		if (!ToAttacker.IsNearlyZero())

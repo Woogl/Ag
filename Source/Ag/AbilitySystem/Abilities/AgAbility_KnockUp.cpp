@@ -29,8 +29,7 @@ UAgAbility_KnockUp::UAgAbility_KnockUp()
 
 UAnimMontage* UAgAbility_KnockUp::GetFallMontage() const
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	return Data ? Data->KnockUpFallMontage.Get() : nullptr;
+	return GetCharacterData<UAgPlayerData>()->KnockUpFallMontage.Get();
 }
 
 void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
@@ -39,7 +38,7 @@ void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const UAnimMontage* FallMontage = GetFallMontage();
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data || !Data->KnockUpMontage || !FallMontage || !Character || Rules.KnockUpAirTime <= 0.f || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data->KnockUpMontage || !FallMontage || Rules.KnockUpAirTime <= 0.f || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;

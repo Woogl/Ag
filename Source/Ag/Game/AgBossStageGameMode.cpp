@@ -59,8 +59,7 @@ void AAgBossStageGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 	bResultDecided = true;
 	bStageCleared = bBossDied;
 
-	const UAgCharacterData* Data = DeadCharacter->GetCharacterData();
-	const float Delay = Data ? Data->DeathPresentationTime : 0.f;
+	const float Delay = DeadCharacter->GetCharacterData()->DeathPresentationTime;
 	if (Delay > 0.f)
 	{
 		GetWorldTimerManager().SetTimer(ResultTimer, this, &ThisClass::ShowResult, Delay);

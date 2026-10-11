@@ -12,12 +12,8 @@ void UAgAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
+	// 블렌드 스페이스와 공중 모션은 캐릭터 데이터에서 가져옵니다. 애니메이션 에디터의 미리보기에는 캐릭터가 없습니다.
 	Character = Cast<AAgCharacterBase>(TryGetPawnOwner());
-	ApplyCharacterData();
-}
-
-void UAgAnimInstance::ApplyCharacterData()
-{
 	if (const UAgCharacterData* Data = Character ? Character->GetCharacterData() : nullptr)
 	{
 		MoveBlendSpace = Data->MoveBlendSpace;

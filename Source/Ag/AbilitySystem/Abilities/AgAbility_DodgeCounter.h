@@ -25,9 +25,6 @@ protected:
 
 private:
 	UFUNCTION()
-	void HandleInvincibleWindowEnded(FGameplayEventData Payload);
-
-	UFUNCTION()
 	void HandleLastWindowEnded();
 
 	UFUNCTION()

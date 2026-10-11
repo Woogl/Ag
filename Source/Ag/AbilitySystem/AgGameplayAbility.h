@@ -71,12 +71,14 @@ protected:
 	/** 보스 패턴의 태그: 피격 반응, 그로기, 처형 피격, 사망, 비전투 중에는 시작하지 못합니다. */
 	void SetupBossPattern();
 
+	/** 이 어빌리티를 가진 캐릭터. 어빌리티는 캐릭터에만 부여합니다. */
 	AAgCharacterBase* GetAgCharacter() const;
 
+	/** 캐릭터 데이터. 캐릭터가 시작할 때 확인하는 필수 데이터라 있다고 보고 씁니다(구현 계획서 '데이터를 찾는 방법'). */
 	template <typename TData>
 	const TData* GetCharacterData() const
 	{
-		return Cast<TData>(GetCharacterDataBase());
+		return CastChecked<TData>(GetCharacterDataBase());
 	}
 
 	/** 행동 중(State.Busy)을 시작합니다. */

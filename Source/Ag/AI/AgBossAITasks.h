@@ -115,12 +115,13 @@ struct FAgBossAITask_RunPattern : public FStateTreeAITaskBase
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 
+private:
 	/** 가중치로 하나를 고릅니다. Random01은 [0, 1). 모든 가중치가 0이면 INDEX_NONE입니다. */
 	static int32 PickWeighted(TConstArrayView<float> Weights, float Random01);
 
 	/**
 	 * 보스 사양 '패턴 선택' 1: 지금 쓸 수 있는 패턴(그 거리 구간의 가중치가 0보다 크고, 페이즈가 허용하고, IsReady가
-	 * 쿨다운이 끝났다고 답함)과 그 구간의 가중치. 월드 없이 선택 규칙을 테스트할 수 있게 static입니다.
+	 * 쿨다운이 끝났다고 답함)과 그 구간의 가중치
 	 */
 	static void GatherCandidates(TConstArrayView<FAgBossPattern> Patterns, float Distance, float NearDistance, float FarDistance, int32 Phase,
 		TFunctionRef<bool(const FAgBossPattern&)> IsReady, TArray<int32>& OutIndices, TArray<float>& OutWeights);

@@ -26,11 +26,12 @@ UAgAbility_Execution::UAgAbility_Execution()
 
 AAgCharacterBase* UAgAbility_Execution::FindExecutionTarget(const AAgPlayerCharacter* Player)
 {
-	const UAgPlayerData* Data = Player ? Cast<UAgPlayerData>(Player->GetCharacterData()) : nullptr;
-	if (!Data)
+	// 보스는 로컬 플레이어로 처형 안내를 정하는데, 플레이어가 아직 없을 수 있습니다.
+	if (!Player)
 	{
 		return nullptr;
 	}
+	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Player->GetCharacterData());
 
 	// 그로기 중이고, 이번 그로기에 아직 처형되지 않았고, 땅에 있는 적입니다(공중에서 그로기가 되면 착지 전에는 처형할 수 없음).
 	return Player->FindEnemy(Data->Execution.TargetingRange, [](const AAgCharacterBase& Enemy)
@@ -49,10 +50,10 @@ bool UAgAbility_Execution::CanActivateAbility(const FGameplayAbilitySpecHandle H
 
 void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
+	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	AAgCharacterBase* Enemy = FindExecutionTarget(Player);
-	if (!Enemy || !Data || !Data->ExecutionMontage || Data->Execution.Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Enemy || !Data->ExecutionMontage || Data->Execution.Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -88,7 +89,7 @@ void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 {
 	AAgCharacterBase* Enemy = Target.Get();
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Data || !Data->Execution.Hits.IsValidIndex(StrikeIndex))
+	if (!Data->Execution.Hits.IsValidIndex(StrikeIndex))
 	{
 		return;
 	}

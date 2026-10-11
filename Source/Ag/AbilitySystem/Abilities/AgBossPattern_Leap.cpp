@@ -31,10 +31,10 @@ UAgBossPattern_Leap::UAgBossPattern_Leap()
 
 void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
+	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(Handle) : nullptr;
-	UAnimMontage* Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
+	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
 	if (!Montage || Pattern->Hits.IsEmpty() || !Boss->GetTarget() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -88,13 +88,12 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 
 FVector UAgBossPattern_Leap::GetLandingTarget() const
 {
-	const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const AActor* Target = Boss ? Boss->GetTarget() : nullptr;
-	if (!Data || !Target)
+	const AActor* Target = CastChecked<AAgBossCharacter>(GetAgCharacter())->GetTarget();
+	if (!Target)
 	{
 		return LeapStart;
 	}
+	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FVector ToTarget = (Target->GetActorLocation() - LeapStart) * FVector(1.f, 1.f, 0.f);
 	const float Distance = FMath::Clamp(ToTarget.Size() - Data->LeapTargetOffset, 0.f, Data->LeapMaxDistance);
 	return LeapStart + ToTarget.GetSafeNormal() * Distance;
@@ -127,9 +126,9 @@ void UAgBossPattern_Leap::HandleTakeOff(EMovementMode NewMovementMode)
 void UAgBossPattern_Leap::HandleApex()
 {
 	// 남은 체공 시간도 수직 속도로 셉니다(GetDescentSpeedAt의 식을 거꾸로 푼 것).
-	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
-	const float Remaining = Boss ? AirTime * 0.5f + Boss->GetCharacterMovement()->Velocity.Z / Gravity : 0.f;
-	if (!Boss || Remaining <= UE_KINDA_SMALL_NUMBER)
+	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
+	const float Remaining = AirTime * 0.5f + Boss->GetCharacterMovement()->Velocity.Z / Gravity;
+	if (Remaining <= UE_KINDA_SMALL_NUMBER)
 	{
 		return;
 	}
@@ -139,10 +138,10 @@ void UAgBossPattern_Leap::HandleApex()
 
 void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 {
-	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
+	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(GetCurrentAbilitySpecHandle()) : nullptr;
-	if (!Data || !Pattern || Pattern->Hits.IsEmpty())
+	const FAgBossPattern* Pattern = Boss->FindPattern(GetCurrentAbilitySpecHandle());
+	if (!Pattern || Pattern->Hits.IsEmpty())
 	{
 		return;
 	}

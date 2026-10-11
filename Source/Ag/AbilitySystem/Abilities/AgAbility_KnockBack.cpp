@@ -17,7 +17,7 @@ void UAgAbility_KnockBack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 {
 	const UAgCharacterData* Data = GetCharacterData<UAgCharacterData>();
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data || !Data->KnockBackMontage || !Character || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data->KnockBackMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;

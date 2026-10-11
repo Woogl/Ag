@@ -44,10 +44,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> TitleText;
 
-	/** 버튼을 담은 패널. 페이드 인이 끝날 때까지 꺼 둡니다. */
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UWidget> ButtonList;
-
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> TryAgainButton;
 

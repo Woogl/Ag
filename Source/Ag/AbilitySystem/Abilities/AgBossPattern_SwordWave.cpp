@@ -25,10 +25,10 @@ UAgBossPattern_SwordWave::UAgBossPattern_SwordWave()
 
 void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
+	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(Handle) : nullptr;
-	UAnimMontage* Montage = (Data && Pattern) ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
+	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
 	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -75,7 +75,7 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 void UAgBossPattern_SwordWave::WaitRotationStop()
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	if (!Data || !ReleaseTimes.IsValidIndex(WaveIndex))
+	if (!ReleaseTimes.IsValidIndex(WaveIndex))
 	{
 		return;
 	}
@@ -104,10 +104,10 @@ void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
 	}
 	WaitRotationStop();
 
-	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter());
+	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(GetCurrentAbilitySpecHandle()) : nullptr;
-	if (!Data || !Data->SwordWaveClass || !Pattern || !Pattern->Hits.IsValidIndex(Index))
+	const FAgBossPattern* Pattern = Boss->FindPattern(GetCurrentAbilitySpecHandle());
+	if (!Data->SwordWaveClass || !Pattern || !Pattern->Hits.IsValidIndex(Index))
 	{
 		return;
 	}

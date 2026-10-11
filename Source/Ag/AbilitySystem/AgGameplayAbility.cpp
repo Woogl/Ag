@@ -92,13 +92,12 @@ void UAgGameplayAbility::SetupBossPattern()
 
 AAgCharacterBase* UAgGameplayAbility::GetAgCharacter() const
 {
-	return Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
+	return CastChecked<AAgCharacterBase>(GetAvatarActorFromActorInfo());
 }
 
 const UAgCharacterData* UAgGameplayAbility::GetCharacterDataBase() const
 {
-	const AAgCharacterBase* Character = GetAgCharacter();
-	return Character ? Character->GetCharacterData() : nullptr;
+	return GetAgCharacter()->GetCharacterData();
 }
 
 void UAgGameplayAbility::BeginBusy()

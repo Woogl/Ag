@@ -60,8 +60,7 @@ void UAgAbility_Jump::HandleLanded(EMovementMode NewMovementMode)
 
 bool UAgAbility_Jump::IsMoving() const
 {
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
-	return Player && !Player->GetMoveInputDirection().IsNearlyZero();
+	return !CastChecked<AAgPlayerCharacter>(GetAgCharacter())->GetMoveInputDirection().IsNearlyZero();
 }
 
 void UAgAbility_Jump::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)

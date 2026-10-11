@@ -18,7 +18,7 @@ void UAgAbility_GuardPushback::ActivateAbility(const FGameplayAbilitySpecHandle 
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data || !Data->GuardPushbackMontage || !Character || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data->GuardPushbackMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;

@@ -138,8 +138,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 		Gauge->SetScalarParameterValue(RatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
 	}
 
-	const UAgPlayerData* Data = Cast<UAgPlayerData>(Player.GetCharacterData());
-	const int32 SkillCost = Data ? FMath::RoundToInt(Data->SkillMPCost) : 0;
+	const int32 SkillCost = FMath::RoundToInt(CastChecked<UAgPlayerData>(Player.GetCharacterData())->SkillMPCost);
 	if (SkillCost != ShownSkillCost)
 	{
 		ShownSkillCost = SkillCost;

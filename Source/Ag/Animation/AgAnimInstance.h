@@ -19,10 +19,6 @@ class UAgAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
-public:
-	/** Copies the blend spaces and airborne loop from the character data. */
-	void ApplyCharacterData();
-
 protected:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;

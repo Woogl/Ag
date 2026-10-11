@@ -47,7 +47,7 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	if (!Data || !Data->GroggyMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data->GroggyMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -58,8 +58,7 @@ void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	ExecutedTask->ReadyForActivation();
 
 	// 공중에서 PP가 깨지면(A4) 공격은 이미 취소됐고, 그로기는 보스가 착지할 때 시작합니다.
-	const AAgCharacterBase* Boss = GetAgCharacter();
-	if (Boss && Boss->GetCharacterMovement()->IsFalling())
+	if (GetAgCharacter()->GetCharacterMovement()->IsFalling())
 	{
 		UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
 		LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
@@ -77,7 +76,7 @@ void UAgAbility_Groggy::HandleLanded(EMovementMode NewMovementMode)
 void UAgAbility_Groggy::StartGroggy()
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	if (!Data || MontageTask)
+	if (MontageTask)
 	{
 		return;
 	}
@@ -89,10 +88,7 @@ void UAgAbility_Groggy::StartGroggy()
 	const int32 EndSection = Montage->GetSectionIndex(GroggyEndSection);
 	const float EndLength = EndSection != INDEX_NONE ? Montage->GetSectionLength(EndSection) : 0.f;
 	MontageTask = PlayMontage(Data->GroggyMontage);
-	if (AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter()))
-	{
-		Boss->SetGroggyTimerRunning(true);
-	}
+	CastChecked<AAgBossCharacter>(GetAgCharacter())->SetGroggyTimerRunning(true);
 	EndSectionTask = UAbilityTask_WaitDelay::WaitDelay(this, FMath::Max(0.f, Rules.GroggyDuration - EndLength));
 	EndSectionTask->OnFinish.AddDynamic(this, &ThisClass::HandleEndSectionDue);
 	EndSectionTask->ReadyForActivation();
@@ -113,7 +109,7 @@ void UAgAbility_Groggy::HandleEndSectionDue()
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (Data && AnimInstance)
+	if (AnimInstance)
 	{
 		AnimInstance->Montage_JumpToSection(GroggyEndSection, Data->GroggyMontage);
 	}
@@ -123,7 +119,7 @@ void UAgAbility_Groggy::HandleExecuted(FGameplayEventData Payload)
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	AAgCharacterBase* Boss = GetAgCharacter();
-	if (!Data || !Data->ExecutedMontage || !Boss)
+	if (!Data->ExecutedMontage)
 	{
 		return;
 	}
@@ -180,15 +176,12 @@ void UAgAbility_Groggy::EndAbility(const FGameplayAbilitySpecHandle Handle, cons
 	{
 		ExecutedTag = nullptr;
 		AAgCharacterBase* Boss = GetAgCharacter();
-		if (Boss && !Boss->IsDead())
+		if (!Boss->IsDead())
 		{
 			Boss->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 		}
 	}
-	if (AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAgCharacter()))
-	{
-		Boss->SetGroggyTimerRunning(false);
-	}
+	CastChecked<AAgBossCharacter>(GetAgCharacter())->SetGroggyTimerRunning(false);
 	MontageTask = nullptr;
 	EndSectionTask = nullptr;
 
