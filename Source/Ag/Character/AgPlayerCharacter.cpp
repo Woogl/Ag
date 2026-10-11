@@ -183,7 +183,7 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 
 void AAgPlayerCharacter::StopLandingMotion()
 {
-	// 착지 모션은 루트 모션으로 제자리에 머물러 캐릭터를 붙잡습니다. 행동이 아니므로 움직이면 끝냅니다. 블렌드 아웃은 몽타주의 값입니다.
+	// 착지 모션은 제자리 모션이라 움직이면 미끄러져 보입니다. 행동이 아니므로 움직이면 끝냅니다. 블렌드 아웃은 몽타주의 값입니다.
 	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (Data->LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(Data->LandMontage))

@@ -7,9 +7,8 @@
 #include "AgAbility_Jump.generated.h"
 
 /**
- * 점프: the character movement's jump (its stock height and air control). No other action starts in the air, but
- * movement input steers. A sprint keeps going through the jump. Without movement input the take-off and landing
- * motions play; while moving, the airborne motion covers the jump.
+ * 점프: 캐릭터 무브먼트의 점프(엔진 기본 높이와 공중 제어). 공중에서는 다른 행동을 시작하지 않고 이동 입력으로 방향만 틉니다.
+ * 달리기는 점프 중에도 이어집니다. 시작 모션은 늘 재생하고, 착지 모션은 이동 입력이 없을 때만 재생합니다.
  */
 UCLASS()
 class UAgAbility_Jump : public UAgGameplayAbility

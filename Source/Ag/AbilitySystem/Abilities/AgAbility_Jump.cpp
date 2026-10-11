@@ -18,25 +18,26 @@ UAgAbility_Jump::UAgAbility_Jump()
 
 void UAgAbility_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter());
-	if (!Player || !Player->CanJump() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
+	if (!Player->CanJump() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	// 공중: only movement until landing.
+	// 공중: 착지할 때까지 이동만 합니다.
 	BeginBusy();
 	Player->Jump();
 
+	// 시작 모션은 루트 모션이 없어 이동 입력을 막지 않으므로, 움직일 때도 재생합니다.
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (Data && Data->JumpMontage && AnimInstance && !IsMoving())
+	if (Data->JumpMontage && AnimInstance)
 	{
 		AnimInstance->Montage_Play(Data->JumpMontage);
 	}
 
-	// The jump turns walking into falling; the next change back to walking is the landing.
+	// 점프하면 걷기가 낙하로 바뀌므로, 다음에 걷기로 바뀌는 때가 착지입니다.
 	UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
 	LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
 	LandTask->ReadyForActivation();
@@ -46,11 +47,11 @@ void UAgAbility_Jump::HandleLanded(EMovementMode NewMovementMode)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (Data && Data->LandMontage && AnimInstance && !IsMoving())
+	if (Data->LandMontage && AnimInstance && !IsMoving())
 	{
 		AnimInstance->Montage_Play(Data->LandMontage);
 	}
-	else if (Data && Data->JumpMontage && AnimInstance)
+	else if (Data->JumpMontage && AnimInstance)
 	{
 		AnimInstance->Montage_StopWithBlendOut(Data->JumpMontage->GetBlendOutArgs(), Data->JumpMontage);
 	}
@@ -65,10 +66,7 @@ bool UAgAbility_Jump::IsMoving() const
 
 void UAgAbility_Jump::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter()))
-	{
-		Player->StopJumping();
-	}
+	CastChecked<AAgPlayerCharacter>(GetAgCharacter())->StopJumping();
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

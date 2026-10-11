@@ -347,7 +347,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> DodgeCounterMontage;
 
-	/** 점프: the take-off, played when jumping without movement input. */
+	/** 점프: 시작 모션. 점프할 때마다 재생합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> JumpMontage;
 
