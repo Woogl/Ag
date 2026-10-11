@@ -4,23 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "Data/AgAttackData.h"
-#include "GameplayTagContainer.h"
 #include "AgBossAIController.generated.h"
 
 class AAgBossCharacter;
 class AAgCharacterBase;
 class UAbilitySystemComponent;
 class UAgBossData;
-struct FAbilityEndedData;
+class UStateTreeAIComponent;
 struct FGameplayEventData;
 
 /**
- * Boss AI (보스 사양 'AI 행동 규칙', '전투 시작과 행동 전환'):
- * wait → pick a pattern → run it → pattern recovery wait → pick again.
- * During the wait the boss walks sideways around the player. With no candidate it walks to the player and retries.
- * Knockback, groggy, execution, phase transition and death are state abilities. After the player dies the boss stops
- * (비전투).
+ * 보스 AI (보스 사양 'AI 행동 규칙', '전투 시작과 행동 전환').
+ * 흐름은 보스 데이터의 StateTree(ST_Boss)에 상태와 전환으로 있고, 이 컨트롤러는 빙의할 때 그것을 실행합니다.
+ * 플레이어가 평타의 각 타를 시작하면 StateTree 이벤트로 넘깁니다(B1 백스텝).
  */
 UCLASS()
 class AAgBossAIController : public AAIController
@@ -30,15 +26,18 @@ class AAgBossAIController : public AAIController
 public:
 	AAgBossAIController();
 
-	/** Picks an index by weight; Random01 in [0, 1). Returns INDEX_NONE when every weight is 0. */
-	static int32 PickWeighted(TConstArrayView<float> Weights, float Random01);
+	AAgBossCharacter* GetBoss() const { return Boss.Get(); }
+	const UAgBossData* GetBossData() const;
 
-	/**
-	 * 패턴 선택 1: the patterns usable now (the distance band's weight above 0, the phase allows it, IsReady says the
-	 * cooldown is over) and their weights in that band. Static so the selection rules can be tested without a world.
-	 */
-	static void GatherCandidates(TConstArrayView<FAgBossPattern> Patterns, float Distance, float NearDistance, float FarDistance, int32 Phase,
-		TFunctionRef<bool(const FAgBossPattern&)> IsReady, TArray<int32>& OutIndices, TArray<float>& OutWeights);
+	/** 플레이어 캐릭터. 아직 스폰되지 않았으면 null입니다. */
+	AAgCharacterBase* GetPlayer() const;
+
+	/** 넉백이나 그로기(처형 피격 포함) 중인지. 그동안 AI는 피격 반응 상태에서 기다립니다. */
+	bool IsBossReacting() const;
+
+	/** 페이즈 전환은 보스전에서 한 번만 시작합니다. */
+	bool HasStartedPhaseTransition() const { return bPhaseTransitionStarted; }
+	void MarkPhaseTransitionStarted() { bPhaseTransitionStarted = true; }
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
@@ -46,66 +45,16 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	enum class EState : uint8
-	{
-		/** 패턴 후딜레이: waits while walking sideways. */
-		Waiting,
-		Approaching,
-		Pattern,
-		PhaseTransition,
-		/** 비전투: the player died; the boss holds its idle pose and only its own death still applies. */
-		NonCombat,
-		Stopped,
-	};
-
-	/** 패턴 후딜레이: waits, walking left or right (picked at random each time), then picks a pattern. */
-	void Wait(float Seconds);
-
-	/** 패턴 선택 */
-	void SelectPattern();
-
-	/** Runs a pattern now. False if it couldn't start. */
-	bool StartPattern(const FGameplayTag& Pattern);
-
-	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
-	void HandleBossDied(AAgCharacterBase* DeadBoss);
-
-	/**
-	 * 넉백 and 그로기 stop the AI. Once neither is left (after an execution too), the boss waits and picks again; groggy
-	 * takes over a knockback it cuts off.
-	 */
-	void HandleReactionChanged(const FGameplayTag Tag, int32 NewCount);
-
-	/**
-	 * 전투 시작과 행동 전환 5: starts the phase transition once phase 2 HP is reached outside a pattern, a knockback and
-	 * groggy.
-	 */
-	void TryStartPhaseTransition();
-
-	/** 전투 시작과 행동 전환 2: the running pattern stops at once and nothing but the boss's own death applies anymore. */
-	void EnterNonCombat();
-
-	/** Listens to the player's basic attack hits once the player exists. */
+	/** 플레이어가 스폰된 뒤 그 평타 시작 이벤트를 받습니다. */
 	void BindPlayerEvents();
 
-	/** B1 백스텝: checked every time the player starts a basic attack hit. */
 	void HandlePlayerBasicAttack(const FGameplayEventData* Payload);
 
-	const UAgBossData* GetBossData() const;
-
-	/** The current phase (1 or 2). */
-	int32 GetPhase() const;
+	UPROPERTY(VisibleAnywhere, Category = "AI")
+	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 	TWeakObjectPtr<UAbilitySystemComponent> PlayerASC;
 	FDelegateHandle BasicAttackHandle;
-	EState State = EState::Stopped;
 	bool bPhaseTransitionStarted = false;
-	FGameplayTag RunningPattern;
-
-	/** 좌우 걷기: +1 walks right, -1 left. */
-	float StrafeDirection = 1.f;
-
-	FTimerHandle WaitTimer;
-	FTimerHandle RetryTimer;
 };

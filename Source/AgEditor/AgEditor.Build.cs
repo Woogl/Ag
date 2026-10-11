@@ -20,6 +20,11 @@ public class AgEditor : ModuleRules
 			"ToolsetRegistry",
 			"DirectoryWatcher",
 			"EditorSubsystem",
+			"AssetTools",
+			"GameplayTags",
+			"StateTreeModule",
+			"StateTreeEditorModule",
+			"PropertyBindingUtils",
 			"Ag"
 		});
 	}

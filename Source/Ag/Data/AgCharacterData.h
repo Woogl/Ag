@@ -14,6 +14,7 @@ class UAnimMontage;
 class UAnimSequenceBase;
 class UBlendSpace;
 class UGameplayAbility;
+class UStateTree;
 class UStreamableRenderAsset;
 
 /** The '스탯' tables of 플레이어 사양 and 보스 사양: starting value and maximum of each stat. */
@@ -511,6 +512,10 @@ public:
 	/** The tag each pattern's cooldown gives while it runs, by pattern ID. Patterns without a cooldown have none. */
 	UPROPERTY(EditDefaultsOnly, Category = "Patterns")
 	TMap<FGameplayTag, FGameplayTag> PatternCooldownTags;
+
+	/** 보스 AI의 흐름(ST_Boss). 보스 AI 컨트롤러가 빙의할 때 실행합니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TObjectPtr<UStateTree> AIStateTree;
 
 	/** Pattern montages, by pattern ID. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages", meta = (Categories = "Ability.Boss.Pattern"))

@@ -26,7 +26,9 @@ public class Ag : ModuleRules
 			"TargetingSystem",
 			"DeveloperSettings",
 			"SlateCore",
-			"Niagara"
+			"Niagara",
+			"StateTreeModule",
+			"GameplayStateTreeModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities" });
