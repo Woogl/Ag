@@ -18,7 +18,7 @@
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/AgDamageNumber.h"
+#include "UI/AgDamageFloater.h"
 
 AAgBossCharacter::AAgBossCharacter()
 {
@@ -125,9 +125,9 @@ float AAgBossCharacter::GetGroggyElapsedTime() const
 	return GroggyStartTime >= 0.0 ? static_cast<float>(GetWorld()->GetTimeSeconds() - GroggyStartTime) : -1.f;
 }
 
-void AAgBossCharacter::ShowDamageNumber(int32 Amount, const FVector& Location, bool bLarge) const
+void AAgBossCharacter::ShowDamageFloater(int32 Amount, const FVector& Location, bool bLarge) const
 {
-	AAgDamageNumber::Spawn(GetWorld(), DamageNumberWidget, Location, Amount, bLarge);
+	AAgDamageFloater::Spawn(GetWorld(), DamageFloaterWidget, Location, Amount, bLarge);
 }
 
 void AAgBossCharacter::Tick(float DeltaSeconds)

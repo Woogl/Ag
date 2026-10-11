@@ -29,7 +29,7 @@
           "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0,
-          "bLargeDamageNumber": false,
+          "bLargeDamageFloater": false,
           "bFinisher": false
         }
       ],
@@ -45,7 +45,7 @@
           "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0,
-          "bLargeDamageNumber": false,
+          "bLargeDamageFloater": false,
           "bFinisher": false
         }
       ],
@@ -61,7 +61,7 @@
           "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0,
-          "bLargeDamageNumber": false,
+          "bLargeDamageFloater": false,
           "bFinisher": false
         }
       ],
@@ -77,7 +77,7 @@
           "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0,
-          "bLargeDamageNumber": false,
+          "bLargeDamageFloater": false,
           "bFinisher": false
         }
       ],
@@ -93,7 +93,7 @@
           "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 4,
-          "bLargeDamageNumber": false,
+          "bLargeDamageFloater": false,
           "bFinisher": false
         }
       ],
@@ -130,7 +130,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 10,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": false
       }
     ],
@@ -148,7 +148,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": false
       },
       {
@@ -159,7 +159,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": false
       },
       {
@@ -170,7 +170,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": false
       },
       {
@@ -181,7 +181,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": true
       }
     ],
@@ -198,7 +198,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": false
       },
       {
@@ -209,7 +209,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": false
       },
       {
@@ -220,7 +220,7 @@
         "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0,
-        "bLargeDamageNumber": true,
+        "bLargeDamageFloater": true,
         "bFinisher": false
       }
     ],
@@ -240,7 +240,7 @@
         "bParryable": true,
         "MPCharge": 8,
         "UPCharge": 0,
-        "bLargeDamageNumber": false,
+        "bLargeDamageFloater": false,
         "bFinisher": false
       }
     ],

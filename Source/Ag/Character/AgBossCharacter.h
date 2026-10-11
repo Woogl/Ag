@@ -7,7 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "AgBossCharacter.generated.h"
 
-class UAgDamageNumberWidget;
+class UAgDamageFloaterWidget;
 class UWidgetComponent;
 struct FGameplayAbilitySpec;
 
@@ -41,8 +41,8 @@ public:
 	/** Game time since the groggy time started counting, or a negative value when it isn't counting. */
 	float GetGroggyElapsedTime() const;
 
-	/** 대미지 숫자: shows the HP this boss lost from a player attack at Location. */
-	void ShowDamageNumber(int32 Amount, const FVector& Location, bool bLarge) const;
+	/** 대미지 숫자: 플레이어 공격으로 보스가 잃은 HP를 Location에 띄웁니다. */
+	void ShowDamageFloater(int32 Amount, const FVector& Location, bool bLarge) const;
 
 	/** 보스 AI의 현재 대상(구현 계획서 'AI 대상'). AI가 없거나 대상이 아직 없으면 null입니다. */
 	AAgCharacterBase* GetTarget() const;
@@ -83,9 +83,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
 
-	/** 대미지 숫자 widget (WBP_DamageNumber). */
+	/** 대미지 숫자 위젯(WBP_DamageFloater). */
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UAgDamageNumberWidget> DamageNumberWidget;
+	TSubclassOf<UAgDamageFloaterWidget> DamageFloaterWidget;
 
 	int32 Phase = 1;
 

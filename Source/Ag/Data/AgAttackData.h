@@ -61,9 +61,9 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float UPCharge = 0.f;
 
-	/** 전투 HUD '대미지 숫자': this hit's number shows at the large size (스킬·궁극기·처형). */
+	/** 전투 HUD '대미지 숫자': 이 타의 숫자를 큰 크기로 표시합니다(스킬·궁극기·처형). */
 	UPROPERTY(EditAnywhere, Category = "Attack")
-	bool bLargeDamageNumber = false;
+	bool bLargeDamageFloater = false;
 
 	/** 카메라 '상황별 단계': this hit shakes the camera as a 마지막 일격 (궁극기) instead of an ordinary hit. */
 	UPROPERTY(EditAnywhere, Category = "Attack")

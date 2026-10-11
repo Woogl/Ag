@@ -123,7 +123,7 @@ void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 		// 대미지 숫자는 보스에게만 표시합니다(전투 HUD '대미지 숫자').
 		if (const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Enemy))
 		{
-			Boss->ShowDamageNumber(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageNumber);
+			Boss->ShowDamageFloater(HPDamage, Boss->GetActorLocation(), Hit.bLargeDamageFloater);
 		}
 		FGameplayCueParameters EffectParameters;
 		EffectParameters.Location = Enemy->GetActorLocation();

@@ -205,10 +205,10 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 		const int32 PPDamage = CanLosePP(Target) ? CalculatePPDamage(SourceStats->GetATK(), Hit.PoiseMultiplier, TargetStats->GetDEF()) : 0;
 		ApplyStatChange(Attacker, Target, -HPDamage, -PPDamage);
 
-		// 전투 HUD '대미지 숫자': the HP the boss lost, where the attack touched it. The player's damage shows no number.
+		// 전투 HUD '대미지 숫자': 보스가 잃은 HP를 공격이 닿은 위치에 띄웁니다. 플레이어가 받은 대미지는 띄우지 않습니다.
 		if (const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Target))
 		{
-			Boss->ShowDamageNumber(HPDamage, HitLocation, Hit.bLargeDamageNumber);
+			Boss->ShowDamageFloater(HPDamage, HitLocation, Hit.bLargeDamageFloater);
 		}
 	}
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, result %d, HP now %.0f, PP now %.0f, SP now %.0f, attacker PP now %.0f"),
