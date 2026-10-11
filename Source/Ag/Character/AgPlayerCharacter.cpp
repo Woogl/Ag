@@ -36,6 +36,9 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->bUsePawnControlRotation = true;
+	// The arm doesn't inherit the character's rotation. Actions turn the character at once, sometimes after the arm has
+	// placed the camera for the frame (a buffered dodge runs from a timer), and the camera would turn with it for that frame.
+	CameraBoom->SetUsingAbsoluteRotation(true);
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
