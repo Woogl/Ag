@@ -11,6 +11,13 @@ class AAgCharacterBase;
 class UAnimMontage;
 struct FAgBossPattern;
 
+/** 타 하나가 시작하는 몽타주 시각. HitIndex는 패턴 데이터 Hits의 번호입니다. */
+struct FAgHitStart
+{
+	int32 HitIndex = 0;
+	float Time = 0.f;
+};
+
 /**
  * 보스 공용 패턴(A1, A2, A5, A7): 패턴 몽타주를 패턴 재생 속도로 공격 데이터와 함께 재생하고, 공격 중 이동 태스크로 정지
  * 간격(보스 사양 '이동')을 지키며 몽타주의 워핑 구간(A1·A5 1타, A7) 동안 다가갑니다. 판정 구간 전에 섬광을 켜고, 쿨다운이
@@ -51,14 +58,14 @@ protected:
 	/** 공용 이동 규칙(정지 간격, 워핑 구간의 접근)을 씁니다. A3, A4, B1은 각자의 이동 규칙을 따릅니다. */
 	virtual bool UsesSharedMovement() const { return true; }
 
-	/** Called once the pattern montage plays; special patterns start their own movement here. */
+	/** 패턴 몽타주가 재생되기 시작하면 한 번 불립니다. 특수 패턴은 여기서 자기 이동을 시작합니다. 재생에 실패하면 불리지 않습니다. */
 	virtual void OnPatternStarted() {}
 
-	/** Montage times at which unguardable hits start (for the 붉은 섬광). By default, their attack windows. */
-	virtual void GetUnguardableHitStarts(TArray<float>& OutTimes) const;
-
-	/** Montage times at which parryable hits start (for the 예고 섬광). By default, their attack windows. */
-	virtual void GetParryableHitStarts(TArray<float>& OutTimes) const;
+	/**
+	 * 타마다 그 타가 시작하는 몽타주 시각(섬광의 기준). 기본은 몽타주의 판정 구간 노티파이입니다. 판정 구간이 몽타주에 없는 패턴
+	 * (A3 돌진 시작, A6 검기 발사)은 이것을 재정의합니다. 켤 섬광의 종류는 기반 클래스가 그 타의 가드·패리 가능 여부로 정합니다.
+	 */
+	virtual void GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const;
 
 	/** Montage time of the first gameplay event notify with EventTag, or a negative value. */
 	float FindEventNotifyTime(const FGameplayTag& EventTag) const;

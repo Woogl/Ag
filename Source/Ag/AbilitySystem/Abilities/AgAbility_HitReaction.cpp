@@ -13,6 +13,7 @@
 #include "Character/AgCharacterBase.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
+#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -27,7 +28,7 @@ UAgAbility_HitReaction::UAgAbility_HitReaction()
 	bRetriggerInstancedAbility = true;
 
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_HitReaction);
-	// Same priority (상태 우선순위 4): the newer reaction replaces the older one. Actions and boss patterns stop.
+	// 같은 우선순위(상태 우선순위 4)는 새 반응이 앞 반응을 대신합니다. 행동과 보스 패턴은 멈춥니다.
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
@@ -216,10 +217,10 @@ void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		return;
 	}
 
-	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
+	const UAgCombatRules& Rules = UAgSettings::Get()->GetCombatRules();
 	const UAnimMontage* FallMontage = GetFallMontage();
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (!Rules || !FallMontage || !AnimInstance || Rules->KnockUpAirTime <= 0.f)
+	if (!FallMontage || !AnimInstance || Rules.KnockUpAirTime <= 0.f)
 	{
 		EndSelf(true);
 		return;
@@ -230,20 +231,20 @@ void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 
 	// 전투 시스템 '넉업': 맞은 자리에서 높이와 체공 시간의 포물선으로 곧게 오르내립니다(중력과 무관).
 	// 착지하면 점프가 끝나고, 공중에서 맞았으면 착지할 때까지 경로의 마지막 속도로 떨어집니다.
-	const float AirTime = Rules->KnockUpAirTime;
+	const float AirTime = Rules.KnockUpAirTime;
 	UAbilityTask_ApplyRootMotionJumpForce* JumpTask = UAbilityTask_ApplyRootMotionJumpForce::ApplyRootMotionJumpForce(this, NAME_None,
-		GetAgCharacter()->GetActorRotation(), /*Distance*/ 0.f, Rules->KnockUpHeight, AirTime, /*MinimumLandedTriggerTime*/ 0.5f,
+		GetAgCharacter()->GetActorRotation(), /*Distance*/ 0.f, Rules.KnockUpHeight, AirTime, /*MinimumLandedTriggerTime*/ 0.5f,
 		/*bFinishOnLanded*/ true, ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, nullptr, nullptr);
 	JumpTask->ReadyForActivation();
 
 	// 점프는 다음 이동 갱신부터 속도를 정하므로, 지금 경로의 첫 속도로 날기 시작해 아래 낙하 검사가 맞기 전 속도를 보지 않게 합니다.
 	UCharacterMovementComponent* Movement = GetAgCharacter()->GetCharacterMovement();
 	Movement->SetMovementMode(MOVE_Falling);
-	Movement->Velocity = FVector(0.f, 0.f, 4.f * Rules->KnockUpHeight / AirTime);
+	Movement->Velocity = FVector(0.f, 0.f, 4.f * Rules.KnockUpHeight / AirTime);
 
 	// 낙하 자세의 블렌드는 정점이 가운데에 오도록 정점보다 블렌드 시간의 절반 먼저 시작합니다.
 	// 경로의 상승은 8 × 높이 ÷ 체공 시간² 의 중력처럼 느려집니다.
-	const float PathGravity = 8.f * Rules->KnockUpHeight / FMath::Square(AirTime);
+	const float PathGravity = 8.f * Rules.KnockUpHeight / FMath::Square(AirTime);
 	const float FallBlendSpeed = PathGravity * FallMontage->BlendIn.GetBlendTime() * 0.5f;
 	UAbilityTask_WaitVelocityChange* FallTask = UAbilityTask_WaitVelocityChange::CreateWaitVelocityChange(this, FVector::DownVector, -FallBlendSpeed);
 	FallTask->OnVelocityChage.AddDynamic(this, &ThisClass::HandleFalling);

@@ -3,7 +3,7 @@
 #include "Combat/AgTimeSubsystem.h"
 
 #include "Ag.h"
-#include "Combat/AgCombatLibrary.h"
+#include "Core/AgSettings.h"
 #include "Data/AgCombatRules.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
@@ -17,8 +17,8 @@ namespace
 
 void UAgTimeSubsystem::StartHitstop(std::initializer_list<AActor*> Actors)
 {
-	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
-	if (!Rules || Rules->HitstopTime <= 0.f)
+	const UAgCombatRules& Rules = UAgSettings::Get()->GetCombatRules();
+	if (Rules.HitstopTime <= 0.f)
 	{
 		return;
 	}
@@ -30,7 +30,7 @@ void UAgTimeSubsystem::StartHitstop(std::initializer_list<AActor*> Actors)
 		{
 			Actor->CustomTimeDilation = HitstopTimeDilation;
 			FTimerHandle& Timer = HitstopTimers.FindOrAdd(Actor);
-			GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::EndHitstop, TWeakObjectPtr<AActor>(Actor)), Rules->HitstopTime, false);
+			GetWorld()->GetTimerManager().SetTimer(Timer, FTimerDelegate::CreateUObject(this, &ThisClass::EndHitstop, TWeakObjectPtr<AActor>(Actor)), Rules.HitstopTime, false);
 		}
 	}
 }

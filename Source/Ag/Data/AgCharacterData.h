@@ -86,6 +86,7 @@ public:
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditUndo() override;
 #endif
 
 	/** Data file in the project's Data folder that fills the Transient fields (Player.json, Boss.json). */

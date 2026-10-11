@@ -13,6 +13,7 @@
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
+#include "Core/AgSettings.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -128,10 +129,8 @@ void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 		FGameplayCueParameters EffectParameters;
 		EffectParameters.Location = Enemy->GetActorLocation();
 		Enemy->GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Hit, EffectParameters);
-		if (const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData())
-		{
-			UAgCombatLibrary::PlayCameraShake(Player, bFinalBlow ? Camera->ExecutionBlowShake : Camera->ExecutionSlashShake);
-		}
+		const UAgCameraData& Camera = UAgSettings::Get()->GetCameraData();
+		UAgCombatLibrary::PlayCameraShake(Player, bFinalBlow ? Camera.ExecutionBlowShake : Camera.ExecutionSlashShake);
 		UE_LOG(LogAg, Verbose, TEXT("Execution strike %d: HP -%d (now %.0f)"), StrikeIndex, HPDamage, Enemy->GetAttributeSet()->GetHP());
 		if (Enemy->GetAttributeSet()->GetHP() <= 0.f)
 		{

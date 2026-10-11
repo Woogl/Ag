@@ -14,6 +14,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
+#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgDataFile.h"
@@ -62,7 +63,7 @@ const FName AAgCharacterBase::WeaponCollisionTag(TEXT("WeaponCollision"));
 
 AAgCharacterBase::AAgCharacterBase()
 {
-	// Ticks after physics so weapon sweeps see this frame's pose.
+	// 물리 다음에 틱해서 무기 스윕이 이번 프레임의 포즈를 봅니다.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PostPhysics;
 
@@ -70,14 +71,14 @@ AAgCharacterBase::AAgCharacterBase()
 	AttributeSet = CreateDefaultSubobject<UAgAttributeSet>(TEXT("AttributeSet"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 
-	// Characters never block the camera (카메라 '카메라 충돌').
+	// 캐릭터는 카메라를 가리지 않습니다(카메라 '카메라 충돌').
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
-	// Weapon sweeps hit the mesh's physics bodies.
+	// 무기 스윕은 메시의 피직스 바디에 맞습니다.
 	GetMesh()->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
 
-	// Attacks hit the mesh's physics bodies and the weapon follows the hand, so the pose must update even off screen.
+	// 공격은 메시의 피직스 바디에 맞고 무기는 손을 따라가므로, 화면 밖에서도 포즈를 갱신합니다.
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 }
 
@@ -105,7 +106,7 @@ void AAgCharacterBase::BeginPlay()
 	GrantAbilities();
 	StartRegen();
 #if WITH_EDITOR
-	// The binding is weak, so it ends with the character.
+	// 약한 바인딩이라 캐릭터가 사라지면 함께 끝납니다.
 	AgDataFile::OnReloaded().AddUObject(this, &ThisClass::HandleDataReloaded);
 #endif
 
@@ -206,10 +207,9 @@ void AAgCharacterBase::HandleDataReloaded()
 
 void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
 {
-	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
-	if (Data.NewValue < Data.OldValue && Rules)
+	if (Data.NewValue < Data.OldValue)
 	{
-		RestartRegenDelay(PPRegenDelay, AgGameplayTags::State_Regen_PPDelay, Rules->PPRegenDelay);
+		RestartRegenDelay(PPRegenDelay, AgGameplayTags::State_Regen_PPDelay, UAgSettings::Get()->GetCombatRules().PPRegenDelay);
 	}
 }
 

@@ -67,7 +67,7 @@ bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 		MakePattern(0.f, 40.f, 40.f, { 2 }),     // A4, 2페이즈 전용
 		MakePattern(40.f, 0.f, 0.f, { 2 }),      // A5, 2페이즈 전용
 		MakePattern(0.f, 20.f, 60.f, { 2 }),     // A6, 2페이즈 전용
-		MakePattern(30.f, 0.f, 0.f, { 1, 2 }),   // A7
+		MakePattern(30.f, 30.f, 0.f, { 1, 2 }),  // A7
 		MakePattern(0.f, 0.f, 0.f, { 1, 2 }),    // B1: 가중치가 없고, 자기 발동 조건으로 시작합니다
 	};
 	constexpr float NearDistance = 300.f;
@@ -83,7 +83,7 @@ bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("3m is still near; phase 2 adds A5, never B1"), Indices == TArray<int32>{ 0, 1, 4, 6 });
 
 	FAgBossAITask_RunPattern::GatherCandidates(Patterns, 1000.f, NearDistance, FarDistance, 1, AllReady, Indices, Weights);
-	TestTrue(TEXT("10m is still mid: only A3 in phase 1 (A4 is phase 2 only)"), Indices == TArray<int32>{ 2 } && Weights == TArray<float>{ 40.f });
+	TestTrue(TEXT("10m is still mid: A3 and A7 in phase 1 (A4 is phase 2 only)"), Indices == TArray<int32>{ 2, 6 } && Weights == TArray<float>{ 40.f, 30.f });
 
 	FAgBossAITask_RunPattern::GatherCandidates(Patterns, 1200.f, NearDistance, FarDistance, 2, AllReady, Indices, Weights);
 	TestTrue(TEXT("Phase 2 far: A3, A4 and A6 with the far weights"), Indices == TArray<int32>{ 2, 3, 5 } && Weights == TArray<float>{ 60.f, 40.f, 60.f });

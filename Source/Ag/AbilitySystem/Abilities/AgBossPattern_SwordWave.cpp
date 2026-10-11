@@ -19,18 +19,14 @@ void UAgBossPattern_SwordWave::OnPatternStarted()
 	ReleaseTask->ReadyForActivation();
 }
 
-void UAgBossPattern_SwordWave::GetParryableHitStarts(TArray<float>& OutTimes) const
+void UAgBossPattern_SwordWave::GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const
 {
-	// Each wave's launch is its attack window (보스 사양 'A6').
-	const FAgBossPattern* Pattern = GetPattern();
+	// 검기마다 발사가 그 타의 판정 구간입니다(보스 사양 'A6').
 	TArray<float> Launches;
 	FindEventNotifyTimes(AgGameplayTags::Event_Boss_SwordWave, Launches);
 	for (int32 Index = 0; Index < Launches.Num(); ++Index)
 	{
-		if (Pattern && Pattern->Hits.IsValidIndex(Index) && Pattern->Hits[Index].bParryable)
-		{
-			OutTimes.Add(Launches[Index]);
-		}
+		OutHitStarts.Add({ Index, Launches[Index] });
 	}
 }
 

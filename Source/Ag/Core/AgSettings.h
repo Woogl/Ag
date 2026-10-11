@@ -11,8 +11,8 @@ class UAgCombatRules;
 class UTargetingPreset;
 
 /**
- * Project settings for Ag (Project Settings > Game > Ag).
- * Points at levels, the common data files and shared assets so code never hardcodes their paths.
+ * Ag 프로젝트 설정(Project Settings > Game > Ag).
+ * 레벨, 공통 데이터 파일, 공용 에셋을 가리켜 코드가 경로를 하드코딩하지 않게 합니다.
  */
 UCLASS(Config = Game, DefaultConfig, meta = (DisplayName = "Ag"))
 class UAgSettings : public UDeveloperSettings
@@ -22,14 +22,14 @@ class UAgSettings : public UDeveloperSettings
 public:
 	static const UAgSettings* Get() { return GetDefault<UAgSettings>(); }
 
-	/** Camera.json, read on first use into one object kept from then on (구현 계획서 '데이터'). */
-	const UAgCameraData* GetCameraData() const;
+	/**
+	 * Camera.json. 처음 쓸 때 UAgCameraData의 기본 객체에 읽어 둡니다(구현 계획서 '데이터'). 읽지 못하면 오류를 알리고 기본값을 줍니다.
+	 * 객체를 따로 만들어 가리키지 않는 것은, 패키징 빌드에서 이 설정의 기본 객체가 GC가 참조를 따라가지 않는 객체 풀에 있기 때문입니다.
+	 */
+	const UAgCameraData& GetCameraData() const;
 
-	/** CombatRules.json, read on first use into one object kept from then on. */
-	const UAgCombatRules* GetCombatRules() const;
-
-	/** TP_Enemy. 처음 쓸 때 로드해 계속 들고 있습니다. */
-	const UTargetingPreset* GetEnemyTargeting() const;
+	/** CombatRules.json. GetCameraData와 같습니다. */
+	const UAgCombatRules& GetCombatRules() const;
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -70,14 +70,7 @@ public:
 	float DeathPushSpeed = 0.f;
 
 private:
-	/** The common data read from the files above. A file read again fills the same object, so users keep their pointers. */
-	UPROPERTY(Transient)
-	mutable TObjectPtr<UAgCameraData> LoadedCameraData;
-
-	UPROPERTY(Transient)
-	mutable TObjectPtr<UAgCombatRules> LoadedCombatRules;
-
-	/** 로드한 TP_Enemy. 소프트 포인터만 가리키므로, 에디터 밖에서는 가비지 컬렉션마다 언로드됩니다. */
-	UPROPERTY(Transient)
-	mutable TObjectPtr<UTargetingPreset> LoadedEnemyTargeting;
+	/** 위 파일을 데이터 클래스의 기본 객체에 읽었는지. */
+	mutable bool bCameraDataLoaded = false;
+	mutable bool bCombatRulesLoaded = false;
 };

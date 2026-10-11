@@ -63,25 +63,25 @@ void UAgAbilityTask_LockOn::UpdateCamera(float DeltaTime)
 {
 	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAvatarActor());
 	APlayerController* PlayerController = Player ? Cast<APlayerController>(Player->GetController()) : nullptr;
-	const UAgCameraData* CameraData = UAgSettings::Get()->GetCameraData();
-	if (!PlayerController || !CameraData)
+	if (!PlayerController)
 	{
 		return;
 	}
+	const UAgCameraData& CameraData = UAgSettings::Get()->GetCameraData();
 
-	// 구도: from the camera pivot (the spring arm's origin) toward the lock-on point, pitch limited, then tilted further down.
+	// 구도: 카메라 중심(스프링 암의 시작점)에서 락온 지점을 보되, 피치를 제한한 뒤 더 내려다봅니다.
 	const FVector Pivot = Player->GetCameraBoom()->GetComponentLocation();
 	FRotator Goal = (LockOn->GetLockOnPoint() - Pivot).Rotation();
-	Goal.Pitch = FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), CameraData->LockOnPitchMin, CameraData->LockOnPitchMax) - CameraData->LockOnLookDown;
+	Goal.Pitch = FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), CameraData.LockOnPitchMin, CameraData.LockOnPitchMax) - CameraData.LockOnLookDown;
 	Goal.Roll = 0.f;
 
-	// 회전: eases in and out toward the goal and never turns faster than the maximum speed, so locking on, a dash or a
-	// leap overhead doesn't jerk the view. Yaw takes the short way round.
+	// 회전: 목표로 부드럽게 가속·감속하며 최대 속도보다 빨리 돌지 않으므로, 락온을 걸거나 머리 위로 돌진·도약이 지나가도
+	// 화면이 튀지 않습니다. Yaw는 짧은 쪽으로 돕니다.
 	const FRotator Current = PlayerController->GetControlRotation();
 	const float CurrentPitch = static_cast<float>(FRotator::NormalizeAxis(Current.Pitch));
 	const float CurrentYaw = static_cast<float>(Current.Yaw);
 	const float GoalYaw = CurrentYaw + static_cast<float>(FMath::FindDeltaAngleDegrees(Current.Yaw, Goal.Yaw));
-	const float Pitch = SpringToward(CurrentPitch, PitchRate, static_cast<float>(Goal.Pitch), DeltaTime, CameraData->LockOnSmoothingTime, CameraData->LockOnRotationSpeed);
-	const float Yaw = SpringToward(CurrentYaw, YawRate, GoalYaw, DeltaTime, CameraData->LockOnSmoothingTime, CameraData->LockOnRotationSpeed);
+	const float Pitch = SpringToward(CurrentPitch, PitchRate, static_cast<float>(Goal.Pitch), DeltaTime, CameraData.LockOnSmoothingTime, CameraData.LockOnRotationSpeed);
+	const float Yaw = SpringToward(CurrentYaw, YawRate, GoalYaw, DeltaTime, CameraData.LockOnSmoothingTime, CameraData.LockOnRotationSpeed);
 	PlayerController->SetControlRotation(FRotator(Pitch, Yaw, 0.f));
 }

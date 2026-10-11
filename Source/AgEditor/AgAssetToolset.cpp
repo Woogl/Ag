@@ -126,7 +126,9 @@ bool UAgAssetToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName Gr
 
 bool UAgAssetToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments)
 {
-	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Segments.IsEmpty())
+	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다. 도중에 실패해 반쯤 바뀐 몽타주가 더티로 남지 않게 합니다.
+	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Segments.IsEmpty()
+		|| Segments.ContainsByPredicate([](const FAgMontageSegment& Segment) { return !Segment.Animation; }))
 	{
 		return false;
 	}
@@ -139,10 +141,6 @@ bool UAgAssetToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotName, 
 	float Position = 0.f;
 	for (const FAgMontageSegment& Segment : Segments)
 	{
-		if (!Segment.Animation)
-		{
-			return false;
-		}
 		FAnimSegment& AnimSegment = SlotTrack.AnimTrack.AnimSegments.AddDefaulted_GetRef();
 		AnimSegment.SetAnimReference(Segment.Animation, /*bInitialize*/ true);
 		AnimSegment.AnimStartTime = Segment.StartTime;
@@ -173,23 +171,36 @@ bool UAgAssetToolset::SetMontageSections(UAnimMontage* Montage, const TArray<FAg
 		return false;
 	}
 
-	Montage->Modify();
-	Montage->CompositeSections.Reset();
+	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다. 이름이 없으면(None이면 엔진이 이름을 지어 붙임) 실패하고, 이름이 겹치거나
+	// 다음 섹션이 목록에 없는 이름이어도 실패합니다.
+	TSet<FName> Names;
 	for (const FAgMontageSection& Section : Sections)
 	{
-		if (Montage->AddAnimCompositeSection(Section.Name, Section.StartTime) == INDEX_NONE)
+		bool bRepeated = false;
+		Names.Add(Section.Name, &bRepeated);
+		if (Section.Name.IsNone() || bRepeated)
 		{
 			return false;
 		}
 	}
+	if (Sections.ContainsByPredicate([&Names](const FAgMontageSection& Section) { return !Section.NextSection.IsNone() && !Names.Contains(Section.NextSection); }))
+	{
+		return false;
+	}
+
+	Montage->Modify();
+	Montage->CompositeSections.Reset();
+	for (const FAgMontageSection& Section : Sections)
+	{
+		Montage->AddAnimCompositeSection(Section.Name, Section.StartTime);
+	}
 	for (const FAgMontageSection& Section : Sections)
 	{
 		const int32 Index = Montage->GetSectionIndex(Section.Name);
-		if (Index == INDEX_NONE)
+		if (Index != INDEX_NONE)
 		{
-			return false;
+			Montage->CompositeSections[Index].NextSectionName = Section.NextSection;
 		}
-		Montage->CompositeSections[Index].NextSectionName = Section.NextSection;
 	}
 	Montage->PostEditChange();
 	Montage->MarkPackageDirty();

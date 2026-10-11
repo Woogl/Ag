@@ -7,8 +7,8 @@
 #include "AgCombatRules.generated.h"
 
 /**
- * CombatRules.json: rules of 전투 시스템 shared by every character (구현 계획서 '데이터').
- * Every field is Transient and comes from the data file (AgDataFile); UAgSettings holds the one object.
+ * CombatRules.json: 모든 캐릭터에 공통인 전투 시스템 규칙(구현 계획서 '데이터').
+ * 모든 필드는 Transient이고 데이터 파일(AgDataFile)에서 채웁니다. 값은 이 클래스의 기본 객체에 있고, UAgSettings::GetCombatRules로 읽습니다.
  */
 UCLASS(BlueprintType)
 class UAgCombatRules : public UObject

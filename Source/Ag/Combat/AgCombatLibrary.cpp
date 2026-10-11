@@ -160,12 +160,12 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 		return EAgHitResult::None;
 	}
 
-	// 공격 방향: a projectile pushes from where it is.
+	// 공격 방향: 투사체는 그 투사체가 있는 곳에서 밉니다.
 	AActor* Instigator = HitSource ? HitSource : static_cast<AActor*>(Attacker);
 	UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 	if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_PerfectDodgeWindow))
 	{
-		// 극한 회피: the dodge ability gives the rewards, once per dodge.
+		// 극한 회피: 보상은 회피 어빌리티가 회피마다 한 번 줍니다.
 		SendEvent(Target, AgGameplayTags::Event_PerfectDodge, Instigator);
 		return EAgHitResult::PerfectDodge;
 	}
@@ -174,7 +174,7 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 		return EAgHitResult::None;
 	}
 
-	const UAgCombatRules* Rules = GetCombatRules();
+	const UAgCombatRules& Rules = UAgSettings::Get()->GetCombatRules();
 	const UAgAttributeSet* SourceStats = Attacker->GetAttributeSet();
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
 	const UAgPlayerData* DefenderData = Cast<UAgPlayerData>(Target->GetCharacterData());
@@ -183,7 +183,7 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 	EAgHitResult Result = EAgHitResult::Hit;
 	if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_ParryWindow) && Hit.bGuardable && Hit.bParryable && DefenderData)
 	{
-		// 패리: the defender takes nothing; the attacker loses a share of its MaxPP.
+		// 패리: 막는 쪽은 아무것도 잃지 않고, 공격한 쪽은 MaxPP의 일정 비율을 잃습니다.
 		Result = EAgHitResult::Parry;
 		if (CanLosePP(Attacker))
 		{
@@ -192,9 +192,9 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 	}
 	else if (TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding) && Hit.bGuardable && DefenderData)
 	{
-		// 가드 or 가드 브레이크: reduced HP damage and no PP damage; SP pays for the guard.
+		// 가드 또는 가드 브레이크: HP 대미지는 줄고 PP 대미지는 없으며, 가드는 SP로 치릅니다.
 		const float GuardSPCost = HPDamage * DefenderData->GuardSPCostRatio;
-		const int32 GuardedHPDamage = CalculateHPDamage(SourceStats->GetATK(), Hit.DamageMultiplier, TargetStats->GetDEF(), Rules ? Rules->GuardReduction : 1.f);
+		const int32 GuardedHPDamage = CalculateHPDamage(SourceStats->GetATK(), Hit.DamageMultiplier, TargetStats->GetDEF(), Rules.GuardReduction);
 		Result = TargetStats->GetSP() >= GuardSPCost ? EAgHitResult::Guard : EAgHitResult::GuardBreak;
 		ApplyStatChange(Attacker, Target, -GuardedHPDamage, 0.f);
 		ApplyResourceChange(Target, { Result == EAgHitResult::Guard ? -GuardSPCost : -TargetStats->GetSP(), 0.f, 0.f });
@@ -214,7 +214,7 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, result %d, HP now %.0f, PP now %.0f, SP now %.0f, attacker PP now %.0f"),
 		*Attacker->GetName(), *Target->GetName(), static_cast<int32>(Result), TargetStats->GetHP(), TargetStats->GetPP(), TargetStats->GetSP(), SourceStats->GetPP());
 
-	// 사망·그로기 판정 comes before the reactions (상태 우선순위). The parry's PP loss is judged on the attacker.
+	// 사망·그로기 판정이 피격 반응보다 먼저입니다(상태 우선순위). 패리로 잃은 PP는 공격한 쪽에서 판정합니다.
 	if (TargetStats->GetHP() <= 0.f)
 	{
 		SendEvent(Target, AgGameplayTags::Event_Death, Instigator);
@@ -248,16 +248,13 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target);
 	}
 
-	// 적중 후 처리: effect (the parry has its own), camera shake, hitstop, MP·UP 충전.
+	// 적중 후 처리: 이펙트(패리는 패리 이펙트), 카메라 셰이크, 히트스톱, MP·UP 충전.
 	FGameplayCueParameters EffectParameters;
 	EffectParameters.Location = HitLocation;
 	TargetASC->ExecuteGameplayCue(Result == EAgHitResult::Parry ? AgGameplayTags::GameplayCue_Parry : AgGameplayTags::GameplayCue_Hit, EffectParameters);
-	if (const UAgCameraData* Camera = GetCameraData())
-	{
-		PlayCameraShake(Target, GetHitShake(*Camera, Result, Hit, Attacker->IsA<AAgPlayerCharacter>()));
-	}
+	PlayCameraShake(Target, GetHitShake(UAgSettings::Get()->GetCameraData(), Result, Hit, Attacker->IsA<AAgPlayerCharacter>()));
 
-	// A projectile doesn't stop its shooter; only the character it reached stops.
+	// 투사체는 쏜 캐릭터를 멈추지 않고, 투사체가 닿은 캐릭터만 멈춥니다.
 	UAgTimeSubsystem* TimeSubsystem = UWorld::GetSubsystem<UAgTimeSubsystem>(Target->GetWorld());
 	if (TimeSubsystem && HitSource)
 	{
@@ -354,24 +351,4 @@ void UAgCombatLibrary::PlayCameraShake(AAgCharacterBase* Context, EAgCameraShake
 	{
 		Context->GetAbilitySystemComponent()->ExecuteGameplayCue(Cue, FGameplayCueParameters());
 	}
-}
-
-const UAgCameraData* UAgCombatLibrary::GetCameraData()
-{
-	const UAgCameraData* Camera = UAgSettings::Get()->GetCameraData();
-	if (!Camera)
-	{
-		UE_LOG(LogAg, Error, TEXT("Camera data is not set (Project Settings > Game > Ag)."));
-	}
-	return Camera;
-}
-
-const UAgCombatRules* UAgCombatLibrary::GetCombatRules()
-{
-	const UAgCombatRules* Rules = UAgSettings::Get()->GetCombatRules();
-	if (!Rules)
-	{
-		UE_LOG(LogAg, Error, TEXT("Combat rules are not set (Project Settings > Game > Ag)."));
-	}
-	return Rules;
 }

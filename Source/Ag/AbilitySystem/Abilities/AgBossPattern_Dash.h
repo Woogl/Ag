@@ -24,8 +24,7 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual bool UsesSharedMovement() const override { return false; }
 	virtual void OnPatternStarted() override;
-	virtual void GetUnguardableHitStarts(TArray<float>& OutTimes) const override;
-	virtual void GetParryableHitStarts(TArray<float>& OutTimes) const override;
+	virtual void GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const override;
 
 private:
 	/** Turns the dash state on or off: no turning, no blocking the player, the attack window open. */

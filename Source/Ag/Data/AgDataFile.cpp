@@ -25,16 +25,16 @@ namespace AgDataFile
 		constexpr int32 MaxErrorsOnScreen = 5;
 
 #if WITH_EDITOR
-		struct FLoadedObject
+		struct FAgLoadedObject
 		{
 			TWeakObjectPtr<UObject> Object;
 			FString FileName;
 		};
 
-		/** Every object filled from a file, for ReloadFiles. */
-		TArray<FLoadedObject>& GetLoadedObjects()
+		/** 파일에서 채운 모든 객체(ReloadFiles용). */
+		TArray<FAgLoadedObject>& GetLoadedObjects()
 		{
-			static TArray<FLoadedObject> LoadedObjects;
+			static TArray<FAgLoadedObject> LoadedObjects;
 			return LoadedObjects;
 		}
 #endif
@@ -97,7 +97,7 @@ namespace AgDataFile
 
 		void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors);
 
-		/** Checks a value against its property: the JSON type, then what that type needs (fields, tag, class, enum value, range). */
+		/** 값을 속성에 맞춰 검사합니다: JSON 형식, 그다음 그 형식에 필요한 것(필드, 태그, 클래스, 열거형 값, 정수, 범위). */
 		void CheckValue(const TSharedPtr<FJsonValue>& Value, const FProperty* Property, const FString& Path, TArray<FString>& Errors)
 		{
 			const EJson Type = GetJsonType(Property);
@@ -134,7 +134,7 @@ namespace AgDataFile
 			}
 			else if (const FClassProperty* ClassProperty = CastField<FClassProperty>(Property))
 			{
-				// Only C++ classes belong in a data file. Classes made in the editor are asset references, which stay in the data asset.
+				// 데이터 파일에는 C++ 클래스만 둡니다. 에디터에서 만든 클래스는 에셋 참조라 데이터 에셋에 둡니다.
 				const FString ClassPath = Value->AsString();
 				const UClass* Class = ClassPath.IsEmpty() ? nullptr : FindObject<UClass>(nullptr, *ClassPath);
 				if (!ClassPath.IsEmpty() && (!Class || !Class->HasAnyClassFlags(CLASS_Native) || !Class->IsChildOf(ClassProperty->MetaClass)))
@@ -144,29 +144,40 @@ namespace AgDataFile
 			}
 			else if (const UEnum* Enum = GetEnum(Property))
 			{
-				// The same lookup as FJsonObjectConverter's.
+				// FJsonObjectConverter와 같은 방법으로 찾습니다.
 				if (Enum->GetValueByName(FName(*Value->AsString()), EGetByNameFlags::CheckAuthoredName) == INDEX_NONE)
 				{
 					Errors.Add(FString::Printf(TEXT("%s: %s is not a value of %s"), *Path, *Value->AsString(), *Enum->GetName()));
 				}
 			}
-#if WITH_METADATA
 			else if (Type == EJson::Number)
 			{
+				// 정수 속성에 소수를 쓰면 변환이 조용히 잘라 버리므로 오류로 알립니다.
 				const double Number = Value->AsNumber();
-				if (Property->HasMetaData(TEXT("ClampMin")) && Number < FCString::Atod(*Property->GetMetaData(TEXT("ClampMin"))))
+				const FNumericProperty* NumericProperty = CastField<FNumericProperty>(Property);
+				if (NumericProperty && NumericProperty->IsInteger() && Number != FMath::TruncToDouble(Number))
 				{
-					Errors.Add(FString::Printf(TEXT("%s: %g is below the minimum %s"), *Path, Number, *Property->GetMetaData(TEXT("ClampMin"))));
+					Errors.Add(FString::Printf(TEXT("%s: %g is not a whole number"), *Path, Number));
 				}
-				if (Property->HasMetaData(TEXT("ClampMax")) && Number > FCString::Atod(*Property->GetMetaData(TEXT("ClampMax"))))
+#if WITH_METADATA
+				// 배열 원소의 허용 범위는 배열 속성에 적혀 있습니다. UHT가 원소 속성에는 메타데이터를 두지 않기 때문입니다.
+				const FProperty* RangeProperty = Property->GetOwnerProperty();
+				if (RangeProperty->HasMetaData(TEXT("ClampMin")) && Number < FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMin"))))
 				{
-					Errors.Add(FString::Printf(TEXT("%s: %g is above the maximum %s"), *Path, Number, *Property->GetMetaData(TEXT("ClampMax"))));
+					Errors.Add(FString::Printf(TEXT("%s: %g is below the minimum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMin"))));
 				}
-			}
+				if (RangeProperty->HasMetaData(TEXT("ClampMax")) && Number > FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMax"))))
+				{
+					Errors.Add(FString::Printf(TEXT("%s: %g is above the maximum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMax"))));
+				}
 #endif
+			}
 		}
 
-		/** Checks that Json has exactly these properties, in the same case, and checks each value. */
+		/**
+		 * Json에 이 속성들이 빠짐없이, 다른 키 없이 있는지 확인하고 값마다 검사합니다. 키는 엔진의 이름(FName)과 JSON 객체처럼
+		 * 대소문자를 구분하지 않습니다. 쿠킹 빌드의 속성 이름은 대소문자를 보존하지 않습니다(예: UP → Up).
+		 */
 		void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors)
 		{
 			for (const auto& Field : Json.Values)
@@ -174,7 +185,7 @@ namespace AgDataFile
 				const FString Key(*Field.Key);
 				const FProperty* const* Property = Properties.FindByPredicate([&Key](const FProperty* Candidate)
 				{
-					return Candidate->GetName().Equals(Key, ESearchCase::CaseSensitive);
+					return Candidate->GetName().Equals(Key, ESearchCase::IgnoreCase);
 				});
 				if (Property)
 				{
@@ -250,8 +261,8 @@ namespace AgDataFile
 	bool Load(UObject& Target, const FString& FileName)
 	{
 #if WITH_EDITOR
-		TArray<FLoadedObject>& LoadedObjects = GetLoadedObjects();
-		LoadedObjects.RemoveAll([&Target](const FLoadedObject& Entry) { return !Entry.Object.IsValid() || Entry.Object.Get() == &Target; });
+		TArray<FAgLoadedObject>& LoadedObjects = GetLoadedObjects();
+		LoadedObjects.RemoveAll([&Target](const FAgLoadedObject& Entry) { return !Entry.Object.IsValid() || Entry.Object.Get() == &Target; });
 		LoadedObjects.Add({ &Target, FileName });
 #endif
 
@@ -288,7 +299,7 @@ namespace AgDataFile
 			CheckObject(*Json, Properties, FString(), Errors);
 		}
 
-		// Every value converts on its own first, so a failure leaves the target as it was.
+		// 값마다 먼저 따로 변환해 두므로, 하나라도 실패하면 대상은 그대로 남습니다.
 		TArray<FDefaultConstructedPropertyElement> Values;
 		if (Errors.IsEmpty())
 		{
@@ -324,7 +335,7 @@ namespace AgDataFile
 		for (const FString& FileName : FileNames)
 		{
 			TArray<UObject*> Objects;
-			for (const FLoadedObject& Entry : GetLoadedObjects())
+			for (const FAgLoadedObject& Entry : GetLoadedObjects())
 			{
 				UObject* Object = Entry.Object.Get();
 				if (Object && Entry.FileName.Equals(FileName, ESearchCase::IgnoreCase))

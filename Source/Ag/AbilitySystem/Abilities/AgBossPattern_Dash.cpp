@@ -30,25 +30,13 @@ void UAgBossPattern_Dash::OnPatternStarted()
 	BlockedTask->ReadyForActivation();
 }
 
-void UAgBossPattern_Dash::GetUnguardableHitStarts(TArray<float>& OutTimes) const
+void UAgBossPattern_Dash::GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const
 {
-	// The attack window opens when the dash starts.
-	const FAgBossPattern* Pattern = GetPattern();
+	// 판정 구간은 돌진을 시작할 때 열립니다. 섬광도 그 시점을 기준으로 켭니다.
 	const float DashStart = FindEventNotifyTime(AgGameplayTags::Event_Boss_DashStart);
-	if (Pattern && !Pattern->Hits.IsEmpty() && !Pattern->Hits[0].bGuardable && DashStart >= 0.f)
+	if (DashStart >= 0.f)
 	{
-		OutTimes.Add(DashStart);
-	}
-}
-
-void UAgBossPattern_Dash::GetParryableHitStarts(TArray<float>& OutTimes) const
-{
-	// 판정 구간은 돌진을 시작할 때 열립니다. 예고 섬광도 그 시점을 기준으로 켭니다.
-	const FAgBossPattern* Pattern = GetPattern();
-	const float DashStart = FindEventNotifyTime(AgGameplayTags::Event_Boss_DashStart);
-	if (Pattern && !Pattern->Hits.IsEmpty() && Pattern->Hits[0].bParryable && DashStart >= 0.f)
-	{
-		OutTimes.Add(DashStart);
+		OutHitStarts.Add({ 0, DashStart });
 	}
 }
 
@@ -79,10 +67,16 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 		AnimInstance->SetRootMotionMode(ERootMotionMode::IgnoreRootMotion);
 	}
 
-	SetDashing(true);
 	DashTask = UAgAbilityTask_Dash::Dash(this, Boss->GetActorForwardVector(), Data->DashSpeed * Boss->GetPatternSpeed(), Distance);
 	DashTask->OnFinished.AddDynamic(this, &ThisClass::HandleDashFinished);
 	DashTask->ReadyForActivation();
+
+	// 판정 구간은 돌진 태스크가 생긴 뒤에 엽니다. 여는 순간의 판정이 가드·패리에 막히면 그 자리에서 돌진을 끝낼 수 있어야
+	// 하기 때문입니다. 돌진이 시작하자마자 끝났으면(HandleDashFinished가 DashTask를 비움) 열지 않습니다.
+	if (DashTask)
+	{
+		SetDashing(true);
+	}
 }
 
 void UAgBossPattern_Dash::HandleDashHold(FGameplayEventData Payload)

@@ -17,9 +17,8 @@ enum class EAgCameraShake : uint8
 };
 
 /**
- * Camera.json: the 락온 카메라 and 셰이크 values of the 카메라 spec (구현 계획서 '데이터'). The 자유 시점 values are
- * set on BP_AgPlayer's spring arm and camera.
- * Every field is Transient and comes from the data file (AgDataFile); UAgSettings holds the one object.
+ * Camera.json: 카메라 기획서의 락온 카메라와 셰이크 값(구현 계획서 '데이터'). 자유 시점 값은 BP_AgPlayer의 스프링 암과 카메라에 있습니다.
+ * 모든 필드는 Transient이고 데이터 파일(AgDataFile)에서 채웁니다. 값은 이 클래스의 기본 객체에 있고, UAgSettings::GetCameraData로 읽습니다.
  */
 UCLASS(BlueprintType)
 class UAgCameraData : public UObject

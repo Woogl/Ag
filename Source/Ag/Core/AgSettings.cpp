@@ -5,51 +5,31 @@
 #include "Data/AgCameraData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgDataFile.h"
-#include "TargetingSystem/TargetingPreset.h"
-#include "UObject/Package.h"
 
 namespace
 {
-	/** Reads a common data file into the one object of its class (구현 계획서 '데이터'). */
+	/** 공통 데이터 파일을 그 클래스의 기본 객체에 처음 한 번 읽어 넣습니다(구현 계획서 '데이터'). 읽지 못하면 기본값으로 남습니다. */
 	template <typename TData>
-	TData* LoadCommonData(const TCHAR* ObjectName, const FString& FileName)
+	const TData& GetCommonData(bool& bLoaded, const FString& FileName)
 	{
-		// A fixed name in the transient package keeps one object per session and makes it easy to find for inspection.
-		TData* Data = FindObject<TData>(GetTransientPackage(), ObjectName);
-		if (!Data)
+		TData& Data = *GetMutableDefault<TData>();
+		if (!bLoaded)
 		{
-			Data = NewObject<TData>(GetTransientPackage(), ObjectName);
+			bLoaded = true;
+			AgDataFile::Load(Data, FileName);
 		}
-		AgDataFile::Load(*Data, FileName);
 		return Data;
 	}
 }
 
-const UAgCameraData* UAgSettings::GetCameraData() const
+const UAgCameraData& UAgSettings::GetCameraData() const
 {
-	if (!LoadedCameraData)
-	{
-		LoadedCameraData = LoadCommonData<UAgCameraData>(TEXT("AgCameraData"), CameraDataFile);
-	}
-	return LoadedCameraData;
+	return GetCommonData<UAgCameraData>(bCameraDataLoaded, CameraDataFile);
 }
 
-const UAgCombatRules* UAgSettings::GetCombatRules() const
+const UAgCombatRules& UAgSettings::GetCombatRules() const
 {
-	if (!LoadedCombatRules)
-	{
-		LoadedCombatRules = LoadCommonData<UAgCombatRules>(TEXT("AgCombatRules"), CombatRulesFile);
-	}
-	return LoadedCombatRules;
-}
-
-const UTargetingPreset* UAgSettings::GetEnemyTargeting() const
-{
-	if (!LoadedEnemyTargeting)
-	{
-		LoadedEnemyTargeting = EnemyTargeting.LoadSynchronous();
-	}
-	return LoadedEnemyTargeting;
+	return GetCommonData<UAgCombatRules>(bCombatRulesLoaded, CombatRulesFile);
 }
 
 #if WITH_EDITOR
@@ -57,16 +37,15 @@ void UAgSettings::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedE
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	// A changed data file is read into the same object; a changed asset is loaded on its next use.
+	// 바뀐 데이터 파일은 같은 기본 객체에 다시 읽습니다. 바뀐 TP_Enemy는 플레이어가 다음 PIE에서 로드합니다.
 	const FName Property = PropertyChangedEvent.GetMemberPropertyName();
-	if (Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CameraDataFile) && LoadedCameraData)
+	if (Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CameraDataFile) && bCameraDataLoaded)
 	{
-		AgDataFile::Load(*LoadedCameraData, CameraDataFile);
+		AgDataFile::Load(*GetMutableDefault<UAgCameraData>(), CameraDataFile);
 	}
-	if (Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CombatRulesFile) && LoadedCombatRules)
+	if (Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CombatRulesFile) && bCombatRulesLoaded)
 	{
-		AgDataFile::Load(*LoadedCombatRules, CombatRulesFile);
+		AgDataFile::Load(*GetMutableDefault<UAgCombatRules>(), CombatRulesFile);
 	}
-	LoadedEnemyTargeting = nullptr;
 }
 #endif

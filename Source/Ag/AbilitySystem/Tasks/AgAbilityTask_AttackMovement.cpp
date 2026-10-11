@@ -74,7 +74,7 @@ void UAgAbilityTask_AttackMovement::UpdateWarpTarget()
 	AAgCharacterBase* Owner = Character.Get();
 	const AActor* TargetActor = Target.Get();
 	const float Distance = UAgCombatLibrary::GetHorizontalDistance(Owner, TargetActor);
-	if (!Owner || !TargetActor || (MaxRange > 0.f && Distance > MaxRange))
+	if (!Owner || !TargetActor || (MaxRange >= 0.f && Distance > MaxRange))
 	{
 		// 범위 밖: 따라가기를 멈추고, 모션은 만든 그대로 마지막 방향으로 계속합니다.
 		bFollowing = false;

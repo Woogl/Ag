@@ -101,14 +101,18 @@ void UAgAbility_Guard::HandleGuardPressed(FGameplayEventData Payload)
 		return;
 	}
 
-	// During the parry motion the guard follows the key. In its recovery a new press is a new guard start.
+	// 패리 모션 중에는 가드가 키를 따릅니다. 후딜에 새로 누르면 패리 모션을 모션 캔슬하고 가드를 새로 시작합니다(플레이어 사양 '가드 시작').
 	SetGuarding(true);
 	if (bInParryRecovery)
 	{
+		// 몽타주 태스크를 끝내는 것만으로는 몽타주가 멈추지 않으므로 직접 멈춥니다. 태스크를 먼저 끝내야, 몽타주가 멈출 때
+		// 태스크의 OnInterrupted가 가드 자체를 끝내지 않습니다.
 		if (ParryTask)
 		{
 			ParryTask->EndTask();
+			ParryTask = nullptr;
 		}
+		MontageStop();
 		EndParryMotion();
 		StartGuard(/*bOpenParryWindow*/ true);
 	}

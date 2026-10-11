@@ -2,6 +2,7 @@
 
 #include "UI/AgResultScreen.h"
 
+#include "Animation/WidgetAnimation.h"
 #include "CommonTextBlock.h"
 #include "Game/AgGameMode.h"
 #include "UI/AgButton.h"
@@ -27,39 +28,20 @@ void UAgResultScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	// Button input starts only after the fade-in (게임 플로우 'Stage Clear UI / Game Over UI').
+	// 버튼 입력은 페이드 인이 끝난 뒤부터 받습니다(게임 플로우 'Stage Clear UI / Game Over UI').
 	ButtonList->SetIsEnabled(false);
-	FadeElapsed = 0.f;
-	bFadingIn = true;
-	SetRenderOpacity(0.f);
-	if (FadeInTime <= 0.f)
-	{
-		FinishFadeIn();
-	}
+	PlayAnimation(FadeInAnimation);
 }
 
-void UAgResultScreen::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+void UAgResultScreen::OnAnimationFinished_Implementation(const UWidgetAnimation* Animation)
 {
-	Super::NativeTick(MyGeometry, InDeltaTime);
+	Super::OnAnimationFinished_Implementation(Animation);
 
-	if (!bFadingIn)
+	if (Animation == FadeInAnimation)
 	{
-		return;
+		ButtonList->SetIsEnabled(true);
+		RequestRefreshFocus();
 	}
-	FadeElapsed += InDeltaTime;
-	SetRenderOpacity(FMath::Clamp(FadeElapsed / FadeInTime, 0.f, 1.f));
-	if (FadeElapsed >= FadeInTime)
-	{
-		FinishFadeIn();
-	}
-}
-
-void UAgResultScreen::FinishFadeIn()
-{
-	bFadingIn = false;
-	SetRenderOpacity(1.f);
-	ButtonList->SetIsEnabled(true);
-	RequestRefreshFocus();
 }
 
 UWidget* UAgResultScreen::NativeGetDesiredFocusTarget() const

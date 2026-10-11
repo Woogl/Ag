@@ -24,6 +24,14 @@ void UAgCharacterData::PostEditChangeProperty(FPropertyChangedEvent& PropertyCha
 		AgDataFile::Load(*this, ValuesFile);
 	}
 }
+
+void UAgCharacterData::PostEditUndo()
+{
+	Super::PostEditUndo();
+
+	// 실행 취소·다시 실행은 Transient 속성(파일에서 읽은 값)까지 그 편집 때의 값으로 되돌립니다. 기준은 파일이므로 다시 읽습니다.
+	AgDataFile::Load(*this, ValuesFile);
+}
 #endif
 
 const FAgBossPattern* UAgBossData::FindPattern(const FGameplayTag& Pattern) const

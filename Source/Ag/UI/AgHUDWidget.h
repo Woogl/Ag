@@ -142,7 +142,7 @@ protected:
 
 private:
 	/** 바 하나의 감소 잔상 */
-	struct FTrail
+	struct FAgTrail
 	{
 		/** 잔상의 현재 길이 (0~1) */
 		float Ratio = 1.f;
@@ -178,7 +178,7 @@ private:
 	static void SetValueText(UTextBlock* Text, float Value, float MaxValue, FIntPoint& ShownValues);
 
 	/** 바가 줄면 잔상은 (줄어드는 중이라도) 그 자리에서 다시 기다린 뒤 바의 현재 값까지 줄어듭니다. */
-	void UpdateTrail(FTrail& Trail, UProgressBar* TrailBar, float BarRatio, float DeltaTime) const;
+	void UpdateTrail(FAgTrail& Trail, UProgressBar* TrailBar, float BarRatio, float DeltaTime) const;
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 
@@ -186,7 +186,7 @@ private:
 	int32 ShownCooldownKey = INDEX_NONE;
 	FIntPoint ShownHP = FIntPoint(INDEX_NONE, INDEX_NONE);
 	FIntPoint ShownMP = FIntPoint(INDEX_NONE, INDEX_NONE);
-	FTrail PlayerHPTrail;
-	FTrail BossHPTrail;
-	FTrail BossPPTrail;
+	FAgTrail PlayerHPTrail;
+	FAgTrail BossHPTrail;
+	FAgTrail BossPPTrail;
 };

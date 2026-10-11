@@ -6,11 +6,11 @@
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Core/AgGameplayTags.h"
+#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgDataFile.h"
@@ -178,10 +178,10 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
 	if (BossCharacter.GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
-		const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
+		const float GroggyDuration = UAgSettings::Get()->GetCombatRules().GroggyDuration;
 		const float Elapsed = BossCharacter.GetGroggyElapsedTime();
-		const bool bCounting = Rules && Rules->GroggyDuration > 0.f && Elapsed >= 0.f;
-		PPBarRatio = bCounting ? FMath::Min(Elapsed / Rules->GroggyDuration, 1.f) : 0.f;
+		const bool bCounting = GroggyDuration > 0.f && Elapsed >= 0.f;
+		PPBarRatio = bCounting ? FMath::Min(Elapsed / GroggyDuration, 1.f) : 0.f;
 	}
 	if (BossPPBar)
 	{
@@ -277,7 +277,7 @@ void UAgHUDWidget::SetValueText(UTextBlock* Text, float Value, float MaxValue, F
 	}
 }
 
-void UAgHUDWidget::UpdateTrail(FTrail& Trail, UProgressBar* TrailBar, float BarRatio, float DeltaTime) const
+void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar* TrailBar, float BarRatio, float DeltaTime) const
 {
 	if (!TrailBar)
 	{

@@ -14,6 +14,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
+#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -28,7 +29,7 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 	SetAssetTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_Groggy));
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_Groggy);
 
-	// 상태 우선순위 3: stops patterns, actions and lower reactions.
+	// 상태 우선순위 3: 패턴, 행동, 그보다 낮은 피격 반응을 멈춥니다.
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_KnockBack);
@@ -47,8 +48,7 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
-	if (!Data || !Data->GroggyMontage || !Rules || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data || !Data->GroggyMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -59,7 +59,7 @@ void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	ExecutedTask->EventReceived.AddDynamic(this, &ThisClass::HandleExecuted);
 	ExecutedTask->ReadyForActivation();
 
-	// Broken in the air (A4): the attack is already cancelled; groggy starts when the boss lands.
+	// 공중에서 PP가 깨지면(A4) 공격은 이미 취소됐고, 그로기는 보스가 착지할 때 시작합니다.
 	const AAgCharacterBase* Boss = GetAgCharacter();
 	if (Boss && Boss->GetCharacterMovement()->IsFalling())
 	{
@@ -79,14 +79,14 @@ void UAgAbility_Groggy::HandleLanded(EMovementMode NewMovementMode)
 void UAgAbility_Groggy::StartGroggy()
 {
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const UAgCombatRules* Rules = UAgCombatLibrary::GetCombatRules();
-	if (!Data || !Rules || MontageTask)
+	if (!Data || MontageTask)
 	{
 		return;
 	}
 
-	// The groggy time covers the whole motion, so the End section starts that long before the time is up.
-	// The time is counted in game time and keeps running during hitstop (전투 시스템 '히트스톱 중의 시간').
+	// 그로기 시간은 모션 전체를 덮으므로, End 섹션은 시간이 끝나기 그 길이만큼 전에 시작합니다.
+	// 시간은 게임 시간으로 세며 히트스톱 중에도 흐릅니다(전투 시스템 '히트스톱 중의 시간').
+	const UAgCombatRules& Rules = UAgSettings::Get()->GetCombatRules();
 	const UAnimMontage* Montage = Data->GroggyMontage;
 	const int32 EndSection = Montage->GetSectionIndex(GroggyEndSection);
 	const float EndLength = EndSection != INDEX_NONE ? Montage->GetSectionLength(EndSection) : 0.f;
@@ -95,7 +95,7 @@ void UAgAbility_Groggy::StartGroggy()
 	{
 		Boss->SetGroggyTimerRunning(true);
 	}
-	EndSectionTask = UAbilityTask_WaitDelay::WaitDelay(this, FMath::Max(0.f, Rules->GroggyDuration - EndLength));
+	EndSectionTask = UAbilityTask_WaitDelay::WaitDelay(this, FMath::Max(0.f, Rules.GroggyDuration - EndLength));
 	EndSectionTask->OnFinish.AddDynamic(this, &ThisClass::HandleEndSectionDue);
 	EndSectionTask->ReadyForActivation();
 }

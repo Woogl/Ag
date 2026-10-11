@@ -123,14 +123,37 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
 
-	// 가드 불가 타 앞에는 붉은 섬광, 패리 가능 타 앞에는 예고 섬광을 판정 구간 시작까지 켭니다. 앞당기는 시간은
-	// 1페이즈 속도 기준 초이며, 2페이즈는 둘 다 같은 비율로 줄이므로 몽타주 시간으로는 두 페이즈가 같습니다.
-	TArray<float> HitStarts;
-	GetUnguardableHitStarts(HitStarts);
-	ScheduleTelegraphs(HitStarts, Data->UnblockableTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ false);
-	HitStarts.Reset();
-	GetParryableHitStarts(HitStarts);
-	ScheduleTelegraphs(HitStarts, Data->ParryTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ true);
+	// 몽타주를 재생하지 못하면 OnCancelled가 그 자리에서 어빌리티를 끝냅니다. 끝난 어빌리티에서 섬광이나 특수 패턴의 이동을
+	// 시작하지 않습니다.
+	if (!IsActive())
+	{
+		return;
+	}
+
+	// 가드 불가 타 앞에는 붉은 섬광, 패리 가능 타 앞에는 예고 섬광을 판정 구간 시작까지 켭니다(보스 사양 '공격 예고').
+	// 앞당기는 시간은 1페이즈 속도 기준 초이며, 2페이즈는 둘 다 같은 비율로 줄이므로 몽타주 시간으로는 두 페이즈가 같습니다.
+	TArray<FAgHitStart> HitStarts;
+	GetHitStarts(HitStarts);
+	TArray<float> UnblockableHitStarts;
+	TArray<float> ParryableHitStarts;
+	for (const FAgHitStart& HitStart : HitStarts)
+	{
+		if (!Pattern->Hits.IsValidIndex(HitStart.HitIndex))
+		{
+			continue;
+		}
+		const FAgAttackHit& Hit = Pattern->Hits[HitStart.HitIndex];
+		if (!Hit.bGuardable)
+		{
+			UnblockableHitStarts.Add(HitStart.Time);
+		}
+		else if (Hit.bParryable)
+		{
+			ParryableHitStarts.Add(HitStart.Time);
+		}
+	}
+	ScheduleTelegraphs(UnblockableHitStarts, Data->UnblockableTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ false);
+	ScheduleTelegraphs(ParryableHitStarts, Data->ParryTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ true);
 
 	OnPatternStarted();
 }
@@ -156,36 +179,17 @@ void UAgBossPatternAbility::ScheduleTelegraphs(const TArray<float>& HitStarts, f
 	}
 }
 
-void UAgBossPatternAbility::GetUnguardableHitStarts(TArray<float>& OutTimes) const
+void UAgBossPatternAbility::GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const
 {
-	const FAgBossPattern* Pattern = GetPattern();
-	if (!Montage || !Pattern)
+	if (!Montage)
 	{
 		return;
 	}
 	for (const FAnimNotifyEvent& Notify : Montage->Notifies)
 	{
-		const UAgAnimNotifyState_AttackWindow* Window = Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass);
-		if (Window && Pattern->Hits.IsValidIndex(Window->HitIndex) && !Pattern->Hits[Window->HitIndex].bGuardable)
+		if (const UAgAnimNotifyState_AttackWindow* Window = Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass))
 		{
-			OutTimes.Add(Notify.GetTriggerTime());
-		}
-	}
-}
-
-void UAgBossPatternAbility::GetParryableHitStarts(TArray<float>& OutTimes) const
-{
-	const FAgBossPattern* Pattern = GetPattern();
-	if (!Montage || !Pattern)
-	{
-		return;
-	}
-	for (const FAnimNotifyEvent& Notify : Montage->Notifies)
-	{
-		const UAgAnimNotifyState_AttackWindow* Window = Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass);
-		if (Window && Pattern->Hits.IsValidIndex(Window->HitIndex) && Pattern->Hits[Window->HitIndex].bParryable)
-		{
-			OutTimes.Add(Notify.GetTriggerTime());
+			OutHitStarts.Add({ Window->HitIndex, Notify.GetTriggerTime() });
 		}
 	}
 }
