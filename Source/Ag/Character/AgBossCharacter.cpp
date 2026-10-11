@@ -125,9 +125,9 @@ float AAgBossCharacter::GetGroggyElapsedTime() const
 	return GroggyStartTime >= 0.0 ? static_cast<float>(GetWorld()->GetTimeSeconds() - GroggyStartTime) : -1.f;
 }
 
-void AAgBossCharacter::ShowDamageFloater(int32 Amount, const FVector& Location, bool bLarge) const
+void AAgBossCharacter::ShowDamageFloater(int32 Amount, const FVector& Location) const
 {
-	AAgDamageFloater::Spawn(GetWorld(), DamageFloaterWidget, Location, Amount, bLarge);
+	AAgDamageFloater::Spawn(GetWorld(), DamageFloaterWidget, Location, Amount);
 }
 
 void AAgBossCharacter::Tick(float DeltaSeconds)

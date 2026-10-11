@@ -5,12 +5,8 @@
 #include "Animation/WidgetAnimation.h"
 #include "CommonTextBlock.h"
 
-void UAgDamageFloaterWidget::SetDamage(int32 Amount, bool bLarge, float GameSpeed)
+void UAgDamageFloaterWidget::SetDamage(int32 Amount, float GameSpeed)
 {
-	if (bLarge && LargeStyle)
-	{
-		DamageText->SetStyle(LargeStyle);
-	}
 	DamageText->SetText(FText::AsNumber(Amount, &FNumberFormattingOptions::DefaultNoGrouping()));
 	PlayAnimation(FadeAnimation, 0.f, 1, EUMGSequencePlayMode::Forward, GameSpeed);
 }

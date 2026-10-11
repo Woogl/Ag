@@ -208,7 +208,7 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 		// 전투 HUD '대미지 숫자': 보스가 잃은 HP를 공격이 닿은 위치에 띄웁니다. 플레이어가 받은 대미지는 띄우지 않습니다.
 		if (const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Target))
 		{
-			Boss->ShowDamageFloater(HPDamage, HitLocation, Hit.bLargeDamageFloater);
+			Boss->ShowDamageFloater(HPDamage, HitLocation);
 		}
 	}
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, result %d, HP now %.0f, PP now %.0f, SP now %.0f, attacker PP now %.0f"),

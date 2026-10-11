@@ -21,8 +21,8 @@ class AAgDamageFloater : public AActor
 public:
 	AAgDamageFloater();
 
-	/** Location에 Amount를 띄웁니다. bLarge면 큰 크기(스킬·궁극기·처형)로 표시합니다. */
-	static void Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount, bool bLarge);
+	/** Location에 Amount를 띄웁니다. */
+	static void Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount);
 
 protected:
 	virtual void Tick(float DeltaSeconds) override;

@@ -20,7 +20,7 @@ AAgDamageFloater::AAgDamageFloater()
 	RootComponent = Widget;
 }
 
-void AAgDamageFloater::Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount, bool bLarge)
+void AAgDamageFloater::Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount)
 {
 	if (!World || !WidgetClass)
 	{
@@ -40,7 +40,7 @@ void AAgDamageFloater::Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> 
 
 	if (UAgDamageFloaterWidget* FloaterWidget = Cast<UAgDamageFloaterWidget>(Floater->Widget->GetWidget()))
 	{
-		FloaterWidget->SetDamage(Amount, bLarge, World->GetWorldSettings()->GetEffectiveTimeDilation());
+		FloaterWidget->SetDamage(Amount, World->GetWorldSettings()->GetEffectiveTimeDilation());
 	}
 }
 

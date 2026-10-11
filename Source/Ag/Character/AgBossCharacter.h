@@ -42,7 +42,7 @@ public:
 	float GetGroggyElapsedTime() const;
 
 	/** 대미지 숫자: 플레이어 공격으로 보스가 잃은 HP를 Location에 띄웁니다. */
-	void ShowDamageFloater(int32 Amount, const FVector& Location, bool bLarge) const;
+	void ShowDamageFloater(int32 Amount, const FVector& Location) const;
 
 	/** 보스 AI의 현재 대상(구현 계획서 'AI 대상'). AI가 없거나 대상이 아직 없으면 null입니다. */
 	AAgCharacterBase* GetTarget() const;

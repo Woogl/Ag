@@ -7,7 +7,6 @@
 #include "AgDamageFloaterWidget.generated.h"
 
 class UCommonTextBlock;
-class UCommonTextStyle;
 class UWidgetAnimation;
 
 /**
@@ -20,8 +19,8 @@ class UAgDamageFloaterWidget : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	/** Amount를 정수로 표시하고 투명해지기 시작합니다. bLarge면 큰 글자 스타일로 바꿉니다. */
-	void SetDamage(int32 Amount, bool bLarge, float GameSpeed);
+	/** Amount를 정수로 표시하고 투명해지기 시작합니다. */
+	void SetDamage(int32 Amount, float GameSpeed);
 
 	/** 투명해지는 속도를 게임 시간 배율(슬로우모션)에 맞춥니다. */
 	void SetGameSpeed(float GameSpeed);
@@ -32,17 +31,13 @@ public:
 	float GetRiseHeight() const { return RiseHeight; }
 
 protected:
-	/** 숫자. 자기 글자 스타일이 일반 크기입니다. */
+	/** 숫자. 글자 크기는 자기 글자 스타일이 정합니다. */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> DamageText;
 
 	/** 숫자가 투명해지는 애니메이션. */
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	TObjectPtr<UWidgetAnimation> FadeAnimation;
-
-	/** 크게 표시하는 타(스킬·궁극기·처형)의 글자 스타일. */
-	UPROPERTY(EditDefaultsOnly, Category = "Damage Floater")
-	TSubclassOf<UCommonTextStyle> LargeStyle;
 
 	/** 표시 시간 동안 떠오르는 높이. */
 	UPROPERTY(EditDefaultsOnly, Category = "Damage Floater", meta = (Units = "cm", ClampMin = 0))
