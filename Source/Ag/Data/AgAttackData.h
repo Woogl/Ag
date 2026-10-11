@@ -118,7 +118,7 @@ struct FAgBossPattern
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (ClampMin = 0))
 	float WeightFar = 0.f;
 
-	/** 보스 사양 '이동': 1타 선딜 동안 정지 간격까지 추가로 다가갑니다 (A1, A5). */
-	UPROPERTY(EditAnywhere, Category = "Pattern")
-	bool bApproachFirstHit = false;
+	/** 보스 사양 '이동': 1타 판정 구간 전에 정지 간격까지 추가로 다가가는 최대 접근 거리. 0이면 추가 접근하지 않습니다. */
+	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "cm", ClampMin = 0))
+	float FirstHitApproachDistance = 0.f;
 };

@@ -41,7 +41,7 @@
       "WeightNear": 40,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": true
+      "FirstHitApproachDistance": 100
     },
     {
       "Pattern": "Ability.Boss.Pattern.A2",
@@ -59,7 +59,7 @@
       "WeightNear": 30,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": false
+      "FirstHitApproachDistance": 0
     },
     {
       "Pattern": "Ability.Boss.Pattern.A3",
@@ -77,7 +77,7 @@
       "WeightNear": 0,
       "WeightMid": 40,
       "WeightFar": 60,
-      "bApproachFirstHit": false
+      "FirstHitApproachDistance": 0
     },
     {
       "Pattern": "Ability.Boss.Pattern.A4",
@@ -95,7 +95,7 @@
       "WeightNear": 0,
       "WeightMid": 40,
       "WeightFar": 40,
-      "bApproachFirstHit": false
+      "FirstHitApproachDistance": 0
     },
     {
       "Pattern": "Ability.Boss.Pattern.A5",
@@ -127,7 +127,7 @@
       "WeightNear": 40,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": true
+      "FirstHitApproachDistance": 100
     },
     {
       "Pattern": "Ability.Boss.Pattern.A6",
@@ -159,7 +159,7 @@
       "WeightNear": 0,
       "WeightMid": 20,
       "WeightFar": 60,
-      "bApproachFirstHit": false
+      "FirstHitApproachDistance": 0
     },
     {
       "Pattern": "Ability.Boss.Pattern.A7",
@@ -175,9 +175,9 @@
       "Cooldown": 6,
       "Phases": [1, 2],
       "WeightNear": 30,
-      "WeightMid": 0,
+      "WeightMid": 30,
       "WeightFar": 0,
-      "bApproachFirstHit": false
+      "FirstHitApproachDistance": 700
     },
     {
       "Pattern": "Ability.Boss.Pattern.B1",
@@ -187,12 +187,11 @@
       "WeightNear": 0,
       "WeightMid": 0,
       "WeightFar": 0,
-      "bApproachFirstHit": false
+      "FirstHitApproachDistance": 0
     }
   ],
   "PatternPlayRate": 0.8,
   "StopDistance": 150,
-  "FirstHitApproachDistance": 100,
   "RotationSpeed": 180,
   "RotationStopLead": 0.2,
   "NearDistance": 300,

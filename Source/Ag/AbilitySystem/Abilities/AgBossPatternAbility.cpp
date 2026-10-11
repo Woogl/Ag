@@ -107,10 +107,10 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	{
 		Boss->SetStopTarget(Player, Data->StopDistance);
 	}
-	if (UsesSharedMovement() && Pattern->bApproachFirstHit && Player)
+	if (UsesSharedMovement() && Pattern->FirstHitApproachDistance > 0.f && Player)
 	{
-		// The approach may add at most the 최대 접근 거리 to the motion's own travel; the boss turns on its own (no warped facing).
-		const float MaxTravel = GetForwardTravelBeforeFirstWindow(Montage) + Data->FirstHitApproachDistance;
+		// 모션 자체 이동에 최대 접근 거리까지만 더합니다. 다가가는 구간은 몽타주의 워핑 구간이며, 방향은 보스가 직접 돌립니다.
+		const float MaxTravel = GetForwardTravelBeforeFirstWindow(Montage) + Pattern->FirstHitApproachDistance;
 		Boss->StartApproach(Player, Data->StopDistance, 0.f, MaxTravel, false);
 	}
 	else
@@ -125,9 +125,8 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
 
-	// 붉은 섬광 before each unguardable hit, 예고 섬광 before each parryable one, until its attack window starts. The
-	// leads are in seconds at phase 1 speed; in montage time they are the same in both phases because phase 2 shortens
-	// both by the same ratio.
+	// 가드 불가 타 앞에는 붉은 섬광, 패리 가능 타 앞에는 예고 섬광을 판정 구간 시작까지 켭니다. 앞당기는 시간은
+	// 1페이즈 속도 기준 초이며, 2페이즈는 둘 다 같은 비율로 줄이므로 몽타주 시간으로는 두 페이즈가 같습니다.
 	TArray<float> HitStarts;
 	GetUnguardableHitStarts(HitStarts);
 	ScheduleTelegraphs(HitStarts, Data->UnblockableTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ false);

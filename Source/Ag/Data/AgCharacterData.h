@@ -380,10 +380,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "cm", ClampMin = 0))
 	float StopDistance = 0.f;
 
-	/** 이동: 최대 접근 거리 of the first-hit approach (A1, A5). */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "cm", ClampMin = 0))
-	float FirstHitApproachDistance = 0.f;
-
 	/** 회전: turning speed toward the player. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "deg/s", ClampMin = 0))
 	float RotationSpeed = 0.f;
