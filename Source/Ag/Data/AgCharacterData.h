@@ -74,7 +74,7 @@ struct FAgStats
  * The data asset (DA_Player, DA_Boss) saves asset references and the values the specs don't give (implementation values,
  * abilities, sockets and bones). The Transient fields are the spec values the planner tunes: they come from the data file
  * ValuesFile each time the asset loads (AgDataFile).
- * The 데이터 위치표 in the implementation plan maps each field to its spec item.
+ * The 데이터 위치표 (Docs/Program/데이터 위치표.md) maps each field to its spec item.
  */
 UCLASS(Abstract, BlueprintType)
 class UAgCharacterData : public UDataAsset
