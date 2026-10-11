@@ -9,7 +9,7 @@
 class UCharacterMovementComponent;
 
 /**
- * 루트 모션 소스로 주인을 일정한 속도로 곧게 옮깁니다(A3 돌진). 거리를 다 가거나 막히면 끝납니다.
+ * 루트 모션 소스로 주인을 일정한 속도로 곧게 옮깁니다(A3 돌진). 거리를 다 가거나 막히거나 Finish를 부르면 끝납니다.
  * 충돌은 그대로 적용되어 벽에 막히면 그 자리에서 멈춥니다.
  */
 UCLASS()
@@ -29,8 +29,10 @@ public:
 	virtual void TickTask(float DeltaTime) override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
-private:
+	/** 지금 자리에서 돌진을 끝내고 OnFinished를 보냅니다. */
 	void Finish();
+
+private:
 	void RemoveSource();
 
 	FVector Direction = FVector::ForwardVector;

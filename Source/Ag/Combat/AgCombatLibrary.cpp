@@ -242,6 +242,12 @@ EAgHitResult UAgCombatLibrary::ProcessHit(AAgCharacterBase* Attacker, AAgCharact
 		}
 	}
 
+	// 막힘: 가드·가드 브레이크·패리면 공격자에게 알립니다.
+	if (Result != EAgHitResult::Hit)
+	{
+		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target);
+	}
+
 	// 적중 후 처리: effect (the parry has its own), camera shake, hitstop, MP·UP 충전.
 	FGameplayCueParameters EffectParameters;
 	EffectParameters.Location = HitLocation;

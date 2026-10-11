@@ -15,6 +15,7 @@
 void UAgBossPattern_Dash::OnPatternStarted()
 {
 	bDashing = bHolding = bRootMotionIgnored = false;
+	DashTask = nullptr;
 
 	UAbilityTask_WaitGameplayEvent* StartTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Boss_DashStart, nullptr, /*OnlyTriggerOnce*/ true);
 	StartTask->EventReceived.AddDynamic(this, &ThisClass::HandleDashStart);
@@ -23,6 +24,10 @@ void UAgBossPattern_Dash::OnPatternStarted()
 	UAbilityTask_WaitGameplayEvent* HoldTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Boss_DashHold, nullptr, /*OnlyTriggerOnce*/ true);
 	HoldTask->EventReceived.AddDynamic(this, &ThisClass::HandleDashHold);
 	HoldTask->ReadyForActivation();
+
+	UAbilityTask_WaitGameplayEvent* BlockedTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_AttackBlocked, nullptr, /*OnlyTriggerOnce*/ true);
+	BlockedTask->EventReceived.AddDynamic(this, &ThisClass::HandleAttackBlocked);
+	BlockedTask->ReadyForActivation();
 }
 
 void UAgBossPattern_Dash::GetUnguardableHitStarts(TArray<float>& OutTimes) const
@@ -75,7 +80,7 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 	}
 
 	SetDashing(true);
-	UAgAbilityTask_Dash* DashTask = UAgAbilityTask_Dash::Dash(this, Boss->GetActorForwardVector(), Data->DashSpeed * Boss->GetPatternSpeed(), Distance);
+	DashTask = UAgAbilityTask_Dash::Dash(this, Boss->GetActorForwardVector(), Data->DashSpeed * Boss->GetPatternSpeed(), Distance);
 	DashTask->OnFinished.AddDynamic(this, &ThisClass::HandleDashFinished);
 	DashTask->ReadyForActivation();
 }
@@ -93,6 +98,7 @@ void UAgBossPattern_Dash::HandleDashHold(FGameplayEventData Payload)
 
 void UAgBossPattern_Dash::HandleDashFinished()
 {
+	DashTask = nullptr;
 	SetDashing(false);
 
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
@@ -100,6 +106,15 @@ void UAgBossPattern_Dash::HandleDashFinished()
 	{
 		bHolding = false;
 		AnimInstance->Montage_Resume(GetMontage());
+	}
+}
+
+void UAgBossPattern_Dash::HandleAttackBlocked(FGameplayEventData Payload)
+{
+	// 가드·패리에 막히면 벽에 막혔을 때처럼 그 자리에서 멈춥니다.
+	if (bDashing && DashTask)
+	{
+		DashTask->Finish();
 	}
 }
 

@@ -88,6 +88,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BasicAttackStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackWindowEnded);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackBlocked);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_DownGrounded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_RecoveryStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ExecutionBlow);
