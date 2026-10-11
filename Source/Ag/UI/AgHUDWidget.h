@@ -107,13 +107,9 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> BossHPTrailBar;
 
-	/** 보스 상태: PP 바. Its fill color in the designer is the normal color. */
+	/** 보스 상태: PP 바 */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UProgressBar> BossPPBar;
-
-	/** 보스 상태: the PP bar color during groggy, while the bar refills over the groggy time. */
-	UPROPERTY(EditAnywhere, Category = "HUD")
-	FLinearColor GroggyPPColor = FLinearColor::White;
 
 	/** 스킬·궁극기 슬롯: opacity of a slot that can't be used. */
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
@@ -165,9 +161,6 @@ private:
 	void UpdateTrail(FHPTrail& Trail, UProgressBar* TrailBar, float HPRatio, float DeltaTime) const;
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
-
-	/** The PP bar's fill color from the designer. */
-	FLinearColor PPColor = FLinearColor::White;
 
 	int32 ShownSkillCost = INDEX_NONE;
 	int32 ShownCooldownKey = INDEX_NONE;

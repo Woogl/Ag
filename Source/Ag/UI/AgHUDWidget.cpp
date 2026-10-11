@@ -27,17 +27,12 @@ void UAgHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (BossPPBar)
-	{
-		PPColor = BossPPBar->GetFillColorAndOpacity();
-	}
-
 #if WITH_EDITOR
-	// A reloaded data file may change the boss name; finding the boss again sets it.
+	// 다시 읽은 데이터 파일이 보스 이름을 바꿀 수 있으므로, 보스를 다시 찾아 이름을 정합니다.
 	AgDataFile::OnReloaded().AddWeakLambda(this, [this]() { Boss = nullptr; });
 #endif
 
-	// An icon whose brush has no image would draw a plain box, so it stays hidden until one is put in.
+	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로, 이미지를 넣기 전까지 숨깁니다.
 	for (UImage* Icon : { SkillIconImage.Get(), UltimateIconImage.Get() })
 	{
 		if (Icon && !Icon->GetBrush().GetResourceObject())
@@ -136,8 +131,7 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 
 	if (BossPPBar)
 	{
-		// 그로기: another color, refilling from empty over the groggy time. When an execution makes the groggy last
-		// longer, the bar stays full in that color until the groggy ends.
+		// 그로기: 빈 바를 그로기 지속 시간 동안 다시 채웁니다. 처형으로 그로기가 길어지면 끝날 때까지 가득 찬 채로 둡니다.
 		const bool bGroggy = BossCharacter.GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 		if (bGroggy)
 		{
@@ -150,7 +144,6 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 		{
 			SetBarRatio(BossPPBar, Stats->GetPP(), Stats->GetMaxPP());
 		}
-		BossPPBar->SetFillColorAndOpacity(bGroggy ? GroggyPPColor : PPColor);
 	}
 }
 
