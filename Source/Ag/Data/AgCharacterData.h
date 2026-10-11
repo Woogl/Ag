@@ -392,11 +392,11 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
 	float RotationStopLead = 0.f;
 
-	/** 거리 구간: 근거리 upper bound (capsule centers, horizontal). */
+	/** 패턴 목록: 근거리의 상한 (캡슐 중심 사이 수평 거리) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))
 	float NearDistance = 0.f;
 
-	/** 거리 구간: 중거리 upper bound. Farther is 원거리. */
+	/** 패턴 목록: 중거리의 상한. 이보다 멀면 원거리입니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))
 	float FarDistance = 0.f;
 
