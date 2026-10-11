@@ -33,7 +33,7 @@
           "bFinisher": false
         }
       ],
-      "TargetingRange": 400
+      "TargetingRange": 150
     },
     {
       "Hits": [
@@ -49,7 +49,7 @@
           "bFinisher": false
         }
       ],
-      "TargetingRange": 450
+      "TargetingRange": 200
     },
     {
       "Hits": [
@@ -65,7 +65,7 @@
           "bFinisher": false
         }
       ],
-      "TargetingRange": 500
+      "TargetingRange": 250
     },
     {
       "Hits": [
@@ -81,7 +81,7 @@
           "bFinisher": false
         }
       ],
-      "TargetingRange": 450
+      "TargetingRange": 210
     },
     {
       "Hits": [
@@ -97,7 +97,7 @@
           "bFinisher": false
         }
       ],
-      "TargetingRange": 500
+      "TargetingRange": 270
     }
   ],
   "AttackStopDistance": 100,
