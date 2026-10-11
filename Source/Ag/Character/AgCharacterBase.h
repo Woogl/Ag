@@ -21,9 +21,8 @@ struct FOnAttributeChangeData;
 DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase* /*DeadCharacter*/);
 
 /**
- * Base for the player and the boss.
- * Owns the ability system and stats, the weapon and its attack windows, movement during attacks,
- * the character data and the death handling from 전투 시스템 '사망 처리'.
+ * 플레이어와 보스의 공통 부모.
+ * 어빌리티 시스템과 스탯, 무기와 판정 구간, 정지 간격, 캐릭터 데이터, 전투 시스템 '사망 처리'를 맡습니다.
  */
 UCLASS(Abstract)
 class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -33,7 +32,7 @@ class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface
 public:
 	AAgCharacterBase();
 
-	/** Motion warping target the attack montages warp toward. */
+	/** 공격 몽타주의 Motion Warping 구간이 향하는 워프 목표 이름. 공격 중 이동 태스크가 넣고 지웁니다. */
 	static const FName AttackWarpTarget;
 
 	/** 블루프린트에서 무기 메시 컴포넌트와 무기 판정 캡슐에 다는 컴포넌트 태그 */
@@ -68,22 +67,15 @@ public:
 	/** 판정 구간 end, from the attack window notify. */
 	void EndAttackWindow(int32 HitIndex);
 
-	/** 정지 간격: root motion never carries this character closer than StopDistance to Target (capsule centers, horizontal). */
+	/** 정지 간격: 루트 모션이 이 캐릭터를 Target에 StopDistance보다 가까이 데려가지 않습니다(캡슐 중심 사이 수평 거리). */
 	void SetStopTarget(AActor* Target, float InStopDistance);
 	void ClearStopTarget();
 
 	/**
-	 * StopApproach까지 매 프레임 공격 워프 목표를 Target 앞 StopDistance 지점으로 옮깁니다.
-	 * Target이 MaxRange(0이면 제한 없음)를 벗어나면 따라가기를 멈춥니다. MaxTravel(음수면 제한 없음)은 워프 목표가
-	 * 시작 위치에서 떨어질 수 있는 최대 거리입니다. bFaceTarget이면 바라보는 방향도 Target 쪽으로 워프합니다.
-	 * 이미 더 가까우면 보통 그 자리에 머물고, bExactGap이면 그 간격까지 물러납니다(처형 맞춤).
+	 * 바라보는 방향이 고정된 동안 참입니다. 기본은 판정 구간 동안입니다(플레이어 사양 '공격 중 이동').
+	 * 공격 중 이동 태스크는 이 순간 접근 목표를 고정합니다.
 	 */
-	void StartApproach(AActor* Target, float InStopDistance, float MaxRange, float MaxTravel, bool bFaceTarget, bool bExactGap = false);
-
-	/** Stops updating the warp target; the last one stays for the rest of the warp window. */
-	void StopApproach();
-
-	bool IsApproaching() const { return ApproachTarget.IsValid(); }
+	virtual bool IsFacingFixed() const { return OpenWindowHit != INDEX_NONE; }
 
 	/** 움찔: plays the additive flinch on top of the current motion. */
 	void PlayFlinch();
@@ -157,8 +149,6 @@ private:
 	/** 무기 판정 캡슐을 지난 위치에서 지금 위치까지 잘게 나눠 스윕합니다. 빠르게 휘둘러도 건너뛰지 않습니다. */
 	void SweepWeapon();
 
-	void UpdateApproach();
-
 	FTransform ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds);
 
 	UPROPERTY(VisibleAnywhere, Category = "Abilities")
@@ -191,14 +181,6 @@ private:
 
 	TWeakObjectPtr<AActor> StopTarget;
 	float StopDistance = 0.f;
-
-	TWeakObjectPtr<AActor> ApproachTarget;
-	FVector ApproachOrigin = FVector::ZeroVector;
-	float ApproachStopDistance = 0.f;
-	float ApproachMaxRange = 0.f;
-	float ApproachMaxTravel = 0.f;
-	bool bApproachFacesTarget = false;
-	bool bApproachExactGap = false;
 
 	FActiveGameplayEffectHandle PPRegenDelay;
 

@@ -125,10 +125,6 @@ void AAgCharacterBase::Tick(float DeltaSeconds)
 	{
 		SweepWeapon();
 	}
-	if (ApproachTarget.IsValid())
-	{
-		UpdateApproach();
-	}
 }
 
 void AAgCharacterBase::PossessedBy(AController* NewController)
@@ -269,9 +265,6 @@ void AAgCharacterBase::BeginAttackWindow(int32 HitIndex)
 		return;
 	}
 
-	// 판정 구간이 시작되면 바라보는 방향과 접근 목표를 고정합니다(플레이어 사양 '공격 중 이동').
-	StopApproach();
-
 	OpenWindowHit = HitIndex;
 	WindowTouchedActors.Reset();
 	UE_LOG(LogAg, Verbose, TEXT("%s: attack window %d opens"), *GetName(), HitIndex + 1);
@@ -371,53 +364,6 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	return Clamped;
 }
 
-void AAgCharacterBase::StartApproach(AActor* Target, float InStopDistance, float MaxRange, float MaxTravel, bool bFaceTarget, bool bExactGap)
-{
-	ApproachTarget = Target;
-	ApproachOrigin = GetActorLocation();
-	ApproachStopDistance = InStopDistance;
-	ApproachMaxRange = MaxRange;
-	ApproachMaxTravel = MaxTravel;
-	bApproachFacesTarget = bFaceTarget;
-	bApproachExactGap = bExactGap;
-	UpdateApproach();
-}
-
-void AAgCharacterBase::StopApproach()
-{
-	ApproachTarget.Reset();
-}
-
-void AAgCharacterBase::UpdateApproach()
-{
-	const AActor* Target = ApproachTarget.Get();
-	const float Gap = UAgCombatLibrary::GetHorizontalDistance(this, Target);
-	if (!Target || (ApproachMaxRange > 0.f && Gap > ApproachMaxRange))
-	{
-		// 범위 밖: 따라가기를 멈추고, 모션은 마지막 방향으로 계속합니다.
-		StopApproach();
-		MotionWarping->RemoveWarpTarget(AttackWarpTarget);
-		return;
-	}
-
-	const FVector Location = GetActorLocation();
-	const FVector Direction = (Target->GetActorLocation() - Location).GetSafeNormal2D();
-	FVector Goal = Location;
-	if (Gap > ApproachStopDistance || bApproachExactGap)
-	{
-		Goal = Target->GetActorLocation() - Direction * ApproachStopDistance;
-		Goal.Z = Location.Z;
-	}
-	if (ApproachMaxTravel >= 0.f)
-	{
-		const FVector Offset = (Goal - ApproachOrigin).GetClampedToMaxSize2D(ApproachMaxTravel);
-		Goal = FVector(ApproachOrigin.X + Offset.X, ApproachOrigin.Y + Offset.Y, Location.Z);
-	}
-
-	const FRotator Facing = bApproachFacesTarget && !Direction.IsNearlyZero() ? Direction.Rotation() : GetActorRotation();
-	MotionWarping->AddOrUpdateWarpTargetFromLocationAndRotation(AttackWarpTarget, Goal, Facing);
-}
-
 void AAgCharacterBase::PlayFlinch()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -435,7 +381,7 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	}
 	bDead = true;
 
-	// 1-2. Stop every action; later hits do nothing (IsDead).
+	// 1-2. 모든 행동을 멈추고, 이후의 피격은 무시합니다(IsDead). 행동의 공격 중 이동 태스크도 함께 끝납니다.
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
 	AbilitySystemComponent->CancelAllAbilities(DeathAbility);
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -444,7 +390,7 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 		AnimInstance->StopAllMontages(0.f);
 	}
 
-	// 3. Stop input (player) or AI (boss), and movement. A death motion still moves the character by its root motion.
+	// 3. 입력(플레이어)이나 AI(보스)와 이동을 멈춥니다. 사망 모션은 루트 모션으로 계속 움직입니다.
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PlayerController);
@@ -455,15 +401,13 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	}
 	GetCharacterMovement()->StopMovementImmediately();
 
-	// 4. Remove this character's attack windows.
+	// 4. 이 캐릭터의 판정 구간을 없앱니다.
 	ClearActiveAttack();
-	ClearStopTarget();
-	StopApproach();
 
-	// 5. Don't block the other character any more.
+	// 5. 더는 상대 캐릭터를 막지 않습니다.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
-	// 6. Ragdoll, pushed the way the last attack came from.
+	// 6. 마지막 공격이 온 쪽으로 밀리며 래그돌이 됩니다.
 	if (bRagdoll)
 	{
 		StartRagdoll(PushVelocity);

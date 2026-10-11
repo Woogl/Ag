@@ -7,14 +7,14 @@
 #include "AgAbility_PlayerAttack.generated.h"
 
 class UAbilityTask_PlayMontageAndWait;
+class UAgAbilityTask_AttackMovement;
 class UAnimMontage;
 struct FAgPlayerAttack;
 
 /**
- * A player attack action (평타 한 타, 스킬, 궁극기): plays its montages one after another with its attack data,
- * sets the attack direction and movement for every hit (플레이어 사양 '공격 방향', '공격 중 이동')
- * and starts the recovery (후딜) when the last attack window ends.
- * Subclasses commit through ActivateAbility and then call StartAttack.
+ * 플레이어 공격 행동(평타 한 타, 회피 반격, 스킬, 궁극기): 몽타주를 공격 데이터와 함께 이어 재생하고, 타마다 공격 방향과
+ * 공격 중 이동을 정하며(플레이어 사양 '공격 방향', '공격 중 이동'), 마지막 판정 구간이 끝나면 후딜을 시작합니다.
+ * 자식 클래스는 ActivateAbility에서 커밋한 뒤 StartAttack을 부릅니다.
  */
 UCLASS(Abstract)
 class UAgAbility_PlayerAttack : public UAgGameplayAbility
@@ -33,6 +33,12 @@ protected:
 private:
 	void PlayMontageAt(int32 Index);
 
+	/**
+	 * 한 타의 공격 방향과 공격 중 이동: 보스와 정지 간격을 지키고, 보스가 이 타의 타겟팅 범위 안이면 선딜 동안 다가가며 그쪽을
+	 * 바라봅니다. 범위 안에 보스가 없으면 락온 중일 때만 락온 대상 쪽으로 돕니다.
+	 */
+	void StartHitMovement();
+
 	UFUNCTION()
 	void HandleAttackWindowEnded(FGameplayEventData Payload);
 
@@ -49,6 +55,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_PlayMontageAndWait> MontageTask;
+
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_AttackMovement> MovementTask;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UAnimMontage>> Montages;

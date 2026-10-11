@@ -28,15 +28,6 @@ public:
 	/** The living boss whose capsule center is within Range (horizontal), found through TP_Boss. */
 	AAgBossCharacter* FindBoss(float Range) const;
 
-	/**
-	 * 공격 방향과 공격 중 이동 for one hit: keeps the stop distance from the boss, and when the boss is within
-	 * TargetingRange, closes in on it and turns toward it until the attack window starts.
-	 */
-	void PrepareAttackMovement(float TargetingRange);
-
-	/** Ends the attack movement of the finished action. */
-	void ClearAttackMovement();
-
 	UAgLockOnComponent* GetLockOn() const { return LockOn; }
 
 	/** IMC_Ag: 전투 HUD의 조작 안내가 이 매핑을 표시합니다. */

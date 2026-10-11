@@ -5,6 +5,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -56,13 +57,13 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	Target = Boss;
 	StrikeIndex = 0;
 
-	// No recovery (후딜): 행동 중 lasts until the motion ends, so no action can cancel the execution.
+	// 후딜이 없습니다. 행동 중이 모션 끝까지 이어져 어떤 행동도 처형을 끊지 못합니다.
 	BeginBusy();
 	SetExecuting(true);
 	bInvincible = true;
 	GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(AgGameplayTags::State_Invincible);
 
-	// The boss turns to the player and starts its 처형 피격 montage in this same frame, so both montages share one timeline.
+	// 보스는 같은 프레임에 플레이어를 향하고 처형 피격 몽타주를 시작하므로, 두 몽타주가 한 타임라인을 따릅니다.
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_Executed;
 	Payload.Instigator = Player;
@@ -70,7 +71,7 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Boss, AgGameplayTags::Event_Executed, Payload);
 
 	// 첫 베기(워프 구간의 끝)까지 플레이어는 보스 정면, 두 모션이 맞물리는 간격에 섭니다. 정지 간격은 적용하지 않습니다.
-	Player->StartApproach(Boss, Data->ExecutionDistance, 0.f, /*MaxTravel*/ -1.f, /*bFaceTarget*/ true, /*bExactGap*/ true);
+	UAgAbilityTask_AttackMovement::FitGap(this, Boss, Data->ExecutionDistance)->ReadyForActivation();
 
 	UAbilityTask_WaitGameplayEvent* StrikeTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_ExecutionBlow);
 	StrikeTask->EventReceived.AddDynamic(this, &ThisClass::HandleStrike);
@@ -156,10 +157,6 @@ void UAgAbility_Execution::EndAbility(const FGameplayAbilitySpecHandle Handle, c
 	{
 		bInvincible = false;
 		GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(AgGameplayTags::State_Invincible);
-	}
-	if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetAgCharacter()))
-	{
-		Player->ClearAttackMovement();
 	}
 	Target.Reset();
 

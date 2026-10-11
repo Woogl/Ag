@@ -3,6 +3,7 @@
 #include "AbilitySystem/Abilities/AgBossPatternAbility.h"
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -14,7 +15,6 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Kismet/GameplayStatics.h"
-#include "MotionWarpingComponent.h"
 
 UAgBossPatternAbility::UAgBossPatternAbility()
 {
@@ -103,19 +103,12 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Pattern.ToString(), GetPatternPlayRate());
 	AActor* Player = UGameplayStatics::GetPlayerPawn(Boss, 0);
 	Boss->SetActiveAttack(Pattern->Hits);
-	if (UsesSharedMovement())
+	if (UsesSharedMovement() && Player)
 	{
-		Boss->SetStopTarget(Player, Data->StopDistance);
-	}
-	if (UsesSharedMovement() && Pattern->FirstHitApproachDistance > 0.f && Player)
-	{
-		// 모션 자체 이동에 최대 접근 거리까지만 더합니다. 다가가는 구간은 몽타주의 워핑 구간이며, 방향은 보스가 직접 돌립니다.
-		const float MaxTravel = GetForwardTravelBeforeFirstWindow(Montage) + Pattern->FirstHitApproachDistance;
-		Boss->StartApproach(Player, Data->StopDistance, 0.f, MaxTravel, false);
-	}
-	else
-	{
-		Boss->GetMotionWarping()->RemoveWarpTarget(AAgCharacterBase::AttackWarpTarget);
+		// 정지 간격을 지키고, 몽타주에 워핑 구간이 있으면(A1·A5 1타 선딜, A7 체공) 그동안 다가갑니다. 다가가는 거리는 모션
+		// 자체의 전진에 패턴의 최대 접근 거리까지만 더하고, 방향은 보스가 직접 돌립니다.
+		const float MaxTravel = GetForwardTravelBeforeFirstWindow(Montage) + Pattern->MaxApproachDistance;
+		UAgAbilityTask_AttackMovement::KeepGap(this, Player, Data->StopDistance, MaxTravel)->ReadyForActivation();
 	}
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, GetPatternPlayRate());
@@ -309,11 +302,9 @@ void UAgBossPatternAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, 
 	if (AAgCharacterBase* Boss = GetAgCharacter())
 	{
 		Boss->ClearActiveAttack();
-		Boss->ClearStopTarget();
-		Boss->StopApproach();
-		Boss->GetMotionWarping()->RemoveWarpTarget(AAgCharacterBase::AttackWarpTarget);
 	}
 	Montage = nullptr;
 
+	// 공격 중 이동 태스크는 어빌리티와 함께 끝나며 워프 목표와 정지 간격을 지웁니다.
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

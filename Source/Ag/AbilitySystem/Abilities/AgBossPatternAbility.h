@@ -11,8 +11,9 @@ class UAnimMontage;
 struct FAgBossPattern;
 
 /**
- * 보스 공용 패턴(A1, A2, A5, A7): 패턴 몽타주를 패턴 재생 속도로 공격 데이터와 함께 재생하고, 정지 간격(보스 사양 '이동')을
- * 지키며, A1·A5는 1타 선딜 동안 추가로 다가갑니다. 판정 구간 전에 섬광을 켜고, 쿨다운이 있는 패턴은 시작할 때 쿨다운을 겁니다.
+ * 보스 공용 패턴(A1, A2, A5, A7): 패턴 몽타주를 패턴 재생 속도로 공격 데이터와 함께 재생하고, 공격 중 이동 태스크로 정지
+ * 간격(보스 사양 '이동')을 지키며 몽타주의 워핑 구간(A1·A5 1타, A7) 동안 다가갑니다. 판정 구간 전에 섬광을 켜고, 쿨다운이
+ * 있는 패턴은 시작할 때 쿨다운을 겁니다.
  * 부여된 스펙마다 패턴 ID를 동적 태그로 갖습니다. 특수 패턴(A3, A4, A6, B1)은 이 클래스를 상속합니다.
  */
 UCLASS()
@@ -43,7 +44,7 @@ protected:
 
 	UAnimMontage* GetMontage() const { return Montage; }
 
-	/** The shared movement rules (stop distance, first-hit approach). A3 and A4 move by their own rules. */
+	/** 공용 이동 규칙(정지 간격, 워핑 구간의 접근)을 씁니다. A3, A4, B1은 각자의 이동 규칙을 따릅니다. */
 	virtual bool UsesSharedMovement() const { return true; }
 
 	/** Called once the pattern montage plays; special patterns start their own movement here. */

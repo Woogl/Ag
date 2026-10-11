@@ -22,7 +22,6 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputActionValue.h"
-#include "MotionWarpingComponent.h"
 #include "TargetingSystem/TargetingPreset.h"
 #include "TargetingSystem/TargetingSubsystem.h"
 #include "TimerManager.h"
@@ -589,46 +588,4 @@ AAgBossCharacter* AAgPlayerCharacter::FindBoss(float Range) const
 		}
 	}
 	return nullptr;
-}
-
-void AAgPlayerCharacter::PrepareAttackMovement(float TargetingRange)
-{
-	const UAgPlayerData* Data = Cast<UAgPlayerData>(GetCharacterData());
-	if (!Data)
-	{
-		return;
-	}
-
-	// 정지 간격은 보스가 타겟팅 범위 안에 있든 없든 적용합니다.
-	AAgBossCharacter* Boss = FindBoss(TNumericLimits<float>::Max());
-	SetStopTarget(Boss, Data->AttackStopDistance);
-
-	const float Gap = Boss ? UAgCombatLibrary::GetHorizontalDistance(this, Boss) : 0.f;
-	if (Boss && Gap <= TargetingRange)
-	{
-		// 접근 목표는 선딜 동안 보스를 따라가지만, 타를 시작할 때의 접근 목표보다 멀리 가지 않습니다.
-		// 그래서 선딜 중 보스가 물러나면(B1) 끝까지 쫓아가지 않고 그만큼 간격이 벌어집니다.
-		const float MaxTravel = FMath::Max(0.f, Gap - Data->AttackStopDistance);
-		StartApproach(Boss, Data->AttackStopDistance, TargetingRange, MaxTravel, /*bFaceTarget*/ true);
-		return;
-	}
-
-	// 범위 안에 대상이 없음: 모션을 만든 그대로 재생합니다. 락온 중이면 락온 대상 쪽, 아니면 정면으로 갑니다.
-	StopApproach();
-	GetMotionWarping()->RemoveWarpTarget(AttackWarpTarget);
-	if (const AActor* LockOnTarget = LockOn->GetTarget())
-	{
-		const FVector ToTarget = UAgCombatLibrary::GetAttackDirection(this, LockOnTarget);
-		if (!ToTarget.IsNearlyZero())
-		{
-			SetActorRotation(FRotator(0.f, ToTarget.Rotation().Yaw, 0.f));
-		}
-	}
-}
-
-void AAgPlayerCharacter::ClearAttackMovement()
-{
-	ClearStopTarget();
-	StopApproach();
-	GetMotionWarping()->RemoveWarpTarget(AttackWarpTarget);
 }

@@ -44,6 +44,12 @@ public:
 	/** 대미지 숫자: shows the HP this boss lost from a player attack at Location. */
 	void ShowDamageNumber(int32 Amount, const FVector& Location, bool bLarge) const;
 
+	/**
+	 * 보스 사양 '회전': 회전하지 않는 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간, 회전하지 않는 상태(피격 반응, 그로기,
+	 * 처형 피격, 회전 고정, 비전투)가 해당합니다.
+	 */
+	virtual bool IsFacingFixed() const override;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
@@ -51,7 +57,7 @@ protected:
 	virtual float GetMoveSpeedMultiplier() const override;
 
 private:
-	/** 회전: turns toward the player at the rotation speed, except during the rotation stop windows. */
+	/** 회전: 바라보는 방향이 고정되지 않은 동안 회전 속도로 플레이어를 향해 돕니다. */
 	void UpdateRotation(float DeltaSeconds);
 
 	/**

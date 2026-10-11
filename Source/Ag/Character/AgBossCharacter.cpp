@@ -157,26 +157,8 @@ void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
 {
 	const UAgBossData* Data = Cast<UAgBossData>(GetCharacterData());
 	const AActor* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (IsDead() || !Data || !Player)
+	if (IsDead() || !Data || !Player || IsFacingFixed())
 	{
-		return;
-	}
-
-	FGameplayTagContainer NoTurning;
-	NoTurning.AddTag(AgGameplayTags::State_HitReaction);
-	NoTurning.AddTag(AgGameplayTags::State_Groggy);
-	NoTurning.AddTag(AgGameplayTags::State_Execution_Executed);
-	NoTurning.AddTag(AgGameplayTags::State_Boss_RotationLocked);
-	NoTurning.AddTag(AgGameplayTags::State_NonCombat);
-	if (GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(NoTurning))
-	{
-		return;
-	}
-
-	if (IsInRotationStopWindow())
-	{
-		// The first-hit approach target is fixed where the player is when the boss stops turning.
-		StopApproach();
 		return;
 	}
 
@@ -186,6 +168,17 @@ void AAgBossCharacter::UpdateRotation(float DeltaSeconds)
 		const FRotator Goal(0.f, ToPlayer.Rotation().Yaw, 0.f);
 		SetActorRotation(FMath::RInterpConstantTo(GetActorRotation(), Goal, DeltaSeconds, Data->RotationSpeed));
 	}
+}
+
+bool AAgBossCharacter::IsFacingFixed() const
+{
+	FGameplayTagContainer NoTurning;
+	NoTurning.AddTag(AgGameplayTags::State_HitReaction);
+	NoTurning.AddTag(AgGameplayTags::State_Groggy);
+	NoTurning.AddTag(AgGameplayTags::State_Execution_Executed);
+	NoTurning.AddTag(AgGameplayTags::State_Boss_RotationLocked);
+	NoTurning.AddTag(AgGameplayTags::State_NonCombat);
+	return Super::IsFacingFixed() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(NoTurning) || IsInRotationStopWindow();
 }
 
 bool AAgBossCharacter::IsInRotationStopWindow() const

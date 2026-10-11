@@ -118,7 +118,10 @@ struct FAgBossPattern
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (ClampMin = 0))
 	float WeightFar = 0.f;
 
-	/** 보스 사양 '이동': 1타 판정 구간 전에 정지 간격까지 추가로 다가가는 최대 접근 거리. 0이면 추가 접근하지 않습니다. */
+	/**
+	 * 보스 사양 '이동': 최대 접근 거리. 몽타주의 워핑 구간 동안 모션 자체의 전진에 더해 다가갈 수 있는 거리의 상한입니다.
+	 * 워핑 구간이 없는 패턴은 쓰지 않습니다.
+	 */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "cm", ClampMin = 0))
-	float FirstHitApproachDistance = 0.f;
+	float MaxApproachDistance = 0.f;
 };
