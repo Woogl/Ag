@@ -50,14 +50,6 @@ protected:
 	virtual void StartInitialLoading() override;
 
 private:
-	/** 프로젝트 설정 'Ag'가 가리키는 공통 JSON 파일을 공통 데이터 객체에 읽습니다. */
-	void LoadCommonData();
-
-#if WITH_EDITOR
-	/** 프로젝트 설정 'Ag'에서 공통 JSON 파일을 바꾸면 다시 읽습니다. */
-	void HandleSettingsChanged(UObject* Settings, FPropertyChangedEvent& PropertyChangedEvent);
-#endif
-
 	UPROPERTY()
 	TObjectPtr<UAgCombatRules> CombatRules;
 

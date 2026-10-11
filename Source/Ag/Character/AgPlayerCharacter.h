@@ -12,7 +12,6 @@ class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
 class USpringArmComponent;
-class UTargetingPreset;
 struct FAbilityEndedData;
 struct FInputActionValue;
 
@@ -118,10 +117,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Lock-On")
 	TObjectPtr<UAgLockOnComponent> LockOn;
-
-	/** TP_Enemy(프로젝트 설정 'Ag'의 EnemyTargeting). FindEnemy가 쓰며, BeginPlay에서 로드해 들고 있습니다. */
-	UPROPERTY(Transient)
-	TObjectPtr<UTargetingPreset> EnemyTargeting;
 
 	/** IMC_Ag: the key layout of 플레이어 입력 '키 배치'. */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")

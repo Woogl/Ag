@@ -3,8 +3,8 @@
 #include "Game/AgGameMode.h"
 
 #include "Ag.h"
-#include "Core/AgSettings.h"
 #include "Game/AgPlayerController.h"
+#include "GameMapsSettings.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -13,26 +13,15 @@ AAgGameMode::AAgGameMode()
 	PlayerControllerClass = AAgPlayerController::StaticClass();
 }
 
-void AAgGameMode::OpenBossStage()
-{
-	const TSoftObjectPtr<UWorld>& Map = UAgSettings::Get()->BossStageMap;
-	if (Map.IsNull())
-	{
-		UE_LOG(LogAg, Error, TEXT("UAgSettings::BossStageMap is not set."));
-		return;
-	}
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, Map);
-}
-
 void AAgGameMode::OpenFrontEnd()
 {
-	const TSoftObjectPtr<UWorld>& Map = UAgSettings::Get()->FrontEndMap;
+	const FSoftObjectPath Map(UGameMapsSettings::GetGameDefaultMap());
 	if (Map.IsNull())
 	{
-		UE_LOG(LogAg, Error, TEXT("UAgSettings::FrontEndMap is not set."));
+		UE_LOG(LogAg, Error, TEXT("Game Default Map is not set (Project Settings > Maps & Modes)."));
 		return;
 	}
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, Map);
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, TSoftObjectPtr<UWorld>(Map));
 }
 
 void AAgGameMode::QuitGame()

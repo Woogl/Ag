@@ -2,17 +2,17 @@
 
 #include "UI/AgTitleScreen.h"
 
-#include "Game/AgGameMode.h"
+#include "Game/AgFrontEndGameMode.h"
 #include "UI/AgButton.h"
 
 void UAgTitleScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
+	if (AAgFrontEndGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgFrontEndGameMode>())
 	{
-		StartButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenBossStage);
-		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
+		StartButton->OnClicked().AddUObject(GameMode, &AAgFrontEndGameMode::OpenBossStage);
+		QuitButton->OnClicked().AddUObject(GameMode, &AAgFrontEndGameMode::QuitGame);
 	}
 }
 

@@ -7,7 +7,6 @@
 #include "AgEffect_Regen.generated.h"
 
 class AAgCharacterBase;
-class UAbilitySystemComponent;
 
 /**
  * 리젠(플레이어 사양 '자원 회복', 전투 시스템 'PP 리젠'): 끝나지 않는 주기 효과로, 주기마다 초당 회복량 × 주기만큼
@@ -25,9 +24,6 @@ public:
 
 	/** 주인의 초당 회복량(음수면 소모)을 캐릭터 데이터에서 읽습니다. */
 	virtual float GetRatePerSecond(const AAgCharacterBase& Owner) const PURE_VIRTUAL(UAgEffect_Regen::GetRatePerSecond, return 0.f;);
-
-	/** RegenClass를 ASC의 주인에게 겁니다. 주기는 프로젝트 설정 'Ag'의 리젠 적용 간격(RegenTickInterval)입니다. */
-	static void Apply(UAbilitySystemComponent& ASC, TSubclassOf<UAgEffect_Regen> RegenClass);
 
 protected:
 	/** 회복하는 어트리뷰트와, 리젠이 도는 동안 주인에게 있어야 하는 태그와 없어야 하는 태그를 정합니다. */

@@ -4,7 +4,7 @@
 
 #include "Animation/WidgetAnimation.h"
 #include "CommonTextBlock.h"
-#include "Game/AgGameMode.h"
+#include "Game/AgBossStageGameMode.h"
 #include "UI/AgButton.h"
 
 void UAgResultScreen::SetResult(bool bStageCleared)
@@ -16,11 +16,11 @@ void UAgResultScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
+	if (AAgBossStageGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgBossStageGameMode>())
 	{
-		TryAgainButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenBossStage);
-		ReturnToTitleButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenFrontEnd);
-		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
+		TryAgainButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::RestartStage);
+		ReturnToTitleButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::OpenFrontEnd);
+		QuitButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::QuitGame);
 	}
 }
 

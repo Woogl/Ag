@@ -4,10 +4,8 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgRegenCalculation.h"
-#include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "GameplayEffectComponents/TargetTagRequirementsGameplayEffectComponent.h"
 
@@ -15,17 +13,10 @@ UAgEffect_Regen::UAgEffect_Regen()
 {
 	DurationPolicy = EGameplayEffectDurationType::Infinite;
 
-	// 실제 주기는 걸 때 스펙에 정합니다(Apply). 이 값은 자리만 채웁니다.
-	Period = FScalableFloat(1.f);
+	// 리젠을 나눠 적용하는 간격. 기획서에 수치가 없는 구현 값으로, 게이지가 부드럽게 찰 만큼 짧게 둡니다.
+	Period = FScalableFloat(0.1f);
 	bExecutePeriodicEffectOnApplication = false;
 	PeriodicInhibitionPolicy = EGameplayEffectPeriodInhibitionRemovedPolicy::ResetPeriod;
-}
-
-void UAgEffect_Regen::Apply(UAbilitySystemComponent& ASC, TSubclassOf<UAgEffect_Regen> RegenClass)
-{
-	const FGameplayEffectSpecHandle Spec = ASC.MakeOutgoingSpec(RegenClass, 1.f, ASC.MakeEffectContext());
-	Spec.Data->Period = UAgSettings::Get()->RegenTickInterval;
-	ASC.ApplyGameplayEffectSpecToSelf(*Spec.Data);
 }
 
 void UAgEffect_Regen::SetupRegen(const FGameplayAttribute& Attribute, const FGameplayTagContainer& RequiredTags, const FGameplayTagContainer& IgnoredTags)

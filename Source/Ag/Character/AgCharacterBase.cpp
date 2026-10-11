@@ -213,7 +213,7 @@ void AAgCharacterBase::StartRegen()
 	{
 		if (Regen)
 		{
-			UAgEffect_Regen::Apply(*AbilitySystemComponent, Regen);
+			AbilitySystemComponent->ApplyGameplayEffectToSelf(Regen.GetDefaultObject(), 1.f, AbilitySystemComponent->MakeEffectContext());
 		}
 	}
 }

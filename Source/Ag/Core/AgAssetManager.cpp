@@ -3,7 +3,6 @@
 #include "Core/AgAssetManager.h"
 
 #include "Ag.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCombatRules.h"
 #include "Dom/JsonObject.h"
@@ -20,6 +19,10 @@ namespace
 {
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
 	const TCHAR* const JsonFolderName = TEXT("Data");
+
+	/** 공통 JSON 파일. 캐릭터 JSON은 캐릭터 DataAsset의 ValuesFile이 가리킵니다. */
+	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
+	const TCHAR* const CameraDataFile = TEXT("Camera.json");
 
 	/** 파일마다 화면에 띄우는 오류 수. 로그에는 모두 남깁니다. */
 	constexpr int32 MaxErrorsOnScreen = 5;
@@ -222,17 +225,8 @@ void UAgAssetManager::StartInitialLoading()
 {
 	Super::StartInitialLoading();
 
-	LoadCommonData();
-#if WITH_EDITOR
-	GetMutableDefault<UAgSettings>()->OnSettingChanged().AddUObject(this, &ThisClass::HandleSettingsChanged);
-#endif
-}
-
-void UAgAssetManager::LoadCommonData()
-{
-	const UAgSettings* Settings = UAgSettings::Get();
-	LoadJsonValues(*CombatRules, Settings->CombatRulesFile);
-	LoadJsonValues(*CameraData, Settings->CameraDataFile);
+	LoadJsonValues(*CombatRules, CombatRulesFile);
+	LoadJsonValues(*CameraData, CameraDataFile);
 }
 
 const UAgCombatRules& UAgAssetManager::GetCombatRules() const
@@ -350,15 +344,6 @@ void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
 				FString::Printf(TEXT("Data/%s reloaded. Stats change on the next PIE start."), *FileName));
 		}
-	}
-}
-
-void UAgAssetManager::HandleSettingsChanged(UObject* Settings, FPropertyChangedEvent& PropertyChangedEvent)
-{
-	const FName Property = PropertyChangedEvent.GetMemberPropertyName();
-	if (Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CombatRulesFile) || Property == GET_MEMBER_NAME_CHECKED(UAgSettings, CameraDataFile))
-	{
-		LoadCommonData();
 	}
 }
 #endif

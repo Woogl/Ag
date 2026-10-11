@@ -23,6 +23,9 @@ public:
 	/** Every player and boss registers itself on BeginPlay. */
 	void RegisterCombatant(AAgCharacterBase* Combatant);
 
+	/** 보스전을 처음부터 다시 시작합니다. 레벨을 다시 열어 모든 상태가 초기화됩니다(결과 UI의 Try Again). */
+	void RestartStage();
+
 protected:
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 

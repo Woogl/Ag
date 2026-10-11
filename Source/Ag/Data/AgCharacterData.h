@@ -16,6 +16,7 @@ class UAnimSequenceBase;
 class UBlendSpace;
 class UGameplayAbility;
 class UStateTree;
+class UTargetingPreset;
 
 /** The '스탯' tables of 플레이어 사양 and 보스 사양: starting value and maximum of each stat. */
 USTRUCT(BlueprintType)
@@ -273,6 +274,10 @@ public:
 	/** 락온 해제 조건: the lock-on ends when the target is farther than this. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
 	float LockOnReleaseRange = 0.f;
+
+	/** TP_Enemy: 공격 보정, 락온, 처형의 대상 후보(플레이어 주변의 캐릭터)를 모읍니다. 범위와 조건은 쓰는 곳마다 따로 확인합니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Targeting")
+	TObjectPtr<UTargetingPreset> EnemyTargeting;
 
 	/** 이동 '달리기': speed as a multiple of MOV. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint", meta = (ClampMin = 0))

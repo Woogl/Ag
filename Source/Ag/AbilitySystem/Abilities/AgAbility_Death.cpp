@@ -8,8 +8,13 @@
 #include "Character/AgCharacterBase.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
+
+namespace
+{
+	/** 래그돌이 마지막 공격의 피격 방향으로 밀려나는 속도(전투 시스템 '사망 처리' 6). 기획서에 수치가 없는 구현 값입니다. */
+	constexpr float DeathPushSpeed = 300.f;
+}
 
 UAgAbility_Death::UAgAbility_Death()
 {
@@ -53,7 +58,7 @@ void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 
 	// 마지막 공격의 피격 방향으로 밀려납니다.
 	const AActor* Attacker = TriggerEventData ? TriggerEventData->Instigator.Get() : nullptr;
-	const FVector Push = UAgCombatLibrary::GetHorizontalDirection(Attacker, Character) * UAgSettings::Get()->DeathPushSpeed;
+	const FVector Push = UAgCombatLibrary::GetHorizontalDirection(Attacker, Character) * DeathPushSpeed;
 	Character->Die(Push, this);
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

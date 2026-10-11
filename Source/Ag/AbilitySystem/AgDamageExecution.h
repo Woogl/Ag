@@ -21,10 +21,10 @@ public:
 	UAgDamageExecution();
 
 	/** 'HP 감소량 계산식'에 가드 경감 배율을 곱해 반올림한 정수 */
-	static int32 CalculateHPDamage(float SourceATK, float DamageMultiplier, float TargetDEF, float GuardReduction = 1.f);
+	static int32 CalculateHPDamage(float SourceATK, float DamageMultiplier, float TargetDEF, float DefenseConstant, float GuardReduction = 1.f);
 
 	/** 'PP 감소량 계산식'을 반올림한 정수 */
-	static int32 CalculatePPDamage(float SourceATK, float PoiseMultiplier, float TargetDEF);
+	static int32 CalculatePPDamage(float SourceATK, float PoiseMultiplier, float TargetDEF, float DefenseConstant);
 
 	virtual void Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const override;
 };

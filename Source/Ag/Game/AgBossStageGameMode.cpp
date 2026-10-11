@@ -18,6 +18,14 @@ void AAgBossStageGameMode::RegisterCombatant(AAgCharacterBase* Combatant)
 	}
 }
 
+void AAgBossStageGameMode::RestartStage()
+{
+	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		PlayerController->RestartLevel();
+	}
+}
+
 void AAgBossStageGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);

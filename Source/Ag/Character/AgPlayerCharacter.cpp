@@ -11,7 +11,6 @@
 #include "Character/AgLockOnComponent.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
-#include "Core/AgSettings.h"
 #include "Data/AgCharacterData.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -59,7 +58,6 @@ void AAgPlayerCharacter::BeginPlay()
 	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandleSPChanged);
 	LockOn->OnLockOnChanged.AddUObject(this, &ThisClass::UpdateRotationMode);
 	UpdateRotationMode();
-	EnemyTargeting = UAgSettings::Get()->EnemyTargeting.LoadSynchronous();
 }
 
 void AAgPlayerCharacter::Tick(float DeltaSeconds)
@@ -503,17 +501,18 @@ AAgCharacterBase* AAgPlayerCharacter::FindAttackTarget() const
 
 AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const
 {
+	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
 	UTargetingSubsystem* Targeting = UTargetingSubsystem::Get(GetWorld());
-	if (!EnemyTargeting || !Targeting)
+	if (!Data->EnemyTargeting || !Targeting)
 	{
-		UE_LOG(LogAg, Error, TEXT("Enemy targeting preset is not set (Project Settings > Game > Ag)."));
+		UE_LOG(LogAg, Error, TEXT("Enemy targeting preset is not set (DA_Player > EnemyTargeting)."));
 		return nullptr;
 	}
 
 	FTargetingSourceContext Source;
 	Source.SourceActor = const_cast<AAgPlayerCharacter*>(this);
 	Source.InstigatorActor = Source.SourceActor;
-	FTargetingRequestHandle Request = UTargetingSubsystem::MakeTargetRequestHandle(EnemyTargeting, Source);
+	FTargetingRequestHandle Request = UTargetingSubsystem::MakeTargetRequestHandle(Data->EnemyTargeting, Source);
 	Targeting->ExecuteTargetingRequestWithHandle(Request);
 	TArray<AActor*> Candidates;
 	Targeting->GetTargetingResultsActors(Request, Candidates);

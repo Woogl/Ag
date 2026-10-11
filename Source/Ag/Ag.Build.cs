@@ -31,7 +31,7 @@ public class Ag : ModuleRules
 			"GameplayStateTreeModule"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Json", "JsonUtilities" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "Json", "JsonUtilities" });
 
 		// The JSON data files the game reads at runtime (구현 계획서 '데이터'). They sit outside Content, so the cook doesn't know them.
 		RuntimeDependencies.Add("$(ProjectDir)/Data/*.json", StagedFileType.UFS);

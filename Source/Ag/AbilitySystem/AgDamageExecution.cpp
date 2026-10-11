@@ -49,14 +49,14 @@ UAgDamageExecution::UAgDamageExecution()
 	RelevantAttributesToCapture.Add(GetCaptures().SP);
 }
 
-int32 UAgDamageExecution::CalculateHPDamage(float SourceATK, float DamageMultiplier, float TargetDEF, float GuardReduction)
+int32 UAgDamageExecution::CalculateHPDamage(float SourceATK, float DamageMultiplier, float TargetDEF, float DefenseConstant, float GuardReduction)
 {
-	return FMath::RoundToInt(SourceATK * DamageMultiplier * (100.f / (100.f + TargetDEF)) * GuardReduction);
+	return FMath::RoundToInt(SourceATK * DamageMultiplier * (DefenseConstant / (DefenseConstant + TargetDEF)) * GuardReduction);
 }
 
-int32 UAgDamageExecution::CalculatePPDamage(float SourceATK, float PoiseMultiplier, float TargetDEF)
+int32 UAgDamageExecution::CalculatePPDamage(float SourceATK, float PoiseMultiplier, float TargetDEF, float DefenseConstant)
 {
-	return FMath::RoundToInt(SourceATK * PoiseMultiplier * (100.f / (100.f + TargetDEF)));
+	return FMath::RoundToInt(SourceATK * PoiseMultiplier * (DefenseConstant / (DefenseConstant + TargetDEF)));
 }
 
 void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -86,12 +86,13 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(GetCaptures().DEF, EvaluateParameters, TargetDEF);
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(GetCaptures().SP, EvaluateParameters, TargetSP);
 
+	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const AAgCharacterBase* Target = CastChecked<AAgCharacterBase>(ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor());
 	const UAgPlayerData* DefenderData = Cast<UAgPlayerData>(Target->GetCharacterData());
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unguardable);
 	const bool bParryable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unparryable);
 	const float DamageMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::Data_DamageMultiplier);
-	const int32 HPDamage = CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF);
+	const int32 HPDamage = CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, Rules.DefenseConstant);
 
 	// 패리: 막는 쪽은 아무것도 잃지 않습니다. 공격한 쪽이 잃는 PP는 결과 처리가 줍니다.
 	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable && bParryable && DefenderData)
@@ -107,15 +108,14 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 		const float GuardSPCost = HPDamage * DefenderData->GuardSPCostRatio;
 		const bool bGuardBreak = TargetSP < GuardSPCost;
 		Spec.AddDynamicAssetTag(bGuardBreak ? AgGameplayTags::Effect_Damage_Result_GuardBreak : AgGameplayTags::Effect_Damage_Result_Guard);
-		const float GuardReduction = UAgAssetManager::Get().GetCombatRules().GuardReduction;
-		AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, GuardReduction));
+		AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, Rules.DefenseConstant, Rules.GuardReduction));
 		AddOutput(OutExecutionOutput, UAgAttributeSet::GetSPAttribute(), bGuardBreak ? -TargetSP : -GuardSPCost);
 		return;
 	}
 
 	// 일반 피격: HP를 먼저 낮춥니다. 사망 판정이 그로기 판정보다 먼저입니다(상태 우선순위).
 	Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Hit);
-	const int32 PPDamage = Target->CanLosePP() ? CalculatePPDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::Data_PoiseMultiplier), TargetDEF) : 0;
+	const int32 PPDamage = Target->CanLosePP() ? CalculatePPDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::Data_PoiseMultiplier), TargetDEF, Rules.DefenseConstant) : 0;
 	AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -HPDamage);
 	AddOutput(OutExecutionOutput, UAgAttributeSet::GetPPAttribute(), -PPDamage);
 }

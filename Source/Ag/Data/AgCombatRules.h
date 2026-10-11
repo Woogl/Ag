@@ -24,6 +24,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (ClampMin = 0, ClampMax = 1))
 	float GuardReduction = 1.f;
 
+	/** 방어 상수 (DefenseConstant): HP·PP 감소량 계산식의 DEF에 따른 감소 비율 DefenseConstant / (DefenseConstant + DEF) */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (ClampMin = 1))
+	float DefenseConstant = 0.f;
+
 	/** 넉업: 체공 시간 when hit on the ground. The flight follows its own parabola, whatever the gravity. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (Units = "s", ClampMin = 0))
 	float KnockUpAirTime = 0.f;
