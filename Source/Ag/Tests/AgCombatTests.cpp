@@ -32,7 +32,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAgPatternPickTest, "Ag.Boss.PatternPick",
 
 bool FAgPatternPickTest::RunTest(const FString& Parameters)
 {
-	// 보스 사양 '거리 구간별 가중치': 뽑힐 확률 = 가중치 ÷ 후보 가중치의 합. 가중치 40과 30은 40/70에서 나뉩니다.
+	// 보스 사양 '패턴 목록': 뽑힐 확률 = 가중치 ÷ 후보 가중치의 합. 가중치 40과 30은 40/70에서 나뉩니다.
 	const TArray<float> Weights = { 40.f, 30.f };
 	TestEqual(TEXT("Low roll picks the first"), FAgBossAITask_RunPattern::PickWeighted(Weights, 0.f), 0);
 	TestEqual(TEXT("Just below 40/70 picks the first"), FAgBossAITask_RunPattern::PickWeighted(Weights, 0.57f), 0);
@@ -50,7 +50,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAgPatternCandidatesTest, "Ag.Boss.PatternCandi
 
 bool FAgPatternCandidatesTest::RunTest(const FString& Parameters)
 {
-	// 보스 사양 '패턴 선택' 1. '패턴 목록'과 '거리 구간별 가중치' 표를 테스트 데이터로 씁니다.
+	// 보스 사양 '패턴 선택' 1. '패턴 목록' 표를 테스트 데이터로 씁니다.
 	auto MakePattern = [](float Near, float Mid, float Far, TArray<int32> Phases)
 	{
 		FAgBossPattern Pattern;

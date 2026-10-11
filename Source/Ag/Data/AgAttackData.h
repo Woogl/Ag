@@ -85,7 +85,7 @@ struct FAgPlayerAttack
 	float TargetingRange = 0.f;
 };
 
-/** 보스 패턴 하나 (보스 사양 '패턴 목록', '거리 구간별 가중치', '패턴 상세') */
+/** 보스 패턴 하나 (보스 사양 '패턴 목록', '패턴 상세') */
 USTRUCT(BlueprintType)
 struct FAgBossPattern
 {
