@@ -114,7 +114,7 @@ public:
 
 	/**
 	 * 스키마 클래스로 새 StateTree 에셋을 만듭니다. 'Root' 상태 하나가 들어 있습니다.
-	 * @param AssetPath 예: /Game/Ag/AI/ST_Boss
+	 * @param AssetPath 예: /Game/AI/ST_Boss
 	 * @return 만든 에셋. 그 경로에 에셋이 이미 있거나 만들지 못하면 null입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
