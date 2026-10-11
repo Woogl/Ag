@@ -12,7 +12,7 @@
         {"clip": "Halberd/Attack_Combo2", "t": 0.75, "time": "1.59초", "label": "2타", "hit": true, "banner": [["움찔 · 가드·패리 가능", "yellow"]]},
         {"clip": "Halberd/Attack_Combo3", "t": 0.3, "time": "2.12초", "label": ""},
         {"clip": "Halberd/Attack_Combo3", "t": 0.5, "time": "2.37초", "label": "전조"},
-        {"clip": "Halberd/Attack_Combo4", "t": 0.1, "time": "2.66초", "label": "", "banner": [["붉은 섬광", "red"]]},
+        {"clip": "Halberd/Attack_Combo4", "t": 0.1, "time": "2.66초", "label": "", "banner": [["가드 불가 예고", "red"]]},
         {"clip": "Halberd/Attack_Combo4", "t": 0.2833, "time": "2.89초", "label": "3타 가드 불가", "hit": true, "red": true, "banner": [["넉업 · 가드·패리 불가", "red"]]},
         {"clip": "Halberd/Attack_Combo4", "t": 0.5, "time": "3.16초", "label": ""},
         {"clip": "Halberd/Attack_Combo4", "t": 0.9833, "time": "3.77초", "label": "끝"}

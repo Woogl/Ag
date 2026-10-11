@@ -68,7 +68,7 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	Boss->LaunchCharacter(ToTarget / AirTime + FVector(0.f, 0.f, Gravity * AirTime * 0.5f), /*bXYOverride*/ true, /*bZOverride*/ true);
 
 	// 회전: 공중에서도 대상을 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 2페이즈에서는 둘 다 같은 비율로
-	// 짧아집니다. 붉은 섬광은 몽타주의 떠오르는 구간에 있는 노티파이가 켭니다.
+	// 짧아집니다. 가드 불가 예고는 몽타주의 떠오르는 구간에 있는 노티파이가 켭니다.
 	RotationStopLead = Data->RotationStopLead / PatternSpeed;
 	if (RotationStopLead >= AirTime)
 	{

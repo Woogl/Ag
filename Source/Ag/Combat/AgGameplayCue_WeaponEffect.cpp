@@ -3,8 +3,10 @@
 #include "Combat/AgGameplayCue_WeaponEffect.h"
 
 #include "Character/AgCharacterBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Sound/SoundBase.h"
 
 AAgGameplayCue_WeaponEffect::AAgGameplayCue_WeaponEffect()
 {
@@ -32,6 +34,10 @@ bool AAgGameplayCue_WeaponEffect::OnActive_Implementation(AActor* MyTarget, cons
 		{
 			SpawnedEffect->SetVariableLinearColor(ColorParameter, Color);
 		}
+	}
+	if (Sound && AttachTo)
+	{
+		UGameplayStatics::SpawnSoundAttached(Sound, AttachTo, AttachSocket);
 	}
 	return true;
 }

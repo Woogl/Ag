@@ -132,8 +132,9 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Hit);
 
-	// GameplayCues for effects and camera shakes.
+	// 이펙트, 효과음, 카메라 셰이크를 재생하는 GameplayCue.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Hit);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Guard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateFinish);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateSlashes);

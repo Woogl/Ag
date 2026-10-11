@@ -171,14 +171,18 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target);
 	}
 
-	// 적중 후 처리: 이펙트(패리는 패리 이펙트, 궁극기 마무리는 궁극기 마무리 이펙트), 카메라 셰이크, 대미지 숫자, 히트스톱,
-	// 슬로우모션(궁극기 마무리), MP·UP 충전.
+	// 적중 후 처리: 결과마다 이펙트와 효과음(가드 브레이크는 가드 큐, 궁극기 마무리 적중은 피격 큐 대신 궁극기 마무리 큐),
+	// 카메라 셰이크, 대미지 숫자, 히트스톱, 슬로우모션(궁극기 마무리), MP·UP 충전.
 	const bool bUltimate = SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Ultimate);
 	FGameplayCueParameters CueParameters;
 	CueParameters.Location = Context.GetOrigin();
 	CueParameters.Instigator = Attacker;
 	CueParameters.EffectCauser = Causer;
-	TargetASC->ExecuteGameplayCue(bParry ? AgGameplayTags::GameplayCue_Parry : (bUltimate ? AgGameplayTags::GameplayCue_UltimateFinish : AgGameplayTags::GameplayCue_Hit), CueParameters);
+	const FGameplayTag ResultCue = bParry ? AgGameplayTags::GameplayCue_Parry
+		: (bGuard || bGuardBreak) ? AgGameplayTags::GameplayCue_Guard
+		: bUltimate ? AgGameplayTags::GameplayCue_UltimateFinish
+		: AgGameplayTags::GameplayCue_Hit;
+	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
 	UAgCombatLibrary::PlayCameraShake(Target, GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>()));
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
