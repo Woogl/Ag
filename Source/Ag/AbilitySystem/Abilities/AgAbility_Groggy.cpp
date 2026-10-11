@@ -103,8 +103,8 @@ void UAgAbility_Groggy::StartGroggy()
 UAbilityTask_PlayMontageAndWait* UAgAbility_Groggy::PlayMontage(UAnimMontage* Montage)
 {
 	UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage);
+	// 그로기는 블렌드 아웃이 시작될 때가 아니라 모션이 끝날 때 끝납니다. 그로기 시간은 원래 자세로 돌아오는 모션의 끝까지입니다.
 	Task->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
-	Task->OnBlendOut.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	Task->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	Task->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	Task->ReadyForActivation();
