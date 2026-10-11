@@ -2,12 +2,14 @@
 
 #include "AbilitySystem/Abilities/AgAbility_Guard.h"
 
+#include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/AgEffect_ParryPPLoss.h"
 #include "AbilitySystem/AgEffect_Resource.h"
 #include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_IgnoreRootMotion.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatLibrary.h"
@@ -45,6 +47,10 @@ void UAgAbility_Guard::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	UAbilityTask_WaitGameplayEvent* ParryEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Parry);
 	ParryEventTask->EventReceived.AddDynamic(this, &ThisClass::HandleParry);
 	ParryEventTask->ReadyForActivation();
+
+	UAbilityTask_WaitGameplayEvent* GuardFlinchTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Guard_Flinch);
+	GuardFlinchTask->EventReceived.AddDynamic(this, &ThisClass::HandleGuardFlinch);
+	GuardFlinchTask->ReadyForActivation();
 
 	UAbilityTask_WaitGameplayEvent* RecoveryTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_RecoveryStarted);
 	RecoveryTask->EventReceived.AddDynamic(this, &ThisClass::HandleParryRecoveryStarted);
@@ -175,12 +181,51 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 	BeginBusy();
 	ParryMotionTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Acting);
 	ParryMotionTag->ReadyForActivation();
+	PushBack(Payload.Instigator.Get(), Data->ParryPushDistance);
 
 	ParryTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->ParryMontage);
 	ParryTask->OnCompleted.AddDynamic(this, &ThisClass::HandleParryMotionFinished);
 	ParryTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleParryMotionCancelled);
 	ParryTask->OnCancelled.AddDynamic(this, &ThisClass::HandleParryMotionCancelled);
 	ParryTask->ReadyForActivation();
+}
+
+void UAgAbility_Guard::HandleGuardFlinch(FGameplayEventData Payload)
+{
+	PushBack(Payload.Instigator.Get(), GetCharacterData<UAgPlayerData>()->GuardFlinchPushDistance);
+}
+
+void UAgAbility_Guard::PushBack(const AActor* Attacker, float Distance)
+{
+	const float PushTime = GetCharacterData<UAgPlayerData>()->BlockPushTime;
+	const FVector Direction = UAgCombatLibrary::GetHorizontalDirection(Attacker, GetAgCharacter());
+	if (Distance <= 0.f || PushTime <= 0.f || Direction.IsNearlyZero())
+	{
+		return;
+	}
+
+	// 무시 태스크는 시작할 때의 루트 모션 모드를 되돌리므로, 앞의 밀림을 먼저 끝냅니다.
+	EndPush();
+	PushIgnoreRootMotion = UAgAbilityTask_IgnoreRootMotion::IgnoreRootMotion(this);
+	PushIgnoreRootMotion->ReadyForActivation();
+	PushTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(this, NAME_None, Direction, Distance / PushTime, PushTime,
+		/*bIsAdditive*/ false, nullptr, ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, /*bEnableGravity*/ false);
+	PushTask->OnFinish.AddDynamic(this, &ThisClass::EndPush);
+	PushTask->ReadyForActivation();
+}
+
+void UAgAbility_Guard::EndPush()
+{
+	if (PushTask)
+	{
+		PushTask->EndTask();
+		PushTask = nullptr;
+	}
+	if (PushIgnoreRootMotion)
+	{
+		PushIgnoreRootMotion->EndTask();
+		PushIgnoreRootMotion = nullptr;
+	}
 }
 
 void UAgAbility_Guard::HandleParryRecoveryStarted(FGameplayEventData Payload)
@@ -226,6 +271,8 @@ void UAgAbility_Guard::EndAbility(const FGameplayAbilitySpecHandle Handle, const
 	ParryTask = nullptr;
 	GuardingTag = nullptr;
 	ParryMotionTag = nullptr;
+	PushTask = nullptr;
+	PushIgnoreRootMotion = nullptr;
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

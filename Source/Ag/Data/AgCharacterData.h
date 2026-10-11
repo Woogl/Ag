@@ -228,6 +228,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0))
 	float GuardMoveSpeedRatio = 1.f;
 
+	/** 가드 반응: 가드 움찔로 공격 반대쪽으로 밀려나는 거리 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (Units = "cm", ClampMin = 0))
+	float GuardFlinchPushDistance = 0.f;
+
 	/** 패리: 패리 구간, from a new guard start. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (Units = "s", ClampMin = 0))
 	float ParryWindowTime = 0.f;
@@ -239,6 +243,14 @@ public:
 	/** 패리: the attacker loses this share of its MaxPP. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0, ClampMax = 1))
 	float ParryPPRatio = 0.f;
+
+	/** 패리: 공격 반대쪽으로 밀려나는 거리 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (Units = "cm", ClampMin = 0))
+	float ParryPushDistance = 0.f;
+
+	/** 패리와 가드 움찔로 밀려나는 데 걸리는 시간. 기획서에 수치가 없는 구현 값입니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Guard", meta = (Units = "s", ClampMin = 0))
+	float BlockPushTime = 0.f;
 
 	/** 스킬 (돌진 베기) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Skill")

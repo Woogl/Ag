@@ -113,9 +113,11 @@
   "BackstepRecoveryStart": 0.4,
   "GuardSPCostRatio": 0.25,
   "GuardMoveSpeedRatio": 0.65,
+  "GuardFlinchPushDistance": 30,
   "ParryWindowTime": 0.3,
   "GuardMoveLockTime": 0.5,
   "ParryPPRatio": 0.08,
+  "ParryPushDistance": 30,
   "Skill": {
     "Hits": [
       {

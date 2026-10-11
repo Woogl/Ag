@@ -7,8 +7,10 @@
 #include "ActiveGameplayEffectHandle.h"
 #include "AgAbility_Guard.generated.h"
 
+class UAbilityTask_ApplyRootMotionConstantForce;
 class UAbilityTask_PlayMontageAndWait;
 class UAgAbilityTask_HoldTag;
+class UAgAbilityTask_IgnoreRootMotion;
 
 /**
  * 가드 and 패리 (플레이어 사양 '가드', '패리'): guards while the guard key is held, and the player can move slowly.
@@ -40,6 +42,12 @@ private:
 	void CloseMoveLock();
 	void EndParryMotion();
 
+	/** 공격 반대쪽으로 Distance만큼 밉니다(패리, 가드 움찔). 밀리는 중이면 앞의 밀림을 끝냅니다. */
+	void PushBack(const AActor* Attacker, float Distance);
+
+	UFUNCTION()
+	void EndPush();
+
 	UFUNCTION()
 	void HandleGuardPressed(FGameplayEventData Payload);
 
@@ -48,6 +56,9 @@ private:
 
 	UFUNCTION()
 	void HandleParry(FGameplayEventData Payload);
+
+	UFUNCTION()
+	void HandleGuardFlinch(FGameplayEventData Payload);
 
 	UFUNCTION()
 	void HandleParryRecoveryStarted(FGameplayEventData Payload);
@@ -68,6 +79,14 @@ private:
 	/** 패리 모션이 재생되는 동안 있고, 그동안 이동 입력을 막습니다(State.Acting). */
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_HoldTag> ParryMotionTag;
+
+	/** 밀리는 동안 있습니다. */
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_ApplyRootMotionConstantForce> PushTask;
+
+	/** 밀리는 동안 몽타주의 루트 모션을 무시합니다. */
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_IgnoreRootMotion> PushIgnoreRootMotion;
 
 	FActiveGameplayEffectHandle ParryWindow;
 	FActiveGameplayEffectHandle MoveLock;

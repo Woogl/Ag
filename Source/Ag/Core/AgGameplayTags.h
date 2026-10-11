@@ -76,6 +76,7 @@ namespace AgGameplayTags
 	// Gameplay events that start state abilities or report combat results.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockBack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Break);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Resume);
