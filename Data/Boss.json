@@ -69,9 +69,9 @@
         {
           "DamageMultiplier": 2,
           "PoiseMultiplier": 1,
-          "HitReaction": "KnockBack",
-          "bGuardable": false,
-          "bParryable": false
+          "HitReaction": "KnockUp",
+          "bGuardable": true,
+          "bParryable": true
         }
       ],
       "Cooldown": 10,
@@ -89,12 +89,12 @@
           "DamageMultiplier": 2,
           "PoiseMultiplier": 1,
           "HitReaction": "KnockUp",
-          "bGuardable": true,
-          "bParryable": true
+          "bGuardable": false,
+          "bParryable": false
         }
       ],
       "Cooldown": 12,
-      "bPhase1": true,
+      "bPhase1": false,
       "bPhase2": true,
       "WeightNear": 0,
       "WeightMid": 40,

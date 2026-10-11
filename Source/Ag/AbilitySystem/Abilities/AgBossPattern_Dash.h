@@ -23,6 +23,7 @@ protected:
 	virtual bool UsesSharedMovement() const override { return false; }
 	virtual void OnPatternStarted() override;
 	virtual void GetUnguardableHitStarts(TArray<float>& OutTimes) const override;
+	virtual void GetParryableHitStarts(TArray<float>& OutTimes) const override;
 
 private:
 	/** Turns the dash state on or off: no turning, no blocking the player, the attack window open. */

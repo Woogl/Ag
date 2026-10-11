@@ -2,13 +2,13 @@
 
 #include "AbilitySystem/Abilities/AgBossPattern_Leap.h"
 
+#include "Abilities/Tasks/AbilityTask_Repeat.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgCombatLibrary.h"
-#include "Components/CapsuleComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgCameraData.h"
@@ -19,39 +19,39 @@
 namespace
 {
 	const FName LeapEndSection(TEXT("End"));
+
+	/** 공중에서 착지 목표를 다시 맞추는 간격 */
+	constexpr float AimInterval = 1.f / 30.f;
 }
 
 void UAgBossPattern_Leap::OnPatternStarted()
 {
 	AAgBossCharacter* Boss = GetBoss();
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const AActor* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!Boss || !Data || !Player)
+	const FAgBossPattern* Pattern = GetPattern();
+	if (!Boss || !Data || !Pattern || Pattern->Hits.IsEmpty() || !UGameplayStatics::GetPlayerPawn(this, 0))
 	{
 		EndSelf(true);
 		return;
 	}
 	bLanded = false;
+	LeapStart = Boss->GetActorLocation();
 
-	// 착지 목표: short of the player's position at the leap, toward the boss, within the maximum leap distance.
-	const FVector Start = Boss->GetActorLocation();
-	const FVector ToPlayer = FVector(Player->GetActorLocation() - Start) * FVector(1.f, 1.f, 0.f);
-	const FVector Direction = ToPlayer.GetSafeNormal();
-	const float Distance = FMath::Clamp(ToPlayer.Size() - Data->LeapTargetOffset, 0.f, Data->LeapMaxDistance);
-
-	// 궤적: the engine's gravity over the air time (shorter in phase 2) decides the launch speed and the peak height.
-	const float AirTime = Data->LeapAirTime / Boss->GetPatternSpeed();
+	// 궤적: 체공 시간(2페이즈에서는 짧아짐)과 엔진 중력으로 처음 속도와 최고 높이가 정해집니다.
+	const float PatternSpeed = Boss->GetPatternSpeed();
+	const float AirTime = Data->LeapAirTime / PatternSpeed;
 	const float Gravity = -Boss->GetCharacterMovement()->GetGravityZ();
-	const FVector Launch = Direction * (Distance / AirTime) + FVector(0.f, 0.f, Gravity * AirTime * 0.5f);
-	if (!Direction.IsNearlyZero())
+	const FVector ToTarget = (GetLandingTarget() - LeapStart) * FVector(1.f, 1.f, 0.f);
+	if (!ToTarget.IsNearlyZero())
 	{
-		Boss->SetActorRotation(FRotator(0.f, Direction.Rotation().Yaw, 0.f));
+		Boss->SetActorRotation(FRotator(0.f, ToTarget.Rotation().Yaw, 0.f));
 	}
-	Boss->LaunchCharacter(Launch, /*bXYOverride*/ true, /*bZOverride*/ true);
+	Boss->LaunchCharacter(ToTarget / AirTime + FVector(0.f, 0.f, Gravity * AirTime * 0.5f), /*bXYOverride*/ true, /*bZOverride*/ true);
+	LandingTime = Boss->GetWorld()->GetTimeSeconds() + AirTime;
 
-	// 회전: the boss keeps turning toward the player in the air and stops 회전 정지 before the landing (its attack window).
-	// Phase 2 shortens both by the same ratio.
-	const float TurnTime = (Data->LeapAirTime - Data->RotationStopLead) / Boss->GetPatternSpeed();
+	// 회전: 공중에서도 플레이어를 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 2페이즈에서는 둘 다
+	// 같은 비율로 짧아집니다.
+	const float TurnTime = (Data->LeapAirTime - Data->RotationStopLead) / PatternSpeed;
 	if (TurnTime > 0.f)
 	{
 		UAbilityTask_WaitDelay* TurnTask = UAbilityTask_WaitDelay::WaitDelay(this, TurnTime);
@@ -63,26 +63,80 @@ void UAgBossPattern_Leap::OnPatternStarted()
 		SetRotationLocked(true);
 	}
 
-	// 예고 섬광: the lead before the landing, until it lands (the same phase 2 rule).
-	const FAgBossPattern* Pattern = GetPattern();
-	if (Pattern && !Pattern->Hits.IsEmpty() && Pattern->Hits[0].bParryable)
+	// 섬광: 가드 불가면 붉은 섬광, 패리 가능하면 예고 섬광을 착지보다 그 시간만큼 앞서 켭니다(2페이즈 규칙도 같음).
+	// 그때까지는 착지 목표를 플레이어 쪽으로 다시 맞춥니다.
+	const FAgAttackHit& Hit = Pattern->Hits[0];
+	const float TelegraphLead = !Hit.bGuardable ? Data->UnblockableTelegraphLead : (Hit.bParryable ? Data->ParryTelegraphLead : 0.f);
+	const float TelegraphTime = (Data->LeapAirTime - TelegraphLead) / PatternSpeed;
+	if (TelegraphTime > AimInterval)
 	{
-		const float TelegraphTime = (Data->LeapAirTime - Data->ParryTelegraphLead) / Boss->GetPatternSpeed();
-		if (TelegraphTime > 0.f)
-		{
-			UAbilityTask_WaitDelay* TelegraphTask = UAbilityTask_WaitDelay::WaitDelay(this, TelegraphTime);
-			TelegraphTask->OnFinish.AddDynamic(this, &ThisClass::HandleParryTelegraphTime);
-			TelegraphTask->ReadyForActivation();
-		}
-		else
-		{
-			SetParryTelegraph(true);
-		}
+		AimTask = UAbilityTask_Repeat::RepeatAction(this, AimInterval, FMath::CeilToInt(TelegraphTime / AimInterval));
+		AimTask->OnPerformAction.AddDynamic(this, &ThisClass::HandleAim);
+		AimTask->ReadyForActivation();
+	}
+	if (TelegraphLead > 0.f)
+	{
+		UAbilityTask_WaitDelay* TelegraphTask = UAbilityTask_WaitDelay::WaitDelay(this, FMath::Max(TelegraphTime, 0.f));
+		TelegraphTask->OnFinish.AddDynamic(this, &ThisClass::HandleTelegraphTime);
+		TelegraphTask->ReadyForActivation();
 	}
 
 	UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
 	LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
 	LandTask->ReadyForActivation();
+}
+
+FVector UAgBossPattern_Leap::GetLandingTarget() const
+{
+	const UAgBossData* Data = GetCharacterData<UAgBossData>();
+	const AActor* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!Data || !Player)
+	{
+		return LeapStart;
+	}
+	const FVector ToPlayer = (Player->GetActorLocation() - LeapStart) * FVector(1.f, 1.f, 0.f);
+	const float Distance = FMath::Clamp(ToPlayer.Size() - Data->LeapTargetOffset, 0.f, Data->LeapMaxDistance);
+	return LeapStart + ToPlayer.GetSafeNormal() * Distance;
+}
+
+void UAgBossPattern_Leap::HandleAim(int32 ActionNumber)
+{
+	// 첫 동작은 도약과 같은 프레임이라, 다시 Launch하면 아직 적용되지 않은 도약 속도를 덮어씁니다.
+	AAgBossCharacter* Boss = GetBoss();
+	const float Remaining = Boss ? static_cast<float>(LandingTime - Boss->GetWorld()->GetTimeSeconds()) : 0.f;
+	if (ActionNumber == 0 || bLanded || !Boss || Remaining <= UE_KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+	const FVector ToTarget = (GetLandingTarget() - Boss->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
+	Boss->LaunchCharacter(ToTarget / Remaining, /*bXYOverride*/ true, /*bZOverride*/ false);
+}
+
+void UAgBossPattern_Leap::HandleTelegraphTime()
+{
+	StopAiming();
+	const FAgBossPattern* Pattern = GetPattern();
+	if (bLanded || !Pattern || Pattern->Hits.IsEmpty())
+	{
+		return;
+	}
+	if (!Pattern->Hits[0].bGuardable)
+	{
+		SetUnblockableTelegraph(true);
+	}
+	else
+	{
+		SetParryTelegraph(true);
+	}
+}
+
+void UAgBossPattern_Leap::StopAiming()
+{
+	if (AimTask)
+	{
+		AimTask->EndTask();
+		AimTask = nullptr;
+	}
 }
 
 void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
@@ -95,7 +149,9 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 		return;
 	}
 	bLanded = true;
+	StopAiming();
 	SetRotationLocked(false);
+	SetUnblockableTelegraph(false);
 	SetParryTelegraph(false);
 
 	if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
@@ -103,7 +159,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 		AnimInstance->Montage_JumpToSection(LeapEndSection, GetMontage());
 	}
 
-	// The landing shakes the camera when the player is near enough (카메라 '상황별 단계').
+	// 플레이어가 가까우면 착지가 카메라를 흔듭니다(카메라 '상황별 단계').
 	AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0));
 	const UAgCameraData* Camera = UAgCombatLibrary::GetCameraData();
 	if (Player && Camera && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Camera->LeapLandingShakeRange)
@@ -111,19 +167,10 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 		UAgCombatLibrary::PlayCameraShake(Boss, Camera->LeapLandingShake);
 	}
 
-	// The landing is the attack window: one check of the landing radius.
-	const float HeightGap = Player ? FMath::Abs(Player->GetActorLocation().Z - Boss->GetActorLocation().Z) : 0.f;
-	if (Player && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Data->LeapHitRadius && HeightGap <= Boss->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.f)
+	// 착지가 판정 구간입니다. 착지 지점 반경 안에서 땅에 있는 대상만 한 번 맞습니다(점프 중이면 맞지 않음).
+	if (Player && !Player->GetCharacterMovement()->IsFalling() && UAgCombatLibrary::GetHorizontalDistance(Boss, Player) <= Data->LeapHitRadius)
 	{
 		UAgCombatLibrary::ProcessHit(Boss, Player, FAgPlayerAttackHit(Pattern->Hits[0]), Boss->GetActorLocation());
-	}
-}
-
-void UAgBossPattern_Leap::HandleParryTelegraphTime()
-{
-	if (!bLanded)
-	{
-		SetParryTelegraph(true);
 	}
 }
 
@@ -154,6 +201,8 @@ void UAgBossPattern_Leap::SetRotationLocked(bool bLocked)
 
 void UAgBossPattern_Leap::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
+	// 공중에서 끊기면(사망, 그로기 등) 그때의 속도로 중력에 맡겨 떨어집니다.
+	StopAiming();
 	SetRotationLocked(false);
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

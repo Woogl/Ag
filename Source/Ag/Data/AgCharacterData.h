@@ -453,7 +453,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "A3 Dash", meta = (Units = "cm", ClampMin = 0))
 	float DashMaxDistance = 0.f;
 
-	/** A4: 체공 시간 from the leap to the landing. */
+	/** A4 체공 시간: 도약부터 착지까지. 엔진 중력과 함께 최고 높이를 정합니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "A4 Leap", meta = (Units = "s", ClampMin = 0.01))
 	float LeapAirTime = 1.f;
 

@@ -37,6 +37,17 @@ void UAgBossPattern_Dash::GetUnguardableHitStarts(TArray<float>& OutTimes) const
 	}
 }
 
+void UAgBossPattern_Dash::GetParryableHitStarts(TArray<float>& OutTimes) const
+{
+	// 판정 구간은 돌진을 시작할 때 열립니다. 예고 섬광도 그 시점을 기준으로 켭니다.
+	const FAgBossPattern* Pattern = GetPattern();
+	const float DashStart = FindEventNotifyTime(AgGameplayTags::Event_Boss_DashStart);
+	if (Pattern && !Pattern->Hits.IsEmpty() && Pattern->Hits[0].bParryable && DashStart >= 0.f)
+	{
+		OutTimes.Add(DashStart);
+	}
+}
+
 void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = GetBoss();

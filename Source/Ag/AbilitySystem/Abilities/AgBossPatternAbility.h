@@ -62,7 +62,8 @@ protected:
 	/** Montage times of every gameplay event notify with EventTag, in order. */
 	void FindEventNotifyTimes(const FGameplayTag& EventTag, TArray<float>& OutTimes) const;
 
-	/** 예고 섬광 on the weapon, for a hit that isn't a montage window (A4's landing). */
+	/** 몽타주의 판정 구간이 아닌 타격(A4 착지)의 무기 섬광. 붉은 섬광은 가드 불가, 예고 섬광은 패리 가능한 타격에 씁니다. */
+	void SetUnblockableTelegraph(bool bOn);
 	void SetParryTelegraph(bool bOn);
 
 private:
@@ -71,8 +72,6 @@ private:
 
 	/** Shows a telegraph from Lead (montage time) before each hit start until the hit starts. */
 	void ScheduleTelegraphs(const TArray<float>& HitStarts, float Lead, bool bParryTelegraph);
-
-	void SetUnblockableTelegraph(bool bOn);
 
 	/** Turns a weapon telegraph cue on or off; bActive tracks whether it is on. */
 	void SetWeaponTelegraph(const FGameplayTag& Cue, bool& bActive, bool bOn);
