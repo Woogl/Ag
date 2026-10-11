@@ -4,7 +4,6 @@
 
 #include "Components/WidgetComponent.h"
 #include "Engine/World.h"
-#include "GameFramework/WorldSettings.h"
 #include "UI/AgDamageFloaterWidget.h"
 
 AAgDamageFloater::AAgDamageFloater()
@@ -40,7 +39,7 @@ void AAgDamageFloater::Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> 
 
 	if (UAgDamageFloaterWidget* FloaterWidget = Cast<UAgDamageFloaterWidget>(Floater->Widget->GetWidget()))
 	{
-		FloaterWidget->SetDamage(Amount, World->GetWorldSettings()->GetEffectiveTimeDilation());
+		FloaterWidget->SetDamage(Amount);
 	}
 }
 
@@ -48,8 +47,9 @@ void AAgDamageFloater::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// 위젯 애니메이션처럼 실제 시간으로 셉니다. 슬로우모션의 영향을 받지 않습니다.
 	UAgDamageFloaterWidget* FloaterWidget = Cast<UAgDamageFloaterWidget>(Widget->GetWidget());
-	Age += DeltaSeconds;
+	Age += GetWorld()->GetTime().GetDeltaRealTimeSeconds();
 	if (!FloaterWidget || Age >= FloaterWidget->GetLifetime())
 	{
 		Destroy();
@@ -58,5 +58,4 @@ void AAgDamageFloater::Tick(float DeltaSeconds)
 
 	const float Alpha = Age / FloaterWidget->GetLifetime();
 	SetActorLocation(StartLocation + FVector(0.f, 0.f, FloaterWidget->GetRiseHeight() * Alpha));
-	FloaterWidget->SetGameSpeed(GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation());
 }

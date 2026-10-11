@@ -5,15 +5,10 @@
 #include "Animation/WidgetAnimation.h"
 #include "CommonTextBlock.h"
 
-void UAgDamageFloaterWidget::SetDamage(int32 Amount, float GameSpeed)
+void UAgDamageFloaterWidget::SetDamage(int32 Amount)
 {
 	DamageText->SetText(FText::AsNumber(Amount, &FNumberFormattingOptions::DefaultNoGrouping()));
-	PlayAnimation(FadeAnimation, 0.f, 1, EUMGSequencePlayMode::Forward, GameSpeed);
-}
-
-void UAgDamageFloaterWidget::SetGameSpeed(float GameSpeed)
-{
-	SetPlaybackSpeed(FadeAnimation, GameSpeed);
+	PlayAnimation(FadeAnimation);
 }
 
 float UAgDamageFloaterWidget::GetLifetime() const

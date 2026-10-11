@@ -20,10 +20,7 @@ class UAgDamageFloaterWidget : public UCommonUserWidget
 
 public:
 	/** Amount를 정수로 표시하고 투명해지기 시작합니다. */
-	void SetDamage(int32 Amount, float GameSpeed);
-
-	/** 투명해지는 속도를 게임 시간 배율(슬로우모션)에 맞춥니다. */
-	void SetGameSpeed(float GameSpeed);
+	void SetDamage(int32 Amount);
 
 	/** 표시 시간: 투명해지는 애니메이션의 길이입니다. */
 	float GetLifetime() const;

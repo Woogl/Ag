@@ -12,6 +12,7 @@ class UWidgetComponent;
 /**
  * 전투 HUD '대미지 숫자': 월드 위치에 띄운 숫자가 일정한 속도로 떠오르는 동안 위젯이 투명하게 만들고, 다 사라지면
  * 스스로 지웁니다. 투명해지는 애니메이션(곧 표시 시간)과 떠오르는 높이는 위젯(WBP_DamageFloater)에 있습니다.
+ * 위젯 애니메이션과 같이 실제 시간으로 흘러, 슬로우모션의 영향을 받지 않습니다.
  */
 UCLASS(NotBlueprintable)
 class AAgDamageFloater : public AActor
