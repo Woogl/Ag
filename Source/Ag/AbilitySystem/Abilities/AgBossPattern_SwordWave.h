@@ -17,7 +17,6 @@ class UAgBossPattern_SwordWave : public UAgBossPatternAbility
 
 protected:
 	virtual void OnPatternStarted() override;
-	virtual void GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const override;
 
 private:
 	UFUNCTION()

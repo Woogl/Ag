@@ -2,9 +2,8 @@
 
 #include "AbilitySystem/Abilities/AgBossPattern_Leap.h"
 
-#include "Abilities/Tasks/AbilityTask_Repeat.h"
-#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
+#include "Abilities/Tasks/AbilityTask_WaitVelocityChange.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Character/AgBossCharacter.h"
@@ -20,9 +19,6 @@
 namespace
 {
 	const FName LeapEndSection(TEXT("End"));
-
-	/** 공중에서 착지 목표를 다시 맞추는 간격 */
-	constexpr float AimInterval = 1.f / 30.f;
 }
 
 void UAgBossPattern_Leap::OnPatternStarted()
@@ -40,47 +36,27 @@ void UAgBossPattern_Leap::OnPatternStarted()
 
 	// 궤적: 체공 시간(2페이즈에서는 짧아짐)과 엔진 중력으로 처음 속도와 최고 높이가 정해집니다.
 	const float PatternSpeed = Boss->GetPatternSpeed();
-	const float AirTime = Data->LeapAirTime / PatternSpeed;
-	const float Gravity = -Boss->GetCharacterMovement()->GetGravityZ();
+	AirTime = Data->LeapAirTime / PatternSpeed;
+	Gravity = -Boss->GetCharacterMovement()->GetGravityZ();
 	const FVector ToTarget = (GetLandingTarget() - LeapStart) * FVector(1.f, 1.f, 0.f);
 	if (!ToTarget.IsNearlyZero())
 	{
 		Boss->SetActorRotation(FRotator(0.f, ToTarget.Rotation().Yaw, 0.f));
 	}
 	Boss->LaunchCharacter(ToTarget / AirTime + FVector(0.f, 0.f, Gravity * AirTime * 0.5f), /*bXYOverride*/ true, /*bZOverride*/ true);
-	LandingTime = Boss->GetWorld()->GetTimeSeconds() + AirTime;
 
-	// 회전: 공중에서도 대상을 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 2페이즈에서는 둘 다
-	// 같은 비율로 짧아집니다.
-	const float TurnTime = (Data->LeapAirTime - Data->RotationStopLead) / PatternSpeed;
-	if (TurnTime > 0.f)
-	{
-		UAbilityTask_WaitDelay* TurnTask = UAbilityTask_WaitDelay::WaitDelay(this, TurnTime);
-		TurnTask->OnFinish.AddDynamic(this, &ThisClass::HandleRotationStop);
-		TurnTask->ReadyForActivation();
-	}
-	else
+	// 회전: 공중에서도 대상을 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 2페이즈에서는 둘 다 같은 비율로
+	// 짧아집니다. 붉은 섬광은 몽타주의 떠오르는 구간에 있는 노티파이가 켭니다.
+	RotationStopLead = Data->RotationStopLead / PatternSpeed;
+	if (RotationStopLead >= AirTime)
 	{
 		SetRotationLocked(true);
 	}
 
-	// 섬광: 가드 불가면 붉은 섬광, 패리 가능하면 예고 섬광을 착지보다 그 시간만큼 앞서 켭니다(2페이즈 규칙도 같음).
-	// 그때까지는 착지 목표를 대상 쪽으로 다시 맞춥니다.
-	const FAgAttackHit& Hit = Pattern->Hits[0];
-	const float TelegraphLead = !Hit.bGuardable ? Data->UnblockableTelegraphLead : (Hit.bParryable ? Data->ParryTelegraphLead : 0.f);
-	const float TelegraphTime = (Data->LeapAirTime - TelegraphLead) / PatternSpeed;
-	if (TelegraphTime > AimInterval)
-	{
-		AimTask = UAbilityTask_Repeat::RepeatAction(this, AimInterval, FMath::CeilToInt(TelegraphTime / AimInterval));
-		AimTask->OnPerformAction.AddDynamic(this, &ThisClass::HandleAim);
-		AimTask->ReadyForActivation();
-	}
-	if (TelegraphLead > 0.f)
-	{
-		UAbilityTask_WaitDelay* TelegraphTask = UAbilityTask_WaitDelay::WaitDelay(this, FMath::Max(TelegraphTime, 0.f));
-		TelegraphTask->OnFinish.AddDynamic(this, &ThisClass::HandleTelegraphTime);
-		TelegraphTask->ReadyForActivation();
-	}
+	// 공중의 시각은 떠오른 뒤부터 잽니다. 땅에서는 아직 도약 속도가 적용되지 않아 수직 속도로 시각을 잴 수 없습니다.
+	UAbilityTask_WaitMovementModeChange* TakeOffTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Falling);
+	TakeOffTask->OnChange.AddDynamic(this, &ThisClass::HandleTakeOff);
+	TakeOffTask->ReadyForActivation();
 
 	UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
 	LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
@@ -100,44 +76,46 @@ FVector UAgBossPattern_Leap::GetLandingTarget() const
 	return LeapStart + ToTarget.GetSafeNormal() * Distance;
 }
 
-void UAgBossPattern_Leap::HandleAim(int32 ActionNumber)
+float UAgBossPattern_Leap::GetDescentSpeedAt(float RemainingTime) const
 {
-	// 첫 동작은 도약과 같은 프레임이라, 다시 Launch하면 아직 적용되지 않은 도약 속도를 덮어씁니다.
+	// 중력만 받는 포물선이라 수직 속도가 남은 체공 시간을 정합니다. 처음 수직 속도가 중력 × 체공 시간 / 2이므로, 남은 시간이
+	// t일 때 하강 속도는 중력 × (체공 시간 / 2 − t)입니다.
+	return Gravity * (AirTime * 0.5f - RemainingTime);
+}
+
+void UAgBossPattern_Leap::HandleTakeOff(EMovementMode NewMovementMode)
+{
+	if (bLanded)
+	{
+		return;
+	}
+
+	// 시각을 시간이 아니라 보스의 수직 속도로 판정합니다. 히트스톱은 보스의 이동을 멈추므로, 공중에서 맞으면 이 시각들도 비행과
+	// 함께 늦어집니다(전투 시스템 '히트스톱 중의 시간').
+	if (RotationStopLead < AirTime)
+	{
+		UAbilityTask_WaitVelocityChange* TurnTask = UAbilityTask_WaitVelocityChange::CreateWaitVelocityChange(this, FVector::DownVector, GetDescentSpeedAt(RotationStopLead));
+		TurnTask->OnVelocityChage.AddDynamic(this, &ThisClass::HandleRotationStop);
+		TurnTask->ReadyForActivation();
+	}
+
+	// 최고점: 내려가기 시작하는 순간입니다.
+	UAbilityTask_WaitVelocityChange* ApexTask = UAbilityTask_WaitVelocityChange::CreateWaitVelocityChange(this, FVector::DownVector, 0.f);
+	ApexTask->OnVelocityChage.AddDynamic(this, &ThisClass::HandleApex);
+	ApexTask->ReadyForActivation();
+}
+
+void UAgBossPattern_Leap::HandleApex()
+{
+	// 남은 체공 시간도 수직 속도로 셉니다(GetDescentSpeedAt의 식을 거꾸로 푼 것).
 	AAgBossCharacter* Boss = GetBoss();
-	const float Remaining = Boss ? static_cast<float>(LandingTime - Boss->GetWorld()->GetTimeSeconds()) : 0.f;
-	if (ActionNumber == 0 || bLanded || !Boss || Remaining <= UE_KINDA_SMALL_NUMBER)
+	const float Remaining = Boss ? AirTime * 0.5f + Boss->GetCharacterMovement()->Velocity.Z / Gravity : 0.f;
+	if (bLanded || !Boss || Remaining <= UE_KINDA_SMALL_NUMBER)
 	{
 		return;
 	}
 	const FVector ToTarget = (GetLandingTarget() - Boss->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
 	Boss->LaunchCharacter(ToTarget / Remaining, /*bXYOverride*/ true, /*bZOverride*/ false);
-}
-
-void UAgBossPattern_Leap::HandleTelegraphTime()
-{
-	StopAiming();
-	const FAgBossPattern* Pattern = GetPattern();
-	if (bLanded || !Pattern || Pattern->Hits.IsEmpty())
-	{
-		return;
-	}
-	if (!Pattern->Hits[0].bGuardable)
-	{
-		SetUnblockableTelegraph(true);
-	}
-	else
-	{
-		SetParryTelegraph(true);
-	}
-}
-
-void UAgBossPattern_Leap::StopAiming()
-{
-	if (AimTask)
-	{
-		AimTask->EndTask();
-		AimTask = nullptr;
-	}
 }
 
 void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
@@ -150,10 +128,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 		return;
 	}
 	bLanded = true;
-	StopAiming();
 	SetRotationLocked(false);
-	SetUnblockableTelegraph(false);
-	SetParryTelegraph(false);
 
 	if (UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance())
 	{
@@ -205,7 +180,6 @@ void UAgBossPattern_Leap::SetRotationLocked(bool bLocked)
 void UAgBossPattern_Leap::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	// 공중에서 끊기면(사망, 그로기 등) 그때의 속도로 중력에 맡겨 떨어집니다.
-	StopAiming();
 	SetRotationLocked(false);
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);

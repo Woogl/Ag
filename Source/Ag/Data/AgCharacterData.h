@@ -389,11 +389,11 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
 	float RotationStopLead = 0.f;
 
-	/** 패턴 목록: 근거리의 상한 (캡슐 중심 사이 수평 거리) */
+	/** 패턴 선택: 근거리의 상한 (캡슐 중심 사이 수평 거리) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))
 	float NearDistance = 0.f;
 
-	/** 패턴 목록: 중거리의 상한. 이보다 멀면 원거리입니다. */
+	/** 패턴 선택: 중거리의 상한. 이보다 멀면 원거리입니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))
 	float FarDistance = 0.f;
 
@@ -424,14 +424,6 @@ public:
 	/** 2페이즈 변화: MOV multiplier (walking). */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase", meta = (ClampMin = 0))
 	float Phase2MOVMultiplier = 1.f;
-
-	/** 공격 예고: 가드 불가 공격의 판정 구간보다 이만큼 먼저 붉은 섬광을 켭니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
-	float UnblockableTelegraphLead = 0.f;
-
-	/** 공격 예고: 패리 가능한 공격의 판정 구간보다 이만큼 먼저 예고 섬광을 켭니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (Units = "s", ClampMin = 0))
-	float ParryTelegraphLead = 0.f;
 
 	/** A3 돌진 규칙: 속도 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "A3 Dash", meta = (Units = "cm/s", ClampMin = 0))

@@ -30,16 +30,6 @@ void UAgBossPattern_Dash::OnPatternStarted()
 	BlockedTask->ReadyForActivation();
 }
 
-void UAgBossPattern_Dash::GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const
-{
-	// 판정 구간은 돌진을 시작할 때 열립니다. 섬광도 그 시점을 기준으로 켭니다.
-	const float DashStart = FindEventNotifyTime(AgGameplayTags::Event_Boss_DashStart);
-	if (DashStart >= 0.f)
-	{
-		OutHitStarts.Add({ 0, DashStart });
-	}
-}
-
 void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = GetBoss();

@@ -4,10 +4,8 @@
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
-#include "Animation/AgAnimNotify_GameplayEvent.h"
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
@@ -123,107 +121,14 @@ void UAgBossPatternAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
 
-	// 몽타주를 재생하지 못하면 OnCancelled가 그 자리에서 어빌리티를 끝냅니다. 끝난 어빌리티에서 섬광이나 특수 패턴의 이동을
-	// 시작하지 않습니다.
+	// 몽타주를 재생하지 못하면 OnCancelled가 그 자리에서 어빌리티를 끝냅니다. 끝난 어빌리티에서 특수 패턴의 이동을 시작하지
+	// 않습니다.
 	if (!IsActive())
 	{
 		return;
 	}
 
-	// 가드 불가 타 앞에는 붉은 섬광, 패리 가능 타 앞에는 예고 섬광을 판정 구간 시작까지 켭니다(보스 사양 '공격 예고').
-	// 앞당기는 시간은 1페이즈 속도 기준 초이며, 2페이즈는 둘 다 같은 비율로 줄이므로 몽타주 시간으로는 두 페이즈가 같습니다.
-	TArray<FAgHitStart> HitStarts;
-	GetHitStarts(HitStarts);
-	TArray<float> UnblockableHitStarts;
-	TArray<float> ParryableHitStarts;
-	for (const FAgHitStart& HitStart : HitStarts)
-	{
-		if (!Pattern->Hits.IsValidIndex(HitStart.HitIndex))
-		{
-			continue;
-		}
-		const FAgAttackHit& Hit = Pattern->Hits[HitStart.HitIndex];
-		if (!Hit.bGuardable)
-		{
-			UnblockableHitStarts.Add(HitStart.Time);
-		}
-		else if (Hit.bParryable)
-		{
-			ParryableHitStarts.Add(HitStart.Time);
-		}
-	}
-	ScheduleTelegraphs(UnblockableHitStarts, Data->UnblockableTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ false);
-	ScheduleTelegraphs(ParryableHitStarts, Data->ParryTelegraphLead * Data->PatternPlayRate, /*bParryTelegraph*/ true);
-
 	OnPatternStarted();
-}
-
-void UAgBossPatternAbility::ScheduleTelegraphs(const TArray<float>& HitStarts, float Lead, bool bParryTelegraph)
-{
-	for (const float HitStart : HitStarts)
-	{
-		UAgAbilityTask_WaitMontagePosition* TelegraphStart = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, FMath::Max(0.f, HitStart - Lead));
-		UAgAbilityTask_WaitMontagePosition* TelegraphEnd = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, HitStart);
-		if (bParryTelegraph)
-		{
-			TelegraphStart->OnReached.AddDynamic(this, &ThisClass::HandleParryTelegraphStart);
-			TelegraphEnd->OnReached.AddDynamic(this, &ThisClass::HandleParryTelegraphEnd);
-		}
-		else
-		{
-			TelegraphStart->OnReached.AddDynamic(this, &ThisClass::HandleUnblockableTelegraphStart);
-			TelegraphEnd->OnReached.AddDynamic(this, &ThisClass::HandleUnblockableTelegraphEnd);
-		}
-		TelegraphStart->ReadyForActivation();
-		TelegraphEnd->ReadyForActivation();
-	}
-}
-
-void UAgBossPatternAbility::GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const
-{
-	if (!Montage)
-	{
-		return;
-	}
-	for (const FAnimNotifyEvent& Notify : Montage->Notifies)
-	{
-		if (const UAgAnimNotifyState_AttackWindow* Window = Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass))
-		{
-			OutHitStarts.Add({ Window->HitIndex, Notify.GetTriggerTime() });
-		}
-	}
-}
-
-void UAgBossPatternAbility::FindEventNotifyTimes(const FGameplayTag& EventTag, TArray<float>& OutTimes) const
-{
-	if (Montage)
-	{
-		for (const FAnimNotifyEvent& Notify : Montage->Notifies)
-		{
-			const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
-			if (Event && Event->EventTag == EventTag)
-			{
-				OutTimes.Add(Notify.GetTriggerTime());
-			}
-		}
-		OutTimes.Sort();
-	}
-}
-
-float UAgBossPatternAbility::FindEventNotifyTime(const FGameplayTag& EventTag) const
-{
-	if (Montage)
-	{
-		for (const FAnimNotifyEvent& Notify : Montage->Notifies)
-		{
-			const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
-			if (Event && Event->EventTag == EventTag)
-			{
-				return Notify.GetTriggerTime();
-			}
-		}
-	}
-	return -1.f;
 }
 
 float UAgBossPatternAbility::GetForwardTravelBeforeFirstWindow(const UAnimMontage* InMontage)
@@ -240,60 +145,6 @@ float UAgBossPatternAbility::GetForwardTravelBeforeFirstWindow(const UAnimMontag
 	return FMath::Max(0.f, RootMotion.GetTranslation().Size2D());
 }
 
-void UAgBossPatternAbility::SetUnblockableTelegraph(bool bOn)
-{
-	SetWeaponTelegraph(AgGameplayTags::GameplayCue_UnblockableTelegraph, bUnblockableTelegraphOn, bOn);
-}
-
-void UAgBossPatternAbility::SetParryTelegraph(bool bOn)
-{
-	SetWeaponTelegraph(AgGameplayTags::GameplayCue_ParryTelegraph, bParryTelegraphOn, bOn);
-}
-
-void UAgBossPatternAbility::SetWeaponTelegraph(const FGameplayTag& Cue, bool& bActive, bool bOn)
-{
-	AAgCharacterBase* Boss = GetAgCharacter();
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-	if (bActive == bOn || !Boss || !ASC)
-	{
-		return;
-	}
-	bActive = bOn;
-	if (bOn)
-	{
-		FGameplayCueParameters Parameters;
-		Parameters.Instigator = Boss;
-		Parameters.EffectCauser = Boss;
-		Parameters.TargetAttachComponent = Boss->GetWeaponComponent();
-		ASC->AddGameplayCue(Cue, Parameters);
-	}
-	else
-	{
-		ASC->RemoveGameplayCue(Cue);
-	}
-	UE_LOG(LogAg, Verbose, TEXT("%s %s"), *Cue.ToString(), bOn ? TEXT("on") : TEXT("off"));
-}
-
-void UAgBossPatternAbility::HandleUnblockableTelegraphStart()
-{
-	SetUnblockableTelegraph(true);
-}
-
-void UAgBossPatternAbility::HandleUnblockableTelegraphEnd()
-{
-	SetUnblockableTelegraph(false);
-}
-
-void UAgBossPatternAbility::HandleParryTelegraphStart()
-{
-	SetParryTelegraph(true);
-}
-
-void UAgBossPatternAbility::HandleParryTelegraphEnd()
-{
-	SetParryTelegraph(false);
-}
-
 void UAgBossPatternAbility::HandleMontageFinished()
 {
 	EndSelf(false);
@@ -306,8 +157,6 @@ void UAgBossPatternAbility::HandleMontageCancelled()
 
 void UAgBossPatternAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	SetUnblockableTelegraph(false);
-	SetParryTelegraph(false);
 	if (AAgCharacterBase* Boss = GetAgCharacter())
 	{
 		Boss->ClearActiveAttack();

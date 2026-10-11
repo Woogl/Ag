@@ -203,8 +203,6 @@
   "Phase2HPRatio": 0.5,
   "Phase2PatternSpeed": 1.1,
   "Phase2MOVMultiplier": 1.2,
-  "UnblockableTelegraphLead": 0.5,
-  "ParryTelegraphLead": 0.3,
   "DashSpeed": 2000,
   "DashOvershoot": 200,
   "DashMaxDistance": 2000,

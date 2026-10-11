@@ -2,6 +2,7 @@
 
 #include "Combat/AgGameplayCue_WeaponEffect.h"
 
+#include "Character/AgCharacterBase.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 
@@ -12,7 +13,14 @@ AAgGameplayCue_WeaponEffect::AAgGameplayCue_WeaponEffect()
 
 bool AAgGameplayCue_WeaponEffect::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
-	USceneComponent* AttachTo = Parameters.TargetAttachComponent.Get();
+	// 대상 캐릭터의 무기에 붙입니다. 몽타주 노티파이는 몸 메시를 넘기므로 캐릭터의 무기를 먼저 쓰고, 애니메이션 에디터
+	// 미리보기처럼 캐릭터가 없으면 넘어온 컴포넌트에 붙입니다.
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(MyTarget);
+	USceneComponent* AttachTo = Character ? Character->GetWeaponComponent() : nullptr;
+	if (!AttachTo)
+	{
+		AttachTo = Parameters.TargetAttachComponent.Get();
+	}
 	if (!AttachTo && MyTarget)
 	{
 		AttachTo = MyTarget->GetRootComponent();

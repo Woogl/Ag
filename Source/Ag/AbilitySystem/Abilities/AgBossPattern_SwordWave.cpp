@@ -19,17 +19,6 @@ void UAgBossPattern_SwordWave::OnPatternStarted()
 	ReleaseTask->ReadyForActivation();
 }
 
-void UAgBossPattern_SwordWave::GetHitStarts(TArray<FAgHitStart>& OutHitStarts) const
-{
-	// 검기마다 발사가 그 타의 판정 구간입니다(보스 사양 'A6').
-	TArray<float> Launches;
-	FindEventNotifyTimes(AgGameplayTags::Event_Boss_SwordWave, Launches);
-	for (int32 Index = 0; Index < Launches.Num(); ++Index)
-	{
-		OutHitStarts.Add({ Index, Launches[Index] });
-	}
-}
-
 void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = GetBoss();

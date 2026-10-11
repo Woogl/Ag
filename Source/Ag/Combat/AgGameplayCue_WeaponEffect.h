@@ -10,8 +10,7 @@ class UNiagaraComponent;
 class UNiagaraSystem;
 
 /**
- * Plays a looping effect on the target's weapon while the cue is active (붉은 섬광, 예고 섬광).
- * The effect and its tint are data on the cue blueprint; the weapon comes in the cue parameters (TargetAttachComponent).
+ * 큐가 켜진 동안 대상 캐릭터의 무기에 반복 이펙트를 붙입니다(붉은 섬광, 예고 섬광). 이펙트와 색은 큐 블루프린트의 데이터입니다.
  */
 UCLASS(Abstract)
 class AAgGameplayCue_WeaponEffect : public AGameplayCueNotify_Actor
