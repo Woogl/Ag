@@ -464,6 +464,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "B1 Backstep", meta = (ClampMin = 0, ClampMax = 1))
 	float BackstepChance = 0.f;
 
+	/** B1 백스텝: 뒤로 물러나는 거리. 모션의 루트 모션을 이 거리에 맞춰 늘립니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "B1 Backstep", meta = (Units = "cm", ClampMin = 0))
+	float BackstepDistance = 0.f;
+
 	/** A6 검기: the projectile (BP_SwordWave). Its hit box (폭, 높이) and look are set on the blueprint. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|A6 Sword Wave")
 	TSubclassOf<AAgSwordWave> SwordWaveClass;

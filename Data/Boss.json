@@ -182,7 +182,7 @@
     {
       "Pattern": "Ability.Boss.Pattern.B1",
       "Hits": [],
-      "Cooldown": 8,
+      "Cooldown": 4,
       "Phases": [1, 2],
       "WeightNear": 0,
       "WeightMid": 0,
@@ -212,6 +212,7 @@
   "LeapHitRadius": 350,
   "BackstepRange": 400,
   "BackstepChance": 0.3,
+  "BackstepDistance": 500,
   "SwordWaveSpeed": 1500,
   "SwordWaveRange": 2000,
   "DisplayName": "커스터"

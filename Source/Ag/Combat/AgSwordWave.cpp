@@ -25,7 +25,6 @@ AAgSwordWave::AAgSwordWave()
 	Mesh->SetupAttachment(HitBox);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Mesh->SetGenerateOverlapEvents(false);
-	Mesh->SetCastShadow(false);
 }
 
 void AAgSwordWave::Launch(AAgCharacterBase* InShooter, const FAgAttackHit& InHit, const FVector& Direction, float InSpeed, float InRange)
