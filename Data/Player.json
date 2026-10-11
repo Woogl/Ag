@@ -28,8 +28,7 @@
           "bGuardable": true,
           "bParryable": true,
           "MPCharge": 4,
-          "UPCharge": 0,
-          "bFinisher": false
+          "UPCharge": 0
         }
       ],
       "TargetingRange": 150
@@ -43,8 +42,7 @@
           "bGuardable": true,
           "bParryable": true,
           "MPCharge": 4,
-          "UPCharge": 0,
-          "bFinisher": false
+          "UPCharge": 0
         }
       ],
       "TargetingRange": 200
@@ -58,8 +56,7 @@
           "bGuardable": true,
           "bParryable": true,
           "MPCharge": 4,
-          "UPCharge": 0,
-          "bFinisher": false
+          "UPCharge": 0
         }
       ],
       "TargetingRange": 250
@@ -73,8 +70,7 @@
           "bGuardable": true,
           "bParryable": true,
           "MPCharge": 4,
-          "UPCharge": 0,
-          "bFinisher": false
+          "UPCharge": 0
         }
       ],
       "TargetingRange": 210
@@ -88,8 +84,7 @@
           "bGuardable": true,
           "bParryable": true,
           "MPCharge": 4,
-          "UPCharge": 4,
-          "bFinisher": false
+          "UPCharge": 4
         }
       ],
       "TargetingRange": 270
@@ -124,8 +119,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 10,
-        "bFinisher": false
+        "UPCharge": 10
       }
     ],
     "TargetingRange": 300
@@ -141,8 +135,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 0,
-        "bFinisher": false
+        "UPCharge": 0
       },
       {
         "DamageMultiplier": 2,
@@ -151,8 +144,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 0,
-        "bFinisher": false
+        "UPCharge": 0
       },
       {
         "DamageMultiplier": 2,
@@ -161,8 +153,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 0,
-        "bFinisher": false
+        "UPCharge": 0
       },
       {
         "DamageMultiplier": 4,
@@ -171,8 +162,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 0,
-        "bFinisher": true
+        "UPCharge": 0
       }
     ],
     "TargetingRange": 450
@@ -187,8 +177,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 0,
-        "bFinisher": false
+        "UPCharge": 0
       },
       {
         "DamageMultiplier": 1.5,
@@ -197,8 +186,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 0,
-        "bFinisher": false
+        "UPCharge": 0
       },
       {
         "DamageMultiplier": 4.5,
@@ -207,8 +195,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 0,
-        "UPCharge": 0,
-        "bFinisher": false
+        "UPCharge": 0
       }
     ],
     "TargetingRange": 300
@@ -226,8 +213,7 @@
         "bGuardable": true,
         "bParryable": true,
         "MPCharge": 8,
-        "UPCharge": 0,
-        "bFinisher": false
+        "UPCharge": 0
       }
     ],
     "TargetingRange": 800

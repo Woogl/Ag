@@ -42,7 +42,7 @@ struct FAgAttackHit
 	bool bParryable = true;
 };
 
-/** A player attack's window: the attack data plus what only player attacks have. */
+/** 플레이어 공격의 판정 구간: 공격 데이터에 플레이어 공격에만 있는 값을 더합니다. */
 USTRUCT(BlueprintType)
 struct FAgPlayerAttackHit : public FAgAttackHit
 {
@@ -50,19 +50,18 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 
 	FAgPlayerAttackHit() = default;
 
-	/** A boss attack's window, with none of the player's charges or display flags. */
+	/** 보스 공격의 판정 구간. 플레이어 공격에만 있는 값은 기본값입니다. */
 	explicit FAgPlayerAttackHit(const FAgAttackHit& Hit) : FAgAttackHit(Hit) {}
 
-	/** 플레이어 사양 'MP 충전': MP the attacker gains when this hit lands. */
+	/** 플레이어 사양 'MP 충전': 이 타가 적중하면 공격자가 얻는 MP */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float MPCharge = 0.f;
 
-	/** 플레이어 사양 'UP 충전': UP the attacker gains when this hit lands. */
+	/** 플레이어 사양 'UP 충전': 이 타가 적중하면 공격자가 얻는 UP */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float UPCharge = 0.f;
 
-	/** 카메라 '상황별 단계': this hit shakes the camera as a 마지막 일격 (궁극기) instead of an ordinary hit. */
-	UPROPERTY(EditAnywhere, Category = "Attack")
+	/** 카메라 '상황별 단계': 궁극기의 마지막 일격. 데이터가 아니라 궁극기 어빌리티가 마지막 타에 켭니다. */
 	bool bFinisher = false;
 };
 

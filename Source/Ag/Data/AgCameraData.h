@@ -87,7 +87,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake ExecutionBlowShake = EAgCameraShake::None;
 
-	/** 상황별 단계: 궁극기의 마지막 일격 (hits marked bFinisher) */
+	/** 상황별 단계: 궁극기의 마지막 일격 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake FinisherShake = EAgCameraShake::None;
 
