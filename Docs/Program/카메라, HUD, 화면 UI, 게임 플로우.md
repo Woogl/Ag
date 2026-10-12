@@ -17,7 +17,7 @@
 | UP 게이지 | 텍스처 없는 기능용 UI 머티리얼로 슬롯 테두리를 채웁니다. 채우는 모양은 머티리얼이 정하고, 코드는 UP 비율만 머티리얼 파라미터로 넘깁니다. 채우는 수식은 머티리얼의 Custom 노드(HLSL) 하나에 넣어 그래프를 작게 둡니다. | 코드가 아트를 직접 그리지 않고 모양은 에셋이 맡습니다. 수식이 텍스트라 AI도 고칠 수 있습니다. |
 | 화면 UI | 타이틀과 결과 UI는 CommonUI 화면으로 만듭니다. 화면마다 입력 모드(화면 UI는 UI 전용 입력과 커서 표시, HUD는 게임 입력과 커서 숨김)와 첫 선택 버튼을 정합니다. 화면의 버튼은 모두 공용 버튼 `WBP_AgButton`을 쓰고, 상태별 모양과 효과음은 표준 버튼 스타일 `ButtonStyle_Ag`가 정합니다. 효과음은 스타일의 `Hovered Sound`와 `Clicked Sound`를 쓰며, 재생은 Slate 버튼이 맡으므로 코드는 없습니다. 버튼은 포커스를 받으면 선택되고 포커스를 잃으면 선택이 풀리므로, 선택된 모양은 포커스를 가진 버튼 하나에만 남습니다. 마우스를 올리면 포커스를 가져옵니다. ↑·↓ 이동은 Slate의 기본 내비게이션입니다. 실행 키(좌클릭, Enter, Space)는 Slate 버튼의 기본 처리로 동작하므로 CommonUI 입력 데이터(확인·뒤로 액션)는 만들지 않고, CommonUI 설정 `CommonButtonAcceptKeyHandling`을 `TriggerClick`으로 둡니다. 결과 UI가 화면을 어둡게 하며 나타나는 페이드 인은 위젯 애니메이션(`FadeInAnimation`)이 맡고, 코드는 그것을 재생하고 끝나면 버튼을 켭니다. | 새 화면의 버튼도 같은 모양이 되도록 모양을 한 에셋에서 관리합니다. `Pressed Sound`는 누르는 순간 재생되어, 누른 채 버튼 밖으로 끌어내 실행을 취소해도 소리가 납니다. 스타일 사운드는 마우스 호버와 버튼 입력에 재생되고, ↑·↓로 포커스를 옮길 때는 재생되지 않습니다. Lyra 샘플처럼 포커스 이동에 소리를 내는 코드는 두지 않습니다(게임패드 이동은 CommonUI가 커서를 포커스된 버튼으로 옮기므로 호버음이 납니다). 페이드의 길이와 모양은 대미지 숫자처럼 위젯에서 바꿉니다. CommonUI의 `SetIsSelected(false)`는 토글 버튼만 선택을 풀어 주므로, 선택 해제는 `ClearSelection`으로 합니다. CommonUI 입력 데이터는 입력 아이콘 표시와 뒤로 가기 처리에만 쓰이는데, 기획서에는 둘 다 없습니다. 이 설정의 기본값(`Ignore`)은 Enter와 Space를 버튼에 넘기지 않습니다. |
 | 게임 모드 | 레벨마다 하나씩, 타이틀용과 보스전용을 `AAgGameMode`를 상속해 둡니다. | |
-| 결과 처리 | 보스전 게임 모드가 플레이어와 보스의 사망 가운데 먼저 처리된 것으로 결과(보스는 Stage Clear, 플레이어는 Game Over)를 정하고, 사망 연출 시간이 지나면 결과 UI를 띄웁니다. 그 밖의 캐릭터가 사망해도 결과와 HUD는 바뀌지 않습니다. Try Again은 레벨을 다시 로드합니다. | 게임 플로우의 Stage Clear와 Game Over는 보스와 플레이어의 사망으로만 정해집니다. |
+| 결과 처리 | 보스전 게임 모드가 플레이어와 보스의 사망 가운데 먼저 처리된 것으로 결과(보스는 Stage Clear, 플레이어는 Game Over)를 정하고, 사망 연출 시간이 지나면 결과 UI를 띄웁니다([사망 처리](<사망 처리.md>) '사망에서 결과 UI까지'). 그 밖의 캐릭터가 사망해도 결과와 HUD는 바뀌지 않습니다. Try Again은 레벨을 다시 로드합니다. | 게임 플로우의 Stage Clear와 Game Over는 보스와 플레이어의 사망으로만 정해집니다. |
 
 ## 클래스 구조
 
@@ -143,25 +143,3 @@ classDiagram
     AAgBossCharacter --> WBP_LockOnMarker : LockOnMarker의 위젯
     AAgBossCharacter --> WBP_ExecutionPrompt : ExecutionPrompt의 위젯
 ```
-
-### 사망에서 결과 UI까지
-
-```mermaid
-sequenceDiagram
-    participant C as 죽는 캐릭터
-    participant D as UAgAbility_Death
-    participant GM as AAgBossStageGameMode
-    participant PC as AAgPlayerController
-    participant R as UAgResultScreen
-    Note over C: Event.Death를 받음
-    C->>D: 이벤트로 시작
-    D->>C: Die
-    C-->>GM: OnDied
-    GM->>PC: HideHUD
-    Note over GM: 사망 연출 시간 뒤
-    GM->>PC: ShowResult
-    PC->>R: PushScreen, SetResult
-    R->>GM: 버튼에 따라<br>RestartStage 등
-```
-
-`Event.Death`는 GameplayEffect가 HP를 0 이하로 만들 때 어트리뷰트 세트(`PostGameplayEffectExecute`)가 보냅니다. 대미지 GameplayEffect와, `Kill`(Kill Z 낙하, 테스트용 콘솔 명령)이 적용하는 HP를 0으로 만드는 GameplayEffect가 모두 이 판정을 거칩니다. 보스와 플레이어의 사망은 StateTree의 전환 조건이 매 프레임 확인해, 보스 AI가 각각 사망 상태와 비전투 상태로 넘어갑니다.
