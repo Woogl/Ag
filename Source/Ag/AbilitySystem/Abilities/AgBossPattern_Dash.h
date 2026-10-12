@@ -27,9 +27,7 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 private:
-	/** 돌진 상태를 켜고 끕니다: 판정 구간이 열려 회전하지 않고, 플레이어를 막지 않습니다. */
-	void SetDashing(bool bNewDashing);
-
+	/** 돌진을 시작합니다: 판정 구간이 열려 회전하지 않고, 플레이어를 막지 않습니다. */
 	UFUNCTION()
 	void HandleDashStart(FGameplayEventData Payload);
 
@@ -48,6 +46,7 @@ private:
 	UFUNCTION()
 	void HandleMontageCancelled();
 
+	/** 돌진하는 동안 있습니다. */
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_Dash> DashTask;
 
@@ -55,6 +54,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_IgnoreCollision> IgnoreCollisionTask;
 
-	bool bDashing = false;
+	/** 창을 내지른 자세로 몽타주를 멈춰 둔 동안 참입니다. */
 	bool bHolding = false;
 };

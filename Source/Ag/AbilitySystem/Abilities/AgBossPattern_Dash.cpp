@@ -33,8 +33,9 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	}
 
 	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Boss->GetPatternPlayRate());
-	bDashing = bHolding = false;
+	bHolding = false;
 	DashTask = nullptr;
+	IgnoreCollisionTask = nullptr;
 	Boss->SetActiveAttack(Pattern->Hits);
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternPlayRate());
@@ -56,10 +57,6 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	UAbilityTask_WaitGameplayEvent* HoldTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Boss_DashHold, nullptr, /*OnlyTriggerOnce*/ true);
 	HoldTask->EventReceived.AddDynamic(this, &ThisClass::HandleDashHold);
 	HoldTask->ReadyForActivation();
-
-	UAbilityTask_WaitGameplayEvent* BlockedTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_AttackBlocked, nullptr, /*OnlyTriggerOnce*/ true);
-	BlockedTask->EventReceived.AddDynamic(this, &ThisClass::HandleAttackBlocked);
-	BlockedTask->ReadyForActivation();
 }
 
 void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
@@ -88,12 +85,23 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 	DashTask->OnFinished.AddDynamic(this, &ThisClass::HandleDashFinished);
 	DashTask->ReadyForActivation();
 
-	// 판정 구간은 돌진 태스크가 생긴 뒤에 엽니다. 여는 순간의 판정이 가드·패리에 막히면 그 자리에서 돌진을 끝낼 수 있어야
-	// 하기 때문입니다. 돌진이 시작하자마자 끝났으면(HandleDashFinished가 DashTask를 비움) 열지 않습니다.
-	if (DashTask)
+	// 돌진이 시작하자마자 끝났으면(HandleDashFinished가 DashTask를 비움) 판정 구간을 열지 않습니다.
+	if (!DashTask)
 	{
-		SetDashing(true);
+		return;
 	}
+
+	// 막힘은 돌진을 시작한 뒤부터 기다립니다. 검기를 막아도 보스에게 막힘 이벤트가 오므로, 그 전부터 기다리면 돌진 전에
+	// 대기가 끝나 버립니다.
+	UAbilityTask_WaitGameplayEvent* BlockedTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_AttackBlocked, nullptr, /*OnlyTriggerOnce*/ true);
+	BlockedTask->EventReceived.AddDynamic(this, &ThisClass::HandleAttackBlocked);
+	BlockedTask->ReadyForActivation();
+
+	// 돌진하는 동안이 판정 구간이라 회전하지 않고, 플레이어를 뚫고 지나갑니다. 판정 구간을 열자마자 막히면 그 안에서 돌진이
+	// 끝나므로, 막힘 대기와 충돌 무시를 판정 구간보다 먼저 겁니다.
+	IgnoreCollisionTask = UAgAbilityTask_IgnoreCollision::IgnoreCollision(this, ECC_Pawn);
+	IgnoreCollisionTask->ReadyForActivation();
+	Boss->BeginAttackWindow(0);
 }
 
 void UAgBossPattern_Dash::HandleDashHold(FGameplayEventData Payload)
@@ -102,7 +110,7 @@ void UAgBossPattern_Dash::HandleDashHold(FGameplayEventData Payload)
 	// 몽타주를 넘기지 않으면 모든 몽타주가 멈추므로, 이 어빌리티가 재생 중인 몽타주가 있을 때만 멈춥니다.
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
 	UAnimMontage* Montage = GetCurrentMontage();
-	if (bDashing && AnimInstance && Montage)
+	if (DashTask && AnimInstance && Montage)
 	{
 		bHolding = true;
 		AnimInstance->Montage_Pause(Montage);
@@ -111,8 +119,14 @@ void UAgBossPattern_Dash::HandleDashHold(FGameplayEventData Payload)
 
 void UAgBossPattern_Dash::HandleDashFinished()
 {
+	// 돌진이 끝나면 판정 구간을 닫고 다시 플레이어를 막으며, 멈춰 둔 자세에서 창을 거둡니다.
 	DashTask = nullptr;
-	SetDashing(false);
+	if (IgnoreCollisionTask)
+	{
+		IgnoreCollisionTask->EndTask();
+		IgnoreCollisionTask = nullptr;
+	}
+	GetAgCharacter()->EndAttackWindow(0);
 
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
 	UAnimMontage* Montage = GetCurrentMontage();
@@ -126,37 +140,9 @@ void UAgBossPattern_Dash::HandleDashFinished()
 void UAgBossPattern_Dash::HandleAttackBlocked(FGameplayEventData Payload)
 {
 	// 가드·패리에 막히면 벽에 막혔을 때처럼 그 자리에서 멈춥니다.
-	if (bDashing && DashTask)
+	if (DashTask)
 	{
 		DashTask->Finish();
-	}
-}
-
-void UAgBossPattern_Dash::SetDashing(bool bNewDashing)
-{
-	if (bDashing == bNewDashing)
-	{
-		return;
-	}
-	bDashing = bNewDashing;
-	AAgCharacterBase* Boss = GetAgCharacter();
-
-	// 돌진하는 동안이 판정 구간이라 회전하지 않고, 플레이어를 뚫고 지나갑니다.
-	// 판정 구간을 열자마자 막히면 그 안에서 돌진이 끝나므로, 충돌 무시를 먼저 겁니다.
-	if (bDashing)
-	{
-		IgnoreCollisionTask = UAgAbilityTask_IgnoreCollision::IgnoreCollision(this, ECC_Pawn);
-		IgnoreCollisionTask->ReadyForActivation();
-		Boss->BeginAttackWindow(0);
-	}
-	else
-	{
-		if (IgnoreCollisionTask)
-		{
-			IgnoreCollisionTask->EndTask();
-			IgnoreCollisionTask = nullptr;
-		}
-		Boss->EndAttackWindow(0);
 	}
 }
 
@@ -172,7 +158,6 @@ void UAgBossPattern_Dash::HandleMontageCancelled()
 
 void UAgBossPattern_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	SetDashing(false);
 	if (bHolding)
 	{
 		bHolding = false;
@@ -182,8 +167,9 @@ void UAgBossPattern_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, co
 			AnimInstance->Montage_Resume(Montage);
 		}
 	}
-	GetAgCharacter()->ClearActiveAttack();
 
-	// 몽타주의 루트 모션 무시와 돌진은 태스크가 어빌리티와 함께 끝나며 되돌립니다.
+	// 판정 구간은 공격 데이터와 함께 지워집니다. 충돌 무시, 몽타주의 루트 모션 무시, 돌진은 태스크가 어빌리티와 함께 끝나며
+	// 되돌립니다.
+	GetAgCharacter()->ClearActiveAttack();
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
