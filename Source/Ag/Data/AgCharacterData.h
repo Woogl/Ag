@@ -502,7 +502,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	FName ExecutionPromptBone;
 
-	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. 2연격, 휩쓸기, 3연격, 뛰어 내려찍기는 공용 패턴 어빌리티(UAgBossPattern_Common)를 씁니다. */
+	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. DoubleStrike, Sweep, QuintupleStrike, JumpSlam은 공용 패턴 어빌리티(UAgBossPattern_Common)를 씁니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Patterns")
 	TMap<FName, TSubclassOf<UAgGameplayAbility>> PatternAbilities;
 

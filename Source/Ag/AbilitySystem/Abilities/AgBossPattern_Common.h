@@ -7,7 +7,7 @@
 #include "AgBossPattern_Common.generated.h"
 
 /**
- * 보스 공용 패턴(2연격, 휩쓸기, 3연격, 뛰어 내려찍기): 공격 태스크로 패턴 몽타주를 패턴 재생 속도로 공격 데이터와 함께
+ * 보스 공용 패턴(DoubleStrike, Sweep, QuintupleStrike, JumpSlam): 공격 태스크로 패턴 몽타주를 패턴 재생 속도로 공격 데이터와 함께
  * 재생하고, 정지 간격(보스 사양 '이동')을 지키며 몽타주의 워핑 구간 동안 다가갑니다. 모션이 끝나면 끝납니다.
  * 공격 예고는 몽타주의 게임플레이 큐 노티파이가 켜고, 패턴별 쿨다운은 UAgGameplayAbility가 겁니다.
  */

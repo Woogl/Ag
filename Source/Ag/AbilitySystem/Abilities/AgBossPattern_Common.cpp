@@ -26,7 +26,7 @@ void UAgBossPattern_Common::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Data->PatternPlayRate);
 
-	// 보스는 타겟팅 범위가 없고, 몽타주에 워핑 구간이 있는 타(2연격·3연격의 1타 선딜, 뛰어 내려찍기의 체공)만 다가갑니다.
+	// 보스는 타겟팅 범위가 없고, 몽타주에 워핑 구간이 있는 타(DoubleStrike 1타의 선딜, JumpSlam의 체공)만 다가갑니다.
 	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Pattern, Montage, Data->PatternPlayRate);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
