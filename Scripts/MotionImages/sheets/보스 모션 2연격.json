@@ -1,21 +1,52 @@
 {
   "image": "보스 모션 2연격",
   "character": "boss",
-  "rows": [
-    {
-      "title": "2연격",
-      "note": "",
-      "frames": [
-        {"clip": "Halberd/Attack_Combo1", "t": 0.0, "time": "0.00초", "label": "시작"},
-        {"clip": "Halberd/Attack_Combo1", "t": 0.1333, "time": "0.48초", "label": ""},
-        {"clip": "Halberd/Attack_Combo1", "t": 0.2333, "time": "0.60초", "label": "1타 찌르기", "hit": true, "banner": [["움찔 · 가드·패리 가능", "yellow"]]},
-        {"clip": "Halberd/Attack_Combo2", "t": 0.2333, "time": "0.94초", "label": ""},
-        {"clip": "Halberd/Attack_Combo2", "t": 0.4833, "time": "1.36초", "label": "들어 올림"},
-        {"clip": "Halberd/Attack_Combo2", "t": 0.7, "time": "1.84초", "label": ""},
-        {"clip": "Halberd/Attack_Combo2", "t": 0.75, "time": "1.90초", "label": "2타 내려찍기", "hit": true, "banner": [["넉백 · 가드·패리 가능", "yellow"]]},
-        {"clip": "Halberd/Attack_Combo2", "t": 1.0, "time": "2.22초", "label": ""},
-        {"clip": "Halberd/Attack_Combo2", "t": 1.4333, "time": "2.75초", "label": "끝"}
-      ]
-    }
-  ]
+  "animation": {
+    "play_rate": 0.8,
+    "segments": [
+      {
+        "clip": "Halberd/Attack_Combo1",
+        "from": 0.0,
+        "to": 0.136,
+        "rate": 0.3523
+      },
+      {
+        "clip": "Halberd/Attack_Combo1",
+        "from": 0.136,
+        "to": 0.27
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.0,
+        "to": 0.4
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.4,
+        "to": 0.65,
+        "rate": 0.5
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.65,
+        "to": 1.4333
+      }
+    ],
+    "marks": [
+      {
+        "clip": "Halberd/Attack_Combo1",
+        "t": 0.2333,
+        "label": "1타 찌르기",
+        "lead": 0.37,
+        "lead_label": "패리 예고"
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "t": 0.75,
+        "label": "2타 내려찍기",
+        "lead": 0.36,
+        "lead_label": "패리 예고"
+      }
+    ]
+  }
 }

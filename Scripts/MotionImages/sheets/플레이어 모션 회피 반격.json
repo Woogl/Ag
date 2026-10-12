@@ -1,17 +1,46 @@
 {
   "image": "플레이어 모션 회피 반격",
   "character": "player",
-  "rows": [
-    {
-      "title": "회피 반격",
-      "note": "",
-      "frames": [
-        {"clip": "Samurai/Attack_Heavy1", "t": 0.0, "time": "0.00초", "label": "웅크린 자세", "banner": [["무적", "cyan"]]},
-        {"clip": "Samurai/Attack_Heavy1", "t": 0.1, "time": "0.10초", "label": "파고듦", "banner": [["무적", "cyan"]]},
-        {"clip": "Samurai/Attack_Heavy1", "t": 0.2, "time": "0.20초", "label": "올려베기", "hit": true, "banner": [["움찔 · 무적", "yellow"]]},
-        {"clip": "Samurai/Attack_Heavy1", "t": 0.4, "time": "0.40초", "label": ""},
-        {"clip": "Samurai/Attack_Heavy1", "t": 0.7333, "time": "0.73초", "label": "끝"}
-      ]
-    }
-  ]
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Attack_Heavy1",
+        "from": 0.0,
+        "to": 0.7333
+      }
+    ],
+    "marks": [
+      {
+        "clip": "Samurai/Attack_Heavy1",
+        "t": 0.2,
+        "label": "올려베기"
+      }
+    ],
+    "spans": [
+      {
+        "from": {
+          "clip": "Samurai/Attack_Heavy1",
+          "t": 0.0
+        },
+        "to": {
+          "clip": "Samurai/Attack_Heavy1",
+          "t": 0.23
+        },
+        "label": "무적",
+        "color": "cyan"
+      },
+      {
+        "from": {
+          "clip": "Samurai/Attack_Heavy1",
+          "t": 0.23
+        },
+        "to": {
+          "clip": "Samurai/Attack_Heavy1",
+          "t": 0.7333
+        },
+        "label": "후딜",
+        "color": "cyan"
+      }
+    ]
+  }
 }

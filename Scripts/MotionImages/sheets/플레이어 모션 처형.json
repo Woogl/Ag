@@ -1,22 +1,40 @@
 {
   "image": "플레이어 모션 처형",
   "character": "player",
-  "rows": [
-    {
-      "title": "처형",
-      "note": "처형 중 무적",
-      "frames": [
-        {"clip": "Samurai/Execute", "t": 0.0, "time": "0.00초", "label": "시작"},
-        {"clip": "Samurai/Execute", "t": 0.2, "time": "0.20초", "label": ""},
-        {"clip": "Samurai/Execute", "t": 0.35, "time": "0.35초", "label": "베기", "hit": true, "banner": [["처형 대미지 적용", "yellow"]]},
-        {"clip": "Samurai/Execute", "t": 0.5167, "time": "0.52초", "label": "베기", "hit": true, "banner": [["처형 대미지 적용", "yellow"]]},
-        {"clip": "Samurai/Execute", "t": 0.85, "time": "0.85초", "label": ""},
-        {"clip": "Samurai/Execute", "t": 1.25, "time": "1.25초", "label": "마지막 일격", "hit": true, "banner": [["처형 대미지 적용", "yellow"]]},
-        {"clip": "Samurai/Execute", "t": 1.6, "time": "1.60초", "label": ""},
-        {"clip": "Samurai/Execute", "t": 2.0, "time": "2.00초", "label": "마무리 동작"},
-        {"clip": "Samurai/Execute", "t": 2.35, "time": "2.35초", "label": ""},
-        {"clip": "Samurai/Execute", "t": 2.7, "time": "2.70초", "label": "끝"}
-      ]
-    }
-  ]
+  "animation": {
+    "play_rate": 0.6,
+    "segments": [
+      {
+        "clip": "Warrior/Execute",
+        "from": 0.0,
+        "to": 1.2333
+      }
+    ],
+    "marks": [
+      {
+        "clip": "Warrior/Execute",
+        "t": 0.3333,
+        "label": "찌르기"
+      },
+      {
+        "clip": "Warrior/Execute",
+        "t": 0.8,
+        "label": "마지막 일격"
+      }
+    ],
+    "spans": [
+      {
+        "from": {
+          "clip": "Warrior/Execute",
+          "t": 0.0
+        },
+        "to": {
+          "clip": "Warrior/Execute",
+          "t": 1.2333
+        },
+        "label": "무적",
+        "color": "cyan"
+      }
+    ]
+  }
 }

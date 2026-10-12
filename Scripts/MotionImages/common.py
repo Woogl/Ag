@@ -1,12 +1,14 @@
 # Copyright Woogle. All Rights Reserved.
-"""Shared pieces of motion_images.py: paths, quaternion math, the two characters and their weapons, and the editor's
-MCP connection.
+"""motion_images.py가 함께 쓰는 것: 경로, 쿼터니언 계산, 두 캐릭터와 게임 BP에서 재는 무기, 에디터 연결(MCP와 파이썬 원격 실행).
 
-Positions are centimeters in the skeleton's component space (forward +Y, right -X, up +Z); quaternions are (x, y, z, w).
+위치는 스켈레톤 컴포넌트 공간의 cm(앞 +Y, 오른쪽 -X, 위 +Z)이고, 쿼터니언은 (x, y, z, w)입니다.
 """
+import contextlib
 import json
 import math
 import os
+import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -37,23 +39,6 @@ def sub(a, b):
     return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
 
 
-def scale(a, s):
-    return (a[0] * s, a[1] * s, a[2] * s)
-
-
-def dot(a, b):
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
-
-
-def cross(a, b):
-    return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
-
-
-def norm(a):
-    n = math.sqrt(dot(a, a))
-    return (a[0] / n, a[1] / n, a[2] / n)
-
-
 def qmul(a, b):
     ax, ay, az, aw = a
     bx, by, bz, bw = b
@@ -75,25 +60,6 @@ def qrot(q, v):
 def to_world(tf, v):
     """tf = [x, y, z, qx, qy, qz, qw]; v in tf's local space -> component space."""
     return add(tuple(tf[0:3]), qrot(tuple(tf[3:7]), v))
-
-
-def mat_to_quat(x_axis, y_axis, z_axis):
-    """Quaternion of the rotation whose columns are the images of the basis vectors."""
-    m00, m01, m02 = x_axis[0], y_axis[0], z_axis[0]
-    m10, m11, m12 = x_axis[1], y_axis[1], z_axis[1]
-    m20, m21, m22 = x_axis[2], y_axis[2], z_axis[2]
-    tr = m00 + m11 + m22
-    if tr > 0:
-        s = math.sqrt(tr + 1.0) * 2
-        return ((m21 - m12) / s, (m02 - m20) / s, (m10 - m01) / s, 0.25 * s)
-    if m00 > m11 and m00 > m22:
-        s = math.sqrt(1.0 + m00 - m11 - m22) * 2
-        return (0.25 * s, (m01 + m10) / s, (m02 + m20) / s, (m21 - m12) / s)
-    if m11 > m22:
-        s = math.sqrt(1.0 + m11 - m00 - m22) * 2
-        return ((m01 + m10) / s, 0.25 * s, (m12 + m21) / s, (m02 - m20) / s)
-    s = math.sqrt(1.0 + m22 - m00 - m11) * 2
-    return ((m02 + m20) / s, (m12 + m21) / s, 0.25 * s, (m10 - m01) / s)
 
 
 def quat_to_rotator(q):
@@ -119,58 +85,87 @@ def quat_to_rotator(q):
 
 
 # ------------------------------------------------------------------ characters and weapons
-class Katana:
-    """플레이어 카타나. 게임과 같이 hand_r의 소켓 KatanaSocket에 붙입니다(Samurai 애니메이션 조사 '무기')."""
-    bone = "hand_r"
-    mesh = "/Game/Fab/ARPG_Pack/ARPG_Samurai/Demo/Weapon/Mesh/katana.katana"
-    component = "/Script/Engine.StaticMeshComponent"
-    mesh_property = "staticMesh"
-    SOCKET_LOC = (-26.83, -26.36, 40.79)   # SK_Mannequin KatanaSocket 위치(hand_r 기준)
-    SOCKET_Q = (-0.48580840364876876, -0.315088429192808, -0.014223640429174067, 0.8151730888504507)   # 회전(Pitch 31.84, Yaw 19.46, Roll 67.18)
-    TIP = (2.7, -43.2, 0.0)                 # 메시의 칼끝
-
-    @classmethod
-    def transform(cls, hr):
-        """hand_r 변환에서 메시 피벗(컴포넌트 공간)과 회전을 구합니다."""
-        q = tuple(hr[3:7])
-        return add(tuple(hr[0:3]), qrot(q, cls.SOCKET_LOC)), qmul(q, cls.SOCKET_Q)
-
-    @classmethod
-    def tip(cls, wr):
-        pivot, q = cls.transform(wr)
-        return add(pivot, qrot(q, cls.TIP))
-
-
-class Halberd:
-    """The boss's halberd on hand_r, on the grip line fitted to the hand (할버드 애니메이션 조사 '무기 부착')."""
-    bone = "hand_r"
-    mesh = "/Game/Fab/ARPG_Pack/ARPG_Halberd/Demo/Weapon/Mesh/Halberd_weapon.Halberd_weapon"
-    component = "/Script/Engine.SkeletalMeshComponent"
-    mesh_property = "skeletalMeshAsset"
-    # Shaft line in hand_r space: C + K * s, head end at s = HEAD. E: the edge side (wrist to middle knuckle).
-    K = (-0.19139550334029393, -0.12210349639582654, 0.9738883393228557)
-    C = (-11.185258469870991, 0.855104053233005, 0.6643688625870006)
-    E = (-0.9760767334009931, -0.08060814069045838, -0.20193201372658562)
-    HEAD = 127.0
-
-    @classmethod
-    def transform(cls, hr):
-        y_axis = scale(cls.K, -1)                     # mesh head at -Y
-        z_axis = scale(cls.E, -1)                     # mesh edge at -Z
-        z_axis = norm(sub(z_axis, scale(y_axis, dot(z_axis, y_axis))))
-        grip = mat_to_quat(cross(y_axis, z_axis), y_axis, z_axis)
-        return to_world(hr, cls.C), qmul(tuple(hr[3:7]), grip)
-
-    @classmethod
-    def tip(cls, hr):
-        return to_world(hr, add(cls.C, scale(cls.K, cls.HEAD)))
-
-
-# The temporary capture actor of each character stands far away from the level's content.
+# 캡처용 임시 캐릭터는 레벨의 물체에서 멀리 떨어진 곳에 둡니다. 무기는 blueprint의 게임 무기를 그대로 씁니다(weapons).
 CHARACTERS = {
-    "player": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple", "weapon": Katana, "actor": (0.0, -20000.0, 0.0)},
-    "boss": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple", "weapon": Halberd, "actor": (0.0, 20000.0, 0.0)},
+    "player": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple", "blueprint": "/Game/Characters/BP_AgPlayer",
+               "actor": (0.0, -20000.0, 0.0)},
+    "boss": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple", "blueprint": "/Game/Characters/BP_AgBoss",
+             "actor": (0.0, 20000.0, 0.0)},
 }
+WEAPON_BONE = "hand_r"   # 무기를 이 본 기준으로 붙입니다. 게임 무기 소켓이 붙은 본입니다.
+WEAPON_TIPS = {          # 무기 메시의 날 끝(메시 공간). 메시의 모양이라 붙이는 위치가 바뀌어도 그대로입니다.
+    "/Game/Fab/ARPG_Pack/ARPG_Samurai/Demo/Weapon/Mesh/katana.katana": (2.7, -43.2, 0.0),
+    "/Game/Fab/ARPG_Pack/ARPG_Halberd/Demo/Weapon/Mesh/Halberd_weapon.Halberd_weapon": (0.0, -127.0, 0.0),
+}
+WEAPONS_FILE = os.path.join(SAVED, "weapons.json")
+
+# 에디터에서 게임 BP를 잠깐 스폰해, 태그가 Weapon인 컴포넌트(게임이 무기로 찾는 컴포넌트)가 WEAPON_BONE에 대해 어디에
+# 붙는지 잽니다. 소켓, 컴포넌트 오프셋, 메시를 바꿔도 게임과 같은 자리가 나옵니다. 원격 실행에 보내는 코드라 '.py'를 쓰지 않습니다.
+_WEAPON_CODE = """
+import json, unreal
+eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+out = {}
+for name, path in json.loads(%r).items():
+    actor = eas.spawn_actor_from_class(unreal.EditorAssetLibrary.load_blueprint_class(path), unreal.Vector(0, 0, -10000), unreal.Rotator(0, 0, 0), True)
+    try:
+        weapon = actor.get_components_by_tag(unreal.SceneComponent, "Weapon")[0]
+        bone = actor.get_editor_property("mesh").get_socket_transform(%r, unreal.RelativeTransformSpace.RTS_WORLD)
+        rel = weapon.get_world_transform().make_relative(bone)
+        static = isinstance(weapon, unreal.StaticMeshComponent)
+        mesh = weapon.get_editor_property("static_mesh" if static else "skeletal_mesh_asset")
+        t, q, s = rel.translation, rel.rotation, rel.scale3d
+        out[name] = {"mesh": mesh.get_path_name(), "component": weapon.get_class().get_path_name(),
+                     "mesh_property": "staticMesh" if static else "skeletalMeshAsset",
+                     "loc": [t.x, t.y, t.z], "q": [q.x, q.y, q.z, q.w], "scale": [s.x, s.y, s.z]}
+    finally:
+        eas.destroy_actor(actor)
+print("AG_WEAPONS " + json.dumps(out))
+"""
+
+
+class Weapon:
+    """게임 BP에서 잰 무기: 메시, 컴포넌트 종류, WEAPON_BONE 기준 위치·회전·크기."""
+    bone = WEAPON_BONE
+
+    def __init__(self, info):
+        self.mesh, self.component, self.mesh_property = info["mesh"], info["component"], info["mesh_property"]
+        self.loc, self.q, self.scale = tuple(info["loc"]), tuple(info["q"]), tuple(info["scale"])
+        if self.mesh not in WEAPON_TIPS:
+            raise SystemExit("no blade tip for %s; add it to WEAPON_TIPS in common.py" % self.mesh)
+        tip = WEAPON_TIPS[self.mesh]
+        self.tip_local = (tip[0] * self.scale[0], tip[1] * self.scale[1], tip[2] * self.scale[2])
+
+    def transform(self, bone):
+        """본 변환(컴포넌트 공간)에서 메시 피벗과 회전을 구합니다."""
+        return to_world(bone, self.loc), qmul(tuple(bone[3:7]), self.q)
+
+    def tip(self, bone):
+        pivot, q = self.transform(bone)
+        return add(pivot, qrot(q, self.tip_local))
+
+
+_weapons = None
+
+
+def weapons():
+    """캐릭터별 Weapon. 처음 부를 때 열린 에디터에서 재고 WEAPONS_FILE에 남깁니다. 에디터에 닿지 못하면 남겨 둔 값을 씁니다."""
+    global _weapons
+    if _weapons is None:
+        blueprints = json.dumps({name: c["blueprint"] for name, c in CHARACTERS.items()})
+        lines = editor_python(_WEAPON_CODE % (blueprints, WEAPON_BONE))
+        if lines is None:
+            if not os.path.exists(WEAPONS_FILE):
+                raise SystemExit("The editor is not reachable for the weapon placement; open the project in the editor first.")
+            print("editor not reachable; using the weapon placement measured earlier (%s)" % WEAPONS_FILE)
+            with open(WEAPONS_FILE, encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            data = json.loads(next(line for line in lines if line.startswith("AG_WEAPONS "))[len("AG_WEAPONS "):])
+            os.makedirs(SAVED, exist_ok=True)
+            with open(WEAPONS_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=1)
+        _weapons = {name: Weapon(info) for name, info in data.items()}
+    return _weapons
 
 
 # ------------------------------------------------------------------ editor (unreal-mcp over HTTP)
@@ -216,3 +211,66 @@ def editor(toolset, tool, args):
     if "error" in reply or result.get("isError") or (isinstance(value, dict) and "TOOL_ERROR" in value):
         raise RuntimeError("%s.%s failed: %s" % (toolset, tool, reply.get("error") or value))
     return value
+
+
+# ------------------------------------------------------------------ 에디터 (파이썬 원격 실행)
+def engine_root():
+    """언리얼 엔진 폴더: UE_ROOT 환경 변수, 없으면 Ag.uproject의 엔진 버전으로 기본 설치 위치."""
+    root = os.environ.get("UE_ROOT")
+    if not root:
+        with open(os.path.join(REPO, "Ag.uproject"), encoding="utf-8") as f:
+            root = "C:/Program Files/Epic Games/UE_%s" % json.load(f).get("EngineAssociation", "5.8")
+    return root
+
+
+def editor_python(code, timeout=10.0):
+    """이 프로젝트를 연 에디터에서 code를 실행하고 출력 줄들을 돌려줍니다. 에디터에 닿지 못하면 None입니다.
+    파일 실행 방식이라 code에 '.py'가 있으면 파일 경로로 읽히므로 쓰지 않습니다."""
+    sys.path.append(os.path.join(engine_root(), "Engine", "Plugins", "Experimental", "PythonScriptPlugin", "Content", "Python"))
+    import remote_execution as remote
+    config = remote.RemoteExecutionConfig()
+    config.multicast_bind_address = "127.0.0.1"
+    rx = remote.RemoteExecution(config)
+    rx.start()
+    try:
+        deadline, nodes = time.time() + timeout, []
+        while not nodes and time.time() < deadline:
+            time.sleep(0.2)
+            nodes = [n for n in rx.remote_nodes if os.path.normcase(os.path.normpath(n.get("project_root", ""))) == os.path.normcase(REPO)]
+        if not nodes:
+            return None
+        rx.open_command_connection(nodes[0])
+        result = rx.run_command(code, unattended=True, exec_mode=remote.MODE_EXEC_FILE, raise_on_failure=False)
+    finally:
+        rx.stop()
+    if not result.get("success"):
+        raise RuntimeError("editor Python failed: %s" % result.get("result"))
+    return [entry.get("output", "") for entry in result.get("output", [])]
+
+
+# 캡처하는 동안 에디터를 캡처에 맞춥니다. 창이 뒤에 있어도 느려지지 않게 백그라운드 스로틀('Use Less CPU when in Background',
+# 켜져 있으면 초당 3틱 정도로 느려져 요청마다 틱을 기다립니다)을 끄고, 시간에 따라 움직이는 구름(VolumetricCloud)을 숨겨 찍을
+# 때마다 하늘과 빛이 같게 합니다. 둘 다 메모리에서만 바꾸고(구름은 아웃라이너의 눈 아이콘과 같은 임시 숨김) 끝나면 되돌립니다.
+_CAPTURE_MODE_CODE = """
+import json, unreal
+want = json.loads(%r)
+s = unreal.get_default_object(unreal.load_class(None, "/Script/UnrealEd.EditorPerformanceSettings"))
+clouds = [a for a in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors() if isinstance(a, unreal.VolumetricCloud)]
+print("AG_STATE " + json.dumps({"throttle": s.get_editor_property("bThrottleCPUWhenNotForeground"),
+                                "clouds": {a.get_path_name(): a.is_temporarily_hidden_in_editor() for a in clouds}}))
+s.set_editor_property("bThrottleCPUWhenNotForeground", want["throttle"], unreal.PropertyAccessChangeNotifyMode.NEVER)
+for a in clouds:
+    a.set_is_temporarily_hidden_in_editor(want["clouds"].get(a.get_path_name(), True))
+"""
+
+
+@contextlib.contextmanager
+def editor_capture_mode():
+    """이 안에서는 에디터의 백그라운드 스로틀을 끄고 구름을 숨깁니다. 끝나면 원래 상태로 되돌립니다."""
+    lines = editor_python(_CAPTURE_MODE_CODE % json.dumps({"throttle": False, "clouds": {}})) or []
+    state = next((json.loads(line[len("AG_STATE "):]) for line in lines if line.startswith("AG_STATE ")), None)
+    try:
+        yield
+    finally:
+        if state is not None:
+            editor_python(_CAPTURE_MODE_CODE % json.dumps(state))

@@ -1,0 +1,42 @@
+{
+  "image": "플레이어 모션 넉업",
+  "character": "player",
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Hit_Air_Up",
+        "from": 0.0,
+        "to": 0.3
+      },
+      {
+        "clip": "Samurai/Hit_Air_Down",
+        "from": 0.1,
+        "to": 0.4
+      },
+      {
+        "clip": "Samurai/Hit_knockdown2",
+        "from": 0.0,
+        "to": 0.7333
+      },
+      {
+        "clip": "Samurai/Getup2_Idle1",
+        "from": 0.0,
+        "to": 0.65
+      }
+    ],
+    "spans": [
+      {
+        "from": {
+          "clip": "Samurai/Hit_knockdown2",
+          "t": 0.1
+        },
+        "to": {
+          "clip": "Samurai/Getup2_Idle1",
+          "t": 0.65
+        },
+        "label": "무적",
+        "color": "cyan"
+      }
+    ]
+  }
+}

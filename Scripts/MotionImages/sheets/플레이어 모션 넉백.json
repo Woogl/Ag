@@ -1,0 +1,27 @@
+{
+  "image": "플레이어 모션 넉백",
+  "character": "player",
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Hit_knockdown",
+        "from": 0.0,
+        "to": 1.3167
+      }
+    ],
+    "spans": [
+      {
+        "from": {
+          "clip": "Samurai/Hit_knockdown",
+          "t": 0.1
+        },
+        "to": {
+          "clip": "Samurai/Hit_knockdown",
+          "t": 1.3167
+        },
+        "label": "무적",
+        "color": "cyan"
+      }
+    ]
+  }
+}

@@ -1,22 +1,56 @@
 {
   "image": "보스 모션 돌진 찌르기",
   "character": "boss",
-  "rows": [
-    {
-      "title": "돌진 찌르기",
-      "note": "",
-      "frames": [
-        {"clip": "Halberd/Attack_Heavy1_Start", "t": 0.0, "time": "0.00초", "label": "시작"},
-        {"clip": "Halberd/Attack_Heavy1_Start", "t": 0.2, "time": "0.25초", "label": "웅크림"},
-        {"clip": "Halberd/Attack_Heavy1_Start", "t": 0.5167, "time": "0.65초", "label": ""},
-        {"clip": "Halberd/Attack_Heavy1_Start", "t": 0.8167, "time": "1.02초", "label": "패리 예고"},
-        {"clip": "Halberd/Attack_Heavy1", "t": 0.1, "time": "1.15초", "label": "돌진 시작", "hit": true, "banner": [["돌진하는 동안 판정", "yellow"], ["넉업 · 가드·패리 가능", "yellow"]]},
-        {"clip": "Halberd/Attack_Heavy1", "t": 0.2, "time": "돌진 중", "label": "다 내지름", "hit": true, "trail": false, "banner": [["판정 유지", "yellow"]]},
-        {"clip": "Halberd/Attack_Heavy1", "t": 0.3333, "time": "돌진 중", "label": "자세 유지", "hit": true, "trail": false, "banner": [["판정 유지", "yellow"]]},
-        {"clip": "Halberd/Attack_Heavy1", "t": 0.45, "time": "돌진 끝", "label": ""},
-        {"clip": "Halberd/Attack_Heavy1", "t": 0.65, "time": "돌진 끝 후", "label": "창 거두기"},
-        {"clip": "Halberd/Attack_Heavy1", "t": 0.9833, "time": "돌진 끝 후", "label": "끝"}
-      ]
-    }
-  ]
+  "animation": {
+    "play_rate": 0.8,
+    "segments": [
+      {
+        "clip": "Halberd/Attack_Heavy1_Start",
+        "from": 0.0,
+        "to": 0.8167
+      },
+      {
+        "clip": "Halberd/Attack_Heavy1",
+        "from": 0.0,
+        "to": 0.22
+      },
+      {
+        "clip": "Halberd/Attack_Heavy1",
+        "from": 0.22,
+        "hold": 0.35
+      },
+      {
+        "clip": "Halberd/Attack_Heavy1",
+        "from": 0.22,
+        "to": 0.9833
+      }
+    ],
+    "spans": [
+      {
+        "from": {
+          "clip": "Halberd/Attack_Heavy1_Start",
+          "t": 0.6767
+        },
+        "to": {
+          "clip": "Halberd/Attack_Heavy1",
+          "t": 0.1
+        },
+        "label": "패리 예고",
+        "color": "yellow"
+      },
+      {
+        "from": {
+          "clip": "Halberd/Attack_Heavy1",
+          "t": 0.1
+        },
+        "to": {
+          "clip": "Halberd/Attack_Heavy1",
+          "t": 0.2201
+        },
+        "label": "돌진 찌르기 (돌진하는 동안)",
+        "color": "yellow",
+        "border": true
+      }
+    ]
+  }
 }

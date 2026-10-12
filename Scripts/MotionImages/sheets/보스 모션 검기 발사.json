@@ -1,21 +1,47 @@
 {
   "image": "보스 모션 검기 발사",
   "character": "boss",
-  "rows": [
-    {
-      "title": "검기 발사 (타마다 검기 1발)",
-      "note": "",
-      "frames": [
-        {"clip": "Halberd/Attack_Combo2", "t": 0.0, "time": "0.00초", "label": "시작"},
-        {"clip": "Halberd/Attack_Combo2", "t": 0.4833, "time": "0.60초", "label": "들어 올림"},
-        {"clip": "Halberd/Attack_Combo2", "t": 0.75, "time": "0.94초", "label": "1발 내려찍기", "hit": true, "banner": [["검기 발사 (투사체)", "yellow"], ["움찔 · 가드·패리 가능", "yellow"]]},
-        {"clip": "Halberd/Attack_Combo3", "t": 0.25, "time": "1.41초", "label": ""},
-        {"clip": "Halberd/Attack_Combo3", "t": 0.5, "time": "1.72초", "label": "2발 사선 베기", "hit": true, "banner": [["검기 발사 (투사체)", "yellow"], ["움찔 · 가드·패리 가능", "yellow"]]},
-        {"clip": "Halberd/Attack_Combo4", "t": 0.1333, "time": "2.05초", "label": ""},
-        {"clip": "Halberd/Attack_Combo4", "t": 0.2833, "time": "2.24초", "label": "3발 휩쓸기", "hit": true, "banner": [["검기 발사 (투사체)", "yellow"], ["움찔 · 가드·패리 가능", "yellow"]]},
-        {"clip": "Halberd/Attack_Combo4", "t": 0.5, "time": "2.51초", "label": ""},
-        {"clip": "Halberd/Attack_Combo4", "t": 0.9833, "time": "3.12초", "label": "끝"}
-      ]
-    }
-  ]
+  "animation": {
+    "play_rate": 0.8,
+    "segments": [
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.0,
+        "to": 0.88
+      },
+      {
+        "clip": "Halberd/Attack_Combo3",
+        "from": 0.0,
+        "to": 0.63
+      },
+      {
+        "clip": "Halberd/Attack_Combo4",
+        "from": 0.0,
+        "to": 0.9833
+      }
+    ],
+    "marks": [
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "t": 0.75,
+        "label": "1발 발사",
+        "lead": 0.3,
+        "lead_label": "패리 예고"
+      },
+      {
+        "clip": "Halberd/Attack_Combo3",
+        "t": 0.5,
+        "label": "2발 발사",
+        "lead": 0.3,
+        "lead_label": "패리 예고"
+      },
+      {
+        "clip": "Halberd/Attack_Combo4",
+        "t": 0.28,
+        "label": "3발 발사",
+        "lead": 0.3,
+        "lead_label": "패리 예고"
+      }
+    ]
+  }
 }

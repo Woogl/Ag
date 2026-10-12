@@ -1,19 +1,13 @@
 {
   "image": "보스 모션 백스텝",
   "character": "boss",
-  "rows": [
-    {
-      "title": "백스텝",
-      "note": "무적 구간 없음",
-      "frames": [
-        {"clip": "Halberd/Dodge", "t": 0.0, "time": "0.00초", "label": "시작"},
-        {"clip": "Halberd/Dodge", "t": 0.1, "time": "0.10초", "label": ""},
-        {"clip": "Halberd/Dodge", "t": 0.2, "time": "0.20초", "label": ""},
-        {"clip": "Halberd/Dodge", "t": 0.3, "time": "0.30초", "label": ""},
-        {"clip": "Halberd/Dodge", "t": 0.4, "time": "0.40초", "label": ""},
-        {"clip": "Halberd/Dodge", "t": 0.5, "time": "0.50초", "label": ""},
-        {"clip": "Halberd/Dodge", "t": 0.7, "time": "0.70초", "label": "끝"}
-      ]
-    }
-  ]
+  "animation": {
+    "segments": [
+      {
+        "clip": "Halberd/Dodge",
+        "from": 0.0,
+        "to": 0.7
+      }
+    ]
+  }
 }

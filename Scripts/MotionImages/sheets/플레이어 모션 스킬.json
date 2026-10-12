@@ -1,17 +1,34 @@
 {
   "image": "플레이어 모션 스킬",
   "character": "player",
-  "rows": [
-    {
-      "title": "스킬 돌진 베기",
-      "note": "",
-      "frames": [
-        {"clip": "Samurai/Attack_Sprint", "t": 0.0, "time": "0.00초", "label": "시작"},
-        {"clip": "Samurai/Attack_Sprint", "t": 0.2, "time": "0.20초", "label": "달려듦"},
-        {"clip": "Samurai/Attack_Sprint", "t": 0.3667, "time": "0.37초", "label": "내려베기", "hit": true, "banner": [["넉백", "yellow"]]},
-        {"clip": "Samurai/Attack_Sprint", "t": 0.6, "time": "0.60초", "label": "", "banner": [["캔슬 가능", "cyan"]]},
-        {"clip": "Samurai/Attack_Sprint", "t": 0.9833, "time": "0.98초", "label": "끝", "banner": [["캔슬 가능", "cyan"]]}
-      ]
-    }
-  ]
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Attack_Combo4",
+        "from": 0.0,
+        "to": 1.15
+      }
+    ],
+    "marks": [
+      {
+        "clip": "Samurai/Attack_Combo4",
+        "t": 0.45,
+        "label": "내려찍기"
+      }
+    ],
+    "spans": [
+      {
+        "from": {
+          "clip": "Samurai/Attack_Combo4",
+          "t": 0.4833
+        },
+        "to": {
+          "clip": "Samurai/Attack_Combo4",
+          "t": 1.15
+        },
+        "label": "후딜",
+        "color": "cyan"
+      }
+    ]
+  }
 }

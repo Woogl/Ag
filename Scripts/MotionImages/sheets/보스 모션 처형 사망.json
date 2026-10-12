@@ -1,0 +1,31 @@
+{
+  "image": "보스 모션 처형 사망",
+  "character": "boss",
+  "animation": {
+    "play_rate": 0.6,
+    "segments": [
+      {
+        "clip": "Warrior/Executed_Death",
+        "from": 0.0,
+        "hold": 0.2222
+      },
+      {
+        "clip": "Warrior/Executed_Death",
+        "from": 0.0,
+        "to": 1.3833
+      }
+    ],
+    "marks": [
+      {
+        "clip": "Warrior/Executed_Death",
+        "t": 0.2,
+        "label": "처형 찌르기"
+      },
+      {
+        "clip": "Warrior/Executed_Death",
+        "t": 0.6667,
+        "label": "마지막 일격"
+      }
+    ]
+  }
+}

@@ -1,22 +1,78 @@
 {
   "image": "플레이어 모션 궁극기",
   "character": "player",
-  "rows": [
-    {
-      "title": "궁극기 심판",
-      "note": "시작부터 끝까지 무적 · 마무리까지 시간 정지",
-      "frames": [
-        {"clip": "Samurai/Attack_Heavy1_Start", "t": 0.0, "time": "0.00초", "label": "컷신 시작"},
-        {"clip": "Samurai/Attack_Heavy1_Start", "t": 0.4, "time": "0.40초", "label": ""},
-        {"clip": "Samurai/Attack_Heavy_Mid", "t": 0.5, "time": "1.30초", "label": "기다림"},
-        {"clip": "Samurai/UnequipB", "t": 0.3, "time": "2.30초", "label": "베기 시작"},
-        {"clip": "Samurai/UnequipB", "t": 0.9, "time": "2.90초", "label": ""},
-        {"clip": "Samurai/UnequipB", "t": 1.5, "time": "3.50초", "label": ""},
-        {"clip": "Samurai/UnequipB", "t": 1.8, "time": "3.80초", "label": "칼집으로"},
-        {"clip": "Samurai/UnequipB", "t": 2.0667, "time": "4.07초", "label": "마무리", "hit": true, "trail": false, "banner": [["범위 안 모든 적 · 넉백", "yellow"]]},
-        {"clip": "Samurai/Equip", "t": 0.5, "time": "4.57초", "label": "칼 뽑기", "banner": [["후딜", "cyan"]]},
-        {"clip": "Samurai/Equip", "t": 0.8167, "time": "4.89초", "label": "끝"}
-      ]
-    }
-  ]
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Attack_Heavy1_Start",
+        "from": 0.0,
+        "to": 0.8167
+      },
+      {
+        "clip": "Samurai/Attack_Heavy_Mid",
+        "from": 0.0,
+        "to": 0.9833
+      },
+      {
+        "clip": "Samurai/Attack_Heavy_Mid",
+        "from": 0.0,
+        "to": 0.2
+      },
+      {
+        "clip": "Samurai/UnequipB",
+        "from": 0.0,
+        "to": 2.0667
+      },
+      {
+        "clip": "Samurai/Equip",
+        "from": 0.0,
+        "to": 0.8167
+      }
+    ],
+    "marks": [
+      {
+        "clip": "Samurai/UnequipB",
+        "t": 2.0667,
+        "label": "마무리"
+      }
+    ],
+    "spans": [
+      {
+        "from": {
+          "clip": "Samurai/Attack_Heavy1_Start",
+          "t": 0.0
+        },
+        "to": {
+          "clip": "Samurai/UnequipB",
+          "t": 0.0
+        },
+        "label": "컷신 (무적 · 시간 정지)",
+        "color": "cyan"
+      },
+      {
+        "from": {
+          "clip": "Samurai/UnequipB",
+          "t": 0.0
+        },
+        "to": {
+          "clip": "Samurai/UnequipB",
+          "t": 2.0667
+        },
+        "label": "베기 (무적 · 시간 정지)",
+        "color": "cyan"
+      },
+      {
+        "from": {
+          "clip": "Samurai/Equip",
+          "t": 0.0
+        },
+        "to": {
+          "clip": "Samurai/Equip",
+          "t": 0.8167
+        },
+        "label": "칼 뽑기 (무적 · 후딜)",
+        "color": "cyan"
+      }
+    ]
+  }
 }
