@@ -200,8 +200,6 @@
   "PatternRecoveryWaitPhase2": { "Min": 0.5, "Max": 1.2 },
   "FixedRecoveryWait": 1,
   "Phase2HPRatio": 0.5,
-  "Phase2PatternSpeed": 1.1,
-  "Phase2MOVMultiplier": 1.2,
   "DashSpeed": 2000,
   "DashOvershoot": 200,
   "DashMaxDistance": 2000,

@@ -32,13 +32,13 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Boss->GetPatternPlayRate());
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Data->PatternPlayRate);
 	bHolding = false;
 	DashTask = nullptr;
 	IgnoreCollisionTask = nullptr;
 	Boss->SetActiveAttack(Pattern->Hits);
 
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternPlayRate());
+	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Data->PatternPlayRate);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
@@ -81,7 +81,7 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 	// 무시합니다. 돌진이 보스를 움직이고, 나머지 모션은 창을 거두기만 합니다.
 	UAgAbilityTask_IgnoreRootMotion::IgnoreRootMotion(this)->ReadyForActivation();
 
-	DashTask = UAgAbilityTask_Dash::Dash(this, Boss->GetActorForwardVector(), Data->DashSpeed * Boss->GetPatternSpeed(), Distance);
+	DashTask = UAgAbilityTask_Dash::Dash(this, Boss->GetActorForwardVector(), Data->DashSpeed, Distance);
 	DashTask->OnFinished.AddDynamic(this, &ThisClass::HandleDashFinished);
 	DashTask->ReadyForActivation();
 

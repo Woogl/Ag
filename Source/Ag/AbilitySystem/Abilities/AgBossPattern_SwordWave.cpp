@@ -35,9 +35,9 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Boss->GetPatternPlayRate());
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Data->PatternPlayRate);
 
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternPlayRate());
+	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Data->PatternPlayRate);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);

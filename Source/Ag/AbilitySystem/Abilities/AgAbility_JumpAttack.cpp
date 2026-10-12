@@ -55,7 +55,7 @@ void UAgAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		return;
 	}
 
-	// 평타의 각 타처럼, 점프 공격을 시작할 때도 그 대상인 보스가 백스텝을 검사합니다.
+	// 평타의 각 타처럼, 점프 공격을 시작할 때도 그 대상인 보스가 Backstep을 검사합니다.
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_BasicAttackStarted;
 	Payload.Instigator = GetAvatarActorFromActorInfo();

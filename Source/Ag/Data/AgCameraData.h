@@ -91,11 +91,11 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake FinisherShake = EAgCameraShake::None;
 
-	/** 상황별 단계: 보스 도약 내려찍기 착지 */
+	/** 상황별 단계: 보스 LeapSlam 착지 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake LeapLandingShake = EAgCameraShake::None;
 
-	/** 상황별 단계: 도약 내려찍기 착지는 플레이어가 이 거리 안에 있을 때만 흔듭니다 (캡슐 중심 사이 수평 거리). */
+	/** 상황별 단계: LeapSlam 착지는 플레이어가 이 거리 안에 있을 때만 흔듭니다 (캡슐 중심 사이 수평 거리). */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (Units = "cm", ClampMin = 0))
 	float LeapLandingShakeRange = 0.f;
 };

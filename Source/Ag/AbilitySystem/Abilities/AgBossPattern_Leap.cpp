@@ -41,8 +41,8 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Boss->GetPatternPlayRate());
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternPlayRate());
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Data->PatternPlayRate);
+	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Data->PatternPlayRate);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
@@ -56,9 +56,8 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	RotationLockTag = nullptr;
 	LeapStart = Boss->GetActorLocation();
 
-	// 궤적: 체공 시간(2페이즈에서는 짧아짐)과 엔진 중력으로 처음 속도와 최고 높이가 정해집니다.
-	const float PatternSpeed = Boss->GetPatternSpeed();
-	AirTime = Data->LeapAirTime / PatternSpeed;
+	// 궤적: 체공 시간과 엔진 중력으로 처음 속도와 최고 높이가 정해집니다.
+	AirTime = Data->LeapAirTime;
 	Gravity = -Boss->GetCharacterMovement()->GetGravityZ();
 	const FVector ToTarget = (GetLandingTarget() - LeapStart) * FVector(1.f, 1.f, 0.f);
 	if (!ToTarget.IsNearlyZero())
@@ -67,9 +66,9 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	}
 	Boss->LaunchCharacter(ToTarget / AirTime + FVector(0.f, 0.f, Gravity * AirTime * 0.5f), /*bXYOverride*/ true, /*bZOverride*/ true);
 
-	// 회전: 공중에서도 대상을 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 2페이즈에서는 둘 다 같은 비율로
-	// 짧아집니다. 가드 불가 예고는 몽타주의 떠오르는 구간에 있는 노티파이가 켭니다.
-	RotationStopLead = Data->RotationStopLead / PatternSpeed;
+	// 회전: 공중에서도 대상을 향해 돌고, 착지(판정 구간)보다 회전 정지 시간만큼 앞서 멈춥니다. 가드 불가 예고는 몽타주의
+	// 떠오르는 구간에 있는 노티파이가 켭니다.
+	RotationStopLead = Data->RotationStopLead;
 	if (RotationStopLead >= AirTime)
 	{
 		SetRotationLocked(true);

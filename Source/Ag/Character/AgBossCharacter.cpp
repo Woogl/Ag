@@ -90,25 +90,9 @@ const FAgBossPattern* AAgBossCharacter::FindPattern(const FGameplayAbilitySpecHa
 	return Id ? CastChecked<UAgBossData>(GetCharacterData())->FindPattern(*Id) : nullptr;
 }
 
-float AAgBossCharacter::GetPatternPlayRate() const
-{
-	return CastChecked<UAgBossData>(GetCharacterData())->PatternPlayRate * GetPatternSpeed();
-}
-
 void AAgBossCharacter::EnterPhase2()
 {
 	Phase = 2;
-	UpdateMoveSpeed();
-}
-
-float AAgBossCharacter::GetPatternSpeed() const
-{
-	return Phase >= 2 ? CastChecked<UAgBossData>(GetCharacterData())->Phase2PatternSpeed : 1.f;
-}
-
-float AAgBossCharacter::GetMoveSpeedMultiplier() const
-{
-	return Phase >= 2 ? CastChecked<UAgBossData>(GetCharacterData())->Phase2MOVMultiplier : 1.f;
 }
 
 void AAgBossCharacter::SetGroggyTimerRunning(bool bRunning)

@@ -33,17 +33,11 @@ public:
 	 */
 	const FAgBossPattern* FindPattern(const FGameplayAbilitySpecHandle Handle) const;
 
-	/** 공격 패턴 몽타주의 재생 속도: 보스 사양 '모션 재생 속도'에 2페이즈 '패턴 진행 속도'를 곱합니다. */
-	float GetPatternPlayRate() const;
-
 	/** 페이즈. 처음에는 1이고, 페이즈 전환이 끝나면 2입니다. */
 	int32 GetPhase() const { return Phase; }
 
 	/** 페이즈 전환이 끝남: 이제부터 2페이즈 변화를 적용합니다. */
 	void EnterPhase2();
-
-	/** 보스 사양 '2페이즈 변화'의 패턴 진행 속도. 1페이즈에서는 1이며, 패턴 모션과 패턴 중 이동에 곱합니다. */
-	float GetPatternSpeed() const;
 
 	/** 그로기 시간을 세기 시작하거나 멈춥니다. 공중에서 그로기가 되면 착지할 때 시작합니다. */
 	void SetGroggyTimerRunning(bool bRunning);
@@ -67,7 +61,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void GrantAbilities() override;
-	virtual float GetMoveSpeedMultiplier() const override;
 
 	/** 보스는 패턴 밖(이동, 패턴 후딜레이)에서도 늘 AI의 대상을 향해 돕니다. */
 	virtual AActor* GetFacingTarget() const override { return GetTarget(); }

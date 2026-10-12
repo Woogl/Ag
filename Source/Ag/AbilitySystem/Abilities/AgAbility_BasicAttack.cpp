@@ -52,7 +52,7 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
 	AttackTask->ReadyForActivation();
 
-	// 평타의 각 타를 시작할 때마다, 그 타의 대상인 보스가 백스텝을 검사합니다.
+	// 평타의 각 타를 시작할 때마다, 그 타의 대상인 보스가 Backstep을 검사합니다.
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_BasicAttackStarted;
 	Payload.Instigator = GetAvatarActorFromActorInfo();

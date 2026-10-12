@@ -57,7 +57,7 @@ struct FAgBossAICondition_Reacting : public FStateTreeAIConditionBase
 
 /**
  * 보스 사양 '전투 시작과 행동 전환' 5: 2페이즈 HP 구간에 들어섰고, 아직 페이즈 전환을 시작하지 않았고, 넉백이나 그로기
- * 중이 아닙니다. 패턴 실행 중이 아닌지는 이 조건을 둔 상태(패턴 후딜레이, 다가가기, 백스텝이 끝난 뒤)가 정합니다.
+ * 중이 아닙니다. 패턴 실행 중이 아닌지는 이 조건을 둔 상태(패턴 후딜레이, 다가가기, Backstep이 끝난 뒤)가 정합니다.
  */
 USTRUCT(meta = (DisplayName = "보스: 페이즈 전환 시작 조건", Category = "Ag|Boss AI"))
 struct FAgBossAICondition_PhaseTransitionReady : public FStateTreeAIConditionBase
@@ -78,13 +78,13 @@ struct FAgBossAICondition_BackstepReadyInstanceData
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AAgBossAIController> Controller = nullptr;
 
-	/** 백스텝 패턴의 ID. 이 패턴의 쿨다운을 확인합니다. */
+	/** Backstep 패턴의 ID. 이 패턴의 쿨다운을 확인합니다. */
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	FName Pattern;
 };
 
-/** 보스 사양 '백스텝'의 발동 조건: AI의 대상(플레이어)이 가깝고, 백스텝 쿨다운이 끝났고, 확률을 통과했습니다. */
-USTRUCT(meta = (DisplayName = "보스: 백스텝 발동 조건", Category = "Ag|Boss AI"))
+/** 보스 사양 'Backstep'의 발동 조건: AI의 대상(플레이어)이 가깝고, Backstep 쿨다운이 끝났고, 확률을 통과했습니다. */
+USTRUCT(meta = (DisplayName = "보스: Backstep 발동 조건", Category = "Ag|Boss AI"))
 struct FAgBossAICondition_BackstepReady : public FStateTreeAIConditionBase
 {
 	GENERATED_BODY()

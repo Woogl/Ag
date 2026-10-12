@@ -98,7 +98,7 @@ void AAgBossAIController::BindTargetEvents()
 
 void AAgBossAIController::HandleTargetBasicAttack(const FGameplayEventData* Payload)
 {
-	// 다른 적을 노린 평타·점프 공격은 넘기지 않습니다. 백스텝의 발동 조건과 확률은 StateTree의 패턴 후딜레이 전환이 검사합니다.
+	// 다른 적을 노린 평타·점프 공격은 넘기지 않습니다. Backstep의 발동 조건과 확률은 StateTree의 패턴 후딜레이 전환이 검사합니다.
 	const AAgBossCharacter* Boss = GetBoss();
 	if (Payload && Boss && Payload->Target.Get() == Boss)
 	{

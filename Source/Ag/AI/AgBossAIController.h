@@ -16,7 +16,7 @@ struct FGameplayEventData;
 /**
  * 보스 AI (보스 사양 'AI 행동 규칙', '전투 시작과 행동 전환').
  * 흐름은 보스 데이터의 StateTree(ST_Boss)에 상태와 전환으로 있고, 이 컨트롤러는 빙의할 때 그것을 실행합니다.
- * 대상이 이 보스를 노려 평타의 한 타나 점프 공격을 시작하면 StateTree 이벤트로 넘깁니다(백스텝).
+ * 대상이 이 보스를 노려 평타의 한 타나 점프 공격을 시작하면 StateTree 이벤트로 넘깁니다(Backstep).
  */
 UCLASS()
 class AAgBossAIController : public AAIController

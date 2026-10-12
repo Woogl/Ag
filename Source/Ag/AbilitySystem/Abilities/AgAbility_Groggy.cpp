@@ -57,7 +57,7 @@ void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	ExecutedTask->EventReceived.AddDynamic(this, &ThisClass::HandleExecuted);
 	ExecutedTask->ReadyForActivation();
 
-	// 공중에서 PP가 0이 되면(도약 내려찍기) 공격은 이미 취소됐고, 그로기는 보스가 착지할 때 시작합니다.
+	// 공중에서 PP가 0이 되면(LeapSlam) 공격은 이미 취소됐고, 그로기는 보스가 착지할 때 시작합니다.
 	if (GetAgCharacter()->GetCharacterMovement()->IsFalling())
 	{
 		UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);

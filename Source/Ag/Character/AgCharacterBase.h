@@ -65,10 +65,10 @@ public:
 	/** 열린 판정 구간을 닫고 행동의 공격 데이터를 지웁니다. */
 	void ClearActiveAttack();
 
-	/** 판정 구간을 엽니다. 판정 구간 노티파이와 돌진 찌르기의 돌진이 부릅니다. */
+	/** 판정 구간을 엽니다. 판정 구간 노티파이와 DashThrust의 돌진이 부릅니다. */
 	void BeginAttackWindow(int32 HitIndex);
 
-	/** 판정 구간을 닫습니다. 판정 구간 노티파이와 돌진 찌르기의 돌진이 부릅니다. */
+	/** 판정 구간을 닫습니다. 판정 구간 노티파이와 DashThrust의 돌진이 부릅니다. */
 	void EndAttackWindow(int32 HitIndex);
 
 	/** 정지 간격: 루트 모션이 이 캐릭터를 Target에 StopDistance보다 가까이 데려가지 않습니다(캡슐 중심 사이 수평 거리). */
@@ -134,7 +134,7 @@ protected:
 	/** 캐릭터 데이터의 리젠 효과(RegenEffects)를 겁니다. */
 	void StartRegen();
 
-	/** MOV에 곱하는 이동 속도 배율. 플레이어는 가드와 달리기, 보스는 2페이즈가 바꿉니다. */
+	/** MOV에 곱하는 이동 속도 배율. 플레이어는 가드와 달리기가 바꿉니다. */
 	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
 
 	/** 지금 향해 돌 대상. 기본은 SetFacingTarget으로 정한 대상입니다. */

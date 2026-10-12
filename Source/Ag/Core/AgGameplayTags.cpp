@@ -69,16 +69,16 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition, "Event.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PerfectDodge, "Event.PerfectDodge");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Parry, "Event.Parry");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타나 점프 공격을 시작함 (백스텝 검사)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타나 점프 공격을 시작함 (Backstep 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackWindowEnded, "Event.AttackWindowEnded", "판정 구간이 끝남. EventMagnitude는 몇 번째 타인지 (0부터)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked", "내 공격이 가드·가드 브레이크·패리로 막힘 (돌진 찌르기의 돌진이 멈춤)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked", "내 공격이 가드·가드 브레이크·패리로 막힘 (DashThrust의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_DownGrounded, "Event.DownGrounded", "넉백·넉업 모션에서 바닥에 쓰러진 순간 (무적 시작)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_RecoveryStarted, "Event.RecoveryStarted", "모션의 후딜이 시작됨 (판정 구간이 없는 행동: 패리 모션)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_ExecutionBlow, "Event.ExecutionBlow", "처형 모션의 타격: 베기 2번과 마지막 일격 (대미지 적용)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_UltimateFinish, "Event.UltimateFinish", "궁극기 마무리: 칼이 칼집에 들어가는 순간");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_JumpAttackPlunge, "Event.JumpAttackPlunge", "점프 공격의 내려베기가 끝남 (내리꽂기 시작)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashStart, "Event.Boss.DashStart", "돌진 찌르기 모션에서 몸을 앞으로 내던지는 순간 (돌진 시작)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashHold, "Event.Boss.DashHold", "돌진 찌르기에서 창을 다 내지른 자세 (돌진이 끝날 때까지 유지)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashStart, "Event.Boss.DashStart", "DashThrust 모션에서 몸을 앞으로 내던지는 순간 (돌진 시작)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashHold, "Event.Boss.DashHold", "DashThrust에서 창을 다 내지른 자세 (돌진이 끝날 때까지 유지)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_SwordWave, "Event.Boss.SwordWave", "검기 발사 (판정 구간으로 봄)");
 
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Dodge, "Cooldown.Dodge");

@@ -433,14 +433,14 @@ public:
 	UAnimMontage* FindPatternMontage(FName Id) const;
 	TSubclassOf<UAgGameplayAbility> FindPatternAbility(FName Id) const;
 
-	/** 회전 정지 시간(1페이즈 재생 속도의 초)을 패턴 몽타주의 시간으로 바꾼 값. 2페이즈에서는 몽타주와 함께 빨라지므로 그대로입니다. */
+	/** 회전 정지 시간(초)을 패턴 몽타주의 시간으로 바꾼 값 */
 	virtual float GetRotationStopLeadInMontage() const override { return RotationStopLead * PatternPlayRate; }
 
 	/** 패턴 목록 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Patterns")
 	TArray<FAgBossPattern> Patterns;
 
-	/** 모션 재생 속도: 1페이즈에서 공격 패턴 모션의 재생 속도 */
+	/** 모션 재생 속도: 공격 패턴 모션의 재생 속도 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (ClampMin = 0.01))
 	float PatternPlayRate = 1.f;
 
@@ -471,14 +471,6 @@ public:
 	/** 페이즈: HP가 MaxHP의 이 비율 이하가 되면 2페이즈입니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase", meta = (ClampMin = 0, ClampMax = 1))
 	float Phase2HPRatio = 0.f;
-
-	/** 2페이즈 변화: 패턴 진행 속도 (공격 모션과 패턴 중 이동) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase", meta = (ClampMin = 0.01))
-	float Phase2PatternSpeed = 1.f;
-
-	/** 2페이즈 변화: MOV 배율 (걷기) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase", meta = (ClampMin = 0))
-	float Phase2MOVMultiplier = 1.f;
 
 	/** 돌진 찌르기 돌진 규칙: 속도 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Dash Thrust", meta = (Units = "cm/s", ClampMin = 0))
@@ -520,7 +512,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Backstep", meta = (Units = "cm", ClampMin = 0))
 	float BackstepDistance = 0.f;
 
-	/** 검기 발사: 투사체 (BP_SwordWave). 판정 상자(폭, 높이)와 모습은 블루프린트에서 정합니다. */
+	/** SwordWave: 투사체 (BP_SwordWave). 판정 상자(폭, 높이)와 모습은 블루프린트에서 정합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Sword Wave")
 	TSubclassOf<AAgSwordWave> SwordWaveClass;
 
