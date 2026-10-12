@@ -17,7 +17,7 @@ enum class EAgCameraShake : uint8
 };
 
 /**
- * Camera.json: 카메라 기획서의 락온 카메라 값과 셰이크의 상황별 단계(구현 계획서 '데이터'). 자유 시점 값은
+ * Camera.json: 카메라 기획서의 락온 카메라 값과 셰이크의 상황별 단계(구현 계획서 'JSON과 DataAsset'). 자유 시점 값은
  * BP_AgPlayer의 스프링 암과 카메라에 있습니다. 모든 필드는 Transient이고 에셋 매니저가 JSON에서 채웁니다. 객체는 에셋
  * 매니저가 들고 있고, UAgAssetManager::GetCameraData로 읽습니다.
  */

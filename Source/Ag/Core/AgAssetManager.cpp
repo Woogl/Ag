@@ -340,7 +340,7 @@ void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 		}
 		if (bSucceeded && GEngine)
 		{
-			// 스탯은 스폰할 때 한 번 넣고 다시 넣지 않으므로 다음 PIE부터 바뀝니다(구현 계획서 '데이터' 다시 읽기).
+			// 스탯은 스폰할 때 한 번 넣고 다시 넣지 않으므로 다음 PIE부터 바뀝니다(구현 계획서 'JSON과 DataAsset' 다시 읽기).
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
 				FString::Printf(TEXT("Data/%s reloaded. Stats change on the next PIE start."), *FileName));
 		}

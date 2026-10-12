@@ -7,7 +7,7 @@
 #include "AgCombatRules.generated.h"
 
 /**
- * CombatRules.json: 모든 캐릭터에 공통인 전투 시스템 규칙(구현 계획서 '데이터').
+ * CombatRules.json: 모든 캐릭터에 공통인 전투 시스템 규칙(구현 계획서 'JSON과 DataAsset').
  * 모든 필드는 Transient이고 에셋 매니저가 JSON에서 채웁니다. 객체는 에셋 매니저가 들고 있고, UAgAssetManager::GetCombatRules로 읽습니다.
  */
 UCLASS(BlueprintType)

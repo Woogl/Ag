@@ -10,7 +10,7 @@ class UAgCameraData;
 class UAgCombatRules;
 
 /**
- * 프로젝트의 에셋 매니저(구현 계획서 '데이터' 읽는 방법). DefaultEngine.ini의 AssetManagerClassName으로 지정합니다.
+ * 프로젝트의 에셋 매니저(구현 계획서 'JSON과 DataAsset' 읽는 방법). DefaultEngine.ini의 AssetManagerClassName으로 지정합니다.
  * 프로젝트 Data 폴더의 JSON 데이터 파일로 데이터 객체의 Transient 속성을 채우고, 공통 데이터 객체를 들고 있습니다.
  * 파일 하나가 객체 하나를 채웁니다. 그 속성은 모두 파일에 있어야 하고, 다른 키는 없어야 합니다.
  * 키는 속성 이름이고, 태그는 태그 이름으로, 열거형은 값 이름으로 적습니다.
