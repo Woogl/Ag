@@ -17,16 +17,16 @@ void UAgBossPattern_Common::ActivateAbility(const FGameplayAbilitySpecHandle Han
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
-	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
 	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Pattern.ToString(), Boss->GetPatternPlayRate());
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Boss->GetPatternPlayRate());
 
-	// 보스는 타겟팅 범위가 없고, 몽타주에 워핑 구간이 있는 타(A1·A5 1타 선딜, A7 체공)만 다가갑니다.
+	// 보스는 타겟팅 범위가 없고, 몽타주에 워핑 구간이 있는 타(2연격·3연격의 1타 선딜, 뛰어 내려찍기의 체공)만 다가갑니다.
 	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Pattern, Montage, Boss->GetPatternPlayRate());
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);

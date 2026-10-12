@@ -34,23 +34,18 @@ void UAgCharacterData::PostEditUndo()
 }
 #endif
 
-const FAgBossPattern* UAgBossData::FindPattern(const FGameplayTag& Pattern) const
+const FAgBossPattern* UAgBossData::FindPattern(FName Id) const
 {
-	return Patterns.FindByPredicate([&Pattern](const FAgBossPattern& Entry) { return Entry.Pattern == Pattern; });
+	return Patterns.FindByPredicate([Id](const FAgBossPattern& Entry) { return Entry.Id == Id; });
 }
 
-UAnimMontage* UAgBossData::FindPatternMontage(const FGameplayTag& Pattern) const
+UAnimMontage* UAgBossData::FindPatternMontage(FName Id) const
 {
-	const TObjectPtr<UAnimMontage>* Montage = PatternMontages.Find(Pattern);
+	const TObjectPtr<UAnimMontage>* Montage = PatternMontages.Find(Id);
 	return Montage ? Montage->Get() : nullptr;
 }
 
-TSubclassOf<UAgGameplayAbility> UAgBossData::FindPatternAbility(const FGameplayTag& Pattern) const
+TSubclassOf<UAgGameplayAbility> UAgBossData::FindPatternAbility(FName Id) const
 {
-	return PatternAbilities.FindRef(Pattern);
-}
-
-FGameplayTag UAgBossData::FindPatternCooldownTag(const FGameplayTag& Pattern) const
-{
-	return PatternCooldownTags.FindRef(Pattern);
+	return PatternAbilities.FindRef(Id);
 }

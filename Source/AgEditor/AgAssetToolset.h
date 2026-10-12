@@ -34,7 +34,7 @@ struct FAgMontageSegment
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
 	float EndTime = 0.f;
 
-	/** 이 조각의 재생 속도. 1보다 작으면 몽타주에서 더 길게 재생됩니다(A1의 느린 패턴 전조 동작). */
+	/** 이 조각의 재생 속도. 1보다 작으면 몽타주에서 더 길게 재생됩니다(2연격의 느린 패턴 전조 동작). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (ClampMin = 0.01))
 	float PlayRate = 1.f;
 };

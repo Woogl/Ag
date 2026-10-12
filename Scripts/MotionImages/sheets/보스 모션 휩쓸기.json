@@ -1,9 +1,9 @@
 {
-  "image": "보스 모션 A2",
+  "image": "보스 모션 휩쓸기",
   "character": "boss",
   "rows": [
     {
-      "title": "A2. 휩쓸기",
+      "title": "휩쓸기",
       "note": "",
       "frames": [
         {"clip": "Halberd/Attack_Sprint", "t": 0.0333, "time": "0.00초", "label": "전조"},

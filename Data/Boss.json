@@ -21,7 +21,7 @@
   "RotationStopLead": 0.2,
   "Patterns": [
     {
-      "Pattern": "Ability.Boss.Pattern.A1",
+      "Id": "DoubleStrike",
       "Hits": [
         {
           "DamageMultiplier": 1,
@@ -46,7 +46,7 @@
       "MaxApproachDistance": 100
     },
     {
-      "Pattern": "Ability.Boss.Pattern.A2",
+      "Id": "Sweep",
       "Hits": [
         {
           "DamageMultiplier": 1.5,
@@ -64,7 +64,7 @@
       "MaxApproachDistance": 0
     },
     {
-      "Pattern": "Ability.Boss.Pattern.A3",
+      "Id": "DashThrust",
       "Hits": [
         {
           "DamageMultiplier": 2,
@@ -82,7 +82,7 @@
       "MaxApproachDistance": 0
     },
     {
-      "Pattern": "Ability.Boss.Pattern.A4",
+      "Id": "LeapSlam",
       "Hits": [
         {
           "DamageMultiplier": 2,
@@ -100,7 +100,7 @@
       "MaxApproachDistance": 0
     },
     {
-      "Pattern": "Ability.Boss.Pattern.A5",
+      "Id": "TripleStrike",
       "Hits": [
         {
           "DamageMultiplier": 0.7,
@@ -132,7 +132,7 @@
       "MaxApproachDistance": 100
     },
     {
-      "Pattern": "Ability.Boss.Pattern.A6",
+      "Id": "SwordWave",
       "Hits": [
         {
           "DamageMultiplier": 1.2,
@@ -164,7 +164,7 @@
       "MaxApproachDistance": 0
     },
     {
-      "Pattern": "Ability.Boss.Pattern.A7",
+      "Id": "JumpSlam",
       "Hits": [
         {
           "DamageMultiplier": 1.6,
@@ -182,7 +182,7 @@
       "MaxApproachDistance": 700
     },
     {
-      "Pattern": "Ability.Boss.Pattern.B1",
+      "Id": "Backstep",
       "Hits": [],
       "Cooldown": 4,
       "Phases": [1, 2],

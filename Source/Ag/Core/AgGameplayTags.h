@@ -44,14 +44,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_PhaseTransition);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Death);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_A1);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_A2);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_A3);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_A4);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_A5);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_A6);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_A7);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern_B1);
 
 	// State tags owned by a character. 상태 우선순위 (전투 시스템) maps onto Dead > Execution > Groggy > HitReaction.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
@@ -103,14 +95,6 @@ namespace AgGameplayTags
 	// Cooldown tags granted by cooldown GameplayEffects.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_A1);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_A2);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_A3);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_A4);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_A5);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_A6);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_A7);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Boss_B1);
 
 	// SetByCaller magnitudes.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_SP);

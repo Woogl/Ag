@@ -1,9 +1,9 @@
 {
-  "image": "보스 모션 A4",
+  "image": "보스 모션 도약 내려찍기",
   "character": "boss",
   "rows": [
     {
-      "title": "A4. 도약 내려찍기",
+      "title": "도약 내려찍기",
       "note": "",
       "frames": [
         {"clip": "Halberd/Attack_Airborne_Start", "t": 0.0, "time": "0.00초", "label": "도약"},

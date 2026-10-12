@@ -90,9 +90,9 @@ struct FAgBossPattern
 {
 	GENERATED_BODY()
 
-	/** 패턴 ID. 이 태그로 DA_Boss에서 패턴의 몽타주, 어빌리티, 쿨다운 태그를 찾습니다. */
-	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Categories = "Ability.Boss.Pattern"))
-	FGameplayTag Pattern;
+	/** 패턴 ID. 이 ID로 DA_Boss에서 패턴의 몽타주와 어빌리티를 찾습니다. */
+	UPROPERTY(EditAnywhere, Category = "Pattern")
+	FName Id;
 
 	/** 판정 구간마다 하나씩, 몽타주 순서대로 */
 	UPROPERTY(EditAnywhere, Category = "Pattern")

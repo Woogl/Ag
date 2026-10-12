@@ -438,12 +438,9 @@ class UAgBossData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	const FAgBossPattern* FindPattern(const FGameplayTag& Pattern) const;
-	UAnimMontage* FindPatternMontage(const FGameplayTag& Pattern) const;
-	TSubclassOf<UAgGameplayAbility> FindPatternAbility(const FGameplayTag& Pattern) const;
-
-	/** 패턴의 쿨다운이 도는 동안 붙는 태그 */
-	FGameplayTag FindPatternCooldownTag(const FGameplayTag& Pattern) const;
+	const FAgBossPattern* FindPattern(FName Id) const;
+	UAnimMontage* FindPatternMontage(FName Id) const;
+	TSubclassOf<UAgGameplayAbility> FindPatternAbility(FName Id) const;
 
 	/** 회전 정지 시간(1페이즈 재생 속도의 초)을 패턴 몽타주의 시간으로 바꾼 값. 2페이즈에서는 몽타주와 함께 빨라지므로 그대로입니다. */
 	virtual float GetRotationStopLeadInMontage() const override { return RotationStopLead * PatternPlayRate; }
@@ -492,56 +489,56 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase", meta = (ClampMin = 0))
 	float Phase2MOVMultiplier = 1.f;
 
-	/** A3 돌진 규칙: 속도 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A3 Dash", meta = (Units = "cm/s", ClampMin = 0))
+	/** 돌진 찌르기 돌진 규칙: 속도 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Dash Thrust", meta = (Units = "cm/s", ClampMin = 0))
 	float DashSpeed = 0.f;
 
-	/** A3 돌진 규칙: 목표 지점, this far past the player. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A3 Dash", meta = (Units = "cm", ClampMin = 0))
+	/** 돌진 찌르기 돌진 규칙: 목표 지점, this far past the player. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Dash Thrust", meta = (Units = "cm", ClampMin = 0))
 	float DashOvershoot = 0.f;
 
-	/** A3 돌진 규칙: 최대 이동 거리 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A3 Dash", meta = (Units = "cm", ClampMin = 0))
+	/** 돌진 찌르기 돌진 규칙: 최대 이동 거리 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Dash Thrust", meta = (Units = "cm", ClampMin = 0))
 	float DashMaxDistance = 0.f;
 
-	/** A4 체공 시간: 도약부터 착지까지. 엔진 중력과 함께 최고 높이를 정합니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A4 Leap", meta = (Units = "s", ClampMin = 0.01))
+	/** 도약 내려찍기 체공 시간: 도약부터 착지까지. 엔진 중력과 함께 최고 높이를 정합니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "s", ClampMin = 0.01))
 	float LeapAirTime = 1.f;
 
-	/** A4: 착지 목표, this far short of the player toward the boss. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
+	/** 도약 내려찍기: 착지 목표, this far short of the player toward the boss. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
 	float LeapTargetOffset = 0.f;
 
-	/** A4: 최대 도약 거리 (horizontal). */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
+	/** 도약 내려찍기: 최대 도약 거리 (horizontal). */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
 	float LeapMaxDistance = 0.f;
 
-	/** A4: the landing hits within this radius of the landing point. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A4 Leap", meta = (Units = "cm", ClampMin = 0))
+	/** 도약 내려찍기: the landing hits within this radius of the landing point. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
 	float LeapHitRadius = 0.f;
 
-	/** B1 백스텝: the player must be this close (capsule centers, horizontal). */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "B1 Backstep", meta = (Units = "cm", ClampMin = 0))
+	/** 백스텝: the player must be this close (capsule centers, horizontal). */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Backstep", meta = (Units = "cm", ClampMin = 0))
 	float BackstepRange = 0.f;
 
-	/** B1 백스텝: chance, checked every time the player starts a basic attack hit. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "B1 Backstep", meta = (ClampMin = 0, ClampMax = 1))
+	/** 백스텝: chance, checked every time the player starts a basic attack hit. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Backstep", meta = (ClampMin = 0, ClampMax = 1))
 	float BackstepChance = 0.f;
 
-	/** B1 백스텝: 뒤로 물러나는 거리. 모션의 루트 모션을 이 거리에 맞춰 늘립니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "B1 Backstep", meta = (Units = "cm", ClampMin = 0))
+	/** 백스텝: 뒤로 물러나는 거리. 모션의 루트 모션을 이 거리에 맞춰 늘립니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Backstep", meta = (Units = "cm", ClampMin = 0))
 	float BackstepDistance = 0.f;
 
-	/** A6 검기: the projectile (BP_SwordWave). Its hit box (폭, 높이) and look are set on the blueprint. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|A6 Sword Wave")
+	/** 검기 발사: the projectile (BP_SwordWave). Its hit box (폭, 높이) and look are set on the blueprint. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Sword Wave")
 	TSubclassOf<AAgSwordWave> SwordWaveClass;
 
-	/** A6 검기: 속도 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A6 Sword Wave", meta = (Units = "cm/s", ClampMin = 0))
+	/** 검기 발사: 속도 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Sword Wave", meta = (Units = "cm/s", ClampMin = 0))
 	float SwordWaveSpeed = 0.f;
 
-	/** A6 검기: 최대 사거리 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "A6 Sword Wave", meta = (Units = "cm", ClampMin = 0))
+	/** 검기 발사: 최대 사거리 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Sword Wave", meta = (Units = "cm", ClampMin = 0))
 	float SwordWaveRange = 0.f;
 
 	/** 락온 카메라: bone of the 락온 지점 (chest height) the camera looks at. The lock-on marker shows there too. */
@@ -556,21 +553,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	FName ExecutionPromptBone;
 
-	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. A1, A2, A5, A7은 공용 패턴 어빌리티(UAgBossPattern_Common)를 씁니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Patterns", meta = (Categories = "Ability.Boss.Pattern"))
-	TMap<FGameplayTag, TSubclassOf<UAgGameplayAbility>> PatternAbilities;
-
-	/** 패턴 ID마다 그 패턴의 쿨다운이 도는 동안 붙는 태그. 모든 패턴에 두고, 쿨다운이 있는지는 쿨다운 시간(0이면 없음)이 정합니다. */
+	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. 2연격, 휩쓸기, 3연격, 뛰어 내려찍기는 공용 패턴 어빌리티(UAgBossPattern_Common)를 씁니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Patterns")
-	TMap<FGameplayTag, FGameplayTag> PatternCooldownTags;
+	TMap<FName, TSubclassOf<UAgGameplayAbility>> PatternAbilities;
 
 	/** 보스 AI의 흐름(ST_Boss). 보스 AI 컨트롤러가 빙의할 때 실행합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<UStateTree> AIStateTree;
 
-	/** Pattern montages, by pattern ID. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages", meta = (Categories = "Ability.Boss.Pattern"))
-	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> PatternMontages;
+	/** 패턴 ID마다 그 패턴의 몽타주 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TMap<FName, TObjectPtr<UAnimMontage>> PatternMontages;
 
 	/** 그로기: sections Start, Loop (repeats) and End; End is jumped to so the motion ends with the groggy time. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")

@@ -81,15 +81,15 @@ EStateTreeRunStatus FAgBossAITask_Approach::Tick(FStateTreeExecutionContext& Con
 EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	InstanceData.RunningPattern = FGameplayTag();
+	InstanceData.RunningPattern = NAME_None;
 	InstanceData.Handle = FGameplayAbilitySpecHandle();
 
 	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
 	const UAgBossData* Data = InstanceData.Controller->GetBossData();
 	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
 
-	FGameplayTag Pattern = InstanceData.Pattern;
-	if (!Pattern.IsValid())
+	FName Pattern = InstanceData.Pattern;
+	if (Pattern.IsNone())
 	{
 		// 1. 후보: 지금 거리 구간과 페이즈에서 쓸 수 있고 쿨다운이 끝난 패턴
 		const float Distance = UAgCombatLibrary::GetHorizontalDistance(Boss, InstanceData.Controller->GetTarget());
@@ -98,7 +98,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		TArray<float> Weights;
 		GatherCandidates(Data->Patterns, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), [Boss, ActorInfo](const FAgBossPattern& Candidate)
 		{
-			const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(Candidate.Pattern);
+			const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(Candidate.Id);
 			return Spec && Spec->Ability && Spec->Ability->CanActivateAbility(Spec->Handle, ActorInfo);
 		}, Candidates, Weights);
 
@@ -108,7 +108,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		{
 			return EStateTreeRunStatus::Failed;
 		}
-		Pattern = Data->Patterns[Candidates[Picked]].Pattern;
+		Pattern = Data->Patterns[Candidates[Picked]].Id;
 	}
 
 	const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(Pattern);

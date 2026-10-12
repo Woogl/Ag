@@ -1,9 +1,9 @@
 {
-  "image": "보스 모션 A5",
+  "image": "보스 모션 3연격",
   "character": "boss",
   "rows": [
     {
-      "title": "A5. 3연격",
+      "title": "3연격",
       "note": "",
       "frames": [
         {"clip": "Halberd/Attack_Combo1", "t": 0.0, "time": "0.00초", "label": "시작"},

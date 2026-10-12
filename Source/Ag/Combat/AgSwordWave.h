@@ -12,7 +12,7 @@ class UBoxComponent;
 class UStaticMeshComponent;
 
 /**
- * A6 검기 (보스 사양 'A6', '검기'): flies along the ground in a straight line and judges the player once, then flies on
+ * 검기 (보스 사양 '검기 발사', '검기'): flies along the ground in a straight line and judges the player once, then flies on
  * through. It vanishes when it touches a wall, reaches its range, or its shooter dies; other changes to the shooter don't
  * stop it. The hit box size (폭, 높이) and the look (mesh, material) are set on the blueprint; speed and range come at
  * launch.

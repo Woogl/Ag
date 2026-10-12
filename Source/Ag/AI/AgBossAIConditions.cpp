@@ -8,7 +8,6 @@
 #include "AI/AgBossAIController.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgCombatLibrary.h"
-#include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "StateTreeExecutionContext.h"
 
@@ -47,7 +46,8 @@ bool FAgBossAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecutionC
 
 bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext& Context) const
 {
-	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
+	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	const AAgBossAIController* Controller = InstanceData.Controller;
 	const AAgBossCharacter* Boss = Controller->GetBoss();
 	const UAgBossData* Data = Controller->GetBossData();
 	if (UAgCombatLibrary::GetHorizontalDistance(Boss, Controller->GetTarget()) > Data->BackstepRange)
@@ -56,7 +56,7 @@ bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext&
 	}
 
 	// 쿨다운이 끝났을 때만, 그리고 확률로
-	const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(AgGameplayTags::Ability_Boss_Pattern_B1);
+	const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(InstanceData.Pattern);
 	const FGameplayAbilityActorInfo* ActorInfo = Boss->GetAbilitySystemComponent()->AbilityActorInfo.Get();
 	return Spec && Spec->Ability && Spec->Ability->CanActivateAbility(Spec->Handle, ActorInfo) && FMath::FRand() < Data->BackstepChance;
 }

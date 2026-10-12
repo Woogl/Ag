@@ -1,9 +1,9 @@
 {
-  "image": "보스 모션 A3",
+  "image": "보스 모션 돌진 찌르기",
   "character": "boss",
   "rows": [
     {
-      "title": "A3. 돌진 찌르기",
+      "title": "돌진 찌르기",
       "note": "",
       "frames": [
         {"clip": "Halberd/Attack_Heavy1_Start", "t": 0.0, "time": "0.00초", "label": "시작"},

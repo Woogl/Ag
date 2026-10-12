@@ -22,7 +22,7 @@ enum class EAgBossWait : uint8
 {
 	/** 레벨 시작, 넉백, 페이즈 전환, 그로기 유지, 처형 피격 뒤: 고정 대기 시간 */
 	Fixed,
-	/** 패턴(A1 ~ A7) 실행 뒤: 페이즈별 범위에서 무작위 */
+	/** 공격 패턴 실행 뒤: 페이즈별 범위에서 무작위 */
 	AfterPattern,
 };
 
@@ -89,13 +89,13 @@ struct FAgBossAITask_RunPatternInstanceData
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AAgBossAIController> Controller = nullptr;
 
-	/** 실행할 패턴. 비워 두면 보스 사양 '패턴 선택'대로 후보 중 가중치로 고릅니다. */
-	UPROPERTY(EditAnywhere, Category = "Parameter", meta = (Categories = "Ability.Boss.Pattern"))
-	FGameplayTag Pattern;
+	/** 실행할 패턴의 ID. 비워 두면 보스 사양 '패턴 선택'대로 후보 중 가중치로 고릅니다. */
+	UPROPERTY(EditAnywhere, Category = "Parameter")
+	FName Pattern;
 
-	/** 실행 중인 패턴. StateTree 디버거에서 고른 패턴을 볼 수 있습니다. */
+	/** 실행 중인 패턴의 ID. StateTree 디버거에서 고른 패턴을 볼 수 있습니다. */
 	UPROPERTY(VisibleAnywhere, Category = "Output")
-	FGameplayTag RunningPattern;
+	FName RunningPattern;
 
 	FGameplayAbilitySpecHandle Handle;
 };

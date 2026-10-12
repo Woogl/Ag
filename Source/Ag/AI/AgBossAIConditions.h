@@ -70,13 +70,26 @@ struct FAgBossAICondition_PhaseTransitionReady : public FStateTreeAIConditionBas
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
-/** 보스 사양 'B1. 백스텝'의 발동 조건: AI의 대상(플레이어)이 가깝고, B1 쿨다운이 끝났고, 확률을 통과했습니다. */
-USTRUCT(meta = (DisplayName = "보스: B1 발동 조건", Category = "Ag|Boss AI"))
+USTRUCT()
+struct FAgBossAICondition_BackstepReadyInstanceData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Context")
+	TObjectPtr<AAgBossAIController> Controller = nullptr;
+
+	/** 백스텝 패턴의 ID. 이 패턴의 쿨다운을 확인합니다. */
+	UPROPERTY(EditAnywhere, Category = "Parameter")
+	FName Pattern;
+};
+
+/** 보스 사양 '백스텝'의 발동 조건: AI의 대상(플레이어)이 가깝고, 백스텝 쿨다운이 끝났고, 확률을 통과했습니다. */
+USTRUCT(meta = (DisplayName = "보스: 백스텝 발동 조건", Category = "Ag|Boss AI"))
 struct FAgBossAICondition_BackstepReady : public FStateTreeAIConditionBase
 {
 	GENERATED_BODY()
 
-	using FInstanceDataType = FAgBossAIConditionInstanceData;
+	using FInstanceDataType = FAgBossAICondition_BackstepReadyInstanceData;
 	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
 
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;

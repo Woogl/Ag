@@ -35,15 +35,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Groggy, "Ability.Reaction.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Death, "Ability.Reaction.Death");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern, "Ability.Boss.Pattern", "보스 패턴");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A1, "Ability.Boss.Pattern.A1", "2연격");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A2, "Ability.Boss.Pattern.A2", "휩쓸기");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A3, "Ability.Boss.Pattern.A3", "돌진 찌르기");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A4, "Ability.Boss.Pattern.A4", "도약 내려찍기");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A5, "Ability.Boss.Pattern.A5", "3연격");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A6, "Ability.Boss.Pattern.A6", "검기 발사");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_A7, "Ability.Boss.Pattern.A7", "뛰어 내려찍기");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern_B1, "Ability.Boss.Pattern.B1", "백스텝");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern, "Ability.Boss.Pattern", "보스 패턴 어빌리티 (패턴을 한꺼번에 취소할 때 씀)");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Execution_Executing, "State.Execution.Executing", "상태 우선순위 2: 처형하는 중");
@@ -78,28 +70,20 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition, "Event.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PerfectDodge, "Event.PerfectDodge");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Parry, "Event.Parry");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타나 점프 공격을 시작함 (B1 백스텝 검사)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted", "플레이어가 평타의 한 타나 점프 공격을 시작함 (백스텝 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackWindowEnded, "Event.AttackWindowEnded", "판정 구간이 끝남. EventMagnitude는 몇 번째 타인지 (0부터)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked", "내 공격이 가드·가드 브레이크·패리로 막힘 (A3 돌진이 멈춤)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked", "내 공격이 가드·가드 브레이크·패리로 막힘 (돌진 찌르기의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_DownGrounded, "Event.DownGrounded", "넉백·넉업 모션에서 바닥에 쓰러진 순간 (무적 시작)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_RecoveryStarted, "Event.RecoveryStarted", "모션의 후딜이 시작됨 (판정 구간이 없는 행동: 패리 모션)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_ExecutionBlow, "Event.ExecutionBlow", "처형 모션의 타격: 베기 2번과 마지막 일격 (대미지 적용)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_UltimateFinish, "Event.UltimateFinish", "궁극기 마무리: 칼이 칼집에 들어가는 순간");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_JumpAttackPlunge, "Event.JumpAttackPlunge", "점프 공격의 내려베기가 끝남 (내리꽂기 시작)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashStart, "Event.Boss.DashStart", "A3 찌르기 모션에서 몸을 앞으로 내던지는 순간 (돌진 시작)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashHold, "Event.Boss.DashHold", "A3 창을 다 내지른 자세 (돌진이 끝날 때까지 유지)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_SwordWave, "Event.Boss.SwordWave", "A6 검기 발사 (판정 구간으로 봄)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashStart, "Event.Boss.DashStart", "돌진 찌르기 모션에서 몸을 앞으로 내던지는 순간 (돌진 시작)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_DashHold, "Event.Boss.DashHold", "돌진 찌르기에서 창을 다 내지른 자세 (돌진이 끝날 때까지 유지)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Boss_SwordWave, "Event.Boss.SwordWave", "검기 발사 (판정 구간으로 봄)");
 
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Dodge, "Cooldown.Dodge");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill, "Cooldown.Skill");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A1, "Cooldown.Boss.A1");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A2, "Cooldown.Boss.A2");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A3, "Cooldown.Boss.A3");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A4, "Cooldown.Boss.A4");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A5, "Cooldown.Boss.A5");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A6, "Cooldown.Boss.A6");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_A7, "Cooldown.Boss.A7");
-	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Boss_B1, "Cooldown.Boss.B1");
 
 	UE_DEFINE_GAMEPLAY_TAG(Data_SP, "Data.SP");
 	UE_DEFINE_GAMEPLAY_TAG(Data_MP, "Data.MP");

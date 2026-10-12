@@ -1,9 +1,9 @@
 {
-  "image": "보스 모션 A6",
+  "image": "보스 모션 검기 발사",
   "character": "boss",
   "rows": [
     {
-      "title": "A6. 검기 발사 (타마다 검기 1발)",
+      "title": "검기 발사 (타마다 검기 1발)",
       "note": "",
       "frames": [
         {"clip": "Halberd/Attack_Combo2", "t": 0.0, "time": "0.00초", "label": "시작"},

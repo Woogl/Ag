@@ -90,11 +90,11 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake FinisherShake = EAgCameraShake::None;
 
-	/** 상황별 단계: 보스 A4 착지 */
+	/** 상황별 단계: 보스 도약 내려찍기 착지 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake LeapLandingShake = EAgCameraShake::None;
 
-	/** 상황별 단계: the A4 landing shakes only within this distance of the player (capsule centers, horizontal). */
+	/** 상황별 단계: the 도약 내려찍기 landing shakes only within this distance of the player (capsule centers, horizontal). */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (Units = "cm", ClampMin = 0))
 	float LeapLandingShakeRange = 0.f;
 };

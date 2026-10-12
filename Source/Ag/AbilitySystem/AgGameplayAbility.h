@@ -38,8 +38,8 @@ public:
 protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 보스 패턴은 패턴 ID마다 쿨다운 태그(DA_Boss)와
-	// 시간(Boss.json)이 다르고, 패턴 시작부터 셉니다. 비용은 비용 GE(CostGameplayEffectClass)로 치르고, 치를 수 있는지는
+	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 보스 패턴은 쿨다운 태그 없이
+	// 패턴 쿨다운 GE(UAgEffect_PatternCooldown)로 패턴마다 따로 세고, 시간(Boss.json)은 패턴 시작부터 셉니다. 비용은 비용 GE(CostGameplayEffectClass)로 치르고, 치를 수 있는지는
 	// 행동마다의 규칙(CanPayCost)이 정합니다.
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	virtual bool CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;

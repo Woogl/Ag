@@ -1,9 +1,9 @@
 {
-  "image": "보스 모션 B1",
+  "image": "보스 모션 백스텝",
   "character": "boss",
   "rows": [
     {
-      "title": "B1. 백스텝",
+      "title": "백스텝",
       "note": "무적 구간 없음",
       "frames": [
         {"clip": "Halberd/Dodge", "t": 0.0, "time": "0.00초", "label": "시작"},

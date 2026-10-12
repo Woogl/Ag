@@ -74,7 +74,7 @@ void UAgAbilityTask_AttackMovement::StartHit()
 	}
 
 	// 정지 간격은 대상이 타겟팅 범위 안에 있든 없든 지킵니다. 다가가는 거리는 다음 판정 구간 시작까지 모션 자체의 전진에 최대
-	// 접근 거리를 더한 만큼까지라, 선딜 중 대상이 물러나면(B1) 끝까지 쫓지 않고 그만큼 간격이 벌어집니다.
+	// 접근 거리를 더한 만큼까지라, 선딜 중 대상이 물러나면(백스텝) 끝까지 쫓지 않고 그만큼 간격이 벌어집니다.
 	AAgCharacterBase* NewTarget = Owner->FindAttackTarget();
 	Target = NewTarget;
 	Gap = Owner->GetCharacterData()->StopDistance;

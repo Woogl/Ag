@@ -18,16 +18,16 @@ void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle H
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
-	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Pattern) : nullptr;
+	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
 	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Pattern.ToString(), Boss->GetPatternSpeed());
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Boss->GetPatternSpeed());
 
-	// 물러나는 거리: 모션의 루트 모션 전체 이동에 배율을 걸어 백스텝 거리에 맞춥니다(보스 사양 'B1'). 몽타주 태스크가 재생할 때
+	// 물러나는 거리: 모션의 루트 모션 전체 이동에 배율을 걸어 백스텝 거리에 맞춥니다(보스 사양 '백스텝'). 몽타주 태스크가 재생할 때
 	// 배율을 걸고, 몽타주가 끝나면 1로 되돌립니다.
 	const float MotionDistance = Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D();
 	const float RootMotionScale = MotionDistance > UE_KINDA_SMALL_NUMBER ? Data->BackstepDistance / MotionDistance : 1.f;

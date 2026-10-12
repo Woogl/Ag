@@ -1,9 +1,9 @@
 {
-  "image": "보스 모션 A7",
+  "image": "보스 모션 뛰어 내려찍기",
   "character": "boss",
   "rows": [
     {
-      "title": "A7. 뛰어 내려찍기",
+      "title": "뛰어 내려찍기",
       "note": "",
       "frames": [
         {"clip": "Halberd/Attack_Heavy2", "t": 0.0, "time": "0.00초", "label": "시작"},

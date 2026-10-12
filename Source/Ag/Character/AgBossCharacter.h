@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Character/AgCharacterBase.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "GameplayTagContainer.h"
 #include "AgBossCharacter.generated.h"
 
 class UWidgetComponent;
 struct FAgBossPattern;
 struct FGameplayAbilitySpec;
-struct FGameplayAbilitySpecHandle;
 
 /**
  * 보스 커스터(보스 사양). 늘 AI의 대상을 향해 돌고(보스 사양 '회전'), AI가 고른 패턴을 실행합니다.
@@ -24,8 +24,8 @@ class AAgBossCharacter : public AAgCharacterBase
 public:
 	AAgBossCharacter();
 
-	/** The granted spec of a pattern, or null. */
-	FGameplayAbilitySpec* FindPatternSpec(const FGameplayTag& Pattern) const;
+	/** 패턴 ID로 부여된 패턴 스펙. 없으면 null입니다. */
+	FGameplayAbilitySpec* FindPatternSpec(FName Id) const;
 
 	/**
 	 * 부여된 패턴 스펙(Handle)이 실행하는 패턴의 데이터(Boss.json). 패턴 스펙이 아니면 null입니다.
@@ -33,7 +33,7 @@ public:
 	 */
 	const FAgBossPattern* FindPattern(const FGameplayAbilitySpecHandle Handle) const;
 
-	/** 공격 패턴(A1 ~ A7) 몽타주의 재생 속도: 보스 사양 '모션 재생 속도'에 2페이즈 '패턴 진행 속도'를 곱합니다. */
+	/** 공격 패턴 몽타주의 재생 속도: 보스 사양 '모션 재생 속도'에 2페이즈 '패턴 진행 속도'를 곱합니다. */
 	float GetPatternPlayRate() const;
 
 	/** 페이즈: 1, or 2 after the phase transition ends. */
@@ -73,8 +73,6 @@ protected:
 	virtual AActor* GetFacingTarget() const override { return GetTarget(); }
 
 private:
-	/** 스펙이 실행하는 패턴 ID. 패턴을 부여할 때 스펙의 동적 태그로 넣습니다. 패턴 스펙이 아니면 빈 태그입니다. */
-	static FGameplayTag GetPatternTag(const FGameplayAbilitySpec& Spec);
 
 	/** Attaches the lock-on marker and the execution prompt to their bones in the character data. */
 	void AttachWorldWidgets();
@@ -91,6 +89,9 @@ private:
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
 
 	int32 Phase = 1;
+
+	/** 부여한 패턴 스펙마다 그 스펙이 실행하는 패턴 ID */
+	TMap<FGameplayAbilitySpecHandle, FName> PatternIds;
 
 	/** World time the groggy time started counting, or negative when it isn't counting. */
 	double GroggyStartTime = -1.0;
