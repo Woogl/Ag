@@ -3,6 +3,7 @@
 #include "UI/AgHUDWidget.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
@@ -14,6 +15,7 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "EngineUtils.h"
+#include "GameplayEffectExtension.h"
 #include "GameFramework/PlayerController.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
@@ -43,6 +45,34 @@ void UAgHUDWidget::NativeConstruct()
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
 		ShowControlsGuide(*Player);
+
+		if (UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
+		{
+			PlayerASC = ASC;
+			PlayerSPChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandlePlayerSPChanged);
+		}
+	}
+}
+
+void UAgHUDWidget::NativeDestruct()
+{
+	if (UAbilitySystemComponent* ASC = PlayerASC.Get())
+	{
+		ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).Remove(PlayerSPChangedHandle);
+	}
+	PlayerASC.Reset();
+	PlayerSPChangedHandle.Reset();
+
+	Super::NativeDestruct();
+}
+
+void UAgHUDWidget::HandlePlayerSPChanged(const FOnAttributeChangeData& Data)
+{
+	// 대미지 GE가 SP를 줄이는 것은 가드와 가드 브레이크뿐입니다(전투 시스템 '피격 처리 순서').
+	const UGameplayEffect* Effect = Data.GEModData ? Data.GEModData->EffectSpec.Def.Get() : nullptr;
+	if (Data.NewValue < Data.OldValue && Effect && Effect->IsA<UAgEffect_Damage>())
+	{
+		bPlayerSPGuardDrop = true;
 	}
 }
 
@@ -134,6 +164,8 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 	SetValueText(*PlayerHPText, Stats->GetHP(), Stats->GetMaxHP(), ShownHP);
 	SetValueText(*PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
 	UpdateTrail(PlayerHPTrail, *PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
+	UpdateTrail(PlayerSPTrail, *PlayerSPTrailBar, Stats->GetMaxSP() > 0.f ? Stats->GetSP() / Stats->GetMaxSP() : 0.f, GameDeltaTime, bPlayerSPGuardDrop);
+	bPlayerSPGuardDrop = false;
 
 	// 슬롯은 MP·UP가 부족할 때만 흐리게 합니다. 스킬 쿨다운은 쿨다운 표시로 보여 줍니다.
 	const UAbilitySystemComponent* ASC = Player.GetAbilitySystemComponent();
@@ -257,12 +289,19 @@ void UAgHUDWidget::SetValueText(UTextBlock& Text, float Value, float MaxValue, F
 	}
 }
 
-void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime) const
+void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime, bool bShowDrop) const
 {
 	if (Trail.LastBarRatio >= 0.f && BarRatio < Trail.LastBarRatio)
 	{
-		Trail.Wait = TrailDelay;
-		Trail.ShrinkElapsed = -1.f;
+		if (bShowDrop)
+		{
+			Trail.Wait = TrailDelay;
+			Trail.ShrinkElapsed = -1.f;
+		}
+		else if (Trail.Ratio <= Trail.LastBarRatio)
+		{
+			Trail.Ratio = BarRatio;
+		}
 	}
 	Trail.LastBarRatio = BarRatio;
 

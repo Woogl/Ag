@@ -16,6 +16,7 @@ class UProgressBar;
 class UTextBlock;
 struct FGameplayAbilitySpecHandle;
 struct FGameplayTag;
+struct FOnAttributeChangeData;
 
 /**
  * 전투 HUD. WBP_HUD의 부모로, 배치는 위젯에 있고 이 클래스는 값만 넣습니다.
@@ -33,6 +34,7 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
@@ -45,6 +47,10 @@ protected:
 	/** 플레이어 상태: SP 바 */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> PlayerSPBar;
+
+	/** 플레이어 상태: SP 바 뒤에 두는 감소 잔상. 가드 피격으로 준 SP만 남깁니다. */
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UProgressBar> PlayerSPTrailBar;
 
 	/** 플레이어 상태: HP 바 */
 	UPROPERTY(meta = (BindWidget))
@@ -179,10 +185,23 @@ private:
 	/** 반올림한 정수가 바뀔 때만 '현재값 / 최대값'을 씁니다. */
 	static void SetValueText(UTextBlock& Text, float Value, float MaxValue, FIntPoint& ShownValues);
 
-	/** 바가 줄면 잔상은 (줄어드는 중이라도) 그 자리에서 다시 기다린 뒤 바의 현재 값까지 줄어듭니다. */
-	void UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime) const;
+	/**
+	 * 바가 줄면 잔상은 (줄어드는 중이라도) 그 자리에서 다시 기다린 뒤 바의 현재 값까지 줄어듭니다.
+	 * bShowDrop이 거짓인 감소는 잔상을 다시 세우지 않고, 잔상이 없으면 잔상도 바를 바로 따라갑니다.
+	 */
+	void UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime, bool bShowDrop = true) const;
+
+	/** 대미지 GE(가드·가드 브레이크)로 SP가 줄면 다음 틱에 SP 감소 잔상을 세웁니다. 회피·달리기 소모는 남기지 않습니다. */
+	void HandlePlayerSPChanged(const FOnAttributeChangeData& Data);
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
+
+	/** SP 변화를 듣는 플레이어 ASC와 그 델리게이트 핸들 */
+	TWeakObjectPtr<UAbilitySystemComponent> PlayerASC;
+	FDelegateHandle PlayerSPChangedHandle;
+
+	/** 지난 틱 뒤 가드 피격으로 SP가 줄었습니다. */
+	bool bPlayerSPGuardDrop = false;
 
 	/** 사망 연출로 StatusPanel을 숨겼습니다. 궁극기 컷신과 달리 다시 표시하지 않습니다. */
 	bool bStatusHidden = false;
@@ -195,6 +214,7 @@ private:
 	FIntPoint ShownHP = FIntPoint(INDEX_NONE, INDEX_NONE);
 	FIntPoint ShownMP = FIntPoint(INDEX_NONE, INDEX_NONE);
 	FAgTrail PlayerHPTrail;
+	FAgTrail PlayerSPTrail;
 	FAgTrail BossHPTrail;
 	FAgTrail BossPPTrail;
 };
