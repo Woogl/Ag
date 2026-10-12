@@ -2,6 +2,8 @@
 
 카메라, HUD, 화면 UI, 게임 플로우를 어떻게 구현할지 정합니다.
 
+## 기술 결정
+
 | 항목 | 결정 | 이유 |
 | - | - | - |
 | 자유 시점 | 스프링 암과 카메라로 만듭니다. 거리, 회전 중심 높이, 위치 추적 지연, FOV는 `BP_AgPlayer`의 스프링 암과 카메라에 적고, 회전 지연은 두지 않습니다. 스프링 암은 캐릭터의 회전을 물려받지 않습니다(절대 회전). 락온 카메라도 스프링 암의 위치를 회전 중심으로 씁니다. | 회피 방향처럼 행동이 캐릭터를 한 번에 돌리는 일이 스프링 암이 그 프레임의 카메라 자리를 정한 뒤에도 일어납니다(선입력은 타이머로 실행). 회전을 물려받으면 그 한 프레임 동안 카메라가 캐릭터와 함께 돌아 화면이 튑니다. |
@@ -16,3 +18,150 @@
 | 화면 UI | 타이틀과 결과 UI는 CommonUI 화면으로 만듭니다. 화면마다 입력 모드(화면 UI는 UI 전용 입력과 커서 표시, HUD는 게임 입력과 커서 숨김)와 첫 선택 버튼을 정합니다. 화면의 버튼은 모두 공용 버튼 `WBP_AgButton`을 쓰고, 상태별 모양과 효과음은 표준 버튼 스타일 `ButtonStyle_Ag`가 정합니다. 효과음은 스타일의 `Hovered Sound`와 `Clicked Sound`를 쓰며, 재생은 Slate 버튼이 맡으므로 코드는 없습니다. 버튼은 포커스를 받으면 선택되고 포커스를 잃으면 선택이 풀리므로, 선택된 모양은 포커스를 가진 버튼 하나에만 남습니다. 마우스를 올리면 포커스를 가져옵니다. ↑·↓ 이동은 Slate의 기본 내비게이션입니다. 실행 키(좌클릭, Enter, Space)는 Slate 버튼의 기본 처리로 동작하므로 CommonUI 입력 데이터(확인·뒤로 액션)는 만들지 않고, CommonUI 설정 `CommonButtonAcceptKeyHandling`을 `TriggerClick`으로 둡니다. 결과 UI가 화면을 어둡게 하며 나타나는 페이드 인은 위젯 애니메이션(`FadeInAnimation`)이 맡고, 코드는 그것을 재생하고 끝나면 버튼을 켭니다. | 새 화면의 버튼도 같은 모양이 되도록 모양을 한 에셋에서 관리합니다. `Pressed Sound`는 누르는 순간 재생되어, 누른 채 버튼 밖으로 끌어내 실행을 취소해도 소리가 납니다. 스타일 사운드는 마우스 호버와 버튼 입력에 재생되고, ↑·↓로 포커스를 옮길 때는 재생되지 않습니다. Lyra 샘플처럼 포커스 이동에 소리를 내는 코드는 두지 않습니다(게임패드 이동은 CommonUI가 커서를 포커스된 버튼으로 옮기므로 호버음이 납니다). 페이드의 길이와 모양은 대미지 숫자처럼 위젯에서 바꿉니다. CommonUI의 `SetIsSelected(false)`는 토글 버튼만 선택을 풀어 주므로, 선택 해제는 `ClearSelection`으로 합니다. CommonUI 입력 데이터는 입력 아이콘 표시와 뒤로 가기 처리에만 쓰이는데, 기획서에는 둘 다 없습니다. 이 설정의 기본값(`Ignore`)은 Enter와 Space를 버튼에 넘기지 않습니다. |
 | 게임 모드 | 레벨마다 하나씩, 타이틀용과 보스전용을 `AAgGameMode`를 상속해 둡니다. | |
 | 결과 처리 | 보스전 게임 모드가 플레이어와 보스의 사망 가운데 먼저 처리된 것으로 결과(보스는 Stage Clear, 플레이어는 Game Over)를 정하고, 사망 연출 시간이 지나면 결과 UI를 띄웁니다. 그 밖의 캐릭터가 사망해도 결과와 HUD는 바뀌지 않습니다. Try Again은 레벨을 다시 로드합니다. | 게임 플로우의 Stage Clear와 Game Over는 보스와 플레이어의 사망으로만 정해집니다. |
+
+## 클래스 구조
+
+### 게임 모드
+
+레벨마다 하나씩 있습니다. 타이틀로 돌아가기와 게임 종료는 부모 `AAgGameMode`가, 보스전 열기는 타이틀용이, 다시 시작은 보스전용이 맡습니다.
+
+| 클래스 | 부모 | 역할 |
+| - | - | - |
+| `AAgGameMode` | `AGameModeBase` | 타이틀로 돌아가기와 게임 종료. 타이틀용·보스전용 게임 모드의 부모 |
+| `AAgFrontEndGameMode` | `AAgGameMode` | 타이틀 레벨의 흐름, 보스전 열기 |
+| `AAgBossStageGameMode` | `AAgGameMode` | 보스전 레벨의 흐름, 결과 판정, 다시 시작(레벨 다시 열기) |
+
+```mermaid
+classDiagram
+    direction TB
+    class AAgFrontEndGameMode {
+        <<BP_AgFrontEndGameMode>>
+        UAgTitleScreen TitleScreenClass
+        UWorld BossStageMap
+    }
+    class AAgBossStageGameMode {
+        <<BP_AgBossStageGameMode>>
+        UAgHUDWidget HUDWidgetClass
+        UAgResultScreen ResultScreenClass
+    }
+    AGameModeBase <|-- AAgGameMode
+    AAgGameMode <|-- AAgFrontEndGameMode
+    AAgGameMode <|-- AAgBossStageGameMode
+
+    AAgGameMode --> AAgPlayerController : PlayerControllerClass
+    AAgGameMode ..> UGameMapsSettings : GameDefaultMap
+    AAgFrontEndGameMode ..> AAgPlayerController : PushScreen
+    AAgBossStageGameMode ..> AAgPlayerController : ShowHUD, HideHUD<br>ShowResult
+    AAgBossStageGameMode ..> AAgCharacterBase : RegisterCombatant<br>OnDied
+    UAgTitleScreen ..> AAgFrontEndGameMode : OpenBossStage<br>QuitGame
+    UAgResultScreen ..> AAgBossStageGameMode : RestartStage<br>OpenFrontEnd, QuitGame
+```
+
+### 플레이어 컨트롤러
+
+화면 UI를 만들고, 테스트용 콘솔 명령을 붙입니다.
+
+| 클래스 | 부모 | 역할 |
+| - | - | - |
+| `AAgPlayerController` | `APlayerController` | HUD와 화면 UI 생성, 테스트용 콘솔 명령 연결 |
+| `UAgCheatManager` | `UCheatManager` | 테스트용 콘솔 명령 (개발 빌드) |
+
+```mermaid
+classDiagram
+    direction TB
+    APlayerController <|-- AAgPlayerController
+    AAgPlayerController --> UAgHUDWidget : HUDWidget
+    AAgPlayerController ..> UAgResultScreen : SetResult
+    AAgPlayerController --> UAgCheatManager : CheatClass
+    UCheatManager <|-- UAgCheatManager
+    UAgCheatManager ..> AAgCharacterBase : Kill
+```
+
+### 화면 UI와 HUD
+
+| 클래스 | 부모 | 역할 |
+| - | - | - |
+| `UAgHUDWidget` | `UCommonActivatableWidget` | `WBP_HUD`의 부모. 플레이어 상태, 슬롯, 보스 상태, 조작 안내. 보스전의 게임 입력 모드를 정합니다. |
+| `UAgTitleScreen` | `UCommonActivatableWidget` | 타이틀 화면 |
+| `UAgResultScreen` | `UCommonActivatableWidget` | Stage Clear UI, Game Over UI |
+| `UAgButton` | `UCommonButtonBase` | 화면 UI 버튼 |
+
+```mermaid
+classDiagram
+    direction TB
+    class UAgHUDWidget {
+        <<WBP_HUD>>
+    }
+    class UAgTitleScreen {
+        <<WBP_Title>>
+    }
+    class UAgResultScreen {
+        <<WBP_Result>>
+    }
+    class UAgButton {
+        <<WBP_AgButton>>
+    }
+    UCommonActivatableWidget <|-- UAgHUDWidget
+    UCommonActivatableWidget <|-- UAgTitleScreen
+    UCommonActivatableWidget <|-- UAgResultScreen
+    UCommonButtonBase <|-- UAgButton
+
+    UAgTitleScreen *-- UAgButton : StartButton<br>QuitButton
+    UAgResultScreen *-- UAgButton : TryAgainButton<br>ReturnToTitleButton<br>QuitButton
+    UAgHUDWidget ..> AAgPlayerCharacter : 스탯, 쿨다운, 입력 매핑
+    UAgHUDWidget ..> AAgBossCharacter : 스탯, 그로기 시간
+```
+
+### 월드 위치 HUD
+
+보스에 붙어 월드 위치에 표시하는 위젯과, 대미지 숫자 큐가 맞은 위치에 띄우는 대미지 숫자입니다.
+
+| 클래스 | 부모 | 역할 |
+| - | - | - |
+| 락온 마커·처형 안내 위젯 | `UCommonUserWidget` | 배치만 있어 C++ 부모 없이 바로 상속합니다. |
+| `UAgDamageFloaterWidget` | `UCommonUserWidget` | `WBP_DamageFloater`의 부모. 숫자, 표시 시간과 떠오르는 높이 |
+| `AAgDamageFloater` | `AActor` | 대미지 숫자를 맞은 위치에 띄우고, 떠오르며 투명해진 뒤 사라집니다. |
+
+```mermaid
+classDiagram
+    direction TB
+    class AAgBossCharacter {
+        <<BP_AgBoss>>
+        UWidgetComponent LockOnMarker
+        UWidgetComponent ExecutionPrompt
+    }
+    class UAgDamageFloaterWidget {
+        <<WBP_DamageFloater>>
+    }
+    UAgGameplayCue_DamageNumber ..> AAgDamageFloater : Spawn
+    AActor <|-- AAgDamageFloater
+    AAgDamageFloater ..> UAgDamageFloaterWidget : SetDamage
+    UAgGameplayCue_DamageNumber --> UAgDamageFloaterWidget : FloaterWidget
+    UCommonUserWidget <|-- UAgDamageFloaterWidget
+    UCommonUserWidget <|-- WBP_LockOnMarker
+    UCommonUserWidget <|-- WBP_ExecutionPrompt
+    AAgBossCharacter --> WBP_LockOnMarker : LockOnMarker의 위젯
+    AAgBossCharacter --> WBP_ExecutionPrompt : ExecutionPrompt의 위젯
+```
+
+### 사망에서 결과 UI까지
+
+```mermaid
+sequenceDiagram
+    participant C as 죽는 캐릭터
+    participant D as UAgAbility_Death
+    participant GM as AAgBossStageGameMode
+    participant PC as AAgPlayerController
+    participant R as UAgResultScreen
+    Note over C: Event.Death를 받음
+    C->>D: 이벤트로 시작
+    D->>C: Die
+    C-->>GM: OnDied
+    GM->>PC: HideHUD
+    Note over GM: 사망 연출 시간 뒤
+    GM->>PC: ShowResult
+    PC->>R: PushScreen, SetResult
+    R->>GM: 버튼에 따라<br>RestartStage 등
+```
+
+`Event.Death`는 GameplayEffect가 HP를 0 이하로 만들 때 어트리뷰트 세트(`PostGameplayEffectExecute`)가 보냅니다. 대미지 GameplayEffect와, `Kill`(Kill Z 낙하, 테스트용 콘솔 명령)이 적용하는 HP를 0으로 만드는 GameplayEffect가 모두 이 판정을 거칩니다. 보스와 플레이어의 사망은 StateTree의 전환 조건이 매 프레임 확인해, 보스 AI가 각각 사망 상태와 비전투 상태로 넘어갑니다.
