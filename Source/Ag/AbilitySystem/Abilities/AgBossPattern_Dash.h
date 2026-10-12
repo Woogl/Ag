@@ -7,7 +7,7 @@
 #include "AgBossPattern_Dash.generated.h"
 
 class UAgAbilityTask_Dash;
-class UAgAbilityTask_IgnorePawnCollision;
+class UAgAbilityTask_IgnoreCollision;
 
 /**
  * 돌진 찌르기 (보스 사양 '돌진 규칙', '돌진과 모션'): 돌진을 시작할 때까지 플레이어를 따라 돈 뒤, 회전 없이 플레이어를
@@ -51,9 +51,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_Dash> DashTask;
 
-	/** 돌진하는 동안 있습니다. */
+	/** 돌진하는 동안 있습니다(Pawn 채널 무시). */
 	UPROPERTY()
-	TObjectPtr<UAgAbilityTask_IgnorePawnCollision> IgnorePawnCollisionTask;
+	TObjectPtr<UAgAbilityTask_IgnoreCollision> IgnoreCollisionTask;
 
 	bool bDashing = false;
 	bool bHolding = false;
