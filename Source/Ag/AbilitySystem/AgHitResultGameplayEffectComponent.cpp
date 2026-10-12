@@ -74,9 +74,7 @@ namespace
 		}
 		else if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
 		{
-			// 밀려나는 것은 가드 어빌리티가 합니다.
 			Target->PlayGuardFlinch();
-			SendEvent(Target, AgGameplayTags::Event_Guard_Flinch, Instigator);
 		}
 	}
 

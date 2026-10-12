@@ -60,7 +60,6 @@ namespace AgGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockBack, "Event.Hit.KnockBack");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockUp, "Event.Hit.KnockUp");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Guard_Flinch, "Event.Guard.Flinch", "가드로 움찔 공격을 막음 (가드 움찔)");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Pushback, "Event.Guard.Pushback");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Break, "Event.Guard.Break");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Guard_Resume, "Event.Guard.Resume", "가드 키를 누른 채 가드 밀림이 끝나 가드로 돌아옴 (패리 구간 없음)");

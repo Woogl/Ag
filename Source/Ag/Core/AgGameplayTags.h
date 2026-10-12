@@ -67,7 +67,6 @@ namespace AgGameplayTags
 	// 게임플레이 이벤트. 어빌리티를 발동하거나, 전투 결과나 모션의 시점(몽타주 노티파이)을 알립니다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockBack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Break);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Resume);
