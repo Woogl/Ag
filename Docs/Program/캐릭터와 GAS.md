@@ -11,7 +11,6 @@
 | 행동 | 플레이어 행동(평타, 회피, 회피 반격, 가드·패리, 스킬, 궁극기, 처형, 달리기, 점프, 점프 공격)과 보스 패턴은 어빌리티로 만듭니다. | 행동, 쿨다운, 자원을 어빌리티·GameplayEffect·태그 한 방식으로 처리합니다. |
 | 어빌리티 구조 | 어빌리티는 모두 `UAgGameplayAbility`를 바로 상속하고, 그 사이에 중간 클래스를 두지 않습니다. 여러 어빌리티가 함께 쓰는, 시간에 걸친 동작은 AbilityTask로 만듭니다(판정 구간이 있는 공격([전투 규칙](<전투 규칙.md>) '공격 진행'), 피격 반응 모션과 쓰러진 뒤의 무적, 루트 모션 무시, 충돌 무시, 공격 중 이동, 컷신 재생, 시간 정지). 한 번에 끝나는 조회(패턴 데이터 찾기, 첫 판정 구간 전의 이동 거리)는 함수로 둡니다. GAS가 정한 확장 지점(비용, 쿨다운(보스 패턴은 패턴별), 종료)과 여러 어빌리티가 같이 쓰는 생성자의 태그 설정은 `UAgGameplayAbility`에 둡니다. 태스크는 델리게이트로 알리기만 하고, 행동 중·후딜과 어빌리티를 끝낼지는 어빌리티가 정합니다. 캐릭터는 플레이가 끝날 때(EndPlay) 어빌리티를 모두 취소합니다. | 한 어빌리티의 흐름이 부모와 자식 파일로 나뉘지 않고, 부모가 다른 어빌리티끼리도 같은 동작을 나눠 쓸 수 있습니다(넉업과 돌진 찌르기의 루트 모션 무시, 돌진 찌르기와 처형 피격의 충돌 무시). 태스크는 어빌리티가 끝나면 엔진이 함께 끝내므로, 켜 둔 상태를 되돌리는 코드가 그 기능 옆에 있습니다. ASC는 자기가 등록 해제될 때에야 어빌리티를 취소하는데, 그보다 먼저 메시가 등록 해제되며 몽타주를 끊으면 살아 있는 어빌리티가 그 콜백에서 메시를 바꿉니다(PIE 종료 때 처형 사망의 래그돌이 등록 해제 중인 메시에 물리 상태를 다시 만들어 엔진 ensure). |
 | 상태 | 피격 반응, 그로기, 처형 피격, 페이즈 전환, 사망은 이벤트로 발동하는 어빌리티로 만들고, 상태 우선순위는 태그로 나타냅니다. 높은 상태는 낮은 상태를 취소하고, 낮은 상태는 높은 상태 중에 시작하지 못합니다. 4순위 피격 반응(넉업, 넉백, 가드 밀림, 가드 브레이크)의 어빌리티 태그는 한 부모 태그(`Ability.Reaction.HitReaction`) 아래에 두어, 높은 상태가 부모 태그 하나로 취소합니다. 어빌리티가 붙이는 상태 태그는, 어빌리티가 도는 내내 붙으면 ActivationOwnedTags에 두고, 일부 구간에만 붙으면(회피의 무적 구간, 가드 중 등) 태그 유지 태스크(`UAgAbilityTask_HoldTag`)로 붙입니다. | 행동과 같은 방식이라 규칙이 한곳에 모입니다. 두 방식 모두 어빌리티가 끝나면 엔진이 태그를 떼므로, 어빌리티마다 태그를 떼는 코드를 두지 않습니다. |
-| 피격 처리 | 공격은 대미지 GameplayEffect를 적용하는 것으로 끝나고, 피격 처리는 그 GameplayEffect 안에서 이루어집니다. 피격 처리 순서와 대미지 계산식은 계산 클래스(`UAgDamageExecution`)가, 사망·그로기 판정은 어트리뷰트 세트의 GameplayEffect 실행 뒤 처리(`PostGameplayEffectExecute`)가, 결과에 따른 반응과 적중 후 처리는 GameplayEffect 컴포넌트(`UAgHitResultGameplayEffectComponent`)가 맡습니다. | GAS가 권장하는 구조입니다. 공격 방식(무기 스윕, 투사체, 착지 범위, 처형)마다 처리 함수를 부르지 않아도, 대미지 GameplayEffect만 적용하면 피격 처리가 빠짐없이 따라옵니다. |
 | 쿨다운 | 쿨다운용 GameplayEffect로 처리합니다. 쿨다운, 리젠 대기, 패리 구간, 가드 시작 후 이동할 수 없는 시간은 시간과 태그를 적용할 때 정하는 GameplayEffect 하나를 같이 씁니다. 비용(SP·MP·UP)은 '자원 변화'를 따릅니다. | GAS 기본 방식입니다. 값이 캐릭터·공통 데이터에 있어 GameplayEffect 에셋에 따로 둘 데이터가 없습니다. |
 | 자원 변화 | 자원이 바뀌는 일마다 그 규칙을 가진 GameplayEffect를 적용합니다. 행동 비용은 어빌리티의 비용 GameplayEffect(`CostGameplayEffectClass`)로 엔진이 커밋할 때 치르고, 줄이는 양은 비용 GameplayEffect의 계산 클래스가 어빌리티에서 읽습니다. 치를 수 있는지는 어빌리티가 플레이어 사양의 행동별 조건으로 확인합니다. MP·UP 충전과 극한 회피의 SP 반환은 얻는 양을 SetByCaller로 받는 자원 GameplayEffect로, PP 회복(그로기가 끝날 때, 페이즈 전환)은 PP를 최대로 덮어쓰는 GameplayEffect로, 패리로 공격자가 잃는 PP는 계산 클래스가 양을 정하는 GameplayEffect로 처리합니다. 극한 회피와 패리의 보상은 그 구간을 연 회피·가드 어빌리티가 그 이벤트를 받아 줍니다. | 양을 정하는 규칙이 GameplayEffect에 있어, 적용하는 쪽이 양을 계산하지 않습니다. 비용은 GAS가 정한 자리(비용 GameplayEffect)로 치릅니다. 보상을 구간을 연 어빌리티가 주면 극한 회피와 패리가 같은 방식이 됩니다. |
 | 모션 캔슬 | 행동 어빌리티는 후딜 전까지 '행동 중' 태그를, 모션이 끝날 때까지 '행동 모션' 태그를 갖습니다. 후딜 시작은 [애니메이션과 이동](<애니메이션과 이동.md>)의 '모션을 따르는 구간'과 '기획서에 초로 적힌 구간'을 따릅니다. 새 행동은 '행동 중' 태그가 없을 때만 시작하고, 시작하면 진행 중인 행동을 취소합니다. 회피 후딜에 회피를 누르면 회피를 처음부터 다시 시작합니다. 이동 입력은 '행동 모션' 태그가 있는 동안 무시합니다. 플레이어 행동, 보스 패턴, 피격 반응, 그로기(처형 피격 포함), 페이즈 전환은 블렌드 아웃이 시작될 때가 아니라 모션이 끝날 때 끝납니다. 피격 반응에 이어지는 모션(넉업의 기상)은 앞 모션이 블렌드 아웃을 시작할 때 잇습니다. | 상태별 허용 입력 표를 그대로 옮길 수 있습니다. 이동만 후딜에도 막히므로 태그를 따로 둡니다. 블렌드 아웃은 모션 끝보다 먼저 시작해, 그때 끝내면 후딜과 피격 반응(기상 무적 포함)이 모션보다 짧아지고 그로기가 지속 시간보다 짧아지며, 페이즈 전환의 무적이 포효가 끝나기 전에 풀립니다. |
@@ -191,7 +190,7 @@ classDiagram
 
 #### 상태
 
-상태 어빌리티는 게임플레이 이벤트로 시작합니다([전투 규칙](<전투 규칙.md>) '공격 판정과 피격 처리').
+상태 어빌리티는 게임플레이 이벤트로 시작합니다([대미지와 피격 처리](<대미지와 피격 처리.md>) '공격 판정과 피격 처리').
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
@@ -245,20 +244,16 @@ classDiagram
 
 ### GameplayEffect
 
-GameplayEffect는 모두 C++ 클래스입니다. 대미지 GameplayEffect는 공격하는 쪽(무기 스윕, 검기, 도약 내려찍기의 착지, 처형, 궁극기 마무리)이 적용하고, 피격 처리는 그 안에서 끝납니다. 계산 클래스가 피격 결과를 정해 스펙 태그로 남기고, 어트리뷰트 세트가 사망·그로기를 판정하며, 결과 처리 컴포넌트가 반응과 적중 후 처리를 합니다. 행동 비용은 어빌리티의 비용 GameplayEffect로 엔진이 치르고, 자원 얻기, PP 회복, 패리로 잃는 PP는 그 일을 하는 어빌리티나 결과 처리 컴포넌트가 적용합니다. 시간 태그 GameplayEffect는 그 클래스의 함수(`Apply`)로 적용하고, 리젠 GameplayEffect는 캐릭터가 시작할 때 캐릭터 데이터의 목록(`RegenEffects`)대로 겁니다. 리젠의 회복량은 크기 계산 클래스가 주기마다 캐릭터 데이터에서 읽습니다.
+GameplayEffect는 모두 C++ 클래스입니다. 대미지 GameplayEffect는 [대미지와 피격 처리](<대미지와 피격 처리.md>)에 있습니다. 행동 비용은 어빌리티의 비용 GameplayEffect로 엔진이 치르고, 자원 얻기, PP 회복, 패리로 잃는 PP는 그 일을 하는 어빌리티나 결과 처리 컴포넌트가 적용합니다. 시간 태그 GameplayEffect는 그 클래스의 함수(`Apply`)로 적용하고, 리젠 GameplayEffect는 캐릭터가 시작할 때 캐릭터 데이터의 목록(`RegenEffects`)대로 겁니다. 리젠의 회복량은 크기 계산 클래스가 주기마다 캐릭터 데이터에서 읽습니다.
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `UAgEffect_Damage` | `UGameplayEffect` | 공격 하나의 적중. 적용하면 피격 처리가 그 안에서 끝납니다(죽은 대상 제외, 계산 클래스, 결과 처리 컴포넌트). 공격 데이터 1타를 스펙에 담는 함수가 있습니다. |
-| `UAgDamageExecution` | `UGameplayEffectExecutionCalculation` | 피격 처리 순서와 대미지 계산식. 대상의 상태 태그로 결과를 정해 HP·PP·SP를 바꾸고, 결과를 스펙 태그로 남깁니다. |
-| `UAgHitResultGameplayEffectComponent` | `UGameplayEffectComponent` | 대미지 GameplayEffect의 결과 처리. 피격 반응, 막힘 알림, 적중 후 처리(이펙트와 효과음, 셰이크, 대미지 숫자, 히트스톱, MP·UP 충전) |
 | `UAgEffect_Resource` | `UGameplayEffect` | 자원 얻기(MP·UP 충전, 극한 회피의 SP 반환). 얻는 양을 SetByCaller로 받습니다. |
 | `UAgEffect_Cost` | `UGameplayEffect` | 행동 비용. 비용을 치르는 어빌리티의 비용 GameplayEffect입니다. |
 | `UAgCostExecution` | `UGameplayEffectExecutionCalculation` | 비용 GameplayEffect의 계산. 어빌리티의 비용만큼 SP·MP·UP를 줄입니다. |
 | `UAgEffect_PPRefill` | `UGameplayEffect` | PP를 최대로 채웁니다(그로기가 끝날 때, 페이즈 전환). |
 | `UAgEffect_ParryPPLoss` | `UGameplayEffect` | 패리로 공격한 쪽이 잃는 PP. 막은 쪽의 가드 어빌리티가 공격한 쪽에 적용합니다. |
 | `UAgParryPPLossExecution` | `UGameplayEffectExecutionCalculation` | 패리로 잃는 PP의 계산. 공격한 쪽의 MaxPP × 막은 쪽의 패리 PP 비율(PP를 잃지 않는 대상은 그대로) |
-| `UAgEffect_Kill` | `UGameplayEffect` | HP를 0으로 만듭니다(Kill Z 낙하, 테스트용 콘솔 명령). |
 | `UAgEffect_TimedTag` | `UGameplayEffect` | 적용할 때 정한 시간 동안 태그를 줍니다(쿨다운, 리젠 대기, 패리 구간, 가드 시작 후 이동 불가, 회피 반격 기회, 히트스톱). 거는 함수가 시간과 태그를 정합니다. |
 | `UAgEffect_Regen` | `UGameplayEffect` | 리젠 주기 GameplayEffect의 부모. SP 평소용, SP 가드 중용, PP용, 달리기 SP 소모용이 태그 조건과 읽는 초당 회복량만 다릅니다. 주기는 이 클래스의 `Period`입니다. |
 | `UAgRegenCalculation` | `UGameplayModMagnitudeCalculation` | 리젠의 한 주기 양. 주인의 캐릭터 데이터에서 읽은 초당 회복량 × 주기 |
@@ -266,21 +261,6 @@ GameplayEffect는 모두 C++ 클래스입니다. 대미지 GameplayEffect는 공
 ```mermaid
 classDiagram
     direction LR
-    class UAgEffect_Damage {
-        <<대미지>>
-    }
-    class UAgDamageExecution {
-        <<피격 처리 순서, 대미지 계산식>>
-    }
-    class UAgHitResultGameplayEffectComponent {
-        <<피격 결과 처리>>
-    }
-    class UTargetTagRequirementsGameplayEffectComponent {
-        <<죽은 대상 제외>>
-    }
-    class UAgEffect_Kill {
-        <<HP를 0으로>>
-    }
     class UAgEffect_Resource {
         <<자원 얻기>>
     }
@@ -311,14 +291,6 @@ classDiagram
     class UAgEffect_SprintSPCost {
         <<달리기 SP 소모>>
     }
-    UGameplayEffect <|-- UAgEffect_Damage
-    UGameplayEffectExecutionCalculation <|-- UAgDamageExecution
-    UAgEffect_Damage --> UAgDamageExecution : Executions
-    UGameplayEffectComponent <|-- UAgHitResultGameplayEffectComponent
-    UAgEffect_Damage *-- UAgHitResultGameplayEffectComponent : GEComponents
-    UAgEffect_Damage *-- UTargetTagRequirementsGameplayEffectComponent : GEComponents
-    UAgDamageExecution ..> UAgAttributeSet : HP·PP·SP
-    UGameplayEffect <|-- UAgEffect_Kill
     UGameplayEffect <|-- UAgEffect_Resource
     UGameplayEffect <|-- UAgEffect_Cost
     UGameplayEffectExecutionCalculation <|-- UAgCostExecution
@@ -337,10 +309,6 @@ classDiagram
     UAgEffect_Regen --> UAgRegenCalculation : 크기 계산
     UAgRegenCalculation ..> UAgEffect_Regen : GetRatePerSecond
 
-    AAgCharacterBase ..> UAgEffect_Kill : Kill
-    UAgHitResultGameplayEffectComponent ..> UAgCombatLibrary : PlayCameraShake
-    UAgHitResultGameplayEffectComponent ..> UAgEffect_TimedTag : Apply(히트스톱)
-    UAgHitResultGameplayEffectComponent ..> UAgEffect_Resource : 적중 충전
     UAgGameplayAbility --> UAgEffect_Cost : CostGameplayEffectClass<br>(회피, 스킬, 궁극기)
     UAgCostExecution ..> UAgGameplayAbility : GetCost
     UAgAbility_Dodge ..> UAgEffect_Resource : 극한 회피 보상
@@ -348,7 +316,6 @@ classDiagram
     UAgAbility_Guard ..> UAgEffect_ParryPPLoss : 패리
     UAgAbility_Groggy ..> UAgEffect_PPRefill : 그로기 끝
     UAgAbility_PhaseTransition ..> UAgEffect_PPRefill : 페이즈 전환
-    UAgHitResultGameplayEffectComponent ..> UAgAssetManager : GetCombatRules<br>GetCameraData
 ```
 
 ### 입력에서 행동까지
