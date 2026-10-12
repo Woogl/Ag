@@ -6,7 +6,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AgAbility_Skill.generated.h"
 
-/** 스킬 (돌진 베기): MP를 쓰고 쿨다운이 있는 돌진 베기입니다. */
+/** 스킬 (돌진 베기): MP를 쓰고 쿨다운이 있는 공격입니다. */
 UCLASS()
 class UAgAbility_Skill : public UAgGameplayAbility
 {

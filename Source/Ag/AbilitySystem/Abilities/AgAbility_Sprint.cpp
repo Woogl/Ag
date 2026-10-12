@@ -22,6 +22,6 @@ void UAgAbility_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 
 bool UAgAbility_Sprint::CanPayCost(const UAgAttributeSet& Stats) const
 {
-	// Usable while SP is above 0 (플레이어 사양 'SP 소모').
+	// SP가 0보다 크면 쓸 수 있습니다(플레이어 사양 'SP 소모').
 	return Stats.GetSP() > 0.f;
 }

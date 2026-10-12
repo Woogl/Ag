@@ -36,7 +36,7 @@ void UAgButton::NativeOnHovered()
 {
 	Super::NativeOnHovered();
 
-	// Moving the mouse onto a button selects it (게임 플로우 'UI 조작').
+	// 마우스를 올리면 그 버튼을 선택합니다(게임 플로우 'UI 조작').
 	if (GetIsEnabled())
 	{
 		SetFocus();
@@ -47,6 +47,6 @@ void UAgButton::HandleFocusLost()
 {
 	Super::HandleFocusLost();
 
-	// Only the focused button stays selected. SetIsSelected(false) deselects only toggleable buttons, so it would leave this one selected.
+	// 선택은 포커스를 가진 버튼에만 남깁니다. SetIsSelected(false)는 토글 버튼만 선택을 풀어 주므로 ClearSelection을 씁니다.
 	ClearSelection();
 }

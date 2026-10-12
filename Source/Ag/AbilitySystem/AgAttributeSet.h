@@ -7,10 +7,7 @@
 #include "AttributeSet.h"
 #include "AgAttributeSet.generated.h"
 
-/**
- * The stats of 전투 시스템 '스탯', named as in the spec.
- * A resource a character doesn't use (the boss's SP, MP, UP) stays at 0.
- */
+/** 전투 시스템 '스탯'(이름은 기획서 그대로). 캐릭터가 쓰지 않는 자원(보스의 SP·MP·UP)은 0입니다. */
 UCLASS()
 class UAgAttributeSet : public UAttributeSet
 {
@@ -65,7 +62,7 @@ public:
 	FGameplayAttributeData DEF;
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, DEF)
 
-	/** 이동 속도 (cm/s). The character movement's max walk speed follows it. */
+	/** 이동 속도 (cm/s). 캐릭터 무브먼트의 최대 걷기 속도에 반영됩니다. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MOV;
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MOV)
@@ -81,6 +78,6 @@ protected:
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 
 private:
-	/** Keeps every stat inside its range from 전투 시스템 '스탯' (resources between 0 and their max, the rest at least 0). */
+	/** 스탯을 전투 시스템 '스탯'의 범위로 자릅니다(HP·SP·MP·UP·PP는 0 ~ 최대값, 나머지는 0 이상). */
 	void ClampToRange(const FGameplayAttribute& Attribute, float& Value) const;
 };

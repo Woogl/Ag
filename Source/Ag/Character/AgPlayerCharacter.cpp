@@ -27,15 +27,15 @@
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
-	// The character faces where it moves; the camera turns with the mouse (플레이어 사양 '이동').
+	// 캐릭터는 이동 방향을 바라보고, 카메라는 마우스로 돌립니다(플레이어 사양 '이동').
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->bUsePawnControlRotation = true;
-	// The arm doesn't inherit the character's rotation. Actions turn the character at once, sometimes after the arm has
-	// placed the camera for the frame (a buffered dodge runs from a timer), and the camera would turn with it for that frame.
+	// 스프링 암은 캐릭터의 회전을 물려받지 않습니다. 행동이 캐릭터를 한 번에 돌리는 일이 스프링 암이 그 프레임의 카메라
+	// 자리를 정한 뒤에도 일어나므로(선입력한 회피는 타이머로 실행), 물려받으면 그 프레임 동안 카메라도 함께 돌아갑니다.
 	CameraBoom->SetUsingAbsoluteRotation(true);
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -172,15 +172,14 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 		return;
 	}
 
-	// X is right, Y is forward, relative to where the camera looks. The direction is kept even when movement is
-	// ignored, because the dodge rolls toward the keys held.
+	// X는 오른쪽, Y는 앞(카메라 기준)입니다. 회피가 누른 키 쪽으로 구르므로 이동을 무시할 때도 방향은 기억합니다.
 	const FVector2D Input = Value.Get<FVector2D>();
 	const FRotationMatrix YawMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f));
 	const FVector Forward = YawMatrix.GetUnitAxis(EAxis::X);
 	const FVector Right = YawMatrix.GetUnitAxis(EAxis::Y);
 	MoveInputDirection = (Forward * Input.Y + Right * Input.X).GetSafeNormal2D();
 
-	// Movement input never cancels an action motion; it is ignored until the motion ends (플레이어 입력 '모션 캔슬').
+	// 이동 입력은 행동 모션을 캔슬하지 않고, 모션이 끝날 때까지 무시됩니다(플레이어 입력 '모션 캔슬').
 	if (CanMove())
 	{
 		AddMovementInput(Forward, Input.Y);
@@ -207,13 +206,13 @@ void AAgPlayerCharacter::MoveReleased()
 
 void AAgPlayerCharacter::Look(const FInputActionValue& Value)
 {
-	// The lock-on camera ignores look input (카메라 '카메라 모드').
+	// 락온 카메라는 시야 입력을 무시합니다(카메라 '카메라 모드').
 	if (LockOn->IsLockedOn())
 	{
 		return;
 	}
 
-	// Applied directly with no smoothing (카메라 '자유 시점' 회전 반응).
+	// 지연 없이 바로 반영합니다(카메라 '자유 시점'의 회전 반응).
 	const FVector2D Input = Value.Get<FVector2D>();
 	AddControllerYawInput(Input.X);
 	AddControllerPitchInput(Input.Y);
@@ -250,8 +249,8 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 
 void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 {
-	// 이 키를 직접 받는 어빌리티가 실행 중이면 그 어빌리티가 받습니다(평타의 다음 타, 패리 모션 중의 새 가드 시작). 아니면 키가
-	// 그 행동을 시작하고, 지금 허용되는지는 행동이 확인합니다.
+	// 이 키를 직접 받는 어빌리티가 실행 중이면 그 어빌리티가 받습니다(평타의 다음 타, 패리 모션 중의 새 가드 시작).
+	// 아니면 키가 그 행동을 시작하고, 지금 허용되는지는 행동이 확인합니다.
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	auto PressOrActivate = [this, ASC, &InputTag](const FGameplayTag& AbilityTag)
 	{
@@ -334,8 +333,8 @@ void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 
 bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) const
 {
-	// 상태별 허용 입력에서 행동 키가 없는 줄: 후딜 전의 행동(공중 포함)과 행동을 멈추는 피격 반응입니다. 공중에서는 평타 키(점프 공격)만
-	// 허용됩니다.
+	// 상태별 허용 입력에서 행동 키가 없는 줄: 후딜 전의 행동(공중 포함)과 행동을 멈추는 피격 반응입니다. 공중에서는
+	// 평타 키(점프 공격)만 허용됩니다.
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (InputTag == AgGameplayTags::Input_Attack && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Jumping))
 	{
@@ -349,8 +348,7 @@ bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) cons
 
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// Checked next frame, once whatever follows in this frame is set up (a knockback that cancelled the action, the
-	// basic attack marking its recovery).
+	// 이번 프레임에 이어지는 상태(행동을 끊은 피격 반응, 평타의 후딜 표시)가 정해진 뒤에 보도록 다음 프레임에 확인합니다.
 	if (NewCount == 0 && BufferedInput.IsValid())
 	{
 		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunBufferedInput);
@@ -471,7 +469,7 @@ void AAgPlayerCharacter::UpdateSprint()
 void AAgPlayerCharacter::UpdateRotationMode()
 {
 	// 이동: 락온 중에는 대상(카메라가 보는 쪽)을, 가드 중에는 대상이나 카메라 정면을 바라봅니다. 그 밖에는, 그리고 락온 중이라도
-	// 달릴 때는 이동 방향을 바라봅니다. 피격 반응 중에는 공격 쪽으로 돈 방향을 유지합니다(전투 시스템 '피격 모션').
+	// 달릴 때는 이동 방향을 바라봅니다. 피격 반응 중에는 공격 쪽으로 돈 방향을 유지합니다(전투 시스템 '피격 반응').
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const bool bReacting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction);
 	const bool bSprinting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting);

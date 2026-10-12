@@ -16,7 +16,7 @@ enum class EAgHitReaction : uint8
 	KnockUp UMETA(DisplayName = "넉업"),
 };
 
-/** 전투 시스템 '공격 데이터': the values of one attack window (1타), for player and boss attacks alike. */
+/** 전투 시스템 '공격 데이터': 공격 판정 하나(1타)의 값. 플레이어와 보스 공격이 함께 씁니다. */
 USTRUCT(BlueprintType)
 struct FAgAttackHit
 {
@@ -37,12 +37,12 @@ struct FAgAttackHit
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	bool bGuardable = true;
 
-	/** 패리 가능. An unguardable attack is never parryable. */
+	/** 패리 가능. 가드 불가 공격은 항상 패리 불가입니다. */
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (EditCondition = "bGuardable"))
 	bool bParryable = true;
 };
 
-/** 플레이어 공격의 판정 구간: 공격 데이터에 플레이어 공격에만 있는 값을 더합니다. */
+/** 플레이어 공격의 타 하나: 공격 데이터에 플레이어 공격에만 있는 값을 더합니다. */
 USTRUCT(BlueprintType)
 struct FAgPlayerAttackHit : public FAgAttackHit
 {
@@ -50,7 +50,7 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 
 	FAgPlayerAttackHit() = default;
 
-	/** 보스 공격의 판정 구간. 플레이어 공격에만 있는 값은 기본값입니다. */
+	/** 보스 공격의 타 하나로 만듭니다. 플레이어 공격에만 있는 값은 기본값입니다. */
 	explicit FAgPlayerAttackHit(const FAgAttackHit& Hit) : FAgAttackHit(Hit) {}
 
 	/** 플레이어 사양 'MP 충전': 이 타가 적중하면 공격자가 얻는 MP */
@@ -65,13 +65,13 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	bool bFinisher = false;
 };
 
-/** 플레이어 공격 하나 (평타 한 타, 회피 반격, 스킬, 처형) */
+/** 플레이어 공격 하나 (평타 한 타, 점프 공격, 회피 반격, 스킬, 처형) */
 USTRUCT(BlueprintType)
 struct FAgPlayerAttack
 {
 	GENERATED_BODY()
 
-	/** 판정 구간마다 하나씩, 몽타주 순서대로 */
+	/** 타마다 하나씩, 몽타주 순서대로 */
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TArray<FAgPlayerAttackHit> Hits;
 
@@ -94,7 +94,7 @@ struct FAgBossPattern
 	UPROPERTY(EditAnywhere, Category = "Pattern")
 	FName Id;
 
-	/** 판정 구간마다 하나씩, 몽타주 순서대로 */
+	/** 타마다 하나씩, 몽타주 순서대로 */
 	UPROPERTY(EditAnywhere, Category = "Pattern")
 	TArray<FAgAttackHit> Hits;
 

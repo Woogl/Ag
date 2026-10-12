@@ -27,22 +27,22 @@
 
 namespace
 {
-	/** Engine collision profile for simulating skeletal meshes (BaseEngine.ini). */
+	/** 래그돌용 엔진 충돌 프로필 (BaseEngine.ini) */
 	const FName RagdollProfileName(TEXT("Ragdoll"));
 
-	/** The weapon edge is swept in steps no longer than this, so a fast swing can't skip over a body. */
+	/** 빠르게 휘둘러도 몸을 건너뛰지 않도록 무기 날을 이 길이(cm) 이하로 나눠 스윕합니다(최대 MaxSweepSteps 단계). */
 	constexpr float SweepStepLength = 10.f;
 	constexpr int32 MaxSweepSteps = 16;
 
-	/** Closer than this to the character's axis, the angle around it is unreliable, so a sub-step goes straight. */
+	/** 캐릭터 축에서 이보다 가까우면 축 둘레의 각도가 불안정하므로, 나눈 위치를 직선으로 잡습니다. */
 	constexpr float MinArcRadius = 20.f;
 
 	/** 히트스톱 중의 시간 배율: 모션, 몽타주, 이동이 거의 멈춥니다. */
 	constexpr float HitstopTimeDilation = 1.e-4f;
 
 	/**
-	 * A point between A and B for a sub-step. Swings travel around the body, so this follows the arc around the
-	 * character's vertical axis through Center rather than the straight chord: a sweep can turn a quarter turn in a frame.
+	 * 나눈 단계의 A와 B 사이 위치. 휘두르기는 몸을 돌아 지나가고 한 프레임에 4분의 1바퀴까지 돌기도 하므로, 직선 대신
+	 * Center를 지나는 캐릭터 수직축 둘레의 호를 따라갑니다.
 	 */
 	FVector ArcLerp(const FVector& Center, const FVector& A, const FVector& B, float Alpha)
 	{
@@ -154,7 +154,7 @@ void AAgCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
-	// The player is possessed after BeginPlay; refresh so the ability system knows its controller.
+	// 빙의할 때마다 ASC가 새 컨트롤러를 알도록 액터 정보를 갱신합니다.
 	AbilitySystemComponent->RefreshAbilityActorInfo();
 }
 
@@ -435,7 +435,7 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 		return WorldRootMotion;
 	}
 
-	// Remove the part of this frame's root motion that would bring the character inside the stop distance.
+	// 이번 프레임의 루트 모션에서 정지 간격 안으로 들어가는 만큼을 잘라냅니다.
 	FVector Delta = WorldRootMotion.GetTranslation();
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	const float Toward = FVector::DotProduct(FVector(Delta.X, Delta.Y, 0.f), ToTarget);
@@ -485,8 +485,8 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 		AnimInstance->StopAllMontages(0.f);
 	}
 
-	// 3. 입력(플레이어)과 이동을 멈춥니다. 보스의 AI는 사망 상태로 넘어가 이동 입력을 더 주지 않습니다. 사망 모션은 루트 모션으로
-	// 계속 움직입니다.
+	// 3. 입력(플레이어)과 이동을 멈춥니다. 보스의 AI는 사망 상태로 넘어가 이동 입력을 더 주지 않습니다. 처형 사망
+	// 모션은 루트 모션으로 계속 움직입니다.
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PlayerController);
@@ -499,7 +499,7 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	// 5. 더는 상대 캐릭터를 막지 않습니다.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
-	// 6. 마지막 공격이 온 쪽으로 밀리며 래그돌이 됩니다.
+	// 6. 마지막 공격의 피격 방향으로 밀리며 래그돌이 됩니다.
 	if (bRagdoll)
 	{
 		StartRagdoll(PushVelocity);

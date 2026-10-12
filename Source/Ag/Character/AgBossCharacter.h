@@ -36,19 +36,19 @@ public:
 	/** 공격 패턴 몽타주의 재생 속도: 보스 사양 '모션 재생 속도'에 2페이즈 '패턴 진행 속도'를 곱합니다. */
 	float GetPatternPlayRate() const;
 
-	/** 페이즈: 1, or 2 after the phase transition ends. */
+	/** 페이즈. 처음에는 1이고, 페이즈 전환이 끝나면 2입니다. */
 	int32 GetPhase() const { return Phase; }
 
-	/** 페이즈 전환이 끝남: the phase 2 changes apply from now on. */
+	/** 페이즈 전환이 끝남: 이제부터 2페이즈 변화를 적용합니다. */
 	void EnterPhase2();
 
-	/** 2페이즈 변화 '패턴 진행 속도': 1 in phase 1. Scales the pattern motions and the movement inside patterns. */
+	/** 보스 사양 '2페이즈 변화'의 패턴 진행 속도. 1페이즈에서는 1이며, 패턴 모션과 패턴 중 이동에 곱합니다. */
 	float GetPatternSpeed() const;
 
-	/** 그로기: the groggy time starts counting (on landing when broken in the air) or groggy ends. */
+	/** 그로기 시간을 세기 시작하거나 멈춥니다. 공중에서 그로기가 되면 착지할 때 시작합니다. */
 	void SetGroggyTimerRunning(bool bRunning);
 
-	/** Game time since the groggy time started counting, or a negative value when it isn't counting. */
+	/** 그로기 시간을 세기 시작한 뒤 흐른 게임 시간. 세지 않을 때는 음수입니다. */
 	float GetGroggyElapsedTime() const;
 
 	/** 보스 AI의 현재 대상(구현 계획서 'AI 대상'). AI가 없거나 대상이 아직 없으면 null입니다. */
@@ -74,17 +74,17 @@ protected:
 
 private:
 
-	/** Attaches the lock-on marker and the execution prompt to their bones in the character data. */
+	/** 락온 마커와 처형 안내를 캐릭터 데이터에 정한 본에 붙입니다. */
 	void AttachWorldWidgets();
 
-	/** Shows or hides the lock-on marker and the execution prompt (전투 HUD '상황별 표시 규칙'). */
+	/** 락온 마커와 처형 안내를 보이거나 숨깁니다(전투 HUD '상황별 표시 규칙'). */
 	void UpdateWorldWidgets();
 
-	/** 락온 마커: at the lock-on point while the player is locked on to this boss. */
+	/** 락온 마커. 플레이어가 이 보스에 락온한 동안 락온 지점에 표시합니다. */
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> LockOnMarker;
 
-	/** 처형 안내: above the head while the player can execute this boss. */
+	/** 처형 안내. 플레이어가 이 보스를 처형할 수 있는 동안 머리 위에 표시합니다. */
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
 
@@ -93,6 +93,6 @@ private:
 	/** 부여한 패턴 스펙마다 그 스펙이 실행하는 패턴 ID */
 	TMap<FGameplayAbilitySpecHandle, FName> PatternIds;
 
-	/** World time the groggy time started counting, or negative when it isn't counting. */
+	/** 그로기 시간을 세기 시작한 월드 시간. 세지 않을 때는 음수입니다. */
 	double GroggyStartTime = -1.0;
 };

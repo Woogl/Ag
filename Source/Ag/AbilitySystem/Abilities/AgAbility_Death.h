@@ -7,9 +7,8 @@
 #include "AgAbility_Death.generated.h"
 
 /**
- * 사망 (상태 우선순위 1), started by Event.Death: runs 전투 시스템 '사망 처리' on the owner.
- * A boss killed by an execution plays the 처형 사망 motion to the end first, continuing from the 처형 피격 motion,
- * and only then becomes a ragdoll.
+ * 사망 (상태 우선순위 1): Event.Death로 시작해 전투 시스템 '사망 처리'를 합니다.
+ * 처형으로 죽은 보스는 처형 피격 모션에서 이어 처형 사망 모션을 끝까지 재생한 뒤 래그돌이 됩니다.
  */
 UCLASS()
 class UAgAbility_Death : public UAgGameplayAbility

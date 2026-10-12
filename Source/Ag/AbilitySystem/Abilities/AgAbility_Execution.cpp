@@ -26,7 +26,6 @@ UAgAbility_Execution::UAgAbility_Execution()
 
 AAgCharacterBase* UAgAbility_Execution::FindExecutionTarget(const AAgPlayerCharacter* Player)
 {
-	// 보스는 로컬 플레이어로 처형 안내를 정하는데, 플레이어가 아직 없을 수 있습니다.
 	if (!Player)
 	{
 		return nullptr;

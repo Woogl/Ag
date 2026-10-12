@@ -28,7 +28,7 @@ void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle H
 	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Boss->GetPatternSpeed());
 
 	// 물러나는 거리: 모션의 루트 모션 전체 이동에 배율을 걸어 백스텝 거리에 맞춥니다(보스 사양 '백스텝'). 몽타주 태스크가 재생할 때
-	// 배율을 걸고, 몽타주가 끝나면 1로 되돌립니다.
+	// 배율을 걸고, 몽타주가 블렌드 아웃을 시작하면 1로 되돌립니다.
 	const float MotionDistance = Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D();
 	const float RootMotionScale = MotionDistance > UE_KINDA_SMALL_NUMBER ? Data->BackstepDistance / MotionDistance : 1.f;
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Boss->GetPatternSpeed(), NAME_None, /*bStopWhenAbilityEnds*/ true, RootMotionScale);

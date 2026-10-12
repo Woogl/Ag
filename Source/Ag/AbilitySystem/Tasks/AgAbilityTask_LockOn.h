@@ -9,8 +9,8 @@
 class UAgLockOnComponent;
 
 /**
- * Follows the lock-on target while the lock-on lasts (카메라 '락온 카메라'): every frame it turns the camera toward the
- * target's lock-on point, and it ends once the lock-on component reports the target lost (플레이어 사양 '락온 해제 조건').
+ * 락온 중 대상을 따라갑니다(카메라 '락온 카메라'). 매 프레임 카메라를 대상의 락온 지점 쪽으로 돌리고, 락온 컴포넌트가
+ * 대상을 잃었다고 하면(플레이어 사양 '락온'의 해제 조건) 끝납니다.
  */
 UCLASS()
 class UAgAbilityTask_LockOn : public UAbilityTask
@@ -20,7 +20,7 @@ class UAgAbilityTask_LockOn : public UAbilityTask
 public:
 	UAgAbilityTask_LockOn();
 
-	/** The target died or went beyond the release range. */
+	/** 대상이 죽거나 해제 거리 밖으로 벗어나면 보냅니다. */
 	UPROPERTY(BlueprintAssignable)
 	FGenericGameplayTaskDelegate OnTargetLost;
 
@@ -29,12 +29,12 @@ public:
 	virtual void TickTask(float DeltaTime) override;
 
 private:
-	/** 구도, 회전: turns the control rotation toward the target. */
+	/** 컨트롤 회전을 대상 쪽으로 돌립니다(카메라 '구도', '회전'). */
 	void UpdateCamera(float DeltaTime);
 
 	TWeakObjectPtr<UAgLockOnComponent> LockOn;
 
-	/** The camera's turning speeds (degrees per second). Each lock-on starts from rest. */
+	/** 카메라의 회전 속도 (deg/s). 락온할 때마다 0에서 시작합니다. */
 	float PitchRate = 0.f;
 	float YawRate = 0.f;
 };

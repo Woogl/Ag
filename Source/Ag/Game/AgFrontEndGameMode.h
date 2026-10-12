@@ -8,7 +8,7 @@
 
 class UAgTitleScreen;
 
-/** Game mode of LV_FrontEnd (게임 플로우 'Front End'). Spawns no pawn and shows the title screen. */
+/** LV_FrontEnd의 게임 모드(게임 플로우 'Front End'). 폰 없이 타이틀 화면을 띄웁니다. */
 UCLASS(Abstract)
 class AAgFrontEndGameMode : public AAgGameMode
 {

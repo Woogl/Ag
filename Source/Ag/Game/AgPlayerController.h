@@ -19,13 +19,13 @@ class AAgPlayerController : public APlayerController
 public:
 	AAgPlayerController();
 
-	/** Creates an activatable screen, adds it to the player screen and activates it. */
+	/** ScreenClass 화면을 만들어 플레이어 화면에 붙이고 활성화합니다. */
 	UCommonActivatableWidget* PushScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass, int32 ZOrder = 0);
 
 	void ShowHUD(TSubclassOf<UAgHUDWidget> HUDClass);
 	void HideHUD();
 
-	/** Shows Stage Clear UI or Game Over UI. */
+	/** Stage Clear UI나 Game Over UI를 띄웁니다. */
 	void ShowResult(TSubclassOf<UAgResultScreen> ResultScreenClass, bool bStageCleared);
 
 private:

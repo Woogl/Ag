@@ -20,7 +20,7 @@ class AAgBossStageGameMode : public AAgGameMode
 	GENERATED_BODY()
 
 public:
-	/** Every player and boss registers itself on BeginPlay. */
+	/** 캐릭터는 모두 BeginPlay에서 스스로 등록합니다. */
 	void RegisterCombatant(AAgCharacterBase* Combatant);
 
 	/** 보스전을 처음부터 다시 시작합니다. 레벨을 다시 열어 모든 상태가 초기화됩니다(결과 UI의 Try Again). */

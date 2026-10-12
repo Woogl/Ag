@@ -9,8 +9,8 @@
 struct FFileChangeData;
 
 /**
- * Reads a data file again when it is saved in the project's Data folder, so changed values show without compiling or
- * restarting PIE (구현 계획서 '데이터' 다시 읽기).
+ * Data 폴더의 JSON이 저장되면 에셋 매니저가 그 파일을 다시 읽게 합니다. 컴파일 없이 PIE 중에 수치를 바꿔 볼 수
+ * 있습니다(구현 계획서 '다시 읽기').
  */
 UCLASS()
 class UAgDataReloadSubsystem : public UEditorSubsystem

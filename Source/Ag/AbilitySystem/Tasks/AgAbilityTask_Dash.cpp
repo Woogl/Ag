@@ -8,13 +8,13 @@
 
 namespace
 {
-	/** A tick that gets less than this share of the expected distance along the dash counts as blocked. */
+	/** 돌진 방향으로 예상 이동의 이 비율보다 덜 나아간 틱은 막힌 것으로 봅니다. */
 	constexpr float BlockedMoveRatio = 0.7f;
 
-	/** Blocked ticks in a row before the dash stops (one short tick can be a step). */
+	/** 막힌 틱이 이만큼 이어지면 돌진을 멈춥니다. 한 틱만 짧은 것은 턱을 오른 것일 수 있습니다. */
 	constexpr int32 BlockedTicksToStop = 3;
 
-	/** Ticks expected to move less than this aren't judged (hitstop all but stops the dash on purpose). */
+	/** 예상 이동(cm)이 이보다 짧은 틱은 막혔는지 판단하지 않습니다(히트스톱으로 돌진이 거의 멈춘 틱). */
 	constexpr float MinJudgedMove = 2.f;
 }
 
@@ -71,8 +71,8 @@ void UAgAbilityTask_Dash::TickTask(float DeltaTime)
 		return;
 	}
 
-	// Blocked (a wall): stop where it is. A wall hit at an angle makes the boss slide along it, so only the progress along
-	// the dash counts. Hitstop slows the owner's time, so those ticks expect almost no movement.
+	// 벽에 막히면 그 자리에서 멈춥니다. 비스듬히 부딪히면 벽을 따라 미끄러지므로 돌진 방향으로 나아간 거리만 봅니다.
+	// 히트스톱은 주인의 시간을 늦추므로 그동안의 틱은 예상 이동이 거의 없습니다.
 	const float Expected = Speed * DeltaTime;
 	if (Expected >= MinJudgedMove)
 	{

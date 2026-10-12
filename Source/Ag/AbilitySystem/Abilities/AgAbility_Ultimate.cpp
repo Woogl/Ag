@@ -49,7 +49,7 @@ void UAgAbility_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	// 마무리 전까지는 어떤 행동도 궁극기를 끊지 못합니다.
 	BeginBusy();
 
-	// 시간 정지: 시작부터 마무리까지 플레이어만 정상 속도로 돕니다.
+	// 시간 정지: 시작부터 마무리까지 플레이어만 정상 속도로 움직입니다.
 	TimeStopTask = UAgAbilityTask_TimeStop::TimeStop(this);
 	TimeStopTask->ReadyForActivation();
 

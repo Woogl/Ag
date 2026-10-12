@@ -21,7 +21,7 @@ void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 	{
 		return;
 	}
-	// 게임 전체 시간 배율은 게임 시간으로 흐르는 모든 것을 늦춥니다: 모션, 이동, 타이머, 카메라 셰이크, HUD의 HP 잔상.
+	// 게임 전체 시간 배율은 게임 시간으로 흐르는 모든 것을 늦춥니다: 모션, 이동, 타이머, 카메라 셰이크, HUD의 감소 잔상.
 	// 그동안 게임 시간은 실제 시간에 배율을 곱한 만큼 흐르므로, 게임 시간 타이머를 RealDuration × 배율로 걸면 실제 시간 RealDuration 뒤에 끝납니다.
 	AWorldSettings* WorldSettings = GetWorld()->GetWorldSettings();
 	WorldSettings->SetTimeDilation(Speed);

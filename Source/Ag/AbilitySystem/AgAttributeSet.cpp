@@ -28,8 +28,8 @@ void UAgAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute
 {
 	Super::PreAttributeBaseChange(Attribute, NewValue);
 
-	// Instant and periodic effects (damage, costs, regen) change the base value; keep it in range so a regen tick at
-	// the maximum doesn't pile up above it and swallow the next decrease.
+	// 즉시·주기 효과(대미지, 비용, 리젠)는 기본값을 바꿉니다. 최대값에서도 리젠이 더해져 기본값이 최대값을 넘으면
+	// 넘친 만큼 다음 감소가 묻히므로 범위로 자릅니다.
 	ClampToRange(Attribute, NewValue);
 }
 

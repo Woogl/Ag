@@ -27,6 +27,6 @@ private:
 	UFUNCTION()
 	void HandleLanded(EMovementMode NewMovementMode);
 
-	/** True while there is movement input. */
+	/** 이동 입력이 있으면 참입니다. */
 	bool IsMoving() const;
 };

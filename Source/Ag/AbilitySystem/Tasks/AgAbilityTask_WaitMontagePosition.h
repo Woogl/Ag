@@ -9,9 +9,9 @@
 class UAnimMontage;
 
 /**
- * Waits until a playing montage reaches a time (기획서에 초로 적힌 구간: 회피 무적, 극한 회피 구간, 후딜 시작).
- * It reads the montage's play position, so hitstop pauses the wait and the play rate scales it.
- * Fires at once when the montage is no longer playing.
+ * 재생 중인 몽타주가 정한 위치(초)에 닿을 때까지 기다립니다(구현 계획서 '기획서에 초로 적힌 구간').
+ * 몽타주 재생 위치로 재므로 히트스톱 중에는 함께 멈추고, 재생 속도에 따라 빨라지거나 느려집니다.
+ * 몽타주가 재생 중이 아니면 바로 알립니다.
  */
 UCLASS()
 class UAgAbilityTask_WaitMontagePosition : public UAbilityTask

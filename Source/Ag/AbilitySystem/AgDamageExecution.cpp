@@ -94,7 +94,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	const float DamageMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::Data_DamageMultiplier);
 	const int32 HPDamage = CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, Rules.DefenseConstant);
 
-	// 패리: 막는 쪽은 아무것도 잃지 않습니다. 공격한 쪽이 잃는 PP는 결과 처리가 줍니다.
+	// 패리: 막는 쪽은 아무것도 잃지 않습니다. 공격한 쪽의 PP는 패리 이벤트를 받은 가드 어빌리티가 줄입니다.
 	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable && bParryable && DefenderData)
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Parry);

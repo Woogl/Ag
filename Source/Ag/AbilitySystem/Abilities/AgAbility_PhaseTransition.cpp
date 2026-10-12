@@ -14,7 +14,7 @@ UAgAbility_PhaseTransition::UAgAbility_PhaseTransition()
 	SetAssetTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_PhaseTransition));
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_Invincible);
 
-	// 회전 covers pattern runs, movement and the pattern recovery wait, not the roar.
+	// 보스는 패턴 실행, 이동, 패턴 후딜레이 중에만 돌고 포효하는 동안은 돌지 않습니다(보스 사양 '회전').
 	ActivationOwnedTags.AddTag(AgGameplayTags::State_Boss_RotationLocked);
 	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
 	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);

@@ -141,7 +141,7 @@ float UAgAbility_Dodge::GetCooldownDuration() const
 
 bool UAgAbility_Dodge::CanPayCost(const UAgAttributeSet& Stats) const
 {
-	// Usable while SP is above 0, even below the cost.
+	// SP가 0보다 크면 비용보다 적어도 쓸 수 있습니다(플레이어 사양 'SP 소모').
 	return Stats.GetSP() > 0.f;
 }
 

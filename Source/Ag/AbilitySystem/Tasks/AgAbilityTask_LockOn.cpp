@@ -12,8 +12,8 @@
 namespace
 {
 	/**
-	 * Moves Angle toward Target on a critically damped spring (it eases in and out), never faster than MaxSpeed. Long
-	 * frames are split, because the spring is only accurate for steps under half the smoothing time.
+	 * Angle을 임계 감쇠 스프링으로 Target 쪽으로 옮기되(부드럽게 가속·감속) MaxSpeed보다 빨리 돌지 않습니다. 스프링은
+	 * 한 스텝이 SmoothingTime의 절반보다 짧을 때만 정확하므로 긴 프레임은 나눠 계산합니다.
 	 */
 	float SpringToward(float Angle, float& Rate, float Target, float DeltaTime, float SmoothingTime, float MaxSpeed)
 	{
@@ -55,7 +55,7 @@ void UAgAbilityTask_LockOn::TickTask(float DeltaTime)
 		return;
 	}
 
-	// The camera isn't part of the character's motion, so hitstop (the owner's time dilation) doesn't pause it.
+	// 카메라는 캐릭터의 모션이 아니므로 히트스톱(주인의 시간 배율)에 멈추지 않습니다.
 	UpdateCamera(GetWorld()->GetDeltaSeconds());
 }
 
@@ -69,7 +69,7 @@ void UAgAbilityTask_LockOn::UpdateCamera(float DeltaTime)
 	}
 	const UAgCameraData& CameraData = UAgAssetManager::Get().GetCameraData();
 
-	// 구도: 카메라 중심(스프링 암의 시작점)에서 락온 지점을 보되, 피치를 제한한 뒤 더 내려다봅니다.
+	// 구도: 회전 중심(스프링 암의 시작점)에서 락온 지점을 보되, 피치를 제한한 뒤 더 내려다봅니다.
 	const FVector Pivot = Player->GetCameraBoom()->GetComponentLocation();
 	FRotator Goal = (LockOn->GetLockOnPoint() - Pivot).Rotation();
 	Goal.Pitch = FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), CameraData.LockOnPitchMin, CameraData.LockOnPitchMax) - CameraData.LockOnLookDown;

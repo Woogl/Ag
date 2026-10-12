@@ -13,10 +13,10 @@ class UAgAbilityTask_HoldTag;
 class UAgAbilityTask_IgnoreRootMotion;
 
 /**
- * 가드 and 패리 (플레이어 사양 '가드', '패리'): guards while the guard key is held, and the player can move slowly.
- * A new guard start opens the 패리 구간; returning to guard after a parry motion or a guard pushback doesn't.
- * A parried attack plays the parry motion. During it the guard holds only while the key is held, and pressing the key
- * again in its recovery (후딜) starts a new guard with a new parry window. Releasing the key ends the guard.
+ * 가드와 패리 (플레이어 사양 '가드', '패리'): 가드 키를 누르고 있는 동안 가드하며, 그동안 천천히 움직일 수 있습니다.
+ * 새 가드 시작은 패리 구간을 열고, 패리 모션이나 가드 밀림 뒤에 가드로 돌아올 때는 열지 않습니다. 패리하면 패리 모션을
+ * 재생합니다. 그동안은 키를 누르고 있을 때만 가드하고, 후딜에 키를 다시 누르면 패리 구간과 함께 가드를 새로 시작합니다.
+ * 키를 떼면 가드가 끝납니다.
  */
 UCLASS()
 class UAgAbility_Guard : public UAgGameplayAbility

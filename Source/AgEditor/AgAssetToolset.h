@@ -18,7 +18,7 @@ class UStateTree;
 class UStateTreeSchema;
 class UWidgetBlueprint;
 
-/** One piece of a montage: a time range of an animation. */
+/** 몽타주의 조각 하나: 애니메이션의 한 구간 */
 USTRUCT(BlueprintType)
 struct FAgMontageSegment
 {
@@ -30,7 +30,7 @@ struct FAgMontageSegment
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
 	float StartTime = 0.f;
 
-	/** 0 plays to the end of the animation. */
+	/** 0이면 애니메이션 끝까지 재생합니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
 	float EndTime = 0.f;
 
@@ -39,7 +39,7 @@ struct FAgMontageSegment
 	float PlayRate = 1.f;
 };
 
-/** One montage section: where it starts and which section plays after it. */
+/** 몽타주 섹션 하나: 시작 시각과 다음에 재생할 섹션 */
 USTRUCT(BlueprintType)
 struct FAgMontageSection
 {
@@ -51,7 +51,7 @@ struct FAgMontageSection
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
 	float StartTime = 0.f;
 
-	/** The section that plays next: none ends the montage, the section's own name repeats it. */
+	/** 다음에 재생할 섹션. None이면 몽타주가 끝나고, 자기 이름이면 반복합니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
 	FName NextSection;
 };
@@ -77,14 +77,15 @@ public:
 	static bool SetComponentParentSocket(UBlueprint* Blueprint, FName ComponentName, FName SocketName);
 
 	/**
-	 * Puts a montage slot in its own slot group on the skeleton, so montages in different groups don't stop each other.
-	 * @return False if an argument is missing or the slot didn't end up in the group.
+	 * 스켈레톤에서 몽타주 슬롯 SlotName을 슬롯 그룹 GroupName에 넣습니다. 그룹이 다른 몽타주끼리는 서로 멈추지 않습니다.
+	 * @return 인자가 빠졌거나 슬롯이 그룹에 들어가지 않았으면 false입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName GroupName);
 
 	/**
-	 * 몽타주의 트랙을 주어진 슬롯에서 차례로 재생하는 조각들로 바꿉니다. 새 끝보다 뒤에서 시작하는 섹션은 처음으로 옮깁니다.
+	 * 몽타주의 첫 슬롯 트랙을 SlotName 슬롯에서 차례로 재생하는 조각들로 바꿉니다. 새 끝보다 뒤에서 시작하는 섹션은
+	 * 처음으로 옮깁니다.
 	 * @param Segments StartTime과 EndTime은 그 조각 애니메이션 안의 시각입니다.
 	 * @return 몽타주에 슬롯 트랙이 없거나, Segments가 비었거나, 애니메이션이 없는 조각이 있으면 false이고 몽타주는 그대로입니다.
 	 */
@@ -100,14 +101,14 @@ public:
 	static bool SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections);
 
 	/**
-	 * Creates or replaces the widget animation AnimationName: WidgetName's render opacity goes from StartOpacity to
-	 * EndOpacity over Duration seconds in a straight line.
-	 * @return False if the widget isn't in the widget tree or Duration isn't positive.
+	 * 위젯 애니메이션 AnimationName을 만들거나 바꿉니다. WidgetName 위젯의 렌더 불투명도가 Duration초 동안 StartOpacity에서
+	 * EndOpacity로 선형으로 바뀝니다.
+	 * @return 위젯 트리에 그 위젯이 없거나 Duration이 0 이하면 false입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName, FName WidgetName, float Duration, float StartOpacity, float EndOpacity);
 
-	/** Deletes the widget animation AnimationName the way the widget designer does. False if there was none. */
+	/** 위젯 애니메이션 AnimationName을 위젯 디자이너와 같은 방식으로 지웁니다. 없었으면 false입니다. */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName);
 

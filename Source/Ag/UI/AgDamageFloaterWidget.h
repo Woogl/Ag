@@ -32,11 +32,11 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> DamageText;
 
-	/** 숫자가 투명해지는 애니메이션. */
+	/** 숫자가 투명해지는 위젯 애니메이션 */
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	TObjectPtr<UWidgetAnimation> FadeAnimation;
 
-	/** 표시 시간 동안 떠오르는 높이. */
+	/** 표시 시간 동안 떠오르는 높이 */
 	UPROPERTY(EditDefaultsOnly, Category = "Damage Floater", meta = (Units = "cm", ClampMin = 0))
 	float RiseHeight = 0.f;
 };

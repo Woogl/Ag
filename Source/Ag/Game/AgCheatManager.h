@@ -6,10 +6,7 @@
 #include "GameFramework/CheatManager.h"
 #include "AgCheatManager.generated.h"
 
-/**
- * Test console commands. Cheats only exist in development builds, so players never see these.
- * They exist to reach states like 처형, 페이즈 전환 and the result UI quickly while testing.
- */
+/** 테스트용 콘솔 명령. 치트는 개발 빌드에만 있어 플레이어에게 보이지 않습니다. 결과 UI를 빠르게 확인할 때 씁니다. */
 UCLASS()
 class UAgCheatManager : public UCheatManager
 {

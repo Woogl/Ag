@@ -13,10 +13,10 @@ class UAgAbilityTask_AttackMovement;
 class UAnimMontage;
 
 /**
- * 판정 구간이 있는 공격 하나(평타 한 타, 회피 반격, 스킬, 보스 공용 패턴, 구현 계획서 '공격 진행'): 공격 데이터를 판정 구간에
- * 걸고 몽타주를 재생하며, 공격 중 이동 태스크를 돌립니다. 마지막 판정 구간이 끝나면 OnLastWindowEnded, 모션이 끝나면
- * OnCompleted, 모션이 끊기면 OnInterrupted를 보냅니다. 행동 중과 후딜, 어빌리티를 끝낼지는 어빌리티가 정합니다.
- * 끝나면(어빌리티가 끝날 때 포함) 공격 데이터를 지웁니다.
+ * 판정 구간이 있는 공격 하나(평타 한 타, 점프 공격, 회피 반격, 스킬, 보스 공용 패턴, 구현 계획서 '공격 진행'): 공격
+ * 데이터를 판정 구간에 걸고 몽타주를 재생하며, 공격 중 이동 태스크를 돌립니다. 마지막 판정 구간이 끝나면
+ * OnLastWindowEnded, 모션이 끝나면 OnCompleted, 모션이 끊기면 OnInterrupted를 보냅니다. 행동 중과 후딜, 어빌리티를
+ * 끝낼지는 어빌리티가 정합니다. 끝나면(어빌리티가 끝날 때 포함) 공격 데이터를 지웁니다.
  */
 UCLASS()
 class UAgAbilityTask_Attack : public UAbilityTask

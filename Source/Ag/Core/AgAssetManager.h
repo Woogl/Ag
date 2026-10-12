@@ -29,8 +29,9 @@ public:
 	AG_API static FString GetJsonFolder();
 
 	/**
-	 * FileName으로 Target의 Transient 속성을 채웁니다. 오류(문법, 모르는 키나 빠진 키, 잘못된 형식, 없는 태그, 정수가 아닌 값,
-	 * 범위 밖의 값)가 하나라도 있으면 모든 값을 그대로 두고, 오류는 로그와 화면에 알립니다. 범위는 에디터에서만 검사합니다.
+	 * FileName으로 Target의 Transient 속성을 채웁니다. 오류(문법, 모르는 키나 빠진 키, 잘못된 형식, 없는 태그·열거형
+	 * 값, 정수가 아닌 값, 범위 밖의 값)가 하나라도 있으면 모든 값을 그대로 두고, 오류는 로그와 화면에 알립니다. 범위는
+	 * 에디터에서만 검사합니다.
 	 */
 	bool LoadJsonValues(UObject& Target, const FString& FileName);
 

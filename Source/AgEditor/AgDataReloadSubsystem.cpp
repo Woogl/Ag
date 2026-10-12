@@ -11,7 +11,7 @@
 
 bool UAgDataReloadSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
-	// Commandlets (the cook) never change the files while running.
+	// 커맨드렛(쿡 등)이 도는 동안에는 데이터 파일이 바뀌지 않으므로 지켜보지 않습니다.
 	return !IsRunningCommandlet();
 }
 

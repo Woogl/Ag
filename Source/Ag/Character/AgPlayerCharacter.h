@@ -16,7 +16,7 @@ class USpringArmComponent;
 struct FAbilityEndedData;
 struct FInputActionValue;
 
-/** The player character (플레이어 사양). Owns the camera and lock-on, and turns input into movement and actions. */
+/** 플레이어 캐릭터(플레이어 사양). 카메라와 락온을 가지고, 입력을 이동과 행동으로 바꿉니다. */
 UCLASS(Abstract)
 class AAgPlayerCharacter : public AAgCharacterBase
 {
@@ -45,10 +45,10 @@ public:
 	/** IMC_Ag: 전투 HUD의 조작 안내가 이 매핑을 표시합니다. */
 	const UInputMappingContext* GetInputMapping() const { return InputMapping; }
 
-	/** The camera's spring arm. Its origin is the camera's 회전 중심. */
+	/** 카메라의 스프링 암. 그 위치가 카메라의 회전 중심입니다. */
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 
-	/** The direction the movement keys point, relative to the camera (zero without movement input). */
+	/** 이동 키가 가리키는 방향(카메라 기준). 이동 입력이 없으면 0입니다. */
 	FVector GetMoveInputDirection() const { return MoveInputDirection; }
 
 	bool IsGuardHeld() const { return bGuardHeld; }
@@ -63,7 +63,7 @@ protected:
 private:
 	void Move(const FInputActionValue& Value);
 
-	/** 점프: moving after a standing landing ends the landing motion. */
+	/** 점프: 제자리 착지 뒤 움직이면 착지 모션을 끝냅니다. */
 	void StopLandingMotion();
 	void MoveReleased();
 	void Look(const FInputActionValue& Value);
@@ -77,14 +77,14 @@ private:
 	/** 뗀 키를 처리합니다(가드 키와 회피·달리기 키만 봅니다). */
 	void HandleInputReleased(FGameplayTag InputTag);
 
-	/** 선입력: 이 행동 키가 지금 허용되지 않으면 true입니다(후딜 전의 행동, 피격 반응, 공중에서는 평타 키 밖의 키). */
+	/** 선입력: 이 행동 키가 지금 허용되지 않으면 참입니다(후딜 전의 행동, 피격 반응, 공중에서는 평타 키 밖의 키). */
 	bool IsActionInputBlocked(const FGameplayTag& InputTag) const;
 
-	/** 선입력: once action keys are allowed again, the remembered key runs. */
+	/** 선입력: 행동 키가 다시 허용되면 기억한 키를 실행합니다. */
 	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);
 	void TryRunBufferedInput();
 
-	/** False while an action motion, a hit reaction, groggy, execution or death ignores movement input. */
+	/** 이동할 수 있으면 참입니다. 행동 모션, 가드 시작 직후, 피격 반응, 그로기, 처형, 사망 중에는 이동 입력을 무시합니다. */
 	bool CanMove() const;
 
 	/** 가드 시작: 가드 키를 누른 채 행동이나 피격 반응이 끝나면 가드를 다시 시작합니다. 가드 밀림 뒤에는 패리 구간을 열지 않습니다. */
@@ -98,23 +98,23 @@ private:
 	void UpdateSprint();
 
 	/**
-	 * Faces the movement direction normally; faces the camera (the lock-on target) while locked on or guarding.
-	 * A sprint faces the movement direction even while locked on.
+	 * 평소에는 이동 방향을, 락온 중이나 가드 중에는 카메라(락온 대상) 쪽을 바라봅니다. 달릴 때는 락온 중에도 이동
+	 * 방향을 바라보고, 피격 반응 중에는 돌지 않습니다.
 	 */
 	void UpdateRotationMode();
 
-	/** Guarding and sprinting change the facing and the movement speed. */
+	/** 가드, 달리기, 피격 반응 태그가 바뀌면 바라보는 방향과 이동 속도를 다시 정합니다. */
 	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
-	/** 자원 회복: any SP use restarts the SP regen delay, a longer one when SP reaches 0. */
+	/** 자원 회복: SP가 줄 때마다 SP 리젠 대기를 다시 시작합니다. SP가 0이 되면 더 긴 대기입니다. */
 	void HandleSPChanged(const FOnAttributeChangeData& Data);
 
 	/** 시간 정지 동안 화면을 흑백으로 합니다. */
 	void HandleTimeStopChanged(bool bStopped);
 
 	/**
-	 * 카메라 '자유 시점': distance, pivot height and follow lag are set on BP_AgPlayer, like the camera's FOV.
-	 * Pulls the camera in when terrain blocks it (카메라 '카메라 충돌').
+	 * 카메라 '자유 시점': 거리, 회전 중심 높이, 위치 추적 지연은 카메라의 FOV처럼 BP_AgPlayer에 적습니다. 지형에 막히면
+	 * 카메라를 당깁니다(카메라 '카메라 충돌').
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -129,7 +129,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Time Stop")
 	TObjectPtr<UPostProcessComponent> TimeStopScreen;
 
-	/** IMC_Ag: the key layout of 플레이어 입력 '키 배치'. */
+	/** IMC_Ag: 플레이어 입력 '키 배치'의 매핑 */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;
 
@@ -165,7 +165,7 @@ private:
 
 	FVector MoveInputDirection = FVector::ZeroVector;
 
-	/** 선입력: the key pressed while it wasn't allowed, and when (world time). */
+	/** 선입력: 허용되지 않을 때 누른 키와 누른 시각(월드 시간) */
 	FGameplayTag BufferedInput;
 	double BufferedInputTime = 0.0;
 
@@ -175,21 +175,21 @@ private:
 
 #if WITH_EDITORONLY_DATA
 	/**
-	 * Editor-only check helper: set from the editor tools during PIE to press an action once (for example Input.Attack),
-	 * so actions can be checked without a keyboard. Cleared after use.
+	 * 에디터 전용 확인용: PIE 중 에디터 도구로 넣으면 이 행동 키를 한 번 눌렀다 뗍니다(예: Input.Attack). 키보드 없이
+	 * 행동을 확인합니다. 쓰고 나면 비웁니다.
 	 */
 	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev", meta = (Categories = "Input"))
 	FGameplayTag DevPressInput;
 
-	/** Editor-only check helper: presses this action every frame while set (mashing), for checking chains like the combo. */
+	/** 에디터 전용 확인용: 넣어 둔 동안 이 행동 키를 매 프레임 누릅니다(연타). 평타 콤보 같은 연계를 확인합니다. */
 	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev", meta = (Categories = "Input"))
 	FGameplayTag DevMashInput;
 
-	/** Editor-only check helper: holds this action's key while set (for example Input.Guard), and releases it when cleared. */
+	/** 에디터 전용 확인용: 넣어 둔 동안 이 행동 키를 누르고 있고(예: Input.Guard), 비우면 뗍니다. */
 	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev", meta = (Categories = "Input"))
 	FGameplayTag DevHoldInput;
 
-	/** Editor-only check helper: movement input applied every frame while not zero (X right, Y forward). */
+	/** 에디터 전용 확인용: 0이 아닌 동안 매 프레임 넣는 이동 입력 (X 오른쪽, Y 앞) */
 	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev")
 	FVector2D DevMoveInput = FVector2D::ZeroVector;
 

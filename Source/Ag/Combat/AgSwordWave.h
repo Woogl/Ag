@@ -12,10 +12,9 @@ class UBoxComponent;
 class UStaticMeshComponent;
 
 /**
- * 검기 (보스 사양 '검기 발사', '검기'): flies along the ground in a straight line and judges the player once, then flies on
- * through. It vanishes when it touches a wall, reaches its range, or its shooter dies; other changes to the shooter don't
- * stop it. The hit box size (폭, 높이) and the look (mesh, material) are set on the blueprint; speed and range come at
- * launch.
+ * 검기 (보스 사양 '검기 발사', '검기'): 지면을 따라 곧게 날아가며, 닿은 적을 한 번씩 판정하고 뚫고 지나갑니다.
+ * 벽에 닿거나 최대 사거리에 이르거나 쏜 캐릭터가 죽으면 사라지고, 쏜 캐릭터의 다른 상태 변화와는 관계없이 날아갑니다.
+ * 판정 상자의 크기(폭, 높이)와 모습(메시, 머티리얼)은 블루프린트에서 정하고, 속도와 사거리는 발사할 때 받습니다.
  */
 UCLASS(Abstract)
 class AAgSwordWave : public AActor
@@ -32,15 +31,15 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	/** The attack box, its bottom on the ground. Only used for queries. X is the depth along the flight, Y the width. */
+	/** 판정 상자. 바닥이 지면에 닿고, 검사에만 씁니다. X는 날아가는 방향의 두께, Y는 폭입니다. */
 	UPROPERTY(VisibleAnywhere, Category = "Sword Wave")
 	TObjectPtr<UBoxComponent> HitBox;
 
-	/** The look, placed over the box on the blueprint. */
+	/** 모습. 블루프린트에서 판정 상자에 겹쳐 놓습니다. */
 	UPROPERTY(VisibleAnywhere, Category = "Sword Wave")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
-	/** Characters the wave already reached; each is judged once. */
+	/** 이미 닿은 캐릭터. 하나당 한 번만 판정합니다. */
 	TArray<TWeakObjectPtr<AActor>> TouchedActors;
 
 	FAgAttackHit Hit;

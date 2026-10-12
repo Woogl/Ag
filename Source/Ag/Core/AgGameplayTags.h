@@ -4,13 +4,10 @@
 
 #include "NativeGameplayTags.h"
 
-/**
- * Every gameplay tag in the project, declared natively (AGENTS.md coding rule 3).
- * Tag ini files are not used.
- */
+/** 프로젝트의 모든 게임플레이 태그. 태그 ini 없이 네이티브로만 선언합니다(AGENTS.md 코딩 규칙 3). */
 namespace AgGameplayTags
 {
-	// Input tags. An ability activates when its input tag is pressed.
+	// 입력 태그. 플레이어 캐릭터가 이 태그로 행동을 시작하거나, 실행 중인 어빌리티에 게임플레이 이벤트로 넘깁니다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Guard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Dodge);
@@ -21,7 +18,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_GuardReleased);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_LockOn);
 
-	// Ability identity tags, used to cancel or block abilities by group.
+	// 어빌리티를 구분하는 태그. 태그로 어빌리티를 시작하고, 부모 태그로 묶어 취소합니다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_BasicAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Dodge);
@@ -45,7 +42,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Death);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern);
 
-	// State tags owned by a character. 상태 우선순위 (전투 시스템) maps onto Dead > Execution > Groggy > HitReaction.
+	// 캐릭터가 가진 상태 태그. 전투 시스템 '상태 우선순위'는 Dead > Execution > Groggy > HitReaction 순입니다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Execution_Executing);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Execution_Executed);
@@ -67,7 +64,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_PPDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Boss_RotationLocked);
 
-	// Gameplay events that start state abilities or report combat results.
+	// 게임플레이 이벤트. 어빌리티를 발동하거나, 전투 결과나 모션의 시점(몽타주 노티파이)을 알립니다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockBack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Flinch);
@@ -92,11 +89,11 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_SwordWave);
 
-	// Cooldown tags granted by cooldown GameplayEffects.
+	// 쿨다운 GE가 주는 쿨다운 태그
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill);
 
-	// SetByCaller magnitudes.
+	// SetByCaller 값의 태그
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_SP);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_MP);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Data_UP);
@@ -116,7 +113,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Hit);
 
-	// 이펙트, 효과음, 카메라 셰이크를 재생하는 GameplayCue.
+	// 이펙트, 효과음, 카메라 셰이크, 대미지 숫자를 재생하는 게임플레이 큐
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Hit);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Guard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Parry);

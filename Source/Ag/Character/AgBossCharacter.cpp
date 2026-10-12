@@ -21,11 +21,11 @@ AAgBossCharacter::AAgBossCharacter()
 	AIControllerClass = AAgBossAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	// The boss turns toward the player by itself, not toward where it walks.
+	// 보스는 걷는 방향이 아니라 AI의 대상을 향해 스스로 돕니다.
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
-	// Screen space: the widgets keep their own size at any distance. They attach to the data's bones on BeginPlay.
+	// 화면 공간이라 거리와 관계없이 크기가 같습니다. 데이터의 본에는 BeginPlay에서 붙입니다.
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
 	for (UWidgetComponent* WorldWidget : { LockOnMarker.Get(), ExecutionPrompt.Get() })
@@ -38,7 +38,7 @@ AAgBossCharacter::AAgBossCharacter()
 		WorldWidget->SetHiddenInGame(true);
 	}
 
-	// The prompt stands on its bone: 보스 머리 위.
+	// 처형 안내는 본 바로 위(보스 머리 위)에 섭니다.
 	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
 }
 
@@ -136,7 +136,7 @@ AAgCharacterBase* AAgBossCharacter::GetTarget() const
 
 void AAgBossCharacter::UpdateWorldWidgets()
 {
-	// 둘 다 어느 쪽이든 사망 연출이 시작되는 순간부터, 처형 중에, 그리고 궁극기 컷신(플레이어 컨트롤러의 시네마틱 모드) 동안
+	// 둘 다 플레이어나 보스의 사망 연출이 시작되는 순간부터, 처형 중, 궁극기 컷신(플레이어 컨트롤러의 시네마틱 모드) 동안
 	// 숨깁니다. 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
 	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);

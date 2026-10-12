@@ -35,7 +35,7 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	GroundSpeed = Velocity.Size2D();
 	if (GroundSpeed > UE_KINDA_SMALL_NUMBER)
 	{
-		// Keep the last direction while standing so the blend doesn't snap.
+		// 서 있을 때는 마지막 방향을 유지해 블렌드가 튀지 않게 합니다.
 		const FVector LocalVelocity = Character->GetActorRotation().UnrotateVector(Velocity);
 		MoveDirection = FMath::RadiansToDegrees(FMath::Atan2(LocalVelocity.Y, LocalVelocity.X));
 	}

@@ -171,8 +171,7 @@ bool UAgAssetToolset::SetMontageSections(UAnimMontage* Montage, const TArray<FAg
 		return false;
 	}
 
-	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다. 이름이 없으면(None이면 엔진이 이름을 지어 붙임) 실패하고, 이름이 겹치거나
-	// 다음 섹션이 목록에 없는 이름이어도 실패합니다.
+	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다. 이름이 None이면 엔진이 이름을 지어 붙이므로 실패로 봅니다.
 	TSet<FName> Names;
 	for (const FAgMontageSection& Section : Sections)
 	{
@@ -218,7 +217,7 @@ bool UAgAssetToolset::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName 
 	WidgetBlueprint->Modify();
 	RemoveWidgetAnimation(WidgetBlueprint, AnimationName);
 
-	// Set up like a new animation made in the widget designer.
+	// 위젯 디자이너에서 새로 만든 애니메이션과 같이 설정합니다.
 	UWidgetAnimation* Animation = NewObject<UWidgetAnimation>(WidgetBlueprint, AnimationName, RF_Transactional);
 	Animation->SetDisplayLabel(AnimationName.ToString());
 	UMovieScene* MovieScene = NewObject<UMovieScene>(Animation, AnimationName, RF_Transactional);
@@ -229,7 +228,7 @@ bool UAgAssetToolset::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName 
 	MovieScene->GetEditorData().WorkStart = 0.f;
 	MovieScene->GetEditorData().WorkEnd = Duration;
 
-	// The animated widget, found by name when the animation plays.
+	// 애니메이션할 위젯. 재생할 때 이름으로 찾습니다.
 	const FGuid Binding = MovieScene->AddPossessable(Widget->GetName(), Widget->GetClass());
 	FWidgetAnimationBinding& WidgetBinding = Animation->AnimationBindings.AddDefaulted_GetRef();
 	WidgetBinding.WidgetName = Widget->GetFName();
@@ -256,7 +255,7 @@ bool UAgAssetToolset::RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, F
 		return false;
 	}
 
-	// Moved out of the way so the name is free again, then forgotten.
+	// 이름을 다시 쓸 수 있도록 임시 패키지로 옮긴 뒤 목록에서 뺍니다.
 	WidgetBlueprint->Modify();
 	bool bRemoved = false;
 	for (int32 Index = WidgetBlueprint->Animations.Num() - 1; Index >= 0; --Index)

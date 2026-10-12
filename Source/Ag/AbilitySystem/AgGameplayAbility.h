@@ -39,20 +39,20 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 보스 패턴은 쿨다운 태그 없이
-	// 패턴 쿨다운 GE(UAgEffect_PatternCooldown)로 패턴마다 따로 세고, 시간(Boss.json)은 패턴 시작부터 셉니다. 비용은 비용 GE(CostGameplayEffectClass)로 치르고, 치를 수 있는지는
-	// 행동마다의 규칙(CanPayCost)이 정합니다.
+	// 패턴 쿨다운 GE(UAgEffect_PatternCooldown)로 패턴마다 따로 세고, 시간(Boss.json)은 패턴 시작부터 셉니다.
+	// 비용은 비용 GE(CostGameplayEffectClass)로 치르고, 치를 수 있는지는 행동마다의 규칙(CanPayCost)이 정합니다.
 	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	virtual bool CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 
-	/** The tag this ability's cooldown gives; the ability can't start while the owner has it. */
+	/** 쿨다운이 주는 태그를 정합니다. 주인에게 이 태그가 있는 동안 시작하지 못합니다. */
 	void SetCooldownTag(const FGameplayTag& CooldownTag);
 
-	/** 쿨다운 length from the character data; 0 for none. */
+	/** 캐릭터 데이터의 쿨다운 시간(초). 0이면 쿨다운이 없습니다. */
 	virtual float GetCooldownDuration() const { return 0.f; }
 
-	/** Whether the owner has enough of the resources to start (each action's own rule). */
+	/** 주인에게 시작할 만큼 자원이 있는지(행동마다의 규칙) */
 	virtual bool CanPayCost(const UAgAttributeSet& Stats) const { return true; }
 
 	/**

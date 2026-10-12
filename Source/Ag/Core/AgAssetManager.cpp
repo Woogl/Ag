@@ -154,7 +154,7 @@ namespace
 
 	/**
 	 * Json에 이 속성들이 빠짐없이, 다른 키 없이 있는지 확인하고 값마다 검사합니다. 키는 엔진의 이름(FName)과 JSON 객체처럼
-	 * 대소문자를 구분하지 않습니다. 쿠킹 빌드의 속성 이름은 대소문자를 보존하지 않습니다(예: UP → Up).
+	 * 대소문자를 구분하지 않습니다. 쿡한 빌드의 속성 이름은 대소문자를 보존하지 않습니다(예: UP → Up).
 	 */
 	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors)
 	{

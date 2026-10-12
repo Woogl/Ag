@@ -21,9 +21,8 @@ struct FOnAttributeChangeData;
 DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase* /*DeadCharacter*/);
 
 /**
- * 플레이어와 보스의 공통 부모.
- * 어빌리티 시스템과 스탯, 무기와 판정 구간, 정지 간격과 회전(전투 시스템 '공격 중 이동'), 캐릭터 데이터, 전투 시스템 '사망 처리'를
- * 맡습니다.
+ * 플레이어와 보스의 공통 부모. 어빌리티 시스템과 스탯, 무기와 판정 구간, 정지 간격과 회전(전투 시스템 '공격 중 이동'),
+ * 캐릭터 데이터, 전투 시스템 '사망 처리'를 맡습니다.
  */
 UCLASS(Abstract)
 class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface
@@ -57,19 +56,19 @@ public:
 	/** PP를 잃을 수 있습니다: 무한 PP가 아니고 그로기 중이 아닙니다(전투 시스템 'PP 감소량 계산식'). */
 	bool CanLosePP() const;
 
-	/** Sets the attack data the running action's attack windows use, one entry per window. */
+	/** 지금 행동의 공격 데이터를 판정 구간마다 하나씩 정합니다. */
 	void SetActiveAttack(TConstArrayView<FAgPlayerAttackHit> Hits);
 
-	/** The same for a boss attack, whose windows have none of the player's charges or display flags. */
+	/** 보스 공격용입니다. 플레이어 공격에만 있는 값(MP·UP 충전, bFinisher)은 기본값으로 둡니다. */
 	void SetActiveAttack(TConstArrayView<FAgAttackHit> Hits);
 
-	/** Closes any open attack window and forgets the action's attack data. */
+	/** 열린 판정 구간을 닫고 행동의 공격 데이터를 지웁니다. */
 	void ClearActiveAttack();
 
-	/** 판정 구간 start, from the attack window notify. */
+	/** 판정 구간을 엽니다. 판정 구간 노티파이와 돌진 찌르기의 돌진이 부릅니다. */
 	void BeginAttackWindow(int32 HitIndex);
 
-	/** 판정 구간 end, from the attack window notify. */
+	/** 판정 구간을 닫습니다. 판정 구간 노티파이와 돌진 찌르기의 돌진이 부릅니다. */
 	void EndAttackWindow(int32 HitIndex);
 
 	/** 정지 간격: 루트 모션이 이 캐릭터를 Target에 StopDistance보다 가까이 데려가지 않습니다(캡슐 중심 사이 수평 거리). */
@@ -86,26 +85,25 @@ public:
 	void SetFacingTarget(AActor* Target);
 
 	/**
-	 * 바라보는 방향이 고정된 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간이 해당합니다(전투 시스템 '공격 중 이동').
-	 * 공격 중 이동 태스크는 이 순간 접근 목표를 고정합니다.
+	 * 바라보는 방향이 고정된 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간이 해당합니다(전투 시스템
+	 * '공격 중 이동'). 공격 중 이동 태스크는 이 순간 접근 목표를 고정합니다.
 	 */
 	virtual bool IsFacingFixed() const;
 
-	/** 움찔: plays the additive flinch on top of the current motion. */
+	/** 움찔: 하던 동작 위에 움찔을 덧입혀 재생합니다. */
 	void PlayFlinch();
 
 	/** 가드 움찔: 가드 자세 위에 가드 움찔을 덧입혀 재생합니다. 가드 움찔 몽타주가 없는 캐릭터는 재생하지 않습니다. */
 	void PlayGuardFlinch();
 
 	/**
-	 * 사망 처리: stops every action, input and movement, removes this character's attack windows,
-	 * turns off character-to-character collision and switches to ragdoll moving with PushVelocity. Broadcasts OnDied.
-	 * DeathAbility is the ability running the death, which is not cancelled. Without bRagdoll the current motion keeps
-	 * playing (처형 사망) and the caller starts the ragdoll later.
+	 * 사망 처리: 모든 행동과 입력, 이동을 멈추고, 이 캐릭터의 판정 구간을 없애고, 캐릭터 간 충돌을 끈 뒤 PushVelocity로
+	 * 밀리는 래그돌이 됩니다. 끝에 OnDied를 알립니다. DeathAbility는 사망을 처리하는 어빌리티라 취소하지 않습니다.
+	 * bRagdoll이 거짓이면 지금 모션을 멈추지 않고(처형 사망), 래그돌은 호출한 쪽이 나중에 시작합니다.
 	 */
 	virtual void Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility = nullptr, bool bRagdoll = true);
 
-	/** 사망 처리 6: switches the dead character to ragdoll, pushed with PushVelocity. */
+	/** 사망 처리 6: 죽은 캐릭터를 래그돌로 바꾸고 PushVelocity로 밉니다. */
 	void StartRagdoll(const FVector& PushVelocity);
 
 	/** HP를 0으로 만드는 GE를 적용해 사망 판정을 일으킵니다. (Kill Z 낙하, 테스트용 콘솔 명령) */
@@ -114,7 +112,7 @@ public:
 	/** 시간 정지 중에 이 캐릭터만 정상 속도로 돌도록 시간 배율에 곱하는 값. 시간 서브시스템이 정하고, 평소에는 1입니다. */
 	void SetTimeCompensation(float Compensation);
 
-	/** Broadcast once when this character dies. */
+	/** 사망할 때 한 번 알립니다. */
 	FAgCharacterDiedSignature OnDied;
 
 protected:
@@ -130,30 +128,30 @@ protected:
 	/** 레벨의 Kill Z 아래로 떨어지면 HP를 0으로 만들어 사망 처리합니다. (전투 시스템 '사망') */
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
-	/** Grants the character data's abilities. */
+	/** 캐릭터 데이터의 어빌리티(Abilities)를 부여합니다. */
 	virtual void GrantAbilities();
 
 	/** 캐릭터 데이터의 리젠 효과(RegenEffects)를 겁니다. */
 	void StartRegen();
 
-	/** Movement speed as a multiple of MOV (the player's guard and sprint change it). */
+	/** MOV에 곱하는 이동 속도 배율. 플레이어는 가드와 달리기, 보스는 2페이즈가 바꿉니다. */
 	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
 
 	/** 지금 향해 돌 대상. 기본은 SetFacingTarget으로 정한 대상입니다. */
 	virtual AActor* GetFacingTarget() const { return FacingTarget.Get(); }
 
-	/** Applies MOV times the current multiplier to the movement component. */
+	/** MOV × GetMoveSpeedMultiplier()를 캐릭터 무브먼트의 최대 걷기 속도에 넣습니다. */
 	void UpdateMoveSpeed();
 
-	/** Restarts a regen delay from the beginning: removes the running one and applies a new one. */
+	/** 리젠 대기를 처음부터 다시 셉니다: 도는 대기를 지우고 새로 적용합니다. */
 	void RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration);
 
-	/** DA_Player or DA_Boss. Its numbers come from its data file (Player.json, Boss.json). */
+	/** DA_Player 또는 DA_Boss. 기획 값은 그 JSON(Player.json, Boss.json)에서 채웁니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	TObjectPtr<UAgCharacterData> CharacterData;
 
 private:
-	/** Sets the stats to the starting values in the character data. */
+	/** 스탯을 캐릭터 데이터의 초기값으로 정합니다. */
 	void InitializeStats();
 
 	void HandleMOVChanged(const FOnAttributeChangeData& Data);
@@ -195,19 +193,19 @@ private:
 	TObjectPtr<USceneComponent> WeaponComponent;
 
 	/**
-	 * 무기 판정 캡슐. 블루프린트에서 무기 컴포넌트의 자식으로 두고 날 전체를 덮게 맞춥니다. 공격은 캡슐 양 끝 중심을 잇는
-	 * 선분을 캡슐 반지름의 구로 스윕하며, 캡슐 자체의 충돌은 쓰지 않습니다.
+	 * 무기 판정 캡슐. 블루프린트에서 무기 컴포넌트의 자식으로 두고 날 전체를 덮게 맞춥니다. 공격은 캡슐 양 끝 중심을
+	 * 잇는 선분을 캡슐 반지름의 구로 스윕하며, 캡슐 자체의 충돌은 쓰지 않습니다.
 	 */
 	UPROPERTY(Transient)
 	TObjectPtr<UCapsuleComponent> WeaponCollisionComponent;
 
-	/** 공격 중 이동 (Motion Warping). */
+	/** 공격 중 이동 (Motion Warping) */
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
 
 	TArray<FAgPlayerAttackHit> ActiveAttackHits;
 	int32 OpenWindowHit = INDEX_NONE;
-	/** Characters the open window already touched (one hit per target per window). */
+	/** 열린 판정 구간이 이미 닿은 캐릭터 (판정 구간 하나에 대상마다 한 번) */
 	TArray<TWeakObjectPtr<AActor>> WindowTouchedActors;
 	FVector LastEdgeStart = FVector::ZeroVector;
 	FVector LastEdgeEnd = FVector::ZeroVector;

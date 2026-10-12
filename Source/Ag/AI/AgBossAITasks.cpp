@@ -14,7 +14,6 @@
 
 namespace
 {
-	/** 페이즈 전환 어빌리티가 실행 중인지 */
 	bool IsPhaseTransitionActive(const UAbilitySystemComponent& ASC)
 	{
 		for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())

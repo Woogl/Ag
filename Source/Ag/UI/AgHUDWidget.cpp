@@ -21,7 +21,7 @@
 
 namespace
 {
-	/** Scalar parameter of the UP gauge and cooldown sweep materials: the filled or covered share, 0 to 1. */
+	/** UP 게이지·쿨다운 원형 표시 머티리얼의 스칼라 파라미터: 채우거나 덮는 비율 (0~1) */
 	const FName RatioParameter(TEXT("Ratio"));
 }
 
@@ -99,7 +99,7 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	// 상황별 표시 규칙 '궁극기 컷신': 컷신은 재생 설정으로 플레이어 컨트롤러를 시네마틱 모드로 두므로, 그동안 숨깁니다.
+	// 궁극기 컷신(전투 HUD '상황별 표시 규칙'): 컷신이 플레이어 컨트롤러를 시네마틱 모드로 두는 동안 숨깁니다.
 	const APlayerController* PlayerController = GetOwningPlayer();
 	const bool bCutscene = PlayerController && PlayerController->bCinematicMode;
 	StatusPanel->SetVisibility(bStatusHidden || bCutscene ? ESlateVisibility::Collapsed : StatusPanelVisibility);

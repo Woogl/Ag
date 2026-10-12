@@ -176,7 +176,8 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 		}
 	}
 
-	// 패리 모션이 시작되면 패리 구간이 끝납니다. 패리 모션은 행동이라 후딜 전까지 이동도 입력도 받지 않습니다.
+	// 패리 모션이 시작되면 패리 구간이 끝납니다. 패리 모션은 행동이라 후딜 전까지 다른 행동을 받지 않고,
+	// 모션이 끝날 때까지 이동 입력을 받지 않습니다.
 	CloseParryWindow();
 	BeginBusy();
 	ParryMotionTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Acting);

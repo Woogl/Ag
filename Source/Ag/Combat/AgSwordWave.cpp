@@ -50,7 +50,7 @@ void AAgSwordWave::Tick(float DeltaSeconds)
 		return;
 	}
 
-	// 벽(보이지 않는 벽 포함)에 닿으면 멈춥니다. 선은 상자 가운데 높이로 지나가 바닥은 벽으로 치지 않습니다.
+	// 벽(보이지 않는 벽 포함)에 닿으면 벽까지만 날고 사라집니다. 선은 상자 가운데 높이로 지나가 바닥은 벽으로 치지 않습니다.
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgSwordWave), false, this);
 	QueryParams.AddIgnoredActor(ShooterCharacter);
 	const FVector Start = GetActorLocation();

@@ -20,27 +20,27 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (Units = "s", ClampMin = 0))
 	float HitstopTime = 0.f;
 
-	/** 가드 경감 배율 (GuardReduction) */
+	/** 가드 경감 배율 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (ClampMin = 0, ClampMax = 1))
 	float GuardReduction = 1.f;
 
-	/** 방어 상수 (DefenseConstant): HP·PP 감소량 계산식의 DEF에 따른 감소 비율 DefenseConstant / (DefenseConstant + DEF) */
+	/** 방어 상수: HP·PP 감소량 계산식의 DEF에 따른 감소 비율 DefenseConstant / (DefenseConstant + DEF) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (ClampMin = 1))
 	float DefenseConstant = 0.f;
 
-	/** 넉업: 체공 시간 when hit on the ground. The flight follows its own parabola, whatever the gravity. */
+	/** 넉업: 땅에서 맞았을 때의 체공 시간. 중력과 관계없이 정한 포물선을 따릅니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (Units = "s", ClampMin = 0))
 	float KnockUpAirTime = 0.f;
 
-	/** 넉업: 최고 높이 of the flight. */
+	/** 넉업: 최고 높이 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (Units = "cm", ClampMin = 0))
 	float KnockUpHeight = 0.f;
 
-	/** PP 리젠: 리젠 대기 시간 after the last PP decrease. The same for every character. */
+	/** PP 리젠: 마지막으로 PP가 줄어든 뒤의 리젠 대기 시간. 모든 캐릭터가 같습니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Regen", meta = (Units = "s", ClampMin = 0))
 	float PPRegenDelay = 0.f;
 
-	/** 그로기 지속 시간, from the groggy motion's start to the end of the motion back to the stance. */
+	/** 그로기 지속 시간. 그로기 모션의 시작부터 원래 자세로 돌아오는 모션의 끝까지 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Groggy", meta = (Units = "s", ClampMin = 0))
 	float GroggyDuration = 0.f;
 };

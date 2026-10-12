@@ -28,7 +28,7 @@ class UAgHUDWidget : public UCommonActivatableWidget
 	GENERATED_BODY()
 
 public:
-	/** 상황별 표시 규칙 '사망 연출': 플레이어 상태, 슬롯, 보스 상태, 조작 안내를 숨깁니다. */
+	/** 사망 연출(전투 HUD '상황별 표시 규칙'): 플레이어 상태, 슬롯, 보스 상태, 조작 안내를 숨깁니다. */
 	void HideStatus();
 
 protected:
@@ -38,7 +38,7 @@ protected:
 
 	// 아래 위젯은 모두 WBP_HUD에 있어야 합니다(BindWidget). 빠지면 위젯 블루프린트 컴파일이 오류로 알립니다.
 
-	/** 사망 연출에 숨기는 요소(플레이어 상태, 슬롯, 보스 상태, 조작 안내)를 모두 담습니다. */
+	/** 사망 연출과 궁극기 컷신에 숨기는 요소(플레이어 상태, 슬롯, 보스 상태, 조작 안내)를 모두 담습니다. */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> StatusPanel;
 
@@ -66,7 +66,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> PlayerMPText;
 
-	/** 스킬 슬롯. 스킬의 MP 소모를 치를 수 없는 동안 흐려집니다. */
+	/** 스킬 슬롯. MP가 부족한 동안 흐려집니다. */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> SkillSlot;
 
@@ -74,7 +74,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> SkillIconImage;
 
-	/** 스킬 슬롯: 스킬의 MP 소모 */
+	/** 스킬 슬롯: 스킬의 MP 코스트 */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> SkillCostText;
 
@@ -114,7 +114,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossPPBar;
 
-	/** 보스 상태: PP 바의 감소 잔상. PP 바 뒤에 둡니다. */
+	/** 보스 상태: PP 바 뒤에 두는 감소 잔상 */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossPPTrailBar;
 
@@ -130,7 +130,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "HUD|Controls Guide")
 	TMap<FKey, FText> KeyDisplayNames;
 
-	/** 스킬·궁극기 슬롯: opacity of a slot that can't be used. */
+	/** 스킬·궁극기 슬롯: MP·UP가 부족해 흐린 슬롯의 불투명도 */
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;
 
@@ -164,19 +164,19 @@ private:
 	void UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime);
 	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);
 
-	/** The granted ability with AbilityTag and its spec handle, or null. */
+	/** 부여된 어빌리티 중 AbilityTag를 가진 것을 스펙 핸들(OutHandle)과 함께 돌려줍니다. 없으면 null입니다. */
 	static const UGameplayAbility* FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
 
-	/** Whether the ability passes its own cost check (흐린 슬롯: MP·UP 부족). */
+	/** 어빌리티 자신의 비용 확인을 통과하면 참입니다(슬롯 흐림: MP·UP 부족). */
 	static bool CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
 
-	/** 쿨다운 표시: 어빌리티 쿨다운의 남은 비율과 시간. 쓸 수 있는 동안은 숨깁니다. */
+	/** 쿨다운 표시: 어빌리티 쿨다운의 남은 비율과 시간을 표시하고, 쿨다운 중이 아니면 숨깁니다. */
 	void UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage& Sweep, UTextBlock& Text);
 
 	static void SetBarRatio(UProgressBar& Bar, float Value, float MaxValue);
 	void SetSlotUsable(UWidget& SlotWidget, bool bUsable) const;
 
-	/** 정수로 바뀌었을 때만 '현재값 / 최대값'을 씁니다. */
+	/** 반올림한 정수가 바뀔 때만 '현재값 / 최대값'을 씁니다. */
 	static void SetValueText(UTextBlock& Text, float Value, float MaxValue, FIntPoint& ShownValues);
 
 	/** 바가 줄면 잔상은 (줄어드는 중이라도) 그 자리에서 다시 기다린 뒤 바의 현재 값까지 줄어듭니다. */

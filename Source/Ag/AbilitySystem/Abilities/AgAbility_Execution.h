@@ -10,12 +10,11 @@ class AAgCharacterBase;
 class AAgPlayerCharacter;
 
 /**
- * 처형 (플레이어 사양 '처형'): a finishing move on a groggy boss within the 처형 타겟팅 범위, once per groggy.
- * The boss turns to the player and starts its 처형 피격 montage in the same frame as the execution montage; that montage
- * waits on its first frame until the first slash, so the two motions stay in step frame by frame. By the first slash the
- * player closes in to the boss's front with Motion Warping. The player is invincible until the execution ends. Each
- * strike of the motion (the two slashes and the final blow, one Execution hit each) applies its damage without hitstop.
- * The execution has no recovery (후딜), so no action can cancel it before the motion ends.
+ * 처형 (플레이어 사양 '처형'): 처형 타겟팅 범위 안에서 그로기 중인 보스에게 그로기마다 한 번 쓰는 마무리 공격입니다.
+ * 보스는 처형 몽타주와 같은 프레임에 플레이어 쪽으로 돌아 처형 피격 몽타주를 시작하고, 그 몽타주는 첫 베기까지 첫
+ * 프레임에 머물러 두 모션이 프레임 단위로 맞물립니다. 플레이어는 첫 베기까지 Motion Warping으로 보스 정면에 붙고,
+ * 처형이 끝날 때까지 무적입니다. 타격(베기 2번과 마지막 일격, 각각 Execution의 타 하나)마다 히트스톱 없이 대미지를
+ * 적용합니다. 후딜이 없어 모션이 끝나기 전에는 어떤 행동도 처형을 끊지 못합니다.
  */
 UCLASS()
 class UAgAbility_Execution : public UAgGameplayAbility
@@ -25,7 +24,7 @@ class UAgAbility_Execution : public UAgGameplayAbility
 public:
 	UAgAbility_Execution();
 
-	/** 지금 처형할 수 있는 대상: 발동 조건 1, 2를 만족하는 가장 가까운 적('대상 찾기'). 없으면 null입니다. */
+	/** 지금 처형할 수 있는 대상: 발동 조건 1, 2를 만족하는 가장 가까운 적(구현 계획서 '대상 찾기'). 없으면 null입니다. */
 	static AAgCharacterBase* FindExecutionTarget(const AAgPlayerCharacter* Player);
 
 protected:
@@ -44,6 +43,6 @@ private:
 
 	TWeakObjectPtr<AAgCharacterBase> Target;
 
-	/** Strikes so far in this execution; the last Execution hit is the final blow. */
+	/** 이번 처형에서 지난 타격 수. Execution의 마지막 타가 마지막 일격입니다. */
 	int32 StrikeIndex = 0;
 };

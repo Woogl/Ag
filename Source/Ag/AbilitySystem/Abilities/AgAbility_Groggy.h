@@ -10,9 +10,9 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitDelay;
 
 /**
- * 그로기 (전투 시스템 '그로기', 보스 사양 '그로기', '처형 피격'), started when PP reaches 0.
- * Stops every action and plays the groggy motion so that it ends with the groggy time. An execution replaces it with
- * the 처형 피격 motion, and groggy then ends when that motion ends, whatever time is left. PP refills when groggy ends.
+ * 그로기 (전투 시스템 '그로기', 보스 사양 '그로기', '처형 피격'): PP가 0이 되면 시작합니다. 모든 행동을 멈추고
+ * 그로기 시간과 함께 끝나도록 그로기 모션을 재생합니다. 처형당하면 처형 피격 모션으로 바꾸고, 남은 시간과 관계없이
+ * 그 모션이 끝날 때 그로기가 끝납니다. 그로기가 끝나면 PP가 가득 찹니다.
  */
 UCLASS()
 class UAgAbility_Groggy : public UAgGameplayAbility
@@ -27,7 +27,7 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 private:
-	/** Starts the groggy motion and its time (on the ground). */
+	/** 땅에서 그로기 모션을 재생하고 그로기 시간을 세기 시작합니다. */
 	void StartGroggy();
 
 	UFUNCTION()
@@ -35,7 +35,7 @@ private:
 
 	UAbilityTask_PlayMontageAndWait* PlayMontage(UAnimMontage* Montage);
 
-	/** Groggy ends: PP back to MaxPP. */
+	/** 그로기를 끝내고 PP를 가득 채웁니다. */
 	void FinishGroggy();
 
 	UFUNCTION()
