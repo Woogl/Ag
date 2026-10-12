@@ -62,6 +62,20 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	bool bFinisher = false;
 };
 
+/** 투사체를 쏘는 행동마다 정하는 값 (전투 시스템 '검기') */
+USTRUCT(BlueprintType)
+struct FAgProjectileParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm/s", ClampMin = 0))
+	float Speed = 0.f;
+
+	/** 최대 사거리 */
+	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm", ClampMin = 0))
+	float Range = 0.f;
+};
+
 /** 플레이어 공격 하나 (평타 한 타, 점프 공격, 회피 반격, 스킬, 처형) */
 USTRUCT(BlueprintType)
 struct FAgPlayerAttack

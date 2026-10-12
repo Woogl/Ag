@@ -79,9 +79,9 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	EAgCameraShake GuardBreakShake = EAgCameraShake::None;
 
-	/** 상황별 단계: 처형의 베기 */
+	/** 상황별 단계: 처형의 찌르기 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
-	EAgCameraShake ExecutionSlashShake = EAgCameraShake::None;
+	EAgCameraShake ExecutionStabShake = EAgCameraShake::None;
 
 	/** 상황별 단계: 처형의 마지막 일격 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")

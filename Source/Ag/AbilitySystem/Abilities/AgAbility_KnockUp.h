@@ -28,6 +28,9 @@ protected:
 
 private:
 	UFUNCTION()
+	void HandleRising();
+
+	UFUNCTION()
 	void HandleFalling();
 
 	UFUNCTION()
@@ -45,4 +48,7 @@ private:
 	TObjectPtr<UAgAbilityTask_PlayReaction> ReactionTask;
 
 	bool bFalling = false;
+
+	/** 낙하 자세로 바꾸는 하강 속도. 오를 때는 이보다 빨라야 낙하 검사를 겁니다. */
+	float FallBlendSpeed = 0.f;
 };

@@ -8,7 +8,7 @@
 #include "Math/Interval.h"
 #include "AgCharacterData.generated.h"
 
-class AAgSwordWave;
+class AAgProjectile;
 class FJsonObject;
 class UAgGameplayAbility;
 class UAgEffect_Regen;
@@ -143,6 +143,21 @@ public:
 	/** 넉백: 밀려나 쓰러졌다가 일어남 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> KnockBackMontage;
+
+	/** 넉업: 상승 자세. 정점 무렵 KnockUpFallMontage가 블렌드되어 들어올 때까지 반복합니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> KnockUpMontage;
+
+	/**
+	 * 넉업: 섹션 Fall(낙하 자세, 반복) → Land(바닥에 떨어짐). 착지하면 Land로 넘깁니다.
+	 * 블렌드 인 시간의 가운데가 정점에 옵니다.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> KnockUpFallMontage;
+
+	/** 넉업: 기상. KnockUpFallMontage 뒤에 블렌드해 잇습니다(자세가 조금 다름). */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
+	TObjectPtr<UAnimMontage> GetUpMontage;
 
 	/** 가드 중이 아닐 때의 이동. 가로축은 캐릭터 정면 기준 이동 방향 (deg), 세로축은 수평 속도 (cm/s)입니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Animation")
@@ -309,7 +324,7 @@ public:
 	FAgPlayerAttack Execution;
 
 	/**
-	 * 처형의 첫 베기까지 플레이어가 보스 정면에 붙는 간격(캡슐 중심 사이 수평 거리). 두 처형 모션이 맞물리는 간격으로,
+	 * 처형의 찌르기까지 플레이어가 보스 정면에 붙는 간격(캡슐 중심 사이 수평 거리). 두 처형 모션이 맞물리는 간격으로,
 	 * 기획서에 수치가 없어 두 모션의 원래 배치에서 잰 값입니다.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Execution", meta = (Units = "cm", ClampMin = 0))
@@ -412,21 +427,6 @@ public:
 	/** 처형 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TObjectPtr<UAnimMontage> ExecutionMontage;
-
-	/** 넉업: 기상. KnockUpFallMontage 뒤에 블렌드해 잇습니다(자세가 조금 다름). */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> GetUpMontage;
-
-	/** 넉업: 상승 자세. 정점 무렵 KnockUpFallMontage가 블렌드되어 들어올 때까지 반복합니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> KnockUpMontage;
-
-	/**
-	 * 넉업: 섹션 Fall(낙하 자세, 반복) → Land(바닥에 떨어짐). 착지하면 Land로 넘깁니다.
-	 * 블렌드 인 시간의 가운데가 정점에 옵니다.
-	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> KnockUpFallMontage;
 };
 
 /** DA_Boss, Boss.json */
@@ -478,7 +478,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PatternRecoveryWaitPhase2 = FFloatInterval(0.f, 0.f);
 
-	/** 패턴 후딜레이 대기 시간: 레벨 시작, 넉백, 페이즈 전환, 그로기 유지, 처형 피격 뒤 */
+	/** 패턴 후딜레이 대기 시간: 레벨 시작, 넉업, 넉백, 페이즈 전환, 그로기 유지, 처형 피격 뒤 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s", ClampMin = 0))
 	float FixedRecoveryWait = 0.f;
 
@@ -488,7 +488,7 @@ public:
 
 	/** SwordWave: 투사체 (BP_SwordWave). 판정 상자(폭, 높이)와 모습은 블루프린트에서 정합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Sword Wave")
-	TSubclassOf<AAgSwordWave> SwordWaveClass;
+	TSubclassOf<AAgProjectile> SwordWaveClass;
 
 	/** 락온 지점(가슴 높이)의 본. 락온 카메라가 이곳을 보고, 락온 마커도 여기에 표시합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
@@ -519,7 +519,7 @@ public:
 	TObjectPtr<UAnimMontage> GroggyMontage;
 
 	/**
-	 * 처형 피격: 플레이어의 처형과 짝을 이루는 모션으로, 끝에서 보스가 일어섭니다. 처형의 첫 베기까지 첫 프레임에
+	 * 처형 피격: 플레이어의 처형과 짝을 이루는 모션으로, 끝에서 보스가 일어섭니다. 두 모션의 시간 차이만큼 첫 프레임에
 	 * 머물러 있어 처형 몽타주와 같은 프레임에 시작해 박자를 맞춥니다.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")

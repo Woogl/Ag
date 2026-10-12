@@ -78,13 +78,13 @@ namespace
 		}
 	}
 
-	/** 카메라 '상황별 단계'. 처형은 베기와 마지막 일격의 단계를 씁니다. */
+	/** 카메라 '상황별 단계'. 처형은 찌르기와 마지막 일격의 단계를 씁니다. */
 	EAgCameraShake GetHitShake(const UAgCameraData& Camera, const FGameplayTagContainer& SpecTags, bool bPlayerAttacked)
 	{
 		const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
 		if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 		{
-			return bFinisher ? Camera.ExecutionBlowShake : Camera.ExecutionSlashShake;
+			return bFinisher ? Camera.ExecutionBlowShake : Camera.ExecutionStabShake;
 		}
 
 		// 넉업·넉백은 움찔보다 크게 흔듭니다.

@@ -41,7 +41,7 @@ classDiagram
     }
     class UAgBossData {
         <<DA_Boss, Boss.json>>
-        AAgSwordWave SwordWaveClass
+        AAgProjectile SwordWaveClass
         UAgGameplayAbility PatternAbilities
     }
     class FAgStats {

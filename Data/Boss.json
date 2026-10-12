@@ -166,8 +166,10 @@
       "WeightFar": 60,
       "MaxApproachDistance": 0,
       "Params": {
-        "Speed": 1500,
-        "Range": 2000
+        "Wave": {
+          "Speed": 1500,
+          "Range": 2000
+        }
       }
     },
     {

@@ -15,18 +15,14 @@ struct FAgBossSwordWaveParams : public FAgBossPatternParams
 {
 	GENERATED_BODY()
 
-	/** 검기의 속도 */
-	UPROPERTY(EditAnywhere, Category = "Sword Wave", meta = (Units = "cm/s", ClampMin = 0))
-	float Speed = 0.f;
-
-	/** 검기의 최대 사거리 */
-	UPROPERTY(EditAnywhere, Category = "Sword Wave", meta = (Units = "cm", ClampMin = 0))
-	float Range = 0.f;
+	/** 검기의 속도와 최대 사거리 */
+	UPROPERTY(EditAnywhere, Category = "Sword Wave")
+	FAgProjectileParams Wave;
 };
 
 /**
- * SwordWave: 세 번 휘두르며, 휘두를 때마다 발사 노티파이에서 그 타의 공격 데이터로 검기 하나를 정면으로 쏩니다.
- * 발사를 판정 구간처럼 보아 발사마다 회전 정지 시간만큼 앞서 회전을 멈추므로, 검기는 그때 바라본 쪽으로 날아갑니다.
+ * SwordWave: 세 번 휘두르며, 휘두를 때마다 발사 노티파이에서 그 타의 공격 데이터로 검기 하나를 정면으로 쏩니다(투사체 발사
+ * 태스크). 발사를 판정 구간처럼 보아 발사마다 회전 정지 시간만큼 앞서 회전을 멈추므로, 검기는 그때 바라본 쪽으로 날아갑니다.
  * 정지 간격은 공용 패턴과 같이 지킵니다.
  */
 UCLASS()
@@ -49,8 +45,9 @@ private:
 	UFUNCTION()
 	void HandleRotationStop();
 
+	/** 쏘고 나면 다시 돌다가 다음 발사 전에 멈춥니다. */
 	UFUNCTION()
-	void HandleRelease(FGameplayEventData Payload);
+	void HandleFired(int32 FiredIndex);
 
 	UFUNCTION()
 	void HandleMontageFinished();

@@ -70,7 +70,7 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	Payload.Target = Enemy;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Enemy, AgGameplayTags::Event_Executed, Payload);
 
-	// 첫 베기(워프 구간의 끝)까지 플레이어는 대상 정면, 두 모션이 맞물리는 간격에 섭니다. 정지 간격은 적용하지 않습니다.
+	// 찌르기(워프 구간의 끝)까지 플레이어는 대상 정면, 두 모션이 맞물리는 간격에 섭니다. 정지 간격은 적용하지 않습니다.
 	UAgAbilityTask_AttackMovement::FitGap(this, Enemy, Data->ExecutionDistance)->ReadyForActivation();
 
 	UAbilityTask_WaitGameplayEvent* StrikeTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_ExecutionBlow);

@@ -85,6 +85,7 @@ classDiagram
 | `UAgAbilityTask_LockOn` | `UAbilityTask` | 락온 중 매 프레임 카메라를 대상의 락온 지점 쪽으로 돌리고, 해제 조건이 되면 끝납니다. |
 | `UAgAbilityTask_AttackMovement` | `UAbilityTask` | 공격 중 이동. 타를 시작할 때마다 대상을 다시 정해 정지 간격과 회전 대상(범위 밖이면 캐릭터가 정한 대체 대상)을 걸고, 매 프레임 워프 목표를 대상 앞 간격 지점에 두다가 바라보는 방향이 고정되면 함께 고정합니다. 끝나면 모두 지웁니다([애니메이션과 이동](<애니메이션과 이동.md>) '공격 중 이동'). |
 | `UAgAbilityTask_Attack` | `UAbilityTask` | 판정 구간이 있는 공격 하나(평타 한 타, 점프 공격, 회피 반격, 스킬, 보스 공용 패턴). 공격 데이터를 판정 구간에 걸고 몽타주를 재생하며 공격 중 이동 태스크를 시작합니다. 마지막 판정 구간의 끝(후딜 시작), 모션의 끝, 끊김을 어빌리티에 알립니다([전투 규칙](<전투 규칙.md>) '공격 진행'). |
+| `UAgAbilityTask_SpawnProjectile` | `UAbilityTask` | 투사체 발사. 몽타주의 발사 노티파이마다 공격 데이터를 하나씩 실어 어빌리티가 넘긴 투사체를 쏘고, 몇 번째인지 어빌리티에 알립니다(SwordWave, [전투 규칙](<전투 규칙.md>) '투사체 발사'). |
 | `UAgAbilityTask_PlayReaction` | `UAbilityTask` | 피격 반응 모션. 반응 몽타주와 이어지는 몽타주(넉업의 기상)를 재생하고, 마지막 모션의 끝과 끊김을 어빌리티에 알립니다. 바닥에 쓰러진 순간부터 끝날 때까지 무적입니다. |
 | `UAgAbilityTask_IgnoreRootMotion` | `UAbilityTask` | 도는 동안 몽타주의 루트 모션을 무시합니다. 루트 모션 소스로 옮기는 동안 씁니다(DashThrust의 돌진, 넉업). |
 | `UAgAbilityTask_IgnoreCollision` | `UAbilityTask` | 도는 동안 주인의 루트 충돌 컴포넌트(캐릭터는 캡슐)가 인자로 받은 충돌 채널을 무시합니다(DashThrust의 돌진과 처형 피격은 Pawn 채널을 무시해 플레이어를 막지 않음). 끝나면 원래 응답으로 되돌리고, 그사이 죽었으면 사망 처리가 정한 대로 둡니다. |

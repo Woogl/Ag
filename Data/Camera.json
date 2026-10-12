@@ -12,7 +12,7 @@
   "GuardShake": "Small",
   "GuardPushbackShake": "Medium",
   "GuardBreakShake": "Large",
-  "ExecutionSlashShake": "Small",
+  "ExecutionStabShake": "Small",
   "ExecutionBlowShake": "Large",
   "FinisherShake": "Large",
   "LeapLandingShake": "Medium",

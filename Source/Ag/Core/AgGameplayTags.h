@@ -84,9 +84,9 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ExecutionBlow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_UltimateFinish);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_JumpAttackPlunge);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ProjectileRelease);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_SwordWave);
 
 	// 쿨다운 GE가 주는 쿨다운 태그
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dodge);

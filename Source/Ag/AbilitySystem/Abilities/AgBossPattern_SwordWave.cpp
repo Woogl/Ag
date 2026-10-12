@@ -3,20 +3,18 @@
 #include "AbilitySystem/Abilities/AgBossPattern_SwordWave.h"
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_AttackMovement.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "Ag.h"
 #include "Animation/AgAnimNotify_GameplayEvent.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
-#include "Combat/AgSwordWave.h"
-#include "Components/CapsuleComponent.h"
+#include "Combat/AgProjectile.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgCharacterData.h"
-#include "Engine/World.h"
 
 UAgBossPattern_SwordWave::UAgBossPattern_SwordWave()
 {
@@ -29,7 +27,8 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	if (!Montage || !GetPatternParams<FAgBossSwordWaveParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgBossSwordWaveParams* Params = GetPatternParams<FAgBossSwordWaveParams>();
+	if (!Montage || !Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -54,15 +53,15 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 
 	WaveIndex = 0;
 	RotationLockTag = nullptr;
-	UAbilityTask_WaitGameplayEvent* ReleaseTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_Boss_SwordWave, nullptr, /*OnlyTriggerOnce*/ false);
-	ReleaseTask->EventReceived.AddDynamic(this, &ThisClass::HandleRelease);
-	ReleaseTask->ReadyForActivation();
+	UAgAbilityTask_SpawnProjectile* WaveTask = UAgAbilityTask_SpawnProjectile::SpawnProjectiles(this, Data->SwordWaveClass, Pattern->Hits, Params->Wave);
+	WaveTask->OnFired.AddDynamic(this, &ThisClass::HandleFired);
+	WaveTask->ReadyForActivation();
 
 	ReleaseTimes.Reset();
 	for (const FAnimNotifyEvent& Notify : Montage->Notifies)
 	{
 		const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
-		if (Event && Event->EventTag == AgGameplayTags::Event_Boss_SwordWave)
+		if (Event && Event->EventTag == AgGameplayTags::Event_ProjectileRelease)
 		{
 			ReleaseTimes.Add(Notify.GetTriggerTime());
 		}
@@ -92,39 +91,15 @@ void UAgBossPattern_SwordWave::HandleRotationStop()
 	}
 }
 
-void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
+void UAgBossPattern_SwordWave::HandleFired(int32 FiredIndex)
 {
-	// 쏘고 나면 다시 돌다가 다음 발사 전에 멈춥니다.
-	const int32 Index = WaveIndex++;
+	WaveIndex = FiredIndex + 1;
 	if (RotationLockTag)
 	{
 		RotationLockTag->EndTask();
 		RotationLockTag = nullptr;
 	}
 	WaitRotationStop();
-
-	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss->FindPattern(GetCurrentAbilitySpecHandle());
-	const FAgBossSwordWaveParams* Params = GetPatternParams<FAgBossSwordWaveParams>();
-	if (!Data->SwordWaveClass || !Pattern || !Pattern->Hits.IsValidIndex(Index) || !Params)
-	{
-		return;
-	}
-
-	// 보스 앞의 바닥에서 정면으로 쏩니다.
-	const FVector Direction = Boss->GetActorForwardVector().GetSafeNormal2D();
-	const UCapsuleComponent* Capsule = Boss->GetCapsuleComponent();
-	const FVector Location = Boss->GetActorLocation() + Direction * Capsule->GetScaledCapsuleRadius() - FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight());
-
-	FActorSpawnParameters SpawnParameters;
-	SpawnParameters.Owner = Boss;
-	SpawnParameters.Instigator = Boss;
-	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	if (AAgSwordWave* Wave = GetWorld()->SpawnActor<AAgSwordWave>(Data->SwordWaveClass, Location, Direction.Rotation(), SpawnParameters))
-	{
-		Wave->Launch(Pattern->Hits[Index], Direction, Params->Speed, Params->Range);
-	}
 }
 
 void UAgBossPattern_SwordWave::HandleMontageFinished()

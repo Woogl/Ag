@@ -15,7 +15,6 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 namespace
 {
@@ -29,12 +28,12 @@ UAgAbility_KnockUp::UAgAbility_KnockUp()
 
 UAnimMontage* UAgAbility_KnockUp::GetFallMontage() const
 {
-	return GetCharacterData<UAgPlayerData>()->KnockUpFallMontage.Get();
+	return GetCharacterData<UAgCharacterData>()->KnockUpFallMontage.Get();
 }
 
 void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	const UAgCharacterData* Data = GetCharacterData<UAgCharacterData>();
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const UAnimMontage* FallMontage = GetFallMontage();
 	AAgCharacterBase* Character = GetAgCharacter();
@@ -75,22 +74,25 @@ void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		/*bFinishOnLanded*/ true, ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, nullptr, nullptr);
 	JumpTask->ReadyForActivation();
 
-	// 점프는 다음 이동 갱신부터 속도를 정하므로, 지금 경로의 첫 속도로 날기 시작해 아래 낙하 검사가 맞기 전 속도를 보지 않게 합니다.
-	UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
-	Movement->SetMovementMode(MOVE_Falling);
-	Movement->Velocity = FVector(0.f, 0.f, 4.f * Rules.KnockUpHeight / AirTime);
-
 	// 낙하 자세의 블렌드는 정점이 가운데에 오도록 정점보다 블렌드 시간의 절반 먼저 시작합니다.
 	// 경로의 상승은 8 × 높이 ÷ 체공 시간² 의 중력처럼 느려집니다.
+	// 점프 첫 틱의 속도는 경로 속도가 아니므로(점프 전 속도, 아주 짧은 프레임이면 0), 낙하 검사는 경로대로 오르기 시작한 뒤에 겁니다.
 	const float PathGravity = 8.f * Rules.KnockUpHeight / FMath::Square(AirTime);
-	const float FallBlendSpeed = PathGravity * FallMontage->BlendIn.GetBlendTime() * 0.5f;
-	UAbilityTask_WaitVelocityChange* FallTask = UAbilityTask_WaitVelocityChange::CreateWaitVelocityChange(this, FVector::DownVector, -FallBlendSpeed);
-	FallTask->OnVelocityChage.AddDynamic(this, &ThisClass::HandleFalling);
-	FallTask->ReadyForActivation();
+	FallBlendSpeed = PathGravity * FallMontage->BlendIn.GetBlendTime() * 0.5f;
+	UAbilityTask_WaitVelocityChange* RiseTask = UAbilityTask_WaitVelocityChange::CreateWaitVelocityChange(this, FVector::UpVector, FallBlendSpeed);
+	RiseTask->OnVelocityChage.AddDynamic(this, &ThisClass::HandleRising);
+	RiseTask->ReadyForActivation();
 
 	UAbilityTask_WaitMovementModeChange* LandTask = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
 	LandTask->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
 	LandTask->ReadyForActivation();
+}
+
+void UAgAbility_KnockUp::HandleRising()
+{
+	UAbilityTask_WaitVelocityChange* FallTask = UAbilityTask_WaitVelocityChange::CreateWaitVelocityChange(this, FVector::DownVector, -FallBlendSpeed);
+	FallTask->OnVelocityChage.AddDynamic(this, &ThisClass::HandleFalling);
+	FallTask->ReadyForActivation();
 }
 
 void UAgAbility_KnockUp::HandleFalling()
