@@ -6,6 +6,8 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AgAbility_Ultimate.generated.h"
 
+class UAgAbilityTask_TimeStop;
+
 /**
  * 궁극기 (심판): UP를 모두 쓰고, 궁극기 컷신 뒤 멈춘 시간 속에 베기 선을 새기다가 칼을 칼집에 넣는 순간 범위 안의 적을 모두 벱니다.
  * 시작부터 끝까지 무적이고, 시작부터 마무리까지 시간 정지입니다. 마무리 뒤의 칼 뽑기가 후딜입니다.
@@ -20,7 +22,6 @@ public:
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual bool CanPayCost(const UAgAttributeSet& Stats) const override;
 	virtual FAgAbilityCost GetCost() const override;
 
@@ -47,6 +48,10 @@ private:
 	void WaitNextSlash();
 
 	void SpawnSlash();
+
+	/** 시작부터 마무리까지 있습니다. */
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_TimeStop> TimeStopTask;
 
 	int32 SlashIndex = 0;
 };

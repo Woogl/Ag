@@ -8,12 +8,12 @@
 #include "AbilitySystem/AgEffect_Cost.h"
 #include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_PlayCutscene.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -50,7 +50,8 @@ void UAgAbility_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	BeginBusy();
 
 	// 시간 정지: 시작부터 마무리까지 플레이어만 정상 속도로 돕니다.
-	GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartTimeStop(*GetAgCharacter());
+	TimeStopTask = UAgAbilityTask_TimeStop::TimeStop(this);
+	TimeStopTask->ReadyForActivation();
 
 	// 모션: 컷신 동안 발도 자세로 기다리다가(Start → Hold 반복), 컷신이 끝나면 Judgment로 넘깁니다.
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->UltimateMontage);
@@ -129,7 +130,7 @@ void UAgAbility_Ultimate::HandleFinish(FGameplayEventData Payload)
 	// 마무리: 베기 선이 모두 사라지고 시간 정지가 끝난 뒤, 범위 안의 적마다 1타를 적용합니다. 시간이 다시 흐른 뒤에 적용해야
 	// 적중 후 처리의 히트스톱과 슬로우모션이 정상 시간 위에서 시작합니다. 여기서부터 후딜(칼 뽑기)입니다.
 	K2_RemoveGameplayCue(AgGameplayTags::GameplayCue_UltimateSlashes);
-	GetWorld()->GetSubsystem<UAgTimeSubsystem>()->EndTimeStop();
+	TimeStopTask->EndTask();
 	EndBusy();
 
 	// 이 어빌리티가 만든 스펙에는 엔진이 어빌리티 태그(Ability.Action.Ultimate)를 넣어, 대미지 GE가 궁극기 마무리 이펙트와
@@ -155,16 +156,6 @@ void UAgAbility_Ultimate::HandleMontageCompleted()
 void UAgAbility_Ultimate::HandleMontageCancelled()
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
-}
-
-void UAgAbility_Ultimate::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	// 마무리 전에 끝나면(레벨 종료 등) 시간 정지를 거둡니다. 컷신은 태스크가, 베기 선 큐는 엔진이 끝냅니다.
-	if (UAgTimeSubsystem* Time = GetWorld() ? GetWorld()->GetSubsystem<UAgTimeSubsystem>() : nullptr)
-	{
-		Time->EndTimeStop();
-	}
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 bool UAgAbility_Ultimate::CanPayCost(const UAgAttributeSet& Stats) const

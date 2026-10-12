@@ -8,7 +8,6 @@
 
 class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitDelay;
-class UAgAbilityTask_HoldTag;
 
 /**
  * 그로기 (전투 시스템 '그로기', 보스 사양 '그로기', '처형 피격'), started when PP reaches 0.
@@ -56,8 +55,4 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask_WaitDelay> EndSectionTask;
-
-	/** 처형 피격 중(State.Execution.Executed)인 동안 있습니다. */
-	UPROPERTY()
-	TObjectPtr<UAgAbilityTask_HoldTag> ExecutedTag;
 };

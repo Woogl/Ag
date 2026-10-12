@@ -8,11 +8,11 @@
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "AbilitySystem/AgEffect_PPRefill.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_IgnorePawnCollision.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
-#include "Components/CapsuleComponent.h"
 #include "Combat/AgCombatLibrary.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
@@ -123,11 +123,10 @@ void UAgAbility_Groggy::HandleExecuted(FGameplayEventData Payload)
 	{
 		return;
 	}
-	ExecutedTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Execution_Executed);
-	ExecutedTag->ReadyForActivation();
+	UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Execution_Executed)->ReadyForActivation();
 
 	// 두 처형 모션은 캡슐 반지름보다 가깝게 붙으므로, 보스가 플레이어를 막지 않게 합니다.
-	Boss->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	UAgAbilityTask_IgnorePawnCollision::IgnorePawnCollision(this)->ReadyForActivation();
 
 	// 처형을 시작하면 보스가 플레이어를 바라보도록 돌립니다.
 	if (const AActor* Executioner = Payload.Instigator.Get())
@@ -171,16 +170,7 @@ void UAgAbility_Groggy::FinishGroggy()
 
 void UAgAbility_Groggy::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	// 처형 피격 태그는 그 태스크가 어빌리티와 함께 끝나며 뗍니다.
-	if (ExecutedTag)
-	{
-		ExecutedTag = nullptr;
-		AAgCharacterBase* Boss = GetAgCharacter();
-		if (!Boss->IsDead())
-		{
-			Boss->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-		}
-	}
+	// 처형 피격 태그와 캐릭터 간 충돌은 그 태스크가 어빌리티와 함께 끝나며 되돌립니다.
 	CastChecked<AAgBossCharacter>(GetAgCharacter())->SetGroggyTimerRunning(false);
 	MontageTask = nullptr;
 	EndSectionTask = nullptr;

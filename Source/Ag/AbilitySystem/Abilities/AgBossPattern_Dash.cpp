@@ -5,13 +5,13 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_IgnorePawnCollision.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_IgnoreRootMotion.h"
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgCombatLibrary.h"
-#include "Components/CapsuleComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -142,16 +142,19 @@ void UAgBossPattern_Dash::SetDashing(bool bNewDashing)
 	AAgCharacterBase* Boss = GetAgCharacter();
 
 	// 돌진하는 동안이 판정 구간이라 회전하지 않고, 플레이어를 뚫고 지나갑니다.
+	// 판정 구간을 열자마자 막히면 그 안에서 돌진이 끝나므로, 충돌 해제를 먼저 겁니다.
 	if (bDashing)
 	{
-		Boss->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		IgnorePawnCollisionTask = UAgAbilityTask_IgnorePawnCollision::IgnorePawnCollision(this);
+		IgnorePawnCollisionTask->ReadyForActivation();
 		Boss->BeginAttackWindow(0);
 	}
 	else
 	{
-		if (!Boss->IsDead())
+		if (IgnorePawnCollisionTask)
 		{
-			Boss->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+			IgnorePawnCollisionTask->EndTask();
+			IgnorePawnCollisionTask = nullptr;
 		}
 		Boss->EndAttackWindow(0);
 	}
