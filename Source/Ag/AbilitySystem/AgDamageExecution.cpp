@@ -91,7 +91,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	const UAgPlayerData* DefenderData = Cast<UAgPlayerData>(Target->GetCharacterData());
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unguardable);
 	const bool bParryable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unparryable);
-	const float DamageMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::Data_DamageMultiplier);
+	const float DamageMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_DamageMultiplier);
 	const int32 HPDamage = CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, Rules.DefenseConstant);
 
 	// 패리: 막는 쪽은 아무것도 잃지 않습니다. 공격한 쪽의 PP는 패리 이벤트를 받은 가드 어빌리티가 줄입니다.
@@ -115,7 +115,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	// 일반 피격: HP를 먼저 낮춥니다. 사망 판정이 그로기 판정보다 먼저입니다(상태 우선순위).
 	Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Hit);
-	const int32 PPDamage = Target->CanLosePP() ? CalculatePPDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::Data_PoiseMultiplier), TargetDEF, Rules.DefenseConstant) : 0;
+	const int32 PPDamage = Target->CanLosePP() ? CalculatePPDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PoiseMultiplier), TargetDEF, Rules.DefenseConstant) : 0;
 	AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -HPDamage);
 	AddOutput(OutExecutionOutput, UAgAttributeSet::GetPPAttribute(), -PPDamage);
 }

@@ -84,11 +84,11 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Dodge, "Cooldown.Dodge");
 	UE_DEFINE_GAMEPLAY_TAG(Cooldown_Skill, "Cooldown.Skill");
 
-	UE_DEFINE_GAMEPLAY_TAG(Data_SP, "Data.SP");
-	UE_DEFINE_GAMEPLAY_TAG(Data_MP, "Data.MP");
-	UE_DEFINE_GAMEPLAY_TAG(Data_UP, "Data.UP");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Data_DamageMultiplier, "Data.DamageMultiplier", "공격의 대미지 배율");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Data_PoiseMultiplier, "Data.PoiseMultiplier", "공격의 PP 배율");
+	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_SP, "SetByCaller.SP");
+	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_MP, "SetByCaller.MP");
+	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_UP, "SetByCaller.UP");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_DamageMultiplier, "SetByCaller.DamageMultiplier", "공격의 대미지 배율");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_PoiseMultiplier, "SetByCaller.PoiseMultiplier", "공격의 PP 배율");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_Flinch, "Effect.Damage.Reaction.Flinch", "피격 반응 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockUp, "Effect.Damage.Reaction.KnockUp", "피격 반응 넉업");

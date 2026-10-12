@@ -8,7 +8,7 @@
 
 /**
  * 자원(SP·MP·UP)을 얻습니다: MP·UP 충전(적중, 패리, 극한 회피)과 극한 회피의 SP 반환. 얻는 양은 줄 때마다 달라
- * SetByCaller(Data.SP, Data.MP, Data.UP)로 받습니다.
+ * SetByCaller.SP, SetByCaller.MP, SetByCaller.UP로 받습니다.
  */
 UCLASS()
 class UAgEffect_Resource : public UGameplayEffect

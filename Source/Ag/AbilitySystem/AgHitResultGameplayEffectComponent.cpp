@@ -209,8 +209,8 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	}
 
 	// 일반 피격이면 공격한 쪽이 공격 데이터의 MP·UP를 얻습니다.
-	const float MPCharge = GESpec.GetSetByCallerMagnitude(AgGameplayTags::Data_MP);
-	const float UPCharge = GESpec.GetSetByCallerMagnitude(AgGameplayTags::Data_UP);
+	const float MPCharge = GESpec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP);
+	const float UPCharge = GESpec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP);
 	if (bHit && (MPCharge > 0.f || UPCharge > 0.f))
 	{
 		UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();

@@ -20,14 +20,14 @@ UAgEffect_Resource::UAgEffect_Resource()
 		Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(SetByCaller);
 	};
 
-	AddSetByCallerModifier(UAgAttributeSet::GetSPAttribute(), AgGameplayTags::Data_SP);
-	AddSetByCallerModifier(UAgAttributeSet::GetMPAttribute(), AgGameplayTags::Data_MP);
-	AddSetByCallerModifier(UAgAttributeSet::GetUPAttribute(), AgGameplayTags::Data_UP);
+	AddSetByCallerModifier(UAgAttributeSet::GetSPAttribute(), AgGameplayTags::SetByCaller_SP);
+	AddSetByCallerModifier(UAgAttributeSet::GetMPAttribute(), AgGameplayTags::SetByCaller_MP);
+	AddSetByCallerModifier(UAgAttributeSet::GetUPAttribute(), AgGameplayTags::SetByCaller_UP);
 }
 
 void UAgEffect_Resource::SetAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP)
 {
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_SP, SP);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_MP, MP);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_UP, UP);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_SP, SP);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, MP);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UP);
 }

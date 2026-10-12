@@ -37,10 +37,10 @@ void UAgEffect_Damage::ApplyAttack(AAgCharacterBase* Attacker, AActor* Causer, A
 void UAgEffect_Damage::SetAttack(FGameplayEffectSpec& Spec, const FAgPlayerAttackHit& Hit, const FVector& HitLocation)
 {
 	Spec.GetContext().AddOrigin(HitLocation);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_DamageMultiplier, Hit.DamageMultiplier);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_PoiseMultiplier, Hit.PoiseMultiplier);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_MP, Hit.MPCharge);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::Data_UP, Hit.UPCharge);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_DamageMultiplier, Hit.DamageMultiplier);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PoiseMultiplier, Hit.PoiseMultiplier);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, Hit.MPCharge);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, Hit.UPCharge);
 
 	switch (Hit.HitReaction)
 	{
