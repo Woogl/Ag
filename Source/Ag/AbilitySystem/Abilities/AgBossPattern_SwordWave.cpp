@@ -29,7 +29,7 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Montage || !GetPatternParams<FAgBossSwordWaveParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -106,7 +106,8 @@ void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(GetCurrentAbilitySpecHandle());
-	if (!Data->SwordWaveClass || !Pattern || !Pattern->Hits.IsValidIndex(Index))
+	const FAgBossSwordWaveParams* Params = GetPatternParams<FAgBossSwordWaveParams>();
+	if (!Data->SwordWaveClass || !Pattern || !Pattern->Hits.IsValidIndex(Index) || !Params)
 	{
 		return;
 	}
@@ -122,7 +123,7 @@ void UAgBossPattern_SwordWave::HandleRelease(FGameplayEventData Payload)
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	if (AAgSwordWave* Wave = GetWorld()->SpawnActor<AAgSwordWave>(Data->SwordWaveClass, Location, Direction.Rotation(), SpawnParameters))
 	{
-		Wave->Launch(Pattern->Hits[Index], Direction, Data->SwordWaveSpeed, Data->SwordWaveRange);
+		Wave->Launch(Pattern->Hits[Index], Direction, Params->Speed, Params->Range);
 	}
 }
 

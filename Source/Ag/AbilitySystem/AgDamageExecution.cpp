@@ -90,12 +90,11 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	const AAgCharacterBase* Target = CastChecked<AAgCharacterBase>(ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor());
 	const UAgPlayerData* DefenderData = Cast<UAgPlayerData>(Target->GetCharacterData());
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unguardable);
-	const bool bParryable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unparryable);
 	const float DamageMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_DamageMultiplier);
 	const int32 HPDamage = CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, Rules.DefenseConstant);
 
 	// 패리: 막는 쪽은 아무것도 잃지 않습니다. 공격한 쪽의 PP는 패리 이벤트를 받은 가드 어빌리티가 줄입니다.
-	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable && bParryable && DefenderData)
+	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable && DefenderData)
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Parry);
 		return;

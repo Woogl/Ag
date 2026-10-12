@@ -6,6 +6,7 @@
 #include "Engine/AssetManager.h"
 #include "AgAssetManager.generated.h"
 
+class FJsonObject;
 class UAgCameraData;
 class UAgCombatRules;
 
@@ -34,6 +35,12 @@ public:
 	 * 에디터에서만 검사합니다.
 	 */
 	bool LoadJsonValues(UObject& Target, const FString& FileName);
+
+	/**
+	 * 인스턴스 구조체 속성의 JSON 객체 Object를 Struct의 값으로 검사하고 읽게 합니다. 파일에는 값만 적고 구조체는 데이터 객체가
+	 * 정하므로, 데이터 객체가 검사 전 단계(UAgCharacterData::ResolveJsonStructTypes)에서 부릅니다.
+	 */
+	static void SetJsonStructType(FJsonObject& Object, const UScriptStruct& Struct);
 
 	/** CombatRules.json의 값 */
 	const UAgCombatRules& GetCombatRules() const;

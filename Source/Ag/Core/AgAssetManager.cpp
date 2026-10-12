@@ -4,6 +4,7 @@
 
 #include "Ag.h"
 #include "Data/AgCameraData.h"
+#include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
@@ -13,12 +14,16 @@
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "StructUtils/InstancedStruct.h"
 #include "UObject/UnrealType.h"
 
 namespace
 {
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
 	const TCHAR* const JsonFolderName = TEXT("Data");
+
+	/** 엔진 JSON 변환기가 인스턴스 구조체를 무슨 구조체로 읽을지 보는 키. 파일에는 적지 않고 SetJsonStructType이 채웁니다. */
+	const TCHAR* const StructTypeKey = TEXT("_structType");
 
 	/** 공통 JSON 파일. 캐릭터 JSON은 캐릭터 DataAsset의 ValuesFile이 가리킵니다. */
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
@@ -105,12 +110,39 @@ namespace
 		}
 		else if (Type == EJson::Object)
 		{
+			const UScriptStruct* Struct = CastFieldChecked<FStructProperty>(Property)->Struct;
+			FJsonObject Object = *Value->AsObject();
+			FString FieldPath = Path + TEXT(".");
+			if (Struct == FInstancedStruct::StaticStruct())
+			{
+				// 인스턴스 구조체: 데이터 객체가 정해 둔 구조체(SetJsonStructType)의 필드로 검사합니다. 정해 둔 구조체가 없으면
+				// 값을 읽을 곳이 없으므로 비어 있어야 합니다.
+				FString StructPath;
+				if (!Object.TryGetStringField(StructTypeKey, StructPath))
+				{
+					if (!Object.Values.IsEmpty())
+					{
+						Errors.Add(FString::Printf(TEXT("%s: must be {}, nothing reads these values"), *Path));
+					}
+					return;
+				}
+				Struct = FindObject<UScriptStruct>(nullptr, *StructPath);
+				if (!Struct)
+				{
+					Errors.Add(FString::Printf(TEXT("%s: %s is not a struct"), *Path, *StructPath));
+					return;
+				}
+				Object.RemoveField(StructTypeKey);
+				// 오류에 구조체 이름을 붙여, 키를 정하는 C++ 구조체를 바로 찾게 합니다.
+				FieldPath = FString::Printf(TEXT("%s (%s)."), *Path, *Struct->GetName());
+			}
+
 			TArray<const FProperty*> Fields;
-			for (TFieldIterator<FProperty> It(CastFieldChecked<FStructProperty>(Property)->Struct); It; ++It)
+			for (TFieldIterator<FProperty> It(Struct); It; ++It)
 			{
 				Fields.Add(*It);
 			}
-			CheckObject(*Value->AsObject(), Fields, Path + TEXT("."), Errors);
+			CheckObject(Object, Fields, FieldPath, Errors);
 		}
 		else if (IsTagProperty(Property))
 		{
@@ -283,6 +315,11 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 	}
 	if (Json.IsValid())
 	{
+		// 인스턴스 구조체 값의 구조체는 데이터 객체가 정합니다(보스 패턴의 전용 값).
+		if (const UAgCharacterData* CharacterData = Cast<UAgCharacterData>(&Target))
+		{
+			CharacterData->ResolveJsonStructTypes(*Json, Errors);
+		}
 		CheckObject(*Json, Properties, FString(), Errors);
 	}
 
@@ -312,6 +349,11 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 		Properties[Index]->CopyCompleteValue(Properties[Index]->ContainerPtrToValuePtr<void>(&Target), Values[Index].GetObjAddress());
 	}
 	return true;
+}
+
+void UAgAssetManager::SetJsonStructType(FJsonObject& Object, const UScriptStruct& Struct)
+{
+	Object.SetStringField(StructTypeKey, Struct.GetPathName());
 }
 
 #if WITH_EDITOR

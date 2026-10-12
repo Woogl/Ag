@@ -100,6 +100,13 @@ const UAgCharacterData* UAgGameplayAbility::GetCharacterDataBase() const
 	return GetAgCharacter()->GetCharacterData();
 }
 
+const TInstancedStruct<FAgBossPatternParams>* UAgGameplayAbility::FindPatternParams() const
+{
+	const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAvatarActorFromActorInfo());
+	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(GetCurrentAbilitySpecHandle()) : nullptr;
+	return Pattern ? &Pattern->Params : nullptr;
+}
+
 void UAgGameplayAbility::BeginBusy()
 {
 	if (!BusyTag)

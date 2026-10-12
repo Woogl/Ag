@@ -26,7 +26,7 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Montage || !GetPatternParams<FAgBossDashParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -62,9 +62,9 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
+	const FAgBossDashParams* Params = GetPatternParams<FAgBossDashParams>();
 	const AActor* Target = Boss->GetTarget();
-	if (!Target)
+	if (!Target || !Params)
 	{
 		return;
 	}
@@ -75,13 +75,13 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 	{
 		Boss->SetActorRotation(FRotator(0.f, Direction.Rotation().Yaw, 0.f));
 	}
-	const float Distance = FMath::Min(UAgCombatLibrary::GetHorizontalDistance(Boss, Target) + Data->DashOvershoot, Data->DashMaxDistance);
+	const float Distance = FMath::Min(UAgCombatLibrary::GetHorizontalDistance(Boss, Target) + Params->Overshoot, Params->MaxDistance);
 
 	// 몽타주가 루트 모션을 주는 동안 캐릭터 무브먼트는 다른 루트 모션을 쓰지 않으므로, 여기서부터 모션 자체의 루트 모션은
 	// 무시합니다. 돌진이 보스를 움직이고, 나머지 모션은 창을 거두기만 합니다.
 	UAgAbilityTask_IgnoreRootMotion::IgnoreRootMotion(this)->ReadyForActivation();
 
-	DashTask = UAgAbilityTask_Dash::Dash(this, Boss->GetActorForwardVector(), Data->DashSpeed, Distance);
+	DashTask = UAgAbilityTask_Dash::Dash(this, Boss->GetActorForwardVector(), Params->Speed, Distance);
 	DashTask->OnFinished.AddDynamic(this, &ThisClass::HandleDashFinished);
 	DashTask->ReadyForActivation();
 

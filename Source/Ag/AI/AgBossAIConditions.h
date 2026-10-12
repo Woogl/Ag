@@ -78,7 +78,7 @@ struct FAgBossAICondition_BackstepReadyInstanceData
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AAgBossAIController> Controller = nullptr;
 
-	/** Backstep 패턴의 ID. 이 패턴의 쿨다운을 확인합니다. */
+	/** Backstep 패턴의 ID. 이 패턴의 전용 값(플레이어와의 거리, 발동 확률)과 쿨다운을 확인합니다. */
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	FName Pattern;
 };

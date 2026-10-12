@@ -19,7 +19,8 @@ void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle H
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgBossBackstepParams* Params = GetPatternParams<FAgBossBackstepParams>();
+	if (!Montage || !Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -30,7 +31,7 @@ void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle H
 	// 물러나는 거리: 모션의 루트 모션 전체 이동에 배율을 걸어 Backstep 거리에 맞춥니다(보스 사양 'Backstep'). 몽타주 태스크가 재생할 때
 	// 배율을 걸고, 몽타주가 블렌드 아웃을 시작하면 1로 되돌립니다.
 	const float MotionDistance = Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D();
-	const float RootMotionScale = MotionDistance > UE_KINDA_SMALL_NUMBER ? Data->BackstepDistance / MotionDistance : 1.f;
+	const float RootMotionScale = MotionDistance > UE_KINDA_SMALL_NUMBER ? Params->Distance / MotionDistance : 1.f;
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, 1.f, NAME_None, /*bStopWhenAbilityEnds*/ true, RootMotionScale);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);

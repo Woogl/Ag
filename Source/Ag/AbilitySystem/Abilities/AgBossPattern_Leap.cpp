@@ -35,7 +35,8 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	if (!Montage || Pattern->Hits.IsEmpty() || !Boss->GetTarget() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgBossLeapParams* Params = GetPatternParams<FAgBossLeapParams>();
+	if (!Montage || !Params || Pattern->Hits.IsEmpty() || !Boss->GetTarget() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -57,7 +58,7 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	LeapStart = Boss->GetActorLocation();
 
 	// 궤적: 체공 시간과 엔진 중력으로 처음 속도와 최고 높이가 정해집니다.
-	AirTime = Data->LeapAirTime;
+	AirTime = Params->AirTime;
 	Gravity = -Boss->GetCharacterMovement()->GetGravityZ();
 	const FVector ToTarget = (GetLandingTarget() - LeapStart) * FVector(1.f, 1.f, 0.f);
 	if (!ToTarget.IsNearlyZero())
@@ -87,13 +88,13 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 FVector UAgBossPattern_Leap::GetLandingTarget() const
 {
 	const AActor* Target = CastChecked<AAgBossCharacter>(GetAgCharacter())->GetTarget();
-	if (!Target)
+	const FAgBossLeapParams* Params = GetPatternParams<FAgBossLeapParams>();
+	if (!Target || !Params)
 	{
 		return LeapStart;
 	}
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FVector ToTarget = (Target->GetActorLocation() - LeapStart) * FVector(1.f, 1.f, 0.f);
-	const float Distance = FMath::Clamp(ToTarget.Size() - Data->LeapTargetOffset, 0.f, Data->LeapMaxDistance);
+	const float Distance = FMath::Clamp(ToTarget.Size() - Params->TargetOffset, 0.f, Params->MaxDistance);
 	return LeapStart + ToTarget.GetSafeNormal() * Distance;
 }
 
@@ -137,9 +138,9 @@ void UAgBossPattern_Leap::HandleApex()
 void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 {
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(GetCurrentAbilitySpecHandle());
-	if (!Pattern || Pattern->Hits.IsEmpty())
+	const FAgBossLeapParams* Params = GetPatternParams<FAgBossLeapParams>();
+	if (!Pattern || Pattern->Hits.IsEmpty() || !Params)
 	{
 		return;
 	}
@@ -158,7 +159,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 
 	// 착지가 판정 구간입니다. 착지 지점 반경 안에서 땅에 있는 대상만 한 번 맞습니다(점프 중이면 맞지 않음).
 	AAgCharacterBase* Target = Boss->GetTarget();
-	if (Target && !Target->GetCharacterMovement()->IsFalling() && UAgCombatLibrary::GetHorizontalDistance(Boss, Target) <= Data->LeapHitRadius)
+	if (Target && !Target->GetCharacterMovement()->IsFalling() && UAgCombatLibrary::GetHorizontalDistance(Boss, Target) <= Params->HitRadius)
 	{
 		UAgEffect_Damage::ApplyAttack(Boss, Boss, Target, FAgPlayerAttackHit(Pattern->Hits[0]), Boss->GetActorLocation());
 	}

@@ -104,7 +104,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockBack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Unguardable);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Unparryable);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Finisher);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Parry);

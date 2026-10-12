@@ -60,10 +60,6 @@ void UAgEffect_Damage::SetAttack(FGameplayEffectSpec& Spec, const FAgPlayerAttac
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Unguardable);
 	}
-	if (!Hit.bParryable)
-	{
-		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Unparryable);
-	}
 	if (Hit.bFinisher)
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Finisher);

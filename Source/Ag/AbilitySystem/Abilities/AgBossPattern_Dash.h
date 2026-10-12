@@ -4,10 +4,30 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "Data/AgAttackData.h"
 #include "AgBossPattern_Dash.generated.h"
 
 class UAgAbilityTask_Dash;
 class UAgAbilityTask_IgnoreCollision;
+
+/** DashThrust의 전용 값 (보스 사양 '돌진 규칙') */
+USTRUCT()
+struct FAgBossDashParams : public FAgBossPatternParams
+{
+	GENERATED_BODY()
+
+	/** 속도 */
+	UPROPERTY(EditAnywhere, Category = "Dash Thrust", meta = (Units = "cm/s", ClampMin = 0))
+	float Speed = 0.f;
+
+	/** 목표 지점: 플레이어 위치보다 이만큼 더 나아간 지점 */
+	UPROPERTY(EditAnywhere, Category = "Dash Thrust", meta = (Units = "cm", ClampMin = 0))
+	float Overshoot = 0.f;
+
+	/** 최대 이동 거리 */
+	UPROPERTY(EditAnywhere, Category = "Dash Thrust", meta = (Units = "cm", ClampMin = 0))
+	float MaxDistance = 0.f;
+};
 
 /**
  * DashThrust (보스 사양 '돌진 규칙', '돌진과 모션'): 돌진을 시작할 때까지 플레이어를 따라 돈 뒤, 회전 없이 플레이어를
@@ -21,6 +41,8 @@ class UAgBossPattern_Dash : public UAgGameplayAbility
 
 public:
 	UAgBossPattern_Dash();
+
+	virtual const UScriptStruct* GetPatternParamsType() const override { return FAgBossDashParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

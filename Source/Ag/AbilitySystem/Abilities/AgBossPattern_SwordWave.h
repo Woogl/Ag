@@ -4,9 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "Data/AgAttackData.h"
 #include "AgBossPattern_SwordWave.generated.h"
 
 class UAgAbilityTask_HoldTag;
+
+/** SwordWave의 전용 값 (보스 사양 '검기') */
+USTRUCT()
+struct FAgBossSwordWaveParams : public FAgBossPatternParams
+{
+	GENERATED_BODY()
+
+	/** 검기의 속도 */
+	UPROPERTY(EditAnywhere, Category = "Sword Wave", meta = (Units = "cm/s", ClampMin = 0))
+	float Speed = 0.f;
+
+	/** 검기의 최대 사거리 */
+	UPROPERTY(EditAnywhere, Category = "Sword Wave", meta = (Units = "cm", ClampMin = 0))
+	float Range = 0.f;
+};
 
 /**
  * SwordWave: 세 번 휘두르며, 휘두를 때마다 발사 노티파이에서 그 타의 공격 데이터로 검기 하나를 정면으로 쏩니다.
@@ -20,6 +36,8 @@ class UAgBossPattern_SwordWave : public UAgGameplayAbility
 
 public:
 	UAgBossPattern_SwordWave();
+
+	virtual const UScriptStruct* GetPatternParamsType() const override { return FAgBossSwordWaveParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

@@ -27,7 +27,7 @@ public:
 	static void ApplyAttack(AAgCharacterBase* Attacker, AActor* Causer, AAgCharacterBase* Target, const FAgPlayerAttackHit& Hit, const FVector& HitLocation);
 
 	/**
-	 * 타 하나의 공격 데이터(배율, 피격 반응, 가드·패리 가능 여부, 마지막 일격, MP·UP 충전)와 맞은 위치를 대미지 GE
+	 * 타 하나의 공격 데이터(배율, 피격 반응, 가드 가능 여부, 마지막 일격, MP·UP 충전)와 맞은 위치를 대미지 GE
 	 * 스펙에 담습니다.
 	 */
 	static void SetAttack(FGameplayEffectSpec& Spec, const FAgPlayerAttackHit& Hit, const FVector& HitLocation);

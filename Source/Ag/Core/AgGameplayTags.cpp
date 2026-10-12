@@ -93,8 +93,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_Flinch, "Effect.Damage.Reaction.Flinch", "피격 반응 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockUp, "Effect.Damage.Reaction.KnockUp", "피격 반응 넉업");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockBack, "Effect.Damage.Reaction.KnockBack", "피격 반응 넉백");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unguardable, "Effect.Damage.Unguardable", "가드할 수 없는 공격");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unparryable, "Effect.Damage.Unparryable", "패리할 수 없는 공격");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unguardable, "Effect.Damage.Unguardable", "가드와 패리로 막을 수 없는 공격 (가드 불가)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Finisher, "Effect.Damage.Finisher", "마지막 일격 (처형의 마지막 일격, 궁극기 마무리)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_PerfectDodge, "Effect.Damage.Result.PerfectDodge", "피격 결과 극한 회피");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Parry, "Effect.Damage.Result.Parry", "피격 결과 패리");

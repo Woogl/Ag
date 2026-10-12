@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "StructUtils/InstancedStruct.h"
 #include "AgAttackData.generated.h"
 
 /** 전투 시스템 '피격 반응' */
@@ -33,13 +34,9 @@ struct FAgAttackHit
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	EAgHitReaction HitReaction = EAgHitReaction::Flinch;
 
-	/** 가드 가능 */
+	/** 가드 가능. 불가면 가드와 패리로 막을 수 없습니다. */
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	bool bGuardable = true;
-
-	/** 패리 가능. 가드 불가 공격은 항상 패리 불가입니다. */
-	UPROPERTY(EditAnywhere, Category = "Attack", meta = (EditCondition = "bGuardable"))
-	bool bParryable = true;
 };
 
 /** 플레이어 공격의 타 하나: 공격 데이터에 플레이어 공격에만 있는 값을 더합니다. */
@@ -84,6 +81,16 @@ struct FAgPlayerAttack
 	float MaxApproachDistance = 0.f;
 };
 
+/**
+ * 보스 패턴의 전용 값: 한 패턴의 코드만 읽는 값의 부모(구현 계획서 'JSON과 DataAsset' 'JSON 파일'). 전용 값이 있는 패턴
+ * 어빌리티가 이 구조체를 상속한 자기 구조체를 어빌리티 옆에 두고, 그 구조체를 정합니다(GetPatternParamsType).
+ */
+USTRUCT()
+struct FAgBossPatternParams
+{
+	GENERATED_BODY()
+};
+
 /** 보스 패턴 하나 (보스 사양 '패턴 목록', '패턴 상세') */
 USTRUCT(BlueprintType)
 struct FAgBossPattern
@@ -123,4 +130,11 @@ struct FAgBossPattern
 	 */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "cm", ClampMin = 0))
 	float MaxApproachDistance = 0.f;
+
+	/**
+	 * 이 패턴의 코드만 읽는 전용 값. 구조체는 패턴 어빌리티가 정하므로(GetPatternParamsType) JSON에는 값만 적고, 전용 값이
+	 * 없는 패턴은 비워 둡니다({}).
+	 */
+	UPROPERTY(EditAnywhere, Category = "Pattern")
+	TInstancedStruct<FAgBossPatternParams> Params;
 };

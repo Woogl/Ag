@@ -9,6 +9,7 @@
 #include "AgCharacterData.generated.h"
 
 class AAgSwordWave;
+class FJsonObject;
 class UAgGameplayAbility;
 class UAgEffect_Regen;
 class UAnimMontage;
@@ -90,6 +91,12 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostEditUndo() override;
 #endif
+
+	/**
+	 * 에셋 매니저가 ValuesFile의 JSON을 검사하기 전에 부릅니다. 인스턴스 구조체 값마다 무슨 구조체로 읽을지 정하고
+	 * (UAgAssetManager::SetJsonStructType), 정할 수 없으면 Errors에 더합니다. 파일은 바꾸지 않습니다.
+	 */
+	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const {}
 
 	/** Transient 필드를 채우는 프로젝트 Data 폴더의 JSON 파일 (Player.json, Boss.json) */
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
@@ -433,6 +440,13 @@ public:
 	UAnimMontage* FindPatternMontage(FName Id) const;
 	TSubclassOf<UAgGameplayAbility> FindPatternAbility(FName Id) const;
 
+	/** 패턴마다 그 패턴 어빌리티가 정한 전용 값의 구조체(GetPatternParamsType)로 Params를 읽게 합니다. */
+	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const override;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
 	/** 회전 정지 시간(초)을 패턴 몽타주의 시간으로 바꾼 값 */
 	virtual float GetRotationStopLeadInMontage() const override { return RotationStopLead * PatternPlayRate; }
 
@@ -472,57 +486,9 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase", meta = (ClampMin = 0, ClampMax = 1))
 	float Phase2HPRatio = 0.f;
 
-	/** 돌진 찌르기 돌진 규칙: 속도 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dash Thrust", meta = (Units = "cm/s", ClampMin = 0))
-	float DashSpeed = 0.f;
-
-	/** 돌진 찌르기 돌진 규칙: 목표 지점. 플레이어 위치보다 이만큼 더 나아간 지점 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dash Thrust", meta = (Units = "cm", ClampMin = 0))
-	float DashOvershoot = 0.f;
-
-	/** 돌진 찌르기 돌진 규칙: 최대 이동 거리 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dash Thrust", meta = (Units = "cm", ClampMin = 0))
-	float DashMaxDistance = 0.f;
-
-	/** 도약 내려찍기 체공 시간: 도약부터 착지까지. 엔진 중력과 함께 최고 높이를 정합니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "s", ClampMin = 0.01))
-	float LeapAirTime = 1.f;
-
-	/** 도약 내려찍기: 착지 목표. 플레이어 위치에서 보스 쪽으로 이만큼 떨어진 지점 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
-	float LeapTargetOffset = 0.f;
-
-	/** 도약 내려찍기: 최대 도약 거리 (수평) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
-	float LeapMaxDistance = 0.f;
-
-	/** 도약 내려찍기: 착지 지점 반경. 착지가 이 안의 대상을 맞힙니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
-	float LeapHitRadius = 0.f;
-
-	/** 백스텝: 플레이어와의 거리. 플레이어가 이 안에 있어야 발동합니다 (캡슐 중심 사이 수평 거리). */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Backstep", meta = (Units = "cm", ClampMin = 0))
-	float BackstepRange = 0.f;
-
-	/** 백스텝: 발동 확률. 플레이어가 평타의 각 타나 점프 공격을 시작할 때마다 검사합니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Backstep", meta = (ClampMin = 0, ClampMax = 1))
-	float BackstepChance = 0.f;
-
-	/** 백스텝: 뒤로 물러나는 거리. 모션의 루트 모션 이동을 이 거리에 맞춥니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Backstep", meta = (Units = "cm", ClampMin = 0))
-	float BackstepDistance = 0.f;
-
 	/** SwordWave: 투사체 (BP_SwordWave). 판정 상자(폭, 높이)와 모습은 블루프린트에서 정합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Sword Wave")
 	TSubclassOf<AAgSwordWave> SwordWaveClass;
-
-	/** 검기 발사: 속도 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Sword Wave", meta = (Units = "cm/s", ClampMin = 0))
-	float SwordWaveSpeed = 0.f;
-
-	/** 검기 발사: 최대 사거리 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Sword Wave", meta = (Units = "cm", ClampMin = 0))
-	float SwordWaveRange = 0.f;
 
 	/** 락온 지점(가슴 높이)의 본. 락온 카메라가 이곳을 보고, 락온 마커도 여기에 표시합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")

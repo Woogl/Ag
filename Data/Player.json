@@ -28,7 +28,6 @@
           "PoiseMultiplier": 0.8,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0
         }
@@ -43,7 +42,6 @@
           "PoiseMultiplier": 0.8,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0
         }
@@ -58,7 +56,6 @@
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0
         }
@@ -73,7 +70,6 @@
           "PoiseMultiplier": 1,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 0
         }
@@ -88,7 +84,6 @@
           "PoiseMultiplier": 2,
           "HitReaction": "Flinch",
           "bGuardable": true,
-          "bParryable": true,
           "MPCharge": 4,
           "UPCharge": 10
         }
@@ -104,7 +99,6 @@
         "PoiseMultiplier": 1.5,
         "HitReaction": "Flinch",
         "bGuardable": true,
-        "bParryable": true,
         "MPCharge": 4,
         "UPCharge": 0
       }
@@ -140,7 +134,6 @@
         "PoiseMultiplier": 6,
         "HitReaction": "KnockBack",
         "bGuardable": true,
-        "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 25
       }
@@ -155,7 +148,6 @@
     "PoiseMultiplier": 5,
     "HitReaction": "KnockBack",
     "bGuardable": true,
-    "bParryable": true,
     "MPCharge": 0,
     "UPCharge": 0
   },
@@ -172,7 +164,6 @@
         "PoiseMultiplier": 0,
         "HitReaction": "None",
         "bGuardable": true,
-        "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0
       },
@@ -181,7 +172,6 @@
         "PoiseMultiplier": 0,
         "HitReaction": "None",
         "bGuardable": true,
-        "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0
       },
@@ -190,7 +180,6 @@
         "PoiseMultiplier": 0,
         "HitReaction": "None",
         "bGuardable": true,
-        "bParryable": true,
         "MPCharge": 0,
         "UPCharge": 0
       }
@@ -209,7 +198,6 @@
         "PoiseMultiplier": 5,
         "HitReaction": "Flinch",
         "bGuardable": true,
-        "bParryable": true,
         "MPCharge": 8,
         "UPCharge": 0
       }

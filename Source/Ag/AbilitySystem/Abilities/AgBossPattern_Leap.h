@@ -4,9 +4,33 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "Data/AgAttackData.h"
 #include "AgBossPattern_Leap.generated.h"
 
 class UAgAbilityTask_HoldTag;
+
+/** LeapSlam의 전용 값 (보스 사양 'LeapSlam') */
+USTRUCT()
+struct FAgBossLeapParams : public FAgBossPatternParams
+{
+	GENERATED_BODY()
+
+	/** 체공 시간: 도약부터 착지까지. 엔진 중력과 함께 최고 높이를 정합니다. */
+	UPROPERTY(EditAnywhere, Category = "Leap Slam", meta = (Units = "s", ClampMin = 0.01))
+	float AirTime = 1.f;
+
+	/** 착지 목표: 플레이어 위치에서 보스 쪽으로 이만큼 떨어진 지점 */
+	UPROPERTY(EditAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
+	float TargetOffset = 0.f;
+
+	/** 최대 도약 거리 (수평) */
+	UPROPERTY(EditAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
+	float MaxDistance = 0.f;
+
+	/** 착지 지점 반경: 착지가 이 안의 대상을 맞힙니다. */
+	UPROPERTY(EditAnywhere, Category = "Leap Slam", meta = (Units = "cm", ClampMin = 0))
+	float HitRadius = 0.f;
+};
 
 /**
  * LeapSlam (보스 사양 'LeapSlam'): 엔진 기본 중력으로 포물선을 그리며 체공 시간 뒤 착지합니다. 최고점에서 수평 속도를
@@ -22,6 +46,8 @@ class UAgBossPattern_Leap : public UAgGameplayAbility
 
 public:
 	UAgBossPattern_Leap();
+
+	virtual const UScriptStruct* GetPatternParamsType() const override { return FAgBossLeapParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

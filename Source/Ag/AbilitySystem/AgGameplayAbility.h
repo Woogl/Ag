@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Data/AgAttackData.h"
 #include "AgGameplayAbility.generated.h"
 
 class AAgCharacterBase;
@@ -34,6 +35,12 @@ public:
 
 	/** 시작할 때 치르는 자원(양수). 비용을 치르는 어빌리티의 비용 GE(UAgEffect_Cost)가 읽습니다. */
 	virtual FAgAbilityCost GetCost() const;
+
+	/**
+	 * 보스 패턴 어빌리티가 읽는 패턴 전용 값의 구조체(FAgBossPatternParams의 자식). 전용 값이 없으면 null입니다.
+	 * 보스 데이터가 이 구조체로 Boss.json의 Params를 검사하고 읽습니다.
+	 */
+	virtual const UScriptStruct* GetPatternParamsType() const { return nullptr; }
 
 protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
@@ -81,6 +88,18 @@ protected:
 		return CastChecked<TData>(GetCharacterDataBase());
 	}
 
+	/**
+	 * 지금 보스 패턴의 전용 값(Boss.json 패턴의 Params). 패턴이 없거나 값이 TParams가 아니면 null입니다. JSON을 다시 읽으면
+	 * 값이 새로 만들어지므로 함수 안에서만 쓰고, 다음에 쓸 때 다시 꺼냅니다.
+	 */
+	template <typename TParams>
+	const TParams* GetPatternParams() const
+	{
+		ensureMsgf(TParams::StaticStruct() == GetPatternParamsType(), TEXT("%s reads %s but GetPatternParamsType returns another struct."), *GetName(), *TParams::StaticStruct()->GetName());
+		const TInstancedStruct<FAgBossPatternParams>* Params = FindPatternParams();
+		return Params ? Params->GetPtr<TParams>() : nullptr;
+	}
+
 	/** 행동 중(State.Busy)을 시작합니다. */
 	void BeginBusy();
 
@@ -92,6 +111,9 @@ protected:
 
 private:
 	const UAgCharacterData* GetCharacterDataBase() const;
+
+	/** 이 어빌리티 스펙의 보스 패턴의 Params. 보스 패턴이 아니면 null입니다. */
+	const TInstancedStruct<FAgBossPatternParams>* FindPatternParams() const;
 
 	FGameplayTagContainer CooldownTags;
 

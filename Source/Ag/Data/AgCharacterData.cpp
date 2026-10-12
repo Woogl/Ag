@@ -5,6 +5,8 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "Animation/AnimMontage.h"
 #include "Core/AgAssetManager.h"
+#include "Dom/JsonObject.h"
+#include "Dom/JsonValue.h"
 
 void UAgCharacterData::PostLoad()
 {
@@ -49,3 +51,59 @@ TSubclassOf<UAgGameplayAbility> UAgBossData::FindPatternAbility(FName Id) const
 {
 	return PatternAbilities.FindRef(Id);
 }
+
+void UAgBossData::ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const
+{
+	// 형식이 틀린 항목은 건너뜁니다. 그 오류는 에셋 매니저의 검사가 알립니다.
+	const TArray<TSharedPtr<FJsonValue>>* Entries = nullptr;
+	if (!Json.TryGetArrayField(TEXT("Patterns"), Entries))
+	{
+		return;
+	}
+	for (int32 Index = 0; Index < Entries->Num(); ++Index)
+	{
+		const TSharedPtr<FJsonObject>* Entry = nullptr;
+		const TSharedPtr<FJsonObject>* Params = nullptr;
+		FString Id;
+		if (!(*Entries)[Index]->TryGetObject(Entry) || !(*Entry)->TryGetStringField(TEXT("Id"), Id) || !(*Entry)->TryGetObjectField(TEXT("Params"), Params))
+		{
+			continue;
+		}
+
+		// 구조체를 정하지 못한 Params는 비워, 검사가 같은 문제를 다시 알리지 않게 합니다. 오류가 있으면 어차피 값을 쓰지 않습니다.
+		const TSubclassOf<UAgGameplayAbility> Ability = FindPatternAbility(FName(*Id));
+		const UScriptStruct* Struct = Ability ? Ability.GetDefaultObject()->GetPatternParamsType() : nullptr;
+		if (!Ability)
+		{
+			Errors.Add(FString::Printf(TEXT("Patterns[%d]: pattern %s has no ability in %s's PatternAbilities"), Index, *Id, *GetName()));
+			(*Params)->Values.Empty();
+		}
+		else if (Struct && Struct->IsChildOf(FAgBossPatternParams::StaticStruct()))
+		{
+			UAgAssetManager::SetJsonStructType(**Params, *Struct);
+		}
+		else if (Struct)
+		{
+			Errors.Add(FString::Printf(TEXT("Patterns[%d].Params: %s declares %s, which isn't an AgBossPatternParams"), Index, *Ability->GetName(), *Struct->GetName()));
+			(*Params)->Values.Empty();
+		}
+		else if ((*Params)->Values.Num() > 0)
+		{
+			Errors.Add(FString::Printf(TEXT("Patterns[%d].Params: must be {}, %s reads no params"), Index, *Ability->GetName()));
+			(*Params)->Values.Empty();
+		}
+	}
+}
+
+#if WITH_EDITOR
+void UAgBossData::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	// 패턴 전용 값의 구조체는 패턴 어빌리티가 정하므로, 어빌리티를 바꾸면 JSON을 다시 읽습니다.
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UAgBossData, PatternAbilities))
+	{
+		UAgAssetManager::Get().LoadJsonValues(*this, ValuesFile);
+	}
+}
+#endif
