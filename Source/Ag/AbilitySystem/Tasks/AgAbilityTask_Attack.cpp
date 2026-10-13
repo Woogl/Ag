@@ -73,8 +73,8 @@ AAgCharacterBase* UAgAbilityTask_Attack::GetHitTarget() const
 
 void UAgAbilityTask_Attack::HandleAttackWindowEnded(const FGameplayEventData* Payload)
 {
-	// 타마다 다시 다가가는 것은 공격 중 이동 태스크가 합니다.
-	if (FMath::RoundToInt(Payload->EventMagnitude) >= Hits.Num() - 1 && ShouldBroadcastAbilityTaskDelegates())
+	// 타마다 다시 다가가는 것은 공격 중 이동 태스크가 합니다. 앞 공격 몽타주의 판정 구간 끝은 받지 않습니다.
+	if (Payload->OptionalObject == Montage && FMath::RoundToInt(Payload->EventMagnitude) >= Hits.Num() - 1 && ShouldBroadcastAbilityTaskDelegates())
 	{
 		OnLastWindowEnded.Broadcast();
 	}

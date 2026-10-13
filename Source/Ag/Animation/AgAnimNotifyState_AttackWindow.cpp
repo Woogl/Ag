@@ -57,6 +57,7 @@ void UAgAnimNotifyState_AttackWindow::NotifyEnd(USkeletalMeshComponent* MeshComp
 		FGameplayEventData Payload;
 		Payload.EventTag = AgGameplayTags::Event_AttackWindowEnded;
 		Payload.EventMagnitude = HitIndex;
+		Payload.OptionalObject = Animation;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Character, AgGameplayTags::Event_AttackWindowEnded, Payload);
 	}
 }

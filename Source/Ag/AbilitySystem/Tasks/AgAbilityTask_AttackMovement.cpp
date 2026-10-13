@@ -97,6 +97,12 @@ void UAgAbilityTask_AttackMovement::StartHit()
 
 void UAgAbilityTask_AttackMovement::HandleAttackWindowEnded(const FGameplayEventData* Payload)
 {
+	// 앞 공격 몽타주의 판정 구간은 이 태스크가 시작된 뒤에 끝나기도 해서, 어빌리티가 재생 중인 몽타주의 것만 봅니다.
+	if (Payload->OptionalObject != Ability->GetCurrentMontage())
+	{
+		return;
+	}
+
 	// 판정 구간이 끝나면 다음 타를 시작합니다. 마지막 타 뒤에는 돌지 않고, 정지 간격은 태스크가 끝날 때까지 지킵니다.
 	if (FMath::RoundToInt(Payload->EventMagnitude) < NumHits - 1)
 	{

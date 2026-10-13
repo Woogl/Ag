@@ -37,8 +37,8 @@
                 "UPCharge": 0
               }
             ],
-            "TargetingRange": 150,
-            "MaxApproachDistance": 20
+            "TargetingRange": 200,
+            "MaxApproachDistance": 70
           },
           {
             "Hits": [
@@ -51,8 +51,8 @@
                 "UPCharge": 0
               }
             ],
-            "TargetingRange": 200,
-            "MaxApproachDistance": 40
+            "TargetingRange": 250,
+            "MaxApproachDistance": 90
           },
           {
             "Hits": [
@@ -79,8 +79,8 @@
                 "UPCharge": 0
               }
             ],
-            "TargetingRange": 210,
-            "MaxApproachDistance": 40
+            "TargetingRange": 260,
+            "MaxApproachDistance": 90
           },
           {
             "Hits": [
@@ -93,8 +93,8 @@
                 "UPCharge": 10
               }
             ],
-            "TargetingRange": 270,
-            "MaxApproachDistance": 130
+            "TargetingRange": 260,
+            "MaxApproachDistance": 120
           }
         ]
       }
@@ -149,8 +149,8 @@
             "UPCharge": 0
           }
         ],
-        "TargetingRange": 800,
-        "MaxApproachDistance": 510
+        "TargetingRange": 850,
+        "MaxApproachDistance": 560
       }
     },
     {
@@ -177,8 +177,8 @@
             "UPCharge": 25
           }
         ],
-        "TargetingRange": 310,
-        "MaxApproachDistance": 40,
+        "TargetingRange": 340,
+        "MaxApproachDistance": 70,
         "MPCost": 30
       }
     },
