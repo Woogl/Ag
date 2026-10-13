@@ -28,6 +28,9 @@ private:
 	void HandleLastWindowEnded();
 
 	UFUNCTION()
+	void HandleRecoveryStarted();
+
+	UFUNCTION()
 	void HandleAttackCompleted();
 
 	UFUNCTION()

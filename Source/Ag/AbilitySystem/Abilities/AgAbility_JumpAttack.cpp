@@ -5,7 +5,6 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
@@ -45,6 +44,7 @@ void UAgAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 	BeginBusy();
 	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->JumpAttack, Data->JumpAttackMontage);
+	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
 	AttackTask->ReadyForActivation();
@@ -83,17 +83,8 @@ void UAgAbility_JumpAttack::HandlePlunge(FGameplayEventData Payload)
 
 void UAgAbility_JumpAttack::HandleLanded(EMovementMode NewMovementMode)
 {
+	// 후딜은 착지 모션(Land 섹션)의 노티파이에서 시작합니다.
 	MontageJumpToSection(LandSection);
-
-	// 후딜은 착지부터 정한 시간 뒤에 시작합니다. 몽타주 재생 위치로 재므로 히트스톱 중에는 함께 멈춥니다.
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	UAnimMontage* Montage = Data->JumpAttackMontage;
-	float LandStart = 0.f;
-	float LandEnd = 0.f;
-	Montage->GetSectionStartAndEndTime(Montage->GetSectionIndex(LandSection), LandStart, LandEnd);
-	UAgAbilityTask_WaitMontagePosition* RecoveryTask = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, LandStart + Data->JumpAttackRecoveryStart);
-	RecoveryTask->OnReached.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
-	RecoveryTask->ReadyForActivation();
 }
 
 void UAgAbility_JumpAttack::HandleRecoveryStarted()

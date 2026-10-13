@@ -82,7 +82,7 @@ private:
 	/** 선입력: 이 행동 키가 지금 허용되지 않으면 참입니다(후딜 전의 행동, 피격 반응, 공중에서는 평타 키 밖의 키). */
 	bool IsActionInputBlocked(const FGameplayTag& InputTag) const;
 
-	/** 선입력: 행동 키가 다시 허용되면 기억한 키를 실행합니다. */
+	/** 선입력: 행동 키가 다시 허용되면 기억한 키를 실행합니다. 가드 키를 누른 채 후딜이 시작되면 가드를 시작합니다. */
 	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);
 	void TryRunBufferedInput();
 

@@ -15,8 +15,9 @@ class UAnimMontage;
 /**
  * 판정 구간이 있는 공격 하나(평타 한 타, 점프 공격, 회피 반격, 스킬, 보스 공용 패턴, 구현 계획서 '공격 진행'): 공격
  * 데이터를 판정 구간에 걸고 몽타주를 재생하며, 공격 중 이동 태스크를 돌립니다. 마지막 판정 구간이 끝나면
- * OnLastWindowEnded, 모션이 끝나면 OnCompleted, 모션이 끊기면 OnInterrupted를 보냅니다. 행동 중과 후딜, 어빌리티를
- * 끝낼지는 어빌리티가 정합니다. 끝나면(어빌리티가 끝날 때 포함) 공격 데이터를 지웁니다.
+ * OnLastWindowEnded, 몽타주의 후딜 시작 노티파이에서 OnRecoveryStarted, 모션이 끝나면 OnCompleted, 모션이 끊기면
+ * OnInterrupted를 보냅니다. 행동 중과 후딜, 어빌리티를 끝낼지는 어빌리티가 정합니다. 끝나면(어빌리티가 끝날 때 포함)
+ * 공격 데이터를 지웁니다.
  */
 UCLASS()
 class UAgAbilityTask_Attack : public UAbilityTask
@@ -26,6 +27,9 @@ class UAgAbilityTask_Attack : public UAbilityTask
 public:
 	UPROPERTY(BlueprintAssignable)
 	FGenericGameplayTaskDelegate OnLastWindowEnded;
+
+	UPROPERTY(BlueprintAssignable)
+	FGenericGameplayTaskDelegate OnRecoveryStarted;
 
 	UPROPERTY(BlueprintAssignable)
 	FGenericGameplayTaskDelegate OnCompleted;
@@ -47,6 +51,8 @@ public:
 
 private:
 	void HandleAttackWindowEnded(const FGameplayEventData* Payload);
+
+	void HandleRecoveryStarted(const FGameplayEventData* Payload);
 
 	/** 모션이 끝났습니다. 후딜은 블렌드 아웃을 지나 여기까지입니다. */
 	UFUNCTION()
@@ -74,4 +80,5 @@ private:
 	TObjectPtr<UAgAbilityTask_AttackMovement> MovementTask;
 
 	FDelegateHandle WindowEndedHandle;
+	FDelegateHandle RecoveryStartedHandle;
 };

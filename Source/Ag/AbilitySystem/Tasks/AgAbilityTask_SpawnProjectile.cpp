@@ -61,11 +61,6 @@ void UAgAbilityTask_SpawnProjectile::HandleRelease(const FGameplayEventData* Pay
 			Projectile->Launch(Hits[Index], Direction, Params);
 		}
 	}
-
-	if (ShouldBroadcastAbilityTaskDelegates())
-	{
-		OnFired.Broadcast(Index);
-	}
 }
 
 void UAgAbilityTask_SpawnProjectile::OnDestroy(bool bInOwnerFinished)

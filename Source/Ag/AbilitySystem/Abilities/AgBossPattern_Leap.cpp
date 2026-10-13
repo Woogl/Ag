@@ -154,7 +154,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	const UAgCameraData& Camera = UAgAssetManager::Get().GetCameraData();
 	if (ViewPlayer && Boss->GetHorizontalDistanceTo(ViewPlayer) <= Camera.LeapLandingShakeRange)
 	{
-		UGameplayCueFunctionLibrary::ExecuteGameplayCueOnActor(ViewPlayer, Camera.LeapLandingShake, FGameplayCueParameters());
+		UGameplayCueFunctionLibrary::ExecuteGameplayCueOnActor(ViewPlayer, UAgCameraData::GetShakeCue(Camera.LeapLandingShake), FGameplayCueParameters());
 	}
 
 	// 착지가 판정 구간입니다. 착지 지점 반경 안에서 땅에 있는 대상만 한 번 맞습니다(점프 중이면 맞지 않음).

@@ -13,6 +13,7 @@ void UAgAnimNotify_GameplayEvent::Notify(USkeletalMeshComponent* MeshComp, UAnim
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = EventTag;
+		Payload.OptionalObject = Animation;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, EventTag, Payload);
 	}
 }

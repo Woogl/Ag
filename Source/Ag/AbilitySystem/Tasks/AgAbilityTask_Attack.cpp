@@ -49,6 +49,7 @@ void UAgAbilityTask_Attack::Activate()
 	}
 
 	WindowEndedHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackWindowEnded).AddUObject(this, &ThisClass::HandleAttackWindowEnded);
+	RecoveryStartedHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_RecoveryStarted).AddUObject(this, &ThisClass::HandleRecoveryStarted);
 	Character->SetActiveAttack(Hits);
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(Ability, NAME_None, Montage, PlayRate);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageCompleted);
@@ -72,10 +73,19 @@ AAgCharacterBase* UAgAbilityTask_Attack::GetHitTarget() const
 
 void UAgAbilityTask_Attack::HandleAttackWindowEnded(const FGameplayEventData* Payload)
 {
-	// 마지막 판정 구간이 끝나면 후딜이 시작됩니다(플레이어 입력 '모션 캔슬'). 타마다 다시 다가가는 것은 공격 중 이동 태스크가 합니다.
+	// 타마다 다시 다가가는 것은 공격 중 이동 태스크가 합니다.
 	if (FMath::RoundToInt(Payload->EventMagnitude) >= Hits.Num() - 1 && ShouldBroadcastAbilityTaskDelegates())
 	{
 		OnLastWindowEnded.Broadcast();
+	}
+}
+
+void UAgAbilityTask_Attack::HandleRecoveryStarted(const FGameplayEventData* Payload)
+{
+	// 다음 타로 넘어간 뒤 블렌드 아웃 중인 앞 몽타주의 노티파이는 받지 않습니다.
+	if (Payload && Payload->OptionalObject == Montage && ShouldBroadcastAbilityTaskDelegates())
+	{
+		OnRecoveryStarted.Broadcast();
 	}
 }
 
@@ -104,6 +114,7 @@ void UAgAbilityTask_Attack::OnDestroy(bool bInOwnerFinished)
 	if (UAbilitySystemComponent* ASC = AbilitySystemComponent.Get(); ASC && WindowEndedHandle.IsValid())
 	{
 		ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackWindowEnded).Remove(WindowEndedHandle);
+		ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_RecoveryStarted).Remove(RecoveryStartedHandle);
 	}
 
 	// 어빌리티가 끝날 때는 어빌리티가 하위 태스크도 끝냅니다(몽타주를 멈추고, 워프 목표, 정지 간격, 회전 대상을 지움). 공격만

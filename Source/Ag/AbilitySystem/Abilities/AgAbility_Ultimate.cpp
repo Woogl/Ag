@@ -9,7 +9,6 @@
 #include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_PlayCutscene.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
@@ -44,7 +43,6 @@ void UAgAbility_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	SlashIndex = 0;
 
 	// 마무리 전까지는 어떤 행동도 궁극기를 끊지 못합니다.
 	BeginBusy();
@@ -60,9 +58,17 @@ void UAgAbility_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
 
+	UAbilityTask_WaitGameplayEvent* SlashTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_UltimateSlash);
+	SlashTask->EventReceived.AddDynamic(this, &ThisClass::HandleSlash);
+	SlashTask->ReadyForActivation();
+
 	UAbilityTask_WaitGameplayEvent* FinishTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_UltimateFinish);
 	FinishTask->EventReceived.AddDynamic(this, &ThisClass::HandleFinish);
 	FinishTask->ReadyForActivation();
+
+	UAbilityTask_WaitGameplayEvent* RecoveryTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_RecoveryStarted);
+	RecoveryTask->EventReceived.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
+	RecoveryTask->ReadyForActivation();
 
 	// 궁극기 컷신: 카메라만 담은 시퀀스를 플레이어 위치·방향을 기준으로 재생합니다. HUD와 보스의 월드 위젯은 컷신의
 	// 시네마틱 모드를 보고 숨습니다. 시간 정지를 건 뒤에 시작해야 컷신이 정상 속도로 재생됩니다.
@@ -75,34 +81,16 @@ void UAgAbility_Ultimate::HandleCutsceneFinished()
 {
 	MontageJumpToSection(JudgmentSection);
 
-	// 베기 선 큐: 켜 두고 베기 선마다 실행하며, 마무리에 끕니다. 마무리 전에 어빌리티가 끝나면 엔진이 끕니다.
+	// 베기 선 큐: 켜 두고 베기 선 노티파이마다 실행하며, 마무리에 끕니다. 마무리 전에 어빌리티가 끝나면 엔진이 끕니다.
 	K2_AddGameplayCue(AgGameplayTags::GameplayCue_UltimateSlashes, FGameplayEffectContextHandle(), /*bRemoveOnAbilityEnd*/ true);
-	WaitNextSlash();
 }
 
-void UAgAbility_Ultimate::WaitNextSlash()
+void UAgAbility_Ultimate::HandleSlash(FGameplayEventData Payload)
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (SlashIndex >= Data->UltimateSlashCount)
+	if (Payload.OptionalObject == GetCurrentMontage())
 	{
-		return;
+		SpawnSlash();
 	}
-	// 몽타주 위치로 세므로 플레이어의 시간(시간 정지 보정, 히트스톱)을 따릅니다.
-	const UAnimMontage* Montage = Data->UltimateMontage;
-	float Start = 0.f;
-	float End = 0.f;
-	Montage->GetSectionStartAndEndTime(Montage->GetSectionIndex(JudgmentSection), Start, End);
-	const float Position = Start + (End - Start) * SlashIndex / Data->UltimateSlashCount;
-	UAgAbilityTask_WaitMontagePosition* SlashTask = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Data->UltimateMontage, Position);
-	SlashTask->OnReached.AddDynamic(this, &ThisClass::HandleSlashTime);
-	SlashTask->ReadyForActivation();
-}
-
-void UAgAbility_Ultimate::HandleSlashTime()
-{
-	SpawnSlash();
-	++SlashIndex;
-	WaitNextSlash();
 }
 
 void UAgAbility_Ultimate::SpawnSlash()
@@ -128,10 +116,9 @@ void UAgAbility_Ultimate::SpawnSlash()
 void UAgAbility_Ultimate::HandleFinish(FGameplayEventData Payload)
 {
 	// 마무리: 베기 선이 모두 사라지고 시간 정지가 끝난 뒤, 범위 안의 적마다 1타를 적용합니다. 시간이 다시 흐른 뒤에 적용해야
-	// 적중 후 처리의 히트스톱과 슬로우모션이 정상 시간 위에서 시작합니다. 여기서부터 후딜(칼 뽑기)입니다.
+	// 적중 후 처리의 히트스톱과 슬로우모션이 정상 시간 위에서 시작합니다.
 	K2_RemoveGameplayCue(AgGameplayTags::GameplayCue_UltimateSlashes);
 	TimeStopTask->EndTask();
-	EndBusy();
 
 	// 이 어빌리티가 만든 스펙에는 엔진이 어빌리티 태그(Ability.Action.Ultimate)를 넣어, 대미지 GE가 궁극기 마무리 이펙트와
 	// 슬로우모션을 고릅니다. 대미지 숫자는 적의 캡슐 중심에 뜹니다.
@@ -145,6 +132,14 @@ void UAgAbility_Ultimate::HandleFinish(FGameplayEventData Payload)
 		UAgEffect_Damage::SetAttack(*Spec.Data, Hit, Enemy->GetActorLocation());
 		GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Spec.Data, Enemy->GetAbilitySystemComponent());
 		UE_LOG(LogAg, Verbose, TEXT("Ultimate finish: %s, HP now %.0f"), *Enemy->GetName(), Enemy->GetAttributeSet()->GetHP());
+	}
+}
+
+void UAgAbility_Ultimate::HandleRecoveryStarted(FGameplayEventData Payload)
+{
+	if (Payload.OptionalObject == GetCurrentMontage())
+	{
+		EndBusy();
 	}
 }
 

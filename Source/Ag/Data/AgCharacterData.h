@@ -195,10 +195,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Jump Attack", meta = (Units = "cm/s", ClampMin = 0))
 	float JumpAttackPlungeSpeed = 0.f;
 
-	/** 점프 공격 '착지': 착지부터 후딜이 시작될 때까지의 시간 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Jump Attack", meta = (Units = "s", ClampMin = 0))
-	float JumpAttackRecoveryStart = 0.f;
-
 	/** 자원 회복: 가드 중이 아닐 때 리젠 대기 시간이 지난 뒤의 초당 SP 회복량 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
 	float SPRegenRate = 0.f;
@@ -239,22 +235,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
 	float DodgeCooldown = 0.f;
 
-	/** 회피: 무적 구간. 시작부터 이 시간까지 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
-	float DodgeInvincibleTime = 0.f;
-
-	/** 회피: 극한 회피 구간. 시작부터 이 시간까지 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
-	float PerfectDodgeTime = 0.f;
-
-	/** 회피: 구를 때의 후딜 시작 (시작부터) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
-	float RollRecoveryStart = 0.f;
-
-	/** 회피: 뒤로 물러날 때의 후딜 시작 (시작부터) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
-	float BackstepRecoveryStart = 0.f;
-
 	/** SP 소모: 가드로 막은 공격. 가드 경감 배율 적용 전 HP 감소량에 곱하는 비율 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0))
 	float GuardSPCostRatio = 0.f;
@@ -294,10 +274,6 @@ public:
 	/** 궁극기: 범위 (플레이어와 적의 캡슐 중심 사이 수평 거리) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (Units = "cm", ClampMin = 0))
 	float UltimateRadius = 0.f;
-
-	/** 베기 선: 개수 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (ClampMin = 0))
-	int32 UltimateSlashCount = 0;
 
 	/** 베기 선: 위치. 카메라가 보는 쪽으로 플레이어 앞 이 거리 안 (cm) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")

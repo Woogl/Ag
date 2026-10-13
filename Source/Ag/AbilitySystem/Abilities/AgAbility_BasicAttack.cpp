@@ -47,7 +47,7 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 	}
 	BeginBusy();
 	AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->BasicAttack[Index], Data->BasicAttackMontages[Index]);
-	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
+	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
 	AttackTask->ReadyForActivation();
@@ -70,9 +70,9 @@ void UAgAbility_BasicAttack::HandleAttackInput(FGameplayEventData Payload)
 	}
 }
 
-void UAgAbility_BasicAttack::HandleLastWindowEnded()
+void UAgAbility_BasicAttack::HandleRecoveryStarted()
 {
-	// 마지막 판정 구간이 끝나면 후딜이 시작됩니다.
+	// 후딜이 시작되면 다음 타와 다른 행동을 받습니다.
 	EndBusy();
 }
 

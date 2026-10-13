@@ -60,7 +60,7 @@
       {
         "from": {
           "clip": "Samurai/Attack_Combo_B5",
-          "t": 0.35
+          "t": 0.9167
         },
         "to": {
           "clip": "Samurai/Attack_Combo_B5",

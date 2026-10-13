@@ -111,15 +111,7 @@ void UAgAbility_Guard::HandleGuardPressed(FGameplayEventData Payload)
 	SetGuarding(true);
 	if (!IsBusy())
 	{
-		// 몽타주 태스크를 끝내는 것만으로는 몽타주가 멈추지 않으므로 직접 멈춥니다. 태스크를 먼저 끝내야, 몽타주가 멈출 때
-		// 태스크의 OnInterrupted가 가드 자체를 끝내지 않습니다.
-		if (ParryTask)
-		{
-			ParryTask->EndTask();
-			ParryTask = nullptr;
-		}
-		MontageStop();
-		EndParryMotion();
+		CancelParryMotion();
 		StartGuard(/*bOpenParryWindow*/ true);
 	}
 }
@@ -185,9 +177,18 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 
 void UAgAbility_Guard::HandleParryRecoveryStarted(FGameplayEventData Payload)
 {
-	if (ParryMotionTag)
+	if (!ParryMotionTag || Payload.OptionalObject != GetCurrentMontage())
 	{
-		EndBusy();
+		return;
+	}
+	EndBusy();
+
+	// 가드 키를 누른 채 후딜이 시작되면 패리 모션을 모션 캔슬하고 패리 구간 없이 가드로 돌아갑니다
+	// (플레이어 사양 '패리 모션 중·종료 후').
+	if (GuardingTag)
+	{
+		CancelParryMotion();
+		StartGuard(/*bOpenParryWindow*/ false);
 	}
 }
 
@@ -206,6 +207,19 @@ void UAgAbility_Guard::HandleParryMotionCancelled()
 {
 	ParryTask = nullptr;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
+}
+
+void UAgAbility_Guard::CancelParryMotion()
+{
+	// 몽타주 태스크를 끝내는 것만으로는 몽타주가 멈추지 않으므로 직접 멈춥니다. 태스크를 먼저 끝내야, 몽타주가 멈출 때
+	// 태스크의 OnInterrupted가 가드 자체를 끝내지 않습니다.
+	if (ParryTask)
+	{
+		ParryTask->EndTask();
+		ParryTask = nullptr;
+	}
+	MontageStop();
+	EndParryMotion();
 }
 
 void UAgAbility_Guard::EndParryMotion()

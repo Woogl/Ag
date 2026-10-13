@@ -29,6 +29,7 @@ void UAgAbility_DodgeCounter::ActivateAbility(const FGameplayAbilitySpecHandle H
 	BeginBusy();
 	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->DodgeCounter, Data->DodgeCounterMontage);
 	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
+	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
 	AttackTask->ReadyForActivation();
@@ -36,8 +37,12 @@ void UAgAbility_DodgeCounter::ActivateAbility(const FGameplayAbilitySpecHandle H
 
 void UAgAbility_DodgeCounter::HandleLastWindowEnded()
 {
-	// 마지막 판정 구간이 끝나면 무적이 풀리고 후딜이 시작됩니다.
+	// 무적은 판정 구간이 끝날 때까지입니다.
 	InvincibleTag->EndTask();
+}
+
+void UAgAbility_DodgeCounter::HandleRecoveryStarted()
+{
 	EndBusy();
 }
 

@@ -30,13 +30,17 @@ private:
 	UFUNCTION()
 	void HandleCutsceneFinished();
 
-	/** 베기 선 하나를 새기고 다음 베기 선을 기다립니다. */
+	/** 베기 선 노티파이(Event.UltimateSlash)마다 베기 선 하나를 새깁니다. 이 궁극기의 몽타주에서 온 것만 받습니다. */
 	UFUNCTION()
-	void HandleSlashTime();
+	void HandleSlash(FGameplayEventData Payload);
 
 	/** 마무리: 칼이 칼집에 들어가는 순간(Event.UltimateFinish) */
 	UFUNCTION()
 	void HandleFinish(FGameplayEventData Payload);
+
+	/** 후딜 시작 노티파이(칼 뽑기). 이 궁극기의 몽타주에서 온 것만 받습니다. */
+	UFUNCTION()
+	void HandleRecoveryStarted(FGameplayEventData Payload);
 
 	UFUNCTION()
 	void HandleMontageCompleted();
@@ -44,14 +48,9 @@ private:
 	UFUNCTION()
 	void HandleMontageCancelled();
 
-	/** 베기 단계 동안 일정한 간격으로, SlashIndex번째 베기 선이 나올 몽타주 위치를 기다립니다. */
-	void WaitNextSlash();
-
 	void SpawnSlash();
 
 	/** 시작부터 마무리까지 있습니다. */
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_TimeStop> TimeStopTask;
-
-	int32 SlashIndex = 0;
 };

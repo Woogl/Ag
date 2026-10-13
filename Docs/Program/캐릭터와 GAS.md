@@ -83,13 +83,12 @@ classDiagram
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `UAgGameplayAbility` | `UGameplayAbility` | 모든 어빌리티의 부모('어빌리티 구조'). 캐릭터 데이터 읽기, 쿨다운과 비용(보스 패턴은 패턴별), 플레이어 행동·피격 반응·보스 패턴의 태그(상태별 허용 입력, 모션 캔슬, 상태 우선순위) |
-| `UAgAbilityTask_WaitMontagePosition` | `UAbilityTask` | 몽타주 재생 위치가 정한 시간에 닿을 때까지 기다립니다(기획서에 초로 적힌 구간). |
 | `UAgAbilityTask_HoldTag` | `UAbilityTask` | 도는 동안 상태 태그 하나를 붙여 둡니다(행동 중, 무적·극한 회피 구간, 가드 중, 패리 모션, 처형 피격, 보스의 회전 정지). 어빌리티가 끝내거나 어빌리티가 끝나면 뗍니다. |
 | `UAgAbilityTask_Dash` | `UAbilityTask` | 일정 속도로 직선 이동하고, 거리를 다 가거나 벽에 막히거나 어빌리티가 멈추면 끝납니다(DashThrust의 돌진). |
 | `UAgAbilityTask_LockOn` | `UAbilityTask` | 락온 중 매 프레임 카메라를 대상의 락온 지점 쪽으로 돌리고, 해제 조건이 되면 끝납니다. |
 | `UAgAbilityTask_AttackMovement` | `UAbilityTask` | 공격 중 이동. 타를 시작할 때마다 대상을 다시 정해 정지 간격과 회전 대상(범위 밖이면 캐릭터가 정한 대체 대상)을 걸고, 매 프레임 워프 목표를 대상 앞 간격 지점에 두다가 바라보는 방향이 고정되면 함께 고정합니다. 끝나면 모두 지웁니다([애니메이션과 이동](<애니메이션과 이동.md>) '공격 중 이동'). |
-| `UAgAbilityTask_Attack` | `UAbilityTask` | 판정 구간이 있는 공격 하나(평타 한 타, 점프 공격, 회피 반격, 스킬, 보스 공용 패턴). 공격 데이터를 판정 구간에 걸고 몽타주를 재생하며 공격 중 이동 태스크를 시작합니다. 마지막 판정 구간의 끝(후딜 시작), 모션의 끝, 끊김을 어빌리티에 알립니다([전투 규칙](<전투 규칙.md>) '공격 진행'). |
-| `UAgAbilityTask_SpawnProjectile` | `UAbilityTask` | 투사체 발사. 몽타주의 발사 노티파이마다 공격 데이터를 하나씩 실어 어빌리티가 넘긴 투사체를 쏘고, 몇 번째인지 어빌리티에 알립니다(SwordWave, [전투 규칙](<전투 규칙.md>) '투사체 발사'). |
+| `UAgAbilityTask_Attack` | `UAbilityTask` | 판정 구간이 있는 공격 하나(평타 한 타, 점프 공격, 회피 반격, 스킬, 보스 공용 패턴). 공격 데이터를 판정 구간에 걸고 몽타주를 재생하며 공격 중 이동 태스크를 시작합니다. 마지막 판정 구간의 끝, 후딜 시작 노티파이, 모션의 끝, 끊김을 어빌리티에 알립니다([전투 규칙](<전투 규칙.md>) '공격 진행'). |
+| `UAgAbilityTask_SpawnProjectile` | `UAbilityTask` | 투사체 발사. 몽타주의 발사 노티파이마다 공격 데이터를 하나씩 실어 어빌리티가 넘긴 투사체를 쏩니다(SwordWave, [전투 규칙](<전투 규칙.md>) '투사체 발사'). |
 | `UAgAbilityTask_PlayReaction` | `UAbilityTask` | 피격 반응 모션. 반응 몽타주와 이어지는 몽타주(넉업의 기상)를 재생하고, 마지막 모션의 끝과 끊김을 어빌리티에 알립니다. 바닥에 쓰러진 순간부터 끝날 때까지 무적입니다. |
 | `UAgAbilityTask_IgnoreRootMotion` | `UAbilityTask` | 도는 동안 몽타주의 루트 모션을 무시합니다. 루트 모션 소스로 옮기는 동안 씁니다(DashThrust의 돌진, 넉업). |
 | `UAgAbilityTask_IgnoreCollision` | `UAbilityTask` | 도는 동안 주인의 루트 충돌 컴포넌트(캐릭터는 캡슐)가 인자로 받은 충돌 채널을 무시합니다(DashThrust의 돌진과 처형 피격은 Pawn 채널을 무시해 플레이어를 막지 않음). 끝나면 원래 응답으로 되돌리고, 그사이 죽었으면 사망 처리가 정한 대로 둡니다. |
@@ -173,7 +172,6 @@ classDiagram
     UAgGameplayAbility <|-- UAgAbility_Ultimate
 
     UAgAbility_Execution ..> UAgAbilityTask_AttackMovement : 처형 간격 맞춤
-    UAgAbility_Dodge ..> UAgAbilityTask_WaitMontagePosition : 무적·극한 회피·후딜 시점
     UAgAbility_Dodge ..> UAgAbilityTask_HoldTag : 무적·극한 회피 구간
     UAgAbility_Guard ..> UAgAbilityTask_HoldTag : 가드 중, 패리 모션
     UAgGameplayAbility ..> UAgAbilityTask_HoldTag : 행동 중
@@ -181,9 +179,7 @@ classDiagram
     UAgAbility_LockOn ..> UAgLockOnComponent : 대상 선택
     UAgAbility_LockOn ..> UAgAbilityTask_LockOn : 카메라 회전·해제 조건
     UAgAbility_Ultimate ..> UAgAbilityTask_PlayCutscene : 궁극기 컷신
-    UAgAbility_Ultimate ..> UAgAbilityTask_WaitMontagePosition : 베기 선 시점
     UAgAbility_Ultimate ..> UAgAbilityTask_TimeStop : 시간 정지
-    UAbilityTask <|-- UAgAbilityTask_WaitMontagePosition
     UAbilityTask <|-- UAgAbilityTask_LockOn
     UAbilityTask <|-- UAgAbilityTask_PlayCutscene
     UAbilityTask <|-- UAgAbilityTask_TimeStop

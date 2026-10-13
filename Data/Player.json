@@ -107,7 +107,6 @@
     "MaxApproachDistance": 0
   },
   "JumpAttackPlungeSpeed": 1000,
-  "JumpAttackRecoveryStart": 0.35,
   "SPRegenRate": 40,
   "SPRegenRateGuarding": 20,
   "SPRegenDelay": 1,
@@ -118,10 +117,6 @@
   "ParryUPCharge": 10,
   "DodgeSPCost": 20,
   "DodgeCooldown": 0.4,
-  "DodgeInvincibleTime": 0.3,
-  "PerfectDodgeTime": 0.15,
-  "RollRecoveryStart": 0.6,
-  "BackstepRecoveryStart": 0.4,
   "GuardSPCostRatio": 0.25,
   "GuardMoveSpeedRatio": 0.65,
   "ParryWindowTime": 0.3,
@@ -152,7 +147,6 @@
     "UPCharge": 0
   },
   "UltimateRadius": 1000,
-  "UltimateSlashCount": 12,
   "UltimateSlashDistance": { "Min": 300, "Max": 1000 },
   "UltimateSlashHeight": { "Min": 0, "Max": 300 },
   "UltimateSlowMotionSpeed": 0.3,

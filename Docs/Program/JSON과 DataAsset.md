@@ -83,7 +83,7 @@ classDiagram
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `UAgCombatRules` | `UObject` | `CombatRules.json`의 클래스 |
-| `UAgCameraData` | `UObject` | `Camera.json`의 클래스 |
+| `UAgCameraData` | `UObject` | `Camera.json`의 클래스. 셰이크 단계를 그 단계의 셰이크 큐 태그로 바꿉니다. |
 | `UAgAssetManager` | `UAssetManager` | 프로젝트의 에셋 매니저('읽는 방법'). JSON 데이터 파일을 읽고 검사해 데이터 객체의 Transient 필드를 채우고, 공통 데이터 객체를 들고 있습니다. 에디터에서는 어느 객체를 어느 파일에서 채웠는지 기억해, 저장된 파일을 다시 읽습니다. |
 
 ```mermaid
@@ -94,7 +94,7 @@ classDiagram
     }
     class UAgCameraData {
         <<Camera.json>>
-        FGameplayTag PlayerHitShake 등
+        EAgCameraShake PlayerHitShake 등
     }
     UAssetManager <|-- UAgAssetManager
     UObject <|-- UAgCombatRules

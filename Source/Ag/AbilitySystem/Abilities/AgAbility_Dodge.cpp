@@ -9,7 +9,6 @@
 #include "AbilitySystem/AgEffect_Resource.h"
 #include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_WaitMontagePosition.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Character/AgPlayerCharacter.h"
@@ -67,16 +66,17 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->ReadyForActivation();
 
-	UAgAbilityTask_WaitMontagePosition* PerfectDodgeTask = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, Data->PerfectDodgeTime);
-	PerfectDodgeTask->OnReached.AddDynamic(this, &ThisClass::HandlePerfectDodgeWindowEnded);
-	PerfectDodgeTask->ReadyForActivation();
+	// 극한 회피 구간과 무적 구간의 끝, 후딜 시작은 회피 몽타주의 노티파이가 알립니다.
+	UAbilityTask_WaitGameplayEvent* PerfectDodgeEndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_PerfectDodgeWindowEnded);
+	PerfectDodgeEndTask->EventReceived.AddDynamic(this, &ThisClass::HandlePerfectDodgeWindowEnded);
+	PerfectDodgeEndTask->ReadyForActivation();
 
-	UAgAbilityTask_WaitMontagePosition* InvincibleTask = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, Data->DodgeInvincibleTime);
-	InvincibleTask->OnReached.AddDynamic(this, &ThisClass::HandleInvincibilityEnded);
-	InvincibleTask->ReadyForActivation();
+	UAbilityTask_WaitGameplayEvent* InvincibleEndTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_InvincibilityEnded);
+	InvincibleEndTask->EventReceived.AddDynamic(this, &ThisClass::HandleInvincibilityEnded);
+	InvincibleEndTask->ReadyForActivation();
 
-	UAgAbilityTask_WaitMontagePosition* RecoveryTask = UAgAbilityTask_WaitMontagePosition::WaitMontagePosition(this, Montage, bRoll ? Data->RollRecoveryStart : Data->BackstepRecoveryStart);
-	RecoveryTask->OnReached.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
+	UAbilityTask_WaitGameplayEvent* RecoveryTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_RecoveryStarted);
+	RecoveryTask->EventReceived.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	RecoveryTask->ReadyForActivation();
 
 	UAbilityTask_WaitGameplayEvent* PerfectDodgeEvent = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, AgGameplayTags::Event_PerfectDodge);
@@ -84,19 +84,28 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	PerfectDodgeEvent->ReadyForActivation();
 }
 
-void UAgAbility_Dodge::HandlePerfectDodgeWindowEnded()
+void UAgAbility_Dodge::HandlePerfectDodgeWindowEnded(FGameplayEventData Payload)
 {
-	PerfectDodgeWindowTag->EndTask();
+	if (Payload.OptionalObject == GetCurrentMontage())
+	{
+		PerfectDodgeWindowTag->EndTask();
+	}
 }
 
-void UAgAbility_Dodge::HandleInvincibilityEnded()
+void UAgAbility_Dodge::HandleInvincibilityEnded(FGameplayEventData Payload)
 {
-	InvincibleTag->EndTask();
+	if (Payload.OptionalObject == GetCurrentMontage())
+	{
+		InvincibleTag->EndTask();
+	}
 }
 
-void UAgAbility_Dodge::HandleRecoveryStarted()
+void UAgAbility_Dodge::HandleRecoveryStarted(FGameplayEventData Payload)
 {
-	EndBusy();
+	if (Payload.OptionalObject == GetCurrentMontage())
+	{
+		EndBusy();
+	}
 }
 
 void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)

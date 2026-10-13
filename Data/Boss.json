@@ -155,19 +155,19 @@
         {
           "DamageMultiplier": 1.2,
           "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
+          "HitReaction": "KnockBack",
           "bGuardable": true
         },
         {
           "DamageMultiplier": 1.2,
           "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
+          "HitReaction": "KnockBack",
           "bGuardable": true
         },
         {
           "DamageMultiplier": 1.2,
           "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
+          "HitReaction": "KnockBack",
           "bGuardable": true
         }
       ],

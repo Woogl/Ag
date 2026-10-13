@@ -33,7 +33,7 @@ private:
 	void HandleAttackInput(FGameplayEventData Payload);
 
 	UFUNCTION()
-	void HandleLastWindowEnded();
+	void HandleRecoveryStarted();
 
 	UFUNCTION()
 	void HandleAttackCompleted();

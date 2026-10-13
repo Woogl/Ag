@@ -348,7 +348,16 @@ bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) cons
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	// 이번 프레임에 이어지는 상태(행동을 끊은 피격 반응, 평타의 후딜 표시)가 정해진 뒤에 보도록 다음 프레임에 확인합니다.
-	if (NewCount == 0 && BufferedInput.IsValid())
+	if (NewCount != 0)
+	{
+		return;
+	}
+	if (Tag == AgGameplayTags::State_Busy && bGuardHeld)
+	{
+		// 가드 키를 누른 채 후딜이 시작되면 가드를 시작합니다. 기억한 입력은 그 안에서 먼저 처리합니다.
+		GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::TryResumeGuard, false));
+	}
+	else if (BufferedInput.IsValid())
 	{
 		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunBufferedInput);
 	}
@@ -399,9 +408,8 @@ void AAgPlayerCharacter::TryResumeGuard(bool bAfterGuardPushback)
 	// 기억한 입력은 누르고 있는 가드 키보다 나중에 누른 것이므로 먼저 처리합니다.
 	TryRunBufferedInput();
 
-	// 대기나 이동에서만 돌아옵니다. 다른 것이 돌고 있으면 안 됩니다.
+	// 가드 입력이 허용될 때(후딜, 대기, 이동)만 시작합니다. 후딜이면 진행 중인 행동은 가드가 모션 캔슬합니다.
 	FGameplayTagContainer Running;
-	Running.AddTag(AgGameplayTags::State_Acting);
 	Running.AddTag(AgGameplayTags::State_Busy);
 	Running.AddTag(AgGameplayTags::State_HitReaction);
 	Running.AddTag(AgGameplayTags::State_Guarding);

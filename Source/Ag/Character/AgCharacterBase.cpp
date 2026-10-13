@@ -10,6 +10,7 @@
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
+#include "Animation/AgAnimNotify_GameplayEvent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/CapsuleComponent.h"
@@ -388,7 +389,8 @@ bool AAgCharacterBase::IsInRotationStopWindow() const
 		return false;
 	}
 
-	// 판정 구간보다 회전 정지 시간만큼 앞서 멈추고, 판정 구간이 끝나면 다시 돕니다.
+	// 판정 구간보다 회전 정지 시간만큼 앞서 멈추고, 판정 구간이 끝나면 다시 돕니다. 투사체 발사 노티파이는 길이 없는
+	// 판정 구간으로 봅니다(보스 사양 'SwordWave').
 	const float LeadInMontage = CharacterData->GetRotationStopLeadInMontage();
 	for (const FAnimMontageInstance* Instance : AnimInstance->MontageInstances)
 	{
@@ -399,8 +401,10 @@ bool AAgCharacterBase::IsInRotationStopWindow() const
 		const float Position = Instance->GetPosition();
 		for (const FAnimNotifyEvent& Notify : Instance->Montage->Notifies)
 		{
-			if (Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass)
-				&& Position >= Notify.GetTriggerTime() - LeadInMontage && Position <= Notify.GetEndTriggerTime())
+			const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
+			const bool bHitTiming = Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass)
+				|| (Event && Event->EventTag == AgGameplayTags::Event_ProjectileRelease);
+			if (bHitTiming && Position >= Notify.GetTriggerTime() - LeadInMontage && Position <= Notify.GetEndTriggerTime())
 			{
 				return true;
 			}

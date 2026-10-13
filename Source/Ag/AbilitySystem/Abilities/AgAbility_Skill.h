@@ -23,7 +23,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void HandleLastWindowEnded();
+	void HandleRecoveryStarted();
 
 	UFUNCTION()
 	void HandleAttackCompleted();

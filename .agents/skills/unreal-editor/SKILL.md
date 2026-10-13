@@ -91,7 +91,10 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 - 몽타주 섹션과 트랙 길이는 엔진 MCP와 파이썬으로 바꿀 수 없다. `AgAssetToolset.SetMontageSegments`·`SetMontageSections`를 쓴다. 섹션은 시작 시간 순서로 넘긴다(툴셋이 정렬하지 않는다).
 - 복제한 몽타주는 `SetMontageSegments` 뒤에도 옛 섹션의 시퀀스 참조가 남는다. `SetMontageSections`를 다시 부르고 저장한다.
-- 몽타주 노티파이는 `get_properties`로 읽을 수 없다. `unreal.AnimationLibrary.get_animation_notify_events(montage)`로 읽는다.
+- 몽타주 노티파이는 `get_properties`로 읽을 수 없다. `unreal.AnimationLibrary.get_animation_notify_events(montage)`로 읽고, 트랙별로는 `get_animation_notify_events_for_track`으로 읽는다.
+- 노티파이는 `unreal.AnimationLibrary.add_animation_notify_event(montage, 트랙 이름, 시각, 노티파이 클래스)`로 더하고, 돌려받은 노티파이에 속성(`event_tag` 등)을 쓴 뒤 저장한다.
+- 몽타주 섹션의 시작 시간은 파이썬으로 읽을 수 없다(`composite_sections`에 접근하지 못한다). 슬롯 구간의 `start_pos`(`slot_anim_tracks`)나 노티파이 위치에서 알아낸다.
+- 정방향 재생은 '앞 위치 < 노티파이 시각 ≤ 지금 위치'인 노티파이만 울린다. 섹션 시작 시각에 정확히 둔 노티파이는 그 섹션으로 점프한 직후 울리지 않으니 조금 뒤에 둔다.
 - 몽타주를 이어 재생할 때, `OnBlendOut`은 길이에서 블렌드 아웃 시간을 뺀 때에 온다. 거기서 다음 몽타주를 시작하면 앞 모션이 잘리므로, 앞 몽타주의 `BlendOutTriggerTime`을 0으로 둔다.
 - 스크립트로 만든 블렌드 스페이스는 `ResampleData()`가 불리지 않아 기본 자세(A 포즈)를 재생한다. `OpenEditorForAsset`으로 열고 dirty로 만든 뒤 저장한다.
 - 애님 그래프 노드의 값이 핀으로 보이면(`bShowPin`) 컴파일할 때 핀 기본값이 덮어쓴다. `BlueprintTools.set_pin_value`로 바꾼다. 핀만 바꾸면 패키지가 dirty가 되지 않아 저장되지 않으니, 노드를 따로 dirty로 만들어 저장한 뒤 파일 시각을 확인한다.
@@ -137,6 +140,7 @@ PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Program/개발 
 - CommonUI 버튼은 `<화면>.WidgetTree_0.<버튼>.WidgetTree_0.InternalRootButtonBase`의 `on_clicked.broadcast()`로 누른다. 화면은 `is_activated()`로 고른다. 이전 월드의 화면이 GameInstance에 남아 있다.
 - 캡처: `CaptureEditorImage`는 화면을 반 크기로 찍고, 0.1 ~ 0.3초짜리 효과는 찍히지 않는다. UI 스크린샷은 떠 있는 PIE 창에서 콘솔 `slomo 0.02` 뒤 `shot showui`로 찍는다(`Saved/Screenshots/WindowsEditor`). OS 화면 캡처(PowerShell 등)는 쓰지 않는다. 다른 창이 에디터를 가려 사용자의 화면이 찍힌다.
 - 소리가 났는지는 콘솔 `au.DumpActiveSounds`를 0.1초마다 실행해 `LogAudio` 줄로 확인한다.
+- 모션 시간(후딜, 무적 구간 등)은 실제 시간이 아니라 몽타주 재생 위치(`anim_instance.montage_get_position(montage)`)로 잰다. 히트스톱 동안 몽타주가 멈추고, 판정 구간 노티파이가 끝난 뒤 바뀌는 태그는 1프레임 늦게 보인다. 다음 행동으로 넘어가기 직전 프레임의 위치는 노티파이보다 한 프레임까지 앞설 수 있다. 미리 누른 키는 선입력 시간이 히트스톱 동안에도 흐르니, 행동 시점을 잴 때는 키를 계속 눌러 둔다.
 - 로그로 확인할 때:
   - 엔진 ensure와 일부 경고(Nanite 머티리얼 경고 등)는 프로세스마다 처음 한 번만 찍힌다. 고쳤는지는 새로 켠 에디터나 게임에서, 실패하던 경우를 먼저 실행해 확인한다.
   - 에디터를 켤 때마다 나오는 `LogAutomationTest: Error: Condition failed` 줄들은 엔진 자체 테스트의 잡음이다.

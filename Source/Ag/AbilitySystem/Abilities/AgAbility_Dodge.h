@@ -28,14 +28,15 @@ protected:
 	virtual FAgAbilityCost GetCost() const override;
 
 private:
+	/** 회피 몽타주의 노티파이(극한 회피 구간 끝, 무적 구간 끝, 후딜 시작). 이 회피의 몽타주에서 온 것만 받습니다. */
 	UFUNCTION()
-	void HandlePerfectDodgeWindowEnded();
+	void HandlePerfectDodgeWindowEnded(FGameplayEventData Payload);
 
 	UFUNCTION()
-	void HandleInvincibilityEnded();
+	void HandleInvincibilityEnded(FGameplayEventData Payload);
 
 	UFUNCTION()
-	void HandleRecoveryStarted();
+	void HandleRecoveryStarted(FGameplayEventData Payload);
 
 	UFUNCTION()
 	void HandlePerfectDodge(FGameplayEventData Payload);

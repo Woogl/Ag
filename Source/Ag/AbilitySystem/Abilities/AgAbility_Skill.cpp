@@ -26,15 +26,14 @@ void UAgAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 
 	BeginBusy();
 	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->Skill, Data->SkillMontage);
-	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
+	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
 	AttackTask->ReadyForActivation();
 }
 
-void UAgAbility_Skill::HandleLastWindowEnded()
+void UAgAbility_Skill::HandleRecoveryStarted()
 {
-	// 마지막 판정 구간이 끝나면 후딜이 시작됩니다.
 	EndBusy();
 }
 

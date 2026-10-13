@@ -73,8 +73,11 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackWindowEnded, "Event.AttackWindowEnded", "판정 구간이 끝남. EventMagnitude는 몇 번째 타인지 (0부터)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked", "내 공격이 가드·가드 브레이크·패리로 막힘 (DashThrust의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_DownGrounded, "Event.DownGrounded", "넉백·넉업 모션에서 바닥에 쓰러진 순간 (무적 시작)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_RecoveryStarted, "Event.RecoveryStarted", "모션의 후딜이 시작됨 (판정 구간이 없는 행동: 패리 모션)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_RecoveryStarted, "Event.RecoveryStarted", "모션의 후딜이 시작됨. 이때부터 다른 행동을 받음 (몽타주 노티파이)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_InvincibilityEnded, "Event.InvincibilityEnded", "회피의 무적 구간이 끝남");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodgeWindowEnded, "Event.PerfectDodgeWindowEnded", "회피의 극한 회피 구간이 끝남");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_ExecutionBlow, "Event.ExecutionBlow", "처형 모션의 타격: 찌르기와 마지막 일격 (대미지 적용)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_UltimateSlash, "Event.UltimateSlash", "궁극기 베기 선 하나가 나타남 (몽타주 노티파이)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_UltimateFinish, "Event.UltimateFinish", "궁극기 마무리: 칼이 칼집에 들어가는 순간");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_JumpAttackPlunge, "Event.JumpAttackPlunge", "점프 공격의 내려베기가 끝남 (내리꽂기 시작)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_ProjectileRelease, "Event.ProjectileRelease", "투사체 발사 (판정 구간으로 봄)");
