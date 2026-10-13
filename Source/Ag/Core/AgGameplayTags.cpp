@@ -54,6 +54,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Sprinting, "State.Sprinting", "달리는 중");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Jumping, "State.Jumping", "점프해 공중에 있음 (점프 공격만 시작할 수 있음)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "비전투 (플레이어 사망 뒤의 보스)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_InfinitePP, "State.InfinitePP", "PP 무한. PP가 줄지 않아 그로기에 빠지지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_PPDelay, "State.Regen.PPDelay", "PP 리젠 대기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Boss_RotationLocked, "State.Boss.RotationLocked", "보스 회전 정지");

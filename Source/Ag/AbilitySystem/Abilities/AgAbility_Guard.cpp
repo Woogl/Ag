@@ -13,6 +13,12 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
+namespace
+{
+	/** 패리 모션 몽타주의 ID (캐릭터 데이터의 Montages) */
+	const FName ParryMontageId(TEXT("Parry"));
+}
+
 UAgAbility_Guard::UAgAbility_Guard()
 {
 	// 가드 중에도 움직일 수 있어 State.Acting을 갖지 않습니다.
@@ -59,7 +65,7 @@ void UAgAbility_Guard::StartGuard(bool bOpenParryWindow)
 	SetGuarding(true);
 	CloseParryWindow();
 	CloseMoveLock();
-	const FAgGuardParams* Params = GetActionParams<FAgGuardParams>();
+	const FAgGuardParams* Params = GetAbilityParams<FAgGuardParams>();
 	if (bOpenParryWindow && Params)
 	{
 		// 패리 구간이 생기는 가드 시작은 이동할 수 없는 시간도 함께 시작합니다(플레이어 입력 '상태별 허용 입력').
@@ -130,7 +136,7 @@ void UAgAbility_Guard::HandleGuardReleased(FGameplayEventData Payload)
 void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	const FAgGuardParams* Params = GetActionParams<FAgGuardParams>();
+	const FAgGuardParams* Params = GetAbilityParams<FAgGuardParams>();
 	if (ParryMotionTag || !Params)
 	{
 		return;
@@ -146,7 +152,8 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 		const FGameplayEffectSpecHandle PPLoss = MakeOutgoingGameplayEffectSpec(UAgEffect_ParryPPLoss::StaticClass());
 		GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*PPLoss.Data, AttackingCharacter->GetAbilitySystemComponent());
 	}
-	if (!Data->ParryMontage)
+	UAnimMontage* ParryMontage = Data->FindMontage(ParryMontageId);
+	if (!ParryMontage)
 	{
 		return;
 	}
@@ -169,7 +176,7 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 	ParryMotionTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Acting);
 	ParryMotionTag->ReadyForActivation();
 
-	ParryTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->ParryMontage);
+	ParryTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, ParryMontage);
 	ParryTask->OnCompleted.AddDynamic(this, &ThisClass::HandleParryMotionFinished);
 	ParryTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleParryMotionCancelled);
 	ParryTask->OnCancelled.AddDynamic(this, &ThisClass::HandleParryMotionCancelled);

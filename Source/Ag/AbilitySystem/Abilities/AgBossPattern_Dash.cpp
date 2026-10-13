@@ -21,21 +21,20 @@ UAgBossPattern_Dash::UAgBossPattern_Dash()
 
 void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
-	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	if (!Montage || !GetActionParams<FAgBossDashParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgBossDashParams* Params = GetAbilityParams<FAgBossDashParams>();
+	UAnimMontage* Montage = Params ? Data->FindMontage(GetAbilityId()) : nullptr;
+	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Data->PatternPlayRate);
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *GetAbilityId().ToString(), Data->PatternPlayRate);
 	bHolding = false;
 	DashTask = nullptr;
 	IgnoreCollisionTask = nullptr;
-	Boss->SetActiveAttack(Pattern->Hits);
+	GetAgCharacter()->SetActiveAttack(Params->Hits);
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Data->PatternPlayRate);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
@@ -61,7 +60,7 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
-	const FAgBossDashParams* Params = GetActionParams<FAgBossDashParams>();
+	const FAgBossDashParams* Params = GetAbilityParams<FAgBossDashParams>();
 	const AActor* Target = Boss->GetTarget();
 	if (!Target || !Params)
 	{

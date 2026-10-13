@@ -77,21 +77,21 @@ struct FAgProjectileParams
 };
 
 /**
- * 행동의 전용 값: 한 행동(보스는 패턴)의 코드만 읽는 값의 부모(구현 계획서 'JSON과 DataAsset' 'JSON 파일'). 전용 값이
- * 있는 어빌리티가 이 구조체를 상속한 자기 구조체를 어빌리티 옆에 두고, 그 구조체를 정합니다(GetActionParamsType).
+ * 어빌리티의 전용 값: 그 어빌리티만 읽는 값의 부모(구현 계획서 'JSON과 DataAsset' 'JSON 파일'). 전용 값이 있는
+ * 어빌리티가 이 구조체를 상속한 자기 구조체를 어빌리티 옆에 두고, 그 구조체를 정합니다(GetAbilityParamsType).
  */
 USTRUCT()
-struct FAgActionParams
+struct FAgAbilityParams
 {
 	GENERATED_BODY()
 };
 
 /**
- * 플레이어 공격 하나 (평타 한 타, 점프 공격, 회피 반격, 스킬, 처형). 회피 반격과 처형은 이 구조체를 그대로 행동의
+ * 플레이어 공격 하나 (평타 한 타, 점프 공격, 회피 반격, 스킬, 처형). 회피 반격과 처형은 이 구조체를 그대로 어빌리티의
  * 전용 값으로 쓰고, 점프 공격과 스킬은 이 구조체에 값을 더합니다.
  */
 USTRUCT(BlueprintType)
-struct FAgPlayerAttack : public FAgActionParams
+struct FAgPlayerAttack : public FAgAbilityParams
 {
 	GENERATED_BODY()
 
@@ -109,33 +109,36 @@ struct FAgPlayerAttack : public FAgActionParams
 };
 
 /**
- * 행동 하나: 플레이어 행동과 보스 패턴의 공통 항목. 캐릭터는 항목마다 DataAsset에서 ID로 찾은 어빌리티를 부여하고,
- * 어빌리티는 자기 스펙의 항목을 읽습니다.
+ * 어빌리티 하나: 캐릭터 데이터의 어빌리티 목록 항목으로, 플레이어와 보스가 같은 타입을 씁니다. 캐릭터는 항목마다
+ * DataAsset에서 ID로 찾은 클래스를 부여하고, 어빌리티는 자기 스펙의 항목을 읽습니다.
  */
 USTRUCT(BlueprintType)
-struct FAgAction
+struct FAgAbilityData
 {
 	GENERATED_BODY()
 
-	/** 행동 ID. 이 ID로 캐릭터 DataAsset에서 행동의 어빌리티를 찾습니다. */
-	UPROPERTY(EditAnywhere, Category = "Action")
+	/** 어빌리티 ID. 이 ID로 캐릭터 DataAsset에서 어빌리티 클래스와 몽타주를 찾습니다. */
+	UPROPERTY(EditAnywhere, Category = "Ability")
 	FName Id;
 
-	/** 쿨다운: 행동을 시작한 순간부터 셉니다. 0이면 없습니다. */
-	UPROPERTY(EditAnywhere, Category = "Action", meta = (Units = "s", ClampMin = 0))
+	/** 쿨다운: 어빌리티를 시작한 순간부터 셉니다. 0이면 없습니다. */
+	UPROPERTY(EditAnywhere, Category = "Ability", meta = (Units = "s", ClampMin = 0))
 	float Cooldown = 0.f;
 
 	/**
-	 * 이 행동의 코드만 읽는 전용 값. 구조체는 그 어빌리티가 정하므로(GetActionParamsType) JSON에는 값만 적고, 전용 값이
-	 * 없는 행동은 비워 둡니다({}).
+	 * 이 어빌리티의 전용 값. 구조체는 그 어빌리티가 정하므로(GetAbilityParamsType) JSON에는 값만 적고, 전용 값이
+	 * 없는 어빌리티는 비워 둡니다({}).
 	 */
-	UPROPERTY(EditAnywhere, Category = "Action")
-	TInstancedStruct<FAgActionParams> Params;
+	UPROPERTY(EditAnywhere, Category = "Ability")
+	TInstancedStruct<FAgAbilityParams> Params;
 };
 
-/** 보스 패턴 하나 (보스 사양 '패턴 목록', '패턴 상세'). 몽타주도 DA_Boss에서 ID로 찾습니다. */
+/**
+ * 보스 패턴의 전용 값: 모든 패턴이 같은 뜻으로 쓰는 값(보스 사양 '패턴 목록', '패턴 상세'). 공용 패턴은 이 구조체를
+ * 그대로 쓰고, 특수 패턴은 이 구조체에 값을 더합니다. 패턴을 고르는 AI는 전용 값이 이 구조체인 항목을 패턴으로 봅니다.
+ */
 USTRUCT(BlueprintType)
-struct FAgBossPattern : public FAgAction
+struct FAgBossPatternParams : public FAgAbilityParams
 {
 	GENERATED_BODY()
 

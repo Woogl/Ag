@@ -51,17 +51,17 @@ public:
 
 	UAgCharacterData* GetCharacterData() const { return CharacterData; }
 
-	/** 행동 ID로 부여된 행동(보스는 패턴)의 스펙. 없으면 null입니다. */
-	FGameplayAbilitySpec* FindActionSpec(FName Id) const;
+	/** 어빌리티 ID로 부여된 어빌리티의 스펙. 없으면 null입니다. */
+	FGameplayAbilitySpec* FindAbilitySpec(FName Id) const;
 
-	/** 부여된 스펙(Handle)이 실행하는 행동의 ID. 행동의 스펙이 아니면 None입니다. */
-	FName FindActionId(const FGameplayAbilitySpecHandle Handle) const;
+	/** 부여된 스펙(Handle)의 어빌리티 ID. 어빌리티 목록으로 부여한 스펙이 아니면 None입니다. */
+	FName FindAbilityId(const FGameplayAbilitySpecHandle Handle) const;
 
 	/**
-	 * 부여된 스펙(Handle)이 실행하는 행동의 항목(캐릭터 데이터의 행동 목록). 행동의 스펙이 아니면 null입니다.
+	 * 부여된 스펙(Handle)의 어빌리티 항목(캐릭터 데이터의 어빌리티 목록). 어빌리티 목록으로 부여하지 않았으면 null입니다.
 	 * 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다(구현 계획서 '다시 읽기').
 	 */
-	const FAgAction* FindAction(const FGameplayAbilitySpecHandle Handle) const;
+	const FAgAbilityData* FindAbility(const FGameplayAbilitySpecHandle Handle) const;
 
 	UMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
 
@@ -71,7 +71,7 @@ public:
 	/** 사망 처리를 시작했습니다(State.Dead). */
 	bool IsDead() const;
 
-	/** PP를 잃을 수 있습니다: 무한 PP가 아니고 그로기 중이 아닙니다(전투 시스템 'PP 감소량 계산식'). */
+	/** PP를 잃을 수 있습니다: PP 무한(State.InfinitePP)도 그로기 중도 아닙니다(전투 시스템 'PP 감소량 계산식'). */
 	bool CanLosePP() const;
 
 	/** 지금 행동의 공격 데이터를 판정 구간마다 하나씩 정합니다. */
@@ -146,11 +146,11 @@ protected:
 	/** 레벨의 Kill Z 아래로 떨어지면 HP를 0으로 만들어 사망 처리합니다. (전투 시스템 '사망') */
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
-	/** 캐릭터 데이터의 어빌리티(Abilities)와 행동 목록의 행동마다 그 어빌리티를 부여합니다. */
+	/** 캐릭터 데이터의 어빌리티 목록(Abilities)의 항목마다 그 클래스를 부여합니다. */
 	virtual void GrantAbilities();
 
-	/** 캐릭터 데이터의 리젠 효과(RegenEffects)를 겁니다. */
-	void StartRegen();
+	/** 캐릭터 데이터의 시작할 때 거는 GameplayEffect(Effects)를 겁니다. */
+	void ApplyEffects();
 
 	/** MOV에 곱하는 이동 속도 배율. 플레이어는 가드와 달리기가 바꿉니다. */
 	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
@@ -170,7 +170,7 @@ protected:
 
 private:
 	/** 스탯을 캐릭터 데이터의 초기값으로 정합니다. */
-	void InitializeStats();
+	void InitializeAttributes();
 
 	void HandleMOVChanged(const FOnAttributeChangeData& Data);
 
@@ -235,6 +235,6 @@ private:
 
 	FActiveGameplayEffectHandle PPRegenDelay;
 
-	/** 부여한 행동 스펙마다 그 스펙이 실행하는 행동 ID */
-	TMap<FGameplayAbilitySpecHandle, FName> ActionIds;
+	/** 어빌리티 목록으로 부여한 스펙마다 그 어빌리티 ID */
+	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 };

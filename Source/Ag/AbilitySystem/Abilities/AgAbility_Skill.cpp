@@ -17,7 +17,7 @@ UAgAbility_Skill::UAgAbility_Skill()
 void UAgAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	const FAgSkillParams* Params = GetActionParams<FAgSkillParams>();
+	const FAgSkillParams* Params = GetAbilityParams<FAgSkillParams>();
 	if (!Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -25,7 +25,7 @@ void UAgAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	}
 
 	BeginBusy();
-	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Params, Data->SkillMontage);
+	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Params, Data->FindMontage(GetAbilityId()));
 	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
@@ -49,12 +49,12 @@ void UAgAbility_Skill::HandleAttackInterrupted()
 
 bool UAgAbility_Skill::CanPayCost(const UAgAttributeSet& Stats) const
 {
-	const FAgSkillParams* Params = GetActionParams<FAgSkillParams>();
+	const FAgSkillParams* Params = GetAbilityParams<FAgSkillParams>();
 	return Params && Stats.GetMP() >= Params->MPCost;
 }
 
 FAgAbilityCost UAgAbility_Skill::GetCost() const
 {
-	const FAgSkillParams* Params = GetActionParams<FAgSkillParams>();
+	const FAgSkillParams* Params = GetAbilityParams<FAgSkillParams>();
 	return { 0.f, Params ? Params->MPCost : 0.f, 0.f };
 }

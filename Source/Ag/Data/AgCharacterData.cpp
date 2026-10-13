@@ -3,6 +3,7 @@
 #include "Data/AgCharacterData.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "Ag.h"
 #include "Animation/AnimMontage.h"
 #include "Core/AgAssetManager.h"
 #include "Dom/JsonObject.h"
@@ -21,7 +22,9 @@ void UAgCharacterData::PostEditChangeProperty(FPropertyChangedEvent& PropertyCha
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UAgCharacterData, ValuesFile))
+	// 전용 값의 구조체는 어빌리티 클래스가 정하므로, 어빌리티 클래스를 바꿔도 JSON을 다시 읽습니다.
+	const FName Property = PropertyChangedEvent.GetMemberPropertyName();
+	if (Property == GET_MEMBER_NAME_CHECKED(UAgCharacterData, ValuesFile) || Property == GET_MEMBER_NAME_CHECKED(UAgCharacterData, AbilityClasses))
 	{
 		UAgAssetManager::Get().LoadJsonValues(*this, ValuesFile);
 	}
@@ -36,17 +39,31 @@ void UAgCharacterData::PostEditUndo()
 }
 #endif
 
-const FAgAction* UAgCharacterData::FindAction(FName Id) const
+const FAgAbilityData* UAgCharacterData::FindAbility(FName Id) const
 {
-	TArray<const FAgAction*> Actions;
-	GetActions(Actions);
-	const FAgAction* const* Found = Actions.FindByPredicate([Id](const FAgAction* Action) { return Action->Id == Id; });
-	return Found ? *Found : nullptr;
+	return Abilities.FindByPredicate([Id](const FAgAbilityData& Ability) { return Ability.Id == Id; });
 }
 
-void UAgCharacterData::ResolveActionParamsTypes(FJsonObject& Json, const TCHAR* Field, const TCHAR* AbilityMap, TArray<FString>& Errors) const
+TSubclassOf<UAgGameplayAbility> UAgCharacterData::FindAbilityClass(FName Id) const
+{
+	return AbilityClasses.FindRef(Id);
+}
+
+UAnimMontage* UAgCharacterData::FindMontage(FName Id) const
+{
+	// 몽타주 ID는 코드에 적은 이름이나 어빌리티 ID라 컴파일러가 확인하지 못하므로, 없으면 바로 알립니다.
+	UAnimMontage* Montage = Montages.FindRef(Id);
+	if (!Montage)
+	{
+		UE_LOG(LogAg, Error, TEXT("%s has no montage %s in Montages."), *GetName(), *Id.ToString());
+	}
+	return Montage;
+}
+
+void UAgCharacterData::ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const
 {
 	// 형식이 틀린 항목은 건너뜁니다. 그 오류는 에셋 매니저의 검사가 알립니다.
+	const TCHAR* Field = TEXT("Abilities");
 	const TArray<TSharedPtr<FJsonValue>>* Entries = nullptr;
 	if (!Json.TryGetArrayField(Field, Entries))
 	{
@@ -63,20 +80,20 @@ void UAgCharacterData::ResolveActionParamsTypes(FJsonObject& Json, const TCHAR* 
 		}
 
 		// 구조체를 정하지 못한 Params는 비워, 검사가 같은 문제를 다시 알리지 않게 합니다. 오류가 있으면 어차피 값을 쓰지 않습니다.
-		const TSubclassOf<UAgGameplayAbility> Ability = FindActionAbility(FName(*Id));
-		const UScriptStruct* Struct = Ability ? Ability.GetDefaultObject()->GetActionParamsType() : nullptr;
+		const TSubclassOf<UAgGameplayAbility> Ability = FindAbilityClass(FName(*Id));
+		const UScriptStruct* Struct = Ability ? Ability.GetDefaultObject()->GetAbilityParamsType() : nullptr;
 		if (!Ability)
 		{
-			Errors.Add(FString::Printf(TEXT("%s[%d]: %s has no ability in %s's %s"), Field, Index, *Id, *GetName(), AbilityMap));
+			Errors.Add(FString::Printf(TEXT("%s[%d]: %s has no class in %s's AbilityClasses"), Field, Index, *Id, *GetName()));
 			(*Params)->Values.Empty();
 		}
-		else if (Struct && Struct->IsChildOf(FAgActionParams::StaticStruct()))
+		else if (Struct && Struct->IsChildOf(FAgAbilityParams::StaticStruct()))
 		{
 			UAgAssetManager::SetJsonStructType(**Params, *Struct);
 		}
 		else if (Struct)
 		{
-			Errors.Add(FString::Printf(TEXT("%s[%d].Params: %s declares %s, which isn't an AgActionParams"), Field, Index, *Ability->GetName(), *Struct->GetName()));
+			Errors.Add(FString::Printf(TEXT("%s[%d].Params: %s declares %s, which isn't an AgAbilityParams"), Field, Index, *Ability->GetName(), *Struct->GetName()));
 			(*Params)->Values.Empty();
 		}
 		else if ((*Params)->Values.Num() > 0)
@@ -86,76 +103,3 @@ void UAgCharacterData::ResolveActionParamsTypes(FJsonObject& Json, const TCHAR* 
 		}
 	}
 }
-
-void UAgPlayerData::GetActions(TArray<const FAgAction*>& OutActions) const
-{
-	for (const FAgAction& Action : Actions)
-	{
-		OutActions.Add(&Action);
-	}
-}
-
-TSubclassOf<UAgGameplayAbility> UAgPlayerData::FindActionAbility(FName Id) const
-{
-	return ActionAbilities.FindRef(Id);
-}
-
-void UAgPlayerData::ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const
-{
-	ResolveActionParamsTypes(Json, TEXT("Actions"), TEXT("ActionAbilities"), Errors);
-}
-
-#if WITH_EDITOR
-void UAgPlayerData::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	// 행동 전용 값의 구조체는 행동 어빌리티가 정하므로, 어빌리티를 바꾸면 JSON을 다시 읽습니다.
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UAgPlayerData, ActionAbilities))
-	{
-		UAgAssetManager::Get().LoadJsonValues(*this, ValuesFile);
-	}
-}
-#endif
-
-void UAgBossData::GetActions(TArray<const FAgAction*>& OutActions) const
-{
-	for (const FAgBossPattern& Pattern : Patterns)
-	{
-		OutActions.Add(&Pattern);
-	}
-}
-
-TSubclassOf<UAgGameplayAbility> UAgBossData::FindActionAbility(FName Id) const
-{
-	return PatternAbilities.FindRef(Id);
-}
-
-const FAgBossPattern* UAgBossData::FindPattern(FName Id) const
-{
-	return Patterns.FindByPredicate([Id](const FAgBossPattern& Entry) { return Entry.Id == Id; });
-}
-
-UAnimMontage* UAgBossData::FindPatternMontage(FName Id) const
-{
-	const TObjectPtr<UAnimMontage>* Montage = PatternMontages.Find(Id);
-	return Montage ? Montage->Get() : nullptr;
-}
-
-void UAgBossData::ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const
-{
-	ResolveActionParamsTypes(Json, TEXT("Patterns"), TEXT("PatternAbilities"), Errors);
-}
-
-#if WITH_EDITOR
-void UAgBossData::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	// 패턴 전용 값의 구조체는 패턴 어빌리티가 정하므로, 어빌리티를 바꾸면 JSON을 다시 읽습니다.
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UAgBossData, PatternAbilities))
-	{
-		UAgAssetManager::Get().LoadJsonValues(*this, ValuesFile);
-	}
-}
-#endif

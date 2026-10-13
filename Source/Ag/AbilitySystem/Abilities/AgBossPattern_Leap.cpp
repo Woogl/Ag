@@ -33,16 +33,15 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 {
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
-	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	const FAgBossLeapParams* Params = GetActionParams<FAgBossLeapParams>();
-	if (!Montage || !Params || Pattern->Hits.IsEmpty() || !Boss->GetTarget() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgBossLeapParams* Params = GetAbilityParams<FAgBossLeapParams>();
+	UAnimMontage* Montage = Params ? Data->FindMontage(GetAbilityId()) : nullptr;
+	if (!Montage || Params->Hits.IsEmpty() || !Boss->GetTarget() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Data->PatternPlayRate);
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *GetAbilityId().ToString(), Data->PatternPlayRate);
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Data->PatternPlayRate);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
@@ -88,7 +87,7 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 FVector UAgBossPattern_Leap::GetLandingTarget() const
 {
 	const AActor* Target = CastChecked<AAgBossCharacter>(GetAgCharacter())->GetTarget();
-	const FAgBossLeapParams* Params = GetActionParams<FAgBossLeapParams>();
+	const FAgBossLeapParams* Params = GetAbilityParams<FAgBossLeapParams>();
 	if (!Target || !Params)
 	{
 		return LeapStart;
@@ -138,9 +137,8 @@ void UAgBossPattern_Leap::HandleApex()
 void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 {
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
-	const FAgBossPattern* Pattern = Boss->FindPattern(GetCurrentAbilitySpecHandle());
-	const FAgBossLeapParams* Params = GetActionParams<FAgBossLeapParams>();
-	if (!Pattern || Pattern->Hits.IsEmpty() || !Params)
+	const FAgBossLeapParams* Params = GetAbilityParams<FAgBossLeapParams>();
+	if (!Params || Params->Hits.IsEmpty())
 	{
 		return;
 	}
@@ -161,7 +159,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 	AAgCharacterBase* Target = Boss->GetTarget();
 	if (Target && !Target->GetCharacterMovement()->IsFalling() && Boss->GetHorizontalDistanceTo(Target) <= Params->HitRadius)
 	{
-		UAgEffect_Damage::ApplyAttack(Boss, Boss, Target, FAgPlayerAttackHit(Pattern->Hits[0]), Boss->GetActorLocation());
+		UAgEffect_Damage::ApplyAttack(Boss, Boss, Target, FAgPlayerAttackHit(Params->Hits[0]), Boss->GetActorLocation());
 	}
 }
 

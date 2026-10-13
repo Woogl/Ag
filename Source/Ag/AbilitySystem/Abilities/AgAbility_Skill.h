@@ -26,7 +26,7 @@ class UAgAbility_Skill : public UAgGameplayAbility
 public:
 	UAgAbility_Skill();
 
-	virtual const UScriptStruct* GetActionParamsType() const override { return FAgSkillParams::StaticStruct(); }
+	virtual const UScriptStruct* GetAbilityParamsType() const override { return FAgSkillParams::StaticStruct(); }
 	virtual FAgAbilityCost GetCost() const override;
 
 protected:

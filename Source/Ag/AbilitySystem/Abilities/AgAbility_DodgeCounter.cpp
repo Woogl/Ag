@@ -16,7 +16,7 @@ UAgAbility_DodgeCounter::UAgAbility_DodgeCounter()
 void UAgAbility_DodgeCounter::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	const FAgPlayerAttack* Params = GetActionParams<FAgPlayerAttack>();
+	const FAgPlayerAttack* Params = GetAbilityParams<FAgPlayerAttack>();
 	if (!Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -28,7 +28,7 @@ void UAgAbility_DodgeCounter::ActivateAbility(const FGameplayAbilitySpecHandle H
 	InvincibleTag->ReadyForActivation();
 
 	BeginBusy();
-	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Params, Data->DodgeCounterMontage);
+	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Params, Data->FindMontage(GetAbilityId()));
 	AttackTask->OnLastWindowEnded.AddDynamic(this, &ThisClass::HandleLastWindowEnded);
 	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);

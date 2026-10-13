@@ -97,11 +97,11 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		}
 		const float Distance = Boss->GetHorizontalDistanceTo(Target);
 		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
-		TArray<int32> Candidates;
+		TArray<FName> Candidates;
 		TArray<float> Weights;
-		GatherCandidates(Data->Patterns, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), [Boss, ActorInfo](const FAgBossPattern& Candidate)
+		GatherCandidates(Data->Abilities, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), [Boss, ActorInfo](FName Candidate)
 		{
-			const FGameplayAbilitySpec* Spec = Boss->FindActionSpec(Candidate.Id);
+			const FGameplayAbilitySpec* Spec = Boss->FindAbilitySpec(Candidate);
 			return Spec && Spec->Ability && Spec->Ability->CanActivateAbility(Spec->Handle, ActorInfo);
 		}, Candidates, Weights);
 
@@ -111,10 +111,10 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		{
 			return EStateTreeRunStatus::Failed;
 		}
-		Pattern = Data->Patterns[Candidates[Picked]].Id;
+		Pattern = Candidates[Picked];
 	}
 
-	const FGameplayAbilitySpec* Spec = Boss->FindActionSpec(Pattern);
+	const FGameplayAbilitySpec* Spec = Boss->FindAbilitySpec(Pattern);
 	const FGameplayAbilitySpecHandle Handle = Spec ? Spec->Handle : FGameplayAbilitySpecHandle();
 	if (!Handle.IsValid() || !ASC->TryActivateAbility(Handle))
 	{
@@ -166,19 +166,25 @@ int32 FAgBossAITask_RunPattern::PickWeighted(TConstArrayView<float> Weights, flo
 	return LastPositive;
 }
 
-void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgBossPattern> Patterns, float Distance, float NearDistance, float FarDistance, int32 Phase,
-	TFunctionRef<bool(const FAgBossPattern&)> IsReady, TArray<int32>& OutIndices, TArray<float>& OutWeights)
+void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgAbilityData> Abilities, float Distance, float NearDistance, float FarDistance, int32 Phase,
+	TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights)
 {
-	OutIndices.Reset();
+	OutIds.Reset();
 	OutWeights.Reset();
-	for (int32 Index = 0; Index < Patterns.Num(); ++Index)
+	for (const FAgAbilityData& Ability : Abilities)
 	{
-		// 거리 구간: NearDistance까지 근거리, FarDistance까지 중거리, 그보다 멀면 원거리
-		const FAgBossPattern& Pattern = Patterns[Index];
-		const float Weight = Distance <= NearDistance ? Pattern.WeightNear : (Distance <= FarDistance ? Pattern.WeightMid : Pattern.WeightFar);
-		if (Weight > 0.f && Pattern.Phases.Contains(Phase) && IsReady(Pattern))
+		// 패턴이 아닌 어빌리티(피격 반응, 사망 등)는 전용 값이 패턴 공통 값이 아닙니다.
+		const FAgBossPatternParams* Pattern = Ability.Params.GetPtr<FAgBossPatternParams>();
+		if (!Pattern)
 		{
-			OutIndices.Add(Index);
+			continue;
+		}
+
+		// 거리 구간: NearDistance까지 근거리, FarDistance까지 중거리, 그보다 멀면 원거리
+		const float Weight = Distance <= NearDistance ? Pattern->WeightNear : (Distance <= FarDistance ? Pattern->WeightMid : Pattern->WeightFar);
+		if (Weight > 0.f && Pattern->Phases.Contains(Phase) && IsReady(Ability.Id))
+		{
+			OutIds.Add(Ability.Id);
 			OutWeights.Add(Weight);
 		}
 	}

@@ -8,6 +8,8 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
+const FName UAgAbility_Jump::LandMontageId(TEXT("Land"));
+
 UAgAbility_Jump::UAgAbility_Jump()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Jump, /*bIgnoresMovement*/ false);
@@ -33,11 +35,11 @@ void UAgAbility_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, c
 	Player->Jump();
 
 	// 시작 모션은 루트 모션이 없어 이동 입력을 막지 않으므로, 움직일 때도 재생합니다.
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	UAnimMontage* JumpMontage = GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId());
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (Data->JumpMontage && AnimInstance)
+	if (JumpMontage && AnimInstance)
 	{
-		AnimInstance->Montage_Play(Data->JumpMontage);
+		AnimInstance->Montage_Play(JumpMontage);
 	}
 
 	// 점프하면 걷기가 낙하로 바뀌므로, 다음에 걷기로 바뀌는 때가 착지입니다.
@@ -48,15 +50,17 @@ void UAgAbility_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, c
 
 void UAgAbility_Jump::HandleLanded(EMovementMode NewMovementMode)
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	const UAgCharacterData* Data = GetCharacterData<UAgCharacterData>();
+	UAnimMontage* LandMontage = Data->FindMontage(LandMontageId);
+	UAnimMontage* JumpMontage = Data->FindMontage(GetAbilityId());
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
-	if (Data->LandMontage && AnimInstance && !IsMoving())
+	if (LandMontage && AnimInstance && !IsMoving())
 	{
-		AnimInstance->Montage_Play(Data->LandMontage);
+		AnimInstance->Montage_Play(LandMontage);
 	}
-	else if (Data->JumpMontage && AnimInstance)
+	else if (JumpMontage && AnimInstance)
 	{
-		AnimInstance->Montage_StopWithBlendOut(Data->JumpMontage->GetBlendOutArgs(), Data->JumpMontage);
+		AnimInstance->Montage_StopWithBlendOut(JumpMontage->GetBlendOutArgs(), JumpMontage);
 	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

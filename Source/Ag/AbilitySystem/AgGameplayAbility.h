@@ -37,19 +37,19 @@ public:
 	virtual FAgAbilityCost GetCost() const;
 
 	/**
-	 * 이 어빌리티가 읽는 행동 전용 값의 구조체(FAgActionParams의 자식). 전용 값이 없으면 null입니다.
-	 * 캐릭터 데이터가 이 구조체로 JSON 행동 목록(보스는 패턴 목록)의 Params를 검사하고 읽습니다.
+	 * 이 어빌리티가 읽는 전용 값의 구조체(FAgAbilityParams의 자식). 전용 값이 없으면 null입니다.
+	 * 캐릭터 데이터가 이 구조체로 JSON 어빌리티 목록의 Params를 검사하고 읽습니다.
 	 */
-	virtual const UScriptStruct* GetActionParamsType() const { return nullptr; }
+	virtual const UScriptStruct* GetAbilityParamsType() const { return nullptr; }
 
-	/** 행동의 쿨다운이 남은 시간과 전체 시간(HUD의 쿨다운 표시). */
+	/** 어빌리티의 쿨다운이 남은 시간과 전체 시간(HUD의 쿨다운 표시). */
 	virtual void GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const override;
 
 protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 쿨다운은 태그 없이 행동 쿨다운 GE
-	// (UAgEffect_Cooldown)로 행동마다 따로 세고, 시간은 행동 항목의 Cooldown(0이면 없음)이며 행동 시작부터 셉니다.
+	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 쿨다운은 태그 없이 쿨다운 GE
+	// (UAgEffect_Cooldown)로 어빌리티마다 따로 세고, 시간은 어빌리티 항목의 Cooldown(0이면 없음)이며 시작부터 셉니다.
 	// 비용은 비용 GE(CostGameplayEffectClass)로 치르고, 치를 수 있는지는 행동마다의 규칙(CanPayCost)이 정합니다.
 	virtual bool CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
@@ -85,16 +85,19 @@ protected:
 	}
 
 	/**
-	 * 이 어빌리티가 실행하는 행동의 전용 값(행동 항목의 Params). 행동이 없거나 값이 TParams가 아니면 null입니다.
+	 * 이 어빌리티의 전용 값(어빌리티 항목의 Params). 항목이 없거나 값이 TParams가 아니면 null입니다.
 	 * JSON을 다시 읽으면 값이 새로 만들어지므로 함수 안에서만 쓰고, 다음에 쓸 때 다시 꺼냅니다.
 	 */
 	template <typename TParams>
-	const TParams* GetActionParams() const
+	const TParams* GetAbilityParams() const
 	{
-		ensureMsgf(TParams::StaticStruct() == GetActionParamsType(), TEXT("%s reads %s but GetActionParamsType returns another struct."), *GetName(), *TParams::StaticStruct()->GetName());
-		const TInstancedStruct<FAgActionParams>* Params = FindActionParams();
+		ensureMsgf(TParams::StaticStruct() == GetAbilityParamsType(), TEXT("%s reads %s but GetAbilityParamsType returns another struct."), *GetName(), *TParams::StaticStruct()->GetName());
+		const TInstancedStruct<FAgAbilityParams>* Params = FindAbilityParams();
 		return Params ? Params->GetPtr<TParams>() : nullptr;
 	}
+
+	/** 이 스펙의 어빌리티 ID(캐릭터 데이터의 어빌리티 목록). 몽타주를 하나만 쓰는 어빌리티는 이 ID로 몽타주를 찾습니다. */
+	FName GetAbilityId() const;
 
 	/** 행동 중(State.Busy)을 시작합니다. */
 	void BeginBusy();
@@ -108,8 +111,8 @@ protected:
 private:
 	const UAgCharacterData* GetCharacterDataBase() const;
 
-	/** 이 어빌리티 스펙이 실행하는 행동의 Params. 행동이 아니면 null입니다. */
-	const TInstancedStruct<FAgActionParams>* FindActionParams() const;
+	/** 이 어빌리티 스펙의 어빌리티 항목의 Params. 항목이 없으면 null입니다. */
+	const TInstancedStruct<FAgAbilityParams>* FindAbilityParams() const;
 
 	/** 행동 중인 동안 State.Busy를 붙여 둡니다. 어빌리티가 끝나면 함께 끝납니다. */
 	UPROPERTY()

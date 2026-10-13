@@ -3,10 +3,20 @@
 #include "Animation/AgAnimInstance.h"
 
 #include "AbilitySystemComponent.h"
+#include "Animation/AnimSequenceBase.h"
+#include "Animation/BlendSpace.h"
 #include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
+
+namespace
+{
+	/** 캐릭터 데이터의 Animations에서 찾는 ID: 이동, 가드 중 이동(블렌드 스페이스), 공중에서 반복하는 모션 */
+	const FName MoveAnimationId(TEXT("Move"));
+	const FName GuardMoveAnimationId(TEXT("GuardMove"));
+	const FName AirborneAnimationId(TEXT("Airborne"));
+}
 
 void UAgAnimInstance::NativeInitializeAnimation()
 {
@@ -16,9 +26,9 @@ void UAgAnimInstance::NativeInitializeAnimation()
 	Character = Cast<AAgCharacterBase>(TryGetPawnOwner());
 	if (const UAgCharacterData* Data = Character ? Character->GetCharacterData() : nullptr)
 	{
-		MoveBlendSpace = Data->MoveBlendSpace;
-		GuardMoveBlendSpace = Data->GuardMoveBlendSpace;
-		AirborneAnimation = Data->AirborneAnimation;
+		MoveBlendSpace = Data->FindAnimation<UBlendSpace>(MoveAnimationId);
+		GuardMoveBlendSpace = Data->FindAnimation<UBlendSpace>(GuardMoveAnimationId);
+		AirborneAnimation = Data->FindAnimation<UAnimSequenceBase>(AirborneAnimationId);
 	}
 }
 

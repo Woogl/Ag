@@ -193,7 +193,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime)
 {
 	// 이름은 매 프레임 데이터에서 읽어 바뀌었을 때만 넣습니다. 에디터에서 데이터 파일을 다시 읽으면 바뀝니다.
-	const FText& BossName = CastChecked<UAgBossData>(BossCharacter.GetCharacterData())->DisplayName;
+	const FText& BossName = BossCharacter.GetCharacterData()->DisplayName;
 	if (!BossNameText->GetText().IdenticalTo(BossName))
 	{
 		BossNameText->SetText(BossName);

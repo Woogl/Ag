@@ -14,9 +14,9 @@ UAgAbility_KnockBack::UAgAbility_KnockBack()
 
 void UAgAbility_KnockBack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const UAgCharacterData* Data = GetCharacterData<UAgCharacterData>();
+	UAnimMontage* Montage = GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId());
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data->KnockBackMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -32,7 +32,7 @@ void UAgAbility_KnockBack::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		}
 	}
 
-	UAgAbilityTask_PlayReaction* ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, Data->KnockBackMontage);
+	UAgAbilityTask_PlayReaction* ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, Montage);
 	ReactionTask->OnCompleted.AddDynamic(this, &ThisClass::HandleReactionCompleted);
 	ReactionTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleReactionInterrupted);
 	ReactionTask->ReadyForActivation();

@@ -2,6 +2,7 @@
 
 #include "Character/AgPlayerCharacter.h"
 
+#include "AbilitySystem/Abilities/AgAbility_Jump.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -190,11 +191,11 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 void AAgPlayerCharacter::StopLandingMotion()
 {
 	// 착지 모션은 제자리 모션이라 움직이면 미끄러져 보입니다. 행동이 아니므로 움직이면 끝냅니다. 블렌드 아웃은 몽타주의 값입니다.
-	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
+	UAnimMontage* LandMontage = GetCharacterData()->FindMontage(UAgAbility_Jump::LandMontageId);
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (Data->LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(Data->LandMontage))
+	if (LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(LandMontage))
 	{
-		AnimInstance->Montage_StopWithBlendOut(Data->LandMontage->GetBlendOutArgs(), Data->LandMontage);
+		AnimInstance->Montage_StopWithBlendOut(LandMontage->GetBlendOutArgs(), LandMontage);
 	}
 }
 

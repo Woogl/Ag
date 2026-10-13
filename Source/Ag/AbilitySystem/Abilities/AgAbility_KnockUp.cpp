@@ -18,6 +18,10 @@
 namespace
 {
 	const FName KnockUpLandSection(TEXT("Land"));
+
+	/** 넉업의 낙하 자세와 기상 몽타주의 ID (캐릭터 데이터의 Montages). 상승 자세는 어빌리티 ID로 찾습니다. */
+	const FName KnockUpFallMontageId(TEXT("KnockUpFall"));
+	const FName GetUpMontageId(TEXT("GetUp"));
 }
 
 UAgAbility_KnockUp::UAgAbility_KnockUp()
@@ -27,16 +31,17 @@ UAgAbility_KnockUp::UAgAbility_KnockUp()
 
 UAnimMontage* UAgAbility_KnockUp::GetFallMontage() const
 {
-	return GetCharacterData<UAgCharacterData>()->KnockUpFallMontage.Get();
+	return GetCharacterData<UAgCharacterData>()->FindMontage(KnockUpFallMontageId);
 }
 
 void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgCharacterData* Data = GetCharacterData<UAgCharacterData>();
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
+	UAnimMontage* RiseMontage = Data->FindMontage(GetAbilityId());
 	const UAnimMontage* FallMontage = GetFallMontage();
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data->KnockUpMontage || !FallMontage || Rules.KnockUpAirTime <= 0.f || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!RiseMontage || !FallMontage || Rules.KnockUpAirTime <= 0.f || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -53,7 +58,7 @@ void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 		}
 	}
 
-	ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, Data->KnockUpMontage, Data->GetUpMontage);
+	ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, RiseMontage, Data->FindMontage(GetUpMontageId));
 	ReactionTask->OnCompleted.AddDynamic(this, &ThisClass::HandleReactionCompleted);
 	ReactionTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleReactionInterrupted);
 	ReactionTask->ReadyForActivation();

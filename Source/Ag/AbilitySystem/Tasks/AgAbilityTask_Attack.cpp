@@ -18,7 +18,7 @@ UAgAbilityTask_Attack* UAgAbilityTask_Attack::PlayAttack(UGameplayAbility* Ownin
 	return Task;
 }
 
-UAgAbilityTask_Attack* UAgAbilityTask_Attack::PlayAttack(UGameplayAbility* OwningAbility, const FAgBossPattern& Pattern, UAnimMontage* InMontage, float InPlayRate)
+UAgAbilityTask_Attack* UAgAbilityTask_Attack::PlayAttack(UGameplayAbility* OwningAbility, const FAgBossPatternParams& Pattern, UAnimMontage* InMontage, float InPlayRate)
 {
 	UAgAbilityTask_Attack* Task = NewAbilityTask<UAgAbilityTask_Attack>(OwningAbility);
 	Task->Hits.Reserve(Pattern.Hits.Num());

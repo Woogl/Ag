@@ -5,7 +5,6 @@
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystem/AgEffect_Kill.h"
-#include "AbilitySystem/AgEffect_Regen.h"
 #include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
@@ -40,6 +39,10 @@ namespace
 
 	/** 히트스톱 중의 시간 배율: 모션, 몽타주, 이동이 거의 멈춥니다. */
 	constexpr float HitstopTimeDilation = 1.e-4f;
+
+	/** 움찔·가드 움찔 몽타주의 ID (캐릭터 데이터의 Montages) */
+	const FName FlinchMontageId(TEXT("Flinch"));
+	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
 
 	/**
 	 * 나눈 단계의 A와 B 사이 위치. 휘두르기는 몸을 돌아 지나가고 한 프레임에 4분의 1바퀴까지 돌기도 하므로, 직선 대신
@@ -100,7 +103,7 @@ bool AAgCharacterBase::IsDead() const
 
 bool AAgCharacterBase::CanLosePP() const
 {
-	return !CharacterData->Stats.bInfinitePP && !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	return !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_InfinitePP) && !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 }
 
 void AAgCharacterBase::PostInitializeComponents()
@@ -119,9 +122,9 @@ void AAgCharacterBase::BeginPlay()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute()).AddUObject(this, &ThisClass::HandleMOVChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetPPAttribute()).AddUObject(this, &ThisClass::HandlePPChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleHitstopChanged);
-	InitializeStats();
+	InitializeAttributes();
 	GrantAbilities();
-	StartRegen();
+	ApplyEffects();
 
 	GetCharacterMovement()->ProcessRootMotionPostConvertToWorld.BindUObject(this, &ThisClass::ClampRootMotion);
 
@@ -159,29 +162,29 @@ void AAgCharacterBase::PossessedBy(AController* NewController)
 	AbilitySystemComponent->RefreshAbilityActorInfo();
 }
 
-void AAgCharacterBase::InitializeStats()
+void AAgCharacterBase::InitializeAttributes()
 {
 	// 캐릭터 데이터는 캐릭터 블루프린트가 정하는 필수 데이터입니다. 여기서 한 번 확인하고, 다른 곳은 있다고 보고 씁니다.
 	checkf(CharacterData, TEXT("%s has no character data. Set it on the character blueprint."), *GetName());
 
-	const FAgStats& Stats = CharacterData->Stats;
+	const FAgAttributes& Attributes = CharacterData->Attributes;
 	UAbilitySystemComponent& ASC = *AbilitySystemComponent;
 
 	// 최대치를 먼저 넣습니다. 현재 값이 최대치에 맞춰 잘리기 때문입니다.
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxHPAttribute(), Stats.MaxHP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxSPAttribute(), Stats.MaxSP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxMPAttribute(), Stats.MaxMP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxUPAttribute(), Stats.MaxUP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPPAttribute(), Stats.bInfinitePP ? 0.f : Stats.MaxPP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxHPAttribute(), Attributes.MaxHP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxSPAttribute(), Attributes.MaxSP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxMPAttribute(), Attributes.MaxMP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxUPAttribute(), Attributes.MaxUP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPPAttribute(), Attributes.MaxPP);
 
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetHPAttribute(), Stats.HP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetSPAttribute(), Stats.SP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMPAttribute(), Stats.MP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetUPAttribute(), Stats.UP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetPPAttribute(), Stats.bInfinitePP ? 0.f : Stats.PP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetATKAttribute(), Stats.ATK);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetDEFAttribute(), Stats.DEF);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMOVAttribute(), Stats.MOV);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetHPAttribute(), Attributes.HP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetSPAttribute(), Attributes.SP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMPAttribute(), Attributes.MP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetUPAttribute(), Attributes.UP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetPPAttribute(), Attributes.PP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetATKAttribute(), Attributes.ATK);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetDEFAttribute(), Attributes.DEF);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMOVAttribute(), Attributes.MOV);
 
 	// 변경 델리게이트는 값이 바뀔 때만 불리므로, MOV는 여기서 한 번 적용합니다.
 	UpdateMoveSpeed();
@@ -189,44 +192,34 @@ void AAgCharacterBase::InitializeStats()
 
 void AAgCharacterBase::GrantAbilities()
 {
-	for (const TSubclassOf<UGameplayAbility>& Ability : CharacterData->Abilities)
+	for (const FAgAbilityData& Ability : CharacterData->Abilities)
 	{
-		if (Ability)
-		{
-			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability));
-		}
-	}
-
-	TArray<const FAgAction*> Actions;
-	CharacterData->GetActions(Actions);
-	for (const FAgAction* Action : Actions)
-	{
-		// 행동 ID는 태그가 아닌 문자열이라 오타를 에디터가 잡지 못하므로, JSON과 DA가 어긋나면 여기서 알립니다.
-		const TSubclassOf<UAgGameplayAbility> AbilityClass = CharacterData->FindActionAbility(Action->Id);
+		// 어빌리티 ID는 태그가 아닌 문자열이라 오타를 에디터가 잡지 못하므로, JSON과 DA가 어긋나면 여기서 알립니다.
+		const TSubclassOf<UAgGameplayAbility> AbilityClass = CharacterData->FindAbilityClass(Ability.Id);
 		if (!AbilityClass)
 		{
-			UE_LOG(LogAg, Error, TEXT("%s: action %s has no ability in %s."), *GetName(), *Action->Id.ToString(), *CharacterData->GetName());
+			UE_LOG(LogAg, Error, TEXT("%s: ability %s has no class in %s."), *GetName(), *Ability.Id.ToString(), *CharacterData->GetName());
 			continue;
 		}
-		ActionIds.Add(AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass)), Action->Id);
+		AbilityIds.Add(AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass)), Ability.Id);
 	}
 }
 
-FGameplayAbilitySpec* AAgCharacterBase::FindActionSpec(FName Id) const
+FGameplayAbilitySpec* AAgCharacterBase::FindAbilitySpec(FName Id) const
 {
-	const FGameplayAbilitySpecHandle* Handle = ActionIds.FindKey(Id);
+	const FGameplayAbilitySpecHandle* Handle = AbilityIds.FindKey(Id);
 	return Handle ? AbilitySystemComponent->FindAbilitySpecFromHandle(*Handle) : nullptr;
 }
 
-FName AAgCharacterBase::FindActionId(const FGameplayAbilitySpecHandle Handle) const
+FName AAgCharacterBase::FindAbilityId(const FGameplayAbilitySpecHandle Handle) const
 {
-	return ActionIds.FindRef(Handle);
+	return AbilityIds.FindRef(Handle);
 }
 
-const FAgAction* AAgCharacterBase::FindAction(const FGameplayAbilitySpecHandle Handle) const
+const FAgAbilityData* AAgCharacterBase::FindAbility(const FGameplayAbilitySpecHandle Handle) const
 {
-	const FName Id = FindActionId(Handle);
-	return Id.IsNone() ? nullptr : CharacterData->FindAction(Id);
+	const FName Id = FindAbilityId(Handle);
+	return Id.IsNone() ? nullptr : CharacterData->FindAbility(Id);
 }
 
 void AAgCharacterBase::HandleMOVChanged(const FOnAttributeChangeData& Data)
@@ -239,13 +232,13 @@ void AAgCharacterBase::UpdateMoveSpeed()
 	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV() * GetMoveSpeedMultiplier();
 }
 
-void AAgCharacterBase::StartRegen()
+void AAgCharacterBase::ApplyEffects()
 {
-	for (const TSubclassOf<UAgEffect_Regen>& Regen : CharacterData->RegenEffects)
+	for (const TSubclassOf<UGameplayEffect>& Effect : CharacterData->Effects)
 	{
-		if (Regen)
+		if (Effect)
 		{
-			AbilitySystemComponent->ApplyGameplayEffectToSelf(Regen.GetDefaultObject(), 1.f, AbilitySystemComponent->MakeEffectContext());
+			AbilitySystemComponent->ApplyGameplayEffectToSelf(Effect.GetDefaultObject(), 1.f, AbilitySystemComponent->MakeEffectContext());
 		}
 	}
 }
@@ -489,18 +482,20 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 void AAgCharacterBase::PlayFlinch()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && CharacterData->FlinchMontage)
+	UAnimMontage* Montage = CharacterData->FindMontage(FlinchMontageId);
+	if (AnimInstance && Montage)
 	{
-		AnimInstance->Montage_Play(CharacterData->FlinchMontage);
+		AnimInstance->Montage_Play(Montage);
 	}
 }
 
 void AAgCharacterBase::PlayGuardFlinch()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && CharacterData->GuardFlinchMontage)
+	UAnimMontage* Montage = CharacterData->FindMontage(GuardFlinchMontageId);
+	if (AnimInstance && Montage)
 	{
-		AnimInstance->Montage_Play(CharacterData->GuardFlinchMontage);
+		AnimInstance->Montage_Play(Montage);
 	}
 }
 

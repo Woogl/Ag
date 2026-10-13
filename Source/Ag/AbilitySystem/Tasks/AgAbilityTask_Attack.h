@@ -41,7 +41,7 @@ public:
 	static UAgAbilityTask_Attack* PlayAttack(UGameplayAbility* OwningAbility, const FAgPlayerAttack& Attack, UAnimMontage* InMontage);
 
 	/** 보스 패턴 Pattern의 타로 InMontage를 InPlayRate로 재생합니다. 보스 패턴에는 타겟팅 범위가 없습니다. */
-	static UAgAbilityTask_Attack* PlayAttack(UGameplayAbility* OwningAbility, const FAgBossPattern& Pattern, UAnimMontage* InMontage, float InPlayRate);
+	static UAgAbilityTask_Attack* PlayAttack(UGameplayAbility* OwningAbility, const FAgBossPatternParams& Pattern, UAnimMontage* InMontage, float InPlayRate);
 
 	/** 지금 타의 대상: 타를 시작할 때 정한 공격 중 이동의 대상(정지 간격의 대상)입니다. 없으면 null입니다. */
 	AAgCharacterBase* GetHitTarget() const;

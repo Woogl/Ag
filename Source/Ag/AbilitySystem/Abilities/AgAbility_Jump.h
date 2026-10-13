@@ -19,6 +19,12 @@ class UAgAbility_Jump : public UAgGameplayAbility
 public:
 	UAgAbility_Jump();
 
+	/**
+	 * 착지 몽타주의 ID (캐릭터 데이터의 Montages). 시작 몽타주는 어빌리티 ID로 찾습니다. 플레이어 캐릭터도 착지 모션을
+	 * 멈출 때 씁니다.
+	 */
+	static const FName LandMontageId;
+
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;

@@ -60,21 +60,15 @@ void AAgBossCharacter::GrantAbilities()
 {
 	Super::GrantAbilities();
 
-	// 패턴 어빌리티는 부모가 부여합니다. 몽타주도 패턴 ID로 찾으므로, DA에 빠졌으면 여기서 알립니다.
-	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
-	for (const FAgBossPattern& Pattern : Data->Patterns)
+	// 패턴 어빌리티는 부모가 부여합니다. 몽타주를 패턴 ID로 찾으므로, DA에 빠졌으면 패턴을 고르기 전에 여기서 알립니다.
+	const UAgCharacterData* Data = GetCharacterData();
+	for (const FAgAbilityData& Ability : Data->Abilities)
 	{
-		if (!Data->FindPatternMontage(Pattern.Id))
+		if (Ability.Params.GetPtr<FAgBossPatternParams>() && !Data->Montages.Contains(Ability.Id))
 		{
-			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no montage in %s's PatternMontages."), *GetName(), *Pattern.Id.ToString(), *Data->GetName());
+			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no montage in %s's Montages."), *GetName(), *Ability.Id.ToString(), *Data->GetName());
 		}
 	}
-}
-
-const FAgBossPattern* AAgBossCharacter::FindPattern(const FGameplayAbilitySpecHandle Handle) const
-{
-	const FName Id = FindActionId(Handle);
-	return Id.IsNone() ? nullptr : CastChecked<UAgBossData>(GetCharacterData())->FindPattern(Id);
 }
 
 void AAgBossCharacter::EnterPhase2()

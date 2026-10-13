@@ -19,6 +19,8 @@
 #include "Data/AgCombatRules.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
+const FName UAgAbility_Groggy::ExecutedMontageId(TEXT("Executed"));
+
 namespace
 {
 	const FName GroggyEndSection(TEXT("End"));
@@ -45,8 +47,7 @@ UAgAbility_Groggy::UAgAbility_Groggy()
 
 void UAgAbility_Groggy::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	if (!Data->GroggyMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId()) || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -74,7 +75,6 @@ void UAgAbility_Groggy::HandleLanded(EMovementMode NewMovementMode)
 
 void UAgAbility_Groggy::StartGroggy()
 {
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	if (MontageTask)
 	{
 		return;
@@ -83,10 +83,10 @@ void UAgAbility_Groggy::StartGroggy()
 	// 그로기 시간은 모션 전체를 덮으므로, End 섹션은 시간이 끝나기 그 길이만큼 전에 시작합니다.
 	// 시간은 게임 시간으로 세며 히트스톱 중에도 흐릅니다(전투 시스템 '히트스톱 중의 시간').
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
-	const UAnimMontage* Montage = Data->GroggyMontage;
+	UAnimMontage* Montage = GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId());
 	const int32 EndSection = Montage->GetSectionIndex(GroggyEndSection);
 	const float EndLength = EndSection != INDEX_NONE ? Montage->GetSectionLength(EndSection) : 0.f;
-	MontageTask = PlayMontage(Data->GroggyMontage);
+	MontageTask = PlayMontage(Montage);
 	CastChecked<AAgBossCharacter>(GetAgCharacter())->SetGroggyTimerRunning(true);
 	EndSectionTask = UAbilityTask_WaitDelay::WaitDelay(this, FMath::Max(0.f, Rules.GroggyDuration - EndLength));
 	EndSectionTask->OnFinish.AddDynamic(this, &ThisClass::HandleEndSectionDue);
@@ -106,19 +106,18 @@ UAbilityTask_PlayMontageAndWait* UAgAbility_Groggy::PlayMontage(UAnimMontage* Mo
 
 void UAgAbility_Groggy::HandleEndSectionDue()
 {
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	UAnimInstance* AnimInstance = GetActorInfo().GetAnimInstance();
 	if (AnimInstance)
 	{
-		AnimInstance->Montage_JumpToSection(GroggyEndSection, Data->GroggyMontage);
+		AnimInstance->Montage_JumpToSection(GroggyEndSection, GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId()));
 	}
 }
 
 void UAgAbility_Groggy::HandleExecuted(FGameplayEventData Payload)
 {
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
+	UAnimMontage* ExecutedMontage = GetCharacterData<UAgCharacterData>()->FindMontage(ExecutedMontageId);
 	AAgCharacterBase* Boss = GetAgCharacter();
-	if (!Data->ExecutedMontage)
+	if (!ExecutedMontage)
 	{
 		return;
 	}
@@ -147,7 +146,7 @@ void UAgAbility_Groggy::HandleExecuted(FGameplayEventData Payload)
 	{
 		MontageTask->EndTask();
 	}
-	MontageTask = PlayMontage(Data->ExecutedMontage);
+	MontageTask = PlayMontage(ExecutedMontage);
 }
 
 void UAgAbility_Groggy::HandleMontageFinished()

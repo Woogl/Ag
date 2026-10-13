@@ -30,7 +30,7 @@ class UAgAbility_JumpAttack : public UAgGameplayAbility
 public:
 	UAgAbility_JumpAttack();
 
-	virtual const UScriptStruct* GetActionParamsType() const override { return FAgJumpAttackParams::StaticStruct(); }
+	virtual const UScriptStruct* GetAbilityParamsType() const override { return FAgJumpAttackParams::StaticStruct(); }
 
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 

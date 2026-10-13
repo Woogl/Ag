@@ -120,11 +120,11 @@ private:
 	static int32 PickWeighted(TConstArrayView<float> Weights, float Random01);
 
 	/**
-	 * 보스 사양 '패턴 선택' 1: 지금 쓸 수 있는 패턴(그 거리 구간의 가중치가 0보다 크고, 페이즈가 허용하고, IsReady가
-	 * 쿨다운이 끝났다고 답함)과 그 구간의 가중치
+	 * 보스 사양 '패턴 선택' 1: 어빌리티 목록에서 지금 쓸 수 있는 패턴(전용 값이 패턴 공통 값이고, 그 거리 구간의 가중치가
+	 * 0보다 크고, 페이즈가 허용하고, IsReady가 쿨다운이 끝났다고 답함)의 ID와 그 구간의 가중치
 	 */
-	static void GatherCandidates(TConstArrayView<FAgBossPattern> Patterns, float Distance, float NearDistance, float FarDistance, int32 Phase,
-		TFunctionRef<bool(const FAgBossPattern&)> IsReady, TArray<int32>& OutIndices, TArray<float>& OutWeights);
+	static void GatherCandidates(TConstArrayView<FAgAbilityData> Abilities, float Distance, float NearDistance, float FarDistance, int32 Phase,
+		TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights);
 };
 
 USTRUCT()

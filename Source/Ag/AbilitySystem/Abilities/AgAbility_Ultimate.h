@@ -11,7 +11,7 @@ class UAgAbilityTask_TimeStop;
 
 /** 궁극기의 전용 값 (플레이어 사양 '궁극기', '베기 선') */
 USTRUCT()
-struct FAgUltimateParams : public FAgActionParams
+struct FAgUltimateParams : public FAgAbilityParams
 {
 	GENERATED_BODY()
 
@@ -44,7 +44,7 @@ class UAgAbility_Ultimate : public UAgGameplayAbility
 public:
 	UAgAbility_Ultimate();
 
-	virtual const UScriptStruct* GetActionParamsType() const override { return FAgUltimateParams::StaticStruct(); }
+	virtual const UScriptStruct* GetAbilityParamsType() const override { return FAgUltimateParams::StaticStruct(); }
 	virtual FAgAbilityCost GetCost() const override;
 
 protected:

@@ -12,7 +12,7 @@ class AAgCharacterBase;
  * 리젠(플레이어 사양 '자원 회복', 전투 시스템 'PP 리젠'): 끝나지 않는 주기 효과로, 주기마다 초당 회복량 × 주기만큼
  * 더합니다(UAgRegenCalculation). 초당 회복량은 효과마다 주인의 캐릭터 데이터에서 읽고, 음수면 소모합니다(달리기의 SP 소모).
  * 태그 조건이 맞지 않는 동안(예: 리젠 대기 태그가 있는 동안) 멈추고, 다시 맞으면 주기를 처음부터 셉니다.
- * 캐릭터마다 거는 리젠은 캐릭터 데이터의 RegenEffects에 있습니다.
+ * 캐릭터마다 거는 리젠은 캐릭터 데이터의 시작할 때 거는 GameplayEffect 목록(Effects)에 있습니다.
  */
 UCLASS(Abstract)
 class UAgEffect_Regen : public UGameplayEffect

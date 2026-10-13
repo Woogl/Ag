@@ -10,11 +10,11 @@ class UAgAbilityTask_Attack;
 
 /** 평타의 전용 값 (플레이어 사양 '평타') */
 USTRUCT()
-struct FAgBasicAttackParams : public FAgActionParams
+struct FAgBasicAttackParams : public FAgAbilityParams
 {
 	GENERATED_BODY()
 
-	/** 타마다 하나씩, 1타부터. 몽타주는 DA_Player의 BasicAttackMontages에서 같은 순서로 찾습니다. */
+	/** 타마다 하나씩, 1타부터. 몽타주는 어빌리티 ID 뒤에 타 번호를 붙인 ID(BasicAttack1 ~ 5)로 찾습니다. */
 	UPROPERTY(EditAnywhere, Category = "Basic Attack")
 	TArray<FAgPlayerAttack> Combo;
 };
@@ -32,7 +32,7 @@ class UAgAbility_BasicAttack : public UAgGameplayAbility
 public:
 	UAgAbility_BasicAttack();
 
-	virtual const UScriptStruct* GetActionParamsType() const override { return FAgBasicAttackParams::StaticStruct(); }
+	virtual const UScriptStruct* GetAbilityParamsType() const override { return FAgBasicAttackParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

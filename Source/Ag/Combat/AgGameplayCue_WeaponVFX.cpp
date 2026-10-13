@@ -1,6 +1,6 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "Combat/AgGameplayCue_WeaponEffect.h"
+#include "Combat/AgGameplayCue_WeaponVFX.h"
 
 #include "Character/AgCharacterBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -8,12 +8,12 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundBase.h"
 
-AAgGameplayCue_WeaponEffect::AAgGameplayCue_WeaponEffect()
+AAgGameplayCue_WeaponVFX::AAgGameplayCue_WeaponVFX()
 {
 	bAutoDestroyOnRemove = true;
 }
 
-bool AAgGameplayCue_WeaponEffect::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
+bool AAgGameplayCue_WeaponVFX::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
 	// 대상 캐릭터의 무기에 붙입니다. 몽타주 노티파이는 몸 메시를 넘기므로 캐릭터의 무기를 먼저 쓰고, 애니메이션 에디터
 	// 미리보기처럼 캐릭터가 없으면 넘어온 컴포넌트에 붙입니다.
@@ -27,12 +27,12 @@ bool AAgGameplayCue_WeaponEffect::OnActive_Implementation(AActor* MyTarget, cons
 	{
 		AttachTo = MyTarget->GetRootComponent();
 	}
-	if (Effect && AttachTo)
+	if (VFX && AttachTo)
 	{
-		SpawnedEffect = UNiagaraFunctionLibrary::SpawnSystemAttached(Effect, AttachTo, AttachSocket, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, /*bAutoDestroy*/ false);
-		if (SpawnedEffect)
+		SpawnedVFX = UNiagaraFunctionLibrary::SpawnSystemAttached(VFX, AttachTo, AttachSocket, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, /*bAutoDestroy*/ false);
+		if (SpawnedVFX)
 		{
-			SpawnedEffect->SetVariableLinearColor(ColorParameter, Color);
+			SpawnedVFX->SetVariableLinearColor(ColorParameter, Color);
 		}
 	}
 	if (Sound && AttachTo)
@@ -42,12 +42,12 @@ bool AAgGameplayCue_WeaponEffect::OnActive_Implementation(AActor* MyTarget, cons
 	return true;
 }
 
-bool AAgGameplayCue_WeaponEffect::OnRemove_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
+bool AAgGameplayCue_WeaponVFX::OnRemove_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
-	if (SpawnedEffect)
+	if (SpawnedVFX)
 	{
-		SpawnedEffect->DestroyComponent();
-		SpawnedEffect = nullptr;
+		SpawnedVFX->DestroyComponent();
+		SpawnedVFX = nullptr;
 	}
 	return true;
 }

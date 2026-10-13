@@ -30,14 +30,14 @@ AAgCharacterBase* UAgAbility_Execution::FindExecutionTarget(const AAgPlayerChara
 	{
 		return nullptr;
 	}
-	// 처형 타겟팅 범위는 플레이어의 처형 행동 항목에 있습니다.
+	// 처형 타겟팅 범위는 플레이어의 처형 어빌리티 항목에 있습니다.
 	const FAgPlayerAttack* Attack = nullptr;
 	for (const FGameplayAbilitySpec& Spec : Player->GetAbilitySystemComponent()->GetActivatableAbilities())
 	{
 		if (Spec.Ability && Spec.Ability->GetAssetTags().HasTagExact(AgGameplayTags::Ability_Action_Execution))
 		{
-			const FAgAction* Action = Player->FindAction(Spec.Handle);
-			Attack = Action ? Action->Params.GetPtr<FAgPlayerAttack>() : nullptr;
+			const FAgAbilityData* Ability = Player->FindAbility(Spec.Handle);
+			Attack = Ability ? Ability->Params.GetPtr<FAgPlayerAttack>() : nullptr;
 			break;
 		}
 	}
@@ -65,9 +65,10 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 {
 	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	const FAgPlayerAttack* Params = GetActionParams<FAgPlayerAttack>();
+	const FAgPlayerAttack* Params = GetAbilityParams<FAgPlayerAttack>();
 	AAgCharacterBase* Enemy = FindExecutionTarget(Player);
-	if (!Enemy || !Data->ExecutionMontage || !Params || Params->Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	UAnimMontage* Montage = Data->FindMontage(GetAbilityId());
+	if (!Enemy || !Montage || !Params || Params->Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -92,7 +93,7 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 	StrikeTask->EventReceived.AddDynamic(this, &ThisClass::HandleStrike);
 	StrikeTask->ReadyForActivation();
 
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->ExecutionMontage);
+	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
@@ -102,7 +103,7 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 {
 	AAgCharacterBase* Enemy = Target.Get();
-	const FAgPlayerAttack* Params = GetActionParams<FAgPlayerAttack>();
+	const FAgPlayerAttack* Params = GetAbilityParams<FAgPlayerAttack>();
 	if (!Params || !Params->Hits.IsValidIndex(StrikeIndex))
 	{
 		return;

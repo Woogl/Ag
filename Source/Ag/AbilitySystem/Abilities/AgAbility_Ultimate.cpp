@@ -38,7 +38,8 @@ UAgAbility_Ultimate::UAgAbility_Ultimate()
 void UAgAbility_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Data->UltimateMontage || !Data->UltimateCutscene || !GetActionParams<FAgUltimateParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	UAnimMontage* Montage = Data->FindMontage(GetAbilityId());
+	if (!Montage || !Data->UltimateCutscene || !GetAbilityParams<FAgUltimateParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -52,7 +53,7 @@ void UAgAbility_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	TimeStopTask->ReadyForActivation();
 
 	// 모션: 컷신 동안 발도 자세로 기다리다가(Start → Hold 반복), 컷신이 끝나면 Judgment로 넘깁니다.
-	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->UltimateMontage);
+	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageCompleted);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMontageCancelled);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMontageCancelled);
@@ -95,7 +96,7 @@ void UAgAbility_Ultimate::HandleSlash(FGameplayEventData Payload)
 
 void UAgAbility_Ultimate::SpawnSlash()
 {
-	const FAgUltimateParams* Params = GetActionParams<FAgUltimateParams>();
+	const FAgUltimateParams* Params = GetAbilityParams<FAgUltimateParams>();
 	const AAgCharacterBase* Character = GetAgCharacter();
 	if (!Params)
 	{
@@ -126,7 +127,7 @@ void UAgAbility_Ultimate::HandleFinish(FGameplayEventData Payload)
 
 	// 이 어빌리티가 만든 스펙에는 엔진이 어빌리티 태그(Ability.Action.Ultimate)를 넣어, 대미지 GE가 궁극기 마무리 이펙트와
 	// 슬로우모션을 고릅니다. 대미지 숫자는 적의 캡슐 중심에 뜹니다.
-	const FAgUltimateParams* Params = GetActionParams<FAgUltimateParams>();
+	const FAgUltimateParams* Params = GetAbilityParams<FAgUltimateParams>();
 	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
 	if (!Params)
 	{

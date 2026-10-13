@@ -12,7 +12,7 @@ class UAgAbilityTask_HoldTag;
 
 /** 가드의 전용 값 (플레이어 사양 '패리', 'MP 충전', 'UP 충전', 플레이어 입력 '상태별 허용 입력') */
 USTRUCT()
-struct FAgGuardParams : public FAgActionParams
+struct FAgGuardParams : public FAgAbilityParams
 {
 	GENERATED_BODY()
 
@@ -47,7 +47,7 @@ class UAgAbility_Guard : public UAgGameplayAbility
 public:
 	UAgAbility_Guard();
 
-	virtual const UScriptStruct* GetActionParamsType() const override { return FAgGuardParams::StaticStruct(); }
+	virtual const UScriptStruct* GetAbilityParamsType() const override { return FAgGuardParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

@@ -32,9 +32,11 @@ void UAgAbility_BasicAttack::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 
 void UAgAbility_BasicAttack::StartHit(int32 Index)
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	const FAgBasicAttackParams* Params = GetActionParams<FAgBasicAttackParams>();
-	if (!Params || !Params->Combo.IsValidIndex(Index) || !Data->BasicAttackMontages.IsValidIndex(Index))
+	// 타마다 몽타주가 하나라, 몽타주 ID는 어빌리티 ID 뒤에 타 번호를 붙입니다(BasicAttack1 ~ 5).
+	const FAgBasicAttackParams* Params = GetAbilityParams<FAgBasicAttackParams>();
+	const FName MontageId(*FString::Printf(TEXT("%s%d"), *GetAbilityId().ToString(), Index + 1));
+	UAnimMontage* Montage = Params && Params->Combo.IsValidIndex(Index) ? GetCharacterData<UAgCharacterData>()->FindMontage(MontageId) : nullptr;
+	if (!Montage)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
@@ -47,7 +49,7 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 		AttackTask->EndTask();
 	}
 	BeginBusy();
-	AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Params->Combo[Index], Data->BasicAttackMontages[Index]);
+	AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Params->Combo[Index], Montage);
 	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
@@ -64,7 +66,7 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 void UAgAbility_BasicAttack::HandleAttackInput(FGameplayEventData Payload)
 {
 	// 평타 키의 처리 순서: 후딜 중이면(행동 중이 풀림) 다음 타를 시작하고, 그 전이면 무시합니다.
-	const FAgBasicAttackParams* Params = GetActionParams<FAgBasicAttackParams>();
+	const FAgBasicAttackParams* Params = GetAbilityParams<FAgBasicAttackParams>();
 	if (!IsBusy() && Params && Params->Combo.Num() > 0)
 	{
 		StartHit((HitIndex + 1) % Params->Combo.Num());

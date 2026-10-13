@@ -15,9 +15,9 @@ UAgAbility_GuardPushback::UAgAbility_GuardPushback()
 
 void UAgAbility_GuardPushback::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	UAnimMontage* Montage = GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId());
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data->GuardPushbackMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -33,7 +33,7 @@ void UAgAbility_GuardPushback::ActivateAbility(const FGameplayAbilitySpecHandle 
 		}
 	}
 
-	UAgAbilityTask_PlayReaction* ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, Data->GuardPushbackMontage);
+	UAgAbilityTask_PlayReaction* ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, Montage);
 	ReactionTask->OnCompleted.AddDynamic(this, &ThisClass::HandleReactionCompleted);
 	ReactionTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleReactionInterrupted);
 	ReactionTask->ReadyForActivation();

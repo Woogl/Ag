@@ -7,7 +7,6 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
-#include "Character/AgBossCharacter.h"
 #include "Combat/AgProjectile.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgCharacterData.h"
@@ -19,18 +18,16 @@ UAgBossPattern_SwordWave::UAgBossPattern_SwordWave()
 
 void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
-	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	const FAgBossSwordWaveParams* Params = GetActionParams<FAgBossSwordWaveParams>();
-	if (!Montage || !Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgBossSwordWaveParams* Params = GetAbilityParams<FAgBossSwordWaveParams>();
+	UAnimMontage* Montage = Params ? Data->FindMontage(GetAbilityId()) : nullptr;
+	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *Pattern->Id.ToString(), Data->PatternPlayRate);
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts (play rate %.2f)"), *GetAbilityId().ToString(), Data->PatternPlayRate);
 
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage, Data->PatternPlayRate);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMontageFinished);
@@ -45,9 +42,9 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 	}
 
 	// 정지 간격과 접근은 공용 패턴과 같은 규칙입니다(UAgBossPattern_Common).
-	UAgAbilityTask_AttackMovement::Attack(this, Pattern->Hits.Num(), /*InTargetingRange*/ -1.f, Pattern->MaxApproachDistance)->ReadyForActivation();
+	UAgAbilityTask_AttackMovement::Attack(this, Params->Hits.Num(), /*InTargetingRange*/ -1.f, Params->MaxApproachDistance)->ReadyForActivation();
 
-	UAgAbilityTask_SpawnProjectile::SpawnProjectiles(this, Data->SwordWaveClass, Pattern->Hits, Params->Wave)->ReadyForActivation();
+	UAgAbilityTask_SpawnProjectile::SpawnProjectiles(this, Data->SwordWaveClass, Params->Hits, Params->Wave)->ReadyForActivation();
 }
 
 void UAgBossPattern_SwordWave::HandleMontageFinished()

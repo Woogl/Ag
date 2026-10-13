@@ -28,8 +28,8 @@ UAgAbility_PhaseTransition::UAgAbility_PhaseTransition()
 
 void UAgAbility_PhaseTransition::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	if (!Data->PhaseTransitionMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	UAnimMontage* Montage = GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId());
+	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -38,7 +38,7 @@ void UAgAbility_PhaseTransition::ActivateAbility(const FGameplayAbilitySpecHandl
 	UE_LOG(LogAg, Verbose, TEXT("Boss phase transition starts"));
 
 	// 1. 포효하는 동안 무적입니다(ActivationOwnedTags).
-	UAbilityTask_PlayMontageAndWait* RoarTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Data->PhaseTransitionMontage);
+	UAbilityTask_PlayMontageAndWait* RoarTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage);
 	// 페이즈 전환은 블렌드 아웃이 시작될 때가 아니라 포효 모션이 끝날 때 끝납니다(구현 계획서 '모션 캔슬').
 	RoarTask->OnCompleted.AddDynamic(this, &ThisClass::HandleRoarFinished);
 	RoarTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleRoarCancelled);

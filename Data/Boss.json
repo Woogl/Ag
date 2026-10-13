@@ -1,5 +1,6 @@
 {
-  "Stats": {
+  "DisplayName": "커스터",
+  "Attributes": {
     "HP": 3000,
     "MaxHP": 3000,
     "SP": 0,
@@ -10,75 +11,72 @@
     "MaxUP": 0,
     "PP": 1500,
     "MaxPP": 1500,
-    "bInfinitePP": false,
     "ATK": 150,
     "DEF": 100,
     "MOV": 250
   },
-  "PPRegenRate": 50,
-  "DeathPresentationTime": 4,
-  "StopDistance": 150,
-  "RotationStopLead": 0.2,
-  "Patterns": [
+  "Abilities": [
     {
       "Id": "DoubleStrike",
-      "Hits": [
-        {
-          "DamageMultiplier": 1,
-          "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
-          "bGuardable": true
-        },
-        {
-          "DamageMultiplier": 1.4,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockBack",
-          "bGuardable": true
-        }
-      ],
       "Cooldown": 0,
-      "Phases": [1, 2],
-      "WeightNear": 40,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "MaxApproachDistance": 100,
-      "Params": {}
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 1,
+            "PoiseMultiplier": 1,
+            "HitReaction": "Flinch",
+            "bGuardable": true
+          },
+          {
+            "DamageMultiplier": 1.4,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockBack",
+            "bGuardable": true
+          }
+        ],
+        "Phases": [1, 2],
+        "WeightNear": 40,
+        "WeightMid": 0,
+        "WeightFar": 0,
+        "MaxApproachDistance": 100
+      }
     },
     {
       "Id": "Sweep",
-      "Hits": [
-        {
-          "DamageMultiplier": 1.5,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockUp",
-          "bGuardable": true
-        }
-      ],
       "Cooldown": 5,
-      "Phases": [1, 2],
-      "WeightNear": 30,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "MaxApproachDistance": 0,
-      "Params": {}
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 1.5,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockUp",
+            "bGuardable": true
+          }
+        ],
+        "Phases": [1, 2],
+        "WeightNear": 30,
+        "WeightMid": 0,
+        "WeightFar": 0,
+        "MaxApproachDistance": 0
+      }
     },
     {
       "Id": "DashThrust",
-      "Hits": [
-        {
-          "DamageMultiplier": 2,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockUp",
-          "bGuardable": true
-        }
-      ],
       "Cooldown": 10,
-      "Phases": [1, 2],
-      "WeightNear": 0,
-      "WeightMid": 40,
-      "WeightFar": 60,
-      "MaxApproachDistance": 0,
       "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 2,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockUp",
+            "bGuardable": true
+          }
+        ],
+        "Phases": [1, 2],
+        "WeightNear": 0,
+        "WeightMid": 40,
+        "WeightFar": 60,
+        "MaxApproachDistance": 0,
         "Speed": 2000,
         "Overshoot": 200,
         "MaxDistance": 2000
@@ -86,21 +84,21 @@
     },
     {
       "Id": "LeapSlam",
-      "Hits": [
-        {
-          "DamageMultiplier": 2,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockUp",
-          "bGuardable": false
-        }
-      ],
       "Cooldown": 12,
-      "Phases": [2],
-      "WeightNear": 0,
-      "WeightMid": 40,
-      "WeightFar": 40,
-      "MaxApproachDistance": 0,
       "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 2,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockUp",
+            "bGuardable": false
+          }
+        ],
+        "Phases": [2],
+        "WeightNear": 0,
+        "WeightMid": 40,
+        "WeightFar": 40,
+        "MaxApproachDistance": 0,
         "AirTime": 1.35,
         "TargetOffset": 150,
         "MaxDistance": 1200,
@@ -109,75 +107,76 @@
     },
     {
       "Id": "QuintupleStrike",
-      "Hits": [
-        {
-          "DamageMultiplier": 0.7,
-          "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
-          "bGuardable": true
-        },
-        {
-          "DamageMultiplier": 0.7,
-          "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
-          "bGuardable": true
-        },
-        {
-          "DamageMultiplier": 0.7,
-          "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
-          "bGuardable": true
-        },
-        {
-          "DamageMultiplier": 0.7,
-          "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
-          "bGuardable": true
-        },
-        {
-          "DamageMultiplier": 2,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockUp",
-          "bGuardable": false
-        }
-      ],
       "Cooldown": 8,
-      "Phases": [2],
-      "WeightNear": 40,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "MaxApproachDistance": 0,
-      "Params": {}
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 0.7,
+            "PoiseMultiplier": 1,
+            "HitReaction": "Flinch",
+            "bGuardable": true
+          },
+          {
+            "DamageMultiplier": 0.7,
+            "PoiseMultiplier": 1,
+            "HitReaction": "Flinch",
+            "bGuardable": true
+          },
+          {
+            "DamageMultiplier": 0.7,
+            "PoiseMultiplier": 1,
+            "HitReaction": "Flinch",
+            "bGuardable": true
+          },
+          {
+            "DamageMultiplier": 0.7,
+            "PoiseMultiplier": 1,
+            "HitReaction": "Flinch",
+            "bGuardable": true
+          },
+          {
+            "DamageMultiplier": 2,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockUp",
+            "bGuardable": false
+          }
+        ],
+        "Phases": [2],
+        "WeightNear": 40,
+        "WeightMid": 0,
+        "WeightFar": 0,
+        "MaxApproachDistance": 0
+      }
     },
     {
       "Id": "SwordWave",
-      "Hits": [
-        {
-          "DamageMultiplier": 1.2,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockBack",
-          "bGuardable": true
-        },
-        {
-          "DamageMultiplier": 1.2,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockBack",
-          "bGuardable": true
-        },
-        {
-          "DamageMultiplier": 1.2,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockBack",
-          "bGuardable": true
-        }
-      ],
       "Cooldown": 10,
-      "Phases": [2],
-      "WeightNear": 0,
-      "WeightMid": 20,
-      "WeightFar": 60,
-      "MaxApproachDistance": 0,
       "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 1.2,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockBack",
+            "bGuardable": true
+          },
+          {
+            "DamageMultiplier": 1.2,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockBack",
+            "bGuardable": true
+          },
+          {
+            "DamageMultiplier": 1.2,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockBack",
+            "bGuardable": true
+          }
+        ],
+        "Phases": [2],
+        "WeightNear": 0,
+        "WeightMid": 20,
+        "WeightFar": 60,
+        "MaxApproachDistance": 0,
         "Wave": {
           "Speed": 1500,
           "Range": 2000
@@ -186,38 +185,68 @@
     },
     {
       "Id": "JumpSlam",
-      "Hits": [
-        {
-          "DamageMultiplier": 1.6,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockBack",
-          "bGuardable": true
-        }
-      ],
       "Cooldown": 6,
-      "Phases": [1, 2],
-      "WeightNear": 30,
-      "WeightMid": 30,
-      "WeightFar": 0,
-      "MaxApproachDistance": 700,
-      "Params": {}
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 1.6,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockBack",
+            "bGuardable": true
+          }
+        ],
+        "Phases": [1, 2],
+        "WeightNear": 30,
+        "WeightMid": 30,
+        "WeightFar": 0,
+        "MaxApproachDistance": 700
+      }
     },
     {
       "Id": "Backstep",
-      "Hits": [],
       "Cooldown": 4,
-      "Phases": [1, 2],
-      "WeightNear": 0,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "MaxApproachDistance": 0,
       "Params": {
+        "Hits": [],
+        "Phases": [1, 2],
+        "WeightNear": 0,
+        "WeightMid": 0,
+        "WeightFar": 0,
+        "MaxApproachDistance": 0,
         "Range": 400,
         "Chance": 0.3,
         "Distance": 500
       }
+    },
+    {
+      "Id": "KnockBack",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "KnockUp",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "Groggy",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "PhaseTransition",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "Death",
+      "Cooldown": 0,
+      "Params": {}
     }
   ],
+  "PPRegenRate": 50,
+  "DeathPresentationTime": 4,
+  "StopDistance": 150,
+  "RotationStopLead": 0.2,
   "PatternPlayRate": 0.8,
   "NearDistance": 300,
   "FarDistance": 1000,
@@ -225,6 +254,5 @@
   "PatternRecoveryWaitPhase1": { "Min": 1, "Max": 2 },
   "PatternRecoveryWaitPhase2": { "Min": 0.5, "Max": 1.2 },
   "FixedRecoveryWait": 1,
-  "Phase2HPRatio": 0.5,
-  "DisplayName": "커스터"
+  "Phase2HPRatio": 0.5
 }

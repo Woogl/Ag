@@ -14,9 +14,9 @@ UAgAbility_GuardBreak::UAgAbility_GuardBreak()
 
 void UAgAbility_GuardBreak::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	UAnimMontage* Montage = GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId());
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (!Data->GuardBreakMontage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -32,7 +32,7 @@ void UAgAbility_GuardBreak::ActivateAbility(const FGameplayAbilitySpecHandle Han
 		}
 	}
 
-	UAgAbilityTask_PlayReaction* ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, Data->GuardBreakMontage);
+	UAgAbilityTask_PlayReaction* ReactionTask = UAgAbilityTask_PlayReaction::PlayReaction(this, Montage);
 	ReactionTask->OnCompleted.AddDynamic(this, &ThisClass::HandleReactionCompleted);
 	ReactionTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleReactionInterrupted);
 	ReactionTask->ReadyForActivation();

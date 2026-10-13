@@ -315,7 +315,7 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 	}
 	if (Json.IsValid())
 	{
-		// 인스턴스 구조체 값의 구조체는 데이터 객체가 정합니다(보스 패턴의 전용 값).
+		// 인스턴스 구조체 값의 구조체는 데이터 객체가 정합니다(어빌리티의 전용 값).
 		if (const UAgCharacterData* CharacterData = Cast<UAgCharacterData>(&Target))
 		{
 			CharacterData->ResolveJsonStructTypes(*Json, Errors);
@@ -384,7 +384,7 @@ void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 		{
 			// 스탯은 스폰할 때 한 번 넣고 다시 넣지 않으므로 다음 PIE부터 바뀝니다(구현 계획서 'JSON과 DataAsset' 다시 읽기).
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
-				FString::Printf(TEXT("Data/%s reloaded. Stats change on the next PIE start."), *FileName));
+				FString::Printf(TEXT("Data/%s reloaded. Attributes change on the next PIE start."), *FileName));
 		}
 	}
 }

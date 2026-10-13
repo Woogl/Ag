@@ -11,71 +11,63 @@
 class AAgProjectile;
 class FJsonObject;
 class UAgGameplayAbility;
-class UAgEffect_Regen;
+class UAnimationAsset;
 class UAnimMontage;
-class UAnimSequenceBase;
+class UGameplayEffect;
 class ULevelSequence;
-class UBlendSpace;
-class UGameplayAbility;
 class UStateTree;
 class UTargetingPreset;
 
-/** 플레이어 사양·보스 사양의 '스탯' 표: 스탯마다 초기값과 최대값 */
+/** 플레이어 사양·보스 사양의 '스탯' 표: 스탯(어트리뷰트)마다 초기값과 최대값 */
 USTRUCT(BlueprintType)
-struct FAgStats
+struct FAgAttributes
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float HP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float MaxHP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float SP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float MaxSP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float MP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float MaxMP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float UP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float MaxUP = 0.f;
 
-	/** bInfinitePP면 쓰지 않습니다. */
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0, EditCondition = "!bInfinitePP"))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float PP = 0.f;
 
-	/** bInfinitePP면 쓰지 않습니다. */
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0, EditCondition = "!bInfinitePP"))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float MaxPP = 0.f;
 
-	/** PP 무한: PP가 줄지 않아 그로기에 빠지지 않습니다. */
-	UPROPERTY(EditAnywhere, Category = "Stats")
-	bool bInfinitePP = false;
-
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float ATK = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
 	float DEF = 0.f;
 
 	/** 기본 이동 속도 */
-	UPROPERTY(EditAnywhere, Category = "Stats", meta = (ClampMin = 0, Units = "cm/s"))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0, Units = "cm/s"))
 	float MOV = 0.f;
 };
 
 /**
  * 플레이어와 보스가 함께 쓰는 데이터(구현 계획서 'JSON과 DataAsset').
- * 데이터 에셋(DA_Player, DA_Boss)에는 에셋 참조와 기획서에 없는 값(구현 값, 어빌리티, 본 이름)을 저장합니다.
+ * 데이터 에셋(DA_Player, DA_Boss)에는 에셋 참조와 기획서에 없는 값(구현 값, 어빌리티 클래스, 본 이름)을 저장합니다.
  * Transient 필드는 기획자가 조절하는 기획 값이고, 에셋이 로드될 때마다 에셋 매니저가 ValuesFile의 JSON에서 채웁니다.
  * 필드마다 기획서의 어느 항목인지는 데이터 위치표(Docs/Program/데이터 위치표.md)를 따릅니다.
  */
@@ -93,29 +85,48 @@ public:
 #endif
 
 	/**
-	 * 에셋 매니저가 ValuesFile의 JSON을 검사하기 전에 부릅니다. 인스턴스 구조체 값마다 무슨 구조체로 읽을지 정하고
-	 * (UAgAssetManager::SetJsonStructType), 정할 수 없으면 Errors에 더합니다. 파일은 바꾸지 않습니다.
+	 * 에셋 매니저가 ValuesFile의 JSON을 검사하기 전에 부릅니다. 어빌리티 항목마다 그 어빌리티가 정한 전용 값의
+	 * 구조체(GetAbilityParamsType)로 Params를 읽게 하고(UAgAssetManager::SetJsonStructType), 정할 수 없으면 Errors에
+	 * 더합니다. 파일은 바꾸지 않습니다.
 	 */
-	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const {}
+	void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const;
 
-	/** 행동 목록(보스는 패턴 목록)의 항목. 캐릭터가 시작할 때 항목마다 그 행동의 어빌리티를 부여합니다. */
-	virtual void GetActions(TArray<const FAgAction*>& OutActions) const {}
+	/** 어빌리티 목록에서 ID로 항목을 찾습니다. 없으면 null입니다. */
+	const FAgAbilityData* FindAbility(FName Id) const;
 
-	/** 행동 목록에서 ID로 항목을 찾습니다. 없으면 null입니다. */
-	const FAgAction* FindAction(FName Id) const;
+	/** 어빌리티 ID마다의 어빌리티 클래스. 없으면 null입니다. */
+	TSubclassOf<UAgGameplayAbility> FindAbilityClass(FName Id) const;
 
-	/** 행동 ID마다 그 행동을 실행하는 어빌리티. 없으면 null입니다. */
-	virtual TSubclassOf<UAgGameplayAbility> FindActionAbility(FName Id) const { return nullptr; }
+	/** 몽타주 ID로 몽타주를 찾습니다. 없으면 오류 로그를 남기고 null입니다. */
+	UAnimMontage* FindMontage(FName Id) const;
+
+	/** 애니메이션 ID로 찾습니다. 없거나 T가 아니면 null입니다(가드하지 않는 캐릭터의 가드 이동처럼 없어도 됩니다). */
+	template <typename T>
+	T* FindAnimation(FName Id) const
+	{
+		return Cast<T>(Animations.FindRef(Id));
+	}
 
 	/** Transient 필드를 채우는 프로젝트 Data 폴더의 JSON 파일 (Player.json, Boss.json) */
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	FString ValuesFile;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Stats", meta = (ShowOnlyInnerProperties))
-	FAgStats Stats;
+	/** 이름. 전투 HUD '보스 상태'에 표시합니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
+	FText DisplayName;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Attributes", meta = (ShowOnlyInnerProperties))
+	FAgAttributes Attributes;
+
+	/**
+	 * 어빌리티 목록: 이 캐릭터가 가진 어빌리티(행동, 보스 패턴, 상태)마다 항목 하나. 캐릭터는 시작할 때 항목마다
+	 * AbilityClasses에서 ID로 찾은 클래스를 부여합니다.
+	 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
+	TArray<FAgAbilityData> Abilities;
 
 	/** PP 리젠: 리젠 대기 시간이 지난 뒤의 초당 회복량 (전투 시스템 'PP 리젠'). 0이면 회복하지 않습니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Stats", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
 	float PPRegenRate = 0.f;
 
 	/** 사망 연출 시간. 끝나면 결과 UI를 띄웁니다. (플레이어 사양·보스 사양 '사망') */
@@ -133,59 +144,21 @@ public:
 	/** 회전 정지 시간을 공격 몽타주의 시간으로 바꾼 값 */
 	virtual float GetRotationStopLeadInMontage() const { return RotationStopLead; }
 
-	/** 시작할 때 주는 어빌리티 중 행동이 아닌 것(피격 반응, 사망, 달리기 등). 행동의 어빌리티는 행동 ID로 찾습니다. */
+	/** 어빌리티 ID마다 그 어빌리티 클래스. 어빌리티 목록의 항목마다 하나씩 둡니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> Abilities;
+	TMap<FName, TSubclassOf<UAgGameplayAbility>> AbilityClasses;
 
-	/** 시작할 때 거는 리젠 효과(SP·PP 리젠, 달리기의 SP 소모). 회복량은 각 효과가 이 데이터에서 읽습니다. */
+	/** 시작할 때 거는 GameplayEffect(SP·PP 리젠, 달리기의 SP 소모, PP 무한). 회복량은 각 효과가 이 데이터에서 읽습니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
-	TArray<TSubclassOf<UAgEffect_Regen>> RegenEffects;
+	TArray<TSubclassOf<UGameplayEffect>> Effects;
 
-	/** 움찔: 하던 동작 위에 덧입혀 재생하는 몽타주 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> FlinchMontage;
+	/** 몽타주 ID마다 그 몽타주. ID는 구현 계획서 'JSON과 DataAsset'의 '어빌리티의 데이터'를 따릅니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets")
+	TMap<FName, TObjectPtr<UAnimMontage>> Montages;
 
-	/** 가드 움찔: 가드 자세 위에 덧입혀 재생하는 몽타주. 가드하지 않는 캐릭터는 비워 둡니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> GuardFlinchMontage;
-
-	/** 넉백: 밀려나 쓰러졌다가 일어남 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> KnockBackMontage;
-
-	/** 넉업: 상승 자세. 정점 무렵 KnockUpFallMontage가 블렌드되어 들어올 때까지 반복합니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> KnockUpMontage;
-
-	/**
-	 * 넉업: 섹션 Fall(낙하 자세, 반복) → Land(바닥에 떨어짐). 착지하면 Land로 넘깁니다.
-	 * 블렌드 인 시간의 가운데가 정점에 옵니다.
-	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> KnockUpFallMontage;
-
-	/** 넉업: 기상. KnockUpFallMontage 뒤에 블렌드해 잇습니다(자세가 조금 다름). */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> GetUpMontage;
-
-	/** 가드 중이 아닐 때의 이동. 가로축은 캐릭터 정면 기준 이동 방향 (deg), 세로축은 수평 속도 (cm/s)입니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Animation")
-	TObjectPtr<UBlendSpace> MoveBlendSpace;
-
-	/** 가드 중의 이동. 축은 MoveBlendSpace와 같습니다. 가드하지 않는 캐릭터는 비워 둡니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Animation")
-	TObjectPtr<UBlendSpace> GuardMoveBlendSpace;
-
-	/** 공중에 있는 동안 반복 재생하는 모션 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Animation")
-	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
-
-protected:
-	/**
-	 * JSON의 Field 배열에 있는 행동마다 그 어빌리티가 정한 전용 값의 구조체(GetActionParamsType)로 Params를 읽게 합니다.
-	 * AbilityMap은 오류에 적는, 행동 ID마다 어빌리티를 둔 DataAsset 필드의 이름입니다.
-	 */
-	void ResolveActionParamsTypes(FJsonObject& Json, const TCHAR* Field, const TCHAR* AbilityMap, TArray<FString>& Errors) const;
+	/** 애니메이션 ID마다 그 애니메이션(이동·가드 이동 블렌드 스페이스, 공중 반복 모션). ID는 UAgAnimInstance가 정합니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Assets")
+	TMap<FName, TObjectPtr<UAnimationAsset>> Animations;
 };
 
 /** DA_Player, Player.json */
@@ -195,24 +168,6 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	virtual void GetActions(TArray<const FAgAction*>& OutActions) const override;
-	virtual TSubclassOf<UAgGameplayAbility> FindActionAbility(FName Id) const override;
-
-	/** 행동마다 그 어빌리티가 정한 전용 값의 구조체(GetActionParamsType)로 Params를 읽게 합니다. */
-	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const override;
-
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-
-	/** 행동 목록. 한 행동만 쓰는 값은 그 항목에 있고, 아래 필드는 행동 밖의 코드가 읽는 값입니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Actions")
-	TArray<FAgAction> Actions;
-
-	/** 행동 ID마다 그 행동을 실행하는 어빌리티 */
-	UPROPERTY(EditDefaultsOnly, Category = "Actions")
-	TMap<FName, TSubclassOf<UAgGameplayAbility>> ActionAbilities;
-
 	/** 선입력: 허용되지 않는 상태에서 누른 입력을 기억하는 시간 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Input", meta = (Units = "s", ClampMin = 0))
 	float InputBufferTime = 0.f;
@@ -286,65 +241,6 @@ public:
 	/** SP 소모: 달리기의 초당 소모량. SP가 0보다 크면 달릴 수 있습니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint", meta = (ClampMin = 0))
 	float SprintSPCost = 0.f;
-
-	/** 평타 몽타주. 평타 행동의 Combo와 같은 순서 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TArray<TObjectPtr<UAnimMontage>> BasicAttackMontages;
-
-	/** 회피: 구르기 (이동 입력 방향) */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> RollMontage;
-
-	/** 회피: 뒤로 물러나기 (이동 입력이 없을 때) */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> BackstepMontage;
-
-	/** 가드 밀림 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> GuardPushbackMontage;
-
-	/** 가드 브레이크 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> GuardBreakMontage;
-
-	/** 패리 모션 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> ParryMontage;
-
-	/** 스킬 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> SkillMontage;
-
-	/** 회피 반격 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> DodgeCounterMontage;
-
-	/** 점프: 시작 모션. 점프할 때마다 재생합니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> JumpMontage;
-
-	/** 점프: 착지 모션. 이동 입력 없이 착지할 때 재생합니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> LandMontage;
-
-	/**
-	 * 점프 공격: 섹션 Start(내려베기) → Fall(떨어지는 자세, 반복) → Land(착지해 바닥을 찍음). 착지하면 Land로 넘깁니다.
-	 * 판정 구간 하나가 내려베기부터 착지해 바닥을 찍을 때까지 이어지고, 내려베기가 끝날 때의 노티파이(Event.JumpAttackPlunge)가
-	 * 내리꽂기를 시작합니다.
-	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> JumpAttackMontage;
-
-	/**
-	 * 궁극기: 섹션 Start(발도 자세) → Hold(기다림, 반복) → Judgment(칼 넣기) → Draw(칼 뽑기). 컷신이 끝나면 Judgment로 넘기고,
-	 * Judgment가 끝나는 순간의 노티파이(Event.UltimateFinish)가 마무리입니다.
-	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> UltimateMontage;
-
-	/** 처형 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> ExecutionMontage;
 };
 
 /** DA_Boss, Boss.json */
@@ -354,24 +250,8 @@ class UAgBossData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	virtual void GetActions(TArray<const FAgAction*>& OutActions) const override;
-	virtual TSubclassOf<UAgGameplayAbility> FindActionAbility(FName Id) const override;
-	const FAgBossPattern* FindPattern(FName Id) const;
-	UAnimMontage* FindPatternMontage(FName Id) const;
-
-	/** 패턴마다 그 패턴 어빌리티가 정한 전용 값의 구조체(GetActionParamsType)로 Params를 읽게 합니다. */
-	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const override;
-
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-
 	/** 회전 정지 시간(초)을 패턴 몽타주의 시간으로 바꾼 값 */
 	virtual float GetRotationStopLeadInMontage() const override { return RotationStopLead * PatternPlayRate; }
-
-	/** 패턴 목록 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Patterns")
-	TArray<FAgBossPattern> Patterns;
 
 	/** 모션 재생 속도: 공격 패턴 모션의 재생 속도 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (ClampMin = 0.01))
@@ -413,42 +293,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Lock-On")
 	FName LockOnBone;
 
-	/** 이름. 전투 HUD '보스 상태'에 표시합니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
-	FText DisplayName;
-
 	/** 전투 HUD '처형 안내': 이 본 위에 안내를 표시합니다 (보스 머리 위). */
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	FName ExecutionPromptBone;
 
-	/** 패턴 ID마다 그 패턴을 실행하는 어빌리티. DoubleStrike, Sweep, QuintupleStrike, JumpSlam은 공용 패턴 어빌리티(UAgBossPattern_Common)를 씁니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Patterns")
-	TMap<FName, TSubclassOf<UAgGameplayAbility>> PatternAbilities;
-
 	/** 보스 AI의 흐름(ST_Boss). 보스 AI 컨트롤러가 빙의할 때 실행합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<UStateTree> AIStateTree;
-
-	/** 패턴 ID마다 그 패턴의 몽타주 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TMap<FName, TObjectPtr<UAnimMontage>> PatternMontages;
-
-	/** 그로기: 섹션 Start → Loop(반복) → End. 그로기 시간이 끝날 때 모션도 끝나도록 End로 넘깁니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> GroggyMontage;
-
-	/**
-	 * 처형 피격: 플레이어의 처형과 짝을 이루는 모션으로, 끝에서 보스가 일어섭니다. 두 모션의 시간 차이만큼 첫 프레임에
-	 * 머물러 있어 처형 몽타주와 같은 프레임에 시작해 박자를 맞춥니다.
-	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> ExecutedMontage;
-
-	/** 처형 사망: 마지막 일격 뒤까지는 ExecutedMontage와 같고, 그 뒤 쓰러진 채로 끝납니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> ExecutedDeathMontage;
-
-	/** 페이즈 전환: 포효 */
-	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
-	TObjectPtr<UAnimMontage> PhaseTransitionMontage;
 };

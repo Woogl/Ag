@@ -13,20 +13,20 @@
 namespace
 {
 	/**
-	 * 행동 스펙의 쿨다운 출처(그 스펙의 어빌리티 인스턴스)와 쿨다운 시간(행동 항목의 Cooldown)을 찾습니다. 쿨다운이 없는
-	 * 행동(시간 0)이나 행동이 아니면 null입니다. 클래스 기본 객체에서도 불리므로 ActorInfo와 스펙 핸들로만 찾습니다.
+	 * 스펙의 쿨다운 출처(그 스펙의 어빌리티 인스턴스)와 쿨다운 시간(어빌리티 항목의 Cooldown)을 찾습니다. 쿨다운이 없는
+	 * 어빌리티(시간 0)나 항목이 없으면 null입니다. 클래스 기본 객체에서도 불리므로 ActorInfo와 스펙 핸들로만 찾습니다.
 	 */
-	const UGameplayAbility* FindActionCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& OutDuration)
+	const UGameplayAbility* FindAbilityCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& OutDuration)
 	{
 		OutDuration = 0.f;
 		const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
-		const FAgAction* Action = Character ? Character->FindAction(Handle) : nullptr;
-		const FGameplayAbilitySpec* Spec = Action && Action->Cooldown > 0.f ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+		const FAgAbilityData* Ability = Character ? Character->FindAbility(Handle) : nullptr;
+		const FGameplayAbilitySpec* Spec = Ability && Ability->Cooldown > 0.f ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
 		if (!Spec)
 		{
 			return nullptr;
 		}
-		OutDuration = Action->Cooldown;
+		OutDuration = Ability->Cooldown;
 		return Spec->GetPrimaryInstance();
 	}
 }
@@ -98,11 +98,16 @@ const UAgCharacterData* UAgGameplayAbility::GetCharacterDataBase() const
 	return GetAgCharacter()->GetCharacterData();
 }
 
-const TInstancedStruct<FAgActionParams>* UAgGameplayAbility::FindActionParams() const
+const TInstancedStruct<FAgAbilityParams>* UAgGameplayAbility::FindAbilityParams() const
 {
 	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
-	const FAgAction* Action = Character ? Character->FindAction(GetCurrentAbilitySpecHandle()) : nullptr;
-	return Action ? &Action->Params : nullptr;
+	const FAgAbilityData* Ability = Character ? Character->FindAbility(GetCurrentAbilitySpecHandle()) : nullptr;
+	return Ability ? &Ability->Params : nullptr;
+}
+
+FName UAgGameplayAbility::GetAbilityId() const
+{
+	return GetAgCharacter()->FindAbilityId(GetCurrentAbilitySpecHandle());
 }
 
 void UAgGameplayAbility::BeginBusy()
@@ -134,7 +139,7 @@ void UAgGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, con
 bool UAgGameplayAbility::CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	float Duration = 0.f;
-	if (const UGameplayAbility* Source = FindActionCooldown(Handle, ActorInfo, Duration))
+	if (const UGameplayAbility* Source = FindAbilityCooldown(Handle, ActorInfo, Duration))
 	{
 		return !UAgEffect_Cooldown::IsActive(ActorInfo->AbilitySystemComponent.Get(), Source);
 	}
@@ -144,7 +149,7 @@ bool UAgGameplayAbility::CheckCooldown(const FGameplayAbilitySpecHandle Handle, 
 void UAgGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
 	float Duration = 0.f;
-	if (const UGameplayAbility* Source = FindActionCooldown(Handle, ActorInfo, Duration))
+	if (const UGameplayAbility* Source = FindAbilityCooldown(Handle, ActorInfo, Duration))
 	{
 		UAgEffect_Cooldown::Apply(ActorInfo->AbilitySystemComponent.Get(), Source, Duration);
 	}
@@ -155,7 +160,7 @@ void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpe
 	TimeRemaining = 0.f;
 	CooldownDuration = 0.f;
 	float Duration = 0.f;
-	if (const UGameplayAbility* Source = FindActionCooldown(Handle, ActorInfo, Duration))
+	if (const UGameplayAbility* Source = FindAbilityCooldown(Handle, ActorInfo, Duration))
 	{
 		UAgEffect_Cooldown::GetTimeRemaining(ActorInfo->AbilitySystemComponent.Get(), Source, TimeRemaining, CooldownDuration);
 	}

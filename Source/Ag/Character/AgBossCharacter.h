@@ -4,12 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Character/AgCharacterBase.h"
-#include "GameplayAbilitySpecHandle.h"
 #include "GameplayTagContainer.h"
 #include "AgBossCharacter.generated.h"
 
 class UWidgetComponent;
-struct FAgBossPattern;
 
 /**
  * 보스 커스터(보스 사양). 늘 AI의 대상을 향해 돌고(보스 사양 '회전'), AI가 고른 패턴을 실행합니다.
@@ -22,12 +20,6 @@ class AAgBossCharacter : public AAgCharacterBase
 
 public:
 	AAgBossCharacter();
-
-	/**
-	 * 부여된 패턴 스펙(Handle)이 실행하는 패턴의 데이터(Boss.json). 패턴 스펙이 아니면 null입니다.
-	 * 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다(구현 계획서 '다시 읽기').
-	 */
-	const FAgBossPattern* FindPattern(const FGameplayAbilitySpecHandle Handle) const;
 
 	/** 페이즈. 처음에는 1이고, 페이즈 전환이 끝나면 2입니다. */
 	int32 GetPhase() const { return Phase; }

@@ -16,6 +16,13 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
+namespace
+{
+	/** 회피 몽타주의 ID (캐릭터 데이터의 Montages): 이동 입력 방향으로 구르기, 입력이 없을 때 뒤로 물러나기 */
+	const FName RollMontageId(TEXT("Roll"));
+	const FName BackstepMontageId(TEXT("Backstep"));
+}
+
 UAgAbility_Dodge::UAgAbility_Dodge()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Dodge);
@@ -46,7 +53,7 @@ void UAgAbility_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 	{
 		Player->SetActorRotation(FRotator(0.f, InputDirection.Rotation().Yaw, 0.f));
 	}
-	UAnimMontage* Montage = bRoll ? Data->RollMontage.Get() : Data->BackstepMontage.Get();
+	UAnimMontage* Montage = Data->FindMontage(bRoll ? RollMontageId : BackstepMontageId);
 	if (!Montage)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
@@ -110,7 +117,7 @@ void UAgAbility_Dodge::HandleRecoveryStarted(FGameplayEventData Payload)
 void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 {
 	// 회피 한 번에 한 번만 받습니다. 그 뒤의 공격도 피하지만 아무것도 주지 않습니다.
-	const FAgDodgeParams* Params = GetActionParams<FAgDodgeParams>();
+	const FAgDodgeParams* Params = GetAbilityParams<FAgDodgeParams>();
 	AAgCharacterBase* Character = GetAgCharacter();
 	if (bPerfectDodged || !Params)
 	{
@@ -150,6 +157,6 @@ bool UAgAbility_Dodge::CanPayCost(const UAgAttributeSet& Stats) const
 
 FAgAbilityCost UAgAbility_Dodge::GetCost() const
 {
-	const FAgDodgeParams* Params = GetActionParams<FAgDodgeParams>();
+	const FAgDodgeParams* Params = GetAbilityParams<FAgDodgeParams>();
 	return { Params ? Params->SPCost : 0.f, 0.f, 0.f };
 }

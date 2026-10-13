@@ -10,7 +10,7 @@ class UAgAbilityTask_HoldTag;
 
 /** 회피의 전용 값 (플레이어 사양 '회피', 'SP 소모', '극한 회피', 'MP 충전', 'UP 충전', '슬로우모션') */
 USTRUCT()
-struct FAgDodgeParams : public FAgActionParams
+struct FAgDodgeParams : public FAgAbilityParams
 {
 	GENERATED_BODY()
 
@@ -52,7 +52,7 @@ class UAgAbility_Dodge : public UAgGameplayAbility
 public:
 	UAgAbility_Dodge();
 
-	virtual const UScriptStruct* GetActionParamsType() const override { return FAgDodgeParams::StaticStruct(); }
+	virtual const UScriptStruct* GetAbilityParamsType() const override { return FAgDodgeParams::StaticStruct(); }
 	virtual FAgAbilityCost GetCost() const override;
 
 protected:

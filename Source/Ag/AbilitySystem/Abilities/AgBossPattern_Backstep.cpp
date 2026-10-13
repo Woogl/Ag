@@ -5,7 +5,6 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
-#include "Character/AgBossCharacter.h"
 #include "Data/AgCharacterData.h"
 
 UAgBossPattern_Backstep::UAgBossPattern_Backstep()
@@ -15,18 +14,15 @@ UAgBossPattern_Backstep::UAgBossPattern_Backstep()
 
 void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
-	const UAgBossData* Data = GetCharacterData<UAgBossData>();
-	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
-	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	const FAgBossBackstepParams* Params = GetActionParams<FAgBossBackstepParams>();
-	if (!Montage || !Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgBossBackstepParams* Params = GetAbilityParams<FAgBossBackstepParams>();
+	UAnimMontage* Montage = Params ? GetCharacterData<UAgCharacterData>()->FindMontage(GetAbilityId()) : nullptr;
+	if (!Montage || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
-	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts"), *Pattern->Id.ToString());
+	UE_LOG(LogAg, Verbose, TEXT("Boss pattern %s starts"), *GetAbilityId().ToString());
 
 	// 물러나는 거리: 모션의 루트 모션 전체 이동에 배율을 걸어 Backstep 거리에 맞춥니다(보스 사양 'Backstep'). 몽타주 태스크가 재생할 때
 	// 배율을 걸고, 몽타주가 블렌드 아웃을 시작하면 1로 되돌립니다.

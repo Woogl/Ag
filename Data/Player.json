@@ -1,5 +1,6 @@
 {
-  "Stats": {
+  "DisplayName": "",
+  "Attributes": {
     "HP": 1000,
     "MaxHP": 1000,
     "SP": 100,
@@ -10,17 +11,11 @@
     "MaxUP": 100,
     "PP": 0,
     "MaxPP": 0,
-    "bInfinitePP": true,
     "ATK": 100,
     "DEF": 50,
     "MOV": 400
   },
-  "PPRegenRate": 0,
-  "DeathPresentationTime": 3,
-  "StopDistance": 100,
-  "RotationStopLead": 0,
-  "InputBufferTime": 0.3,
-  "Actions": [
+  "Abilities": [
     {
       "Id": "BasicAttack",
       "Cooldown": 0,
@@ -224,8 +219,48 @@
         "TargetingRange": 300,
         "MaxApproachDistance": 0
       }
+    },
+    {
+      "Id": "Sprint",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "LockOn",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "KnockBack",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "KnockUp",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "GuardPushback",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "GuardBreak",
+      "Cooldown": 0,
+      "Params": {}
+    },
+    {
+      "Id": "Death",
+      "Cooldown": 0,
+      "Params": {}
     }
   ],
+  "PPRegenRate": 0,
+  "DeathPresentationTime": 3,
+  "StopDistance": 100,
+  "RotationStopLead": 0,
+  "InputBufferTime": 0.3,
   "SPRegenRate": 40,
   "SPRegenRateGuarding": 20,
   "SPRegenDelay": 1,
