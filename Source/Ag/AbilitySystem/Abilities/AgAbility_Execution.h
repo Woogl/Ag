@@ -24,6 +24,9 @@ class UAgAbility_Execution : public UAgGameplayAbility
 public:
 	UAgAbility_Execution();
 
+	/** 전용 값은 공격 데이터 하나입니다. TargetingRange가 처형 타겟팅 범위이고, 타 하나가 타격 하나입니다. */
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgPlayerAttack::StaticStruct(); }
+
 	/** 지금 처형할 수 있는 대상: 발동 조건 1, 2를 만족하는 가장 가까운 적(구현 계획서 '대상 찾기'). 없으면 null입니다. */
 	static AAgCharacterBase* FindExecutionTarget(const AAgPlayerCharacter* Player);
 

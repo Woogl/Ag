@@ -3,6 +3,7 @@
 #include "UI/AgHUDWidget.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
@@ -179,7 +180,9 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 		Gauge->SetScalarParameterValue(RatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
 	}
 
-	const int32 SkillCost = FMath::RoundToInt(CastChecked<UAgPlayerData>(Player.GetCharacterData())->SkillMPCost);
+	FGameplayAbilitySpecHandle SkillHandle;
+	const UAgGameplayAbility* Skill = Cast<UAgGameplayAbility>(FindAbility(*ASC, AgGameplayTags::Ability_Action_Skill, SkillHandle));
+	const int32 SkillCost = Skill ? FMath::RoundToInt(Skill->GetCost().MP) : 0;
 	if (SkillCost != ShownSkillCost)
 	{
 		ShownSkillCost = SkillCost;

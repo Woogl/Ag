@@ -3,11 +3,9 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgEffect_PatternCooldown.h"
-#include "AbilitySystem/AgEffect_TimedTag.h"
+#include "AbilitySystem/AgEffect_Cooldown.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystemComponent.h"
-#include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -15,20 +13,20 @@
 namespace
 {
 	/**
-	 * 보스 패턴 스펙의 쿨다운 출처(그 스펙의 어빌리티 인스턴스)와 쿨다운 시간(Boss.json)을 찾습니다. 보스 패턴이 아니면 null입니다.
-	 * 쿨다운이 있는지는 시간(0이면 없음)이 정합니다. 클래스 기본 객체에서도 불리므로 ActorInfo와 스펙 핸들로만 찾습니다.
+	 * 행동 스펙의 쿨다운 출처(그 스펙의 어빌리티 인스턴스)와 쿨다운 시간(행동 항목의 Cooldown)을 찾습니다. 쿨다운이 없는
+	 * 행동(시간 0)이나 행동이 아니면 null입니다. 클래스 기본 객체에서도 불리므로 ActorInfo와 스펙 핸들로만 찾습니다.
 	 */
-	const UGameplayAbility* FindPatternCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& OutDuration)
+	const UGameplayAbility* FindActionCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& OutDuration)
 	{
 		OutDuration = 0.f;
-		const AAgBossCharacter* Boss = ActorInfo ? Cast<AAgBossCharacter>(ActorInfo->AvatarActor.Get()) : nullptr;
-		const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(Handle) : nullptr;
-		const FGameplayAbilitySpec* Spec = Pattern ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+		const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
+		const FAgAction* Action = Character ? Character->FindAction(Handle) : nullptr;
+		const FGameplayAbilitySpec* Spec = Action && Action->Cooldown > 0.f ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
 		if (!Spec)
 		{
 			return nullptr;
 		}
-		OutDuration = Pattern->Cooldown;
+		OutDuration = Action->Cooldown;
 		return Spec->GetPrimaryInstance();
 	}
 }
@@ -100,11 +98,11 @@ const UAgCharacterData* UAgGameplayAbility::GetCharacterDataBase() const
 	return GetAgCharacter()->GetCharacterData();
 }
 
-const TInstancedStruct<FAgBossPatternParams>* UAgGameplayAbility::FindPatternParams() const
+const TInstancedStruct<FAgActionParams>* UAgGameplayAbility::FindActionParams() const
 {
-	const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(GetAvatarActorFromActorInfo());
-	const FAgBossPattern* Pattern = Boss ? Boss->FindPattern(GetCurrentAbilitySpecHandle()) : nullptr;
-	return Pattern ? &Pattern->Params : nullptr;
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
+	const FAgAction* Action = Character ? Character->FindAction(GetCurrentAbilitySpecHandle()) : nullptr;
+	return Action ? &Action->Params : nullptr;
 }
 
 void UAgGameplayAbility::BeginBusy()
@@ -133,40 +131,33 @@ void UAgGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, con
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UAgGameplayAbility::SetCooldownTag(const FGameplayTag& CooldownTag)
-{
-	CooldownTags = FGameplayTagContainer(CooldownTag);
-}
-
-const FGameplayTagContainer* UAgGameplayAbility::GetCooldownTags() const
-{
-	return &CooldownTags;
-}
-
 bool UAgGameplayAbility::CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	float Duration = 0.f;
-	if (const UGameplayAbility* PatternCooldownSource = FindPatternCooldown(Handle, ActorInfo, Duration))
+	if (const UGameplayAbility* Source = FindActionCooldown(Handle, ActorInfo, Duration))
 	{
-		return !UAgEffect_PatternCooldown::IsActive(ActorInfo->AbilitySystemComponent.Get(), PatternCooldownSource);
+		return !UAgEffect_Cooldown::IsActive(ActorInfo->AbilitySystemComponent.Get(), Source);
 	}
 	return Super::CheckCooldown(Handle, ActorInfo, OptionalRelevantTags);
 }
 
 void UAgGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	if (!ActorInfo)
+	float Duration = 0.f;
+	if (const UGameplayAbility* Source = FindActionCooldown(Handle, ActorInfo, Duration))
 	{
-		return;
+		UAgEffect_Cooldown::Apply(ActorInfo->AbilitySystemComponent.Get(), Source, Duration);
 	}
-	float PatternCooldown = 0.f;
-	if (const UGameplayAbility* PatternCooldownSource = FindPatternCooldown(Handle, ActorInfo, PatternCooldown))
+}
+
+void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const
+{
+	TimeRemaining = 0.f;
+	CooldownDuration = 0.f;
+	float Duration = 0.f;
+	if (const UGameplayAbility* Source = FindActionCooldown(Handle, ActorInfo, Duration))
 	{
-		UAgEffect_PatternCooldown::Apply(ActorInfo->AbilitySystemComponent.Get(), PatternCooldownSource, PatternCooldown);
-	}
-	else if (!CooldownTags.IsEmpty())
-	{
-		UAgEffect_TimedTag::Apply(ActorInfo->AbilitySystemComponent.Get(), CooldownTags.First(), GetCooldownDuration());
+		UAgEffect_Cooldown::GetTimeRemaining(ActorInfo->AbilitySystemComponent.Get(), Source, TimeRemaining, CooldownDuration);
 	}
 }
 

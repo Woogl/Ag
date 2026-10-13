@@ -23,7 +23,7 @@ void UAgBossPattern_SwordWave::ActivateAbility(const FGameplayAbilitySpecHandle 
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	const FAgBossSwordWaveParams* Params = GetPatternParams<FAgBossSwordWaveParams>();
+	const FAgBossSwordWaveParams* Params = GetActionParams<FAgBossSwordWaveParams>();
 	if (!Montage || !Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

@@ -36,14 +36,15 @@ bool UAgAbility_JumpAttack::CanActivateAbility(const FGameplayAbilitySpecHandle 
 void UAgAbility_JumpAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgJumpAttackParams* Params = GetActionParams<FAgJumpAttackParams>();
+	if (!Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	BeginBusy();
-	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->JumpAttack, Data->JumpAttackMontage);
+	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Params, Data->JumpAttackMontage);
 	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
@@ -75,9 +76,10 @@ void UAgAbility_JumpAttack::HandlePlunge(FGameplayEventData Payload)
 {
 	// 아래로는 정한 속도로 떨어지기 시작하고(그 뒤로는 엔진 중력이 더해짐), 수평 이동은 점프할 때의 이동을 그대로 잇습니다.
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (Character->GetCharacterMovement()->IsFalling())
+	const FAgJumpAttackParams* Params = GetActionParams<FAgJumpAttackParams>();
+	if (Params && Character->GetCharacterMovement()->IsFalling())
 	{
-		Character->LaunchCharacter(FVector(0.f, 0.f, -GetCharacterData<UAgPlayerData>()->JumpAttackPlungeSpeed), /*bXYOverride*/ false, /*bZOverride*/ true);
+		Character->LaunchCharacter(FVector(0.f, 0.f, -Params->PlungeSpeed), /*bXYOverride*/ false, /*bZOverride*/ true);
 	}
 }
 

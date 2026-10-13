@@ -6,6 +6,17 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AgAbility_JumpAttack.generated.h"
 
+/** 점프 공격의 전용 값 (플레이어 사양 '점프 공격'): 공격 데이터와 내리꽂는 속도 */
+USTRUCT()
+struct FAgJumpAttackParams : public FAgPlayerAttack
+{
+	GENERATED_BODY()
+
+	/** 내리꽂기: 내려베기가 끝난 뒤 떨어지는 속도 */
+	UPROPERTY(EditAnywhere, Category = "Jump Attack", meta = (Units = "cm/s", ClampMin = 0))
+	float PlungeSpeed = 0.f;
+};
+
 /**
  * 점프 공격: 점프해 공중에 있을 때 평타 키로 씁니다. 내려벤 뒤 아래로 빠르게 떨어지고, 착지하며 바닥을 찍습니다.
  * 판정 구간 하나가 내려베기부터 착지해 바닥을 찍을 때까지 이어지고, 후딜은 착지하고 정해진 시간이 지나면 시작합니다.
@@ -18,6 +29,8 @@ class UAgAbility_JumpAttack : public UAgGameplayAbility
 
 public:
 	UAgAbility_JumpAttack();
+
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgJumpAttackParams::StaticStruct(); }
 
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 

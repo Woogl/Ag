@@ -91,10 +91,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);
 
-	// 쿨다운 GE가 주는 쿨다운 태그
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Dodge);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Cooldown_Skill);
-
 	// SetByCaller 값의 태그
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_SP);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_MP);

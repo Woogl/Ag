@@ -7,6 +7,7 @@
 #include "AbilitySystem/AgEffect_Kill.h"
 #include "AbilitySystem/AgEffect_Regen.h"
 #include "AbilitySystem/AgEffect_TimedTag.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
@@ -195,6 +196,37 @@ void AAgCharacterBase::GrantAbilities()
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability));
 		}
 	}
+
+	TArray<const FAgAction*> Actions;
+	CharacterData->GetActions(Actions);
+	for (const FAgAction* Action : Actions)
+	{
+		// 행동 ID는 태그가 아닌 문자열이라 오타를 에디터가 잡지 못하므로, JSON과 DA가 어긋나면 여기서 알립니다.
+		const TSubclassOf<UAgGameplayAbility> AbilityClass = CharacterData->FindActionAbility(Action->Id);
+		if (!AbilityClass)
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: action %s has no ability in %s."), *GetName(), *Action->Id.ToString(), *CharacterData->GetName());
+			continue;
+		}
+		ActionIds.Add(AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass)), Action->Id);
+	}
+}
+
+FGameplayAbilitySpec* AAgCharacterBase::FindActionSpec(FName Id) const
+{
+	const FGameplayAbilitySpecHandle* Handle = ActionIds.FindKey(Id);
+	return Handle ? AbilitySystemComponent->FindAbilitySpecFromHandle(*Handle) : nullptr;
+}
+
+FName AAgCharacterBase::FindActionId(const FGameplayAbilitySpecHandle Handle) const
+{
+	return ActionIds.FindRef(Handle);
+}
+
+const FAgAction* AAgCharacterBase::FindAction(const FGameplayAbilitySpecHandle Handle) const
+{
+	const FName Id = FindActionId(Handle);
+	return Id.IsNone() ? nullptr : CharacterData->FindAction(Id);
 }
 
 void AAgCharacterBase::HandleMOVChanged(const FOnAttributeChangeData& Data)

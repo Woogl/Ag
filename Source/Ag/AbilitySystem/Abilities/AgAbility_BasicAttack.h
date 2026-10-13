@@ -8,8 +8,19 @@
 
 class UAgAbilityTask_Attack;
 
+/** 평타의 전용 값 (플레이어 사양 '평타') */
+USTRUCT()
+struct FAgBasicAttackParams : public FAgActionParams
+{
+	GENERATED_BODY()
+
+	/** 타마다 하나씩, 1타부터. 몽타주는 DA_Player의 BasicAttackMontages에서 같은 순서로 찾습니다. */
+	UPROPERTY(EditAnywhere, Category = "Basic Attack")
+	TArray<FAgPlayerAttack> Combo;
+};
+
 /**
- * 평타: 캐릭터 데이터의 BasicAttack 항목마다 한 타인 연속 공격이며, 타마다 하나의 행동입니다.
+ * 평타: 전용 값의 Combo 항목마다 한 타인 연속 공격이며, 타마다 하나의 행동입니다.
  * 한 타의 후딜에 평타 키를 누르면 다음 타를 시작합니다(마지막 타 다음은 첫 타). 입력 없이 후딜이 끝나거나, 다른 행동이나
  * 피격 반응이 끊으면 처음 타로 돌아갑니다.
  */
@@ -20,6 +31,8 @@ class UAgAbility_BasicAttack : public UAgGameplayAbility
 
 public:
 	UAgAbility_BasicAttack();
+
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgBasicAttackParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

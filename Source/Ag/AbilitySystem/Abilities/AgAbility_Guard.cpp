@@ -59,12 +59,12 @@ void UAgAbility_Guard::StartGuard(bool bOpenParryWindow)
 	SetGuarding(true);
 	CloseParryWindow();
 	CloseMoveLock();
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (bOpenParryWindow)
+	const FAgGuardParams* Params = GetActionParams<FAgGuardParams>();
+	if (bOpenParryWindow && Params)
 	{
 		// 패리 구간이 생기는 가드 시작은 이동할 수 없는 시간도 함께 시작합니다(플레이어 입력 '상태별 허용 입력').
-		ParryWindow = UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_ParryWindow, Data->ParryWindowTime);
-		MoveLock = UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_GuardMoveLock, Data->GuardMoveLockTime);
+		ParryWindow = UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_ParryWindow, Params->ParryWindowTime);
+		MoveLock = UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_GuardMoveLock, Params->MoveLockTime);
 	}
 }
 
@@ -130,7 +130,8 @@ void UAgAbility_Guard::HandleGuardReleased(FGameplayEventData Payload)
 void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (ParryMotionTag)
+	const FAgGuardParams* Params = GetActionParams<FAgGuardParams>();
+	if (ParryMotionTag || !Params)
 	{
 		return;
 	}
@@ -138,7 +139,7 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 	// 패리 보상(플레이어 사양 '패리'): 막은 쪽은 MP·UP를 얻고, 공격한 쪽(대미지 GE 컨텍스트의 Instigator)은 PP를 잃습니다.
 	// 공격한 쪽의 그로기 판정은 그쪽 어트리뷰트 세트가 합니다.
 	const FGameplayEffectSpecHandle Charge = MakeOutgoingGameplayEffectSpec(UAgEffect_Resource::StaticClass());
-	UAgEffect_Resource::SetAmounts(*Charge.Data, 0.f, Data->ParryMPCharge, Data->ParryUPCharge);
+	UAgEffect_Resource::SetAmounts(*Charge.Data, 0.f, Params->ParryMPCharge, Params->ParryUPCharge);
 	ApplyGameplayEffectSpecToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), Charge);
 	if (const AAgCharacterBase* AttackingCharacter = Cast<AAgCharacterBase>(Payload.ContextHandle.GetInstigator()))
 	{

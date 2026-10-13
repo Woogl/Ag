@@ -60,34 +60,21 @@ void AAgBossCharacter::GrantAbilities()
 {
 	Super::GrantAbilities();
 
+	// 패턴 어빌리티는 부모가 부여합니다. 몽타주도 패턴 ID로 찾으므로, DA에 빠졌으면 여기서 알립니다.
 	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
 	for (const FAgBossPattern& Pattern : Data->Patterns)
 	{
-		// 패턴 ID는 태그가 아닌 문자열이라 오타를 에디터가 잡지 못하므로, JSON과 DA가 어긋나면 여기서 알립니다.
-		const TSubclassOf<UAgGameplayAbility> AbilityClass = Data->FindPatternAbility(Pattern.Id);
-		if (!AbilityClass)
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no ability in %s's PatternAbilities."), *GetName(), *Pattern.Id.ToString(), *Data->GetName());
-			continue;
-		}
 		if (!Data->FindPatternMontage(Pattern.Id))
 		{
 			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no montage in %s's PatternMontages."), *GetName(), *Pattern.Id.ToString(), *Data->GetName());
 		}
-		PatternIds.Add(GetAbilitySystemComponent()->GiveAbility(FGameplayAbilitySpec(AbilityClass)), Pattern.Id);
 	}
-}
-
-FGameplayAbilitySpec* AAgBossCharacter::FindPatternSpec(FName Id) const
-{
-	const FGameplayAbilitySpecHandle* Handle = PatternIds.FindKey(Id);
-	return Handle ? GetAbilitySystemComponent()->FindAbilitySpecFromHandle(*Handle) : nullptr;
 }
 
 const FAgBossPattern* AAgBossCharacter::FindPattern(const FGameplayAbilitySpecHandle Handle) const
 {
-	const FName* Id = PatternIds.Find(Handle);
-	return Id ? CastChecked<UAgBossData>(GetCharacterData())->FindPattern(*Id) : nullptr;
+	const FName Id = FindActionId(Handle);
+	return Id.IsNone() ? nullptr : CastChecked<UAgBossData>(GetCharacterData())->FindPattern(Id);
 }
 
 void AAgBossCharacter::EnterPhase2()

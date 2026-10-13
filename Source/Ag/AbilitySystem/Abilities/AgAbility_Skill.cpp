@@ -11,21 +11,21 @@
 UAgAbility_Skill::UAgAbility_Skill()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Skill);
-	SetCooldownTag(AgGameplayTags::Cooldown_Skill);
 	CostGameplayEffectClass = UAgEffect_Cost::StaticClass();
 }
 
 void UAgAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	const FAgSkillParams* Params = GetActionParams<FAgSkillParams>();
+	if (!Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 
 	BeginBusy();
-	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->Skill, Data->SkillMontage);
+	UAgAbilityTask_Attack* AttackTask = UAgAbilityTask_Attack::PlayAttack(this, *Params, Data->SkillMontage);
 	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
@@ -47,17 +47,14 @@ void UAgAbility_Skill::HandleAttackInterrupted()
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
-float UAgAbility_Skill::GetCooldownDuration() const
-{
-	return GetCharacterData<UAgPlayerData>()->SkillCooldown;
-}
-
 bool UAgAbility_Skill::CanPayCost(const UAgAttributeSet& Stats) const
 {
-	return Stats.GetMP() >= GetCharacterData<UAgPlayerData>()->SkillMPCost;
+	const FAgSkillParams* Params = GetActionParams<FAgSkillParams>();
+	return Params && Stats.GetMP() >= Params->MPCost;
 }
 
 FAgAbilityCost UAgAbility_Skill::GetCost() const
 {
-	return { 0.f, GetCharacterData<UAgPlayerData>()->SkillMPCost, 0.f };
+	const FAgSkillParams* Params = GetActionParams<FAgSkillParams>();
+	return { 0.f, Params ? Params->MPCost : 0.f, 0.f };
 }

@@ -10,6 +10,29 @@
 class UAbilityTask_PlayMontageAndWait;
 class UAgAbilityTask_HoldTag;
 
+/** 가드의 전용 값 (플레이어 사양 '패리', 'MP 충전', 'UP 충전', 플레이어 입력 '상태별 허용 입력') */
+USTRUCT()
+struct FAgGuardParams : public FAgActionParams
+{
+	GENERATED_BODY()
+
+	/** 패리 구간. 가드를 새로 시작한 순간부터 */
+	UPROPERTY(EditAnywhere, Category = "Guard", meta = (Units = "s", ClampMin = 0))
+	float ParryWindowTime = 0.f;
+
+	/** 패리 구간이 생기는 가드 시작 후 이동할 수 없는 시간 */
+	UPROPERTY(EditAnywhere, Category = "Guard", meta = (Units = "s", ClampMin = 0))
+	float MoveLockTime = 0.f;
+
+	/** MP 충전: 패리 성공 */
+	UPROPERTY(EditAnywhere, Category = "Guard", meta = (ClampMin = 0))
+	float ParryMPCharge = 0.f;
+
+	/** UP 충전: 패리 성공 */
+	UPROPERTY(EditAnywhere, Category = "Guard", meta = (ClampMin = 0))
+	float ParryUPCharge = 0.f;
+};
+
 /**
  * 가드와 패리 (플레이어 사양 '가드', '패리'): 가드 키를 누르고 있는 동안 가드하며, 그동안 천천히 움직일 수 있습니다.
  * 새 가드 시작은 패리 구간을 열고, 패리 모션이나 가드 밀림 뒤에 가드로 돌아올 때는 열지 않습니다. 패리하면 패리 모션을
@@ -23,6 +46,8 @@ class UAgAbility_Guard : public UAgGameplayAbility
 
 public:
 	UAgAbility_Guard();
+
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgGuardParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

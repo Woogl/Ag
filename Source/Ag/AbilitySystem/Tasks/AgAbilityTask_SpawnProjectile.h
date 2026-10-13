@@ -11,8 +11,9 @@
 class AAgProjectile;
 
 /**
- * 투사체 발사(보스 SwordWave): 몽타주의 투사체 발사 노티파이(Event.ProjectileRelease)마다 공격 데이터를 차례로 하나씩 실어
- * 투사체를 쏩니다. 투사체는 캐릭터 앞의 바닥에 스폰되어 캐릭터 정면으로 날아갑니다. 발사 전 회전 정지는 캐릭터가 맡습니다.
+ * 투사체 발사(보스 SwordWave): 몽타주의 투사체 발사 노티파이(Event.ProjectileRelease)마다 공격 데이터를 차례로
+ * 하나씩 실어 투사체를 쏩니다. 투사체는 캐릭터 앞의 바닥에 스폰되어 캐릭터 정면으로 날아갑니다. 발사 전 회전 정지는
+ * 캐릭터가 맡습니다.
  */
 UCLASS()
 class UAgAbilityTask_SpawnProjectile : public UAbilityTask

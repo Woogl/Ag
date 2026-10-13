@@ -35,7 +35,7 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	const FAgBossLeapParams* Params = GetPatternParams<FAgBossLeapParams>();
+	const FAgBossLeapParams* Params = GetActionParams<FAgBossLeapParams>();
 	if (!Montage || !Params || Pattern->Hits.IsEmpty() || !Boss->GetTarget() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -88,7 +88,7 @@ void UAgBossPattern_Leap::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 FVector UAgBossPattern_Leap::GetLandingTarget() const
 {
 	const AActor* Target = CastChecked<AAgBossCharacter>(GetAgCharacter())->GetTarget();
-	const FAgBossLeapParams* Params = GetPatternParams<FAgBossLeapParams>();
+	const FAgBossLeapParams* Params = GetActionParams<FAgBossLeapParams>();
 	if (!Target || !Params)
 	{
 		return LeapStart;
@@ -139,7 +139,7 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 {
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 	const FAgBossPattern* Pattern = Boss->FindPattern(GetCurrentAbilitySpecHandle());
-	const FAgBossLeapParams* Params = GetPatternParams<FAgBossLeapParams>();
+	const FAgBossLeapParams* Params = GetActionParams<FAgBossLeapParams>();
 	if (!Pattern || Pattern->Hits.IsEmpty() || !Params)
 	{
 		return;

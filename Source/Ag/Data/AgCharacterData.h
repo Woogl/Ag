@@ -98,6 +98,15 @@ public:
 	 */
 	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const {}
 
+	/** 행동 목록(보스는 패턴 목록)의 항목. 캐릭터가 시작할 때 항목마다 그 행동의 어빌리티를 부여합니다. */
+	virtual void GetActions(TArray<const FAgAction*>& OutActions) const {}
+
+	/** 행동 목록에서 ID로 항목을 찾습니다. 없으면 null입니다. */
+	const FAgAction* FindAction(FName Id) const;
+
+	/** 행동 ID마다 그 행동을 실행하는 어빌리티. 없으면 null입니다. */
+	virtual TSubclassOf<UAgGameplayAbility> FindActionAbility(FName Id) const { return nullptr; }
+
 	/** Transient 필드를 채우는 프로젝트 Data 폴더의 JSON 파일 (Player.json, Boss.json) */
 	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	FString ValuesFile;
@@ -124,7 +133,7 @@ public:
 	/** 회전 정지 시간을 공격 몽타주의 시간으로 바꾼 값 */
 	virtual float GetRotationStopLeadInMontage() const { return RotationStopLead; }
 
-	/** 시작할 때 주는 어빌리티 (행동, 피격 반응, 사망 등) */
+	/** 시작할 때 주는 어빌리티 중 행동이 아닌 것(피격 반응, 사망, 달리기 등). 행동의 어빌리티는 행동 ID로 찾습니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> Abilities;
 
@@ -170,6 +179,13 @@ public:
 	/** 공중에 있는 동안 반복 재생하는 모션 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Animation")
 	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
+
+protected:
+	/**
+	 * JSON의 Field 배열에 있는 행동마다 그 어빌리티가 정한 전용 값의 구조체(GetActionParamsType)로 Params를 읽게 합니다.
+	 * AbilityMap은 오류에 적는, 행동 ID마다 어빌리티를 둔 DataAsset 필드의 이름입니다.
+	 */
+	void ResolveActionParamsTypes(FJsonObject& Json, const TCHAR* Field, const TCHAR* AbilityMap, TArray<FString>& Errors) const;
 };
 
 /** DA_Player, Player.json */
@@ -179,21 +195,27 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
+	virtual void GetActions(TArray<const FAgAction*>& OutActions) const override;
+	virtual TSubclassOf<UAgGameplayAbility> FindActionAbility(FName Id) const override;
+
+	/** 행동마다 그 어빌리티가 정한 전용 값의 구조체(GetActionParamsType)로 Params를 읽게 합니다. */
+	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const override;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
+	/** 행동 목록. 한 행동만 쓰는 값은 그 항목에 있고, 아래 필드는 행동 밖의 코드가 읽는 값입니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Actions")
+	TArray<FAgAction> Actions;
+
+	/** 행동 ID마다 그 행동을 실행하는 어빌리티 */
+	UPROPERTY(EditDefaultsOnly, Category = "Actions")
+	TMap<FName, TSubclassOf<UAgGameplayAbility>> ActionAbilities;
+
 	/** 선입력: 허용되지 않는 상태에서 누른 입력을 기억하는 시간 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Input", meta = (Units = "s", ClampMin = 0))
 	float InputBufferTime = 0.f;
-
-	/** 평타: 타마다 하나씩, 1타부터 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Basic Attack")
-	TArray<FAgPlayerAttack> BasicAttack;
-
-	/** 점프 공격 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Jump Attack")
-	FAgPlayerAttack JumpAttack;
-
-	/** 점프 공격 '내리꽂기': 내려베기가 끝난 뒤 떨어지는 속도 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Jump Attack", meta = (Units = "cm/s", ClampMin = 0))
-	float JumpAttackPlungeSpeed = 0.f;
 
 	/** 자원 회복: 가드 중이 아닐 때 리젠 대기 시간이 지난 뒤의 초당 SP 회복량 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
@@ -211,30 +233,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (Units = "s", ClampMin = 0))
 	float SPRegenDelayEmpty = 0.f;
 
-	/** MP 충전: 극한 회피 성공 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
-	float PerfectDodgeMPCharge = 0.f;
-
-	/** UP 충전: 극한 회피 성공 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
-	float PerfectDodgeUPCharge = 0.f;
-
-	/** MP 충전: 패리 성공 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
-	float ParryMPCharge = 0.f;
-
-	/** UP 충전: 패리 성공 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
-	float ParryUPCharge = 0.f;
-
-	/** SP 소모: 회피. SP가 0보다 크면 소모량보다 적어도 쓸 수 있습니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (ClampMin = 0))
-	float DodgeSPCost = 0.f;
-
-	/** 회피: 쿨다운 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (Units = "s", ClampMin = 0))
-	float DodgeCooldown = 0.f;
-
 	/** SP 소모: 가드로 막은 공격. 가드 경감 배율 적용 전 HP 감소량에 곱하는 비율 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0))
 	float GuardSPCostRatio = 0.f;
@@ -243,61 +241,21 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0))
 	float GuardMoveSpeedRatio = 1.f;
 
-	/** 패리: 패리 구간. 가드를 새로 시작한 순간부터 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (Units = "s", ClampMin = 0))
-	float ParryWindowTime = 0.f;
-
-	/** 상태별 허용 입력: 패리 구간이 생기는 가드 시작 후 이동할 수 없는 시간 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (Units = "s", ClampMin = 0))
-	float GuardMoveLockTime = 0.f;
-
 	/** 패리: 공격자가 잃는 PP (공격자 MaxPP에 대한 비율) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0, ClampMax = 1))
 	float ParryPPRatio = 0.f;
 
-	/** 스킬 (돌진 베기) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Skill")
-	FAgPlayerAttack Skill;
-
-	/** 스킬: MP 소모 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Skill", meta = (ClampMin = 0))
-	float SkillMPCost = 0.f;
-
-	/** 스킬: 쿨다운 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Skill", meta = (Units = "s", ClampMin = 0))
-	float SkillCooldown = 0.f;
-
-	/** 궁극기 (심판): 마무리의 1타 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
-	FAgPlayerAttackHit UltimateHit;
-
-	/** 궁극기: 범위 (플레이어와 적의 캡슐 중심 사이 수평 거리) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (Units = "cm", ClampMin = 0))
-	float UltimateRadius = 0.f;
-
-	/** 베기 선: 위치. 카메라가 보는 쪽으로 플레이어 앞 이 거리 안 (cm) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
-	FFloatInterval UltimateSlashDistance = FFloatInterval(0.f, 0.f);
-
-	/** 베기 선: 위치. 바닥에서 이 높이 안 (cm) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
-	FFloatInterval UltimateSlashHeight = FFloatInterval(0.f, 0.f);
-
 	/** 슬로우모션: 궁극기 마무리 적중의 속도 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (ClampMin = 0.01, ClampMax = 1))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (ClampMin = 0.01, ClampMax = 1))
 	float UltimateSlowMotionSpeed = 1.f;
 
 	/** 슬로우모션: 궁극기 마무리 적중의 지속 시간 (실제 시간) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate", meta = (Units = "s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
 	float UltimateSlowMotionDuration = 0.f;
 
 	/** 궁극기 컷신(LS_UltimateCutscene). 카메라만 담고, 플레이어 위치·방향을 기준으로 재생합니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Ultimate")
 	TObjectPtr<ULevelSequence> UltimateCutscene;
-
-	/** 처형. TargetingRange가 처형 타겟팅 범위입니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Execution")
-	FAgPlayerAttack Execution;
 
 	/**
 	 * 처형의 찌르기까지 플레이어가 보스 정면에 붙는 간격(캡슐 중심 사이 수평 거리). 두 처형 모션이 맞물리는 간격으로,
@@ -329,23 +287,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint", meta = (ClampMin = 0))
 	float SprintSPCost = 0.f;
 
-	/** 회피 반격 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge Counter")
-	FAgPlayerAttack DodgeCounter;
-
-	/** 회피 반격 기회: 유효 시간. 극한 회피가 발동한 순간부터 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge Counter", meta = (Units = "s", ClampMin = 0))
-	float DodgeCounterChanceTime = 0.f;
-
-	/** 슬로우모션: 극한 회피 성공의 속도 (게임 전체 시간 배율) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (ClampMin = 0.01, ClampMax = 1))
-	float SlowMotionSpeed = 1.f;
-
-	/** 슬로우모션: 극한 회피 성공의 지속 시간 (실제 시간) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
-	float SlowMotionDuration = 0.f;
-
-	/** 평타 몽타주. BasicAttack과 같은 순서 */
+	/** 평타 몽타주. 평타 행동의 Combo와 같은 순서 */
 	UPROPERTY(EditDefaultsOnly, Category = "Assets|Montages")
 	TArray<TObjectPtr<UAnimMontage>> BasicAttackMontages;
 
@@ -412,11 +354,12 @@ class UAgBossData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
+	virtual void GetActions(TArray<const FAgAction*>& OutActions) const override;
+	virtual TSubclassOf<UAgGameplayAbility> FindActionAbility(FName Id) const override;
 	const FAgBossPattern* FindPattern(FName Id) const;
 	UAnimMontage* FindPatternMontage(FName Id) const;
-	TSubclassOf<UAgGameplayAbility> FindPatternAbility(FName Id) const;
 
-	/** 패턴마다 그 패턴 어빌리티가 정한 전용 값의 구조체(GetPatternParamsType)로 Params를 읽게 합니다. */
+	/** 패턴마다 그 패턴 어빌리티가 정한 전용 값의 구조체(GetActionParamsType)로 Params를 읽게 합니다. */
 	virtual void ResolveJsonStructTypes(FJsonObject& Json, TArray<FString>& Errors) const override;
 
 #if WITH_EDITOR

@@ -19,7 +19,7 @@ void UAgBossPattern_Backstep::ActivateAbility(const FGameplayAbilitySpecHandle H
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	const FAgBossBackstepParams* Params = GetPatternParams<FAgBossBackstepParams>();
+	const FAgBossBackstepParams* Params = GetActionParams<FAgBossBackstepParams>();
 	if (!Montage || !Params || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);

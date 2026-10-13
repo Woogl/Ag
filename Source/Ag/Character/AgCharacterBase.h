@@ -7,6 +7,7 @@
 #include "ActiveGameplayEffectHandle.h"
 #include "Data/AgAttackData.h"
 #include "GameFramework/Character.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "GenericTeamAgentInterface.h"
 #include "AgCharacterBase.generated.h"
 
@@ -17,6 +18,7 @@ class UAgCharacterData;
 class UGameplayAbility;
 class UMotionWarpingComponent;
 class AAgCharacterBase;
+struct FGameplayAbilitySpec;
 struct FOnAttributeChangeData;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase* /*DeadCharacter*/);
@@ -48,6 +50,18 @@ public:
 	UAgAttributeSet* GetAttributeSet() const { return AttributeSet; }
 
 	UAgCharacterData* GetCharacterData() const { return CharacterData; }
+
+	/** 행동 ID로 부여된 행동(보스는 패턴)의 스펙. 없으면 null입니다. */
+	FGameplayAbilitySpec* FindActionSpec(FName Id) const;
+
+	/** 부여된 스펙(Handle)이 실행하는 행동의 ID. 행동의 스펙이 아니면 None입니다. */
+	FName FindActionId(const FGameplayAbilitySpecHandle Handle) const;
+
+	/**
+	 * 부여된 스펙(Handle)이 실행하는 행동의 항목(캐릭터 데이터의 행동 목록). 행동의 스펙이 아니면 null입니다.
+	 * 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다(구현 계획서 '다시 읽기').
+	 */
+	const FAgAction* FindAction(const FGameplayAbilitySpecHandle Handle) const;
 
 	UMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
 
@@ -132,7 +146,7 @@ protected:
 	/** 레벨의 Kill Z 아래로 떨어지면 HP를 0으로 만들어 사망 처리합니다. (전투 시스템 '사망') */
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
-	/** 캐릭터 데이터의 어빌리티(Abilities)를 부여합니다. */
+	/** 캐릭터 데이터의 어빌리티(Abilities)와 행동 목록의 행동마다 그 어빌리티를 부여합니다. */
 	virtual void GrantAbilities();
 
 	/** 캐릭터 데이터의 리젠 효과(RegenEffects)를 겁니다. */
@@ -220,4 +234,7 @@ private:
 	TWeakObjectPtr<AActor> FacingTarget;
 
 	FActiveGameplayEffectHandle PPRegenDelay;
+
+	/** 부여한 행동 스펙마다 그 스펙이 실행하는 행동 ID */
+	TMap<FGameplayAbilitySpecHandle, FName> ActionIds;
 };

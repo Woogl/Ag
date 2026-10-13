@@ -37,27 +37,23 @@ public:
 	virtual FAgAbilityCost GetCost() const;
 
 	/**
-	 * 보스 패턴 어빌리티가 읽는 패턴 전용 값의 구조체(FAgBossPatternParams의 자식). 전용 값이 없으면 null입니다.
-	 * 보스 데이터가 이 구조체로 Boss.json의 Params를 검사하고 읽습니다.
+	 * 이 어빌리티가 읽는 행동 전용 값의 구조체(FAgActionParams의 자식). 전용 값이 없으면 null입니다.
+	 * 캐릭터 데이터가 이 구조체로 JSON 행동 목록(보스는 패턴 목록)의 Params를 검사하고 읽습니다.
 	 */
-	virtual const UScriptStruct* GetPatternParamsType() const { return nullptr; }
+	virtual const UScriptStruct* GetActionParamsType() const { return nullptr; }
+
+	/** 행동의 쿨다운이 남은 시간과 전체 시간(HUD의 쿨다운 표시). */
+	virtual void GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const override;
 
 protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
-	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 보스 패턴은 쿨다운 태그 없이
-	// 패턴 쿨다운 GE(UAgEffect_PatternCooldown)로 패턴마다 따로 세고, 시간(Boss.json)은 패턴 시작부터 셉니다.
+	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 쿨다운은 태그 없이 행동 쿨다운 GE
+	// (UAgEffect_Cooldown)로 행동마다 따로 세고, 시간은 행동 항목의 Cooldown(0이면 없음)이며 행동 시작부터 셉니다.
 	// 비용은 비용 GE(CostGameplayEffectClass)로 치르고, 치를 수 있는지는 행동마다의 규칙(CanPayCost)이 정합니다.
-	virtual const FGameplayTagContainer* GetCooldownTags() const override;
 	virtual bool CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-
-	/** 쿨다운이 주는 태그를 정합니다. 주인에게 이 태그가 있는 동안 시작하지 못합니다. */
-	void SetCooldownTag(const FGameplayTag& CooldownTag);
-
-	/** 캐릭터 데이터의 쿨다운 시간(초). 0이면 쿨다운이 없습니다. */
-	virtual float GetCooldownDuration() const { return 0.f; }
 
 	/** 주인에게 시작할 만큼 자원이 있는지(행동마다의 규칙) */
 	virtual bool CanPayCost(const UAgAttributeSet& Stats) const { return true; }
@@ -89,14 +85,14 @@ protected:
 	}
 
 	/**
-	 * 지금 보스 패턴의 전용 값(Boss.json 패턴의 Params). 패턴이 없거나 값이 TParams가 아니면 null입니다. JSON을 다시 읽으면
-	 * 값이 새로 만들어지므로 함수 안에서만 쓰고, 다음에 쓸 때 다시 꺼냅니다.
+	 * 이 어빌리티가 실행하는 행동의 전용 값(행동 항목의 Params). 행동이 없거나 값이 TParams가 아니면 null입니다.
+	 * JSON을 다시 읽으면 값이 새로 만들어지므로 함수 안에서만 쓰고, 다음에 쓸 때 다시 꺼냅니다.
 	 */
 	template <typename TParams>
-	const TParams* GetPatternParams() const
+	const TParams* GetActionParams() const
 	{
-		ensureMsgf(TParams::StaticStruct() == GetPatternParamsType(), TEXT("%s reads %s but GetPatternParamsType returns another struct."), *GetName(), *TParams::StaticStruct()->GetName());
-		const TInstancedStruct<FAgBossPatternParams>* Params = FindPatternParams();
+		ensureMsgf(TParams::StaticStruct() == GetActionParamsType(), TEXT("%s reads %s but GetActionParamsType returns another struct."), *GetName(), *TParams::StaticStruct()->GetName());
+		const TInstancedStruct<FAgActionParams>* Params = FindActionParams();
 		return Params ? Params->GetPtr<TParams>() : nullptr;
 	}
 
@@ -112,10 +108,8 @@ protected:
 private:
 	const UAgCharacterData* GetCharacterDataBase() const;
 
-	/** 이 어빌리티 스펙의 보스 패턴의 Params. 보스 패턴이 아니면 null입니다. */
-	const TInstancedStruct<FAgBossPatternParams>* FindPatternParams() const;
-
-	FGameplayTagContainer CooldownTags;
+	/** 이 어빌리티 스펙이 실행하는 행동의 Params. 행동이 아니면 null입니다. */
+	const TInstancedStruct<FAgActionParams>* FindActionParams() const;
 
 	/** 행동 중인 동안 State.Busy를 붙여 둡니다. 어빌리티가 끝나면 함께 끝납니다. */
 	UPROPERTY()

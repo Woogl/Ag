@@ -20,6 +20,9 @@ class UAgAbility_DodgeCounter : public UAgGameplayAbility
 public:
 	UAgAbility_DodgeCounter();
 
+	/** 전용 값은 공격 데이터 하나입니다. */
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgPlayerAttack::StaticStruct(); }
+
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 

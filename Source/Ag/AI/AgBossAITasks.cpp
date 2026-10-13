@@ -101,7 +101,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		TArray<float> Weights;
 		GatherCandidates(Data->Patterns, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), [Boss, ActorInfo](const FAgBossPattern& Candidate)
 		{
-			const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(Candidate.Id);
+			const FGameplayAbilitySpec* Spec = Boss->FindActionSpec(Candidate.Id);
 			return Spec && Spec->Ability && Spec->Ability->CanActivateAbility(Spec->Handle, ActorInfo);
 		}, Candidates, Weights);
 
@@ -114,7 +114,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		Pattern = Data->Patterns[Candidates[Picked]].Id;
 	}
 
-	const FGameplayAbilitySpec* Spec = Boss->FindPatternSpec(Pattern);
+	const FGameplayAbilitySpec* Spec = Boss->FindActionSpec(Pattern);
 	const FGameplayAbilitySpecHandle Handle = Spec ? Spec->Handle : FGameplayAbilitySpecHandle();
 	if (!Handle.IsValid() || !ASC->TryActivateAbility(Handle))
 	{

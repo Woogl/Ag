@@ -12,7 +12,7 @@ class UAgAbilityTask_IgnoreCollision;
 
 /** DashThrust의 전용 값 (보스 사양 '돌진 규칙') */
 USTRUCT()
-struct FAgBossDashParams : public FAgBossPatternParams
+struct FAgBossDashParams : public FAgActionParams
 {
 	GENERATED_BODY()
 
@@ -42,7 +42,7 @@ class UAgBossPattern_Dash : public UAgGameplayAbility
 public:
 	UAgBossPattern_Dash();
 
-	virtual const UScriptStruct* GetPatternParamsType() const override { return FAgBossDashParams::StaticStruct(); }
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgBossDashParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

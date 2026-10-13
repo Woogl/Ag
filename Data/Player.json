@@ -20,178 +20,223 @@
   "StopDistance": 100,
   "RotationStopLead": 0,
   "InputBufferTime": 0.3,
-  "BasicAttack": [
+  "Actions": [
     {
-      "Hits": [
-        {
-          "DamageMultiplier": 0.8,
-          "PoiseMultiplier": 0.8,
-          "HitReaction": "Flinch",
-          "bGuardable": true,
-          "MPCharge": 4,
-          "UPCharge": 0
-        }
-      ],
-      "TargetingRange": 150,
-      "MaxApproachDistance": 20
+      "Id": "BasicAttack",
+      "Cooldown": 0,
+      "Params": {
+        "Combo": [
+          {
+            "Hits": [
+              {
+                "DamageMultiplier": 0.8,
+                "PoiseMultiplier": 0.8,
+                "HitReaction": "Flinch",
+                "bGuardable": true,
+                "MPCharge": 4,
+                "UPCharge": 0
+              }
+            ],
+            "TargetingRange": 150,
+            "MaxApproachDistance": 20
+          },
+          {
+            "Hits": [
+              {
+                "DamageMultiplier": 0.8,
+                "PoiseMultiplier": 0.8,
+                "HitReaction": "Flinch",
+                "bGuardable": true,
+                "MPCharge": 4,
+                "UPCharge": 0
+              }
+            ],
+            "TargetingRange": 200,
+            "MaxApproachDistance": 40
+          },
+          {
+            "Hits": [
+              {
+                "DamageMultiplier": 1,
+                "PoiseMultiplier": 1,
+                "HitReaction": "Flinch",
+                "bGuardable": true,
+                "MPCharge": 4,
+                "UPCharge": 0
+              }
+            ],
+            "TargetingRange": 250,
+            "MaxApproachDistance": 130
+          },
+          {
+            "Hits": [
+              {
+                "DamageMultiplier": 1,
+                "PoiseMultiplier": 1,
+                "HitReaction": "Flinch",
+                "bGuardable": true,
+                "MPCharge": 4,
+                "UPCharge": 0
+              }
+            ],
+            "TargetingRange": 210,
+            "MaxApproachDistance": 40
+          },
+          {
+            "Hits": [
+              {
+                "DamageMultiplier": 1.2,
+                "PoiseMultiplier": 2,
+                "HitReaction": "Flinch",
+                "bGuardable": true,
+                "MPCharge": 4,
+                "UPCharge": 10
+              }
+            ],
+            "TargetingRange": 270,
+            "MaxApproachDistance": 130
+          }
+        ]
+      }
     },
     {
-      "Hits": [
-        {
-          "DamageMultiplier": 0.8,
-          "PoiseMultiplier": 0.8,
-          "HitReaction": "Flinch",
-          "bGuardable": true,
-          "MPCharge": 4,
-          "UPCharge": 0
-        }
-      ],
-      "TargetingRange": 200,
-      "MaxApproachDistance": 40
+      "Id": "Jump",
+      "Cooldown": 0,
+      "Params": {}
     },
     {
-      "Hits": [
-        {
-          "DamageMultiplier": 1,
-          "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
-          "bGuardable": true,
-          "MPCharge": 4,
-          "UPCharge": 0
-        }
-      ],
-      "TargetingRange": 250,
-      "MaxApproachDistance": 130
+      "Id": "JumpAttack",
+      "Cooldown": 0,
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 1.5,
+            "PoiseMultiplier": 1.5,
+            "HitReaction": "Flinch",
+            "bGuardable": true,
+            "MPCharge": 4,
+            "UPCharge": 0
+          }
+        ],
+        "TargetingRange": 300,
+        "MaxApproachDistance": 0,
+        "PlungeSpeed": 1000
+      }
     },
     {
-      "Hits": [
-        {
-          "DamageMultiplier": 1,
-          "PoiseMultiplier": 1,
-          "HitReaction": "Flinch",
-          "bGuardable": true,
-          "MPCharge": 4,
-          "UPCharge": 0
-        }
-      ],
-      "TargetingRange": 210,
-      "MaxApproachDistance": 40
+      "Id": "Dodge",
+      "Cooldown": 0.4,
+      "Params": {
+        "SPCost": 20,
+        "PerfectDodgeMPCharge": 10,
+        "PerfectDodgeUPCharge": 10,
+        "CounterChanceTime": 1,
+        "SlowMotionSpeed": 0.3,
+        "SlowMotionDuration": 0.3
+      }
     },
     {
-      "Hits": [
-        {
-          "DamageMultiplier": 1.2,
-          "PoiseMultiplier": 2,
-          "HitReaction": "Flinch",
+      "Id": "DodgeCounter",
+      "Cooldown": 0,
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 2.5,
+            "PoiseMultiplier": 5,
+            "HitReaction": "Flinch",
+            "bGuardable": true,
+            "MPCharge": 8,
+            "UPCharge": 0
+          }
+        ],
+        "TargetingRange": 800,
+        "MaxApproachDistance": 510
+      }
+    },
+    {
+      "Id": "Guard",
+      "Cooldown": 0,
+      "Params": {
+        "ParryWindowTime": 0.3,
+        "MoveLockTime": 0.5,
+        "ParryMPCharge": 15,
+        "ParryUPCharge": 10
+      }
+    },
+    {
+      "Id": "Skill",
+      "Cooldown": 3,
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 3,
+            "PoiseMultiplier": 6,
+            "HitReaction": "KnockBack",
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 25
+          }
+        ],
+        "TargetingRange": 310,
+        "MaxApproachDistance": 40,
+        "MPCost": 30
+      }
+    },
+    {
+      "Id": "Ultimate",
+      "Cooldown": 0,
+      "Params": {
+        "Hit": {
+          "DamageMultiplier": 5,
+          "PoiseMultiplier": 5,
+          "HitReaction": "KnockUp",
           "bGuardable": true,
-          "MPCharge": 4,
-          "UPCharge": 10
-        }
-      ],
-      "TargetingRange": 270,
-      "MaxApproachDistance": 130
+          "MPCharge": 0,
+          "UPCharge": 0
+        },
+        "Radius": 1000,
+        "SlashDistance": { "Min": 300, "Max": 1000 },
+        "SlashHeight": { "Min": 0, "Max": 300 }
+      }
+    },
+    {
+      "Id": "Execution",
+      "Cooldown": 0,
+      "Params": {
+        "Hits": [
+          {
+            "DamageMultiplier": 1.5,
+            "PoiseMultiplier": 0,
+            "HitReaction": "None",
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
+          },
+          {
+            "DamageMultiplier": 4.5,
+            "PoiseMultiplier": 0,
+            "HitReaction": "None",
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
+          }
+        ],
+        "TargetingRange": 300,
+        "MaxApproachDistance": 0
+      }
     }
   ],
-  "JumpAttack": {
-    "Hits": [
-      {
-        "DamageMultiplier": 1.5,
-        "PoiseMultiplier": 1.5,
-        "HitReaction": "Flinch",
-        "bGuardable": true,
-        "MPCharge": 4,
-        "UPCharge": 0
-      }
-    ],
-    "TargetingRange": 300,
-    "MaxApproachDistance": 0
-  },
-  "JumpAttackPlungeSpeed": 1000,
   "SPRegenRate": 40,
   "SPRegenRateGuarding": 20,
   "SPRegenDelay": 1,
   "SPRegenDelayEmpty": 1.5,
-  "PerfectDodgeMPCharge": 10,
-  "PerfectDodgeUPCharge": 10,
-  "ParryMPCharge": 15,
-  "ParryUPCharge": 10,
-  "DodgeSPCost": 20,
-  "DodgeCooldown": 0.4,
   "GuardSPCostRatio": 0.25,
   "GuardMoveSpeedRatio": 0.65,
-  "ParryWindowTime": 0.3,
-  "GuardMoveLockTime": 0.5,
   "ParryPPRatio": 0.08,
-  "Skill": {
-    "Hits": [
-      {
-        "DamageMultiplier": 3,
-        "PoiseMultiplier": 6,
-        "HitReaction": "KnockBack",
-        "bGuardable": true,
-        "MPCharge": 0,
-        "UPCharge": 25
-      }
-    ],
-    "TargetingRange": 310,
-    "MaxApproachDistance": 40
-  },
-  "SkillMPCost": 30,
-  "SkillCooldown": 3,
-  "UltimateHit": {
-    "DamageMultiplier": 5,
-    "PoiseMultiplier": 5,
-    "HitReaction": "KnockUp",
-    "bGuardable": true,
-    "MPCharge": 0,
-    "UPCharge": 0
-  },
-  "UltimateRadius": 1000,
-  "UltimateSlashDistance": { "Min": 300, "Max": 1000 },
-  "UltimateSlashHeight": { "Min": 0, "Max": 300 },
   "UltimateSlowMotionSpeed": 0.3,
   "UltimateSlowMotionDuration": 0.8,
-  "Execution": {
-    "Hits": [
-      {
-        "DamageMultiplier": 1.5,
-        "PoiseMultiplier": 0,
-        "HitReaction": "None",
-        "bGuardable": true,
-        "MPCharge": 0,
-        "UPCharge": 0
-      },
-      {
-        "DamageMultiplier": 4.5,
-        "PoiseMultiplier": 0,
-        "HitReaction": "None",
-        "bGuardable": true,
-        "MPCharge": 0,
-        "UPCharge": 0
-      }
-    ],
-    "TargetingRange": 300,
-    "MaxApproachDistance": 0
-  },
   "LockOnRange": 2000,
   "LockOnReleaseRange": 3000,
   "SprintSpeedRatio": 1.5,
-  "SprintSPCost": 12,
-  "DodgeCounter": {
-    "Hits": [
-      {
-        "DamageMultiplier": 2.5,
-        "PoiseMultiplier": 5,
-        "HitReaction": "Flinch",
-        "bGuardable": true,
-        "MPCharge": 8,
-        "UPCharge": 0
-      }
-    ],
-    "TargetingRange": 800,
-    "MaxApproachDistance": 510
-  },
-  "DodgeCounterChanceTime": 1,
-  "SlowMotionSpeed": 0.3,
-  "SlowMotionDuration": 0.3
+  "SprintSPCost": 12
 }

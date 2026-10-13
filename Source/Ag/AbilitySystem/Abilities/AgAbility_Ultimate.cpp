@@ -38,7 +38,7 @@ UAgAbility_Ultimate::UAgAbility_Ultimate()
 void UAgAbility_Ultimate::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Data->UltimateMontage || !Data->UltimateCutscene || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Data->UltimateMontage || !Data->UltimateCutscene || !GetActionParams<FAgUltimateParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -95,15 +95,19 @@ void UAgAbility_Ultimate::HandleSlash(FGameplayEventData Payload)
 
 void UAgAbility_Ultimate::SpawnSlash()
 {
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	const FAgUltimateParams* Params = GetActionParams<FAgUltimateParams>();
 	const AAgCharacterBase* Character = GetAgCharacter();
+	if (!Params)
+	{
+		return;
+	}
 
 	// 위치: 카메라가 보는 쪽으로 플레이어 앞 일정 거리, 바닥에서 일정 높이 안의 무작위 위치입니다.
 	// 방향: 카메라를 마주 보는 면 안의 무작위 방향이라, 카메라 쪽을 향해 점처럼 보이지 않습니다.
 	const float ViewYaw = Character->GetControlRotation().Yaw;
 	const float Yaw = ViewYaw + FMath::FRandRange(-SlashHalfAngle, SlashHalfAngle);
-	const float Distance = FMath::FRandRange(Data->UltimateSlashDistance.Min, Data->UltimateSlashDistance.Max);
-	const float Height = FMath::FRandRange(Data->UltimateSlashHeight.Min, Data->UltimateSlashHeight.Max);
+	const float Distance = FMath::FRandRange(Params->SlashDistance.Min, Params->SlashDistance.Max);
+	const float Height = FMath::FRandRange(Params->SlashHeight.Min, Params->SlashHeight.Max);
 	const FVector Feet = Character->GetActorLocation() - FVector(0.f, 0.f, Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 	const float Angle = FMath::DegreesToRadians(FMath::FRandRange(0.f, 180.f));
 
@@ -122,11 +126,15 @@ void UAgAbility_Ultimate::HandleFinish(FGameplayEventData Payload)
 
 	// 이 어빌리티가 만든 스펙에는 엔진이 어빌리티 태그(Ability.Action.Ultimate)를 넣어, 대미지 GE가 궁극기 마무리 이펙트와
 	// 슬로우모션을 고릅니다. 대미지 숫자는 적의 캡슐 중심에 뜹니다.
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	const FAgUltimateParams* Params = GetActionParams<FAgUltimateParams>();
 	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
-	FAgPlayerAttackHit Hit = Data->UltimateHit;
+	if (!Params)
+	{
+		return;
+	}
+	FAgPlayerAttackHit Hit = Params->Hit;
 	Hit.bFinisher = true;
-	for (AAgCharacterBase* Enemy : Player->FindEnemies(Data->UltimateRadius))
+	for (AAgCharacterBase* Enemy : Player->FindEnemies(Params->Radius))
 	{
 		const FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(UAgEffect_Damage::StaticClass());
 		UAgEffect_Damage::SetAttack(*Spec.Data, Hit, Enemy->GetActorLocation());

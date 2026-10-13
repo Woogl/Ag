@@ -9,7 +9,7 @@
 
 /** Backstep의 전용 값 (보스 사양 'Backstep'). 발동 조건(FAgBossAICondition_BackstepReady)도 읽습니다. */
 USTRUCT()
-struct FAgBossBackstepParams : public FAgBossPatternParams
+struct FAgBossBackstepParams : public FAgActionParams
 {
 	GENERATED_BODY()
 
@@ -38,7 +38,7 @@ class UAgBossPattern_Backstep : public UAgGameplayAbility
 public:
 	UAgBossPattern_Backstep();
 
-	virtual const UScriptStruct* GetPatternParamsType() const override { return FAgBossBackstepParams::StaticStruct(); }
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgBossBackstepParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

@@ -76,9 +76,22 @@ struct FAgProjectileParams
 	float Range = 0.f;
 };
 
-/** 플레이어 공격 하나 (평타 한 타, 점프 공격, 회피 반격, 스킬, 처형) */
+/**
+ * 행동의 전용 값: 한 행동(보스는 패턴)의 코드만 읽는 값의 부모(구현 계획서 'JSON과 DataAsset' 'JSON 파일'). 전용 값이
+ * 있는 어빌리티가 이 구조체를 상속한 자기 구조체를 어빌리티 옆에 두고, 그 구조체를 정합니다(GetActionParamsType).
+ */
+USTRUCT()
+struct FAgActionParams
+{
+	GENERATED_BODY()
+};
+
+/**
+ * 플레이어 공격 하나 (평타 한 타, 점프 공격, 회피 반격, 스킬, 처형). 회피 반격과 처형은 이 구조체를 그대로 행동의
+ * 전용 값으로 쓰고, 점프 공격과 스킬은 이 구조체에 값을 더합니다.
+ */
 USTRUCT(BlueprintType)
-struct FAgPlayerAttack
+struct FAgPlayerAttack : public FAgActionParams
 {
 	GENERATED_BODY()
 
@@ -96,31 +109,39 @@ struct FAgPlayerAttack
 };
 
 /**
- * 보스 패턴의 전용 값: 한 패턴의 코드만 읽는 값의 부모(구현 계획서 'JSON과 DataAsset' 'JSON 파일'). 전용 값이 있는 패턴
- * 어빌리티가 이 구조체를 상속한 자기 구조체를 어빌리티 옆에 두고, 그 구조체를 정합니다(GetPatternParamsType).
+ * 행동 하나: 플레이어 행동과 보스 패턴의 공통 항목. 캐릭터는 항목마다 DataAsset에서 ID로 찾은 어빌리티를 부여하고,
+ * 어빌리티는 자기 스펙의 항목을 읽습니다.
  */
-USTRUCT()
-struct FAgBossPatternParams
+USTRUCT(BlueprintType)
+struct FAgAction
 {
 	GENERATED_BODY()
+
+	/** 행동 ID. 이 ID로 캐릭터 DataAsset에서 행동의 어빌리티를 찾습니다. */
+	UPROPERTY(EditAnywhere, Category = "Action")
+	FName Id;
+
+	/** 쿨다운: 행동을 시작한 순간부터 셉니다. 0이면 없습니다. */
+	UPROPERTY(EditAnywhere, Category = "Action", meta = (Units = "s", ClampMin = 0))
+	float Cooldown = 0.f;
+
+	/**
+	 * 이 행동의 코드만 읽는 전용 값. 구조체는 그 어빌리티가 정하므로(GetActionParamsType) JSON에는 값만 적고, 전용 값이
+	 * 없는 행동은 비워 둡니다({}).
+	 */
+	UPROPERTY(EditAnywhere, Category = "Action")
+	TInstancedStruct<FAgActionParams> Params;
 };
 
-/** 보스 패턴 하나 (보스 사양 '패턴 목록', '패턴 상세') */
+/** 보스 패턴 하나 (보스 사양 '패턴 목록', '패턴 상세'). 몽타주도 DA_Boss에서 ID로 찾습니다. */
 USTRUCT(BlueprintType)
-struct FAgBossPattern
+struct FAgBossPattern : public FAgAction
 {
 	GENERATED_BODY()
-
-	/** 패턴 ID. 이 ID로 DA_Boss에서 패턴의 몽타주와 어빌리티를 찾습니다. */
-	UPROPERTY(EditAnywhere, Category = "Pattern")
-	FName Id;
 
 	/** 타마다 하나씩, 몽타주 순서대로 */
 	UPROPERTY(EditAnywhere, Category = "Pattern")
 	TArray<FAgAttackHit> Hits;
-
-	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "s", ClampMin = 0))
-	float Cooldown = 0.f;
 
 	/** 페이즈: 이 패턴을 쓸 수 있는 페이즈 번호. 비어 있으면 어느 페이즈에서도 쓰지 않습니다. */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (ClampMin = 1))
@@ -144,11 +165,4 @@ struct FAgBossPattern
 	 */
 	UPROPERTY(EditAnywhere, Category = "Pattern", meta = (Units = "cm", ClampMin = 0))
 	float MaxApproachDistance = 0.f;
-
-	/**
-	 * 이 패턴의 코드만 읽는 전용 값. 구조체는 패턴 어빌리티가 정하므로(GetPatternParamsType) JSON에는 값만 적고, 전용 값이
-	 * 없는 패턴은 비워 둡니다({}).
-	 */
-	UPROPERTY(EditAnywhere, Category = "Pattern")
-	TInstancedStruct<FAgBossPatternParams> Params;
 };

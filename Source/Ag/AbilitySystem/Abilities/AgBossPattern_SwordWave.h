@@ -9,7 +9,7 @@
 
 /** SwordWave의 전용 값 (보스 사양 '검기') */
 USTRUCT()
-struct FAgBossSwordWaveParams : public FAgBossPatternParams
+struct FAgBossSwordWaveParams : public FAgActionParams
 {
 	GENERATED_BODY()
 
@@ -31,7 +31,7 @@ class UAgBossPattern_SwordWave : public UAgGameplayAbility
 public:
 	UAgBossPattern_SwordWave();
 
-	virtual const UScriptStruct* GetPatternParamsType() const override { return FAgBossSwordWaveParams::StaticStruct(); }
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgBossSwordWaveParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;

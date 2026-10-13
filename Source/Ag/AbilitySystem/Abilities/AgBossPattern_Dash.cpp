@@ -25,7 +25,7 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const UAgBossData* Data = GetCharacterData<UAgBossData>();
 	const FAgBossPattern* Pattern = Boss->FindPattern(Handle);
 	UAnimMontage* Montage = Pattern ? Data->FindPatternMontage(Pattern->Id) : nullptr;
-	if (!Montage || !GetPatternParams<FAgBossDashParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Montage || !GetActionParams<FAgBossDashParams>() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -61,7 +61,7 @@ void UAgBossPattern_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 {
 	AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
-	const FAgBossDashParams* Params = GetPatternParams<FAgBossDashParams>();
+	const FAgBossDashParams* Params = GetActionParams<FAgBossDashParams>();
 	const AActor* Target = Boss->GetTarget();
 	if (!Target || !Params)
 	{

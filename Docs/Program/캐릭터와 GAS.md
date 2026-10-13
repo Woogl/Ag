@@ -8,10 +8,10 @@
 | - | - | - |
 | ASC 위치 | 캐릭터에 둡니다. | 싱글플레이라 PlayerState에 둘 이유가 없습니다. |
 | 어트리뷰트 | 세트 하나에 기획서 스탯을 기획서 이름 그대로 둡니다. HP, MaxHP, SP, MaxSP, MP, MaxMP, UP, MaxUP, PP, MaxPP, ATK, DEF, MOV. 보스가 쓰지 않는 SP·MP·UP는 0입니다. 기본값이 바뀌기 전에 범위(0 ~ 최대값)로 고정합니다. | 기획서, 데이터 위치표, 코드의 이름이 같아 대조하기 쉽습니다. 최대값에서 리젠이 더해져도 기본값이 넘치지 않아야 다음 감소가 바로 보입니다. |
-| 행동 | 플레이어 행동(평타, 회피, 회피 반격, 가드·패리, 스킬, 궁극기, 처형, 달리기, 점프, 점프 공격)과 보스 패턴은 어빌리티로 만듭니다. | 행동, 쿨다운, 자원을 어빌리티·GameplayEffect·태그 한 방식으로 처리합니다. |
-| 어빌리티 구조 | 어빌리티는 모두 `UAgGameplayAbility`를 바로 상속하고, 그 사이에 중간 클래스를 두지 않습니다. 여러 어빌리티가 함께 쓰는, 시간에 걸친 동작은 AbilityTask로 만듭니다(판정 구간이 있는 공격([전투 규칙](<전투 규칙.md>) '공격 진행'), 피격 반응 모션과 쓰러진 뒤의 무적, 루트 모션 무시, 충돌 무시, 공격 중 이동, 컷신 재생, 시간 정지). 한 번에 끝나는 조회(패턴 데이터 찾기, 첫 판정 구간 전의 이동 거리)는 함수로 둡니다. GAS가 정한 확장 지점(비용, 쿨다운(보스 패턴은 패턴별), 종료)과 여러 어빌리티가 같이 쓰는 생성자의 태그 설정은 `UAgGameplayAbility`에 둡니다. 태스크는 델리게이트로 알리기만 하고, 행동 중·후딜과 어빌리티를 끝낼지는 어빌리티가 정합니다. 캐릭터는 플레이가 끝날 때(EndPlay) 어빌리티를 모두 취소합니다. | 한 어빌리티의 흐름이 부모와 자식 파일로 나뉘지 않고, 부모가 다른 어빌리티끼리도 같은 동작을 나눠 쓸 수 있습니다(넉업과 DashThrust의 루트 모션 무시, DashThrust와 처형 피격의 충돌 무시). 태스크는 어빌리티가 끝나면 엔진이 함께 끝내므로, 켜 둔 상태를 되돌리는 코드가 그 기능 옆에 있습니다. ASC는 자기가 등록 해제될 때에야 어빌리티를 취소하는데, 그보다 먼저 메시가 등록 해제되며 몽타주를 끊으면 살아 있는 어빌리티가 그 콜백에서 메시를 바꿉니다(PIE 종료 때 처형 사망의 래그돌이 등록 해제 중인 메시에 물리 상태를 다시 만들어 엔진 ensure). |
+| 행동 | 플레이어 행동(평타, 회피, 회피 반격, 가드·패리, 스킬, 궁극기, 처형, 달리기, 점프, 점프 공격)과 보스 패턴은 어빌리티로 만듭니다. 달리기를 뺀 행동과 패턴은 캐릭터 데이터의 행동 목록(플레이어 `Actions`, 보스 `Patterns`)에 ID가 있는 항목(`FAgAction`: ID, 쿨다운, 전용 값 `Params`)으로 둡니다. 캐릭터는 시작할 때 항목마다 DataAsset에서 ID로 찾은 어빌리티를 부여하고 스펙 핸들마다 ID를 기억하며, 어빌리티는 자기 스펙의 항목을 읽습니다([JSON과 DataAsset](<JSON과 DataAsset.md>) '어빌리티의 데이터'). | 행동, 쿨다운, 자원을 어빌리티·GameplayEffect·태그 한 방식으로 처리합니다. 플레이어와 보스가 같은 행동 목록과 같은 처리를 써서, 행동 구성이 다른 캐릭터는 JSON 항목과 DataAsset 연결만 다릅니다. |
+| 어빌리티 구조 | 어빌리티는 모두 `UAgGameplayAbility`를 바로 상속하고, 그 사이에 중간 클래스를 두지 않습니다. 여러 어빌리티가 함께 쓰는, 시간에 걸친 동작은 AbilityTask로 만듭니다(판정 구간이 있는 공격([전투 규칙](<전투 규칙.md>) '공격 진행'), 피격 반응 모션과 쓰러진 뒤의 무적, 루트 모션 무시, 충돌 무시, 공격 중 이동, 컷신 재생, 시간 정지). 한 번에 끝나는 조회(행동 항목 찾기, 첫 판정 구간 전의 이동 거리)는 함수로 둡니다. GAS가 정한 확장 지점(비용, 쿨다운, 종료)과 여러 어빌리티가 같이 쓰는 생성자의 태그 설정은 `UAgGameplayAbility`에 둡니다. 태스크는 델리게이트로 알리기만 하고, 행동 중·후딜과 어빌리티를 끝낼지는 어빌리티가 정합니다. 캐릭터는 플레이가 끝날 때(EndPlay) 어빌리티를 모두 취소합니다. | 한 어빌리티의 흐름이 부모와 자식 파일로 나뉘지 않고, 부모가 다른 어빌리티끼리도 같은 동작을 나눠 쓸 수 있습니다(넉업과 DashThrust의 루트 모션 무시, DashThrust와 처형 피격의 충돌 무시). 태스크는 어빌리티가 끝나면 엔진이 함께 끝내므로, 켜 둔 상태를 되돌리는 코드가 그 기능 옆에 있습니다. ASC는 자기가 등록 해제될 때에야 어빌리티를 취소하는데, 그보다 먼저 메시가 등록 해제되며 몽타주를 끊으면 살아 있는 어빌리티가 그 콜백에서 메시를 바꿉니다(PIE 종료 때 처형 사망의 래그돌이 등록 해제 중인 메시에 물리 상태를 다시 만들어 엔진 ensure). |
 | 상태 | 4순위 상태(넉업, 넉백, 가드 밀림, 가드 브레이크), 그로기, 처형 피격, 페이즈 전환, 사망은 이벤트로 발동하는 어빌리티로 만들고, 상태 우선순위는 태그로 나타냅니다. 높은 상태는 낮은 상태를 취소하고, 낮은 상태는 높은 상태 중에 시작하지 못합니다. 4순위 상태의 어빌리티 태그는 한 부모 태그(`Ability.Reaction.HitReaction`) 아래에 두어, 높은 상태가 부모 태그 하나로 취소합니다. 어빌리티가 붙이는 상태 태그는, 어빌리티가 도는 내내 붙으면 ActivationOwnedTags에 두고, 일부 구간에만 붙으면(회피의 무적 구간, 가드 중 등) 태그 유지 태스크(`UAgAbilityTask_HoldTag`)로 붙입니다. | 행동과 같은 방식이라 규칙이 한곳에 모입니다. 두 방식 모두 어빌리티가 끝나면 엔진이 태그를 떼므로, 어빌리티마다 태그를 떼는 코드를 두지 않습니다. |
-| 쿨다운 | 쿨다운용 GameplayEffect로 처리합니다. 쿨다운(보스 패턴은 [보스](<보스.md>) '패턴'), 리젠 대기, 패리 구간, 가드 시작 후 이동할 수 없는 시간은 시간과 태그를 적용할 때 정하는 GameplayEffect 하나를 같이 씁니다. 비용(SP·MP·UP)은 '자원 변화'를 따릅니다. | GAS 기본 방식입니다. 값이 캐릭터·공통 데이터에 있어 GameplayEffect 에셋에 따로 둘 데이터가 없습니다. |
+| 쿨다운 | 행동(보스는 패턴)의 쿨다운은 쿨다운 GameplayEffect(`UAgEffect_Cooldown`) 하나로 셉니다. 태그 없이, 걸 때 넣은 출처(그 행동 스펙의 어빌리티 인스턴스)로 행동을 구분하고, 시간은 행동 항목의 `Cooldown`이며 0이면 쿨다운이 없습니다. 플레이어와 보스가 이 길 하나를 씁니다. 리젠 대기, 패리 구간, 가드 시작 후 이동할 수 없는 시간은 시간과 태그를 적용할 때 정하는 GameplayEffect 하나를 같이 씁니다. 비용(SP·MP·UP)은 '자원 변화'를 따릅니다. | GAS 기본 방식입니다. 값이 캐릭터·공통 데이터에 있어 GameplayEffect 에셋에 따로 둘 데이터가 없습니다. 행동마다 태그를 두지 않아 행동을 더해도 태그가 늘지 않습니다. 쿨다운 유무를 시간 하나로 정해, 쿨다운 GameplayEffect가 있는지와 시간이 어긋나지 않습니다. |
 | 자원 변화 | 자원이 바뀌는 일마다 그 규칙을 가진 GameplayEffect를 적용합니다. 행동 비용은 어빌리티의 비용 GameplayEffect(`CostGameplayEffectClass`)로 엔진이 커밋할 때 치르고, 줄이는 양은 비용 GameplayEffect의 계산 클래스가 어빌리티에서 읽습니다. 치를 수 있는지는 어빌리티가 플레이어 사양의 행동별 조건으로 확인합니다. MP·UP 충전과 극한 회피의 SP 반환은 얻는 양을 SetByCaller로 받는 자원 GameplayEffect로, PP 회복(그로기가 끝날 때, 페이즈 전환)은 PP를 최대로 덮어쓰는 GameplayEffect로, 패리로 공격자가 잃는 PP는 계산 클래스가 양을 정하는 GameplayEffect로 처리합니다. 극한 회피와 패리의 보상은 그 구간을 연 회피·가드 어빌리티가 그 이벤트를 받아 줍니다. | 양을 정하는 규칙이 GameplayEffect에 있어, 적용하는 쪽이 양을 계산하지 않습니다. 비용은 GAS가 정한 자리(비용 GameplayEffect)로 치릅니다. 보상을 구간을 연 어빌리티가 주면 극한 회피와 패리가 같은 방식이 됩니다. |
 | 리젠 | SP·PP 리젠은 GameplayEffect로 처리합니다. 리젠 대기는 태그를 주는 지속 GameplayEffect로, 자원이 줄 때마다 다시 적용해 처음부터 다시 셉니다. SP가 0이 될 때는 더 긴 대기용 GameplayEffect를 적용합니다. 회복은 주기 GameplayEffect로 하고, 대기 태그가 있는 동안에는 멈춥니다. SP는 평소용과 가드 중용 주기 GameplayEffect를 가드 태그 조건으로 바꿔 씁니다. 회복 GameplayEffect의 크기 계산 클래스(`UAgRegenCalculation`)가 주기마다 주인의 캐릭터 데이터에서 초당 회복량을 읽어 주기를 곱하고, 주기는 회복 GameplayEffect의 `Period`입니다. 캐릭터마다 거는 회복 GameplayEffect는 캐릭터 DataAsset의 목록(`RegenEffects`)에 두고, 캐릭터가 시작할 때 겁니다. 대기 시간은 캐릭터·공통 데이터에서 읽어 적용합니다. | 자원 변화를 모두 GameplayEffect로 처리하는 GAS 표준 방식입니다. 회복량을 GameplayEffect가 주기마다 읽으므로, 데이터 파일을 다시 읽어도 효과를 다시 걸 필요가 없습니다. GameplayEffect 타이머는 게임 시간으로 흘러, 히트스톱 중에도 리젠이 계속되는 기획서 규칙과 맞습니다. |
 
@@ -23,7 +23,7 @@
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·보스 공통. ASC, 어트리뷰트, 팀(적대 판정), 무기와 공격 판정(무기 스윕), 정지 간격(루트 모션 자르기), 회전과 바라보는 방향이 고정되는 때, 공격 중 이동의 대상(`FindAttackTarget`)과 범위 밖 타의 회전 대상(`GetFallbackFacingTarget`), 움찔, 히트스톱 중의 시간 배율, 사망 처리 |
+| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·보스 공통. ASC, 어트리뷰트, 팀(적대 판정), 행동 부여와 스펙의 행동 항목 찾기(`FindAction`, `FindActionSpec`), 무기와 공격 판정(무기 스윕), 정지 간격(루트 모션 자르기), 회전과 바라보는 방향이 고정되는 때, 공격 중 이동의 대상(`FindAttackTarget`)과 범위 밖 타의 회전 대상(`GetFallbackFacingTarget`), 움찔, 히트스톱 중의 시간 배율, 사망 처리 |
 | `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라, 락온, 대상 찾기, 입력 매핑, 입력을 어빌리티로 연결 |
 | `AAgBossCharacter` | `AAgCharacterBase` | 페이즈 같은 보스 상태, 회전 대상(AI 대상)과 회전하지 않는 상태. 보스에 표시하는 월드 위치 HUD(락온 마커, 처형 안내) |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, 사망·그로기 판정 |
@@ -82,7 +82,7 @@ classDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `UAgGameplayAbility` | `UGameplayAbility` | 모든 어빌리티의 부모('어빌리티 구조'). 캐릭터 데이터 읽기, 쿨다운과 비용(보스 패턴은 패턴별), 플레이어 행동·피격 반응·보스 패턴의 태그(상태별 허용 입력, 모션 캔슬, 상태 우선순위) |
+| `UAgGameplayAbility` | `UGameplayAbility` | 모든 어빌리티의 부모('어빌리티 구조'). 캐릭터 데이터와 행동 전용 값 읽기(`GetActionParams`), 쿨다운과 비용, 플레이어 행동·피격 반응·보스 패턴의 태그(상태별 허용 입력, 모션 캔슬, 상태 우선순위) |
 | `UAgAbilityTask_HoldTag` | `UAbilityTask` | 도는 동안 상태 태그 하나를 붙여 둡니다(행동 중, 무적·극한 회피 구간, 가드 중, 패리 모션, 처형 피격, 보스의 회전 정지). 어빌리티가 끝내거나 어빌리티가 끝나면 뗍니다. |
 | `UAgAbilityTask_Dash` | `UAbilityTask` | 일정 속도로 직선 이동하고, 거리를 다 가거나 벽에 막히거나 어빌리티가 멈추면 끝납니다(DashThrust의 돌진). |
 | `UAgAbilityTask_LockOn` | `UAbilityTask` | 락온 중 매 프레임 카메라를 대상의 락온 지점 쪽으로 돌리고, 해제 조건이 되면 끝납니다. |
@@ -253,8 +253,8 @@ GameplayEffect는 모두 C++ 클래스입니다. 대미지 GameplayEffect는 [�
 | `UAgEffect_PPRefill` | `UGameplayEffect` | PP를 최대로 채웁니다(그로기가 끝날 때, 페이즈 전환). |
 | `UAgEffect_ParryPPLoss` | `UGameplayEffect` | 패리로 공격한 쪽이 잃는 PP. 막은 쪽의 가드 어빌리티가 공격한 쪽에 적용합니다. |
 | `UAgParryPPLossExecution` | `UGameplayEffectExecutionCalculation` | 패리로 잃는 PP의 계산. 공격한 쪽의 MaxPP × 막은 쪽의 패리 PP 비율(PP를 잃지 않는 대상은 그대로) |
-| `UAgEffect_TimedTag` | `UGameplayEffect` | 적용할 때 정한 시간 동안 태그를 줍니다(보스 패턴이 아닌 쿨다운, 리젠 대기, 패리 구간, 가드 시작 후 이동 불가, 회피 반격 기회, 히트스톱). 거는 함수가 시간과 태그를 정합니다. |
-| `UAgEffect_PatternCooldown` | `UGameplayEffect` | 보스 패턴의 쿨다운. 태그 없이, 걸 때 넣은 출처(그 패턴 스펙의 어빌리티 인스턴스)로 패턴을 구분합니다. |
+| `UAgEffect_TimedTag` | `UGameplayEffect` | 적용할 때 정한 시간 동안 태그를 줍니다(리젠 대기, 패리 구간, 가드 시작 후 이동 불가, 회피 반격 기회, 히트스톱). 거는 함수가 시간과 태그를 정합니다. |
+| `UAgEffect_Cooldown` | `UGameplayEffect` | 행동(보스는 패턴)의 쿨다운. 태그 없이, 걸 때 넣은 출처(그 행동 스펙의 어빌리티 인스턴스)로 행동을 구분합니다. |
 | `UAgEffect_Regen` | `UGameplayEffect` | 리젠 주기 GameplayEffect의 부모. SP 평소용, SP 가드 중용, PP용, 달리기 SP 소모용이 태그 조건과 읽는 초당 회복량만 다릅니다. 주기는 이 클래스의 `Period`입니다. |
 | `UAgRegenCalculation` | `UGameplayModMagnitudeCalculation` | 리젠의 한 주기 양. 주인의 캐릭터 데이터에서 읽은 초당 회복량 × 주기 |
 
@@ -274,10 +274,10 @@ classDiagram
         <<패리로 잃는 PP>>
     }
     class UAgEffect_TimedTag {
-        <<쿨다운, 리젠 대기, 패리 구간, 히트스톱>>
+        <<리젠 대기, 패리 구간, 히트스톱>>
     }
-    class UAgEffect_PatternCooldown {
-        <<보스 패턴 쿨다운>>
+    class UAgEffect_Cooldown {
+        <<행동 쿨다운>>
     }
     class UAgEffect_Regen {
         <<리젠>>
@@ -303,7 +303,7 @@ classDiagram
     UGameplayEffectExecutionCalculation <|-- UAgParryPPLossExecution
     UAgEffect_ParryPPLoss --> UAgParryPPLossExecution : Executions
     UGameplayEffect <|-- UAgEffect_TimedTag
-    UGameplayEffect <|-- UAgEffect_PatternCooldown
+    UGameplayEffect <|-- UAgEffect_Cooldown
     UGameplayEffect <|-- UAgEffect_Regen
     UAgEffect_Regen <|-- UAgEffect_SPRegen
     UAgEffect_Regen <|-- UAgEffect_SPRegenGuarding
@@ -315,7 +315,7 @@ classDiagram
 
     UAgGameplayAbility --> UAgEffect_Cost : CostGameplayEffectClass<br>(회피, 스킬, 궁극기)
     UAgCostExecution ..> UAgGameplayAbility : GetCost
-    UAgEffect_PatternCooldown <.. UAgGameplayAbility : Apply
+    UAgEffect_Cooldown <.. UAgGameplayAbility : Apply
     UAgAbility_Dodge ..> UAgEffect_Resource : 극한 회피 보상
     UAgAbility_Guard ..> UAgEffect_Resource : 패리 충전
     UAgAbility_Guard ..> UAgEffect_ParryPPLoss : 패리

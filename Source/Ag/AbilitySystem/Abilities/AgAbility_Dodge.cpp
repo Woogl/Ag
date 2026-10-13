@@ -19,7 +19,6 @@
 UAgAbility_Dodge::UAgAbility_Dodge()
 {
 	SetupPlayerAction(AgGameplayTags::Ability_Action_Dodge);
-	SetCooldownTag(AgGameplayTags::Cooldown_Dodge);
 	CostGameplayEffectClass = UAgEffect_Cost::StaticClass();
 
 	// 회피 후딜에 회피를 다시 누르면 이 어빌리티를 처음부터 다시 시작합니다.
@@ -111,24 +110,24 @@ void UAgAbility_Dodge::HandleRecoveryStarted(FGameplayEventData Payload)
 void UAgAbility_Dodge::HandlePerfectDodge(FGameplayEventData Payload)
 {
 	// 회피 한 번에 한 번만 받습니다. 그 뒤의 공격도 피하지만 아무것도 주지 않습니다.
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	const FAgDodgeParams* Params = GetActionParams<FAgDodgeParams>();
 	AAgCharacterBase* Character = GetAgCharacter();
-	if (bPerfectDodged)
+	if (bPerfectDodged || !Params)
 	{
 		return;
 	}
 	bPerfectDodged = true;
-	UE_LOG(LogAg, Verbose, TEXT("Perfect dodge: SP +%.0f, MP +%.0f, UP +%.0f"), SPSpent, Data->PerfectDodgeMPCharge, Data->PerfectDodgeUPCharge);
+	UE_LOG(LogAg, Verbose, TEXT("Perfect dodge: SP +%.0f, MP +%.0f, UP +%.0f"), SPSpent, Params->PerfectDodgeMPCharge, Params->PerfectDodgeUPCharge);
 	const FGameplayEffectSpecHandle Reward = MakeOutgoingGameplayEffectSpec(UAgEffect_Resource::StaticClass());
-	UAgEffect_Resource::SetAmounts(*Reward.Data, SPSpent, Data->PerfectDodgeMPCharge, Data->PerfectDodgeUPCharge);
+	UAgEffect_Resource::SetAmounts(*Reward.Data, SPSpent, Params->PerfectDodgeMPCharge, Params->PerfectDodgeUPCharge);
 	ApplyGameplayEffectSpecToOwner(GetCurrentAbilitySpecHandle(), GetCurrentActorInfo(), GetCurrentActivationInfo(), Reward);
 
 	// 회피 반격 기회는 이때부터 시작해 회피가 끝나도 이어집니다.
-	UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_DodgeCounterChance, Data->DodgeCounterChanceTime);
+	UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), AgGameplayTags::State_DodgeCounterChance, Params->CounterChanceTime);
 
 	if (UAgTimeSubsystem* TimeSubsystem = UWorld::GetSubsystem<UAgTimeSubsystem>(Character->GetWorld()))
 	{
-		TimeSubsystem->StartSlowMotion(Data->SlowMotionSpeed, Data->SlowMotionDuration);
+		TimeSubsystem->StartSlowMotion(Params->SlowMotionSpeed, Params->SlowMotionDuration);
 	}
 }
 
@@ -143,11 +142,6 @@ void UAgAbility_Dodge::HandleMontageCancelled()
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 }
 
-float UAgAbility_Dodge::GetCooldownDuration() const
-{
-	return GetCharacterData<UAgPlayerData>()->DodgeCooldown;
-}
-
 bool UAgAbility_Dodge::CanPayCost(const UAgAttributeSet& Stats) const
 {
 	// SP가 0보다 크면 비용보다 적어도 쓸 수 있습니다(플레이어 사양 'SP 소모').
@@ -156,5 +150,6 @@ bool UAgAbility_Dodge::CanPayCost(const UAgAttributeSet& Stats) const
 
 FAgAbilityCost UAgAbility_Dodge::GetCost() const
 {
-	return { GetCharacterData<UAgPlayerData>()->DodgeSPCost, 0.f, 0.f };
+	const FAgDodgeParams* Params = GetActionParams<FAgDodgeParams>();
+	return { Params ? Params->SPCost : 0.f, 0.f, 0.f };
 }

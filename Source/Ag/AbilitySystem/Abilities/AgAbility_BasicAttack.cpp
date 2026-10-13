@@ -33,7 +33,8 @@ void UAgAbility_BasicAttack::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 void UAgAbility_BasicAttack::StartHit(int32 Index)
 {
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Data->BasicAttack.IsValidIndex(Index) || !Data->BasicAttackMontages.IsValidIndex(Index))
+	const FAgBasicAttackParams* Params = GetActionParams<FAgBasicAttackParams>();
+	if (!Params || !Params->Combo.IsValidIndex(Index) || !Data->BasicAttackMontages.IsValidIndex(Index))
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, true);
 		return;
@@ -46,7 +47,7 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 		AttackTask->EndTask();
 	}
 	BeginBusy();
-	AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Data->BasicAttack[Index], Data->BasicAttackMontages[Index]);
+	AttackTask = UAgAbilityTask_Attack::PlayAttack(this, Params->Combo[Index], Data->BasicAttackMontages[Index]);
 	AttackTask->OnRecoveryStarted.AddDynamic(this, &ThisClass::HandleRecoveryStarted);
 	AttackTask->OnCompleted.AddDynamic(this, &ThisClass::HandleAttackCompleted);
 	AttackTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleAttackInterrupted);
@@ -63,10 +64,10 @@ void UAgAbility_BasicAttack::StartHit(int32 Index)
 void UAgAbility_BasicAttack::HandleAttackInput(FGameplayEventData Payload)
 {
 	// 평타 키의 처리 순서: 후딜 중이면(행동 중이 풀림) 다음 타를 시작하고, 그 전이면 무시합니다.
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!IsBusy() && Data->BasicAttack.Num() > 0)
+	const FAgBasicAttackParams* Params = GetActionParams<FAgBasicAttackParams>();
+	if (!IsBusy() && Params && Params->Combo.Num() > 0)
 	{
-		StartHit((HitIndex + 1) % Data->BasicAttack.Num());
+		StartHit((HitIndex + 1) % Params->Combo.Num());
 	}
 }
 

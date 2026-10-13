@@ -30,10 +30,24 @@ AAgCharacterBase* UAgAbility_Execution::FindExecutionTarget(const AAgPlayerChara
 	{
 		return nullptr;
 	}
-	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Player->GetCharacterData());
+	// 처형 타겟팅 범위는 플레이어의 처형 행동 항목에 있습니다.
+	const FAgPlayerAttack* Attack = nullptr;
+	for (const FGameplayAbilitySpec& Spec : Player->GetAbilitySystemComponent()->GetActivatableAbilities())
+	{
+		if (Spec.Ability && Spec.Ability->GetAssetTags().HasTagExact(AgGameplayTags::Ability_Action_Execution))
+		{
+			const FAgAction* Action = Player->FindAction(Spec.Handle);
+			Attack = Action ? Action->Params.GetPtr<FAgPlayerAttack>() : nullptr;
+			break;
+		}
+	}
+	if (!Attack)
+	{
+		return nullptr;
+	}
 
 	// 그로기 중이고, 이번 그로기에 아직 처형되지 않았고, 땅에 있는 적입니다(공중에서 그로기가 되면 착지 전에는 처형할 수 없음).
-	return Player->FindEnemy(Data->Execution.TargetingRange, [](const AAgCharacterBase& Enemy)
+	return Player->FindEnemy(Attack->TargetingRange, [](const AAgCharacterBase& Enemy)
 	{
 		const UAbilitySystemComponent* EnemyASC = Enemy.GetAbilitySystemComponent();
 		return EnemyASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) && !EnemyASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed)
@@ -51,8 +65,9 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 {
 	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetAgCharacter());
 	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
+	const FAgPlayerAttack* Params = GetActionParams<FAgPlayerAttack>();
 	AAgCharacterBase* Enemy = FindExecutionTarget(Player);
-	if (!Enemy || !Data->ExecutionMontage || Data->Execution.Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!Enemy || !Data->ExecutionMontage || !Params || Params->Hits.IsEmpty() || !CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
@@ -87,14 +102,14 @@ void UAgAbility_Execution::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 void UAgAbility_Execution::HandleStrike(FGameplayEventData Payload)
 {
 	AAgCharacterBase* Enemy = Target.Get();
-	const UAgPlayerData* Data = GetCharacterData<UAgPlayerData>();
-	if (!Data->Execution.Hits.IsValidIndex(StrikeIndex))
+	const FAgPlayerAttack* Params = GetActionParams<FAgPlayerAttack>();
+	if (!Params || !Params->Hits.IsValidIndex(StrikeIndex))
 	{
 		return;
 	}
-	FAgPlayerAttackHit Hit = Data->Execution.Hits[StrikeIndex];
+	FAgPlayerAttackHit Hit = Params->Hits[StrikeIndex];
 	++StrikeIndex;
-	Hit.bFinisher = StrikeIndex == Data->Execution.Hits.Num();
+	Hit.bFinisher = StrikeIndex == Params->Hits.Num();
 
 	// 타격마다 처형 대상(보스의 캡슐 중심)에 대미지 GE를 적용합니다. 이 어빌리티가 만든 스펙에는 엔진이 어빌리티 태그
 	// (Ability.Action.Execution)를 넣어, 대미지 GE가 처형의 셰이크를 쓰고 히트스톱을 걸지 않으며, 처형으로 죽으면 사망

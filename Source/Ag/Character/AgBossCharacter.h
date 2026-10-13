@@ -10,7 +10,6 @@
 
 class UWidgetComponent;
 struct FAgBossPattern;
-struct FGameplayAbilitySpec;
 
 /**
  * 보스 커스터(보스 사양). 늘 AI의 대상을 향해 돌고(보스 사양 '회전'), AI가 고른 패턴을 실행합니다.
@@ -23,9 +22,6 @@ class AAgBossCharacter : public AAgCharacterBase
 
 public:
 	AAgBossCharacter();
-
-	/** 패턴 ID로 부여된 패턴 스펙. 없으면 null입니다. */
-	FGameplayAbilitySpec* FindPatternSpec(FName Id) const;
 
 	/**
 	 * 부여된 패턴 스펙(Handle)이 실행하는 패턴의 데이터(Boss.json). 패턴 스펙이 아니면 null입니다.
@@ -82,9 +78,6 @@ private:
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
 
 	int32 Phase = 1;
-
-	/** 부여한 패턴 스펙마다 그 스펙이 실행하는 패턴 ID */
-	TMap<FGameplayAbilitySpecHandle, FName> PatternIds;
 
 	/** 그로기 시간을 세기 시작한 월드 시간. 세지 않을 때는 음수입니다. */
 	double GroggyStartTime = -1.0;

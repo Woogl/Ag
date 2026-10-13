@@ -11,7 +11,7 @@ class UAgAbilityTask_HoldTag;
 
 /** LeapSlam의 전용 값 (보스 사양 'LeapSlam') */
 USTRUCT()
-struct FAgBossLeapParams : public FAgBossPatternParams
+struct FAgBossLeapParams : public FAgActionParams
 {
 	GENERATED_BODY()
 
@@ -47,7 +47,7 @@ class UAgBossPattern_Leap : public UAgGameplayAbility
 public:
 	UAgBossPattern_Leap();
 
-	virtual const UScriptStruct* GetPatternParamsType() const override { return FAgBossLeapParams::StaticStruct(); }
+	virtual const UScriptStruct* GetActionParamsType() const override { return FAgBossLeapParams::StaticStruct(); }
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
