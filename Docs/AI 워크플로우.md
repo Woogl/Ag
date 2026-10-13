@@ -48,6 +48,7 @@
 | `Docs/Art` | 에셋 조사 |
 | `Scripts/MotionImages` | 기획서 모션 그림을 만드는 스크립트와 그림 정의. 쓰는 법은 폴더의 README를 따릅니다. |
 | `Scripts/ScenarioTest` | AI가 동작 테스트 창을 띄워 시나리오를 실행하는 스크립트. 쓰는 법은 폴더의 README를 따릅니다. |
+| `.agents/skills` | AI가 되풀이하는 작업의 절차와 도구 요령(스킬). 규칙과 결정은 적지 않고 그것을 정한 문서를 가리킵니다. Claude Code는 `.claude/skills`를 이 폴더에 연결해 읽습니다(만드는 법은 `.gitignore`의 주석). |
 
 ## 문서 작성 규칙
 
