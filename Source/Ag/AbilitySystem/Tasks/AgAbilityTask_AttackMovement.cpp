@@ -6,7 +6,6 @@
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimInstance.h"
 #include "Character/AgCharacterBase.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -82,7 +81,7 @@ void UAgAbilityTask_AttackMovement::StartHit()
 	MaxTravel = UAgAnimNotifyState_AttackWindow::GetTravelToNextWindow(*AnimInstance) + MaxApproachDistance;
 	Owner->SetStopTarget(NewTarget, Gap);
 
-	bTracking = NewTarget && (TargetingRange < 0.f || UAgCombatLibrary::GetHorizontalDistance(Owner, NewTarget) <= TargetingRange);
+	bTracking = NewTarget && (TargetingRange < 0.f || Owner->GetHorizontalDistanceTo(NewTarget) <= TargetingRange);
 	if (bTracking)
 	{
 		Owner->SetFacingTarget(NewTarget);
@@ -131,8 +130,7 @@ void UAgAbilityTask_AttackMovement::UpdateWarpTarget()
 {
 	AAgCharacterBase* Owner = Character.Get();
 	const AAgCharacterBase* TargetCharacter = Target.Get();
-	const float Distance = UAgCombatLibrary::GetHorizontalDistance(Owner, TargetCharacter);
-	if (!Owner || !TargetCharacter || (TargetingRange >= 0.f && Distance > TargetingRange))
+	if (!Owner || !TargetCharacter || (TargetingRange >= 0.f && Owner->GetHorizontalDistanceTo(TargetCharacter) > TargetingRange))
 	{
 		// 범위 밖: 이 타의 추적을 멈춥니다.
 		StopTracking();
@@ -140,9 +138,9 @@ void UAgAbilityTask_AttackMovement::UpdateWarpTarget()
 	}
 
 	const FVector Location = Owner->GetActorLocation();
-	const FVector Direction = UAgCombatLibrary::GetHorizontalDirection(Owner, TargetCharacter);
+	const FVector Direction = (TargetCharacter->GetActorLocation() - Location).GetSafeNormal2D();
 	FVector Goal = Location;
-	if (Distance > Gap || !bKeepGap)
+	if (Owner->GetHorizontalDistanceTo(TargetCharacter) > Gap || !bKeepGap)
 	{
 		Goal = TargetCharacter->GetActorLocation() - Direction * Gap;
 		Goal.Z = Location.Z;

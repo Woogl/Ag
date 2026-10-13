@@ -7,7 +7,6 @@
 #include "AbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Character/AgBossCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "StateTreeExecutionContext.h"
@@ -90,8 +89,13 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 	FName Pattern = InstanceData.Pattern;
 	if (Pattern.IsNone())
 	{
-		// 1. 후보: 지금 거리 구간과 페이즈에서 쓸 수 있고 쿨다운이 끝난 패턴
-		const float Distance = UAgCombatLibrary::GetHorizontalDistance(Boss, InstanceData.Controller->GetTarget());
+		// 1. 후보: 지금 거리 구간과 페이즈에서 쓸 수 있고 쿨다운이 끝난 패턴. 대상이 없으면 고르지 않습니다.
+		const AAgCharacterBase* Target = InstanceData.Controller->GetTarget();
+		if (!Target)
+		{
+			return EStateTreeRunStatus::Failed;
+		}
+		const float Distance = Boss->GetHorizontalDistanceTo(Target);
 		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
 		TArray<int32> Candidates;
 		TArray<float> Weights;

@@ -11,7 +11,6 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -70,12 +69,12 @@ void UAgBossPattern_Dash::HandleDashStart(FGameplayEventData Payload)
 	}
 
 	// 방향: 이 순간의 대상 쪽으로 고정합니다. 목표 지점: 대상을 지나, 최대 이동 거리까지.
-	const FVector Direction = UAgCombatLibrary::GetHorizontalDirection(Boss, Target);
+	const FVector Direction = (Target->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D();
 	if (!Direction.IsNearlyZero())
 	{
 		Boss->SetActorRotation(FRotator(0.f, Direction.Rotation().Yaw, 0.f));
 	}
-	const float Distance = FMath::Min(UAgCombatLibrary::GetHorizontalDistance(Boss, Target) + Params->Overshoot, Params->MaxDistance);
+	const float Distance = FMath::Min(Boss->GetHorizontalDistanceTo(Target) + Params->Overshoot, Params->MaxDistance);
 
 	// 몽타주가 루트 모션을 주는 동안 캐릭터 무브먼트는 다른 루트 모션을 쓰지 않으므로, 여기서부터 모션 자체의 루트 모션은
 	// 무시합니다. 돌진이 보스를 움직이고, 나머지 모션은 창을 거두기만 합니다.

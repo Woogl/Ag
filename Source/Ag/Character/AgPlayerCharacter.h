@@ -25,6 +25,8 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
+	virtual FGenericTeamId GetGenericTeamId() const override { return FGenericTeamId(0); }
+
 	/**
 	 * 대상 찾기(구현 계획서 '대상 찾기'): TP_Enemy가 모은 후보 가운데 적대 관계이고 살아 있고, 캡슐 중심 사이 수평 거리가
 	 * Range 안이며 Condition을 만족하는 가장 가까운 적입니다. 없으면 null입니다.

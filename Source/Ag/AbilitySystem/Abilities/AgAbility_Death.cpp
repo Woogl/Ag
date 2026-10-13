@@ -6,7 +6,6 @@
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Character/AgCharacterBase.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -51,9 +50,13 @@ void UAgAbility_Death::ActivateAbility(const FGameplayAbilitySpecHandle Handle, 
 		return;
 	}
 
-	// 마지막 공격의 피격 방향으로 밀려납니다.
+	// 마지막 공격의 피격 방향으로 밀려납니다. 공격자가 없으면 밀리지 않습니다.
 	const AActor* Attacker = TriggerEventData ? TriggerEventData->Instigator.Get() : nullptr;
-	const FVector Push = UAgCombatLibrary::GetHorizontalDirection(Attacker, Character) * DeathPushSpeed;
+	FVector Push = FVector::ZeroVector;
+	if (Attacker)
+	{
+		Push = (Character->GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * DeathPushSpeed;
+	}
 	Character->Die(Push, this);
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

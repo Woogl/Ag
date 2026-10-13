@@ -10,7 +10,6 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 
@@ -163,7 +162,7 @@ void UAgAbility_Guard::HandleParry(FGameplayEventData Payload)
 	AAgCharacterBase* Character = GetAgCharacter();
 	if (const AActor* Attacker = Payload.Instigator.Get())
 	{
-		const FVector ToAttacker = -UAgCombatLibrary::GetHorizontalDirection(Attacker, Character);
+		const FVector ToAttacker = (Attacker->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal2D();
 		if (!ToAttacker.IsNearlyZero())
 		{
 			Character->SetActorRotation(FRotator(0.f, ToAttacker.Rotation().Yaw, 0.f));

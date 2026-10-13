@@ -11,7 +11,6 @@
 #include "Character/AgLockOnComponent.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Components/PostProcessComponent.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "EnhancedInputComponent.h"
@@ -521,7 +520,7 @@ AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(c
 	float NearestDistance = Range;
 	for (AAgCharacterBase* Enemy : FindEnemies(Range))
 	{
-		const float Distance = UAgCombatLibrary::GetHorizontalDistance(this, Enemy);
+		const float Distance = GetHorizontalDistanceTo(Enemy);
 		if (Distance <= NearestDistance && Condition(*Enemy))
 		{
 			Nearest = Enemy;
@@ -554,7 +553,7 @@ TArray<AAgCharacterBase*> AAgPlayerCharacter::FindEnemies(float Range) const
 	for (AActor* Candidate : Candidates)
 	{
 		AAgCharacterBase* Enemy = Cast<AAgCharacterBase>(Candidate);
-		if (Enemy && !Enemy->IsDead() && UAgCombatLibrary::AreHostile(this, Enemy) && UAgCombatLibrary::GetHorizontalDistance(this, Enemy) <= Range)
+		if (Enemy && !Enemy->IsDead() && GetTeamAttitudeTowards(*Enemy) == ETeamAttitude::Hostile && GetHorizontalDistanceTo(Enemy) <= Range)
 		{
 			Enemies.Add(Enemy);
 		}

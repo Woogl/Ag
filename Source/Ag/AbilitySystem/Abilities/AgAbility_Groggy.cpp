@@ -13,7 +13,6 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -131,7 +130,7 @@ void UAgAbility_Groggy::HandleExecuted(FGameplayEventData Payload)
 	// 처형을 시작하면 보스가 플레이어를 바라보도록 돌립니다.
 	if (const AActor* Executioner = Payload.Instigator.Get())
 	{
-		const FVector ToExecutioner = UAgCombatLibrary::GetHorizontalDirection(Boss, Executioner);
+		const FVector ToExecutioner = (Executioner->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D();
 		if (!ToExecutioner.IsNearlyZero())
 		{
 			Boss->SetActorRotation(FRotator(0.f, ToExecutioner.Rotation().Yaw, 0.f));

@@ -10,13 +10,13 @@
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgBossCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameplayCueFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 
 namespace
@@ -150,16 +150,16 @@ void UAgBossPattern_Leap::HandleLanded(EMovementMode NewMovementMode)
 
 	// 플레이어가 가까우면 착지가 카메라를 흔듭니다(카메라 '상황별 단계'). 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를
 	// 기준으로 합니다.
-	const AActor* ViewPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
+	AActor* ViewPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
 	const UAgCameraData& Camera = UAgAssetManager::Get().GetCameraData();
-	if (ViewPlayer && UAgCombatLibrary::GetHorizontalDistance(Boss, ViewPlayer) <= Camera.LeapLandingShakeRange)
+	if (ViewPlayer && Boss->GetHorizontalDistanceTo(ViewPlayer) <= Camera.LeapLandingShakeRange)
 	{
-		UAgCombatLibrary::PlayCameraShake(Boss, Camera.LeapLandingShake);
+		UGameplayCueFunctionLibrary::ExecuteGameplayCueOnActor(ViewPlayer, Camera.LeapLandingShake, FGameplayCueParameters());
 	}
 
 	// 착지가 판정 구간입니다. 착지 지점 반경 안에서 땅에 있는 대상만 한 번 맞습니다(점프 중이면 맞지 않음).
 	AAgCharacterBase* Target = Boss->GetTarget();
-	if (Target && !Target->GetCharacterMovement()->IsFalling() && UAgCombatLibrary::GetHorizontalDistance(Boss, Target) <= Params->HitRadius)
+	if (Target && !Target->GetCharacterMovement()->IsFalling() && Boss->GetHorizontalDistanceTo(Target) <= Params->HitRadius)
 	{
 		UAgEffect_Damage::ApplyAttack(Boss, Boss, Target, FAgPlayerAttackHit(Pattern->Hits[0]), Boss->GetActorLocation());
 	}

@@ -4,7 +4,6 @@
 
 #include "AbilitySystem/AgEffect_Damage.h"
 #include "Character/AgCharacterBase.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -70,7 +69,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	for (const FHitResult& Contact : Reached)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
-		if (!Target || !UAgCombatLibrary::AreHostile(ShooterCharacter, Target) || TouchedActors.Contains(Target))
+		if (!Target || FGenericTeamId::GetAttitude(ShooterCharacter, Target) != ETeamAttitude::Hostile || TouchedActors.Contains(Target))
 		{
 			continue;
 		}

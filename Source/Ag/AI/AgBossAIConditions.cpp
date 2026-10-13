@@ -8,7 +8,6 @@
 #include "AbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Character/AgBossCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Data/AgCharacterData.h"
 #include "StateTreeExecutionContext.h"
 
@@ -52,7 +51,8 @@ bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext&
 	const AAgBossCharacter* Boss = Controller->GetBoss();
 	const FAgBossPattern* Pattern = Controller->GetBossData()->FindPattern(InstanceData.Pattern);
 	const FAgBossBackstepParams* Params = Pattern ? Pattern->Params.GetPtr<FAgBossBackstepParams>() : nullptr;
-	if (!Params || UAgCombatLibrary::GetHorizontalDistance(Boss, Controller->GetTarget()) > Params->Range)
+	const AAgCharacterBase* Target = Controller->GetTarget();
+	if (!Params || !Target || Boss->GetHorizontalDistanceTo(Target) > Params->Range)
 	{
 		return false;
 	}

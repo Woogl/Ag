@@ -10,7 +10,6 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -47,7 +46,7 @@ void UAgAbility_KnockUp::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	// 공격 쪽으로 돌아, 모션이 공격 반대쪽으로 밀려나게 합니다(전투 시스템 '피격 반응').
 	if (const AActor* Attacker = TriggerEventData ? TriggerEventData->Instigator.Get() : nullptr)
 	{
-		const FVector ToAttacker = -UAgCombatLibrary::GetHorizontalDirection(Attacker, Character);
+		const FVector ToAttacker = (Attacker->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal2D();
 		if (!ToAttacker.IsNearlyZero())
 		{
 			Character->SetActorRotation(FRotator(0.f, ToAttacker.Rotation().Yaw, 0.f));

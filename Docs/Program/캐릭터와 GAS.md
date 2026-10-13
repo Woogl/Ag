@@ -23,7 +23,7 @@
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface` | 플레이어·보스 공통. ASC, 어트리뷰트, 무기와 공격 판정(무기 스윕), 정지 간격(루트 모션 자르기), 회전과 바라보는 방향이 고정되는 때, 공격 중 이동의 대상(`FindAttackTarget`)과 범위 밖 타의 회전 대상(`GetFallbackFacingTarget`), 움찔, 히트스톱 중의 시간 배율, 사망 처리 |
+| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·보스 공통. ASC, 어트리뷰트, 팀(적대 판정), 무기와 공격 판정(무기 스윕), 정지 간격(루트 모션 자르기), 회전과 바라보는 방향이 고정되는 때, 공격 중 이동의 대상(`FindAttackTarget`)과 범위 밖 타의 회전 대상(`GetFallbackFacingTarget`), 움찔, 히트스톱 중의 시간 배율, 사망 처리 |
 | `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라, 락온, 대상 찾기, 입력 매핑, 입력을 어빌리티로 연결 |
 | `AAgBossCharacter` | `AAgCharacterBase` | 페이즈 같은 보스 상태, 회전 대상(AI 대상)과 회전하지 않는 상태. 보스에 표시하는 월드 위치 HUD(락온 마커, 처형 안내) |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, 사망·그로기 판정 |
@@ -33,6 +33,9 @@
 classDiagram
     direction TB
     class IAbilitySystemInterface {
+        <<interface>>
+    }
+    class IGenericTeamAgentInterface {
         <<interface>>
     }
     class AAgCharacterBase {
@@ -58,6 +61,7 @@ classDiagram
     }
     ACharacter <|-- AAgCharacterBase
     IAbilitySystemInterface <|.. AAgCharacterBase
+    IGenericTeamAgentInterface <|.. AAgCharacterBase
     AAgCharacterBase <|-- AAgPlayerCharacter
     AAgCharacterBase <|-- AAgBossCharacter
 

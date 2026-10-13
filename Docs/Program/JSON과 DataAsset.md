@@ -94,7 +94,7 @@ classDiagram
     }
     class UAgCameraData {
         <<Camera.json>>
-        EAgCameraShake PlayerHitShake 등
+        FGameplayTag PlayerHitShake 등
     }
     UAssetManager <|-- UAgAssetManager
     UObject <|-- UAgCombatRules

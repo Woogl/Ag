@@ -12,7 +12,6 @@
 #include "Animation/AgAnimNotifyState_AttackWindow.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
@@ -340,7 +339,7 @@ void AAgCharacterBase::SweepWeapon()
 		for (const FHitResult& Touch : Touches)
 		{
 			AAgCharacterBase* Target = Cast<AAgCharacterBase>(Touch.GetActor());
-			if (!Target || !UAgCombatLibrary::AreHostile(this, Target) || WindowTouchedActors.Contains(Target))
+			if (!Target || GetTeamAttitudeTowards(*Target) != ETeamAttitude::Hostile || WindowTouchedActors.Contains(Target))
 			{
 				continue;
 			}
@@ -419,7 +418,7 @@ void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
 	}
 
 	// 회전 속도는 캐릭터 무브먼트의 회전 속도(엔진 기본값)입니다.
-	const FVector ToTarget = UAgCombatLibrary::GetHorizontalDirection(this, Target);
+	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	if (!ToTarget.IsNearlyZero())
 	{
 		const FRotator Goal(0.f, ToTarget.Rotation().Yaw, 0.f);
@@ -439,7 +438,7 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	FVector Delta = WorldRootMotion.GetTranslation();
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	const float Toward = FVector::DotProduct(FVector(Delta.X, Delta.Y, 0.f), ToTarget);
-	const float Allowed = FMath::Max(0.f, UAgCombatLibrary::GetHorizontalDistance(this, Target) - StopDistance);
+	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - StopDistance);
 	if (Toward <= Allowed)
 	{
 		return WorldRootMotion;

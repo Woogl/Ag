@@ -3,7 +3,6 @@
 #include "Character/AgLockOnComponent.h"
 
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/PlayerController.h"
@@ -45,7 +44,7 @@ bool UAgLockOnComponent::IsTargetLost() const
 	const AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetOwner());
 	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Player->GetCharacterData());
 	const AAgCharacterBase* TargetCharacter = Target.Get();
-	return !TargetCharacter || TargetCharacter->IsDead() || UAgCombatLibrary::GetHorizontalDistance(Player, TargetCharacter) > Data->LockOnReleaseRange;
+	return !TargetCharacter || TargetCharacter->IsDead() || Player->GetHorizontalDistanceTo(TargetCharacter) > Data->LockOnReleaseRange;
 }
 
 FVector UAgLockOnComponent::GetLockOnPoint() const

@@ -7,6 +7,7 @@
 #include "ActiveGameplayEffectHandle.h"
 #include "Data/AgAttackData.h"
 #include "GameFramework/Character.h"
+#include "GenericTeamAgentInterface.h"
 #include "AgCharacterBase.generated.h"
 
 class UAbilitySystemComponent;
@@ -25,7 +26,7 @@ DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase*
  * 캐릭터 데이터, 전투 시스템 '사망 처리'를 맡습니다.
  */
 UCLASS(Abstract)
-class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface
+class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -40,6 +41,9 @@ public:
 	static const FName WeaponCollisionTag;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	/** 팀(엔진 팀 인터페이스). 팀이 다르면 적대합니다. 플레이어는 0번 팀이고, 그 밖의 캐릭터는 1번 팀입니다. */
+	virtual FGenericTeamId GetGenericTeamId() const override { return FGenericTeamId(1); }
 
 	UAgAttributeSet* GetAttributeSet() const { return AttributeSet; }
 

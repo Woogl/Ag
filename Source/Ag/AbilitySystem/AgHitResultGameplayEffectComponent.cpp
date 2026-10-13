@@ -10,13 +10,14 @@
 #include "Ag.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgCombatLibrary.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "GameplayCueFunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 namespace
 {
@@ -78,8 +79,8 @@ namespace
 		}
 	}
 
-	/** 카메라 '상황별 단계'. 처형은 찌르기와 마지막 일격의 단계를 씁니다. */
-	EAgCameraShake GetHitShake(const UAgCameraData& Camera, const FGameplayTagContainer& SpecTags, bool bPlayerAttacked)
+	/** 카메라 '상황별 단계'의 셰이크 큐 태그. 처형은 찌르기와 마지막 일격의 단계를 씁니다. */
+	FGameplayTag GetHitShake(const UAgCameraData& Camera, const FGameplayTagContainer& SpecTags, bool bPlayerAttacked)
 	{
 		const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
 		if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
@@ -181,7 +182,9 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		: bUltimate ? AgGameplayTags::GameplayCue_UltimateFinish
 		: AgGameplayTags::GameplayCue_Hit;
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
-	UAgCombatLibrary::PlayCameraShake(Target, GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>()));
+	// 엔진 Burst 큐는 큐를 실행한 캐릭터가 로컬 플레이어일 때 그 카메라를 흔들므로, 셰이크 큐는 로컬 플레이어 캐릭터에서 실행합니다.
+	const FGameplayTag Shake = GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>());
+	UGameplayCueFunctionLibrary::ExecuteGameplayCueOnActor(UGameplayStatics::GetPlayerPawn(Target, 0), Shake, FGameplayCueParameters());
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
 	{
