@@ -1,31 +1,42 @@
+# Project formatting authority. Runner/version: Scripts/FormatCpp.ps1
 BasedOnStyle: Microsoft
+Language: Cpp
 UseTab: ForIndentation
 IndentWidth: 4
 TabWidth: 4
 ContinuationIndentWidth: 4
-AlignAfterOpenBracket: DontAlign
 NamespaceIndentation: All
-FixNamespaceComments: false
-ColumnLimit: 140
+AccessModifierOffset: -4
+IndentCaseLabels: true
 BreakBeforeBraces: Allman
 InsertBraces: true
-AccessModifierOffset: -4
-PointerAlignment: Left
-ReferenceAlignment: Left
 AllowShortFunctionsOnASingleLine: None
 AllowShortBlocksOnASingleLine: Never
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AllowShortLambdasOnASingleLine: None
 AllowShortEnumsOnASingleLine: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+# Project choice; Epic does not prescribe this column limit.
+ColumnLimit: 140
 SortIncludes: Never
 IncludeBlocks: Preserve
+SortUsingDeclarations: Never
+ReflowComments: Never
+FixNamespaceComments: false
 StatementMacros:
+  - UCLASS
+  - USTRUCT
+  - UENUM
+  - UINTERFACE
   - UPROPERTY
   - UFUNCTION
+  - UMETA
   - GENERATED_BODY
   - GENERATED_UCLASS_BODY
   - GENERATED_USTRUCT_BODY
+  - GENERATED_IINTERFACE_BODY
   - DECLARE_LOG_CATEGORY_EXTERN
   - DEFINE_LOG_CATEGORY
-  - IMPLEMENT_SIMPLE_AUTOMATION_TEST
