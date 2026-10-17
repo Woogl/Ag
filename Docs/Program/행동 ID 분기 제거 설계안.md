@@ -574,7 +574,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
   "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust": {
     "Start": [
       {"Task": "MotionWarping", "Start": 0, "End": 0.9, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
-      {"Task": "Dash", "Start": 0.9166667, "End": {"Section": "Hold"}, "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000, "Next": {"Section": "Recover", "BlendTime": 0.1}},
+      {"Task": "Dash", "Start": 0.9166667, "End": {"Section": "Hold"}, "To": "Target", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000, "Next": {"Section": "Recover", "BlendTime": 0.1}},
       {"Task": "Attack", "Start": 0.9166667, "End": {"Section": "Hold"}, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
       {"Task": "SetCollisionResponseToChannel", "Start": 0.9166667, "End": {"Section": "Hold"}, "Channel": "Pawn", "Response": "Ignore"}
     ]
