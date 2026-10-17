@@ -34,7 +34,7 @@ struct FAgResourceCostParams
 
 /*
  * 아래 Params는 행동 처리가 발동 Task 배열과 시간표에서 값을 직접 읽는 설정입니다. 범용 Task와 효과 데이터로 옮기면
- * 없어집니다(구현 계획서 '행동 ID 분기 제거 설계안'의 '구현 순서와 완료 조건' ②단계).
+ * 없어집니다(구현 계획서 '단일 Ability Runner와 독립 기능 Task 설계안'의 '구현 순서와 완료 조건' ②단계).
  */
 
 USTRUCT()

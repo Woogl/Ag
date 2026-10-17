@@ -277,7 +277,7 @@ private:
 	UPROPERTY()
 	TArray<FAgAbilityWindowExecution> Windows;
 
-	/** 재생 중인 몽타주의 시간표(구현 계획서 '행동 ID 분기 제거 설계안'의 '시간표 판정') */
+	/** 재생 중인 몽타주의 시간표(구현 계획서 '단일 Ability Runner와 독립 기능 Task 설계안'의 '시간표 판정') */
 	UPROPERTY()
 	TArray<FAgTimelineEntry> TimelineEntries;
 
