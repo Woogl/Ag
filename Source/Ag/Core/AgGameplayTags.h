@@ -62,7 +62,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_PPDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Boss_RotationLocked);
 
-	// 게임플레이 이벤트. 어빌리티를 발동하거나, 전투 결과나 모션의 시점(몽타주 노티파이)을 알립니다.
+	// 게임플레이 이벤트. 어빌리티를 발동하거나, 전투 결과나 모션의 시점(몽타주 시간표)을 알립니다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockBack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
@@ -79,7 +79,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_DownGrounded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_RecoveryStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ExecutionBlow);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_UltimateSlash);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_UltimateFinish);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_JumpAttackPlunge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);

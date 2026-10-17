@@ -7,6 +7,7 @@
 #include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgMontageTimeline.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
 #include "GameplayTagContainer.h"
@@ -20,6 +21,7 @@
 #include "UObject/UnrealType.h"
 #include "UObject/Package.h"
 #if WITH_EDITOR
+#include "Animation/AnimMontage.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/FileManager.h"
 #endif
@@ -32,6 +34,7 @@ namespace
 	/** 공통 JSON 파일. 캐릭터 JSON은 캐릭터 DataAsset의 JsonFileName이 가리킵니다. */
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
 	const TCHAR* const CameraDataFile = TEXT("Camera.json");
+	const TCHAR* const MontageTimelinesFile = TEXT("MontageTimelines.json");
 
 	/** 파일마다 화면에 띄우는 오류 수. 로그에는 모두 남깁니다. */
 	constexpr int32 MaxErrorsOnScreen = 5;
@@ -296,6 +299,7 @@ UAgAssetManager::UAgAssetManager()
 {
 	CombatRules = CreateDefaultSubobject<UAgCombatRules>(TEXT("CombatRules"));
 	CameraData = CreateDefaultSubobject<UAgCameraData>(TEXT("CameraData"));
+	MontageTimelines = CreateDefaultSubobject<UAgMontageTimelineData>(TEXT("MontageTimelines"));
 }
 
 UAgAssetManager& UAgAssetManager::Get()
@@ -316,6 +320,8 @@ void UAgAssetManager::StartInitialLoading()
 
 	LoadJsonValues(*CombatRules, CombatRulesFile);
 	LoadJsonValues(*CameraData, CameraDataFile);
+	// 캐릭터 데이터를 검증할 때 시간표를 보므로 캐릭터보다 먼저 읽습니다.
+	LoadJsonValues(*MontageTimelines, MontageTimelinesFile);
 }
 
 const UAgCombatRules& UAgAssetManager::GetCombatRules() const
@@ -326,6 +332,11 @@ const UAgCombatRules& UAgAssetManager::GetCombatRules() const
 const UAgCameraData& UAgAssetManager::GetCameraData() const
 {
 	return *CameraData;
+}
+
+const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const
+{
+	return *MontageTimelines;
 }
 
 bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
@@ -420,13 +431,26 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 		}
 	};
 
+	// 어빌리티 목록과 몽타주 시간표는 고정 스키마 파서가 따로 읽습니다.
 	const FProperty* AbilitiesProperty =
 	    Cast<UAgCharacterData>(Candidate) ? FindFProperty<FProperty>(Target.GetClass(), TEXT("Abilities")) : nullptr;
+	const FProperty* TimelinesProperty =
+	    Cast<UAgMontageTimelineData>(Candidate) ? FindFProperty<FProperty>(Target.GetClass(), TEXT("Timelines")) : nullptr;
 	if (Json.IsValid())
 	{
 		if (UAgCharacterData* Character = Cast<UAgCharacterData>(Candidate))
 		{
 			AgAbilityData::Parse(*Json, Character->Abilities, Errors);
+		}
+		if (UAgMontageTimelineData* Timelines = Cast<UAgMontageTimelineData>(Candidate))
+		{
+			AgMontageTimeline::Parse(*Json, Timelines->Timelines, Errors);
+#if WITH_EDITOR
+			if (Errors.IsEmpty())
+			{
+				AgMontageTimeline::ValidateAssets(Timelines->Timelines, Errors);
+			}
+#endif
 		}
 #if WITH_EDITOR
 		FJsonObject OtherFields = *Json;
@@ -435,6 +459,11 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 		{
 			OtherFields.RemoveField(TEXT("Abilities"));
 			OtherProperties.Remove(AbilitiesProperty);
+		}
+		if (TimelinesProperty)
+		{
+			OtherFields = FJsonObject();
+			OtherProperties.Remove(TimelinesProperty);
 		}
 		if (Errors.IsEmpty())
 		{
@@ -446,7 +475,7 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 	{
 		for (const FProperty* Property : Properties)
 		{
-			if (Property != AbilitiesProperty)
+			if (Property != AbilitiesProperty && Property != TimelinesProperty)
 			{
 				ConvertProperty(Property);
 			}
@@ -505,12 +534,14 @@ void UAgAssetManager::ModifyCook(
 	};
 	LoadForCook(*CombatRules, CombatRulesFile);
 	LoadForCook(*CameraData, CameraDataFile);
+	LoadForCook(*MontageTimelines, MontageTimelinesFile);
 
 	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다.
 	IAssetRegistry& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
 	Registry.SearchAllAssets(true);
 	TArray<FAssetData> Assets;
 	Registry.GetAssetsByClass(UAgCharacterData::StaticClass()->GetClassPathName(), Assets, true);
+	TSet<FName> UsedMontages;
 	for (const FAssetData& Asset : Assets)
 	{
 		UAgCharacterData* Data = Cast<UAgCharacterData>(Asset.GetAsset());
@@ -520,6 +551,21 @@ void UAgAssetManager::ModifyCook(
 			continue;
 		}
 		LoadForCook(*Data, Data->JsonFileName);
+		for (const TPair<FName, TObjectPtr<UAnimMontage>>& Pair : Data->Montages)
+		{
+			if (Pair.Value)
+			{
+				UsedMontages.Add(FName(*Pair.Value->GetPathName()));
+			}
+		}
+	}
+	// 시간표는 캐릭터가 재생하는 몽타주에만 둡니다.
+	for (const TPair<FName, FAgMontageTimeline>& Pair : MontageTimelines->Timelines)
+	{
+		if (!UsedMontages.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: no character data plays this montage (%s)"), MontageTimelinesFile, *Pair.Key.ToString());
+		}
 	}
 	// UFS에 포함되지만 로더에 연결되지 않은 파일도 배포하지 않습니다.
 	TArray<FString> Files;

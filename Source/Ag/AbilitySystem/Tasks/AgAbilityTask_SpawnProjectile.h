@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask_SpawnActor.h"
-#include "Animation/AgAnimNotify_SpawnProjectile.h"
+#include "Data/AgMontageTimeline.h"
 #include "Data/AgCharacterData.h"
 #include "AgAbilityTask_SpawnProjectile.generated.h"
 class AAgProjectile;
 
-/** 발사 Notify마다 한 발. 권한 검사와 지연 생성은 엔진 SpawnActor를 사용합니다. */
+/** 시간표의 발사 항목마다 한 발. 권한 검사와 지연 생성은 엔진 SpawnActor를 사용합니다. */
 UCLASS()
 class UAgAbilityTask_SpawnProjectile : public UAbilityTask_SpawnActor
 {

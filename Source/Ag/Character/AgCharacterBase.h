@@ -17,6 +17,7 @@ class UAgCharacterData;
 struct FAgAbilityData;
 class UGameplayAbility;
 class UMotionWarpingComponent;
+class UAgMontageTimelineComponent;
 class UAnimMontage;
 class AAgCharacterBase;
 struct FGameplayAbilitySpec;
@@ -82,6 +83,12 @@ public:
 	UMotionWarpingComponent* GetMotionWarping() const
 	{
 		return MotionWarping;
+	}
+
+	/** 재생 중인 몽타주의 시간표를 판정합니다. */
+	UAgMontageTimelineComponent* GetMontageTimeline() const
+	{
+		return MontageTimeline;
 	}
 
 	/** 블루프린트의 무기 메시 컴포넌트(WeaponTag). 없으면 null입니다. */
@@ -220,6 +227,10 @@ private:
 	/** 공격 중 이동 (Motion Warping) */
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
+
+	/** 몽타주 시간표 판정 */
+	UPROPERTY(VisibleAnywhere, Category = "Animation")
+	TObjectPtr<UAgMontageTimelineComponent> MontageTimeline;
 
 	FActiveGameplayEffectHandle PPRegenDelay;
 

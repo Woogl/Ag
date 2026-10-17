@@ -12,12 +12,10 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Animation/AgMontageTimelineComponent.h"
 #include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Animation/AgAnimNotifyState_AbilityTask.h"
-#include "Animation/AgAnimNotify_SpawnProjectile.h"
-#include "AnimNotifyState_MotionWarping.h"
 #include "AbilitySystemGlobals.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
@@ -25,6 +23,7 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_LockOn.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgMontageTimeline.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Ag.h"
 
@@ -323,8 +322,12 @@ bool UAgGameplayAbility::PlayMotion(FName Id, bool bPlayerAction, float Rate, FN
 		return false;
 	}
 	const int32 InstanceId = Instance->GetInstanceID();
-	BindMontageInstance(*Anim, *Instance);
-	InitializeNotifyStates(*Anim, *Instance);
+	BindMontageInstance(*Instance);
+	if (OwnsMontage(InstanceId))
+	{
+		// 시작 위치에 걸친 구간과 그 위치의 지점은 여기서 바로 실행합니다. 이 알림에서 재생 자체가 끝날 수 있습니다.
+		GetAgCharacter()->GetMontageTimeline()->BeginPlayback(InstanceId);
+	}
 	if (OwnsMontage(InstanceId) && !Anim->GetMontageInstanceForID(InstanceId))
 	{
 		Finish(true);
@@ -332,52 +335,30 @@ bool UAgGameplayAbility::PlayMotion(FName Id, bool bPlayerAction, float Rate, FN
 	return MotionTask == StartedTask && OwnsMontage(InstanceId);
 }
 
-void UAgGameplayAbility::BindMontageInstance(UAnimInstance& Anim, const FAnimMontageInstance& Instance)
+void UAgGameplayAbility::JumpToMotionSection(FName Section)
+{
+	MontageJumpToSection(Section);
+	if (IsActive() && !bEnding && Motion.InstanceId != INDEX_NONE)
+	{
+		GetAgCharacter()->GetMontageTimeline()->Resync(Motion.InstanceId);
+	}
+}
+
+void UAgGameplayAbility::BindMontageInstance(const FAnimMontageInstance& Instance)
 {
 	if (IsActive() && Motion.Montage == Instance.Montage)
 	{
 		Motion.InstanceId = Instance.GetInstanceID();
-		Motion.AnimInstance = &Anim;
-		Anim.OnPlayMontageNotifyBegin.AddDynamic(this, &ThisClass::HandleMontageNotifyBegin);
-		Anim.OnPlayMontageNotifyEnd.AddDynamic(this, &ThisClass::HandleMontageNotifyEnd);
-		Motion.bControlsFacing = Instance.Montage->Notifies.ContainsByPredicate(
-		    [](const FAnimNotifyEvent& Notify)
-		    {
-			    const UAgAnimNotifyState_AbilityTask* Task = Cast<UAgAnimNotifyState_AbilityTask>(Notify.NotifyStateClass);
-			    const UAnimNotifyState_MotionWarping* Warp = Cast<UAnimNotifyState_MotionWarping>(Notify.NotifyStateClass);
-			    return (Task && Task->Task == TEXT("Attack")) || Cast<UAgAnimNotify_SpawnProjectile>(Notify.Notify) ||
-			           (Warp && Cast<UAgRootMotionModifier_MotionWarping>(Warp->RootMotionModifier));
-		    });
+		Motion.TimelineHandle = GetAgCharacter()->GetMontageTimeline()->OnTimelineEvent.AddUObject(this, &ThisClass::HandleTimelineEvent);
+		// 공격, 발사, 워핑이 있는 모션은 회전을 직접 정합니다.
+		const FAgMontageTimeline* Timeline = UAgMontageTimelineComponent::FindTimeline(*Instance.Montage);
+		Motion.bControlsFacing =
+		    Timeline && (!Timeline->Attack.IsEmpty() || !Timeline->SpawnProjectile.IsEmpty() || !Timeline->MotionWarping.IsEmpty());
 		if (Motion.bControlsFacing)
 		{
 			Motion.Target = GetAgCharacter()->FindAttackTarget();
 		}
 		UpdateMotionConstraints();
-	}
-}
-
-void UAgGameplayAbility::InitializeNotifyStates(UAnimInstance& Anim, FAnimMontageInstance& Instance)
-{
-	const int32 InstanceId = Instance.GetInstanceID();
-	const float Position = Instance.GetPosition();
-	UAnimMontage* Montage = Instance.Montage;
-	// 이 콜백에서 재생 자체가 폐기될 수 있으므로 이후에는 원래 Instance 참조를 읽지 않습니다.
-	Instance.HandleEvents(Position, Position, nullptr);
-	for (int32 Index : Montage->BranchingPointStateNotifyIndices)
-	{
-		if (!OwnsMontage(InstanceId) || !Anim.GetMontageInstanceForID(InstanceId))
-		{
-			break;
-		}
-		const FAnimNotifyEvent& Event = Montage->Notifies[Index];
-		if (Event.GetTime() == Position)
-		{
-			if (const UAgAnimNotifyState_AbilityTask* Notify = Cast<UAgAnimNotifyState_AbilityTask>(Event.NotifyStateClass))
-			{
-				// OffsetAfter로 첫 Advance까지 미뤄지는 시작 경계만 보완합니다. 이후 Begin은 실행 키로 중복 제거합니다.
-				BeginNotifyTask(InstanceId, Index, Notify->Task, Notify->ParamsId);
-			}
-		}
 	}
 }
 
@@ -414,14 +395,10 @@ void UAgGameplayAbility::EndWindows()
 void UAgGameplayAbility::ClearMotion(bool bStop)
 {
 	const FAgAbilityMontageExecution Previous = Motion;
-	if (UAnimInstance* Anim = Previous.AnimInstance.Get())
-	{
-		Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &ThisClass::HandleMontageNotifyBegin);
-		Anim->OnPlayMontageNotifyEnd.RemoveDynamic(this, &ThisClass::HandleMontageNotifyEnd);
-	}
 	Motion = {};
 	if (AAgCharacterBase* Character = GetAgCharacter())
 	{
+		Character->GetMontageTimeline()->OnTimelineEvent.Remove(Previous.TimelineHandle);
 		Character->ClearMotionConstraints(*this);
 	}
 	UAbilityTask_PlayMontageAndWait* PreviousTask = MotionTask.Get();

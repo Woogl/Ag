@@ -1,0 +1,223 @@
+{
+  "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust": {
+    "Attack": [
+      {"Start": 0.9166667, "End": 1.8, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
+    ],
+    "SetCollisionResponseToChannel": [
+      {"Start": 0.9166667, "End": 1.8, "Channel": "Pawn", "Response": "Ignore"}
+    ],
+    "Dash": [
+      {"Start": 0.9166667, "End": 1.8, "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.9, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 1.0366666, "Event": "Event.Boss.DashHold"}
+    ]
+  },
+  "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike": {
+    "Attack": [
+      {"Start": 0.43, "End": 0.52, "DamageMultiplier": 1, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Start": 1.47, "End": 1.57, "DamageMultiplier": 1.4, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.386, "TargetingRange": null, "MaxWarpDistance": 110, "RotationMethod": "ConstantRate"},
+      {"Start": 0.52, "End": 1.42, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+    ]
+  },
+  "/Game/Animations/AM_Boss_JumpSlam.AM_Boss_JumpSlam": {
+    "Attack": [
+      {"Start": 0.533, "End": 0.613, "DamageMultiplier": 1.6, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.4, "TargetingRange": null, "MaxWarpDistance": 850, "RotationMethod": "ConstantRate"}
+    ]
+  },
+  "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack": {
+    "GameplayEvent": [
+      {"Time": 0.1, "Event": "Event.DownGrounded"}
+    ]
+  },
+  "/Game/Animations/AM_Boss_LeapSlam.AM_Boss_LeapSlam": {
+    "MotionWarping": [
+      {"Start": 0, "End": 0.15, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+    ]
+  },
+  "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike": {
+    "Attack": [
+      {"Start": 0.6067, "End": 0.6867, "DamageMultiplier": 0.7, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Start": 1.2266, "End": 1.3166001, "DamageMultiplier": 0.7, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Start": 1.87, "End": 1.97, "DamageMultiplier": 0.7, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Start": 2.51, "End": 2.58, "DamageMultiplier": 0.7, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Start": 3.1966, "End": 3.3966, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": false, "MPCharge": 0, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.35665, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Start": 0.93665, "End": 1.15575, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Start": 1.31665, "End": 1.81997, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Start": 2.12998, "End": 2.45408, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Start": 2.94665, "End": 3.13414, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+    ]
+  },
+  "/Game/Animations/AM_Boss_Sweep.AM_Boss_Sweep": {
+    "Attack": [
+      {"Start": 0.46, "End": 0.62, "DamageMultiplier": 1.5, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.37, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+    ]
+  },
+  "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave": {
+    "MotionWarping": [
+      {"Start": 0, "End": 0.65, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Start": 0.88, "End": 1.13, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Start": 1.51, "End": 1.66, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+    ],
+    "SpawnProjectile": [
+      {"Time": 0.75, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward", "Attack": {"DamageMultiplier": 1.2, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}},
+      {"Time": 1.38, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward", "Attack": {"DamageMultiplier": 1.2, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}},
+      {"Time": 1.79, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward", "Attack": {"DamageMultiplier": 1.2, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}}
+    ]
+  },
+  "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall": {
+    "GameplayEvent": [
+      {"Time": 1.0833334, "Event": "Event.DownGrounded"}
+    ]
+  },
+  "/Game/Animations/AM_Player_Backstep.AM_Player_Backstep": {
+    "HoldTag": [
+      {"Start": 0, "End": 0.15, "Tag": "State.PerfectDodgeWindow"},
+      {"Start": 0, "End": 0.3, "Tag": "State.Invincible"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.4, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_BasicAttack1.AM_Player_BasicAttack1": {
+    "Attack": [
+      {"Start": 0.27, "End": 0.3, "DamageMultiplier": 0.8, "PoiseMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.22, "TargetingRange": 200, "MaxWarpDistance": 110, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.3, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_BasicAttack2.AM_Player_BasicAttack2": {
+    "Attack": [
+      {"Start": 0.28, "End": 0.32, "DamageMultiplier": 0.8, "PoiseMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.23, "TargetingRange": 250, "MaxWarpDistance": 160, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.32, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_BasicAttack3.AM_Player_BasicAttack3": {
+    "Attack": [
+      {"Start": 0.25, "End": 0.3, "DamageMultiplier": 1, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.2, "TargetingRange": 250, "MaxWarpDistance": 160, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.3, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_BasicAttack4.AM_Player_BasicAttack4": {
+    "Attack": [
+      {"Start": 0.27, "End": 0.33, "DamageMultiplier": 1, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.22, "TargetingRange": 260, "MaxWarpDistance": 170, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.33, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_BasicAttack5.AM_Player_BasicAttack5": {
+    "Attack": [
+      {"Start": 0.3, "End": 0.35000002, "DamageMultiplier": 1.2, "PoiseMultiplier": 2, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 10}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.25, "TargetingRange": 260, "MaxWarpDistance": 170, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.9166667, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter": {
+    "Attack": [
+      {"Start": 0.15, "End": 0.23, "DamageMultiplier": 2.5, "PoiseMultiplier": 5, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 8, "UPCharge": 0}
+    ],
+    "HoldTag": [
+      {"Start": 0, "End": 0.23, "Tag": "State.Invincible"}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.1, "TargetingRange": 850, "MaxWarpDistance": 750, "RotationMethod": "Slerp"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.23, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_Execute.AM_Player_Execute": {
+    "MotionWarping": [
+      {"Start": 0.0001, "End": 0.3333333, "TargetingRange": null, "MaxWarpDistance": null, "RotationMethod": "Slerp"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.33333334, "Event": "Event.ExecutionBlow"},
+      {"Time": 0.8, "Event": "Event.ExecutionBlow"}
+    ]
+  },
+  "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack": {
+    "Attack": [
+      {"Start": 0.23, "End": 1.35, "DamageMultiplier": 1.5, "PoiseMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.18, "TargetingRange": 300, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.3, "Event": "Event.JumpAttackPlunge"},
+      {"Time": 1.65, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack": {
+    "GameplayEvent": [
+      {"Time": 0.1, "Event": "Event.DownGrounded"}
+    ]
+  },
+  "/Game/Animations/AM_Player_Parry.AM_Player_Parry": {
+    "GameplayEvent": [
+      {"Time": 0.25, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_Roll.AM_Player_Roll": {
+    "HoldTag": [
+      {"Start": 0, "End": 0.15, "Tag": "State.PerfectDodgeWindow"},
+      {"Start": 0, "End": 0.3, "Tag": "State.Invincible"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.6, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_Skill.AM_Player_Skill": {
+    "Attack": [
+      {"Start": 0.4333, "End": 0.4833, "DamageMultiplier": 3, "PoiseMultiplier": 6, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 25}
+    ],
+    "MotionWarping": [
+      {"Start": 0, "End": 0.3833, "TargetingRange": 340, "MaxWarpDistance": 240, "RotationMethod": "ConstantRate"}
+    ],
+    "GameplayEvent": [
+      {"Time": 0.4833, "Event": "Event.RecoveryStarted"}
+    ]
+  },
+  "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate": {
+    "GameplayEvent": [
+      {"Time": 3.8665667, "Event": "Event.RecoveryStarted"},
+      {"Time": 3.8666666, "Event": "Event.UltimateFinish"}
+    ]
+  }
+}

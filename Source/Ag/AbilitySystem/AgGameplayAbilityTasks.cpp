@@ -4,11 +4,8 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_SetCollisionResponseToChannel.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
-#include "Animation/AgAnimNotify_SpawnProjectile.h"
-#include "Animation/AgAnimNotify_GameplayEvent.h"
-#include "Animation/AgAnimNotifyState_AbilityTask.h"
+#include "Animation/AgMontageTimelineComponent.h"
 #include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -16,68 +13,83 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgMontageTimeline.h"
 #include "Ag.h"
 
-bool UAgGameplayAbility::IsCurrentMontageNotify(const FBranchingPointNotifyPayload& Payload) const
+namespace
 {
-	UAnimInstance* Anim = Motion.AnimInstance.Get();
-	const AAgCharacterBase* Character = GetAgCharacter();
-	return !bEnding && OwnsMontage(Payload.MontageInstanceID) && Anim && Character && Payload.SkelMeshComponent == Character->GetMesh() &&
-	       Payload.SkelMeshComponent->GetAnimInstance() == Anim && Payload.SequenceAsset == Motion.Montage && Payload.NotifyEvent &&
-	       Anim->GetMontageInstanceForID(Payload.MontageInstanceID);
+	/** 시간표 구간의 실행 키: 기능과 그 기능 배열의 번호 */
+	int32 TimelineKey(const FAgTimelineEvent& Event)
+	{
+		return static_cast<int32>(Event.Feature) * 1000 + Event.Index;
+	}
 }
 
-void UAgGameplayAbility::HandleMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
+void UAgGameplayAbility::HandleTimelineEvent(const FAgTimelineEvent& Event)
 {
-	if (!IsCurrentMontageNotify(Payload))
+	if (!OwnsMontage(Event.InstanceId) || bEnding || !Event.Timeline)
 	{
 		return;
 	}
-	const FAnimNotifyEvent& Event = *Payload.NotifyEvent;
-	if (const UAgAnimNotifyState_AbilityTask* Notify = Cast<UAgAnimNotifyState_AbilityTask>(Event.NotifyStateClass))
+	const FAgMontageTimeline& Timeline = *Event.Timeline;
+	const int32 Key = TimelineKey(Event);
+	if (Event.Phase == EAgTimelinePhase::End)
 	{
-		const int32 Index = Motion.Montage->Notifies.IndexOfByKey(Event);
-		BeginNotifyTask(Payload.MontageInstanceID, Index, Notify->Task, Notify->ParamsId);
-	}
-	else if (const UAgAnimNotify_GameplayEvent* GameplayEvent = Cast<UAgAnimNotify_GameplayEvent>(Event.Notify))
-	{
-		HandleMontageEvent(Payload.MontageInstanceID, GameplayEvent->EventTag);
-	}
-	else if (const UAgAnimNotify_SpawnProjectile* Projectile = Cast<UAgAnimNotify_SpawnProjectile>(Event.Notify))
-	{
-		SpawnProjectile(Payload.MontageInstanceID, *Projectile);
-	}
-}
-
-void UAgGameplayAbility::HandleMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& Payload)
-{
-	if (IsCurrentMontageNotify(Payload) && Cast<UAgAnimNotifyState_AbilityTask>(Payload.NotifyEvent->NotifyStateClass))
-	{
-		// 엔진의 End payload는 활성 구간의 복사본일 수 있으므로 배열 주소로 인덱스를 계산하지 않습니다.
-		const int32 Index = Motion.Montage->Notifies.IndexOfByKey(*Payload.NotifyEvent);
-		EndNotifyTask(Payload.MontageInstanceID, Index);
-	}
-}
-
-void UAgGameplayAbility::BeginNotifyTask(int32 InstanceId, int32 NotifyIndex, FName Function, FName ParamsId)
-{
-	if (!OwnsMontage(InstanceId) || bEnding || NotifyIndex == INDEX_NONE)
-	{
+		EndWindowTask(Event.InstanceId, Key);
 		return;
 	}
+	switch (Event.Feature)
+	{
+	case EAgTimelineFeature::Attack:
+		StartWindowTask(Event.InstanceId, Key, TEXT("Attack"),
+		    [&]() -> UAbilityTask*
+		    {
+			    return UAgAbilityTask_Attack::Sweep(this, Timeline.Attack[Event.Index]);
+		    });
+		break;
+	case EAgTimelineFeature::HoldTag:
+		StartWindowTask(Event.InstanceId, Key, TEXT("HoldTag"),
+		    [&]() -> UAbilityTask*
+		    {
+			    return UAgAbilityTask_HoldTag::HoldTag(this, Timeline.HoldTag[Event.Index].Tag);
+		    });
+		break;
+	case EAgTimelineFeature::SetCollisionResponseToChannel:
+		StartWindowTask(Event.InstanceId, Key, TEXT("SetCollisionResponseToChannel"),
+		    [&]() -> UAbilityTask*
+		    {
+			    const FAgTimelineCollisionResponse& Params = Timeline.SetCollisionResponseToChannel[Event.Index];
+			    return UAgAbilityTask_SetCollisionResponseToChannel::SetCollisionResponseToChannel(
+			        this, GetAgCharacter()->GetCapsuleComponent(), Params.Channel, Params.Response);
+		    });
+		break;
+	case EAgTimelineFeature::Dash:
+		StartWindowTask(Event.InstanceId, Key, TEXT("Dash"),
+		    [&]() -> UAbilityTask*
+		    {
+			    return MakeDashTask(Timeline.Dash[Event.Index], Event.InstanceId, Key);
+		    });
+		break;
+	case EAgTimelineFeature::GameplayEvent:
+		HandleMontageEvent(Event.InstanceId, Timeline.GameplayEvent[Event.Index].Event);
+		break;
+	case EAgTimelineFeature::SpawnProjectile:
+	{
+		const FAgTimelineSpawnProjectile& Shot = Timeline.SpawnProjectile[Event.Index];
+		LaunchProjectile(Event.InstanceId, Shot.ProjectileId, Shot.Attack, Shot.Origin, Shot.SocketName);
+		break;
+	}
+	}
+}
+
+void UAgGameplayAbility::StartWindowTask(int32 InstanceId, int32 Key, FName Function, TFunctionRef<UAbilityTask*()> MakeTask)
+{
 	if (Windows.ContainsByPredicate(
 	        [=](const FAgAbilityWindowExecution& E)
 	        {
-		        return E.MontageInstanceId == InstanceId && E.NotifyIndex == NotifyIndex;
+		        return E.MontageInstanceId == InstanceId && E.TimelineKey == Key;
 	        }))
 	{
-		return;
-	}
-	FString Error;
-	if (!ExecutionDefinition.ValidateTaskReference(Function, ParamsId, Error))
-	{
-		UE_LOG(LogAg, Error, TEXT("%s %s (play %d notify %d)"), *GetAgCharacter()->GetCharacterData()->JsonFileName, *Error, InstanceId,
-		    NotifyIndex);
 		return;
 	}
 	if (GetAbilityId() == TEXT("DashThrust") && bDashFinished &&
@@ -85,43 +97,7 @@ void UAgGameplayAbility::BeginNotifyTask(int32 InstanceId, int32 NotifyIndex, FN
 	{
 		return;
 	}
-	const FAgAbilityTasks& Tasks = ExecutionDefinition.Tasks;
-	UAbilityTask* Task = nullptr;
-	if (Function == TEXT("Attack"))
-	{
-		Task = UAgAbilityTask_Attack::Sweep(this, Tasks.Attack.FindChecked(ParamsId));
-	}
-	else if (Function == TEXT("HoldTag"))
-	{
-		Task = UAgAbilityTask_HoldTag::HoldTag(this, Tasks.HoldTag.FindChecked(ParamsId).Tag);
-	}
-	else if (Function == TEXT("SetCollisionResponseToChannel"))
-	{
-		const FAgCollisionResponseParams& Params = Tasks.SetCollisionResponseToChannel.FindChecked(ParamsId);
-		Task = UAgAbilityTask_SetCollisionResponseToChannel::SetCollisionResponseToChannel(
-		    this, GetAgCharacter()->GetCapsuleComponent(), Params.Channel, Params.Response);
-	}
-	else if (Function == TEXT("TimeStop"))
-	{
-		Task = UAgAbilityTask_TimeStop::TimeStop(this);
-	}
-	else if (Function == TEXT("Dash"))
-	{
-		AActor* Target = GetAgCharacter()->FindAttackTarget();
-		if (!Target)
-		{
-			UE_LOG(LogAg, Error, TEXT("%s Abilities.%s.Tasks.Dash: missing target input (play %d notify %d)"),
-			    *GetAgCharacter()->GetCharacterData()->JsonFileName, *GetAbilityId().ToString(), InstanceId, NotifyIndex);
-			return;
-		}
-		DashTask =
-		    UAgAbilityTask_Dash::Dash(this, Tasks.Dash, GetAgCharacter()->GetActorForwardVector(), Target->GetActorLocation(), Target);
-		if (GetAbilityId() == TEXT("DashThrust"))
-		{
-			DashTask->OnFinished.AddDynamic(this, &ThisClass::HandleDashFinished);
-		}
-		Task = DashTask;
-	}
+	UAbilityTask* Task = MakeTask();
 	if (!Task)
 	{
 		return;
@@ -130,16 +106,33 @@ void UAgGameplayAbility::BeginNotifyTask(int32 InstanceId, int32 NotifyIndex, FN
 	Execution.Task = Task;
 	Execution.Function = Function;
 	Execution.MontageInstanceId = InstanceId;
-	Execution.NotifyIndex = NotifyIndex;
+	Execution.TimelineKey = Key;
 	Task->ReadyForActivation();
 }
 
-void UAgGameplayAbility::EndNotifyTask(int32 InstanceId, int32 NotifyIndex)
+UAbilityTask* UAgGameplayAbility::MakeDashTask(const FAgDashParams& Params, int32 InstanceId, int32 Key)
+{
+	AActor* Target = GetAgCharacter()->FindAttackTarget();
+	if (!Target)
+	{
+		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s Dash: missing target input (play %d window %d)"),
+		    *GetAgCharacter()->GetCharacterData()->JsonFileName, *GetAbilityId().ToString(), InstanceId, Key);
+		return nullptr;
+	}
+	DashTask = UAgAbilityTask_Dash::Dash(this, Params, GetAgCharacter()->GetActorForwardVector(), Target->GetActorLocation(), Target);
+	if (GetAbilityId() == TEXT("DashThrust"))
+	{
+		DashTask->OnFinished.AddDynamic(this, &ThisClass::HandleDashFinished);
+	}
+	return DashTask;
+}
+
+void UAgGameplayAbility::EndWindowTask(int32 InstanceId, int32 Key)
 {
 	const int32 Index = Windows.IndexOfByPredicate(
 	    [=](const FAgAbilityWindowExecution& E)
 	    {
-		    return E.MontageInstanceId == InstanceId && E.NotifyIndex == NotifyIndex;
+		    return E.MontageInstanceId == InstanceId && E.TimelineKey == Key;
 	    });
 	if (Index == INDEX_NONE)
 	{
@@ -186,38 +179,26 @@ void UAgGameplayAbility::HandleDashFinished()
 	}
 }
 
-void UAgGameplayAbility::SpawnProjectile(int32 InstanceId, const UAgAnimNotify_SpawnProjectile& Notify)
+void UAgGameplayAbility::LaunchProjectile(
+    int32 InstanceId, FName ProjectileId, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName)
 {
-	if (!OwnsMontage(InstanceId) || bEnding)
+	const FAgProjectileDefinition* Projectile = ExecutionProjectiles.Find(ProjectileId);
+	if (!Projectile)
 	{
+		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s: projectile %s missing in Projectiles (play %d)"),
+		    *GetAgCharacter()->GetCharacterData()->JsonFileName, *GetAbilityId().ToString(), *ProjectileId.ToString(), InstanceId);
 		return;
 	}
-	const FAgSpawnProjectileParams* Params = ExecutionDefinition.Tasks.SpawnProjectile.Find(Notify.ParamsId);
-	const FAgAttackParams* Hit = Params ? ExecutionDefinition.Tasks.Attack.Find(Params->AttackParamsId) : nullptr;
-	const FAgProjectileDefinition* Projectile = Params ? ExecutionProjectiles.Find(Params->ProjectileId) : nullptr;
-	if (!Params || !Hit || !Projectile)
-	{
-		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s.Tasks.SpawnProjectile.%s: unresolved references (play %d)"),
-		    *GetAgCharacter()->GetCharacterData()->JsonFileName, *GetAbilityId().ToString(), *Notify.ParamsId.ToString(), InstanceId);
-		return;
-	}
-	UAgAbilityTask_SpawnProjectile::SpawnProjectile(this, InstanceId, *Projectile, *Hit, Notify.Origin, Notify.SocketName)
-	    ->ReadyForActivation();
+	UAgAbilityTask_SpawnProjectile::SpawnProjectile(this, InstanceId, *Projectile, Attack, Origin, SocketName)->ReadyForActivation();
 }
 
-bool UAgGameplayAbility::PrepareWarp(
-    int32 InstanceId, float WindowStart, FName ParamsId, FAgMotionWarpingParams& Params, AActor*& Target, float& Gap, bool& bFacingOnly)
+bool UAgGameplayAbility::PrepareWarpTarget(
+    int32 InstanceId, float WindowStart, const FAgMotionWarpingParams& Params, AActor*& Target, float& Gap, bool& bFacingOnly)
 {
 	if (!OwnsMontage(InstanceId) || bEnding)
 	{
 		return false;
 	}
-	const FAgMotionWarpingParams* Found = ExecutionDefinition.Tasks.MotionWarping.Find(ParamsId);
-	if (!Found)
-	{
-		return false;
-	}
-	Params = *Found;
 	bFacingOnly = false;
 	AAgCharacterBase* Character = GetAgCharacter();
 	if (GetAbilityId() == TEXT("Execution"))

@@ -41,30 +41,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "DoubleStrike"
-        },
-        "Attack": {
-          "Hit1": {
-            "DamageMultiplier": 1,
-            "PoiseMultiplier": 1,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          },
-          "Hit2": {
-            "DamageMultiplier": 1.4,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockBack",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          }
-        },
-        "MotionWarping": {
-          "Tracking": {
-            "TargetingRange": null,
-            "MaxWarpDistance": 110
-          }
         }
       },
       "PatternSelection": {
@@ -104,22 +80,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "Sweep"
-        },
-        "Attack": {
-          "Hit1": {
-            "DamageMultiplier": 1.5,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockUp",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          }
-        },
-        "MotionWarping": {
-          "Facing": {
-            "TargetingRange": null,
-            "MaxWarpDistance": 0
-          }
         }
       },
       "PatternSelection": {
@@ -159,34 +119,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "DashThrust"
-        },
-        "Attack": {
-          "ThrustHit": {
-            "DamageMultiplier": 2,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockUp",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          }
-        },
-        "MotionWarping": {
-          "Facing": {
-            "TargetingRange": null,
-            "MaxWarpDistance": 0
-          }
-        },
-        "Dash": {
-          "Speed": 2000,
-          "HomingTurnRate": 90,
-          "Overshoot": 200,
-          "MaxDistance": 2000
-        },
-        "SetCollisionResponseToChannel": {
-          "PassThroughPawn": {
-            "Channel": "Pawn",
-            "Response": "Ignore"
-          }
         }
       },
       "PatternSelection": {
@@ -237,12 +169,6 @@
             "UPCharge": 0
           }
         },
-        "MotionWarping": {
-          "Facing": {
-            "TargetingRange": null,
-            "MaxWarpDistance": 0
-          }
-        },
         "LaunchToTarget": {
           "AirTime": 1.35,
           "TargetOffset": 150,
@@ -290,54 +216,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "QuintupleStrike"
-        },
-        "Attack": {
-          "Hit1": {
-            "DamageMultiplier": 0.7,
-            "PoiseMultiplier": 1,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          },
-          "Hit2": {
-            "DamageMultiplier": 0.7,
-            "PoiseMultiplier": 1,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          },
-          "Hit3": {
-            "DamageMultiplier": 0.7,
-            "PoiseMultiplier": 1,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          },
-          "Hit4": {
-            "DamageMultiplier": 0.7,
-            "PoiseMultiplier": 1,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          },
-          "Hit5": {
-            "DamageMultiplier": 2,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockUp",
-            "bGuardable": false,
-            "MPCharge": 0,
-            "UPCharge": 0
-          }
-        },
-        "MotionWarping": {
-          "Facing": {
-            "TargetingRange": null,
-            "MaxWarpDistance": 0
-          }
         }
       },
       "PatternSelection": {
@@ -376,28 +254,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "SwordWave"
-        },
-        "Attack": {
-          "WaveHit": {
-            "DamageMultiplier": 1.2,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockBack",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          }
-        },
-        "SpawnProjectile": {
-          "FireWave": {
-            "ProjectileId": "SwordWave",
-            "AttackParamsId": "WaveHit"
-          }
-        },
-        "MotionWarping": {
-          "Facing": {
-            "TargetingRange": null,
-            "MaxWarpDistance": 0
-          }
         }
       },
       "PatternSelection": {
@@ -436,22 +292,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "JumpSlam"
-        },
-        "Attack": {
-          "Hit1": {
-            "DamageMultiplier": 1.6,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockBack",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 0
-          }
-        },
-        "MotionWarping": {
-          "Tracking": {
-            "TargetingRange": null,
-            "MaxWarpDistance": 850
-          }
         }
       },
       "PatternSelection": {

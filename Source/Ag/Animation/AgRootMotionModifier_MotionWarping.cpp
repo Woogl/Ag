@@ -10,6 +10,21 @@
 #include "MotionWarpingComponent.h"
 #include "Ag.h"
 
+UAgRootMotionModifier_MotionWarping::UAgRootMotionModifier_MotionWarping(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	// 엔진 기본값 외에 워핑 항목이 모두 함께 쓰는 설정입니다.
+	WarpTargetName = TEXT("AttackTarget");
+}
+
+void UAgRootMotionModifier_MotionWarping::SetTimelineSettings(
+    const FAgMotionWarpingParams& InParams, EMotionWarpRotationMethod InRotationMethod)
+{
+	Params = InParams;
+	RotationMethod = InRotationMethod;
+	bWarpTranslation = !(Params.bHasMaxWarpDistance && Params.MaxWarpDistance <= 0.f);
+}
+
 void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateContext& Context)
 {
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetActorOwner());
@@ -26,10 +41,10 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		const FAnimMontageInstance* Instance = RootInstance && RootInstance->Montage == Animation.Get() ? RootInstance : nullptr;
 		UAgGameplayAbility* Owner = Cast<UAgGameplayAbility>(Character->GetAbilitySystemComponent()->GetAnimatingAbility());
 		AActor* Selected = nullptr;
-		if (!Owner || !Instance || !Owner->PrepareWarp(Instance->GetInstanceID(), StartTime, ParamsId, Params, Selected, Gap, bFacingOnly))
+		if (!Owner || !Instance || !Owner->PrepareWarpTarget(Instance->GetInstanceID(), StartTime, Params, Selected, Gap, bFacingOnly))
 		{
-			UE_LOG(LogAg, Error, TEXT("MotionWarping.%s: missing playback owner or Params (animation %s, window %.3f..%.3f)"),
-			    *ParamsId.ToString(), *GetNameSafe(Animation.Get()), StartTime, EndTime);
+			UE_LOG(LogAg, Error, TEXT("MotionWarping: missing playback owner (animation %s, window %.3f..%.3f)"),
+			    *GetNameSafe(Animation.Get()), StartTime, EndTime);
 			SetState(ERootMotionModifierState::Disabled);
 			return;
 		}

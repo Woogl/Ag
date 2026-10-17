@@ -41,72 +41,7 @@
         "bAllowRetrigger": false
       },
       "Cost": null,
-      "Tasks": {
-        "Attack": {
-          "Hit1": {
-            "DamageMultiplier": 0.8,
-            "PoiseMultiplier": 0.8,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 4,
-            "UPCharge": 0
-          },
-          "Hit2": {
-            "DamageMultiplier": 0.8,
-            "PoiseMultiplier": 0.8,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 4,
-            "UPCharge": 0
-          },
-          "Hit3": {
-            "DamageMultiplier": 1,
-            "PoiseMultiplier": 1,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 4,
-            "UPCharge": 0
-          },
-          "Hit4": {
-            "DamageMultiplier": 1,
-            "PoiseMultiplier": 1,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 4,
-            "UPCharge": 0
-          },
-          "Hit5": {
-            "DamageMultiplier": 1.2,
-            "PoiseMultiplier": 2,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 4,
-            "UPCharge": 10
-          }
-        },
-        "MotionWarping": {
-          "Approach1": {
-            "TargetingRange": 200,
-            "MaxWarpDistance": 110
-          },
-          "Approach2": {
-            "TargetingRange": 250,
-            "MaxWarpDistance": 160
-          },
-          "Approach3": {
-            "TargetingRange": 250,
-            "MaxWarpDistance": 160
-          },
-          "Approach4": {
-            "TargetingRange": 260,
-            "MaxWarpDistance": 170
-          },
-          "Approach5": {
-            "TargetingRange": 260,
-            "MaxWarpDistance": 170
-          }
-        }
-      }
+      "Tasks": {}
     },
     {
       "Id": "Jump",
@@ -166,22 +101,6 @@
         "PlayMontageAndWait": {
           "MontageId": "JumpAttack"
         },
-        "Attack": {
-          "PlungeHit": {
-            "DamageMultiplier": 1.5,
-            "PoiseMultiplier": 1.5,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 4,
-            "UPCharge": 0
-          }
-        },
-        "MotionWarping": {
-          "Facing": {
-            "TargetingRange": 300,
-            "MaxWarpDistance": 0
-          }
-        },
         "LaunchVertical": {
           "VelocityZ": -1000
         }
@@ -216,14 +135,6 @@
         "Amount": 20
       },
       "Tasks": {
-        "HoldTag": {
-          "Invincible": {
-            "Tag": "State.Invincible"
-          },
-          "PerfectDodgeWindow": {
-            "Tag": "State.PerfectDodgeWindow"
-          }
-        },
         "GrantResources": {
           "PerfectDodge": {
             "SP": 0,
@@ -275,27 +186,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "DodgeCounter"
-        },
-        "Attack": {
-          "CounterHit": {
-            "DamageMultiplier": 2.5,
-            "PoiseMultiplier": 5,
-            "HitReaction": "Flinch",
-            "bGuardable": true,
-            "MPCharge": 8,
-            "UPCharge": 0
-          }
-        },
-        "MotionWarping": {
-          "Approach": {
-            "TargetingRange": 850,
-            "MaxWarpDistance": 750
-          }
-        },
-        "HoldTag": {
-          "Invincible": {
-            "Tag": "State.Invincible"
-          }
         }
       }
     },
@@ -378,22 +268,6 @@
       "Tasks": {
         "PlayMontageAndWait": {
           "MontageId": "Skill"
-        },
-        "Attack": {
-          "SkillHit": {
-            "DamageMultiplier": 3,
-            "PoiseMultiplier": 6,
-            "HitReaction": "KnockBack",
-            "bGuardable": true,
-            "MPCharge": 0,
-            "UPCharge": 25
-          }
-        },
-        "MotionWarping": {
-          "Approach": {
-            "TargetingRange": 340,
-            "MaxWarpDistance": 240
-          }
         }
       }
     },
@@ -489,12 +363,6 @@
         "TargetQuery": {
           "Execution": {
             "Range": 300
-          }
-        },
-        "MotionWarping": {
-          "Alignment": {
-            "TargetingRange": null,
-            "MaxWarpDistance": null
           }
         },
         "Attack": {

@@ -213,18 +213,6 @@ struct FAgPlayCutsceneParams
 	TObjectPtr<ULevelSequence> Sequence;
 };
 
-USTRUCT()
-struct FAgSpawnProjectileParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName ProjectileId;
-
-	UPROPERTY()
-	FName AttackParamsId;
-};
-
 /** 설정 유무는 값과 별개로 유지합니다. 맵은 검증된 비어 있지 않은 블록만 존재합니다. */
 USTRUCT()
 struct FAgAbilityTasks
@@ -244,9 +232,6 @@ struct FAgAbilityTasks
 	FAgLaunchToTargetParams LaunchToTarget;
 
 	UPROPERTY()
-	FAgDashParams Dash;
-
-	UPROPERTY()
 	TMap<FName, FAgTimedTagParams> TimedTag;
 
 	UPROPERTY()
@@ -259,9 +244,6 @@ struct FAgAbilityTasks
 	TMap<FName, FAgTargetQueryParams> TargetQuery;
 
 	UPROPERTY()
-	TMap<FName, FAgMotionWarpingParams> MotionWarping;
-
-	UPROPERTY()
 	TMap<FName, FAgAttackParams> Attack;
 
 	UPROPERTY()
@@ -272,14 +254,10 @@ struct FAgAbilityTasks
 
 	UPROPERTY()
 	TMap<FName, FAgPlayCutsceneParams> PlayCutscene;
-
-	UPROPERTY()
-	TMap<FName, FAgSpawnProjectileParams> SpawnProjectile;
 	bool bHasPlayMontageAndWait = false;
 	bool bHasDrainResource = false;
 	bool bHasLaunchVertical = false;
 	bool bHasLaunchToTarget = false;
-	bool bHasDash = false;
 	bool bHasTimeStop = false;
 	bool bHasLockOn = false;
 };

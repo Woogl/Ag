@@ -8,6 +8,7 @@
 
 class UAgCameraData;
 class UAgCombatRules;
+class UAgMontageTimelineData;
 
 /**
  * 프로젝트의 에셋 매니저(구현 계획서 'JSON과 DataAsset' 읽는 방법). DefaultEngine.ini의 AssetManagerClassName으로 지정합니다.
@@ -41,6 +42,9 @@ public:
 	/** Camera.json의 값 */
 	const UAgCameraData& GetCameraData() const;
 
+	/** MontageTimelines.json의 값(몽타주 시간표) */
+	AG_API const UAgMontageTimelineData& GetMontageTimelines() const;
+
 #if WITH_EDITOR
 	/** 이 파일들로 채운 객체를 모두 다시 채웁니다. Data 폴더 감시가 부릅니다. */
 	AG_API void ReloadJsonFiles(const TArray<FString>& FileNames);
@@ -61,6 +65,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAgCameraData> CameraData;
+
+	UPROPERTY()
+	TObjectPtr<UAgMontageTimelineData> MontageTimelines;
 
 #if WITH_EDITOR
 	/** 객체마다 채운 파일 (ReloadJsonFiles용) */

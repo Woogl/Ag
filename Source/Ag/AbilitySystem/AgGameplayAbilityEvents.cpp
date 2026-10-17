@@ -597,13 +597,6 @@ void UAgGameplayAbility::HandleMontageEvent(int32 InstanceId, FGameplayTag Event
 			ApplySingleAttack(bLast ? TEXT("Finish") : TEXT("Stab"), {ExecutionTarget.Get()}, bLast);
 		}
 	}
-	else if (Event == AgGameplayTags::Event_UltimateSlash && GetAbilityId() == TEXT("Ultimate"))
-	{
-		FGameplayCueParameters Params;
-		Params.Instigator = GetAgCharacter();
-		Params.EffectCauser = GetAgCharacter();
-		K2_ExecuteGameplayCueWithParams(AgGameplayTags::GameplayCue_UltimateSlashes, Params);
-	}
 	else if (Event == AgGameplayTags::Event_UltimateFinish && GetAbilityId() == TEXT("Ultimate"))
 	{
 		K2_RemoveGameplayCue(AgGameplayTags::GameplayCue_UltimateSlashes);
@@ -628,7 +621,7 @@ void UAgGameplayAbility::HandleCutsceneFinished()
 	{
 		return;
 	}
-	MontageJumpToSection(TEXT("Judgment"));
+	JumpToMotionSection(TEXT("Judgment"));
 	K2_AddGameplayCue(AgGameplayTags::GameplayCue_UltimateSlashes, FGameplayEffectContextHandle(), true);
 }
 
@@ -735,7 +728,7 @@ void UAgGameplayAbility::HandleGroggyEndDue()
 	GroggyWait = nullptr;
 	if (IsActive())
 	{
-		MontageJumpToSection(TEXT("End"));
+		JumpToMotionSection(TEXT("End"));
 	}
 }
 
@@ -793,13 +786,13 @@ void UAgGameplayAbility::HandleLanded(EMovementMode Mode)
 	}
 	else if (Id == TEXT("JumpAttack"))
 	{
-		MontageJumpToSection(TEXT("Land"));
+		JumpToMotionSection(TEXT("Land"));
 	}
 	else if (Id == TEXT("KnockUp"))
 	{
 		if (Motion.MontageId == TEXT("KnockUpFall"))
 		{
-			MontageJumpToSection(TEXT("Land"));
+			JumpToMotionSection(TEXT("Land"));
 		}
 		else
 		{
@@ -820,7 +813,7 @@ void UAgGameplayAbility::HandleLanded(EMovementMode Mode)
 	}
 	else if (Id == TEXT("LeapSlam"))
 	{
-		MontageJumpToSection(TEXT("End"));
+		JumpToMotionSection(TEXT("End"));
 		AAgBossCharacter* Boss = CastChecked<AAgBossCharacter>(GetAgCharacter());
 		AAgPlayerController* Controller = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 		const UAgCameraData& Camera = UAgAssetManager::Get().GetCameraData();

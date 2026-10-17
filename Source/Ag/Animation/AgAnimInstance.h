@@ -9,7 +9,6 @@
 class AAgCharacterBase;
 class UAnimSequenceBase;
 class UBlendSpace;
-struct FAnimNotifyEventReference;
 
 /**
  * 공통 그래프 ABP_Ag의 부모입니다. 자식 ABP_AgPlayer·ABP_AgBoss에서 모션 기본값을 정합니다. 애님 그래프가 읽는 값은 모두 여기서 계산하고,
@@ -19,10 +18,6 @@ UCLASS()
 class UAgAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
-
-public:
-	/** 단발 알림의 실제 재생 출처를 이 인스턴스의 엔진 몽타주 델리게이트로 전달합니다. */
-	void BroadcastMontageNotify(UAnimSequenceBase* Animation, const FAnimNotifyEventReference& Reference);
 
 protected:
 	virtual void NativeInitializeAnimation() override;

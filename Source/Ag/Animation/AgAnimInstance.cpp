@@ -3,24 +3,12 @@
 #include "Animation/AgAnimInstance.h"
 
 #include "AbilitySystemComponent.h"
-#include "Animation/ActiveMontageInstanceScope.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/BlendSpace.h"
 #include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
-
-void UAgAnimInstance::BroadcastMontageNotify(UAnimSequenceBase* Animation, const FAnimNotifyEventReference& Reference)
-{
-	const UE::Anim::FAnimNotifyMontageInstanceContext* Context = Reference.GetContextData<UE::Anim::FAnimNotifyMontageInstanceContext>();
-	if (Context && Reference.GetNotify())
-	{
-		FAnimNotifyEvent Event = *Reference.GetNotify();
-		const FBranchingPointNotifyPayload Payload(GetSkelMeshComponent(), Animation, &Event, Context->MontageInstanceID);
-		OnPlayMontageNotifyBegin.Broadcast(NAME_None, Payload);
-	}
-}
 
 void UAgAnimInstance::NativeInitializeAnimation()
 {

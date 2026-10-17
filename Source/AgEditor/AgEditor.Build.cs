@@ -21,7 +21,6 @@ public class AgEditor : ModuleRules
 			"DirectoryWatcher",
 			"EditorSubsystem",
 			"AssetTools",
-			"DataValidation",
 			"GameplayTags",
 			"StateTreeModule",
 			"StateTreeEditorModule",

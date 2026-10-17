@@ -18,9 +18,9 @@ class UAgAbilityTask_Dash;
 class UAgAbilityTask_TimeStop;
 class UAgAbilityTask_LockOn;
 class UAgRootMotionModifier_MotionWarping;
-class UAgAnimNotify_SpawnProjectile;
+struct FAgTimelineEvent;
 struct FAnimMontageInstance;
-struct FBranchingPointNotifyPayload;
+enum class EAgProjectileOrigin : uint8;
 
 USTRUCT()
 struct FAgAbilityWindowExecution
@@ -31,7 +31,7 @@ struct FAgAbilityWindowExecution
 	TObjectPtr<UAbilityTask> Task;
 	FName Function;
 	int32 MontageInstanceId = INDEX_NONE;
-	int32 NotifyIndex = INDEX_NONE;
+	int32 TimelineKey = INDEX_NONE;
 };
 
 USTRUCT()
@@ -41,13 +41,13 @@ struct FAgAbilityMontageExecution
 
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> Montage;
-	TWeakObjectPtr<UAnimInstance> AnimInstance;
 	FName MontageId;
 	int32 InstanceId = INDEX_NONE;
 	bool bBlocksMovement = false;
 	bool bControlsFacing = false;
 	TWeakObjectPtr<AAgCharacterBase> Target;
 	float TargetPhaseStart = 0.f;
+	FDelegateHandle TimelineHandle;
 };
 
 /** 모든 행동을 ID별 독립 GAS 스펙으로 부여합니다. 설정은 실행 요청과 구분합니다. */
@@ -57,9 +57,6 @@ class UAgGameplayAbility : public UGameplayAbility
 	GENERATED_BODY()
 
 public:
-#if WITH_DEV_AUTOMATION_TESTS
-	friend class FAgAbilityExecutionTest;
-#endif
 	UAgGameplayAbility();
 	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	virtual void OnRemoveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
@@ -92,11 +89,7 @@ public:
 		return IsActive() && Motion.InstanceId == InstanceId && InstanceId != INDEX_NONE;
 	}
 
-	void BeginNotifyTask(int32 InstanceId, int32 NotifyIndex, FName Task, FName ParamsId);
-	void EndNotifyTask(int32 InstanceId, int32 NotifyIndex);
-	void HandleMontageEvent(int32 InstanceId, FGameplayTag Event);
-	void SpawnProjectile(int32 InstanceId, const UAgAnimNotify_SpawnProjectile& Notify);
-	bool PrepareWarp(int32 InstanceId, float WindowStart, FName ParamsId, FAgMotionWarpingParams& Params, AActor*& Target, float& Gap,
+	bool PrepareWarpTarget(int32 InstanceId, float WindowStart, const FAgMotionWarpingParams& Params, AActor*& Target, float& Gap,
 	    bool& bFacingOnly);
 	void RegisterWarp(UAgRootMotionModifier_MotionWarping* Modifier);
 	static AAgCharacterBase* FindExecutionTarget(const AAgPlayerCharacter* Player);
@@ -125,9 +118,14 @@ private:
 	void Finish(bool bCancelled = false);
 	bool PlayMotion(FName Id, bool bPlayerAction = false, float Rate = 1.f, FName Section = NAME_None, float TranslationScale = 1.f,
 	    float StartTime = 0.f);
-	void BindMontageInstance(UAnimInstance& Anim, const FAnimMontageInstance& Instance);
-	void InitializeNotifyStates(UAnimInstance& Anim, FAnimMontageInstance& Instance);
-	bool IsCurrentMontageNotify(const FBranchingPointNotifyPayload& Payload) const;
+	void BindMontageInstance(const FAnimMontageInstance& Instance);
+	void HandleTimelineEvent(const FAgTimelineEvent& Event);
+	void HandleMontageEvent(int32 InstanceId, FGameplayTag Event);
+	void StartWindowTask(int32 InstanceId, int32 Key, FName Function, TFunctionRef<UAbilityTask*()> MakeTask);
+	void EndWindowTask(int32 InstanceId, int32 Key);
+	UAbilityTask* MakeDashTask(const FAgDashParams& Params, int32 InstanceId, int32 Key);
+	void LaunchProjectile(int32 InstanceId, FName ProjectileId, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName);
+	void JumpToMotionSection(FName Section);
 	void ClearMotion(bool bStop);
 	void UpdateMotionConstraints();
 	void EndWindows();
@@ -149,12 +147,6 @@ private:
 
 	UFUNCTION()
 	void HandleEvent(FGameplayEventData Event);
-
-	UFUNCTION()
-	void HandleMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload);
-
-	UFUNCTION()
-	void HandleMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& Payload);
 
 	UFUNCTION()
 	void HandleMotionCompleted();

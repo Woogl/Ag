@@ -2,6 +2,13 @@
 
 2026-10-17 설계 검토 전입니다. 승인되면 [AbilityTask 기반 어빌리티 설계안](<AbilityTask 기반 어빌리티 설계안.md>)의 일부 규칙을 이 문서의 규칙으로 바꿉니다.
 
+같은 날 몽타주 노티파이와 ParamsId를 [몽타주 시간표](<몽타주 시간표.md>)로 옮겼습니다. 이 문서는 아직 노티파이를 전제로 쓰여 있어, 검토 전에 다음처럼 고칩니다.
+
+- ParamsId와 이름별 맵을 쓰지 않습니다. 시작 기능은 이름 없는 값으로, 몽타주에 묶인 기능은 시간표 항목으로 둡니다. 코드가 이름으로 찾는 나머지 20개(가드의 Guarding·ParryWindow·Parry, 회피의 PerfectDodge 둘·CounterChance, 궁극기의 UltimateCamera·Finish 둘, 처형의 Execution·Stab·Finish, 넉백·넉업의 Downed 둘, 도약의 LandingHit·Landing, 그로기의 Executed·PassThroughPawn)를 없앱니다.
+- '몽타주 노티파이' 표와 공용 지점 노티파이는 시간표 항목으로 바꿉니다. 연출(GameplayCue)은 몽타주 노티파이로 남깁니다.
+- '한 프레임 앞에 둔다' 같은 배치 요령은 시간표 판정 규칙의 순서로 대신합니다.
+- 기능의 실행 시점(구간 기능과 시작 기능의 구분)은 이 문서를 고칠 때 다시 정합니다.
+
 ## 결정과 목표
 
 **구체 클래스 `UAgGameplayAbility` 하나, 기능별 고정 Params, 공용 ANS는 그대로 둡니다. 대신 어빌리티·Task·데이터 검증 코드에서 행동 ID로 동작을 고르는 분기를 모두 없앱니다.** 지금은 어빌리티 세 파일(`AgGameplayAbility.cpp`, `AgGameplayAbilityEvents.cpp`, `AgGameplayAbilityTasks.cpp`)에 행동 ID 비교가 58곳, `AgAbilityData.cpp`의 검증에 16곳 있습니다.

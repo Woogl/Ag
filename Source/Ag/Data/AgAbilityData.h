@@ -90,7 +90,6 @@ struct FAgAbilityData
 	bool bHasPatternSelection = false;
 
 	bool HasSameGrantSettings(const FAgAbilityData& Other) const;
-	bool ValidateTaskReference(FName Task, FName ParamsId, FString& Error) const;
 };
 
 namespace AgAbilityData

@@ -2,6 +2,9 @@
 
 #include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgJsonRead.h"
+#include "Data/AgMontageTimeline.h"
+#include "Core/AgAssetManager.h"
 #include "Animation/AnimMontage.h"
 #include "Dom/JsonObject.h"
 #include "JsonObjectConverter.h"
@@ -10,59 +13,7 @@
 
 namespace
 {
-	using FObject = TSharedPtr<FJsonObject>;
-
-	bool Keys(const FJsonObject& Object, const FString& Path, std::initializer_list<const TCHAR*> Required,
-	    std::initializer_list<const TCHAR*> Optional, TArray<FString>& Errors)
-	{
-		const int32 Before = Errors.Num();
-		TSet<FString> Allowed;
-		for (const TCHAR* Key : Required)
-		{
-			Allowed.Add(Key);
-			if (!Object.HasField(Key))
-			{
-				Errors.Add(Path + TEXT(".") + Key + TEXT(": missing"));
-			}
-		}
-		for (const TCHAR* Key : Optional)
-		{
-			Allowed.Add(Key);
-		}
-		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Object.Values)
-		{
-			if (!Allowed.Contains(FString(Pair.Key)))
-			{
-				Errors.Add(Path + TEXT(".") + Pair.Key + TEXT(": unknown field"));
-			}
-		}
-		return Before == Errors.Num();
-	}
-
-	FObject ObjectAt(const FJsonObject& Parent, const FString& Key, const FString& Path, TArray<FString>& Errors)
-	{
-		const TSharedPtr<FJsonObject>* Object = nullptr;
-		if (!Parent.TryGetObjectField(Key, Object))
-		{
-			Errors.Add(Path + TEXT(": expected object"));
-			return nullptr;
-		}
-		return *Object;
-	}
-
-	bool Number(
-	    const FJsonObject& Object, const FString& Key, const FString& Path, float& Out, TArray<FString>& Errors, bool bSigned = false)
-	{
-		const TSharedPtr<FJsonValue> Value = Object.TryGetField(Key);
-		if (!Value || Value->Type != EJson::Number || !FMath::IsFinite(Value->AsNumber()) ||
-		    FMath::Abs(Value->AsNumber()) > TNumericLimits<float>::Max() || (!bSigned && Value->AsNumber() < 0))
-		{
-			Errors.Add(Path + TEXT(".") + Key + TEXT(": expected finite number in range"));
-			return false;
-		}
-		Out = static_cast<float>(Value->AsNumber());
-		return true;
-	}
+	using namespace AgJsonRead;
 
 	bool Tags(const FJsonObject& Object, const FString& Key, const FString& Path, FGameplayTagContainer& Out, TArray<FString>& Errors)
 	{
@@ -84,110 +35,6 @@ namespace
 			{
 				Out.AddTag(Tag);
 			}
-		}
-		return true;
-	}
-
-	/** 고정 Params의 리플렉션 필드와 JSON을 대조합니다. 선택·null 필드는 아래에서 명시적으로 처리합니다. */
-	template <typename T> bool Read(const FJsonObject& Object, T& Out, const FString& Path, TArray<FString>& Errors)
-	{
-		const int32 Before = Errors.Num();
-		FJsonObject Normalized = Object;
-		TSet<FString> Fields;
-		for (TFieldIterator<FProperty> It(T::StaticStruct()); It; ++It)
-		{
-			const FProperty* Property = *It;
-			const FString Key = Property->GetName();
-			Fields.Add(Key);
-			const TSharedPtr<FJsonValue> Value = Object.TryGetField(Key);
-			const FString Field = Path + TEXT(".") + Key;
-			if (!Value)
-			{
-				Errors.Add(Field + TEXT(": missing"));
-				continue;
-			}
-			const FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property);
-			const FNumericProperty* NumericProperty = CastField<FNumericProperty>(Property);
-			const UEnum* Enum = EnumProperty ? EnumProperty->GetEnum() : NumericProperty ? NumericProperty->GetIntPropertyEnum() : nullptr;
-			if (Enum)
-			{
-				if (Value->Type != EJson::String)
-				{
-					Errors.Add(Field + TEXT(": expected enum string"));
-					continue;
-				}
-				FString Name = Value->AsString();
-				if (Enum == StaticEnum<ECollisionChannel>())
-				{
-					Name = TEXT("ECC_") + Name;
-				}
-				if (Enum == StaticEnum<ECollisionResponse>())
-				{
-					Name = TEXT("ECR_") + Name;
-				}
-				const int64 Index = Enum->GetValueByNameString(Name);
-				if (Index == INDEX_NONE || Name.EndsWith(TEXT("_MAX")))
-				{
-					Errors.Add(Field + TEXT(": invalid enum"));
-				}
-				else
-				{
-					Normalized.SetStringField(Key, Name);
-				}
-			}
-			else if (NumericProperty)
-			{
-				float Ignored;
-				Number(Object, Key, Path, Ignored, Errors, Key == TEXT("VelocityZ"));
-			}
-			else if (Property->IsA<FBoolProperty>())
-			{
-				if (Value->Type != EJson::Boolean)
-				{
-					Errors.Add(Field + TEXT(": expected boolean"));
-				}
-			}
-			else
-			{
-				if (Value->Type != EJson::String || Value->AsString().IsEmpty())
-				{
-					Errors.Add(Field + TEXT(": expected nonempty string"));
-					continue;
-				}
-				if (const FStructProperty* Struct = CastField<FStructProperty>(Property);
-				    Struct && Struct->Struct == FGameplayTag::StaticStruct())
-				{
-					if (!FGameplayTag::RequestGameplayTag(FName(*Value->AsString()), false).IsValid())
-					{
-						Errors.Add(Field + TEXT(": unknown native tag"));
-					}
-				}
-				if (const FObjectPropertyBase* Reference = CastField<FObjectPropertyBase>(Property))
-				{
-					UObject* Asset = StaticLoadObject(Reference->PropertyClass, nullptr, *Value->AsString(), nullptr, LOAD_NoWarn);
-					if (!Asset || Asset->GetPathName() != Value->AsString())
-					{
-						Errors.Add(Field + TEXT(": missing asset or redirected path"));
-					}
-				}
-			}
-		}
-		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Object.Values)
-		{
-			if (!Fields.Contains(FString(Pair.Key)))
-			{
-				Errors.Add(Path + TEXT(".") + Pair.Key + TEXT(": unknown field"));
-			}
-		}
-		if (Errors.Num() != Before)
-		{
-			return false;
-		}
-		FText Reason;
-		if (!FJsonObjectConverter::JsonObjectToUStruct(MakeShared<FJsonObject>(Normalized), T::StaticStruct(), &Out, 0, 0, true, &Reason))
-		{
-			Errors.Add(Path + TEXT(": ") + Reason.ToString());
-			return false;
 		}
 		return true;
 	}
@@ -247,9 +94,8 @@ namespace
 	{
 		Keys(Object, Path, {},
 		    {TEXT("PlayMontageAndWait"), TEXT("DrainResource"), TEXT("TimedTag"), TEXT("GrantResources"), TEXT("SlowMotion"),
-		        TEXT("LaunchVertical"), TEXT("LaunchToTarget"), TEXT("TargetQuery"), TEXT("MotionWarping"), TEXT("Attack"), TEXT("Dash"),
-		        TEXT("HoldTag"), TEXT("SetCollisionResponseToChannel"), TEXT("TimeStop"), TEXT("LockOn"), TEXT("PlayCutscene"),
-		        TEXT("SpawnProjectile")},
+		        TEXT("LaunchVertical"), TEXT("LaunchToTarget"), TEXT("TargetQuery"), TEXT("Attack"), TEXT("HoldTag"),
+		        TEXT("SetCollisionResponseToChannel"), TEXT("TimeStop"), TEXT("LockOn"), TEXT("PlayCutscene")},
 		    Errors);
 		ReadMap(Object, TEXT("TimedTag"), Out.TimedTag, Path, Errors);
 		ReadMap(Object, TEXT("GrantResources"), Out.GrantResources, Path, Errors);
@@ -259,11 +105,9 @@ namespace
 		ReadMap(Object, TEXT("HoldTag"), Out.HoldTag, Path, Errors);
 		ReadMap(Object, TEXT("SetCollisionResponseToChannel"), Out.SetCollisionResponseToChannel, Path, Errors);
 		ReadMap(Object, TEXT("PlayCutscene"), Out.PlayCutscene, Path, Errors);
-		ReadMap(Object, TEXT("SpawnProjectile"), Out.SpawnProjectile, Path, Errors);
 		ReadSingle(Object, TEXT("DrainResource"), Out.DrainResource, Out.bHasDrainResource, Path, Errors);
 		ReadSingle(Object, TEXT("LaunchVertical"), Out.LaunchVertical, Out.bHasLaunchVertical, Path, Errors);
 		ReadSingle(Object, TEXT("LaunchToTarget"), Out.LaunchToTarget, Out.bHasLaunchToTarget, Path, Errors);
-		ReadSingle(Object, TEXT("Dash"), Out.Dash, Out.bHasDash, Path, Errors);
 		Out.bHasPlayMontageAndWait = Object.HasField(TEXT("PlayMontageAndWait"));
 		if (Out.bHasPlayMontageAndWait)
 		{
@@ -300,53 +144,6 @@ namespace
 				}
 			}
 		}
-		if (Object.HasField(TEXT("MotionWarping")))
-		{
-			const FString Field = Path + TEXT(".MotionWarping");
-			if (const FObject Map = ObjectAt(Object, TEXT("MotionWarping"), Field, Errors))
-			{
-				if (Map->Values.IsEmpty())
-				{
-					Errors.Add(Field + TEXT(": requires at least one ParamsId"));
-				}
-				for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Map->Values)
-				{
-					const FString Item = Field + TEXT(".") + Pair.Key;
-					const FName Id(*Pair.Key);
-					if (Id.IsNone() || Out.MotionWarping.Contains(Id))
-					{
-						Errors.Add(Item + TEXT(": empty or duplicate ParamsId"));
-						continue;
-					}
-					if (const FObject Params = ObjectAt(*Map, FString(Pair.Key), Item, Errors))
-					{
-						Keys(*Params, Item, {TEXT("TargetingRange"), TEXT("MaxWarpDistance")}, {}, Errors);
-						FAgMotionWarpingParams Value;
-						for (const TCHAR* Key : {TEXT("TargetingRange"), TEXT("MaxWarpDistance")})
-						{
-							const TSharedPtr<FJsonValue> NumberValue = Params->TryGetField(Key);
-							const bool bLimited = NumberValue && NumberValue->Type != EJson::Null;
-							float Limit = 0.f;
-							if (bLimited)
-							{
-								Number(*Params, Key, Item, Limit, Errors);
-							}
-							if (FString(Key) == TEXT("TargetingRange"))
-							{
-								Value.bHasTargetingRange = bLimited;
-								Value.TargetingRange = Limit;
-							}
-							else
-							{
-								Value.bHasMaxWarpDistance = bLimited;
-								Value.MaxWarpDistance = Limit;
-							}
-						}
-						Out.MotionWarping.Add(Id, Value);
-					}
-				}
-			}
-		}
 		if (Out.bHasDrainResource && Out.DrainResource.AmountPerSecond <= 0.f)
 		{
 			Errors.Add(Path + TEXT(".DrainResource.AmountPerSecond: must be positive"));
@@ -354,10 +151,6 @@ namespace
 		if (Out.bHasLaunchToTarget && Out.LaunchToTarget.AirTime <= 0.f)
 		{
 			Errors.Add(Path + TEXT(".LaunchToTarget.AirTime: must be positive"));
-		}
-		if (Out.bHasDash && (Out.Dash.Speed <= 0.f || Out.Dash.MaxDistance <= 0.f))
-		{
-			Errors.Add(Path + TEXT(".Dash: Speed and MaxDistance must be positive"));
 		}
 		for (const TPair<FName, FAgTimedTagParams>& Pair : Out.TimedTag)
 		{
@@ -401,37 +194,6 @@ bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
 {
 	return Id == Other.Id && Tags == Other.Tags &&
 	       FAgAbilityActivation::StaticStruct()->CompareScriptStruct(&Activation, &Other.Activation, 0);
-}
-
-bool FAgAbilityData::ValidateTaskReference(FName Task, FName ParamsId, FString& Error) const
-{
-	bool bValid = false;
-	if (Task == TEXT("Attack"))
-	{
-		bValid = !ParamsId.IsNone() && Tasks.Attack.Contains(ParamsId);
-	}
-	else if (Task == TEXT("HoldTag"))
-	{
-		bValid = !ParamsId.IsNone() && Tasks.HoldTag.Contains(ParamsId);
-	}
-	else if (Task == TEXT("SetCollisionResponseToChannel"))
-	{
-		bValid = !ParamsId.IsNone() && Tasks.SetCollisionResponseToChannel.Contains(ParamsId);
-	}
-	else if (Task == TEXT("Dash"))
-	{
-		bValid = ParamsId.IsNone() && Tasks.bHasDash;
-	}
-	else if (Task == TEXT("TimeStop"))
-	{
-		bValid = ParamsId.IsNone() && Tasks.bHasTimeStop;
-	}
-	if (!bValid)
-	{
-		Error = FString::Printf(
-		    TEXT("Abilities.%s.Tasks.%s.%s: invalid ANS function or ParamsId"), *Id.ToString(), *Task.ToString(), *ParamsId.ToString());
-	}
-	return bValid;
 }
 
 bool AgAbilityData::Parse(const FJsonObject& Json, TArray<FAgAbilityData>& OutAbilities, TArray<FString>& Errors)
@@ -643,15 +405,22 @@ void AgAbilityData::ValidateReferences(const UAgCharacterData& Data, TArray<FStr
 				Errors.Add(Path + TEXT("PlayMontageAndWait.RootMotionDistance: montage has no horizontal root motion"));
 			}
 		}
-		for (const TPair<FName, FAgSpawnProjectileParams>& Pair : Tasks.SpawnProjectile)
+	}
+	// 이 캐릭터가 재생하는 몽타주의 시간표가 쏘는 투사체는 이 캐릭터의 Projectiles에 있어야 합니다.
+	const UAgMontageTimelineData& Timelines = UAgAssetManager::Get().GetMontageTimelines();
+	for (const TPair<FName, TObjectPtr<UAnimMontage>>& Pair : Data.Montages)
+	{
+		const FAgMontageTimeline* Timeline = Pair.Value ? Timelines.Find(*Pair.Value) : nullptr;
+		if (!Timeline)
 		{
-			if (!Data.Projectiles.Contains(Pair.Value.ProjectileId))
+			continue;
+		}
+		for (const FAgTimelineSpawnProjectile& Shot : Timeline->SpawnProjectile)
+		{
+			if (!Data.Projectiles.Contains(Shot.ProjectileId))
 			{
-				Errors.Add(Path + TEXT("SpawnProjectile.") + Pair.Key.ToString() + TEXT(".ProjectileId: missing projectile"));
-			}
-			if (!Tasks.Attack.Contains(Pair.Value.AttackParamsId))
-			{
-				Errors.Add(Path + TEXT("SpawnProjectile.") + Pair.Key.ToString() + TEXT(".AttackParamsId: missing attack"));
+				Errors.Add(TEXT("Montages.") + Pair.Key.ToString() + TEXT(": timeline projectile ") + Shot.ProjectileId.ToString() +
+				           TEXT(" missing in Projectiles"));
 			}
 		}
 	}
