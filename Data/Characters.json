@@ -42,14 +42,6 @@
     "ParryPPRatio": 0.08,
     "UltimateSlowMotionSpeed": 0.3,
     "UltimateSlowMotionDuration": 0.8,
-    "UltimateSlashDistance": {
-      "Min": 300,
-      "Max": 1000
-    },
-    "UltimateSlashHeight": {
-      "Min": 0,
-      "Max": 300
-    },
     "LockOnRange": 2000,
     "LockOnReleaseRange": 3000,
     "SprintSpeedRatio": 1.5,

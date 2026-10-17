@@ -23,7 +23,8 @@ public:
 	AAgDamageFloater();
 
 	/** Location에 Amount를 띄웁니다. */
-	static void Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount);
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "UI", meta = (WorldContext = "WorldContextObject"))
+	static void Spawn(UObject* WorldContextObject, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount);
 
 protected:
 	virtual void Tick(float DeltaSeconds) override;

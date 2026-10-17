@@ -155,14 +155,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
 	float UltimateSlowMotionDuration = 0.f;
 
-	/** 궁극기 '베기 선': 플레이어 발 위치에서 카메라 쪽으로의 거리 범위(cm) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
-	FFloatInterval UltimateSlashDistance = FFloatInterval(0.f, 0.f);
-
-	/** 궁극기 '베기 선': 바닥에서의 높이 범위(cm) */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Ultimate")
-	FFloatInterval UltimateSlashHeight = FFloatInterval(0.f, 0.f);
-
 	/**
 	 * 처형의 찌르기까지 플레이어가 보스 정면에 붙는 간격(캡슐 중심 사이 수평 거리). 두 처형 모션이 맞물리는 간격으로,
 	 * 기획서에 수치가 없어 두 모션의 원래 배치에서 잰 값입니다.

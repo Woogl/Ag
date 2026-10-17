@@ -89,6 +89,7 @@ public:
 	}
 
 	/** 블루프린트의 무기 메시 컴포넌트(WeaponTag). 없으면 null입니다. */
+	UFUNCTION(BlueprintPure, Category = "Weapon")
 	USceneComponent* GetWeaponComponent() const
 	{
 		return WeaponComponent;

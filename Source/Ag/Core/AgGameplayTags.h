@@ -104,7 +104,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Hit);
 
-	// 이펙트, 효과음, 카메라 셰이크, 대미지 숫자를 재생하는 게임플레이 큐
+	// 이펙트, 효과음, 대미지 숫자를 재생하는 게임플레이 큐
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Hit);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Guard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Parry);
