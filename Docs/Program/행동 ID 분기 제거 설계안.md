@@ -12,7 +12,7 @@
 | Task | 범용 기능 하나와 그 Params의 스키마·검증 |
 | 행동 정의(`Abilities.json`) | 발동 조건과 트리거, 대상 선정, 재생할 몽타주와 재생 옵션, 종료 방식, 발동 동안 실행하는 Task |
 | 몽타주 시간표(`MontageTimelines.json`) | 섹션 안의 시각에 실행하는 Task(구간·지점) |
-| 효과 데이터(`Effects.json`) | 시간 태그(패리 구간, 극한 회피 구간, 회피 반격 기회, 그로기 시간), 보상(패리, 극한 회피), 지속 소모(달리기)의 값 |
+| 효과 데이터(`Effects.json`) | 계속 흐르는 시간(패리 구간, 회피 반격 기회, 그로기 시간), 보상(패리, 극한 회피), 지속 소모(달리기)의 값. 모션을 따르는 시간은 시간표에 둡니다(아래 '시간 기준'). |
 | 주인 객체 | 행동이 아닌 규칙: 입력(행동 태그 검색, 트리거 태그, 점프, 락온 카메라), 공중 상태·이동 사건·점프 모션·사망(캐릭터), 그로기가 끝날 때의 PP 회복(보스 캐릭터), 패리·극한 회피의 결과와 보상(피격 처리), 평타 반응과 2페이즈 진입(보스 AI) |
 
 - 있는 Task를 조합한 새 행동·패턴은 JSON과 몽타주만으로 더합니다. 새로운 종류의 기능만 Task 파일 하나(Task와 그 Params)로 더하고 Runner는 고치지 않습니다.
@@ -171,6 +171,19 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task, 행동 ID, 몽�
 | 구간(시간표 Start·End) | 재생 위치가 Start에 이를 때 | End, 재생 바뀜, 행동 종료, 또는 스스로 끝날 때. 붙잡기는 위 표 |
 | 지점(시간표 Time) | 재생 위치가 Time에 이를 때 | 행동 종료, 또는 스스로 끝날 때 |
 
+### 시간 기준
+
+Task가 시작하고 끝나는 때는 둔 곳이 정하고, 도는 동안의 시간은 Task가 쓰는 엔진 기능이 정합니다. 히트스톱은 두 캐릭터의 시간 배율(`CustomTimeDilation`)만 낮추고, 슬로우모션과 시간 정지는 게임 전체 배율을 바꿉니다.
+
+| 시간 | 따르는 것 | 히트스톱 중 | 쓰는 곳(전투 시스템 '히트스톱 중의 시간') |
+| - | - | - | - |
+| 모션 시간 | 시간표 구간·지점(몽타주 재생 위치), 캐릭터 무브먼트의 이동(Dash, Launch, 워핑) | 멈춤 | 선딜, 판정 구간, 후딜(Busy), 무적 구간, 극한 회피 구간, 보스 패턴 안의 모든 시간 |
+| 월드 시간 | 효과의 지속 시간(발동·지점의 ApplyEffect), 월드 타이머 | 계속 흐름 | 쿨다운, 패리 구간, 회피 반격 기회, 그로기 지속 시간, 리젠과 소모 |
+| 주인의 시간 | PlayCutscene(매 프레임 주인의 시간 배율을 재생 속도로) | 멈춤 | 궁극기 컷신 |
+
+- 기획서가 모션을 따른다고 정한 시간은 시간표 구간에, 계속 흐른다고 정한 시간은 효과의 지속 시간에 둡니다. 극한 회피 구간처럼 모션 시간이면서 피격 처리가 지워야 하는 것은 ApplyEffect 구간(길이는 시간표, 태그는 효과)으로 둡니다.
+- 슬로우모션과 시간 정지에는 둘 다 함께 느려집니다. 시간 정지에서 빠진 주인은 시간 배율 보정을 받으므로 주인의 모션 시간은 그대로 흐르고, 효과의 지속 시간은 멈춘 것처럼 흐릅니다(지금과 같음).
+
 ### Task 목록
 
 `Next`는 위 '전환' 값입니다.
@@ -179,7 +192,7 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task, 행동 ID, 몽�
 | - | - | - | - |
 | Attack | 구간, 지점 | DamageMultiplier, PoiseMultiplier, HitReaction, bGuardable, MPCharge, UPCharge. 지점만: bFinisher, Targeting(선택), HitLocation(선택: Owner) | 구간이면 무기 스윕 판정입니다. 지점이면 그 시각에 한 번 칩니다. Targeting이 있으면 그 결과 모두를, 없으면 행동 대상을 칩니다. bFinisher면 마지막 일격(`Effect.Damage.Finisher`)이고, HitLocation이 Owner면 피격 위치를 주인 위치로 둡니다. |
 | HoldTag | 발동, 구간, 지점 | Tag | 태그를 유지합니다. 지점이면 그 시각부터 행동이 끝날 때까지입니다. |
-| ApplyEffect | 발동, 지점 | Effect, bRemoveOnEnd | `Effects.json`의 효과를 주인에게 겁니다. bRemoveOnEnd면 행동이 끝날 때 그 효과를 지웁니다. |
+| ApplyEffect | 발동, 구간, 지점 | Effect. 발동·지점만: bRemoveOnEnd | `Effects.json`의 효과를 주인에게 겁니다. 구간이면 구간 시작에 걸고 구간 끝에 지웁니다(모션 시간). 발동·지점이면 효과의 지속 시간(월드 시간)을 따르고, bRemoveOnEnd면 행동이 끝날 때 지웁니다. |
 | SetCollisionResponseToChannel | 발동, 구간 | Channel, Response | 캡슐의 채널 응답을 바꾸고 끝날 때 되돌립니다. |
 | Dash | 구간 | Speed, HomingTurnRate, Overshoot, MaxDistance | 행동 대상 쪽으로 돌진합니다. 공격이 막히면(`Event.AttackBlocked`) 그 자리에서 멈춥니다. 구간 끝에 아직 돌진 중이면 구간 끝을 붙잡고, 돌진이 끝나면 놓습니다. |
 | Launch | 발동, 지점 | 다음 중 하나: VelocityZ, ToTarget(AirTime, TargetOffset, MaxDistance), Rise(Height, AirTime) | 한 번 띄우거나 던집니다. VelocityZ는 공중일 때 수직 속도만 바꾸고(점프 공격 내리꽂기), ToTarget은 행동 대상 쪽 포물선으로 발사하고(지금 LaunchToTarget 계산), Rise는 그 높이·체공 시간의 수직 루트 모션 점프를 겁니다(넉업). |
@@ -280,7 +293,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 평타 | 입력 이벤트 대기, BasicAttackMontageIds의 타 선택, 다음 타, 평타 시작 알림 | Targeting(TP_Enemy), `BasicAttack` 몽타주(섹션 Attack1~5, bHoldFacing·bKeepDistance). 섹션마다 Busy 구간, 시작의 SendGameplayEvent(평타 시작 알림), 후딜부터 섹션 끝까지 Transition(`Input.Attack`, 다음 섹션을 BlendTime으로 다시 재생, Attack5 다음은 Attack1, bOptional). 입력 없이 섹션이 끝나면 몽타주가 끝나 콤보가 초기화됩니다. |
 | 점프 | CanJump 검사, Busy·착지 대기·Jump·점프 모션, 모션 완료 무시, 착지 모션과 종료, StopJumping | 트리거 `State.Jumping`, End TriggerTag, OwnedTags State.Busy. 점프와 모션은 캐릭터 |
 | 점프 공격 | IsFalling 검사, 물리 속도 이동·착지 대기, 평타 시작 알림, 착지 때 Land 섹션, 내리꽂기 사건 | RequiredTags State.Jumping, Targeting(TP_Enemy), 몽타주 bHoldFacing·bPhysicsTranslation. 시간표: Start·Fall의 Transition(`Event.Landed` → Land), Launch 지점(VelocityZ), SendGameplayEvent 지점, Start에서 Land로 넘어가는 Attack·Busy 구간 |
-| 회피 | 극한 회피 대기, 입력 방향 회전과 Roll·Backstep 선택, 극한 회피 보상 | `Dodge` 몽타주(섹션 Roll, Backstep, StartSections는 `Input.Move`가 있으면 Roll, StartFacing MoveInput), ApplyEffect(PerfectDodgeWindow). 보상은 피격 처리 |
+| 회피 | 극한 회피 대기, 입력 방향 회전과 Roll·Backstep 선택, 극한 회피 보상 | `Dodge` 몽타주(섹션 Roll, Backstep, StartSections는 `Input.Move`가 있으면 Roll, StartFacing MoveInput), 시간표의 ApplyEffect 구간(PerfectDodgeWindow). 보상과 한 번만 주는 규칙은 피격 처리 |
 | 회피 반격, 스킬 | 없음 | Targeting(TP_Enemy), 몽타주 bHoldFacing·bKeepDistance, 시간표 Busy 구간 |
 | 가드 | 키 유지 검사, 입력·패리 대기, 가드 태그·패리 구간, 패리 모션과 그 후딜·완료 처리, 종료 때 패리 구간 닫기 | 트리거 `Input.Guard`, End TriggerTag, OwnedTags State.Guarding, ApplyEffect(ParryWindow, bRemoveOnEnd). 패리 모션은 Parry 스펙, 패리 후딜 복귀는 입력 계층, 패리 결과와 보상은 피격 처리 |
 | 패리(새 스펙) | 가드 안의 `Event.Parry` 처리 | 트리거 `Event.Parry`, Parry 몽타주(StartFacing Target), Busy 구간. CancelTags에 가드가 없어 가드를 끝내지 않습니다. |
@@ -373,9 +386,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
       "StartFacing": "MoveInput"
     },
     "End": "Montage",
-    "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "PerfectDodgeWindow", "bRemoveOnEnd": true}
-    ]
+    "Tasks": []
   },
   "Execution": {
     "Tags": ["Ability.Action.Execution"],
@@ -468,7 +479,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 | 효과 | 정의 | 값의 지금 위치 |
 | - | - | - |
 | ParryWindow | 0.3초, `State.ParryWindow` | 가드의 TimedTag |
-| PerfectDodgeWindow | 0.15초, `State.PerfectDodgeWindow` | 구르기·물러나기 시간표의 HoldTag |
+| PerfectDodgeWindow | 무한, `State.PerfectDodgeWindow`. 길이는 시간표 구간(구르기·물러나기 0~0.15초)이 정합니다. | 구르기·물러나기 시간표의 HoldTag(구간 값은 그대로) |
 | DodgeCounterChance | 1초, `State.DodgeCounterChance` | 회피의 TimedTag |
 | GroggyTime | 5초, `State.GroggyTime` | `CombatRules.json`의 `GroggyDuration` |
 | SprintDrain | 무한, 주기 0.1초, SP 초당 −12 | 달리기의 DrainResource |
@@ -491,10 +502,12 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
   "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge": {
     "Roll": [
       {"Task": "HoldTag", "Start": 0, "End": 0.6, "Tag": "State.Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.15, "Effect": "PerfectDodgeWindow"},
       {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Invincible"}
     ],
     "Backstep": [
       {"Task": "HoldTag", "Start": 0, "End": 0.4, "Tag": "State.Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.15, "Effect": "PerfectDodgeWindow"},
       {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Invincible"}
     ]
   },
@@ -586,7 +599,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 
 - 지우는 것: 행동 ID별 필수 항목 검사(`ValidateRequiredTasks`), BasicAttackMontageIds 검사, 행동 ID별 모션 목록
 - 행동 정의: Task 이름은 등록된 Task이고, 각 Params가 읽기·검증·둘 수 있는 곳을 검사합니다. End가 Montage면 Montage가, TriggerTag면 OwnedTagPresent 트리거가 정확히 하나 있습니다. Triggers의 Source는 GameplayEvent나 OwnedTagPresent입니다. Targeting의 Preset은 있는 에셋이고 Range는 0 이상의 유한한 수입니다. StartSections의 섹션은 그 몽타주 ID를 쓰는 모든 캐릭터의 몽타주에 있고, 마지막 항목은 조건이 없습니다.
-- Task 값: ApplyEffect의 Effect는 `Effects.json`에 있습니다. Launch는 VelocityZ·ToTarget·Rise 중 정확히 하나입니다. Transition은 지점이면 트리거가 없고, 구간이면 Event와 BeforeTagEnds 중 정확히 하나입니다. Attack의 bFinisher·Targeting·HitLocation은 지점에만 둡니다.
+- Task 값: ApplyEffect의 Effect는 `Effects.json`에 있고, 구간에 두면 무한 효과입니다. Launch는 VelocityZ·ToTarget·Rise 중 정확히 하나입니다. Transition은 지점이면 트리거가 없고, 구간이면 Event와 BeforeTagEnds 중 정확히 하나입니다. Attack의 bFinisher·Targeting·HitLocation은 지점에만 둡니다.
 - 행동 대상: 행동 대상이 필요한 것(StartFacing Target, bKeepDistance, Launch ToTarget, Dash, Targeting이 없는 Attack 지점, Recipient가 Target인 SendGameplayEvent)이 행동 정의나 그 몽타주의 시간표에 있으면, 그 행동은 Targeting이나 GameplayEvent 트리거를 가집니다.
 - 시간표 키: 어떤 행동의 Montage가 재생하는 몽타주만 키가 될 수 있습니다. 캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)의 시간표는 오류입니다.
 - 시간표 항목: 섹션은 그 몽타주에 있고, 0 ≤ Time ≤ 섹션 길이, 0 ≤ Start < 섹션 길이입니다. End는 같은 섹션이면 Start보다 뒤이고 섹션 길이 이하이며, 다른 섹션이면 몽타주 타임라인에서 Start보다 뒤입니다. 전환의 섹션은 그 몽타주에 있고, 전환 지점은 섹션 끝보다 앞입니다. 이벤트를 기다리는 구간(bOptional이 아닌 Transition, PlayCutscene)은 반복 섹션을 끝까지 덮습니다. 반복 섹션 안의 지점과 워핑 구간은 지금처럼 오류입니다.
@@ -620,7 +633,6 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 | 돌진 찌르기가 자세 유지 시점 전에 막히거나 거리를 다 감 | 판정과 충돌 해제가 바로 끝남 | 자세 유지 시점 직후까지 남음(몽타주 시간 최대 0.12초, 실제 시간 0.15초) | 받아들입니다. 자세 유지 전의 돌진 거리는 약 3m라 출발할 때 플레이어나 벽이 그보다 가까울 때만 생기고, 가드·패리로 막힌 공격은 같은 대상에 다시 맞지 않습니다. 정확히 맞추려면 Dash와 함께 끝나는 구간 표시가 필요합니다. |
 | 패리 모션 후딜 전에 가드 키를 떼었다가 다시 눌러 선입력으로 가드가 시작됨 | 패리 구간이 생기지 않음 | 패리 구간이 생김 | 플레이어 사양 '패리 구간' 표 1행을 따르는 수정입니다. |
 | 넉업의 낙하 자세 전환 | 정점보다 블렌드 시간의 절반 앞에서 시작해 정점에서 반씩 섞임 | 정점(`Event.Apex`)에서 시작해 블렌드 시간의 절반 뒤에 반씩 섞임 | 받아들입니다. 차이가 보이면 낙하 전환의 BlendTime을 줄입니다. 지금처럼 맞추려면 넉업 전용 전환 조건(Task)이 필요합니다. |
-| 회피를 자기 히트스톱(공격 적중 직후 0.12초) 중에 시작함 | 극한 회피 구간이 몽타주 시간이라 히트스톱만큼 늘어남 | 효과(월드 시간)라 늘어나지 않음 | 받아들입니다. 기획서의 극한 회피 구간(시작 후 0.15초)에 더 가깝습니다. |
 | 점프 입력과 같은 프레임에 점프 행동을 막는 상태가 시작됨(드묾) | 점프하지 않음 | 점프는 하지만 점프 행동이 시작되지 않아 그 점프 동안 Busy가 없음 | 받아들입니다. 입력 계층이 Jump 직전에 발동 가능을 확인하므로, 그 사이 피격 반응 같은 상태가 시작될 때만 생기고 그 상태가 행동을 막습니다. |
 
 ## 구현 순서와 완료 조건
