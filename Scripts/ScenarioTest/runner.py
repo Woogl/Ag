@@ -190,11 +190,13 @@ def _finish(error=None):
             # 판정 문구는 글자만 주거나, 항목별 판정을 붙여 (통과 여부, 글자)로 준다.
             items = [(None, l) if isinstance(l, str) else (bool(l[0]), l[1]) for l in lines]
         except Exception as e:
-            items = [(False, "판정 오류: %s: %s" % (type(e).__name__, e))]
-    verdict = "통과" if ok else "확인 필요"
+            ok = False
+            error = "판정 오류: %s: %s" % (type(e).__name__, e)
+            items = [(False, error)]
+    verdict = "실행 실패" if error else "통과" if ok else "테스트 실패"
     lines = ["%s %s" % ("-" if i is None else "[통과]" if i else "[실패]", text) for i, text in items]
     try:
-        if 0 < ctx.step_index <= len(STEPS):
+        if not error and 0 < ctx.step_index <= len(STEPS):
             ctx._step_line(ctx.step_index - 1, "done")
         ctx.banner("판정: %s" % verdict, "verdict", PASS if ok else FAIL)
         for n, (i, text) in enumerate(items):

@@ -1,5 +1,5 @@
 ---
-name: unreal-editor
+name: ag-editor-workflow
 description: 이 프로젝트에서 언리얼 에디터를 다루는 순서와 알려진 함정. C++ 빌드와 에디터 재시작, MCP·에디터 파이썬으로 에셋 읽기·편집·저장, PIE 확인, 패키징을 하기 전에 읽는다.
 ---
 

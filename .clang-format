@@ -1,0 +1,31 @@
+BasedOnStyle: Microsoft
+UseTab: ForIndentation
+IndentWidth: 4
+TabWidth: 4
+ContinuationIndentWidth: 4
+AlignAfterOpenBracket: DontAlign
+NamespaceIndentation: All
+FixNamespaceComments: false
+ColumnLimit: 140
+BreakBeforeBraces: Allman
+InsertBraces: true
+AccessModifierOffset: -4
+PointerAlignment: Left
+ReferenceAlignment: Left
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortLambdasOnASingleLine: None
+AllowShortEnumsOnASingleLine: false
+SortIncludes: Never
+IncludeBlocks: Preserve
+StatementMacros:
+  - UPROPERTY
+  - UFUNCTION
+  - GENERATED_BODY
+  - GENERATED_UCLASS_BODY
+  - GENERATED_USTRUCT_BODY
+  - DECLARE_LOG_CATEGORY_EXTERN
+  - DEFINE_LOG_CATEGORY
+  - IMPLEMENT_SIMPLE_AUTOMATION_TEST

@@ -3,7 +3,7 @@
 
     python -I Scripts/ScenarioTest/run.py <시나리오.py> [--hold 초] [--keep]
 
-종료 코드: 0 통과, 1 확인 필요, 2 실행 실패.
+종료 코드: 0 통과, 1 테스트 실패, 2 실행 실패.
 """
 import argparse, base64, json, os, re, subprocess, sys, time
 
@@ -195,7 +195,7 @@ def main():
             print("창을 열어 둠(PID %d). 다 보면 닫아야 빌드가 됩니다." % pid)
         else:
             time.sleep(a.hold)
-        return 0 if r["verdict"] == "통과" else 1
+        return {"통과": 0, "테스트 실패": 1, "실행 실패": 2}.get(r["verdict"], 2)
     finally:
         if pid and not a.keep:
             subprocess.run(["taskkill", "/PID", str(pid), "/F"], capture_output=True)
@@ -203,4 +203,9 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        code = main()
+    except Exception as e:
+        print("실행 실패: %s: %s" % (type(e).__name__, e))
+        code = 2
+    sys.exit(code)
