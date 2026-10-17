@@ -6,11 +6,11 @@
 #include "Abilities/Tasks/AbilityTask.h"
 #include "AgAbilityTask_LockOn.generated.h"
 
-class UAgLockOnComponent;
+class AAgCharacterBase;
+class AAgPlayerCharacter;
 
 /**
- * 락온 중 대상을 따라갑니다(카메라 '락온 카메라'). 매 프레임 카메라를 대상의 락온 지점 쪽으로 돌리고, 락온 컴포넌트가
- * 대상을 잃었다고 하면(플레이어 사양 '락온'의 해제 조건) 끝납니다.
+ * 락온 대상을 보관하고 카메라를 대상의 락온 지점 쪽으로 돌립니다. 대상 상실 시 알리고, 종료 시 대상과 회전 상태를 정리합니다.
  */
 UCLASS()
 class UAgAbilityTask_LockOn : public UAbilityTask
@@ -24,15 +24,22 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FGenericGameplayTaskDelegate OnTargetLost;
 
-	static UAgAbilityTask_LockOn* FollowTarget(UGameplayAbility* OwningAbility, UAgLockOnComponent* LockOn);
+	/** 화면과 타겟팅 범위 안의 가장 가까운 적을 읽기 전용으로 조회합니다. */
+	static AAgCharacterBase* FindTarget(const AAgPlayerCharacter& Player);
+	static UAgAbilityTask_LockOn* FollowTarget(UGameplayAbility* OwningAbility, AAgCharacterBase* Target);
 
+	AAgCharacterBase* GetTarget() const;
+	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
+	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
+	bool IsTargetLost() const;
+	FVector GetLockOnPoint() const;
 	/** 컨트롤 회전을 대상 쪽으로 돌립니다(카메라 '구도', '회전'). */
 	void UpdateCamera(float DeltaTime);
 
-	TWeakObjectPtr<UAgLockOnComponent> LockOn;
+	TWeakObjectPtr<AAgCharacterBase> Target;
 
 	/** 카메라의 회전 속도 (deg/s). 락온할 때마다 0에서 시작합니다. */
 	float PitchRate = 0.f;

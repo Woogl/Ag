@@ -72,6 +72,8 @@ void AAgBossAIController::OnUnPossess()
 	{
 		TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).Remove(BasicAttackHandle);
 	}
+	TargetASC.Reset();
+	BasicAttackHandle.Reset();
 
 	Super::OnUnPossess();
 }
@@ -92,7 +94,8 @@ void AAgBossAIController::BindTargetEvents()
 	if (const AAgCharacterBase* Target = GetTarget())
 	{
 		TargetASC = Target->GetAbilitySystemComponent();
-		BasicAttackHandle = TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).AddUObject(this, &ThisClass::HandleTargetBasicAttack);
+		BasicAttackHandle = TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted)
+		                        .AddUObject(this, &ThisClass::HandleTargetBasicAttack);
 	}
 }
 

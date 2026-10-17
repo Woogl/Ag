@@ -35,8 +35,14 @@ void UAgTimeSubsystem::EndSlowMotion()
 	UE_LOG(LogAg, Verbose, TEXT("Slow motion ends"));
 }
 
-void UAgTimeSubsystem::StartTimeStop(AAgCharacterBase& Exempt)
+bool UAgTimeSubsystem::StartTimeStop(UObject& Requester, AAgCharacterBase& Exempt)
 {
+	if (bTimeStopped)
+	{
+		UE_LOG(LogAg, Error, TEXT("Time stop is already owned by %s; rejected %s"), *GetNameSafe(TimeStopRequester.Get()), *Requester.GetName());
+		return false;
+	}
+	TimeStopRequester = &Requester;
 	// 시간 정지가 게임 전체 시간 배율을 대신 쥐므로, 도는 슬로우모션은 여기서 끝납니다.
 	GetWorld()->GetTimerManager().ClearTimer(SlowMotionTimer);
 	GetWorld()->GetWorldSettings()->SetTimeDilation(TimeStopDilation);
@@ -45,11 +51,12 @@ void UAgTimeSubsystem::StartTimeStop(AAgCharacterBase& Exempt)
 	Exempt.SetTimeCompensation(GetTimeStopCompensation());
 	OnTimeStopChanged.Broadcast(true);
 	UE_LOG(LogAg, Verbose, TEXT("Time stop starts: %s keeps moving"), *Exempt.GetName());
+	return true;
 }
 
-void UAgTimeSubsystem::EndTimeStop()
+void UAgTimeSubsystem::EndTimeStop(UObject& Requester)
 {
-	if (!bTimeStopped)
+	if (!bTimeStopped || TimeStopRequester != &Requester)
 	{
 		return;
 	}
@@ -60,6 +67,7 @@ void UAgTimeSubsystem::EndTimeStop()
 		Exempt->SetTimeCompensation(1.f);
 	}
 	TimeStopExempt.Reset();
+	TimeStopRequester.Reset();
 	OnTimeStopChanged.Broadcast(false);
 	UE_LOG(LogAg, Verbose, TEXT("Time stop ends"));
 }

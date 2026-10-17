@@ -20,7 +20,7 @@ struct FOnAttributeChangeData;
 
 /**
  * 전투 HUD. WBP_HUD의 부모로, 배치는 위젯에 있고 이 클래스는 값만 넣습니다.
- * 월드에 표시하는 락온 마커와 처형 안내는 보스에 있고, 대미지 숫자는 대미지 숫자 큐(GC_DamageNumber)가 띄웁니다.
+ * 월드에 표시하는 락온 마커와 처형 안내는 보스에 있고, 대미지 숫자는 대미지 숫자 큐(UAgGameplayCue_DamageNumber)가 띄웁니다.
  * 활성인 동안 입력은 게임에만 가고 커서는 숨깁니다(게임 플로우 'Boss Stage').
  */
 UCLASS(Abstract)
@@ -140,14 +140,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;
 
-	/** 감소 잔상: 바가 줄어든 뒤 잔상이 기다리는 시간 */
-	UPROPERTY(EditAnywhere, Category = "HUD|Trail", meta = (Units = "s", ClampMin = 0))
-	float TrailDelay = 0.f;
-
-	/** 감소 잔상: 기다린 뒤 바의 현재 값까지 줄어드는 시간 */
-	UPROPERTY(EditAnywhere, Category = "HUD|Trail", meta = (Units = "s", ClampMin = 0))
-	float TrailShrinkTime = 0.f;
-
 private:
 	/** 바 하나의 감소 잔상 */
 	struct FAgTrail
@@ -171,7 +163,8 @@ private:
 	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);
 
 	/** 부여된 어빌리티 중 AbilityTag를 가진 것을 스펙 핸들(OutHandle)과 함께 돌려줍니다. 없으면 null입니다. */
-	static const UGameplayAbility* FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
+	static const UGameplayAbility* FindAbility(
+	    const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
 
 	/** 어빌리티 자신의 비용 확인을 통과하면 참입니다(슬롯 흐림: MP·UP 부족). */
 	static bool CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);

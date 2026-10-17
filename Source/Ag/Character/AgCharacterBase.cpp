@@ -3,14 +3,12 @@
 #include "Character/AgCharacterBase.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystem/AgEffect_Kill.h"
 #include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "Ag.h"
-#include "Animation/AgAnimNotifyState_AttackWindow.h"
-#include "Animation/AgAnimNotify_GameplayEvent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/CapsuleComponent.h"
@@ -30,13 +28,6 @@ namespace
 	/** 래그돌용 엔진 충돌 프로필 (BaseEngine.ini) */
 	const FName RagdollProfileName(TEXT("Ragdoll"));
 
-	/** 빠르게 휘둘러도 몸을 건너뛰지 않도록 무기 날을 이 길이(cm) 이하로 나눠 스윕합니다(최대 MaxSweepSteps 단계). */
-	constexpr float SweepStepLength = 10.f;
-	constexpr int32 MaxSweepSteps = 16;
-
-	/** 캐릭터 축에서 이보다 가까우면 축 둘레의 각도가 불안정하므로, 나눈 위치를 직선으로 잡습니다. */
-	constexpr float MinArcRadius = 20.f;
-
 	/** 히트스톱 중의 시간 배율: 모션, 몽타주, 이동이 거의 멈춥니다. */
 	constexpr float HitstopTimeDilation = 1.e-4f;
 
@@ -44,39 +35,18 @@ namespace
 	const FName FlinchMontageId(TEXT("Flinch"));
 	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
 
-	/**
-	 * 나눈 단계의 A와 B 사이 위치. 휘두르기는 몸을 돌아 지나가고 한 프레임에 4분의 1바퀴까지 돌기도 하므로, 직선 대신
-	 * Center를 지나는 캐릭터 수직축 둘레의 호를 따라갑니다.
-	 */
-	FVector ArcLerp(const FVector& Center, const FVector& A, const FVector& B, float Alpha)
-	{
-		const FVector2D RelA(A.X - Center.X, A.Y - Center.Y);
-		const FVector2D RelB(B.X - Center.X, B.Y - Center.Y);
-		const float RadiusA = RelA.Size();
-		const float RadiusB = RelB.Size();
-		if (RadiusA < MinArcRadius || RadiusB < MinArcRadius)
-		{
-			return FMath::Lerp(A, B, Alpha);
-		}
-
-		const float AngleA = FMath::Atan2(RelA.Y, RelA.X);
-		const float Angle = AngleA + FMath::FindDeltaAngleRadians(AngleA, FMath::Atan2(RelB.Y, RelB.X)) * Alpha;
-		const float Radius = FMath::Lerp(RadiusA, RadiusB, Alpha);
-		return FVector(Center.X + Radius * FMath::Cos(Angle), Center.Y + Radius * FMath::Sin(Angle), FMath::Lerp(A.Z, B.Z, Alpha));
-	}
 }
 
-const FName AAgCharacterBase::AttackWarpTarget(TEXT("AttackTarget"));
 const FName AAgCharacterBase::WeaponTag(TEXT("Weapon"));
 const FName AAgCharacterBase::WeaponCollisionTag(TEXT("WeaponCollision"));
 
 AAgCharacterBase::AAgCharacterBase()
 {
-	// 물리 다음에 틱해서 무기 스윕이 이번 프레임의 포즈를 봅니다.
+	// 이동과 물리 갱신 뒤 일반 회전을 처리합니다.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PostPhysics;
 
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
+	AbilitySystemComponent = CreateDefaultSubobject<UAgAbilitySystemComponent>(TEXT("AbilitySystem"));
 	AttributeSet = CreateDefaultSubobject<UAgAttributeSet>(TEXT("AttributeSet"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 
@@ -103,7 +73,8 @@ bool AAgCharacterBase::IsDead() const
 
 bool AAgCharacterBase::CanLosePP() const
 {
-	return !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_InfinitePP) && !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	return !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_GroggyImmune) &&
+	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 }
 
 void AAgCharacterBase::PostInitializeComponents()
@@ -111,17 +82,25 @@ void AAgCharacterBase::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	WeaponComponent = FindComponentByTag<USceneComponent>(WeaponTag);
-	WeaponCollisionComponent = FindComponentByTag<UCapsuleComponent>(WeaponCollisionTag);
 }
 
 void AAgCharacterBase::BeginPlay()
 {
+	// 처음 읽기에 실패한 데이터로는 전투를 시작하지 않습니다. 다시 읽기 실패는 기존 정상 값을 유지합니다.
+	if (!CharacterData || !CharacterData->HasValidJsonData())
+	{
+		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character JSON data is not valid."), *GetName());
+		return;
+	}
 	Super::BeginPlay();
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute()).AddUObject(this, &ThisClass::HandleMOVChanged);
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetPPAttribute()).AddUObject(this, &ThisClass::HandlePPChanged);
-	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleHitstopChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute())
+	    .AddUObject(this, &ThisClass::HandleMOVChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetPPAttribute())
+	    .AddUObject(this, &ThisClass::HandlePPChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandleHitstopChanged);
 	InitializeAttributes();
 	GrantAbilities();
 	ApplyEffects();
@@ -147,10 +126,6 @@ void AAgCharacterBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (OpenWindowHit != INDEX_NONE)
-	{
-		SweepWeapon();
-	}
 	UpdateFacing(DeltaSeconds);
 }
 
@@ -194,14 +169,19 @@ void AAgCharacterBase::GrantAbilities()
 {
 	for (const FAgAbilityData& Ability : CharacterData->Abilities)
 	{
-		// 어빌리티 ID는 태그가 아닌 문자열이라 오타를 에디터가 잡지 못하므로, JSON과 DA가 어긋나면 여기서 알립니다.
-		const TSubclassOf<UAgGameplayAbility> AbilityClass = CharacterData->FindAbilityClass(Ability.Id);
-		if (!AbilityClass)
+		FGameplayAbilitySpec Spec(UAgGameplayAbility::StaticClass());
+		AbilityIds.Add(Spec.Handle, Ability.Id);
+		Spec.GetDynamicSpecSourceTags() = Ability.Tags;
+		for (const FGameplayTag& Tag : Ability.Activation.TriggerEvents)
 		{
-			UE_LOG(LogAg, Error, TEXT("%s: ability %s has no class in %s."), *GetName(), *Ability.Id.ToString(), *CharacterData->GetName());
-			continue;
+			FAbilityTriggerData& Trigger = Spec.DynamicAbilityTriggers.AddDefaulted_GetRef();
+			Trigger.TriggerTag = Tag;
+			Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
 		}
-		AbilityIds.Add(AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass)), Ability.Id);
+		if (!AbilitySystemComponent->GiveAbility(Spec).IsValid())
+		{
+			AbilityIds.Remove(Spec.Handle);
+		}
 	}
 }
 
@@ -278,164 +258,24 @@ void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, co
 	Handle = UAgEffect_TimedTag::Apply(AbilitySystemComponent, DelayTag, Duration);
 }
 
-bool AAgCharacterBase::GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const
+void AAgCharacterBase::SetMotionConstraints(UObject& RequestOwner, const FAgCharacterMotionConstraints& Constraints)
 {
-	if (!WeaponCollisionComponent)
+	MotionConstraintOwner = &RequestOwner;
+	MotionConstraints = Constraints;
+}
+
+void AAgCharacterBase::ClearMotionConstraints(const UObject& RequestOwner)
+{
+	if (MotionConstraintOwner.Get() == &RequestOwner)
 	{
-		return false;
+		MotionConstraintOwner.Reset();
+		MotionConstraints = {};
 	}
-	// 캡슐의 축은 로컬 Z입니다.
-	const FVector Center = WeaponCollisionComponent->GetComponentLocation();
-	const FVector HalfSegment = WeaponCollisionComponent->GetUpVector() * WeaponCollisionComponent->GetScaledCapsuleHalfHeight_WithoutHemisphere();
-	OutStart = Center + HalfSegment;
-	OutEnd = Center - HalfSegment;
-	return true;
-}
-
-void AAgCharacterBase::SetActiveAttack(TConstArrayView<FAgPlayerAttackHit> Hits)
-{
-	ClearActiveAttack();
-	ActiveAttackHits = Hits;
-}
-
-void AAgCharacterBase::SetActiveAttack(TConstArrayView<FAgAttackHit> Hits)
-{
-	ClearActiveAttack();
-	for (const FAgAttackHit& Hit : Hits)
-	{
-		ActiveAttackHits.Emplace(Hit);
-	}
-}
-
-void AAgCharacterBase::ClearActiveAttack()
-{
-	OpenWindowHit = INDEX_NONE;
-	WindowTouchedActors.Reset();
-	ActiveAttackHits.Reset();
-}
-
-void AAgCharacterBase::BeginAttackWindow(int32 HitIndex)
-{
-	if (IsDead() || !ActiveAttackHits.IsValidIndex(HitIndex))
-	{
-		return;
-	}
-
-	OpenWindowHit = HitIndex;
-	WindowTouchedActors.Reset();
-	UE_LOG(LogAg, Verbose, TEXT("%s: attack window %d opens"), *GetName(), HitIndex + 1);
-	if (GetWeaponCollision(LastEdgeStart, LastEdgeEnd))
-	{
-		SweepWeapon();
-	}
-}
-
-void AAgCharacterBase::EndAttackWindow(int32 HitIndex)
-{
-	if (OpenWindowHit == HitIndex)
-	{
-		OpenWindowHit = INDEX_NONE;
-		WindowTouchedActors.Reset();
-	}
-}
-
-void AAgCharacterBase::SweepWeapon()
-{
-	FVector EdgeStart, EdgeEnd;
-	if (!GetWeaponCollision(EdgeStart, EdgeEnd))
-	{
-		return;
-	}
-
-	const float Travel = FMath::Max(FVector::Dist(EdgeStart, LastEdgeStart), FVector::Dist(EdgeEnd, LastEdgeEnd));
-	const int32 Steps = FMath::Clamp(FMath::CeilToInt(Travel / SweepStepLength), 1, MaxSweepSteps);
-	const FCollisionShape Edge = FCollisionShape::MakeSphere(WeaponCollisionComponent->GetScaledCapsuleRadius());
-	const FCollisionQueryParams Params(SCENE_QUERY_STAT(AgWeaponSweep), /*bTraceComplex*/ false, this);
-	const FVector Center = GetActorLocation();
-
-	TArray<FHitResult> Touches;
-	for (int32 Step = 1; Step <= Steps && OpenWindowHit != INDEX_NONE; ++Step)
-	{
-		const float Alpha = static_cast<float>(Step) / Steps;
-		const FVector From = ArcLerp(Center, LastEdgeStart, EdgeStart, Alpha);
-		const FVector To = ArcLerp(Center, LastEdgeEnd, EdgeEnd, Alpha);
-
-		Touches.Reset();
-		GetWorld()->SweepMultiByChannel(Touches, From, To, FQuat::Identity, ECC_AgWeapon, Edge, Params);
-		for (const FHitResult& Touch : Touches)
-		{
-			AAgCharacterBase* Target = Cast<AAgCharacterBase>(Touch.GetActor());
-			if (!Target || GetTeamAttitudeTowards(*Target) != ETeamAttitude::Hostile || WindowTouchedActors.Contains(Target))
-			{
-				continue;
-			}
-
-			// 판정 구간 하나에서 대상마다 한 번만 닿습니다. 아무 일도 없었어도(무적) 다시 맞지 않습니다.
-			WindowTouchedActors.Add(Target);
-			const FVector HitLocation = Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint;
-			UAgEffect_Damage::ApplyAttack(this, this, Target, ActiveAttackHits[OpenWindowHit], HitLocation);
-			if (OpenWindowHit == INDEX_NONE)
-			{
-				break;
-			}
-		}
-	}
-
-	LastEdgeStart = EdgeStart;
-	LastEdgeEnd = EdgeEnd;
-}
-
-void AAgCharacterBase::SetStopTarget(AActor* Target, float InStopDistance)
-{
-	StopTarget = Target;
-	StopDistance = InStopDistance;
-}
-
-void AAgCharacterBase::ClearStopTarget()
-{
-	StopTarget.Reset();
-}
-
-void AAgCharacterBase::SetFacingTarget(AActor* Target)
-{
-	FacingTarget = Target;
 }
 
 bool AAgCharacterBase::IsFacingFixed() const
 {
-	return OpenWindowHit != INDEX_NONE || IsInRotationStopWindow();
-}
-
-bool AAgCharacterBase::IsInRotationStopWindow() const
-{
-	const UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (!AnimInstance)
-	{
-		return false;
-	}
-
-	// 판정 구간보다 회전 정지 시간만큼 앞서 멈추고, 판정 구간이 끝나면 다시 돕니다. 투사체 발사 노티파이는 길이 없는
-	// 판정 구간으로 봅니다(보스 사양 'SwordWave').
-	const float LeadInMontage = CharacterData->GetRotationStopLeadInMontage();
-	for (const FAnimMontageInstance* Instance : AnimInstance->MontageInstances)
-	{
-		if (!Instance || !Instance->IsActive())
-		{
-			continue;
-		}
-		const float Position = Instance->GetPosition();
-		for (const FAnimNotifyEvent& Notify : Instance->Montage->Notifies)
-		{
-			const UAgAnimNotify_GameplayEvent* Event = Cast<UAgAnimNotify_GameplayEvent>(Notify.Notify);
-			const bool bHitTiming = Cast<UAgAnimNotifyState_AttackWindow>(Notify.NotifyStateClass)
-				|| (Event && Event->EventTag == AgGameplayTags::Event_ProjectileRelease);
-			if (bHitTiming && Position >= Notify.GetTriggerTime() - LeadInMontage && Position <= Notify.GetEndTriggerTime())
-			{
-				return true;
-			}
-		}
-	}
-	return false;
+	return MotionConstraintOwner.IsValid() && MotionConstraints.bControlsFacing;
 }
 
 void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
@@ -457,7 +297,18 @@ void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
 
 FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds)
 {
-	const AActor* Target = StopTarget.Get();
+	if (!MotionConstraintOwner.IsValid())
+	{
+		return WorldRootMotion;
+	}
+	if (MotionConstraints.bTranslationFromVelocity)
+	{
+		// 회전은 워핑 결과를 쓰고, 공중 궤적은 물리 속도를 유지합니다. 착지 후 모션으로 밀려나지 않습니다.
+		FTransform Result = WorldRootMotion;
+		Result.SetTranslation(Movement->IsFalling() ? Movement->Velocity * DeltaSeconds : FVector::ZeroVector);
+		return Result;
+	}
+	const AActor* Target = MotionConstraints.StopTarget.Get();
 	if (!Target)
 	{
 		return WorldRootMotion;
@@ -467,7 +318,7 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	FVector Delta = WorldRootMotion.GetTranslation();
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	const float Toward = FVector::DotProduct(FVector(Delta.X, Delta.Y, 0.f), ToTarget);
-	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - StopDistance);
+	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - MotionConstraints.StopDistance);
 	if (Toward <= Allowed)
 	{
 		return WorldRootMotion;
@@ -506,7 +357,7 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 		return;
 	}
 
-	// 1-2. 모든 행동을 멈추고, 이후의 피격은 무시합니다(IsDead). 행동의 공격 중 이동 태스크도 함께 끝납니다.
+	// 1-2. 모든 행동을 멈추고, 이후의 피격은 무시합니다(IsDead). 몽타주의 워핑과 열린 판정도 함께 정리합니다.
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
 	AbilitySystemComponent->CancelAllAbilities(DeathAbility);
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -523,13 +374,10 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 	}
 	GetCharacterMovement()->StopMovementImmediately();
 
-	// 4. 이 캐릭터의 판정 구간을 없앱니다.
-	ClearActiveAttack();
-
-	// 5. 더는 상대 캐릭터를 막지 않습니다.
+	// 4. 어빌리티 취소가 각 판정 Task를 끝냈으므로 더는 상대 캐릭터를 막지 않습니다.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
-	// 6. 마지막 공격의 피격 방향으로 밀리며 래그돌이 됩니다.
+	// 5. 마지막 공격의 피격 방향으로 밀리며 래그돌이 됩니다.
 	if (bRagdoll)
 	{
 		StartRagdoll(PushVelocity);

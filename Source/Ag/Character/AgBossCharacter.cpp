@@ -2,12 +2,9 @@
 
 #include "Character/AgBossCharacter.h"
 
-#include "AbilitySystem/Abilities/AgAbility_Execution.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
-#include "Ag.h"
 #include "AI/AgBossAIController.h"
-#include "Character/AgLockOnComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Components/WidgetComponent.h"
 #include "Core/AgGameplayTags.h"
@@ -28,7 +25,7 @@ AAgBossCharacter::AAgBossCharacter()
 	// 화면 공간이라 거리와 관계없이 크기가 같습니다. 데이터의 본에는 BeginPlay에서 붙입니다.
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
-	for (UWidgetComponent* WorldWidget : { LockOnMarker.Get(), ExecutionPrompt.Get() })
+	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get()})
 	{
 		WorldWidget->SetupAttachment(GetMesh());
 		WorldWidget->SetWidgetSpace(EWidgetSpace::Screen);
@@ -54,21 +51,6 @@ void AAgBossCharacter::AttachWorldWidgets()
 	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
 	LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->LockOnBone);
 	ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->ExecutionPromptBone);
-}
-
-void AAgBossCharacter::GrantAbilities()
-{
-	Super::GrantAbilities();
-
-	// 패턴 어빌리티는 부모가 부여합니다. 몽타주를 패턴 ID로 찾으므로, DA에 빠졌으면 패턴을 고르기 전에 여기서 알립니다.
-	const UAgCharacterData* Data = GetCharacterData();
-	for (const FAgAbilityData& Ability : Data->Abilities)
-	{
-		if (Ability.Params.GetPtr<FAgBossPatternParams>() && !Data->Montages.Contains(Ability.Id))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: pattern %s has no montage in %s's Montages."), *GetName(), *Ability.Id.ToString(), *Data->GetName());
-		}
-	}
 }
 
 void AAgBossCharacter::EnterPhase2()
@@ -105,16 +87,16 @@ void AAgBossCharacter::UpdateWorldWidgets()
 	// 숨깁니다. 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
 	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	const bool bInCombat = Player && !Player->IsDead() && !IsDead()
-		&& !GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Execution_Executed)
-		&& !(PlayerController && PlayerController->bCinematicMode);
+	const bool bInCombat = Player && !Player->IsDead() && !IsDead() &&
+	                       !GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
+	                       !(PlayerController && PlayerController->bCinematicMode);
 
-	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOn()->GetTarget() == this));
+	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOnTarget() == this));
 
 	// 처형 발동 조건 1, 2(그로기, 범위 안)를 만족하는 처형 대상이면 표시합니다. 지금 하는 행동 때문에 처형 키를 받지 않는 동안에도
 	// 표시합니다. 범위 확인은 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
 	const bool bGroggy = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
-	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && UAgAbility_Execution::FindExecutionTarget(Player) == this));
+	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && UAgGameplayAbility::FindExecutionTarget(Player) == this));
 }
 
 bool AAgBossCharacter::IsFacingFixed() const
@@ -122,7 +104,7 @@ bool AAgBossCharacter::IsFacingFixed() const
 	FGameplayTagContainer NoTurning;
 	NoTurning.AddTag(AgGameplayTags::State_HitReaction);
 	NoTurning.AddTag(AgGameplayTags::State_Groggy);
-	NoTurning.AddTag(AgGameplayTags::State_Execution_Executed);
+	NoTurning.AddTag(AgGameplayTags::State_Execution);
 	NoTurning.AddTag(AgGameplayTags::State_Boss_RotationLocked);
 	NoTurning.AddTag(AgGameplayTags::State_NonCombat);
 	return Super::IsFacingFixed() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(NoTurning);

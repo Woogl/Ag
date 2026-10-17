@@ -25,4 +25,5 @@ public:
 
 private:
 	TWeakObjectPtr<UAgTimeSubsystem> TimeSubsystem;
+	bool bAcquired = false;
 };

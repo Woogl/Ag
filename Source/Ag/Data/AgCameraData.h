@@ -3,11 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "UObject/Object.h"
 #include "AgCameraData.generated.h"
 
-/** 카메라 '셰이크 단계'. 단계마다 카메라 셰이크 에셋 하나를 그 단계의 게임플레이 큐로 재생합니다. */
+/** 카메라 '셰이크 단계'. 단계별 JSON 값을 공통 C++ 셰이크로 재생합니다. */
 UENUM()
 enum class EAgCameraShake : uint8
 {
@@ -15,6 +14,21 @@ enum class EAgCameraShake : uint8
 	Small UMETA(DisplayName = "작음"),
 	Medium UMETA(DisplayName = "보통"),
 	Large UMETA(DisplayName = "큼"),
+};
+
+USTRUCT()
+struct FAgCameraShakeSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, meta = (ClampMin = 0.001, Units = "s"))
+	float Duration = 0.f;
+
+	UPROPERTY(VisibleAnywhere, meta = (ClampMin = 0, Units = "deg"))
+	float RotationAmplitude = 0.f;
+
+	UPROPERTY(VisibleAnywhere, meta = (ClampMin = 0, Units = "cm"))
+	float LocationAmplitude = 0.f;
 };
 
 /**
@@ -28,8 +42,29 @@ class UAgCameraData : public UObject
 	GENERATED_BODY()
 
 public:
-	/** 셰이크 단계의 셰이크 큐 태그. 없음이면 빈 태그라, 그 태그로 큐를 실행해도 흔들지 않습니다. */
-	static FGameplayTag GetShakeCue(EAgCameraShake Shake);
+	/** 단계별 JSON 설정. None이면 nullptr입니다. */
+	const FAgCameraShakeSettings* FindShakeSettings(EAgCameraShake Shake) const;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
+	FAgCameraShakeSettings SmallShake;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
+	FAgCameraShakeSettings MediumShake;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
+	FAgCameraShakeSettings LargeShake;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	float ShakePitchFrequency = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	float ShakeYawFrequency = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	float ShakeYFrequency = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	float ShakeZFrequency = 0.f;
 
 	/** 락온 카메라 '구도': 회전 중심에서 락온 지점을 보는 방향의 피치 하한 (음수는 아래) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "deg"))

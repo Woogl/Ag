@@ -18,93 +18,156 @@
   "Abilities": [
     {
       "Id": "BasicAttack",
+      "Tags": [
+        "Ability.Action.BasicAttack"
+      ],
       "Cooldown": 0,
-      "Params": {
-        "Combo": [
-          {
-            "Hits": [
-              {
-                "DamageMultiplier": 0.8,
-                "PoiseMultiplier": 0.8,
-                "HitReaction": "Flinch",
-                "bGuardable": true,
-                "MPCharge": 4,
-                "UPCharge": 0
-              }
-            ],
-            "TargetingRange": 200,
-            "MaxApproachDistance": 70
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "Attack": {
+          "Hit1": {
+            "DamageMultiplier": 0.8,
+            "PoiseMultiplier": 0.8,
+            "HitReaction": "Flinch",
+            "bGuardable": true,
+            "MPCharge": 4,
+            "UPCharge": 0
           },
-          {
-            "Hits": [
-              {
-                "DamageMultiplier": 0.8,
-                "PoiseMultiplier": 0.8,
-                "HitReaction": "Flinch",
-                "bGuardable": true,
-                "MPCharge": 4,
-                "UPCharge": 0
-              }
-            ],
-            "TargetingRange": 250,
-            "MaxApproachDistance": 90
+          "Hit2": {
+            "DamageMultiplier": 0.8,
+            "PoiseMultiplier": 0.8,
+            "HitReaction": "Flinch",
+            "bGuardable": true,
+            "MPCharge": 4,
+            "UPCharge": 0
           },
-          {
-            "Hits": [
-              {
-                "DamageMultiplier": 1,
-                "PoiseMultiplier": 1,
-                "HitReaction": "Flinch",
-                "bGuardable": true,
-                "MPCharge": 4,
-                "UPCharge": 0
-              }
-            ],
-            "TargetingRange": 250,
-            "MaxApproachDistance": 130
+          "Hit3": {
+            "DamageMultiplier": 1,
+            "PoiseMultiplier": 1,
+            "HitReaction": "Flinch",
+            "bGuardable": true,
+            "MPCharge": 4,
+            "UPCharge": 0
           },
-          {
-            "Hits": [
-              {
-                "DamageMultiplier": 1,
-                "PoiseMultiplier": 1,
-                "HitReaction": "Flinch",
-                "bGuardable": true,
-                "MPCharge": 4,
-                "UPCharge": 0
-              }
-            ],
-            "TargetingRange": 260,
-            "MaxApproachDistance": 90
+          "Hit4": {
+            "DamageMultiplier": 1,
+            "PoiseMultiplier": 1,
+            "HitReaction": "Flinch",
+            "bGuardable": true,
+            "MPCharge": 4,
+            "UPCharge": 0
           },
-          {
-            "Hits": [
-              {
-                "DamageMultiplier": 1.2,
-                "PoiseMultiplier": 2,
-                "HitReaction": "Flinch",
-                "bGuardable": true,
-                "MPCharge": 4,
-                "UPCharge": 10
-              }
-            ],
-            "TargetingRange": 260,
-            "MaxApproachDistance": 120
+          "Hit5": {
+            "DamageMultiplier": 1.2,
+            "PoiseMultiplier": 2,
+            "HitReaction": "Flinch",
+            "bGuardable": true,
+            "MPCharge": 4,
+            "UPCharge": 10
           }
-        ]
+        },
+        "MotionWarping": {
+          "Approach1": {
+            "TargetingRange": 200,
+            "MaxWarpDistance": 110
+          },
+          "Approach2": {
+            "TargetingRange": 250,
+            "MaxWarpDistance": 160
+          },
+          "Approach3": {
+            "TargetingRange": 250,
+            "MaxWarpDistance": 160
+          },
+          "Approach4": {
+            "TargetingRange": 260,
+            "MaxWarpDistance": 170
+          },
+          "Approach5": {
+            "TargetingRange": 260,
+            "MaxWarpDistance": 170
+          }
+        }
       }
     },
     {
       "Id": "Jump",
+      "Tags": [
+        "Ability.Action.Jump"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.Jumping"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {}
     },
     {
       "Id": "JumpAttack",
+      "Tags": [
+        "Ability.Action.JumpAttack"
+      ],
       "Cooldown": 0,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [
+          "State.Jumping"
+        ],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "JumpAttack"
+        },
+        "Attack": {
+          "PlungeHit": {
             "DamageMultiplier": 1.5,
             "PoiseMultiplier": 1.5,
             "HitReaction": "Flinch",
@@ -112,30 +175,109 @@
             "MPCharge": 4,
             "UPCharge": 0
           }
-        ],
-        "TargetingRange": 300,
-        "MaxApproachDistance": 0,
-        "PlungeSpeed": 1000
+        },
+        "MotionWarping": {
+          "Facing": {
+            "TargetingRange": 300,
+            "MaxWarpDistance": 0
+          }
+        },
+        "LaunchVertical": {
+          "VelocityZ": -1000
+        }
       }
     },
     {
       "Id": "Dodge",
+      "Tags": [
+        "Ability.Action.Dodge"
+      ],
       "Cooldown": 0.4,
-      "Params": {
-        "SPCost": 20,
-        "PerfectDodgeMPCharge": 10,
-        "PerfectDodgeUPCharge": 10,
-        "CounterChanceTime": 1,
-        "SlowMotionSpeed": 0.3,
-        "SlowMotionDuration": 0.3
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": true
+      },
+      "Cost": {
+        "Resource": "SP",
+        "Amount": 20
+      },
+      "Tasks": {
+        "HoldTag": {
+          "Invincible": {
+            "Tag": "State.Invincible"
+          },
+          "PerfectDodgeWindow": {
+            "Tag": "State.PerfectDodgeWindow"
+          }
+        },
+        "GrantResources": {
+          "PerfectDodge": {
+            "SP": 0,
+            "MP": 10,
+            "UP": 10
+          }
+        },
+        "TimedTag": {
+          "CounterChance": {
+            "Tag": "State.DodgeCounterChance",
+            "Duration": 1
+          }
+        },
+        "SlowMotion": {
+          "PerfectDodge": {
+            "Speed": 0.3,
+            "RealDuration": 0.3
+          }
+        }
       }
     },
     {
       "Id": "DodgeCounter",
+      "Tags": [
+        "Ability.Action.DodgeCounter"
+      ],
       "Cooldown": 0,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [
+          "State.DodgeCounterChance"
+        ],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "DodgeCounter"
+        },
+        "Attack": {
+          "CounterHit": {
             "DamageMultiplier": 2.5,
             "PoiseMultiplier": 5,
             "HitReaction": "Flinch",
@@ -143,27 +285,102 @@
             "MPCharge": 8,
             "UPCharge": 0
           }
-        ],
-        "TargetingRange": 850,
-        "MaxApproachDistance": 560
+        },
+        "MotionWarping": {
+          "Approach": {
+            "TargetingRange": 850,
+            "MaxWarpDistance": 750
+          }
+        },
+        "HoldTag": {
+          "Invincible": {
+            "Tag": "State.Invincible"
+          }
+        }
       }
     },
     {
       "Id": "Guard",
+      "Tags": [
+        "Ability.Action.Guard"
+      ],
       "Cooldown": 0,
-      "Params": {
-        "ParryWindowTime": 0.3,
-        "MoveLockTime": 0.5,
-        "ParryMPCharge": 15,
-        "ParryUPCharge": 10
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [
+          "Event.Guard.Resume"
+        ],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "HoldTag": {
+          "Guarding": {
+            "Tag": "State.Guarding"
+          }
+        },
+        "TimedTag": {
+          "ParryWindow": {
+            "Tag": "State.ParryWindow",
+            "Duration": 0.3
+          }
+        },
+        "GrantResources": {
+          "Parry": {
+            "SP": 0,
+            "MP": 15,
+            "UP": 10
+          }
+        }
       }
     },
     {
       "Id": "Skill",
+      "Tags": [
+        "Ability.Action.Skill"
+      ],
       "Cooldown": 3,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": {
+        "Resource": "MP",
+        "Amount": 30
+      },
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "Skill"
+        },
+        "Attack": {
+          "SkillHit": {
             "DamageMultiplier": 3,
             "PoiseMultiplier": 6,
             "HitReaction": "KnockBack",
@@ -171,35 +388,117 @@
             "MPCharge": 0,
             "UPCharge": 25
           }
-        ],
-        "TargetingRange": 340,
-        "MaxApproachDistance": 70,
-        "MPCost": 30
+        },
+        "MotionWarping": {
+          "Approach": {
+            "TargetingRange": 340,
+            "MaxWarpDistance": 240
+          }
+        }
       }
     },
     {
       "Id": "Ultimate",
+      "Tags": [
+        "Ability.Action.Ultimate"
+      ],
       "Cooldown": 0,
-      "Params": {
-        "Hit": {
-          "DamageMultiplier": 5,
-          "PoiseMultiplier": 5,
-          "HitReaction": "KnockUp",
-          "bGuardable": true,
-          "MPCharge": 0,
-          "UPCharge": 0
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.Invincible"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": {
+        "Resource": "UP",
+        "Amount": 100
+      },
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "Ultimate"
         },
-        "Radius": 1000,
-        "SlashDistance": { "Min": 300, "Max": 1000 },
-        "SlashHeight": { "Min": 0, "Max": 300 }
+        "TimeStop": {},
+        "PlayCutscene": {
+          "UltimateCamera": {
+            "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"
+          }
+        },
+        "TargetQuery": {
+          "Finish": {
+            "Range": 1000
+          }
+        },
+        "Attack": {
+          "Finish": {
+            "DamageMultiplier": 5,
+            "PoiseMultiplier": 5,
+            "HitReaction": "KnockUp",
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
+          }
+        }
       }
     },
     {
       "Id": "Execution",
+      "Tags": [
+        "Ability.Action.Execution"
+      ],
       "Cooldown": 0,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.Execution",
+          "State.Invincible"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "Execution"
+        },
+        "TargetQuery": {
+          "Execution": {
+            "Range": 300
+          }
+        },
+        "MotionWarping": {
+          "Alignment": {
+            "TargetingRange": null,
+            "MaxWarpDistance": null
+          }
+        },
+        "Attack": {
+          "Stab": {
             "DamageMultiplier": 1.5,
             "PoiseMultiplier": 0,
             "HitReaction": "None",
@@ -207,7 +506,7 @@
             "MPCharge": 0,
             "UPCharge": 0
           },
-          {
+          "Finish": {
             "DamageMultiplier": 4.5,
             "PoiseMultiplier": 0,
             "HitReaction": "None",
@@ -215,51 +514,237 @@
             "MPCharge": 0,
             "UPCharge": 0
           }
-        ],
-        "TargetingRange": 300,
-        "MaxApproachDistance": 0
+        }
       }
     },
     {
       "Id": "Sprint",
+      "Tags": [
+        "Ability.Sprint"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Busy",
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.Sprinting"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint"
+        ],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "DrainResource": {
+          "Resource": "SP",
+          "AmountPerSecond": 12
+        }
+      }
     },
     {
       "Id": "LockOn",
+      "Tags": [
+        "Ability.LockOn"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "LockOn": {}
+      }
     },
     {
       "Id": "KnockBack",
+      "Tags": [
+        "Ability.Reaction.HitReaction.KnockBack"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.HitReaction"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint",
+          "Ability.Boss.Pattern",
+          "Ability.Reaction.HitReaction"
+        ],
+        "TriggerEvents": [
+          "Event.Hit.KnockBack"
+        ],
+        "bAllowRetrigger": true
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "KnockBack"
+        },
+        "HoldTag": {
+          "Downed": {
+            "Tag": "State.Invincible"
+          }
+        }
+      }
     },
     {
       "Id": "KnockUp",
+      "Tags": [
+        "Ability.Reaction.HitReaction.KnockUp"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.HitReaction"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint",
+          "Ability.Boss.Pattern",
+          "Ability.Reaction.HitReaction"
+        ],
+        "TriggerEvents": [
+          "Event.Hit.KnockUp"
+        ],
+        "bAllowRetrigger": true
+      },
+      "Cost": null,
+      "Tasks": {
+        "HoldTag": {
+          "Downed": {
+            "Tag": "State.Invincible"
+          }
+        }
+      }
     },
     {
       "Id": "GuardPushback",
+      "Tags": [
+        "Ability.Reaction.HitReaction.GuardPushback"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.HitReaction",
+          "State.Guarding"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint",
+          "Ability.Boss.Pattern",
+          "Ability.Reaction.HitReaction"
+        ],
+        "TriggerEvents": [
+          "Event.Guard.Pushback"
+        ],
+        "bAllowRetrigger": true
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "GuardPushback"
+        }
+      }
     },
     {
       "Id": "GuardBreak",
+      "Tags": [
+        "Ability.Reaction.HitReaction.GuardBreak"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.HitReaction"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint",
+          "Ability.Boss.Pattern",
+          "Ability.Reaction.HitReaction"
+        ],
+        "TriggerEvents": [
+          "Event.Guard.Break"
+        ],
+        "bAllowRetrigger": true
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "GuardBreak"
+        }
+      }
     },
     {
       "Id": "Death",
+      "Tags": [
+        "Ability.Reaction.Death"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [
+          "Event.Death"
+        ],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {}
     }
   ],
   "PPRegenRate": 0,
   "DeathPresentationTime": 3,
   "StopDistance": 100,
-  "RotationStopLead": 0,
   "InputBufferTime": 0.3,
   "SPRegenRate": 40,
   "SPRegenRateGuarding": 20,
@@ -270,8 +755,55 @@
   "ParryPPRatio": 0.08,
   "UltimateSlowMotionSpeed": 0.3,
   "UltimateSlowMotionDuration": 0.8,
+  "UltimateSlashDistance": {
+    "Min": 300,
+    "Max": 1000
+  },
+  "UltimateSlashHeight": {
+    "Min": 0,
+    "Max": 300
+  },
   "LockOnRange": 2000,
   "LockOnReleaseRange": 3000,
   "SprintSpeedRatio": 1.5,
-  "SprintSPCost": 12
+  "Effects": [
+    "/Script/Ag.AgEffect_SPRegen",
+    "/Script/Ag.AgEffect_SPRegenGuarding",
+    "/Script/Ag.AgEffect_GroggyImmune"
+  ],
+  "Montages": {
+    "BasicAttack1": "/Game/Animations/AM_Player_BasicAttack1.AM_Player_BasicAttack1",
+    "BasicAttack2": "/Game/Animations/AM_Player_BasicAttack2.AM_Player_BasicAttack2",
+    "BasicAttack3": "/Game/Animations/AM_Player_BasicAttack3.AM_Player_BasicAttack3",
+    "BasicAttack4": "/Game/Animations/AM_Player_BasicAttack4.AM_Player_BasicAttack4",
+    "BasicAttack5": "/Game/Animations/AM_Player_BasicAttack5.AM_Player_BasicAttack5",
+    "Roll": "/Game/Animations/AM_Player_Roll.AM_Player_Roll",
+    "Backstep": "/Game/Animations/AM_Player_Backstep.AM_Player_Backstep",
+    "GuardFlinch": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch",
+    "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
+    "GuardBreak": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak",
+    "Parry": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
+    "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
+    "DodgeCounter": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
+    "Jump": "/Game/Animations/AM_Player_Jump.AM_Player_Jump",
+    "Land": "/Game/Animations/AM_Player_Land.AM_Player_Land",
+    "JumpAttack": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
+    "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
+    "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
+    "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+    "KnockBack": "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack",
+    "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+    "KnockUpFall": "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall",
+    "GetUp": "/Game/Animations/AM_GetUp.AM_GetUp"
+  },
+  "ExecutionDistance": 95,
+  "EnemyTargeting": "/Game/Data/TP_Enemy.TP_Enemy",
+  "Projectiles": {},
+  "BasicAttackMontageIds": [
+    "BasicAttack1",
+    "BasicAttack2",
+    "BasicAttack3",
+    "BasicAttack4",
+    "BasicAttack5"
+  ]
 }

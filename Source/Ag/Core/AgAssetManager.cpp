@@ -4,6 +4,7 @@
 
 #include "Ag.h"
 #include "Data/AgCameraData.h"
+#include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Dom/JsonObject.h"
@@ -12,26 +13,30 @@
 #include "JsonObjectConverter.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/PackageName.h"
+#include "Misc/ScopeExit.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
-#include "StructUtils/InstancedStruct.h"
 #include "UObject/UnrealType.h"
+#include "UObject/Package.h"
+#if WITH_EDITOR
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "HAL/FileManager.h"
+#endif
 
 namespace
 {
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
 	const TCHAR* const JsonFolderName = TEXT("Data");
 
-	/** 엔진 JSON 변환기가 인스턴스 구조체를 무슨 구조체로 읽을지 보는 키. 파일에는 적지 않고 SetJsonStructType이 채웁니다. */
-	const TCHAR* const StructTypeKey = TEXT("_structType");
-
-	/** 공통 JSON 파일. 캐릭터 JSON은 캐릭터 DataAsset의 ValuesFile이 가리킵니다. */
+	/** 공통 JSON 파일. 캐릭터 JSON은 캐릭터 DataAsset의 JsonFileName이 가리킵니다. */
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
 	const TCHAR* const CameraDataFile = TEXT("Camera.json");
 
 	/** 파일마다 화면에 띄우는 오류 수. 로그에는 모두 남깁니다. */
 	constexpr int32 MaxErrorsOnScreen = 5;
 
+#if WITH_EDITOR
 	bool IsTagProperty(const FProperty* Property)
 	{
 		const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
@@ -63,7 +68,7 @@ namespace
 		{
 			return EJson::Number;
 		}
-		if (Property->IsA<FStructProperty>() && !IsTagProperty(Property))
+		if (Property->IsA<FMapProperty>() || (Property->IsA<FStructProperty>() && !IsTagProperty(Property)))
 		{
 			return EJson::Object;
 		}
@@ -108,41 +113,64 @@ namespace
 				CheckValue(Items[Index], ArrayProperty->Inner, FString::Printf(TEXT("%s[%d]"), *Path, Index), Errors);
 			}
 		}
+		else if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
+		{
+			TSet<FName> Keys;
+			for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Entry : Value->AsObject()->Values)
+			{
+				const FString Key(Entry.Key);
+				const FName Name(*Key);
+				if (Name.IsNone() || Keys.Contains(Name))
+				{
+					Errors.Add(FString::Printf(TEXT("%s.%s: empty or duplicate name"), *Path, *Key));
+				}
+				Keys.Add(Name);
+				if (const FNumericProperty* KeyNumber = CastField<FNumericProperty>(MapProperty->KeyProp);
+				    KeyNumber && KeyNumber->IsInteger())
+				{
+					int32 Index = 0;
+					if (!LexTryParseString(Index, *Key) || FString::FromInt(Index) != Key)
+					{
+						Errors.Add(Path + TEXT(".") + Key + TEXT(": must be a canonical integer key"));
+					}
+				}
+				CheckValue(Entry.Value, MapProperty->ValueProp, Path + TEXT(".") + Key, Errors);
+			}
+		}
+		else if (const FObjectPropertyBase* ObjectProperty = CastField<FObjectPropertyBase>(Property))
+		{
+			const FString ObjectPath = Value->AsString();
+			// JSON은 전체 객체 경로만 받습니다. null이나 리다이렉터에 기대는 오래된 경로는 허용하지 않습니다.
+			if (!FPackageName::IsValidObjectPath(ObjectPath))
+			{
+				Errors.Add(FString::Printf(TEXT("%s: invalid object path %s"), *Path, *ObjectPath));
+				return;
+			}
+			UObject* Object = StaticLoadObject(UObject::StaticClass(), nullptr, *ObjectPath, nullptr, LOAD_NoWarn);
+			const FClassProperty* ClassProperty = CastField<FClassProperty>(Property);
+			const UClass* Class = Cast<UClass>(Object);
+			if (!Object || !Object->IsA(ObjectProperty->PropertyClass) ||
+			    (ClassProperty && (!Class || !Class->IsChildOf(ClassProperty->MetaClass) || Class->HasAnyClassFlags(CLASS_Abstract))))
+			{
+				Errors.Add(FString::Printf(TEXT("%s: %s is missing or has an invalid type"), *Path, *ObjectPath));
+			}
+			else if (!Object->GetPathName().Equals(ObjectPath, ESearchCase::IgnoreCase))
+			{
+				Errors.Add(FString::Printf(TEXT("%s: use the current path %s"), *Path, *Object->GetPathName()));
+			}
+		}
 		else if (Type == EJson::Object)
 		{
 			const UScriptStruct* Struct = CastFieldChecked<FStructProperty>(Property)->Struct;
-			FJsonObject Object = *Value->AsObject();
-			FString FieldPath = Path + TEXT(".");
-			if (Struct == FInstancedStruct::StaticStruct())
-			{
-				// 인스턴스 구조체: 데이터 객체가 정해 둔 구조체(SetJsonStructType)의 필드로 검사합니다. 정해 둔 구조체가 없으면
-				// 값을 읽을 곳이 없으므로 비어 있어야 합니다.
-				FString StructPath;
-				if (!Object.TryGetStringField(StructTypeKey, StructPath))
-				{
-					if (!Object.Values.IsEmpty())
-					{
-						Errors.Add(FString::Printf(TEXT("%s: must be {}, nothing reads these values"), *Path));
-					}
-					return;
-				}
-				Struct = FindObject<UScriptStruct>(nullptr, *StructPath);
-				if (!Struct)
-				{
-					Errors.Add(FString::Printf(TEXT("%s: %s is not a struct"), *Path, *StructPath));
-					return;
-				}
-				Object.RemoveField(StructTypeKey);
-				// 오류에 구조체 이름을 붙여, 키를 정하는 C++ 구조체를 바로 찾게 합니다.
-				FieldPath = FString::Printf(TEXT("%s (%s)."), *Path, *Struct->GetName());
-			}
-
 			TArray<const FProperty*> Fields;
 			for (TFieldIterator<FProperty> It(Struct); It; ++It)
 			{
-				Fields.Add(*It);
+				if (!It->HasAnyPropertyFlags(CPF_Deprecated))
+				{
+					Fields.Add(*It);
+				}
 			}
-			CheckObject(Object, Fields, FieldPath, Errors);
+			CheckObject(*Value->AsObject(), Fields, Path + TEXT("."), Errors);
 		}
 		else if (IsTagProperty(Property))
 		{
@@ -165,6 +193,28 @@ namespace
 			// 정수 속성에 소수를 쓰면 변환이 조용히 잘라 버리므로 오류로 알립니다.
 			const double Number = Value->AsNumber();
 			const FNumericProperty* NumericProperty = CastField<FNumericProperty>(Property);
+			if (!FMath::IsFinite(Number))
+			{
+				Errors.Add(Path + TEXT(": must be a finite number"));
+				return;
+			}
+			if (NumericProperty->IsInteger())
+			{
+				const bool bUnsigned = Property->IsA<FByteProperty>() || Property->IsA<FUInt16Property>() ||
+				                       Property->IsA<FUInt32Property>() || Property->IsA<FUInt64Property>();
+				// 상한을 배타적인 2의 거듭제곱으로 비교해 int64 최댓값의 double 반올림도 피합니다.
+				const double UpperBound = FMath::Pow(2.0, NumericProperty->GetSize() * 8 - (bUnsigned ? 0 : 1));
+				if (Number < (bUnsigned ? 0.0 : -UpperBound) || Number >= UpperBound)
+				{
+					Errors.Add(Path + TEXT(": outside numeric storage range"));
+					return;
+				}
+			}
+			else if (Property->IsA<FFloatProperty>() && FMath::Abs(Number) > static_cast<double>(MAX_flt))
+			{
+				Errors.Add(Path + TEXT(": outside numeric storage range"));
+				return;
+			}
 			if (NumericProperty && NumericProperty->IsInteger() && Number != FMath::TruncToDouble(Number))
 			{
 				Errors.Add(FString::Printf(TEXT("%s: %g is not a whole number"), *Path, Number));
@@ -174,11 +224,13 @@ namespace
 			const FProperty* RangeProperty = Property->GetOwnerProperty();
 			if (RangeProperty->HasMetaData(TEXT("ClampMin")) && Number < FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMin"))))
 			{
-				Errors.Add(FString::Printf(TEXT("%s: %g is below the minimum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMin"))));
+				Errors.Add(
+				    FString::Printf(TEXT("%s: %g is below the minimum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMin"))));
 			}
 			if (RangeProperty->HasMetaData(TEXT("ClampMax")) && Number > FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMax"))))
 			{
-				Errors.Add(FString::Printf(TEXT("%s: %g is above the maximum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMax"))));
+				Errors.Add(
+				    FString::Printf(TEXT("%s: %g is above the maximum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMax"))));
 			}
 #endif
 		}
@@ -190,13 +242,14 @@ namespace
 	 */
 	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors)
 	{
-		for (const auto& Field : Json.Values)
+		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Json.Values)
 		{
 			const FString Key(*Field.Key);
-			const FProperty* const* Property = Properties.FindByPredicate([&Key](const FProperty* Candidate)
-			{
-				return Candidate->GetName().Equals(Key, ESearchCase::IgnoreCase);
-			});
+			const FProperty* const* Property = Properties.FindByPredicate(
+			    [&Key](const FProperty* Candidate)
+			    {
+				    return Candidate->GetName().Equals(Key, ESearchCase::IgnoreCase);
+			    });
 			if (Property)
 			{
 				CheckValue(Field.Value, *Property, Path + Key, Errors);
@@ -215,6 +268,8 @@ namespace
 		}
 	}
 
+#endif // WITH_EDITOR
+
 	void Report(const UObject& Target, const FString& FileName, const TArray<FString>& Errors)
 	{
 		const FString File = FileName.IsEmpty() ? Target.GetName() : FString::Printf(TEXT("Data/%s"), *FileName);
@@ -231,8 +286,10 @@ namespace
 		{
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("    %s"), *Errors[Index]));
 		}
-		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("%s was not applied, %d error(s) (all in the log):"), *File, Errors.Num()));
+		GEngine->AddOnScreenDebugMessage(
+		    INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("%s was not applied, %d error(s) (all in the log):"), *File, Errors.Num()));
 	}
+
 }
 
 UAgAssetManager::UAgAssetManager()
@@ -274,7 +331,7 @@ const UAgCameraData& UAgAssetManager::GetCameraData() const
 bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 {
 #if WITH_EDITOR
-	for (auto It = LoadedFiles.CreateIterator(); It; ++It)
+	for (TMap<TWeakObjectPtr<UObject>, FString>::TIterator It = LoadedFiles.CreateIterator(); It; ++It)
 	{
 		if (!It.Key().IsValid())
 		{
@@ -298,6 +355,37 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 	}
 	else
 	{
+#if WITH_EDITOR
+		// JSON DOM은 중복 키를 덮어쓸 수 있으므로 원문에서 FName 기준으로 먼저 검사합니다.
+		const TSharedRef<TJsonReader<>> KeyReader = TJsonReaderFactory<>::Create(Text);
+		TArray<TSet<FName>> Containers;
+		EJsonNotation Notation;
+		while (KeyReader->ReadNext(Notation))
+		{
+			if (Notation == EJsonNotation::ObjectEnd || Notation == EJsonNotation::ArrayEnd)
+			{
+				if (!Containers.IsEmpty())
+				{
+					Containers.Pop();
+				}
+				continue;
+			}
+			const FString Key = KeyReader->GetIdentifier();
+			if (!Key.IsEmpty() && !Containers.IsEmpty())
+			{
+				const FName Name(*Key);
+				if (Containers.Last().Contains(Name))
+				{
+					Errors.Add(FString::Printf(TEXT("duplicate JSON name: %s (line %d)"), *Key, KeyReader->GetLineNumber()));
+				}
+				Containers.Last().Add(Name);
+			}
+			if (Notation == EJsonNotation::ObjectStart || Notation == EJsonNotation::ArrayStart)
+			{
+				Containers.AddDefaulted();
+			}
+		}
+#endif
 		const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
 		if (!FJsonSerializer::Deserialize(Reader, Json) || !Json.IsValid())
 		{
@@ -313,50 +401,138 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 			Properties.Add(*It);
 		}
 	}
+	// 대상과 같은 타입의 임시 객체에만 변환합니다. 실패하면 원래 객체는 바뀌지 않습니다.
+	UObject* Candidate = NewObject<UObject>(this, Target.GetClass());
+	JsonLoadTargets.Add(Candidate);
+	ON_SCOPE_EXIT
+	{
+		JsonLoadTargets.RemoveSingle(Candidate);
+	};
+
+	TFunction<void(const FProperty*)> ConvertProperty = [&](const FProperty* Property)
+	{
+		FText FailReason;
+		const TSharedPtr<FJsonValue> Value = Json->TryGetField(Property->GetName());
+		if (!Value.IsValid() || !FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
+		                            Property->ContainerPtrToValuePtr<void>(Candidate), 0, 0, false, &FailReason))
+		{
+			Errors.Add(FString::Printf(TEXT("%s: %s"), *Property->GetName(), *FailReason.ToString()));
+		}
+	};
+
+	const FProperty* AbilitiesProperty =
+	    Cast<UAgCharacterData>(Candidate) ? FindFProperty<FProperty>(Target.GetClass(), TEXT("Abilities")) : nullptr;
 	if (Json.IsValid())
 	{
-		// 인스턴스 구조체 값의 구조체는 데이터 객체가 정합니다(어빌리티의 전용 값).
-		if (const UAgCharacterData* CharacterData = Cast<UAgCharacterData>(&Target))
+		if (UAgCharacterData* Character = Cast<UAgCharacterData>(Candidate))
 		{
-			CharacterData->ResolveJsonStructTypes(*Json, Errors);
+			AgAbilityData::Parse(*Json, Character->Abilities, Errors);
 		}
-		CheckObject(*Json, Properties, FString(), Errors);
+#if WITH_EDITOR
+		FJsonObject OtherFields = *Json;
+		TArray<const FProperty*> OtherProperties = Properties;
+		if (AbilitiesProperty)
+		{
+			OtherFields.RemoveField(TEXT("Abilities"));
+			OtherProperties.Remove(AbilitiesProperty);
+		}
+		if (Errors.IsEmpty())
+		{
+			CheckObject(OtherFields, OtherProperties, FString(), Errors);
+		}
+#endif
 	}
-
-	// 값마다 먼저 따로 변환해 두므로, 하나라도 실패하면 대상은 그대로 남습니다.
-	TArray<FDefaultConstructedPropertyElement> Values;
 	if (Errors.IsEmpty())
 	{
-		Values.Reserve(Properties.Num());
 		for (const FProperty* Property : Properties)
 		{
-			const FDefaultConstructedPropertyElement& Value = Values.Emplace_GetRef(Property);
-			FText FailReason;
-			if (!FJsonObjectConverter::JsonValueToUProperty(Json->TryGetField(Property->GetName()), const_cast<FProperty*>(Property), Value.GetObjAddress(), 0, 0, false, &FailReason))
+			if (Property != AbilitiesProperty)
 			{
-				Errors.Add(FString::Printf(TEXT("%s: %s"), *Property->GetName(), *FailReason.ToString()));
+				ConvertProperty(Property);
 			}
 		}
 	}
-
+	if (Errors.IsEmpty())
+	{
+		if (const UAgCharacterData* Character = Cast<UAgCharacterData>(Candidate))
+		{
+			Character->ValidateProjectiles(Errors);
+			AgAbilityData::ValidateReferences(*Character, Errors);
+		}
+	}
 	if (!Errors.IsEmpty())
 	{
 		Report(Target, FileName, Errors);
 		return false;
 	}
-	for (int32 Index = 0; Index < Properties.Num(); ++Index)
+	for (const FProperty* Property : Properties)
 	{
-		Properties[Index]->CopyCompleteValue(Properties[Index]->ContainerPtrToValuePtr<void>(&Target), Values[Index].GetObjAddress());
+		Property->CopyCompleteValue(Property->ContainerPtrToValuePtr<void>(&Target), Property->ContainerPtrToValuePtr<void>(Candidate));
+	}
+	if (UAgCharacterData* CharacterData = Cast<UAgCharacterData>(&Target))
+	{
+		CharacterData->MarkJsonDataLoaded();
 	}
 	return true;
 }
 
-void UAgAssetManager::SetJsonStructType(FJsonObject& Object, const UScriptStruct& Struct)
+#if WITH_EDITOR
+void UAgAssetManager::ModifyCook(
+    TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook)
 {
-	Object.SetStringField(StructTypeKey, Struct.GetPathName());
+	Super::ModifyCook(TargetPlatforms, PackagesToCook, PackagesToNeverCook);
+	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 공통 JSON 전체를 검사합니다.
+	TSet<FString> ValidatedFiles;
+	TFunction<void(UObject&, const FString&)> LoadForCook = [&](UObject& Data, const FString& FileName)
+	{
+		if (!LoadJsonValues(Data, FileName))
+		{
+			UE_LOG(LogAg, Error, TEXT("Cannot cook invalid JSON: %s"), *FileName);
+			return;
+		}
+		ValidatedFiles.Add(FileName.ToLower());
+		TArray<UObject*> References;
+		FReferenceFinder Finder(References, nullptr, false, true, false, false);
+		Finder.AddPropertyReferencesWithStructARO(Data.GetClass(), &Data);
+		for (UObject* Reference : References)
+		{
+			const FString PackageName = Reference->GetOutermost()->GetName();
+			if (!PackageName.StartsWith(TEXT("/Script/")) && PackageName != TEXT("/Engine/Transient"))
+			{
+				PackagesToCook.AddUnique(FName(*PackageName));
+			}
+		}
+	};
+	LoadForCook(*CombatRules, CombatRulesFile);
+	LoadForCook(*CameraData, CameraDataFile);
+
+	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다.
+	IAssetRegistry& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
+	Registry.SearchAllAssets(true);
+	TArray<FAssetData> Assets;
+	Registry.GetAssetsByClass(UAgCharacterData::StaticClass()->GetClassPathName(), Assets, true);
+	for (const FAssetData& Asset : Assets)
+	{
+		UAgCharacterData* Data = Cast<UAgCharacterData>(Asset.GetAsset());
+		if (!Data)
+		{
+			UE_LOG(LogAg, Error, TEXT("Cannot load character data for cook: %s"), *Asset.GetObjectPathString());
+			continue;
+		}
+		LoadForCook(*Data, Data->JsonFileName);
+	}
+	// UFS에 포함되지만 로더에 연결되지 않은 파일도 배포하지 않습니다.
+	TArray<FString> Files;
+	IFileManager::Get().FindFiles(Files, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
+	for (const FString& File : Files)
+	{
+		if (!ValidatedFiles.Contains(File.ToLower()))
+		{
+			UE_LOG(LogAg, Error, TEXT("Cannot stage unvalidated JSON: %s"), *File);
+		}
+	}
 }
 
-#if WITH_EDITOR
 void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 {
 	for (const FString& FileName : FileNames)
@@ -384,8 +560,9 @@ void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
 		{
 			// 스탯은 스폰할 때 한 번 넣고 다시 넣지 않으므로 다음 PIE부터 바뀝니다(구현 계획서 'JSON과 DataAsset' 다시 읽기).
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
-				FString::Printf(TEXT("Data/%s reloaded. Attributes change on the next PIE start."), *FileName));
+			    FString::Printf(TEXT("Data/%s reloaded. Spawn settings apply on the next play start."), *FileName));
 		}
 	}
 }
+
 #endif

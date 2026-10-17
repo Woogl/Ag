@@ -3,6 +3,7 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
 
 #include "GameFramework/Character.h"
+#include "Abilities/GameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
 
@@ -23,13 +24,24 @@ UAgAbilityTask_Dash::UAgAbilityTask_Dash()
 	bTickingTask = true;
 }
 
-UAgAbilityTask_Dash* UAgAbilityTask_Dash::Dash(UGameplayAbility* OwningAbility, const FVector& Direction, float Speed, float Distance)
+UAgAbilityTask_Dash* UAgAbilityTask_Dash::Dash(
+    UGameplayAbility* OwningAbility, const FVector& Direction, float Speed, float Distance, AActor* HomingTarget, float HomingTurnRate)
 {
 	UAgAbilityTask_Dash* Task = NewAbilityTask<UAgAbilityTask_Dash>(OwningAbility);
 	Task->Direction = Direction.GetSafeNormal2D();
 	Task->Speed = Speed;
 	Task->Distance = Distance;
+	Task->HomingTarget = HomingTarget;
+	Task->HomingTurnRate = FMath::Max(0.f, HomingTurnRate);
 	return Task;
+}
+
+UAgAbilityTask_Dash* UAgAbilityTask_Dash::Dash(
+    UGameplayAbility* Owner, const FAgDashParams& Params, const FVector& InDirection, const FVector& TargetLocation, AActor* Target)
+{
+	const float DistanceToTarget = FVector::Dist2D(Owner->GetAvatarActorFromActorInfo()->GetActorLocation(), TargetLocation);
+	return Dash(Owner, InDirection, Params.Speed, FMath::Min(DistanceToTarget + Params.Overshoot, Params.MaxDistance), Target,
+	    Params.HomingTurnRate);
 }
 
 void UAgAbilityTask_Dash::Activate()
@@ -42,7 +54,12 @@ void UAgAbilityTask_Dash::Activate()
 		return;
 	}
 
-	StartLocation = LastLocation = Character->GetActorLocation();
+	if (Movement->CurrentRootMotion.HasOverrideVelocity())
+	{
+		EndTask();
+		return;
+	}
+	LastLocation = Character->GetActorLocation();
 
 	// 제거할 때까지 다른 속도를 덮어씁니다. 모션의 루트 이동은 덮지 못하므로 쓰는 쪽에서 꺼야 합니다.
 	TSharedPtr<FRootMotionSource_ConstantForce> Source = MakeShared<FRootMotionSource_ConstantForce>();
@@ -58,14 +75,16 @@ void UAgAbilityTask_Dash::Activate()
 
 void UAgAbilityTask_Dash::TickTask(float DeltaTime)
 {
-	const AActor* Avatar = GetAvatarActor();
+	AActor* Avatar = GetAvatarActor();
 	if (!Avatar || IsFinished())
 	{
 		return;
 	}
 
 	const FVector Location = Avatar->GetActorLocation();
-	if (FVector::Dist2D(StartLocation, Location) >= Distance)
+	const FVector Travel = (Location - LastLocation) * FVector(1.f, 1.f, 0.f);
+	TraveledDistance += Travel.Size();
+	if (TraveledDistance >= Distance)
 	{
 		Finish();
 		return;
@@ -76,13 +95,33 @@ void UAgAbilityTask_Dash::TickTask(float DeltaTime)
 	const float Expected = Speed * DeltaTime;
 	if (Expected >= MinJudgedMove)
 	{
-		const float Progress = FVector::DotProduct((Location - LastLocation) * FVector(1.f, 1.f, 0.f), Direction);
+		const float Progress = FVector::DotProduct(Travel, Direction);
 		BlockedTicks = Progress < Expected * BlockedMoveRatio ? BlockedTicks + 1 : 0;
 	}
 	LastLocation = Location;
 	if (BlockedTicks >= BlockedTicksToStop)
 	{
 		Finish();
+		return;
+	}
+
+	// 이번 이동의 막힘을 이전 방향으로 판정한 뒤, 다음 이동에 쓸 방향을 갱신합니다.
+	if (HomingTurnRate > 0.f && HomingTarget.IsValid() && Movement.IsValid() && DeltaTime > 0.f)
+	{
+		const FVector ToTarget = (HomingTarget->GetActorLocation() - Location).GetSafeNormal2D();
+		if (!ToTarget.IsNearlyZero())
+		{
+			const float Yaw = FMath::FixedTurn(Direction.Rotation().Yaw, ToTarget.Rotation().Yaw, HomingTurnRate * DeltaTime);
+			Direction = FRotator(0.f, Yaw, 0.f).Vector();
+			const TSharedPtr<FRootMotionSource> Source = Movement->GetRootMotionSourceByID(SourceID);
+			if (Source.IsValid())
+			{
+				StaticCastSharedPtr<FRootMotionSource_ConstantForce>(Source)->Force = Direction * Speed;
+				FRotator Rotation = Avatar->GetActorRotation();
+				Rotation.Yaw = Yaw;
+				Avatar->SetActorRotation(Rotation);
+			}
+		}
 	}
 }
 

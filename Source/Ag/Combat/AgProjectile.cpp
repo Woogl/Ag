@@ -2,7 +2,7 @@
 
 #include "Combat/AgProjectile.h"
 
-#include "AbilitySystem/AgEffect_Damage.h"
+#include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -25,15 +25,17 @@ AAgProjectile::AAgProjectile()
 	Mesh->SetGenerateOverlapEvents(false);
 }
 
-void AAgProjectile::Launch(const FAgPlayerAttackHit& InHit, const FVector& Direction, const FAgProjectileParams& InParams)
+void AAgProjectile::Launch(const FGameplayEffectSpecHandle& InDamageSpec, const FVector& Direction, const FAgProjectileParams& InParams)
 {
-	Hit = InHit;
+	DamageSpec = InDamageSpec;
 	Params = InParams;
-	FlightDirection = Direction.GetSafeNormal2D();
+	FlightDirection = Direction.GetSafeNormal();
 	Traveled = 0.f;
+}
 
-	// 상자는 바닥 위에 서서 날아가는 쪽을 바라봅니다.
-	SetActorLocationAndRotation(GetActorLocation() + FVector(0.f, 0.f, HitBox->GetScaledBoxExtent().Z), FlightDirection.Rotation());
+float AAgProjectile::GetCollisionHalfHeight() const
+{
+	return HitBox->GetScaledBoxExtent().Z;
 }
 
 void AAgProjectile::Tick(float DeltaSeconds)
@@ -42,7 +44,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 
 	// 사망 처리: 쏜 캐릭터가 죽으면 투사체도 사라집니다.
 	AAgCharacterBase* ShooterCharacter = GetInstigator<AAgCharacterBase>();
-	if (!ShooterCharacter || ShooterCharacter->IsDead())
+	if (!ShooterCharacter || ShooterCharacter->IsDead() || !DamageSpec.IsValid())
 	{
 		Destroy();
 		return;
@@ -52,10 +54,11 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgProjectile), false, this);
 	QueryParams.AddIgnoredActor(ShooterCharacter);
 	const FVector Start = GetActorLocation();
-	const float Step = Params.Speed * DeltaSeconds;
+	const float Step = FMath::Min(Params.Speed * DeltaSeconds, Params.Range - Traveled);
 	FVector End = Start + FlightDirection * Step;
 	FHitResult WallHit;
-	const bool bHitWall = GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
+	const bool bHitWall =
+	    GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
 	if (bHitWall)
 	{
 		End = WallHit.Location;
@@ -75,7 +78,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		}
 		TouchedActors.Add(Target);
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
-		UAgEffect_Damage::ApplyAttack(ShooterCharacter, this, Target, Hit, HitLocation);
+		ApplyHit(*Target, HitLocation);
 	}
 
 	if (bHitWall)
@@ -89,4 +92,15 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	{
 		Destroy();
 	}
+}
+
+void AAgProjectile::ApplyHit(AAgCharacterBase& Target, const FVector& HitLocation)
+{
+	FGameplayEffectSpec Spec(*DamageSpec.Data);
+	FGameplayEffectContextHandle Context = Spec.GetContext().Duplicate();
+	Context.AddInstigator(GetInstigator(), this);
+	Context.AddOrigin(HitLocation);
+	// SetContext는 출처 태그와 어트리뷰트를 다시 캡처하므로, 기존처럼 적중 시점의 ATK를 사용합니다.
+	Spec.SetContext(Context);
+	Context.GetInstigatorAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(Spec, Target.GetAbilitySystemComponent());
 }

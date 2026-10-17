@@ -2,19 +2,13 @@
 
 #include "Data/AgCameraData.h"
 
-#include "Core/AgGameplayTags.h"
-
-FGameplayTag UAgCameraData::GetShakeCue(EAgCameraShake Shake)
+const FAgCameraShakeSettings* UAgCameraData::FindShakeSettings(EAgCameraShake Shake) const
 {
 	switch (Shake)
 	{
-	case EAgCameraShake::Small:
-		return AgGameplayTags::GameplayCue_CameraShake_Small;
-	case EAgCameraShake::Medium:
-		return AgGameplayTags::GameplayCue_CameraShake_Medium;
-	case EAgCameraShake::Large:
-		return AgGameplayTags::GameplayCue_CameraShake_Large;
-	default:
-		return FGameplayTag();
+	case EAgCameraShake::Small: return &SmallShake;
+	case EAgCameraShake::Medium: return &MediumShake;
+	case EAgCameraShake::Large: return &LargeShake;
+	default: return nullptr;
 	}
 }

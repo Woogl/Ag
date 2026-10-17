@@ -103,6 +103,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 ### GAS와 StateTree
 
 - GameplayCue를 복제하면 태그를 바꿀 때까지 "Multiple gameplay cues ... Skipping" 경고가 나고 원본만 재생된다. 복제본의 CDO에 `set_editor_property('gameplay_cue_tag', tag)`로 태그를 주면 바로 다시 등록된다. 엔진 `GameplayCueToolset.AddCueTag`는 태그 ini에 쓰므로 쓰지 않는다(AGENTS.md 코딩 규칙 3).
+- 에디터를 켤 때 부모 클래스를 찾지 못한 GameplayCue 블루프린트는 경고 없이 Cue 목록에서 빠진다. 켜 둔 에디터에서 부모를 바꿔 저장해도 목록은 다시 만들어지지 않아, 그 세션의 PIE에서는 그 Cue가 나오지 않는다. 부모를 바꿨으면 에디터를 다시 켠 뒤 확인한다. 등록 여부는 `GameplayCueManager_0`의 `GlobalGameplayCueSet`에서 `GameplayCueData`의 태그로 본다(파이썬에 `GameplayCueSet` 타입이 없어 `ObjectIterator(unreal.Object)`에서 클래스 이름으로 찾는다).
 - StateTree는 `AgAssetToolset`의 StateTree 함수로 고치고, `CompileStateTree`(빈 문자열이면 오류 없음)로 컴파일한 뒤 저장한다. 읽기와 스키마 속성은 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '프로젝트 MCP 도구'를 따른다.
 - 파이썬으로 상태 이름을 바꾸려면 `unreal.ObjectIterator(unreal.StateTreeState)`를 `get_outermost().get_name() == '/Game/AI/ST_Boss'`로 걸러 `set_editor_property('name', ...)`로 바꾸고, 컴파일하고 저장한다. 전환은 ID로 이어져 있어 그대로 남는다.
 

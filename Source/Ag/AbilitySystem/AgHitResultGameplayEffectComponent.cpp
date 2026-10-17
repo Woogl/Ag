@@ -16,7 +16,7 @@
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
-#include "GameplayCueFunctionLibrary.h"
+#include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 namespace
@@ -182,10 +182,12 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		: bUltimate ? AgGameplayTags::GameplayCue_UltimateFinish
 		: AgGameplayTags::GameplayCue_Hit;
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
-	// 엔진 Burst 큐는 큐를 실행한 캐릭터가 로컬 플레이어일 때 그 카메라를 흔들므로, 셰이크 큐는 로컬 플레이어
-	// 캐릭터에서 실행합니다.
+	// 전투 대상과 관계없이 로컬 플레이어 화면에 셰이크를 재생합니다.
 	const EAgCameraShake Shake = GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>());
-	UGameplayCueFunctionLibrary::ExecuteGameplayCueOnActor(UGameplayStatics::GetPlayerPawn(Target, 0), UAgCameraData::GetShakeCue(Shake), FGameplayCueParameters());
+	if (AAgPlayerController* PlayerController = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(Target, 0)))
+	{
+		PlayerController->PlayCameraShake(Shake);
+	}
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
 	{

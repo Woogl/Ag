@@ -43,4 +43,12 @@ public:
 	/** 그로기 지속 시간. 그로기 모션의 시작부터 원래 자세로 돌아오는 모션의 끝까지 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Groggy", meta = (Units = "s", ClampMin = 0))
 	float GroggyDuration = 0.f;
+
+	/** HUD 감소 잔상: 바가 줄어든 뒤 잔상이 기다리는 시간 (게임 시간) */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "HUD|Trail", meta = (Units = "s", ClampMin = 0))
+	float HUDTrailDelay = 0.f;
+
+	/** HUD 감소 잔상: 기다린 뒤 바의 현재 값까지 줄어드는 시간 (게임 시간) */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "HUD|Trail", meta = (Units = "s", ClampMin = 0))
+	float HUDTrailShrinkTime = 0.f;
 };

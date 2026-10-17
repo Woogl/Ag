@@ -1,13 +1,23 @@
 // Copyright Woogle. All Rights Reserved.
-
 #include "AbilitySystem/AgEffect_Cost.h"
+#include "Data/AgAbilityTaskParams.h"
 
-#include "AbilitySystem/AgCostExecution.h"
-
-UAgEffect_Cost::UAgEffect_Cost()
+void UAgEffect_Cost::SetCost(FGameplayEffectSpec& Spec, const FAgResourceCostParams& Cost)
 {
-	DurationPolicy = EGameplayEffectDurationType::Instant;
-
-	FGameplayEffectExecutionDefinition& Execution = Executions.AddDefaulted_GetRef();
-	Execution.CalculationClass = UAgCostExecution::StaticClass();
+	float SP = 0.f;
+	float MP = 0.f;
+	float UP = 0.f;
+	switch (Cost.Resource)
+	{
+	case EAgResource::SP:
+		SP = -Cost.Amount;
+		break;
+	case EAgResource::MP:
+		MP = -Cost.Amount;
+		break;
+	case EAgResource::UP:
+		UP = -Cost.Amount;
+		break;
+	}
+	SetAmounts(Spec, SP, MP, UP);
 }

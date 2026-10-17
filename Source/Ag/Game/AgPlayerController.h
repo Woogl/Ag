@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "AgPlayerController.generated.h"
 
+enum class EAgCameraShake : uint8;
+
 class UCommonActivatableWidget;
 class UAgHUDWidget;
 class UAgResultScreen;
@@ -18,6 +20,9 @@ class AAgPlayerController : public APlayerController
 
 public:
 	AAgPlayerController();
+
+	/** JSON의 단계별 셰이크를 로컬 카메라에 재생합니다. None은 재생하지 않습니다. */
+	void PlayCameraShake(EAgCameraShake Shake);
 
 	/** ScreenClass 화면을 만들어 플레이어 화면에 붙이고 활성화합니다. */
 	UCommonActivatableWidget* PushScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass, int32 ZOrder = 0);

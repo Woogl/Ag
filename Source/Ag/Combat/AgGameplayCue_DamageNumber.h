@@ -18,7 +18,7 @@ class UAgGameplayCue_DamageNumber : public UGameplayCueNotify_Static
 	GENERATED_BODY()
 
 public:
-	virtual bool OnExecute_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters) const override;
+	virtual bool OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const override;
 
 protected:
 	/** 대미지 숫자 위젯(WBP_DamageFloater) */

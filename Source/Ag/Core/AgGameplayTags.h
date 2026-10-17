@@ -44,23 +44,20 @@ namespace AgGameplayTags
 
 	// 캐릭터가 가진 상태 태그. 전투 시스템 '상태 우선순위'는 Dead > Execution > Groggy > HitReaction 순입니다.
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Execution_Executing);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Execution_Executed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Execution);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Busy);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Acting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Invincible);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_PerfectDodgeWindow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Guarding);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_ParryWindow);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GuardMoveLock);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_DodgeCounterChance);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hitstop);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Sprinting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Jumping);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_NonCombat);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_InfinitePP);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GroggyImmune);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_SPDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_PPDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Boss_RotationLocked);
@@ -78,18 +75,13 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BasicAttackStarted);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackWindowEnded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackBlocked);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_DownGrounded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_RecoveryStarted);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_InvincibilityEnded);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodgeWindowEnded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ExecutionBlow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_UltimateSlash);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_UltimateFinish);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_JumpAttackPlunge);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_ProjectileRelease);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Boss_DashHold);
 
 	// SetByCaller 값의 태그
@@ -120,7 +112,4 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_DamageNumber);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryTelegraph);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Small);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Medium);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Large);
 }

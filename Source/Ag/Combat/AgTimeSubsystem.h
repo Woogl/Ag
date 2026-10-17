@@ -25,10 +25,10 @@ public:
 	void StartSlowMotion(float Speed, float RealDuration);
 
 	/** 시간 정지를 시작합니다. Exempt만 정상 속도로 돌고, 도는 슬로우모션은 끝납니다. */
-	void StartTimeStop(AAgCharacterBase& Exempt);
+	bool StartTimeStop(UObject& Requester, AAgCharacterBase& Exempt);
 
 	/** 시간 정지를 끝내고 게임 전체를 원래 속도로 돌립니다. */
-	void EndTimeStop();
+	void EndTimeStop(UObject& Requester);
 
 	bool IsTimeStopped() const { return bTimeStopped; }
 
@@ -44,6 +44,7 @@ private:
 	FTimerHandle SlowMotionTimer;
 
 	bool bTimeStopped = false;
+	TWeakObjectPtr<UObject> TimeStopRequester;
 
 	TWeakObjectPtr<AAgCharacterBase> TimeStopExempt;
 };

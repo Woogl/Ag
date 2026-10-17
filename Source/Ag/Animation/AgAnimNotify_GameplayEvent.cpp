@@ -1,24 +1,17 @@
 // Copyright Woogle. All Rights Reserved.
-
 #include "Animation/AgAnimNotify_GameplayEvent.h"
-
-#include "AbilitySystemBlueprintLibrary.h"
+#include "Animation/AgAnimInstance.h"
 #include "Components/SkeletalMeshComponent.h"
-
-void UAgAnimNotify_GameplayEvent::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+void UAgAnimNotify_GameplayEvent::Notify(
+    USkeletalMeshComponent* Mesh, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& Reference)
 {
-	Super::Notify(MeshComp, Animation, EventReference);
-
-	if (AActor* Owner = MeshComp->GetOwner(); Owner && EventTag.IsValid())
+	if (UAgAnimInstance* Anim = Mesh ? Cast<UAgAnimInstance>(Mesh->GetAnimInstance()) : nullptr)
 	{
-		FGameplayEventData Payload;
-		Payload.EventTag = EventTag;
-		Payload.OptionalObject = Animation;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Owner, EventTag, Payload);
+		Anim->BroadcastMontageNotify(Animation, Reference);
 	}
 }
 
 FString UAgAnimNotify_GameplayEvent::GetNotifyName_Implementation() const
 {
-	return EventTag.IsValid() ? EventTag.ToString() : Super::GetNotifyName_Implementation();
+	return EventTag.ToString();
 }

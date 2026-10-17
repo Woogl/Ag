@@ -9,7 +9,8 @@ UAgEffect_Resource::UAgEffect_Resource()
 {
 	DurationPolicy = EGameplayEffectDurationType::Instant;
 
-	auto AddSetByCallerModifier = [this](const FGameplayAttribute& Attribute, const FGameplayTag& DataTag)
+	TFunction<void(const FGameplayAttribute&, const FGameplayTag&)> AddSetByCallerModifier =
+	    [this](const FGameplayAttribute& Attribute, const FGameplayTag& DataTag)
 	{
 		FSetByCallerFloat SetByCaller;
 		SetByCaller.DataTag = DataTag;

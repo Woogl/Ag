@@ -5,6 +5,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Character/AgBossCharacter.h"
 #include "Core/AgGameplayTags.h"
@@ -17,13 +18,14 @@ namespace
 	{
 		for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
 		{
-			if (Spec.IsActive() && Spec.Ability && Spec.Ability->GetAssetTags().HasTag(AgGameplayTags::Ability_Reaction_PhaseTransition))
+			if (Spec.IsActive() && Spec.Ability && Spec.GetDynamicSpecSourceTags().HasTag(AgGameplayTags::Ability_Reaction_PhaseTransition))
 			{
 				return true;
 			}
 		}
 		return false;
 	}
+
 }
 
 EStateTreeRunStatus FAgBossAITask_Wait::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
@@ -56,7 +58,8 @@ EStateTreeRunStatus FAgBossAITask_Wait::Tick(FStateTreeExecutionContext& Context
 	return InstanceData.Elapsed >= InstanceData.Duration ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
 }
 
-EStateTreeRunStatus FAgBossAITask_Approach::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FAgBossAITask_Approach::EnterState(
+    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	InstanceData.Elapsed = 0.f;
@@ -76,7 +79,8 @@ EStateTreeRunStatus FAgBossAITask_Approach::Tick(FStateTreeExecutionContext& Con
 	return InstanceData.Elapsed >= Data->RetryInterval ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
 }
 
-EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(
+    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	InstanceData.RunningPattern = NAME_None;
@@ -99,11 +103,14 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
 		TArray<FName> Candidates;
 		TArray<float> Weights;
-		GatherCandidates(Data->Abilities, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), [Boss, ActorInfo](FName Candidate)
-		{
-			const FGameplayAbilitySpec* Spec = Boss->FindAbilitySpec(Candidate);
-			return Spec && Spec->Ability && Spec->Ability->CanActivateAbility(Spec->Handle, ActorInfo);
-		}, Candidates, Weights);
+		GatherCandidates(
+		    Data->Abilities, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(),
+		    [Boss, ActorInfo](FName Candidate)
+		    {
+			    const FGameplayAbilitySpec* Spec = Boss->FindAbilitySpec(Candidate);
+			    return Spec && Spec->Ability && Spec->GetPrimaryInstance()->CanActivateAbility(Spec->Handle, ActorInfo);
+		    },
+		    Candidates, Weights);
 
 		// 2. 가중치로 하나를 고릅니다. 3. 후보가 없으면 실패해 다가가기로 넘어갑니다.
 		const int32 Picked = PickWeighted(Weights, FMath::FRand());
@@ -166,22 +173,24 @@ int32 FAgBossAITask_RunPattern::PickWeighted(TConstArrayView<float> Weights, flo
 	return LastPositive;
 }
 
-void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgAbilityData> Abilities, float Distance, float NearDistance, float FarDistance, int32 Phase,
-	TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights)
+void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgAbilityData> Abilities, float Distance, float NearDistance,
+    float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights)
 {
 	OutIds.Reset();
 	OutWeights.Reset();
 	for (const FAgAbilityData& Ability : Abilities)
 	{
 		// 패턴이 아닌 어빌리티(피격 반응, 사망 등)는 전용 값이 패턴 공통 값이 아닙니다.
-		const FAgBossPatternParams* Pattern = Ability.Params.GetPtr<FAgBossPatternParams>();
+		const FAgPatternSelection* Pattern =
+		    Ability.bHasPatternSelection && Ability.Tags.HasTag(AgGameplayTags::Ability_Boss_Pattern) ? &Ability.PatternSelection : nullptr;
 		if (!Pattern)
 		{
 			continue;
 		}
 
 		// 거리 구간: NearDistance까지 근거리, FarDistance까지 중거리, 그보다 멀면 원거리
-		const float Weight = Distance <= NearDistance ? Pattern->WeightNear : (Distance <= FarDistance ? Pattern->WeightMid : Pattern->WeightFar);
+		const float Weight =
+		    Distance <= NearDistance ? Pattern->WeightNear : (Distance <= FarDistance ? Pattern->WeightMid : Pattern->WeightFar);
 		if (Weight > 0.f && Pattern->Phases.Contains(Phase) && IsReady(Ability.Id))
 		{
 			OutIds.Add(Ability.Id);
@@ -190,7 +199,8 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgAbilityData> 
 	}
 }
 
-EStateTreeRunStatus FAgBossAITask_PhaseTransition::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FAgBossAITask_PhaseTransition::EnterState(
+    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
@@ -208,10 +218,12 @@ EStateTreeRunStatus FAgBossAITask_PhaseTransition::EnterState(FStateTreeExecutio
 EStateTreeRunStatus FAgBossAITask_PhaseTransition::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return IsPhaseTransitionActive(*InstanceData.Controller->GetBoss()->GetAbilitySystemComponent()) ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	return IsPhaseTransitionActive(*InstanceData.Controller->GetBoss()->GetAbilitySystemComponent()) ? EStateTreeRunStatus::Running
+	                                                                                                 : EStateTreeRunStatus::Succeeded;
 }
 
-EStateTreeRunStatus FAgBossAITask_WaitReaction::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FAgBossAITask_WaitReaction::EnterState(
+    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	return InstanceData.Controller->IsBossReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
@@ -229,12 +241,13 @@ FAgBossAITask_NonCombat::FAgBossAITask_NonCombat()
 	bShouldCallTick = false;
 }
 
-EStateTreeRunStatus FAgBossAITask_NonCombat::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FAgBossAITask_NonCombat::EnterState(
+    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	UAbilitySystemComponent* ASC = InstanceData.Controller->GetBoss()->GetAbilitySystemComponent();
 	ASC->AddLooseGameplayTag(AgGameplayTags::State_NonCombat);
 	const FGameplayTagContainer PatternTags(AgGameplayTags::Ability_Boss_Pattern);
-	ASC->CancelAbilities(&PatternTags);
+	CastChecked<UAgAbilitySystemComponent>(ASC)->CancelAbilitiesWithSpecTags(PatternTags);
 	return EStateTreeRunStatus::Running;
 }

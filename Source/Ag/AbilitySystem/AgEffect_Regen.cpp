@@ -19,7 +19,8 @@ UAgEffect_Regen::UAgEffect_Regen()
 	PeriodicInhibitionPolicy = EGameplayEffectPeriodInhibitionRemovedPolicy::ResetPeriod;
 }
 
-void UAgEffect_Regen::SetupRegen(const FGameplayAttribute& Attribute, const FGameplayTagContainer& RequiredTags, const FGameplayTagContainer& IgnoredTags)
+void UAgEffect_Regen::SetupRegen(
+    const FGameplayAttribute& Attribute, const FGameplayTagContainer& RequiredTags, const FGameplayTagContainer& IgnoredTags)
 {
 	FCustomCalculationBasedFloat Calculation;
 	Calculation.CalculationClassMagnitude = UAgRegenCalculation::StaticClass();
@@ -29,7 +30,8 @@ void UAgEffect_Regen::SetupRegen(const FGameplayAttribute& Attribute, const FGam
 	Modifier.ModifierOp = EGameplayModOp::Additive;
 	Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(Calculation);
 
-	UTargetTagRequirementsGameplayEffectComponent* Requirements = CreateDefaultSubobject<UTargetTagRequirementsGameplayEffectComponent>(TEXT("TagRequirements"));
+	UTargetTagRequirementsGameplayEffectComponent* Requirements =
+	    CreateDefaultSubobject<UTargetTagRequirementsGameplayEffectComponent>(TEXT("TagRequirements"));
 	Requirements->OngoingTagRequirements.RequireTags = RequiredTags;
 	Requirements->OngoingTagRequirements.IgnoreTags = IgnoredTags;
 	GEComponents.Add(Requirements);
@@ -50,7 +52,8 @@ float UAgEffect_SPRegen::GetRatePerSecond(const AAgCharacterBase& Owner) const
 
 UAgEffect_SPRegenGuarding::UAgEffect_SPRegenGuarding()
 {
-	SetupRegen(UAgAttributeSet::GetSPAttribute(), FGameplayTagContainer(AgGameplayTags::State_Guarding), FGameplayTagContainer(AgGameplayTags::State_Regen_SPDelay));
+	SetupRegen(UAgAttributeSet::GetSPAttribute(), FGameplayTagContainer(AgGameplayTags::State_Guarding),
+	    FGameplayTagContainer(AgGameplayTags::State_Regen_SPDelay));
 }
 
 float UAgEffect_SPRegenGuarding::GetRatePerSecond(const AAgCharacterBase& Owner) const
@@ -66,14 +69,4 @@ UAgEffect_PPRegen::UAgEffect_PPRegen()
 float UAgEffect_PPRegen::GetRatePerSecond(const AAgCharacterBase& Owner) const
 {
 	return Owner.GetCharacterData()->PPRegenRate;
-}
-
-UAgEffect_SprintSPCost::UAgEffect_SprintSPCost()
-{
-	SetupRegen(UAgAttributeSet::GetSPAttribute(), FGameplayTagContainer(AgGameplayTags::State_Sprinting), FGameplayTagContainer());
-}
-
-float UAgEffect_SprintSPCost::GetRatePerSecond(const AAgCharacterBase& Owner) const
-{
-	return -CastChecked<UAgPlayerData>(Owner.GetCharacterData())->SprintSPCost;
 }

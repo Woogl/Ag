@@ -3,33 +3,31 @@
 #include "Animation/AgAnimInstance.h"
 
 #include "AbilitySystemComponent.h"
+#include "Animation/ActiveMontageInstanceScope.h"
+#include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/BlendSpace.h"
 #include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
-#include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-namespace
+void UAgAnimInstance::BroadcastMontageNotify(UAnimSequenceBase* Animation, const FAnimNotifyEventReference& Reference)
 {
-	/** 캐릭터 데이터의 Animations에서 찾는 ID: 이동, 가드 중 이동(블렌드 스페이스), 공중에서 반복하는 모션 */
-	const FName MoveAnimationId(TEXT("Move"));
-	const FName GuardMoveAnimationId(TEXT("GuardMove"));
-	const FName AirborneAnimationId(TEXT("Airborne"));
+	const UE::Anim::FAnimNotifyMontageInstanceContext* Context = Reference.GetContextData<UE::Anim::FAnimNotifyMontageInstanceContext>();
+	if (Context && Reference.GetNotify())
+	{
+		FAnimNotifyEvent Event = *Reference.GetNotify();
+		const FBranchingPointNotifyPayload Payload(GetSkelMeshComponent(), Animation, &Event, Context->MontageInstanceID);
+		OnPlayMontageNotifyBegin.Broadcast(NAME_None, Payload);
+	}
 }
 
 void UAgAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	// 블렌드 스페이스와 공중 모션은 캐릭터 데이터에서 가져옵니다. 애니메이션 에디터의 미리보기에는 캐릭터가 없습니다.
+	// 모션은 ABP 기본값을 사용하고, 갱신에 필요한 캐릭터만 기억합니다.
 	Character = Cast<AAgCharacterBase>(TryGetPawnOwner());
-	if (const UAgCharacterData* Data = Character ? Character->GetCharacterData() : nullptr)
-	{
-		MoveBlendSpace = Data->FindAnimation<UBlendSpace>(MoveAnimationId);
-		GuardMoveBlendSpace = Data->FindAnimation<UBlendSpace>(GuardMoveAnimationId);
-		AirborneAnimation = Data->FindAnimation<UAnimSequenceBase>(AirborneAnimationId);
-	}
 }
 
 void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)

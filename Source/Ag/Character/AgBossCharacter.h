@@ -22,7 +22,10 @@ public:
 	AAgBossCharacter();
 
 	/** 페이즈. 처음에는 1이고, 페이즈 전환이 끝나면 2입니다. */
-	int32 GetPhase() const { return Phase; }
+	int32 GetPhase() const
+	{
+		return Phase;
+	}
 
 	/** 페이즈 전환이 끝남: 이제부터 2페이즈 변화를 적용합니다. */
 	void EnterPhase2();
@@ -37,10 +40,13 @@ public:
 	AAgCharacterBase* GetTarget() const;
 
 	/** 공격 중 이동의 대상은 AI의 대상입니다. */
-	virtual AAgCharacterBase* FindAttackTarget() const override { return GetTarget(); }
+	virtual AAgCharacterBase* FindAttackTarget() const override
+	{
+		return GetTarget();
+	}
 
 	/**
-	 * 보스 사양 '회전': 회전하지 않는 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간, 회전하지 않는 상태(피격 반응, 그로기,
+	 * 보스 사양 '회전': 회전하지 않는 동안 참입니다. 공격의 추적 구간 밖, 회전하지 않는 상태(피격 반응, 그로기,
 	 * 처형 피격, 회전 고정, 비전투)가 해당합니다.
 	 */
 	virtual bool IsFacingFixed() const override;
@@ -48,13 +54,14 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void GrantAbilities() override;
 
 	/** 보스는 패턴 밖(이동, 패턴 후딜레이)에서도 늘 AI의 대상을 향해 돕니다. */
-	virtual AActor* GetFacingTarget() const override { return GetTarget(); }
+	virtual AActor* GetFacingTarget() const override
+	{
+		return GetTarget();
+	}
 
 private:
-
 	/** 락온 마커와 처형 안내를 캐릭터 데이터에 정한 본에 붙입니다. */
 	void AttachWorldWidgets();
 

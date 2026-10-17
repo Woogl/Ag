@@ -35,7 +35,7 @@ void UAgHUDWidget::NativeConstruct()
 	StatusPanelVisibility = StatusPanel->GetVisibility();
 
 	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로, 이미지를 넣기 전까지 숨깁니다.
-	for (UImage* Icon : { SkillIconImage.Get(), UltimateIconImage.Get() })
+	for (UImage* Icon : {SkillIconImage.Get(), UltimateIconImage.Get()})
 	{
 		if (!Icon->GetBrush().GetResourceObject())
 		{
@@ -50,7 +50,8 @@ void UAgHUDWidget::NativeConstruct()
 		if (UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
 		{
 			PlayerASC = ASC;
-			PlayerSPChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandlePlayerSPChanged);
+			PlayerSPChangedHandle = ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute())
+			                            .AddUObject(this, &ThisClass::HandlePlayerSPChanged);
 		}
 	}
 }
@@ -123,7 +124,8 @@ void UAgHUDWidget::HideStatus()
 
 TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
 {
-	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown, /*bHideCursorDuringViewportCapture*/ true);
+	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown,
+	    /*bHideCursorDuringViewportCapture*/ true);
 }
 
 void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -165,7 +167,8 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 	SetValueText(*PlayerHPText, Stats->GetHP(), Stats->GetMaxHP(), ShownHP);
 	SetValueText(*PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
 	UpdateTrail(PlayerHPTrail, *PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
-	UpdateTrail(PlayerSPTrail, *PlayerSPTrailBar, Stats->GetMaxSP() > 0.f ? Stats->GetSP() / Stats->GetMaxSP() : 0.f, GameDeltaTime, bPlayerSPGuardDrop);
+	UpdateTrail(PlayerSPTrail, *PlayerSPTrailBar, Stats->GetMaxSP() > 0.f ? Stats->GetSP() / Stats->GetMaxSP() : 0.f, GameDeltaTime,
+	    bPlayerSPGuardDrop);
 	bPlayerSPGuardDrop = false;
 
 	// 슬롯은 MP·UP가 부족할 때만 흐리게 합니다. 스킬 쿨다운은 쿨다운 표시로 보여 줍니다.
@@ -182,7 +185,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 
 	FGameplayAbilitySpecHandle SkillHandle;
 	const UAgGameplayAbility* Skill = Cast<UAgGameplayAbility>(FindAbility(*ASC, AgGameplayTags::Ability_Action_Skill, SkillHandle));
-	const int32 SkillCost = Skill ? FMath::RoundToInt(Skill->GetCost().MP) : 0;
+	const int32 SkillCost = Skill ? FMath::RoundToInt(Skill->GetCost().Amount) : 0;
 	if (SkillCost != ShownSkillCost)
 	{
 		ShownSkillCost = SkillCost;
@@ -217,12 +220,13 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	UpdateTrail(BossPPTrail, *BossPPTrailBar, PPBarRatio, GameDeltaTime);
 }
 
-const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
+const UGameplayAbility* UAgHUDWidget::FindAbility(
+    const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
 {
 	for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
 	{
 		const UGameplayAbility* Ability = Spec.GetPrimaryInstance();
-		if (Ability && Ability->GetAssetTags().HasTagExact(AbilityTag))
+		if (Ability && Spec.GetDynamicSpecSourceTags().HasTagExact(AbilityTag))
 		{
 			OutHandle = Spec.Handle;
 			return Ability;
@@ -294,11 +298,12 @@ void UAgHUDWidget::SetValueText(UTextBlock& Text, float Value, float MaxValue, F
 
 void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime, bool bShowDrop) const
 {
+	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	if (Trail.LastBarRatio >= 0.f && BarRatio < Trail.LastBarRatio)
 	{
 		if (bShowDrop)
 		{
-			Trail.Wait = TrailDelay;
+			Trail.Wait = Rules.HUDTrailDelay;
 			Trail.ShrinkElapsed = -1.f;
 		}
 		else if (Trail.Ratio <= Trail.LastBarRatio)
@@ -325,7 +330,7 @@ void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float Ba
 	else
 	{
 		Trail.ShrinkElapsed += DeltaTime;
-		const float Alpha = TrailShrinkTime > 0.f ? FMath::Min(Trail.ShrinkElapsed / TrailShrinkTime, 1.f) : 1.f;
+		const float Alpha = Rules.HUDTrailShrinkTime > 0.f ? FMath::Min(Trail.ShrinkElapsed / Rules.HUDTrailShrinkTime, 1.f) : 1.f;
 		Trail.Ratio = FMath::Lerp(Trail.ShrinkFrom, BarRatio, Alpha);
 	}
 	TrailBar.SetPercent(Trail.Ratio);

@@ -2,14 +2,16 @@
 
 #include "Character/AgPlayerCharacter.h"
 
-#include "AbilitySystem/Abilities/AgAbility_Jump.h"
+#include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
-#include "Character/AgLockOnComponent.h"
+#include "Core/AgAssetManager.h"
+#include "Data/AgCameraData.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Components/PostProcessComponent.h"
 #include "Core/AgGameplayTags.h"
@@ -42,8 +44,6 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	LockOn = CreateDefaultSubobject<UAgLockOnComponent>(TEXT("LockOn"));
-
 	TimeStopScreen = CreateDefaultSubobject<UPostProcessComponent>(TEXT("TimeStopScreen"));
 	TimeStopScreen->SetupAttachment(RootComponent);
 	TimeStopScreen->bUnbound = true;
@@ -57,13 +57,17 @@ void AAgPlayerCharacter::BeginPlay()
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleMoveStateChanged);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleInputBlockChanged);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleInputBlockChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandleInputBlockChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandleSPChanged);
-	LockOn->OnLockOnChanged.AddUObject(this, &ThisClass::UpdateRotationMode);
 	UpdateRotationMode();
 	GetWorld()->GetSubsystem<UAgTimeSubsystem>()->OnTimeStopChanged.AddUObject(this, &ThisClass::HandleTimeStopChanged);
 }
@@ -117,7 +121,8 @@ void AAgPlayerCharacter::NotifyControllerChanged()
 
 	if (const APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem =
+		        ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			InputSubsystem->AddMappingContext(InputMapping, 0);
 		}
@@ -135,33 +140,42 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	// 행동 키를 누르면 그 입력 태그를 넘깁니다. 키를 뗀 것은 가드와 회피·달리기 키만 봅니다.
 	const TPair<const UInputAction*, FGameplayTag> ActionKeys[] = {
-		{ AttackAction, AgGameplayTags::Input_Attack },
-		{ GuardAction, AgGameplayTags::Input_Guard },
-		{ DodgeAction, AgGameplayTags::Input_Dodge },
-		{ JumpAction, AgGameplayTags::Input_Jump },
-		{ SkillAction, AgGameplayTags::Input_Skill },
-		{ UltimateAction, AgGameplayTags::Input_Ultimate },
-		{ ExecuteAction, AgGameplayTags::Input_Execute },
-		{ LockOnAction, AgGameplayTags::Input_LockOn },
+	    {AttackAction, AgGameplayTags::Input_Attack},
+	    {GuardAction, AgGameplayTags::Input_Guard},
+	    {DodgeAction, AgGameplayTags::Input_Dodge},
+	    {JumpAction, AgGameplayTags::Input_Jump},
+	    {SkillAction, AgGameplayTags::Input_Skill},
+	    {UltimateAction, AgGameplayTags::Input_Ultimate},
+	    {ExecuteAction, AgGameplayTags::Input_Execute},
+	    {LockOnAction, AgGameplayTags::Input_LockOn},
 	};
 	for (const TPair<const UInputAction*, FGameplayTag>& ActionKey : ActionKeys)
 	{
 		EnhancedInput->BindAction(ActionKey.Key, ETriggerEvent::Started, this, &ThisClass::HandleInputPressed, ActionKey.Value);
 	}
-	EnhancedInput->BindAction(GuardAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Guard));
-	EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Dodge));
+	EnhancedInput->BindAction(
+	    GuardAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Guard));
+	EnhancedInput->BindAction(
+	    DodgeAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Dodge));
 }
 
 bool AAgPlayerCharacter::CanMove() const
 {
 	// 행동, 피격 반응, 가드 시작 직후에는 움직이지 않습니다(플레이어 입력 '상태별 허용 입력', '모션 캔슬').
 	FGameplayTagContainer Blockers;
-	Blockers.AddTag(AgGameplayTags::State_Acting);
-	Blockers.AddTag(AgGameplayTags::State_GuardMoveLock);
+	Blockers.AddTag(AgGameplayTags::State_ParryWindow);
 	Blockers.AddTag(AgGameplayTags::State_HitReaction);
 	Blockers.AddTag(AgGameplayTags::State_Groggy);
-	Blockers.AddTag(AgGameplayTags::State_Execution_Executing);
+	Blockers.AddTag(AgGameplayTags::State_Execution);
 	Blockers.AddTag(AgGameplayTags::State_Dead);
+	for (const FGameplayAbilitySpec& Spec : GetAbilitySystemComponent()->GetActivatableAbilities())
+	{
+		const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(Spec.GetPrimaryInstance());
+		if (Ability && Ability->BlocksMovementInput())
+		{
+			return false;
+		}
+	}
 	return !GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Blockers);
 }
 
@@ -191,7 +205,7 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 void AAgPlayerCharacter::StopLandingMotion()
 {
 	// 착지 모션은 제자리 모션이라 움직이면 미끄러져 보입니다. 행동이 아니므로 움직이면 끝냅니다. 블렌드 아웃은 몽타주의 값입니다.
-	UAnimMontage* LandMontage = GetCharacterData()->FindMontage(UAgAbility_Jump::LandMontageId);
+	UAnimMontage* LandMontage = GetCharacterData()->FindMontage(TEXT("Land"));
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (LandMontage && AnimInstance && AnimInstance->Montage_IsPlaying(LandMontage))
 	{
@@ -207,7 +221,7 @@ void AAgPlayerCharacter::MoveReleased()
 void AAgPlayerCharacter::Look(const FInputActionValue& Value)
 {
 	// 락온 카메라는 시야 입력을 무시합니다(카메라 '카메라 모드').
-	if (LockOn->IsLockedOn())
+	if (GetLockOnTarget())
 	{
 		return;
 	}
@@ -252,67 +266,75 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 	// 이 키를 직접 받는 어빌리티가 실행 중이면 그 어빌리티가 받습니다(평타의 다음 타, 패리 모션 중의 새 가드 시작).
 	// 아니면 키가 그 행동을 시작하고, 지금 허용되는지는 행동이 확인합니다.
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	auto PressOrActivate = [this, ASC, &InputTag](const FGameplayTag& AbilityTag)
+	TFunction<void(FName)> Activate = [this, ASC](FName Id)
 	{
-		const FGameplayTagContainer AbilityTags(AbilityTag);
-		TArray<FGameplayAbilitySpec*> Specs;
-		ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(AbilityTags, Specs, false);
-		if (Specs.ContainsByPredicate([](const FGameplayAbilitySpec* Spec) { return Spec->IsActive(); }))
+		if (FGameplayAbilitySpec* Spec = FindAbilitySpec(Id))
 		{
-			FGameplayEventData Payload;
-			Payload.EventTag = InputTag;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, InputTag, Payload);
+			ASC->TryActivateAbility(Spec->Handle);
 		}
-		else
+	};
+	TFunction<void(FName)> PressOrActivate = [this, ASC, &InputTag](FName Id)
+	{
+		if (FGameplayAbilitySpec* Spec = FindAbilitySpec(Id))
 		{
-			ASC->TryActivateAbilitiesByTag(AbilityTags);
+			if (Spec->IsActive())
+			{
+				FGameplayEventData Payload;
+				Payload.EventTag = InputTag;
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, InputTag, Payload);
+			}
+			else
+			{
+				ASC->TryActivateAbility(Spec->Handle);
+			}
 		}
 	};
 
 	if (InputTag == AgGameplayTags::Input_Attack)
 	{
-		// 평타 키의 처리 순서: 공중이면 점프 공격, 회피 반격 기회가 남아 있으면 회피 반격(지금 시작할 수 없으면 무시), 그 밖에는 평타입니다.
+		// 평타 키의 처리 순서: 공중이면 점프 공격, 회피 반격 기회가 남아 있으면 회피 반격(지금 시작할 수 없으면 무시), 그 밖에는
+		// 평타입니다.
 		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Jumping))
 		{
-			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_JumpAttack));
+			Activate(TEXT("JumpAttack"));
 		}
 		else if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_DodgeCounterChance))
 		{
-			ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_DodgeCounter));
+			Activate(TEXT("DodgeCounter"));
 		}
 		else
 		{
-			PressOrActivate(AgGameplayTags::Ability_Action_BasicAttack);
+			PressOrActivate(TEXT("BasicAttack"));
 		}
 	}
 	else if (InputTag == AgGameplayTags::Input_Guard)
 	{
-		PressOrActivate(AgGameplayTags::Ability_Action_Guard);
+		PressOrActivate(TEXT("Guard"));
 	}
 	else if (InputTag == AgGameplayTags::Input_Dodge)
 	{
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Dodge));
+		Activate(TEXT("Dodge"));
 	}
 	else if (InputTag == AgGameplayTags::Input_Skill)
 	{
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Skill));
+		Activate(TEXT("Skill"));
 	}
 	else if (InputTag == AgGameplayTags::Input_Ultimate)
 	{
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Ultimate));
+		Activate(TEXT("Ultimate"));
 	}
 	else if (InputTag == AgGameplayTags::Input_Execute)
 	{
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Execution));
+		Activate(TEXT("Execution"));
 	}
 	else if (InputTag == AgGameplayTags::Input_Jump)
 	{
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Jump));
+		Activate(TEXT("Jump"));
 	}
 	else if (InputTag == AgGameplayTags::Input_LockOn)
 	{
 		// 락온하거나, 락온 중이면 해제합니다.
-		PressOrActivate(AgGameplayTags::Ability_LockOn);
+		PressOrActivate(TEXT("LockOn"));
 	}
 }
 
@@ -393,8 +415,14 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 	{
 		return;
 	}
-	const FGameplayTagContainer& EndedTags = Ended->GetAssetTags();
-	if (!bGuardHeld || EndedTags.HasTag(AgGameplayTags::Ability_Action_Guard) || (!EndedTags.HasTag(AgGameplayTags::Ability_Action) && !EndedTags.HasTag(AgGameplayTags::Ability_Reaction)))
+	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ended);
+	if (!AgAbility)
+	{
+		return;
+	}
+	const FGameplayTagContainer& EndedTags = AgAbility->GetDefinitionTags();
+	if (!bGuardHeld || EndedTags.HasTag(AgGameplayTags::Ability_Action_Guard) ||
+	    (!EndedTags.HasTag(AgGameplayTags::Ability_Action) && !EndedTags.HasTag(AgGameplayTags::Ability_Reaction)))
 	{
 		return;
 	}
@@ -414,7 +442,7 @@ void AAgPlayerCharacter::TryResumeGuard(bool bAfterGuardPushback)
 	Running.AddTag(AgGameplayTags::State_Busy);
 	Running.AddTag(AgGameplayTags::State_HitReaction);
 	Running.AddTag(AgGameplayTags::State_Guarding);
-	Running.AddTag(AgGameplayTags::State_Execution_Executing);
+	Running.AddTag(AgGameplayTags::State_Execution);
 	if (!bGuardHeld || IsDead() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Running))
 	{
 		return;
@@ -429,7 +457,10 @@ void AAgPlayerCharacter::TryResumeGuard(bool bAfterGuardPushback)
 	}
 	else
 	{
-		GetAbilitySystemComponent()->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Action_Guard));
+		if (const FGameplayAbilitySpec* Spec = FindAbilitySpec(TEXT("Guard")))
+		{
+			GetAbilitySystemComponent()->TryActivateAbility(Spec->Handle);
+		}
 	}
 }
 
@@ -440,7 +471,7 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	Enders.AddTag(AgGameplayTags::Ability_Action);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockBack);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockUp);
-	if (Ability && Ability->GetAssetTags().HasAny(Enders))
+	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinitionTags().HasAny(Enders))
 	{
 		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_DodgeCounterChance));
 	}
@@ -455,7 +486,7 @@ void AAgPlayerCharacter::UpdateSprint()
 		if (!bWantsSprint || GetAttributeSet()->GetSP() <= 0.f)
 		{
 			const FGameplayTagContainer SprintTags(AgGameplayTags::Ability_Sprint);
-			ASC->CancelAbilities(&SprintTags);
+			CastChecked<UAgAbilitySystemComponent>(ASC)->CancelAbilitiesWithSpecTags(SprintTags);
 		}
 		return;
 	}
@@ -466,11 +497,11 @@ void AAgPlayerCharacter::UpdateSprint()
 	{
 		return;
 	}
-	TArray<FGameplayAbilitySpec*> DodgeSpecs;
-	ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Dodge), DodgeSpecs, false);
-	if (DodgeSpecs.ContainsByPredicate([](const FGameplayAbilitySpec* Spec) { return Spec->IsActive(); }))
+	const FGameplayAbilitySpec* Dodge = FindAbilitySpec(TEXT("Dodge"));
+	const FGameplayAbilitySpec* Sprint = FindAbilitySpec(TEXT("Sprint"));
+	if (Dodge && Dodge->IsActive() && Sprint)
 	{
-		ASC->TryActivateAbilitiesByTag(FGameplayTagContainer(AgGameplayTags::Ability_Sprint));
+		ASC->TryActivateAbility(Sprint->Handle);
 	}
 }
 
@@ -481,7 +512,7 @@ void AAgPlayerCharacter::UpdateRotationMode()
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const bool bReacting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction);
 	const bool bSprinting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting);
-	const bool bFaceCamera = (LockOn->IsLockedOn() && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
+	const bool bFaceCamera = (GetLockOnTarget() && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
 	GetCharacterMovement()->bOrientRotationToMovement = !bReacting && !bFaceCamera;
 	GetCharacterMovement()->bUseControllerDesiredRotation = !bReacting && bFaceCamera;
 }
@@ -508,18 +539,30 @@ void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
 	const UAgPlayerData* PlayerData = CastChecked<UAgPlayerData>(GetCharacterData());
 	if (Data.NewValue < Data.OldValue)
 	{
-		RestartRegenDelay(SPRegenDelay, AgGameplayTags::State_Regen_SPDelay, Data.NewValue <= 0.f ? PlayerData->SPRegenDelayEmpty : PlayerData->SPRegenDelay);
+		RestartRegenDelay(SPRegenDelay, AgGameplayTags::State_Regen_SPDelay,
+		    Data.NewValue <= 0.f ? PlayerData->SPRegenDelayEmpty : PlayerData->SPRegenDelay);
 	}
 }
 
 AAgCharacterBase* AAgPlayerCharacter::FindAttackTarget() const
 {
-	return FindEnemy(TNumericLimits<float>::Max(), [](const AAgCharacterBase&) { return true; });
+	return FindEnemy(TNumericLimits<float>::Max(),
+	    [](const AAgCharacterBase&)
+	    {
+		    return true;
+	    });
 }
 
 AActor* AAgPlayerCharacter::GetFallbackFacingTarget() const
 {
-	return LockOn->GetTarget();
+	return GetLockOnTarget();
+}
+
+AAgCharacterBase* AAgPlayerCharacter::GetLockOnTarget() const
+{
+	const FGameplayAbilitySpec* Spec = FindAbilitySpec(TEXT("LockOn"));
+	const UAgGameplayAbility* Instance = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
+	return Instance ? Instance->GetLockOnTarget() : nullptr;
 }
 
 AAgCharacterBase* AAgPlayerCharacter::FindEnemy(float Range, TFunctionRef<bool(const AAgCharacterBase&)> Condition) const
@@ -562,7 +605,8 @@ TArray<AAgCharacterBase*> AAgPlayerCharacter::FindEnemies(float Range) const
 	for (AActor* Candidate : Candidates)
 	{
 		AAgCharacterBase* Enemy = Cast<AAgCharacterBase>(Candidate);
-		if (Enemy && !Enemy->IsDead() && GetTeamAttitudeTowards(*Enemy) == ETeamAttitude::Hostile && GetHorizontalDistanceTo(Enemy) <= Range)
+		if (Enemy && !Enemy->IsDead() && GetTeamAttitudeTowards(*Enemy) == ETeamAttitude::Hostile &&
+		    GetHorizontalDistanceTo(Enemy) <= Range)
 		{
 			Enemies.Add(Enemy);
 		}

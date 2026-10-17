@@ -4,117 +4,247 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "Data/AgAttackData.h"
+#include "Data/AgAbilityData.h"
+#include "Data/AgCharacterData.h"
 #include "AgGameplayAbility.generated.h"
 
 class AAgCharacterBase;
+class AAgPlayerCharacter;
+class UAbilityTask;
+class UAbilityTask_PlayMontageAndWait;
+class UAbilityTask_WaitDelay;
 class UAgAbilityTask_HoldTag;
-class UAgAttributeSet;
-class UAgCharacterData;
+class UAgAbilityTask_Dash;
+class UAgAbilityTask_TimeStop;
+class UAgAbilityTask_LockOn;
+class UAgRootMotionModifier_MotionWarping;
+class UAgAnimNotify_SpawnProjectile;
+struct FAnimMontageInstance;
+struct FBranchingPointNotifyPayload;
 
-/** 어빌리티를 시작할 때 치르는 자원(양수) */
-struct FAgAbilityCost
+USTRUCT()
+struct FAgAbilityWindowExecution
 {
-	float SP = 0.f;
-	float MP = 0.f;
-	float UP = 0.f;
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UAbilityTask> Task;
+	FName Function;
+	int32 MontageInstanceId = INDEX_NONE;
+	int32 NotifyIndex = INDEX_NONE;
 };
 
-/**
- * 모든 Ag 어빌리티의 부모. 어빌리티는 모두 이 클래스를 바로 상속하고, 여러 어빌리티가 함께 쓰는 동작은 어빌리티 태스크로
- * 둡니다(구현 계획서 '어빌리티 구조'). 주인의 캐릭터 데이터를 읽고, 쿨다운과 비용, 모션 캔슬을 위한 행동 중(State.Busy)을
- * 다룹니다. 행동은 후딜이 시작될 때까지 State.Busy를 들고 있고, 그동안 새 행동은 시작하지 못합니다.
- */
-UCLASS(Abstract)
+USTRUCT()
+struct FAgAbilityMontageExecution
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> Montage;
+	TWeakObjectPtr<UAnimInstance> AnimInstance;
+	FName MontageId;
+	int32 InstanceId = INDEX_NONE;
+	bool bBlocksMovement = false;
+	bool bControlsFacing = false;
+	TWeakObjectPtr<AAgCharacterBase> Target;
+	float TargetPhaseStart = 0.f;
+};
+
+/** 모든 행동을 ID별 독립 GAS 스펙으로 부여합니다. 설정은 실행 요청과 구분합니다. */
+UCLASS()
 class UAgGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
 
 public:
+#if WITH_DEV_AUTOMATION_TESTS
+	friend class FAgAbilityExecutionTest;
+#endif
 	UAgGameplayAbility();
+	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+	virtual void OnRemoveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
+	virtual bool CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
+	    FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	virtual bool DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags = nullptr,
+	    const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	virtual void GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    float& TimeRemaining, float& Duration) const override;
+	FAgResourceCostParams GetCost() const;
+	AAgCharacterBase* GetLockOnTarget() const;
+	FName GetAbilityId() const
+	{
+		return GrantedDefinition.Id;
+	}
 
-	/** 시작할 때 치르는 자원(양수). 비용을 치르는 어빌리티의 비용 GE(UAgEffect_Cost)가 읽습니다. */
-	virtual FAgAbilityCost GetCost() const;
+	const FGameplayTagContainer& GetDefinitionTags() const
+	{
+		return GrantedDefinition.Tags;
+	}
 
-	/**
-	 * 이 어빌리티가 읽는 전용 값의 구조체(FAgAbilityParams의 자식). 전용 값이 없으면 null입니다.
-	 * 캐릭터 데이터가 이 구조체로 JSON 어빌리티 목록의 Params를 검사하고 읽습니다.
-	 */
-	virtual const UScriptStruct* GetAbilityParamsType() const { return nullptr; }
+	bool BlocksMovementInput() const
+	{
+		return IsActive() && Motion.Montage && Motion.bBlocksMovement;
+	}
 
-	/** 어빌리티의 쿨다운이 남은 시간과 전체 시간(HUD의 쿨다운 표시). */
-	virtual void GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const override;
+	bool OwnsMontage(int32 InstanceId) const
+	{
+		return IsActive() && Motion.InstanceId == InstanceId && InstanceId != INDEX_NONE;
+	}
+
+	void BeginNotifyTask(int32 InstanceId, int32 NotifyIndex, FName Task, FName ParamsId);
+	void EndNotifyTask(int32 InstanceId, int32 NotifyIndex);
+	void HandleMontageEvent(int32 InstanceId, FGameplayTag Event);
+	void SpawnProjectile(int32 InstanceId, const UAgAnimNotify_SpawnProjectile& Notify);
+	bool PrepareWarp(int32 InstanceId, float WindowStart, FName ParamsId, FAgMotionWarpingParams& Params, AActor*& Target, float& Gap,
+	    bool& bFacingOnly);
+	void RegisterWarp(UAgRootMotionModifier_MotionWarping* Modifier);
+	static AAgCharacterBase* FindExecutionTarget(const AAgPlayerCharacter* Player);
 
 protected:
-	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
-	// 쿨다운과 비용: CanActivateAbility가 확인하고 CommitAbility가 치릅니다. 쿨다운은 태그 없이 쿨다운 GE
-	// (UAgEffect_Cooldown)로 어빌리티마다 따로 세고, 시간은 어빌리티 항목의 Cooldown(0이면 없음)이며 시작부터 셉니다.
-	// 비용은 비용 GE(CostGameplayEffectClass)로 치르고, 치를 수 있는지는 행동마다의 규칙(CanPayCost)이 정합니다.
-	virtual bool CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
-	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-
-	/** 주인에게 시작할 만큼 자원이 있는지(행동마다의 규칙) */
-	virtual bool CanPayCost(const UAgAttributeSet& Stats) const { return true; }
-
-	/**
-	 * 플레이어 행동의 태그(플레이어 입력 '상태별 허용 입력', '모션 캔슬'): 다른 행동의 행동 중, 피격 반응, 그로기, 처형, 사망 중에는
-	 * 시작하지 못하고, 시작하면 진행 중인 행동과 달리기를 취소합니다. bIgnoresMovement면 State.Acting을 가져 도는 동안 이동 입력을 무시합니다.
-	 */
-	void SetupPlayerAction(const FGameplayTag& AbilityTag, bool bIgnoresMovement = true);
-
-	/**
-	 * 피격 반응(넉업, 넉백, 가드 밀림, 가드 브레이크)의 태그와 발동 이벤트(전투 시스템 '피격 반응', '상태 우선순위'): TriggerEvent로
-	 * 시작하고, 같은 우선순위의 새 반응은 앞 반응을 대신합니다. 하던 행동, 달리기, 보스 패턴을 멈추고, 그로기·처형·사망 중에는 시작하지 못합니다.
-	 * AbilityTag는 Ability.Reaction.HitReaction 아래의 태그입니다.
-	 */
-	void SetupHitReaction(const FGameplayTag& AbilityTag, const FGameplayTag& TriggerEvent);
-
-	/** 보스 패턴의 태그: 피격 반응, 그로기, 처형 피격, 사망, 비전투 중에는 시작하지 못합니다. */
-	void SetupBossPattern();
-
-	/** 이 어빌리티를 가진 캐릭터. 어빌리티는 캐릭터에만 부여합니다. */
-	AAgCharacterBase* GetAgCharacter() const;
-
-	/** 캐릭터 데이터. 캐릭터가 시작할 때 확인하는 필수 데이터라 있다고 보고 씁니다(구현 계획서 '데이터를 찾는 방법'). */
-	template <typename TData>
-	const TData* GetCharacterData() const
-	{
-		return CastChecked<TData>(GetCharacterDataBase());
-	}
-
-	/**
-	 * 이 어빌리티의 전용 값(어빌리티 항목의 Params). 항목이 없거나 값이 TParams가 아니면 null입니다.
-	 * JSON을 다시 읽으면 값이 새로 만들어지므로 함수 안에서만 쓰고, 다음에 쓸 때 다시 꺼냅니다.
-	 */
-	template <typename TParams>
-	const TParams* GetAbilityParams() const
-	{
-		ensureMsgf(TParams::StaticStruct() == GetAbilityParamsType(), TEXT("%s reads %s but GetAbilityParamsType returns another struct."), *GetName(), *TParams::StaticStruct()->GetName());
-		const TInstancedStruct<FAgAbilityParams>* Params = FindAbilityParams();
-		return Params ? Params->GetPtr<TParams>() : nullptr;
-	}
-
-	/** 이 스펙의 어빌리티 ID(캐릭터 데이터의 어빌리티 목록). 몽타주를 하나만 쓰는 어빌리티는 이 ID로 몽타주를 찾습니다. */
-	FName GetAbilityId() const;
-
-	/** 행동 중(State.Busy)을 시작합니다. */
-	void BeginBusy();
-
-	/** 행동 중을 끝냅니다. 후딜이 시작되고, 다른 행동이 이 행동을 취소할 수 있습니다. */
-	void EndBusy();
-
-	/** 행동 중인지. 실행 중인 행동은 이것이 풀린 뒤가 후딜입니다. */
-	bool IsBusy() const { return BusyTag != nullptr; }
+	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+	virtual bool CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    FGameplayTagContainer* RelevantTags = nullptr) const override;
+	virtual void ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    FGameplayAbilityActivationInfo ActivationInfo) const override;
+	virtual bool CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    FGameplayTagContainer* RelevantTags = nullptr) const override;
+	virtual void ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	    FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 private:
-	const UAgCharacterData* GetCharacterDataBase() const;
+	AAgCharacterBase* GetAgCharacter() const;
+	const FAgAbilityData* FindDefinition(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const;
+	bool CheckStartConditions(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const;
+	bool CheckResources(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const;
+	void BeginBusy();
+	void EndBusy();
+	void Finish(bool bCancelled = false);
+	bool PlayMotion(FName Id, bool bPlayerAction = false, float Rate = 1.f, FName Section = NAME_None, float TranslationScale = 1.f,
+	    float StartTime = 0.f);
+	void BindMontageInstance(UAnimInstance& Anim, const FAnimMontageInstance& Instance);
+	void InitializeNotifyStates(UAnimInstance& Anim, FAnimMontageInstance& Instance);
+	bool IsCurrentMontageNotify(const FBranchingPointNotifyPayload& Payload) const;
+	void ClearMotion(bool bStop);
+	void UpdateMotionConstraints();
+	void EndWindows();
+	void Listen(FGameplayTag Event);
+	void WaitForLanding();
+	void StartComboHit(int32 Index);
+	void StartGuard(bool bParryWindow);
+	void SetGuarding(bool bGuarding);
+	void CloseParryWindow();
+	void StartGroggy();
+	void StartKnockUp();
+	void StartDeath(const FGameplayEventData* Event);
+	void ApplyReward(FName ParamsId);
+	void ApplySingleAttack(
+	    FName ParamsId, const TArray<AAgCharacterBase*>& Targets, bool bFinisher = false, TOptional<FVector> HitLocation = {});
+	void NotifyBasicAttackStarted();
+	void FaceActor(const AActor* Actor);
+	UAgAbilityTask_HoldTag* HoldConfiguredTag(FName ParamsId);
 
-	/** 이 어빌리티 스펙의 어빌리티 항목의 Params. 항목이 없으면 null입니다. */
-	const TInstancedStruct<FAgAbilityParams>* FindAbilityParams() const;
+	UFUNCTION()
+	void HandleEvent(FGameplayEventData Event);
 
-	/** 행동 중인 동안 State.Busy를 붙여 둡니다. 어빌리티가 끝나면 함께 끝납니다. */
+	UFUNCTION()
+	void HandleMontageNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& Payload);
+
+	UFUNCTION()
+	void HandleMontageNotifyEnd(FName NotifyName, const FBranchingPointNotifyPayload& Payload);
+
+	UFUNCTION()
+	void HandleMotionCompleted();
+
+	UFUNCTION()
+	void HandleMotionCancelled();
+
+	UFUNCTION()
+	void HandleMotionBlendOut();
+
+	UFUNCTION()
+	void HandleLanded(EMovementMode Mode);
+
+	UFUNCTION()
+	void HandleRising();
+
+	UFUNCTION()
+	void HandleFalling();
+
+	UFUNCTION()
+	void HandleGroggyEndDue();
+
+	UFUNCTION()
+	void HandleCutsceneFinished();
+
+	UFUNCTION()
+	void HandleDashFinished();
+
+	UFUNCTION()
+	void HandleTargetLost();
+
+	UPROPERTY()
+	FAgAbilityData GrantedDefinition;
+
+	UPROPERTY()
+	FAgAbilityData ExecutionDefinition;
+
+	UPROPERTY()
+	TMap<FName, TObjectPtr<UAnimMontage>> ExecutionMontages;
+
+	UPROPERTY()
+	TArray<FName> ComboMontageIds;
+
+	UPROPERTY()
+	TMap<FName, FAgProjectileDefinition> ExecutionProjectiles;
+
+	UPROPERTY()
+	FAgAbilityMontageExecution Motion;
+
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_PlayMontageAndWait> MotionTask;
+
+	UPROPERTY()
+	TArray<FAgAbilityWindowExecution> Windows;
+
+	UPROPERTY()
+	TArray<TObjectPtr<UAgRootMotionModifier_MotionWarping>> Warps;
+
 	UPROPERTY()
 	TObjectPtr<UAgAbilityTask_HoldTag> BusyTag;
+
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_HoldTag> GuardingTag;
+
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_HoldTag> DownedTag;
+
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_Dash> DashTask;
+
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_TimeStop> UltimateTimeStop;
+
+	UPROPERTY()
+	TObjectPtr<UAgAbilityTask_LockOn> LockOnTask;
+
+	UPROPERTY()
+	TObjectPtr<UAbilityTask_WaitDelay> GroggyWait;
+	FActiveGameplayEffectHandle DrainEffect;
+	FActiveGameplayEffectHandle ParryWindow;
+	TWeakObjectPtr<AAgCharacterBase> ExecutionTarget;
+	int32 ComboIndex = 0;
+	int32 ExecutionStrike = 0;
+	float SPSpent = 0.f;
+	float FallBlendSpeed = 0.f;
+	float WarpStopDistance = 0.f;
+	bool bPerfectDodged = false;
+	bool bHoldingDash = false;
+	bool bDashFinished = false;
+	bool bGettingUp = false;
+	bool bEnding = false;
+	bool bRootMotionTranslationFromVelocity = false;
 };

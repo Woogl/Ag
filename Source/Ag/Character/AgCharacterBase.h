@@ -5,26 +5,28 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "ActiveGameplayEffectHandle.h"
-#include "Data/AgAttackData.h"
+#include "Character/AgCharacterMotionConstraints.h"
 #include "GameFramework/Character.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "GenericTeamAgentInterface.h"
 #include "AgCharacterBase.generated.h"
 
 class UAbilitySystemComponent;
-class UCapsuleComponent;
 class UAgAttributeSet;
 class UAgCharacterData;
+struct FAgAbilityData;
 class UGameplayAbility;
 class UMotionWarpingComponent;
+class UAnimMontage;
 class AAgCharacterBase;
 struct FGameplayAbilitySpec;
+struct FGameplayTag;
 struct FOnAttributeChangeData;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase* /*DeadCharacter*/);
 
 /**
- * 플레이어와 보스의 공통 부모. 어빌리티 시스템과 스탯, 무기와 판정 구간, 정지 간격과 회전(전투 시스템 '공격 중 이동'),
+ * 플레이어와 보스의 공통 부모. 어빌리티 시스템과 스탯, 무기, 정지 간격과 회전(전투 시스템 '공격 중 이동'),
  * 캐릭터 데이터, 전투 시스템 '사망 처리'를 맡습니다.
  */
 UCLASS(Abstract)
@@ -32,11 +34,12 @@ class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, publ
 {
 	GENERATED_BODY()
 
+#if WITH_DEV_AUTOMATION_TESTS
+	friend class FAgAbilityExecutionTest;
+#endif
+
 public:
 	AAgCharacterBase();
-
-	/** 공격 몽타주의 Motion Warping 구간이 향하는 워프 목표 이름. 공격 중 이동 태스크가 넣고 지웁니다. */
-	static const FName AttackWarpTarget;
 
 	/** 블루프린트에서 무기 메시 컴포넌트와 무기 판정 캡슐에 다는 컴포넌트 태그 */
 	static const FName WeaponTag;
@@ -45,17 +48,30 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	/** 팀(엔진 팀 인터페이스). 팀이 다르면 적대합니다. 플레이어는 0번 팀이고, 그 밖의 캐릭터는 1번 팀입니다. */
-	virtual FGenericTeamId GetGenericTeamId() const override { return FGenericTeamId(1); }
+	virtual FGenericTeamId GetGenericTeamId() const override
+	{
+		return FGenericTeamId(1);
+	}
 
-	UAgAttributeSet* GetAttributeSet() const { return AttributeSet; }
+	UAgAttributeSet* GetAttributeSet() const
+	{
+		return AttributeSet;
+	}
 
-	UAgCharacterData* GetCharacterData() const { return CharacterData; }
+	UAgCharacterData* GetCharacterData() const
+	{
+		return CharacterData;
+	}
 
 	/** 어빌리티 ID로 부여된 어빌리티의 스펙. 없으면 null입니다. */
 	FGameplayAbilitySpec* FindAbilitySpec(FName Id) const;
 
 	/** 부여된 스펙(Handle)의 어빌리티 ID. 어빌리티 목록으로 부여한 스펙이 아니면 None입니다. */
 	FName FindAbilityId(const FGameplayAbilitySpecHandle Handle) const;
+	void ForgetAbility(FGameplayAbilitySpecHandle Handle)
+	{
+		AbilityIds.Remove(Handle);
+	}
 
 	/**
 	 * 부여된 스펙(Handle)의 어빌리티 항목(캐릭터 데이터의 어빌리티 목록). 어빌리티 목록으로 부여하지 않았으면 null입니다.
@@ -63,49 +79,40 @@ public:
 	 */
 	const FAgAbilityData* FindAbility(const FGameplayAbilitySpecHandle Handle) const;
 
-	UMotionWarpingComponent* GetMotionWarping() const { return MotionWarping; }
+	UMotionWarpingComponent* GetMotionWarping() const
+	{
+		return MotionWarping;
+	}
 
 	/** 블루프린트의 무기 메시 컴포넌트(WeaponTag). 없으면 null입니다. */
-	USceneComponent* GetWeaponComponent() const { return WeaponComponent; }
+	USceneComponent* GetWeaponComponent() const
+	{
+		return WeaponComponent;
+	}
 
 	/** 사망 처리를 시작했습니다(State.Dead). */
 	bool IsDead() const;
 
-	/** PP를 잃을 수 있습니다: PP 무한(State.InfinitePP)도 그로기 중도 아닙니다(전투 시스템 'PP 감소량 계산식'). */
+	/** PP를 잃을 수 있습니다: 그로기 면역(State.GroggyImmune)도 그로기 중도 아닙니다(전투 시스템 'PP 감소량 계산식'). */
 	bool CanLosePP() const;
 
-	/** 지금 행동의 공격 데이터를 판정 구간마다 하나씩 정합니다. */
-	void SetActiveAttack(TConstArrayView<FAgPlayerAttackHit> Hits);
-
-	/** 보스 공격용입니다. 플레이어 공격에만 있는 값(MP·UP 충전, bFinisher)은 기본값으로 둡니다. */
-	void SetActiveAttack(TConstArrayView<FAgAttackHit> Hits);
-
-	/** 열린 판정 구간을 닫고 행동의 공격 데이터를 지웁니다. */
-	void ClearActiveAttack();
-
-	/** 판정 구간을 엽니다. 판정 구간 노티파이와 DashThrust의 돌진이 부릅니다. */
-	void BeginAttackWindow(int32 HitIndex);
-
-	/** 판정 구간을 닫습니다. 판정 구간 노티파이와 DashThrust의 돌진이 부릅니다. */
-	void EndAttackWindow(int32 HitIndex);
-
-	/** 정지 간격: 루트 모션이 이 캐릭터를 Target에 StopDistance보다 가까이 데려가지 않습니다(캡슐 중심 사이 수평 거리). */
-	void SetStopTarget(AActor* Target, float InStopDistance);
-	void ClearStopTarget();
+	/** 실행 소유자가 정한 최종 이동 제약을 적용합니다. 다른 소유자의 해제 요청은 무시합니다. */
+	void SetMotionConstraints(UObject& RequestOwner, const FAgCharacterMotionConstraints& Constraints);
+	void ClearMotionConstraints(const UObject& RequestOwner);
 
 	/** 전투 시스템 '공격 중 이동'의 대상: 타를 시작할 때 이 캐릭터가 공격할 적입니다. 없으면 null입니다. */
-	virtual AAgCharacterBase* FindAttackTarget() const { return nullptr; }
+	virtual AAgCharacterBase* FindAttackTarget() const
+	{
+		return nullptr;
+	}
 
 	/** 플레이어 사양 '공격 방향': 타겟팅 범위 안에 공격 대상이 없는 타에서 향해 돌 대상입니다. 없으면 null(정면)입니다. */
-	virtual AActor* GetFallbackFacingTarget() const { return nullptr; }
+	virtual AActor* GetFallbackFacingTarget() const
+	{
+		return nullptr;
+	}
 
-	/** 회전: 바라보는 방향이 고정되지 않은 동안 Target을 향해 캐릭터 무브먼트의 회전 속도로 돕니다. null이면 돌지 않습니다. */
-	void SetFacingTarget(AActor* Target);
-
-	/**
-	 * 바라보는 방향이 고정된 동안 참입니다. 판정 구간과 그 앞의 회전 정지 구간이 해당합니다(전투 시스템
-	 * '공격 중 이동'). 공격 중 이동 태스크는 이 순간 접근 목표를 고정합니다.
-	 */
+	/** 실행 소유자가 회전을 제어하거나 캐릭터 상태가 일반 회전을 금지합니다. */
 	virtual bool IsFacingFixed() const;
 
 	/** 움찔: 하던 동작 위에 움찔을 덧입혀 재생합니다. */
@@ -121,7 +128,7 @@ public:
 	 */
 	virtual void Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility = nullptr, bool bRagdoll = true);
 
-	/** 사망 처리 6: 죽은 캐릭터를 래그돌로 바꾸고 PushVelocity로 밉니다. */
+	/** 사망 처리: 죽은 캐릭터를 래그돌로 바꾸고 PushVelocity로 밉니다. */
 	void StartRagdoll(const FVector& PushVelocity);
 
 	/** HP를 0으로 만드는 GE를 적용해 사망 판정을 일으킵니다. (Kill Z 낙하, 테스트용 콘솔 명령) */
@@ -153,10 +160,16 @@ protected:
 	void ApplyEffects();
 
 	/** MOV에 곱하는 이동 속도 배율. 플레이어는 가드와 달리기가 바꿉니다. */
-	virtual float GetMoveSpeedMultiplier() const { return 1.f; }
+	virtual float GetMoveSpeedMultiplier() const
+	{
+		return 1.f;
+	}
 
-	/** 지금 향해 돌 대상. 기본은 SetFacingTarget으로 정한 대상입니다. */
-	virtual AActor* GetFacingTarget() const { return FacingTarget.Get(); }
+	/** 일반 회전의 대상. 보스는 AI 대상을 반환합니다. */
+	virtual AActor* GetFacingTarget() const
+	{
+		return nullptr;
+	}
 
 	/** MOV × GetMoveSpeedMultiplier()를 캐릭터 무브먼트의 최대 걷기 속도에 넣습니다. */
 	void UpdateMoveSpeed();
@@ -186,19 +199,13 @@ private:
 	/** SetTimeCompensation으로 정한 시간 정지 보정 */
 	float TimeCompensation = 1.f;
 
-	/** 무기 판정 캡슐 축의 양 끝(월드 위치) */
-	bool GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const;
-
-	/** 무기 판정 캡슐을 지난 위치에서 지금 위치까지 잘게 나눠 스윕합니다. 빠르게 휘둘러도 건너뛰지 않습니다. */
-	void SweepWeapon();
-
 	FTransform ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds);
 
 	/** 회전: 바라보는 방향이 고정되지 않은 동안 GetFacingTarget을 향해 돕니다. */
 	void UpdateFacing(float DeltaSeconds);
 
-	/** 재생 중인 몽타주의 판정 구간보다 회전 정지 시간만큼 앞선 때부터 그 판정 구간이 끝날 때까지 참입니다. */
-	bool IsInRotationStopWindow() const;
+	TWeakObjectPtr<UObject> MotionConstraintOwner;
+	FAgCharacterMotionConstraints MotionConstraints;
 
 	UPROPERTY(VisibleAnywhere, Category = "Abilities")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -210,28 +217,9 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<USceneComponent> WeaponComponent;
 
-	/**
-	 * 무기 판정 캡슐. 블루프린트에서 무기 컴포넌트의 자식으로 두고 날 전체를 덮게 맞춥니다. 공격은 캡슐 양 끝 중심을
-	 * 잇는 선분을 캡슐 반지름의 구로 스윕하며, 캡슐 자체의 충돌은 쓰지 않습니다.
-	 */
-	UPROPERTY(Transient)
-	TObjectPtr<UCapsuleComponent> WeaponCollisionComponent;
-
 	/** 공격 중 이동 (Motion Warping) */
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
-
-	TArray<FAgPlayerAttackHit> ActiveAttackHits;
-	int32 OpenWindowHit = INDEX_NONE;
-	/** 열린 판정 구간이 이미 닿은 캐릭터 (판정 구간 하나에 대상마다 한 번) */
-	TArray<TWeakObjectPtr<AActor>> WindowTouchedActors;
-	FVector LastEdgeStart = FVector::ZeroVector;
-	FVector LastEdgeEnd = FVector::ZeroVector;
-
-	TWeakObjectPtr<AActor> StopTarget;
-	float StopDistance = 0.f;
-
-	TWeakObjectPtr<AActor> FacingTarget;
 
 	FActiveGameplayEffectHandle PPRegenDelay;
 

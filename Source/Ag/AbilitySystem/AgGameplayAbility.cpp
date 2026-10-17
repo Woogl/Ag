@@ -1,113 +1,255 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "AbilitySystem/AgGameplayAbility.h"
-
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgEffect_Cooldown.h"
+#include "AbilitySystem/AgEffect_Cost.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
-#include "AbilitySystemComponent.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
+#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
+#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "Animation/AgRootMotionModifier_MotionWarping.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/AgAnimNotifyState_AbilityTask.h"
+#include "Animation/AgAnimNotify_SpawnProjectile.h"
+#include "AnimNotifyState_MotionWarping.h"
+#include "AbilitySystemGlobals.h"
 #include "Character/AgCharacterBase.h"
+#include "Character/AgPlayerCharacter.h"
+#include "Character/AgBossCharacter.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_LockOn.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Ag.h"
 
 namespace
 {
-	/**
-	 * 스펙의 쿨다운 출처(그 스펙의 어빌리티 인스턴스)와 쿨다운 시간(어빌리티 항목의 Cooldown)을 찾습니다. 쿨다운이 없는
-	 * 어빌리티(시간 0)나 항목이 없으면 null입니다. 클래스 기본 객체에서도 불리므로 ActorInfo와 스펙 핸들로만 찾습니다.
-	 */
-	const UGameplayAbility* FindAbilityCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& OutDuration)
+	FGameplayAttribute ResourceAttribute(EAgResource Resource)
 	{
-		OutDuration = 0.f;
-		const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
-		const FAgAbilityData* Ability = Character ? Character->FindAbility(Handle) : nullptr;
-		const FGameplayAbilitySpec* Spec = Ability && Ability->Cooldown > 0.f ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
-		if (!Spec)
+		switch (Resource)
 		{
-			return nullptr;
+		case EAgResource::SP:
+			return UAgAttributeSet::GetSPAttribute();
+		case EAgResource::MP:
+			return UAgAttributeSet::GetMPAttribute();
+		case EAgResource::UP:
+			return UAgAttributeSet::GetUPAttribute();
 		}
-		OutDuration = Ability->Cooldown;
-		return Spec->GetPrimaryInstance();
+		return {};
 	}
+
 }
 
 UAgGameplayAbility::UAgGameplayAbility()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalOnly;
-}
-
-void UAgGameplayAbility::SetupPlayerAction(const FGameplayTag& AbilityTag, bool bIgnoresMovement)
-{
-	SetAssetTags(FGameplayTagContainer(AbilityTag));
-	if (bIgnoresMovement)
-	{
-		ActivationOwnedTags.AddTag(AgGameplayTags::State_Acting);
-	}
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Sprint);
-
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Busy);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_HitReaction);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executing);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executed);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);
-}
-
-void UAgGameplayAbility::SetupHitReaction(const FGameplayTag& AbilityTag, const FGameplayTag& TriggerEvent)
-{
-	SetAssetTags(FGameplayTagContainer(AbilityTag));
 	bRetriggerInstancedAbility = true;
-
-	FAbilityTriggerData& Trigger = AbilityTriggers.AddDefaulted_GetRef();
-	Trigger.TriggerTag = TriggerEvent;
-	Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
-
-	ActivationOwnedTags.AddTag(AgGameplayTags::State_HitReaction);
-	// 같은 우선순위(상태 우선순위 4)는 새 반응이 앞 반응을 대신합니다. 행동, 달리기, 보스 패턴은 멈춥니다.
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Action);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Sprint);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Boss_Pattern);
-	CancelAbilitiesWithTag.AddTag(AgGameplayTags::Ability_Reaction_HitReaction);
-
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executing);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executed);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);
-}
-
-void UAgGameplayAbility::SetupBossPattern()
-{
-	SetAssetTags(FGameplayTagContainer(AgGameplayTags::Ability_Boss_Pattern));
-
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_HitReaction);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Groggy);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Execution_Executed);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_Dead);
-	ActivationBlockedTags.AddTag(AgGameplayTags::State_NonCombat);
+	CostGameplayEffectClass = UAgEffect_Cost::StaticClass();
 }
 
 AAgCharacterBase* UAgGameplayAbility::GetAgCharacter() const
 {
-	return CastChecked<AAgCharacterBase>(GetAvatarActorFromActorInfo());
+	return Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
 }
 
-const UAgCharacterData* UAgGameplayAbility::GetCharacterDataBase() const
+const FAgAbilityData* UAgGameplayAbility::FindDefinition(
+    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
 {
-	return GetAgCharacter()->GetCharacterData();
+	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
+	return Character ? Character->FindAbility(Handle) : nullptr;
 }
 
-const TInstancedStruct<FAgAbilityParams>* UAgGameplayAbility::FindAbilityParams() const
+void UAgGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
-	const FAgAbilityData* Ability = Character ? Character->FindAbility(GetCurrentAbilitySpecHandle()) : nullptr;
-	return Ability ? &Ability->Params : nullptr;
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		if (const FAgAbilityData* Data = FindDefinition(Spec.Handle, ActorInfo))
+		{
+			GrantedDefinition = *Data;
+			ActivationRequiredTags = Data->Activation.RequiredTags;
+			ActivationBlockedTags = Data->Activation.BlockedTags;
+			ActivationOwnedTags = Data->Activation.OwnedTags;
+			BlockAbilitiesWithTag = Data->Activation.BlockTags;
+			CancelAbilitiesWithTag = Data->Activation.CancelTags;
+		}
+	}
+	Super::OnGiveAbility(ActorInfo, Spec);
 }
 
-FName UAgGameplayAbility::GetAbilityId() const
+void UAgGameplayAbility::OnRemoveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
-	return GetAgCharacter()->FindAbilityId(GetCurrentAbilitySpecHandle());
+	if (AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr)
+	{
+		Character->ForgetAbility(Spec.Handle);
+	}
+	Super::OnRemoveAbility(ActorInfo, Spec);
+	GrantedDefinition = {};
+}
+
+bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+    const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* RelevantTags) const
+{
+	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
+	const FGameplayAbilitySpec* Spec = ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
+	                                       ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle)
+	                                       : nullptr;
+	const UAgGameplayAbility* Instance = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
+	if (!Data || !Instance || !Instance->GrantedDefinition.HasSameGrantSettings(*Data))
+	{
+		UE_LOG(LogAg, Warning,
+		    TEXT("Ability %s: grant settings changed or unavailable; recreate character or regrant spec before activation"),
+		    Data ? *Data->Id.ToString() : TEXT("None"));
+		return false;
+	}
+	if (Spec->IsActive() && !Data->Activation.bAllowRetrigger)
+	{
+		return false;
+	}
+	return CheckStartConditions(*Data, ActorInfo) && Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, RelevantTags);
+}
+
+bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags,
+    const FGameplayTagContainer* TargetTags, FGameplayTagContainer* RelevantTags) const
+{
+	return !ASC.AreAbilityTagsBlocked(GrantedDefinition.Tags) &&
+	       Super::DoesAbilitySatisfyTagRequirements(ASC, SourceTags, TargetTags, RelevantTags);
+}
+
+AAgCharacterBase* UAgGameplayAbility::GetLockOnTarget() const
+{
+	return IsActive() && LockOnTask ? LockOnTask->GetTarget() : nullptr;
+}
+
+bool UAgGameplayAbility::CheckStartConditions(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
+{
+	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
+	if (!Character)
+	{
+		return false;
+	}
+	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(Character);
+	if (Data.Id == TEXT("Jump"))
+	{
+		return Player && Player->CanJump();
+	}
+	if (Data.Id == TEXT("JumpAttack"))
+	{
+		return Character->GetCharacterMovement()->IsFalling();
+	}
+	if (Data.Id == TEXT("Guard"))
+	{
+		return Player && Player->IsGuardHeld();
+	}
+	if (Data.Id == TEXT("Execution"))
+	{
+		return FindExecutionTarget(Player) != nullptr;
+	}
+	if (Data.Id == TEXT("LeapSlam"))
+	{
+		const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Character);
+		return Boss && Boss->GetTarget();
+	}
+	if (Data.Id == TEXT("LockOn"))
+	{
+		return Player && UAgAbilityTask_LockOn::FindTarget(*Player);
+	}
+	return true;
+}
+
+bool UAgGameplayAbility::CheckResources(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
+{
+	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
+	if (!ASC)
+	{
+		return false;
+	}
+	if (Data.bHasCost && ASC->GetNumericAttribute(ResourceAttribute(Data.Cost.Resource)) < Data.Cost.Amount)
+	{
+		return false;
+	}
+	if (Data.Tasks.bHasDrainResource)
+	{
+		const FAgDrainResourceParams& Drain = Data.Tasks.DrainResource;
+		const float Remaining = ASC->GetNumericAttribute(ResourceAttribute(Drain.Resource)) -
+		                        (Data.bHasCost && Data.Cost.Resource == Drain.Resource ? Data.Cost.Amount : 0.f);
+		if (Remaining <= 0.f)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool UAgGameplayAbility::CheckCost(
+    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* RelevantTags) const
+{
+	// 활성 스펙의 재발동 사전 검사도 여기로 들어오므로 새 요청의 현재 정의를 확인합니다.
+	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
+	if (Data && CheckResources(*Data, ActorInfo))
+	{
+		return true;
+	}
+	const FGameplayTag& CostTag = UAbilitySystemGlobals::Get().ActivateFailCostTag;
+	if (RelevantTags && CostTag.IsValid())
+	{
+		RelevantTags->AddTag(CostTag);
+	}
+	return false;
+}
+
+FAgResourceCostParams UAgGameplayAbility::GetCost() const
+{
+	const FAgAbilityData* Definition = IsActive() ? &ExecutionDefinition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
+	return Definition && Definition->bHasCost ? Definition->Cost : FAgResourceCostParams();
+}
+
+void UAgGameplayAbility::ApplyCost(
+    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	if (ExecutionDefinition.bHasCost && ExecutionDefinition.Cost.Amount > 0.f)
+	{
+		const FGameplayEffectSpecHandle Spec =
+		    MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CostGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
+		if (Spec.IsValid())
+		{
+			UAgEffect_Cost::SetCost(*Spec.Data, ExecutionDefinition.Cost);
+			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
+		}
+	}
+}
+
+bool UAgGameplayAbility::CheckCooldown(
+    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* RelevantTags) const
+{
+	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+	return Spec && !UAgEffect_Cooldown::IsActive(ActorInfo->AbilitySystemComponent.Get(), Spec->GetPrimaryInstance());
+}
+
+void UAgGameplayAbility::ApplyCooldown(
+    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	if (ExecutionDefinition.Cooldown > 0.f)
+	{
+		UAgEffect_Cooldown::Apply(ActorInfo->AbilitySystemComponent.Get(), this, ExecutionDefinition.Cooldown);
+	}
+}
+
+void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(
+    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& Remaining, float& Duration) const
+{
+	Remaining = Duration = 0.f;
+	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+	if (Spec)
+	{
+		UAgEffect_Cooldown::GetTimeRemaining(ActorInfo->AbilitySystemComponent.Get(), Spec->GetPrimaryInstance(), Remaining, Duration);
+	}
 }
 
 void UAgGameplayAbility::BeginBusy()
@@ -121,58 +263,261 @@ void UAgGameplayAbility::BeginBusy()
 
 void UAgGameplayAbility::EndBusy()
 {
-	if (BusyTag)
-	{
-		BusyTag->EndTask();
-		BusyTag = nullptr;
-	}
-}
-
-void UAgGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	// 행동 중 태그는 그 태스크가 어빌리티와 함께 끝나며 뗍니다. 다음 실행이 새 태스크를 만들도록 가리키던 것만 지웁니다.
+	UAgAbilityTask_HoldTag* Task = BusyTag.Get();
 	BusyTag = nullptr;
+	if (Task)
+	{
+		Task->EndTask();
+	}
+}
 
+void UAgGameplayAbility::Finish(bool bCancelled)
+{
+	if (IsActive() && !bEnding)
+	{
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, bCancelled);
+	}
+}
+
+bool UAgGameplayAbility::PlayMotion(FName Id, bool bPlayerAction, float Rate, FName Section, float TranslationScale, float StartTime)
+{
+	UAnimMontage* Montage = ExecutionMontages.FindRef(Id);
+	if (!Montage || !IsActive())
+	{
+		Finish(true);
+		return false;
+	}
+	ClearMotion(false);
+	if (!IsActive())
+	{
+		return false;
+	}
+	Motion.Montage = Montage;
+	Motion.MontageId = Id;
+	Motion.bBlocksMovement = bPlayerAction;
+	if (bPlayerAction)
+	{
+		BeginBusy();
+	}
+	if (!IsActive() || bEnding)
+	{
+		return false;
+	}
+	MotionTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+	    this, NAME_None, Montage, Rate, Section, true, TranslationScale, StartTime);
+	MotionTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMotionCompleted);
+	MotionTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMotionCancelled);
+	MotionTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMotionCancelled);
+	MotionTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMotionBlendOut);
+	UAbilityTask_PlayMontageAndWait* StartedTask = MotionTask;
+	StartedTask->ReadyForActivation();
+	if (!IsActive() || MotionTask != StartedTask || GetAbilitySystemComponentFromActorInfo()->GetAnimatingAbility() != this)
+	{
+		return false;
+	}
+	UAnimInstance* Anim = GetActorInfo().GetAnimInstance();
+	FAnimMontageInstance* Instance = Anim ? Anim->GetActiveInstanceForMontage(Montage) : nullptr;
+	if (!Instance)
+	{
+		Finish(true);
+		return false;
+	}
+	const int32 InstanceId = Instance->GetInstanceID();
+	BindMontageInstance(*Anim, *Instance);
+	InitializeNotifyStates(*Anim, *Instance);
+	if (OwnsMontage(InstanceId) && !Anim->GetMontageInstanceForID(InstanceId))
+	{
+		Finish(true);
+	}
+	return MotionTask == StartedTask && OwnsMontage(InstanceId);
+}
+
+void UAgGameplayAbility::BindMontageInstance(UAnimInstance& Anim, const FAnimMontageInstance& Instance)
+{
+	if (IsActive() && Motion.Montage == Instance.Montage)
+	{
+		Motion.InstanceId = Instance.GetInstanceID();
+		Motion.AnimInstance = &Anim;
+		Anim.OnPlayMontageNotifyBegin.AddDynamic(this, &ThisClass::HandleMontageNotifyBegin);
+		Anim.OnPlayMontageNotifyEnd.AddDynamic(this, &ThisClass::HandleMontageNotifyEnd);
+		Motion.bControlsFacing = Instance.Montage->Notifies.ContainsByPredicate(
+		    [](const FAnimNotifyEvent& Notify)
+		    {
+			    const UAgAnimNotifyState_AbilityTask* Task = Cast<UAgAnimNotifyState_AbilityTask>(Notify.NotifyStateClass);
+			    const UAnimNotifyState_MotionWarping* Warp = Cast<UAnimNotifyState_MotionWarping>(Notify.NotifyStateClass);
+			    return (Task && Task->Task == TEXT("Attack")) || Cast<UAgAnimNotify_SpawnProjectile>(Notify.Notify) ||
+			           (Warp && Cast<UAgRootMotionModifier_MotionWarping>(Warp->RootMotionModifier));
+		    });
+		if (Motion.bControlsFacing)
+		{
+			Motion.Target = GetAgCharacter()->FindAttackTarget();
+		}
+		UpdateMotionConstraints();
+	}
+}
+
+void UAgGameplayAbility::InitializeNotifyStates(UAnimInstance& Anim, FAnimMontageInstance& Instance)
+{
+	const int32 InstanceId = Instance.GetInstanceID();
+	const float Position = Instance.GetPosition();
+	UAnimMontage* Montage = Instance.Montage;
+	// 이 콜백에서 재생 자체가 폐기될 수 있으므로 이후에는 원래 Instance 참조를 읽지 않습니다.
+	Instance.HandleEvents(Position, Position, nullptr);
+	for (int32 Index : Montage->BranchingPointStateNotifyIndices)
+	{
+		if (!OwnsMontage(InstanceId) || !Anim.GetMontageInstanceForID(InstanceId))
+		{
+			break;
+		}
+		const FAnimNotifyEvent& Event = Montage->Notifies[Index];
+		if (Event.GetTime() == Position)
+		{
+			if (const UAgAnimNotifyState_AbilityTask* Notify = Cast<UAgAnimNotifyState_AbilityTask>(Event.NotifyStateClass))
+			{
+				// OffsetAfter로 첫 Advance까지 미뤄지는 시작 경계만 보완합니다. 이후 Begin은 실행 키로 중복 제거합니다.
+				BeginNotifyTask(InstanceId, Index, Notify->Task, Notify->ParamsId);
+			}
+		}
+	}
+}
+
+void UAgGameplayAbility::UpdateMotionConstraints()
+{
+	if (!IsActive() || bEnding || Motion.InstanceId == INDEX_NONE)
+	{
+		return;
+	}
+	FAgCharacterMotionConstraints Constraints;
+	Constraints.bControlsFacing = Motion.bControlsFacing;
+	Constraints.bTranslationFromVelocity = bRootMotionTranslationFromVelocity;
+	if (Motion.bControlsFacing && GetAbilityId() != TEXT("Execution"))
+	{
+		Constraints.StopTarget = Motion.Target.Get();
+		Constraints.StopDistance = WarpStopDistance;
+	}
+	GetAgCharacter()->SetMotionConstraints(*this, Constraints);
+}
+
+void UAgGameplayAbility::EndWindows()
+{
+	TArray<FAgAbilityWindowExecution> Ending = MoveTemp(Windows);
+	Windows.Reset();
+	for (FAgAbilityWindowExecution& Window : Ending)
+	{
+		if (Window.Task && !Window.Task->IsFinished())
+		{
+			Window.Task->EndTask();
+		}
+	}
+}
+
+void UAgGameplayAbility::ClearMotion(bool bStop)
+{
+	const FAgAbilityMontageExecution Previous = Motion;
+	if (UAnimInstance* Anim = Previous.AnimInstance.Get())
+	{
+		Anim->OnPlayMontageNotifyBegin.RemoveDynamic(this, &ThisClass::HandleMontageNotifyBegin);
+		Anim->OnPlayMontageNotifyEnd.RemoveDynamic(this, &ThisClass::HandleMontageNotifyEnd);
+	}
+	Motion = {};
+	if (AAgCharacterBase* Character = GetAgCharacter())
+	{
+		Character->ClearMotionConstraints(*this);
+	}
+	UAbilityTask_PlayMontageAndWait* PreviousTask = MotionTask.Get();
+	MotionTask = nullptr;
+	if (PreviousTask)
+	{
+		PreviousTask->OnCompleted.RemoveAll(this);
+		PreviousTask->OnInterrupted.RemoveAll(this);
+		PreviousTask->OnCancelled.RemoveAll(this);
+		PreviousTask->OnBlendOut.RemoveAll(this);
+		PreviousTask->EndTask();
+	}
+	EndWindows();
+	TArray<TObjectPtr<UAgRootMotionModifier_MotionWarping>> PreviousWarps = MoveTemp(Warps);
+	Warps.Reset();
+	for (UAgRootMotionModifier_MotionWarping* Warp : PreviousWarps)
+	{
+		if (Warp)
+		{
+			Warp->SetState(ERootMotionModifierState::MarkedForRemoval);
+		}
+	}
+	if (UAnimInstance* Anim = GetActorInfo().GetAnimInstance(); Anim && Previous.Montage)
+	{
+		if (const FAnimMontageInstance* Instance = Anim->GetMontageInstanceForID(Previous.InstanceId); Instance && Instance->IsActive())
+		{
+			if (bHoldingDash)
+			{
+				Anim->Montage_Resume(Previous.Montage);
+			}
+			if (bStop)
+			{
+				Anim->Montage_StopWithBlendOut(Previous.Montage->GetBlendOutArgs(), Previous.Montage);
+			}
+		}
+	}
+	bHoldingDash = false;
+	DashTask = nullptr;
+}
+
+void UAgGameplayAbility::Listen(FGameplayTag Event)
+{
+	UAbilityTask_WaitGameplayEvent* Task = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, Event, nullptr, false, true);
+	Task->EventReceived.AddDynamic(this, &ThisClass::HandleEvent);
+	Task->ReadyForActivation();
+}
+
+void UAgGameplayAbility::WaitForLanding()
+{
+	UAbilityTask_WaitMovementModeChange* Task = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
+	Task->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
+	Task->ReadyForActivation();
+}
+
+void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+    FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	if (bEnding || !IsActive())
+	{
+		return;
+	}
+	if (ScopeLockCount > 0)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
+	bEnding = true;
+	CloseParryWindow();
+	if (DrainEffect.IsValid())
+	{
+		GetAbilitySystemComponentFromActorInfo()->RemoveActiveGameplayEffect(DrainEffect);
+		DrainEffect.Invalidate();
+	}
+	ClearMotion(true);
+	EndBusy();
+	if (AAgCharacterBase* Character = GetAgCharacter())
+	{
+		if (GetAbilityId() == TEXT("Jump"))
+		{
+			Character->StopJumping();
+		}
+		if (GetAbilityId() == TEXT("Groggy"))
+		{
+			CastChecked<AAgBossCharacter>(Character)->SetGroggyTimerRunning(false);
+		}
+	}
+	GuardingTag = nullptr;
+	DownedTag = nullptr;
+	UltimateTimeStop = nullptr;
+	LockOnTask = nullptr;
+	GroggyWait = nullptr;
+	ExecutionMontages.Reset();
+	ExecutionProjectiles.Reset();
+	ComboMontageIds.Reset();
+	ExecutionTarget.Reset();
+	ExecutionDefinition = {};
+	bRootMotionTranslationFromVelocity = false;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-}
-
-bool UAgGameplayAbility::CheckCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
-{
-	float Duration = 0.f;
-	if (const UGameplayAbility* Source = FindAbilityCooldown(Handle, ActorInfo, Duration))
-	{
-		return !UAgEffect_Cooldown::IsActive(ActorInfo->AbilitySystemComponent.Get(), Source);
-	}
-	return Super::CheckCooldown(Handle, ActorInfo, OptionalRelevantTags);
-}
-
-void UAgGameplayAbility::ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const
-{
-	float Duration = 0.f;
-	if (const UGameplayAbility* Source = FindAbilityCooldown(Handle, ActorInfo, Duration))
-	{
-		UAgEffect_Cooldown::Apply(ActorInfo->AbilitySystemComponent.Get(), Source, Duration);
-	}
-}
-
-void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const
-{
-	TimeRemaining = 0.f;
-	CooldownDuration = 0.f;
-	float Duration = 0.f;
-	if (const UGameplayAbility* Source = FindAbilityCooldown(Handle, ActorInfo, Duration))
-	{
-		UAgEffect_Cooldown::GetTimeRemaining(ActorInfo->AbilitySystemComponent.Get(), Source, TimeRemaining, CooldownDuration);
-	}
-}
-
-bool UAgGameplayAbility::CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
-{
-	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
-	return Super::CheckCost(Handle, ActorInfo, OptionalRelevantTags) && Character && CanPayCost(*Character->GetAttributeSet());
-}
-
-FAgAbilityCost UAgGameplayAbility::GetCost() const
-{
-	return FAgAbilityCost();
 }

@@ -1,74 +1,130 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
-
+#include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystemComponent.h"
+#include "Abilities/GameplayAbility.h"
+#include "Abilities/GameplayAbilityTargetTypes.h"
+
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Character/AgCharacterBase.h"
 #include "Combat/AgProjectile.h"
 #include "Components/CapsuleComponent.h"
-#include "Core/AgGameplayTags.h"
-#include "Engine/World.h"
-#include "GameFramework/Character.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Data/AgCharacterData.h"
+#include "Ag.h"
 
-UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectiles(UGameplayAbility* OwningAbility, TSubclassOf<AAgProjectile> InClass, TConstArrayView<FAgPlayerAttackHit> InHits, const FAgProjectileParams& InParams)
+UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId,
+    const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName)
 {
-	UAgAbilityTask_SpawnProjectile* Task = NewAbilityTask<UAgAbilityTask_SpawnProjectile>(OwningAbility);
-	Task->ProjectileClass = InClass;
-	Task->Hits = InHits;
-	Task->Params = InParams;
+	UAgAbilityTask_SpawnProjectile* Task = NewAbilityTask<UAgAbilityTask_SpawnProjectile>(Owner);
+	Task->SourceInstanceId = MontageInstanceId;
+	Task->ProjectileClass = Projectile.ProjectileClass;
+	Task->FlightParams = Projectile.Params;
+	Task->Hit = Attack.MakeHit();
+	Task->SpawnOrigin = Origin;
+	Task->SpawnSocket = SocketName;
 	return Task;
 }
 
-UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectiles(UGameplayAbility* OwningAbility, TSubclassOf<AAgProjectile> InClass, TConstArrayView<FAgAttackHit> InHits, const FAgProjectileParams& InParams)
+bool UAgAbilityTask_SpawnProjectile::IsSourceActive() const
 {
-	UAgAbilityTask_SpawnProjectile* Task = NewAbilityTask<UAgAbilityTask_SpawnProjectile>(OwningAbility);
-	Task->ProjectileClass = InClass;
-	Task->Hits.Reserve(InHits.Num());
-	for (const FAgAttackHit& Hit : InHits)
+	if (!Ability || !Ability->IsActive() || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->GetAnimatingAbility() != Ability)
 	{
-		Task->Hits.Emplace(Hit);
+		return false;
 	}
-	Task->Params = InParams;
-	return Task;
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr;
+	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(SourceInstanceId) : nullptr;
+	return Instance && Instance->IsActive() && Anim->GetActiveInstanceForMontage(Instance->Montage) == Instance &&
+	       AbilitySystemComponent->GetCurrentMontage() == Instance->Montage;
 }
 
 void UAgAbilityTask_SpawnProjectile::Activate()
 {
-	Super::Activate();
-
-	if (UAbilitySystemComponent* ASC = AbilitySystemComponent.Get())
+	if (!IsSourceActive())
 	{
-		ReleaseHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_ProjectileRelease).AddUObject(this, &ThisClass::HandleRelease);
+		EndTask();
+		return;
 	}
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
+	if (!ProjectileClass)
+	{
+		EndTask();
+		return;
+	}
+	const UAnimMontage* Montage = AbilitySystemComponent->GetCurrentMontage();
+	FTransform Transform;
+	if (SpawnOrigin == EAgProjectileOrigin::CharacterFeetForward)
+	{
+		Direction = Character->GetActorForwardVector().GetSafeNormal2D();
+		const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
+		Transform = FTransform(Direction.Rotation(), Character->GetActorLocation() + Direction * Capsule->GetScaledCapsuleRadius() -
+		                                                 FVector(0, 0, Capsule->GetScaledCapsuleHalfHeight()));
+	}
+	else if (SpawnOrigin == EAgProjectileOrigin::MeshSocket && !SpawnSocket.IsNone() && Character->GetMesh()->DoesSocketExist(SpawnSocket))
+	{
+		Transform = Character->GetMesh()->GetSocketTransform(SpawnSocket);
+		Direction = Transform.GetRotation().GetForwardVector();
+	}
+	else
+	{
+		UE_LOG(LogAg, Error, TEXT("%s projectile %s has invalid socket/origin %s"), *GetNameSafe(Montage),
+		    *GetNameSafe(ProjectileClass.Get()), *SpawnSocket.ToString());
+		EndTask();
+		return;
+	}
+	FGameplayAbilityTargetData_LocationInfo* Target = new FGameplayAbilityTargetData_LocationInfo();
+	Target->TargetLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
+	Target->TargetLocation.LiteralTransform = Transform;
+	CachedTargetDataHandle.Add(Target);
+	Success.AddDynamic(this, &ThisClass::HandleSpawned);
+	AActor* Spawned = nullptr;
+	if (!BeginSpawningActor(Ability, CachedTargetDataHandle, ProjectileClass, Spawned))
+	{
+		EndTask();
+		return;
+	}
+	PendingProjectile = Cast<AAgProjectile>(Spawned);
+	if (!IsValid(PendingProjectile) || !IsSourceActive() || IsFinished())
+	{
+		if (IsValid(Spawned))
+		{
+			Spawned->Destroy();
+		}
+		PendingProjectile = nullptr;
+		EndTask();
+		return;
+	}
+	PendingProjectile->SetOwner(Character);
+	PendingProjectile->SetInstigator(Character);
+	FinishSpawningActor(Ability, CachedTargetDataHandle, PendingProjectile);
 }
 
-void UAgAbilityTask_SpawnProjectile::HandleRelease(const FGameplayEventData* Payload)
+void UAgAbilityTask_SpawnProjectile::HandleSpawned(AActor* Actor)
 {
-	const int32 Index = NumReleased++;
-	ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	if (Character && ProjectileClass && Hits.IsValidIndex(Index))
+	if (!IsValid(Actor) || Actor != PendingProjectile || IsFinished() || !IsSourceActive())
 	{
-		// 캐릭터 앞의 바닥에서 정면으로 쏩니다.
-		const FVector Direction = Character->GetActorForwardVector().GetSafeNormal2D();
-		const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
-		const FVector Location = Character->GetActorLocation() + Direction * Capsule->GetScaledCapsuleRadius() - FVector(0.f, 0.f, Capsule->GetScaledCapsuleHalfHeight());
-
-		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Owner = Character;
-		SpawnParameters.Instigator = Character;
-		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		if (AAgProjectile* Projectile = GetWorld()->SpawnActor<AAgProjectile>(ProjectileClass, Location, Direction.Rotation(), SpawnParameters))
-		{
-			Projectile->Launch(Hits[Index], Direction, Params);
-		}
+		return;
 	}
+	// 바닥 기준 검기만 판정 상자 반높이만큼 올립니다. 소켓 발사는 소켓 변환을 보존합니다.
+	if (SpawnOrigin == EAgProjectileOrigin::CharacterFeetForward)
+	{
+		PendingProjectile->AddActorWorldOffset(FVector(0.f, 0.f, PendingProjectile->GetCollisionHalfHeight()));
+	}
+	const FGameplayEffectSpecHandle DamageSpec = Ability->MakeOutgoingGameplayEffectSpec(UAgEffect_Damage::StaticClass());
+	UAgEffect_Damage::SetAttack(*DamageSpec.Data, Hit, PendingProjectile->GetActorLocation());
+	PendingProjectile->Launch(DamageSpec, Direction, FlightParams);
+	PendingProjectile = nullptr;
 }
 
 void UAgAbilityTask_SpawnProjectile::OnDestroy(bool bInOwnerFinished)
 {
-	if (UAbilitySystemComponent* ASC = AbilitySystemComponent.Get(); ASC && ReleaseHandle.IsValid())
+	if (IsValid(PendingProjectile))
 	{
-		ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_ProjectileRelease).Remove(ReleaseHandle);
+		PendingProjectile->Destroy();
 	}
-
+	PendingProjectile = nullptr;
 	Super::OnDestroy(bInOwnerFinished);
 }

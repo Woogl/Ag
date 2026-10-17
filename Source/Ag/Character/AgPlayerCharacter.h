@@ -7,7 +7,6 @@
 #include "GameplayTagContainer.h"
 #include "AgPlayerCharacter.generated.h"
 
-class UAgLockOnComponent;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
@@ -25,7 +24,10 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
-	virtual FGenericTeamId GetGenericTeamId() const override { return FGenericTeamId(0); }
+	virtual FGenericTeamId GetGenericTeamId() const override
+	{
+		return FGenericTeamId(0);
+	}
 
 	/**
 	 * 대상 찾기(구현 계획서 '대상 찾기'): TP_Enemy가 모은 후보 가운데 적대 관계이고 살아 있고, 캡슐 중심 사이 수평 거리가
@@ -36,24 +38,40 @@ public:
 	/** 대상 찾기: TP_Enemy가 모은 후보 가운데 적대 관계이고 살아 있고, 캡슐 중심 사이 수평 거리가 Range 안인 적 모두입니다. */
 	TArray<AAgCharacterBase*> FindEnemies(float Range) const;
 
-	/** 공격 중 이동의 대상은 거리와 관계없이 가장 가까운 적입니다. 타겟팅 범위는 공격 중 이동 태스크가 공격마다 따집니다. */
+	/** 공격 중 이동의 대상은 거리와 관계없이 가장 가까운 적입니다. 타겟팅 범위는 워핑 Modifier가 공격마다 따집니다. */
 	virtual AAgCharacterBase* FindAttackTarget() const override;
 
 	/** 범위 안에 공격 대상이 없는 타는 락온 중일 때만 락온 대상 쪽으로 돕니다. */
 	virtual AActor* GetFallbackFacingTarget() const override;
 
-	UAgLockOnComponent* GetLockOn() const { return LockOn; }
+	/** 실행 중인 락온 Task가 보관한 대상입니다. */
+	AAgCharacterBase* GetLockOnTarget() const;
+
+	/** 락온·가드·달리기·피격 상태에 맞춰 이동 회전 방식을 갱신합니다. */
+	void UpdateRotationMode();
 
 	/** IMC_Ag: 전투 HUD의 조작 안내가 이 매핑을 표시합니다. */
-	const UInputMappingContext* GetInputMapping() const { return InputMapping; }
+	const UInputMappingContext* GetInputMapping() const
+	{
+		return InputMapping;
+	}
 
 	/** 카메라의 스프링 암. 그 위치가 카메라의 회전 중심입니다. */
-	USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	USpringArmComponent* GetCameraBoom() const
+	{
+		return CameraBoom;
+	}
 
 	/** 이동 키가 가리키는 방향(카메라 기준). 이동 입력이 없으면 0입니다. */
-	FVector GetMoveInputDirection() const { return MoveInputDirection; }
+	FVector GetMoveInputDirection() const
+	{
+		return MoveInputDirection;
+	}
 
-	bool IsGuardHeld() const { return bGuardHeld; }
+	bool IsGuardHeld() const
+	{
+		return bGuardHeld;
+	}
 
 protected:
 	virtual void BeginPlay() override;
@@ -99,12 +117,6 @@ private:
 	/** 달리기: 회피 후딜에 Shift와 이동 입력이 있으면 시작하고, Shift를 떼거나 이동 입력이 없거나 SP가 0이 되면 끝냅니다. */
 	void UpdateSprint();
 
-	/**
-	 * 평소에는 이동 방향을, 락온 중이나 가드 중에는 카메라(락온 대상) 쪽을 바라봅니다. 달릴 때는 락온 중에도 이동
-	 * 방향을 바라보고, 피격 반응 중에는 돌지 않습니다.
-	 */
-	void UpdateRotationMode();
-
 	/** 가드, 달리기, 피격 반응 태그가 바뀌면 바라보는 방향과 이동 속도를 다시 정합니다. */
 	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
@@ -123,9 +135,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
-
-	UPROPERTY(VisibleAnywhere, Category = "Lock-On")
-	TObjectPtr<UAgLockOnComponent> LockOn;
 
 	/** 플레이어 사양 '시간 정지'의 화면 흑백. 흑백 설정은 BP_AgPlayer에 두고, 코드는 시간 정지 동안 가중치만 1로 올립니다. */
 	UPROPERTY(VisibleAnywhere, Category = "Time Stop")

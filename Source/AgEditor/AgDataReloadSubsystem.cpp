@@ -46,7 +46,7 @@ void UAgDataReloadSubsystem::HandleFilesChanged(const TArray<FFileChangeData>& C
 	TArray<FString> FileNames;
 	for (const FFileChangeData& Change : Changes)
 	{
-		if (Change.Action != FFileChangeData::FCA_Removed && FPaths::GetExtension(Change.Filename).Equals(TEXT("json"), ESearchCase::IgnoreCase))
+		if (FPaths::GetExtension(Change.Filename).Equals(TEXT("json"), ESearchCase::IgnoreCase))
 		{
 			FileNames.AddUnique(FPaths::GetCleanFilename(Change.Filename));
 		}

@@ -9,30 +9,35 @@
 class AAgCharacterBase;
 class UAnimSequenceBase;
 class UBlendSpace;
+struct FAnimNotifyEventReference;
 
 /**
- * ABP_Ag의 부모로, 플레이어와 보스가 같이 씁니다. 애님 그래프가 읽는 값은 모두 여기서 계산하고, 그래프는 블렌드만
- * 합니다(이동, 가드 이동, 공중, 몽타주 슬롯, 덧입힘 슬롯).
+ * 공통 그래프 ABP_Ag의 부모입니다. 자식 ABP_AgPlayer·ABP_AgBoss에서 모션 기본값을 정합니다. 애님 그래프가 읽는 값은 모두 여기서 계산하고,
+ * 그래프는 블렌드만 합니다(이동, 가드 이동, 공중, 몽타주 슬롯, 덧입힘 슬롯).
  */
 UCLASS()
 class UAgAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
+public:
+	/** 단발 알림의 실제 재생 출처를 이 인스턴스의 엔진 몽타주 델리게이트로 전달합니다. */
+	void BroadcastMontageNotify(UAnimSequenceBase* Animation, const FAnimNotifyEventReference& Reference);
+
 protected:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	/** 캐릭터 데이터에서 가져온 값 */
-	UPROPERTY(BlueprintReadOnly, Category = "Assets")
+	/** 자식 ABP의 기본값에서 정하는 모션 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UBlendSpace> MoveBlendSpace;
 
-	/** 캐릭터 데이터에서 가져온 값. 가드하지 않는 캐릭터는 비어 있습니다. */
-	UPROPERTY(BlueprintReadOnly, Category = "Assets")
+	/** 자식 ABP의 기본값에서 정하는 가드 이동 모션. 가드하지 않는 캐릭터는 비워 둡니다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UBlendSpace> GuardMoveBlendSpace;
 
-	/** 캐릭터 데이터에서 가져온 값 */
-	UPROPERTY(BlueprintReadOnly, Category = "Assets")
+	/** 자식 ABP의 기본값에서 정하는 모션 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
 
 	/** 수평 속도 (cm/s) */

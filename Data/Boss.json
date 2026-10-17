@@ -18,241 +18,720 @@
   "Abilities": [
     {
       "Id": "DoubleStrike",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 0,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "DoubleStrike"
+        },
+        "Attack": {
+          "Hit1": {
             "DamageMultiplier": 1,
             "PoiseMultiplier": 1,
             "HitReaction": "Flinch",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           },
-          {
+          "Hit2": {
             "DamageMultiplier": 1.4,
             "PoiseMultiplier": 1,
             "HitReaction": "KnockBack",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           }
+        },
+        "MotionWarping": {
+          "Tracking": {
+            "TargetingRange": null,
+            "MaxWarpDistance": 110
+          }
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          1,
+          2
         ],
-        "Phases": [1, 2],
         "WeightNear": 40,
         "WeightMid": 0,
         "WeightFar": 0,
-        "MaxApproachDistance": 100
+        "ResponseRange": 0,
+        "ResponseChance": 0
       }
     },
     {
       "Id": "Sweep",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 5,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "Sweep"
+        },
+        "Attack": {
+          "Hit1": {
             "DamageMultiplier": 1.5,
             "PoiseMultiplier": 1,
             "HitReaction": "KnockUp",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           }
+        },
+        "MotionWarping": {
+          "Facing": {
+            "TargetingRange": null,
+            "MaxWarpDistance": 0
+          }
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          1,
+          2
         ],
-        "Phases": [1, 2],
         "WeightNear": 30,
         "WeightMid": 0,
         "WeightFar": 0,
-        "MaxApproachDistance": 0
+        "ResponseRange": 0,
+        "ResponseChance": 0
       }
     },
     {
       "Id": "DashThrust",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 10,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "DashThrust"
+        },
+        "Attack": {
+          "ThrustHit": {
             "DamageMultiplier": 2,
             "PoiseMultiplier": 1,
             "HitReaction": "KnockUp",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           }
+        },
+        "MotionWarping": {
+          "Facing": {
+            "TargetingRange": null,
+            "MaxWarpDistance": 0
+          }
+        },
+        "Dash": {
+          "Speed": 2000,
+          "HomingTurnRate": 90,
+          "Overshoot": 200,
+          "MaxDistance": 2000
+        },
+        "SetCollisionResponseToChannel": {
+          "PassThroughPawn": {
+            "Channel": "Pawn",
+            "Response": "Ignore"
+          }
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          1,
+          2
         ],
-        "Phases": [1, 2],
         "WeightNear": 0,
         "WeightMid": 40,
         "WeightFar": 60,
-        "MaxApproachDistance": 0,
-        "Speed": 2000,
-        "Overshoot": 200,
-        "MaxDistance": 2000
+        "ResponseRange": 0,
+        "ResponseChance": 0
       }
     },
     {
       "Id": "LeapSlam",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 12,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "LeapSlam"
+        },
+        "Attack": {
+          "LandingHit": {
             "DamageMultiplier": 2,
             "PoiseMultiplier": 1,
             "HitReaction": "KnockUp",
-            "bGuardable": false
+            "bGuardable": false,
+            "MPCharge": 0,
+            "UPCharge": 0
           }
+        },
+        "MotionWarping": {
+          "Facing": {
+            "TargetingRange": null,
+            "MaxWarpDistance": 0
+          }
+        },
+        "LaunchToTarget": {
+          "AirTime": 1.35,
+          "TargetOffset": 150,
+          "MaxDistance": 1200
+        },
+        "TargetQuery": {
+          "Landing": {
+            "Range": 350
+          }
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          2
         ],
-        "Phases": [2],
         "WeightNear": 0,
         "WeightMid": 40,
         "WeightFar": 40,
-        "MaxApproachDistance": 0,
-        "AirTime": 1.35,
-        "TargetOffset": 150,
-        "MaxDistance": 1200,
-        "HitRadius": 350
+        "ResponseRange": 0,
+        "ResponseChance": 0
       }
     },
     {
       "Id": "QuintupleStrike",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 8,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "QuintupleStrike"
+        },
+        "Attack": {
+          "Hit1": {
             "DamageMultiplier": 0.7,
             "PoiseMultiplier": 1,
             "HitReaction": "Flinch",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           },
-          {
+          "Hit2": {
             "DamageMultiplier": 0.7,
             "PoiseMultiplier": 1,
             "HitReaction": "Flinch",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           },
-          {
+          "Hit3": {
             "DamageMultiplier": 0.7,
             "PoiseMultiplier": 1,
             "HitReaction": "Flinch",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           },
-          {
+          "Hit4": {
             "DamageMultiplier": 0.7,
             "PoiseMultiplier": 1,
             "HitReaction": "Flinch",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           },
-          {
+          "Hit5": {
             "DamageMultiplier": 2,
             "PoiseMultiplier": 1,
             "HitReaction": "KnockUp",
-            "bGuardable": false
+            "bGuardable": false,
+            "MPCharge": 0,
+            "UPCharge": 0
           }
+        },
+        "MotionWarping": {
+          "Facing": {
+            "TargetingRange": null,
+            "MaxWarpDistance": 0
+          }
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          2
         ],
-        "Phases": [2],
         "WeightNear": 40,
         "WeightMid": 0,
         "WeightFar": 0,
-        "MaxApproachDistance": 0
+        "ResponseRange": 0,
+        "ResponseChance": 0
       }
     },
     {
       "Id": "SwordWave",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 10,
-      "Params": {
-        "Hits": [
-          {
-            "DamageMultiplier": 1.2,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockBack",
-            "bGuardable": true
-          },
-          {
-            "DamageMultiplier": 1.2,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockBack",
-            "bGuardable": true
-          },
-          {
-            "DamageMultiplier": 1.2,
-            "PoiseMultiplier": 1,
-            "HitReaction": "KnockBack",
-            "bGuardable": true
-          }
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
         ],
-        "Phases": [2],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "SwordWave"
+        },
+        "Attack": {
+          "WaveHit": {
+            "DamageMultiplier": 1.2,
+            "PoiseMultiplier": 1,
+            "HitReaction": "KnockBack",
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
+          }
+        },
+        "SpawnProjectile": {
+          "FireWave": {
+            "ProjectileId": "SwordWave",
+            "AttackParamsId": "WaveHit"
+          }
+        },
+        "MotionWarping": {
+          "Facing": {
+            "TargetingRange": null,
+            "MaxWarpDistance": 0
+          }
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          2
+        ],
         "WeightNear": 0,
         "WeightMid": 20,
         "WeightFar": 60,
-        "MaxApproachDistance": 0,
-        "Wave": {
-          "Speed": 1500,
-          "Range": 2000
-        }
+        "ResponseRange": 0,
+        "ResponseChance": 0
       }
     },
     {
       "Id": "JumpSlam",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 6,
-      "Params": {
-        "Hits": [
-          {
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "JumpSlam"
+        },
+        "Attack": {
+          "Hit1": {
             "DamageMultiplier": 1.6,
             "PoiseMultiplier": 1,
             "HitReaction": "KnockBack",
-            "bGuardable": true
+            "bGuardable": true,
+            "MPCharge": 0,
+            "UPCharge": 0
           }
+        },
+        "MotionWarping": {
+          "Tracking": {
+            "TargetingRange": null,
+            "MaxWarpDistance": 850
+          }
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          1,
+          2
         ],
-        "Phases": [1, 2],
         "WeightNear": 30,
         "WeightMid": 30,
         "WeightFar": 0,
-        "MaxApproachDistance": 700
+        "ResponseRange": 0,
+        "ResponseChance": 0
       }
     },
     {
       "Id": "Backstep",
+      "Tags": [
+        "Ability.Boss.Pattern"
+      ],
       "Cooldown": 4,
-      "Params": {
-        "Hits": [],
-        "Phases": [1, 2],
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.HitReaction",
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "Backstep",
+          "RootMotionDistance": 500
+        }
+      },
+      "PatternSelection": {
+        "Phases": [
+          1,
+          2
+        ],
         "WeightNear": 0,
         "WeightMid": 0,
         "WeightFar": 0,
-        "MaxApproachDistance": 0,
-        "Range": 400,
-        "Chance": 0.3,
-        "Distance": 500
+        "ResponseRange": 400,
+        "ResponseChance": 0.3
       }
     },
     {
       "Id": "KnockBack",
+      "Tags": [
+        "Ability.Reaction.HitReaction.KnockBack"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.HitReaction"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint",
+          "Ability.Boss.Pattern",
+          "Ability.Reaction.HitReaction"
+        ],
+        "TriggerEvents": [
+          "Event.Hit.KnockBack"
+        ],
+        "bAllowRetrigger": true
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "KnockBack"
+        },
+        "HoldTag": {
+          "Downed": {
+            "Tag": "State.Invincible"
+          }
+        }
+      }
     },
     {
       "Id": "KnockUp",
+      "Tags": [
+        "Ability.Reaction.HitReaction.KnockUp"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.Execution",
+          "State.Dead"
+        ],
+        "OwnedTags": [
+          "State.HitReaction"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Action",
+          "Ability.Sprint",
+          "Ability.Boss.Pattern",
+          "Ability.Reaction.HitReaction"
+        ],
+        "TriggerEvents": [
+          "Event.Hit.KnockUp"
+        ],
+        "bAllowRetrigger": true
+      },
+      "Cost": null,
+      "Tasks": {
+        "HoldTag": {
+          "Downed": {
+            "Tag": "State.Invincible"
+          }
+        }
+      }
     },
     {
       "Id": "Groggy",
+      "Tags": [
+        "Ability.Reaction.Groggy"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.GroggyImmune",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [
+          "State.Groggy"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Boss.Pattern",
+          "Ability.Action",
+          "Ability.Sprint",
+          "Ability.Reaction.HitReaction"
+        ],
+        "TriggerEvents": [
+          "Event.Groggy"
+        ],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "HoldTag": {
+          "Executed": {
+            "Tag": "State.Execution"
+          }
+        },
+        "SetCollisionResponseToChannel": {
+          "PassThroughPawn": {
+            "Channel": "Pawn",
+            "Response": "Ignore"
+          }
+        }
+      }
     },
     {
       "Id": "PhaseTransition",
+      "Tags": [
+        "Ability.Reaction.PhaseTransition"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Groggy",
+          "State.Dead",
+          "State.NonCombat"
+        ],
+        "OwnedTags": [
+          "State.Invincible",
+          "State.Boss.RotationLocked"
+        ],
+        "BlockTags": [],
+        "CancelTags": [
+          "Ability.Boss.Pattern"
+        ],
+        "TriggerEvents": [
+          "Event.PhaseTransition"
+        ],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {
+        "PlayMontageAndWait": {
+          "MontageId": "PhaseTransition"
+        }
+      }
     },
     {
       "Id": "Death",
+      "Tags": [
+        "Ability.Reaction.Death"
+      ],
       "Cooldown": 0,
-      "Params": {}
+      "Activation": {
+        "RequiredTags": [],
+        "BlockedTags": [
+          "State.Dead"
+        ],
+        "OwnedTags": [],
+        "BlockTags": [],
+        "CancelTags": [],
+        "TriggerEvents": [
+          "Event.Death"
+        ],
+        "bAllowRetrigger": false
+      },
+      "Cost": null,
+      "Tasks": {}
     }
   ],
   "PPRegenRate": 50,
   "DeathPresentationTime": 4,
   "StopDistance": 150,
-  "RotationStopLead": 0.2,
   "PatternPlayRate": 0.8,
   "NearDistance": 300,
   "FarDistance": 1000,
   "RetryInterval": 0.5,
-  "PatternRecoveryWaitPhase1": { "Min": 1, "Max": 2 },
-  "PatternRecoveryWaitPhase2": { "Min": 0.5, "Max": 1.2 },
+  "PatternRecoveryWaitPhase1": {
+    "Min": 1,
+    "Max": 2
+  },
+  "PatternRecoveryWaitPhase2": {
+    "Min": 0.5,
+    "Max": 1.2
+  },
   "FixedRecoveryWait": 1,
-  "Phase2HPRatio": 0.5
+  "Phase2HPRatio": 0.5,
+  "Effects": [
+    "/Script/Ag.AgEffect_PPRegen"
+  ],
+  "Montages": {
+    "DoubleStrike": "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike",
+    "Sweep": "/Game/Animations/AM_Boss_Sweep.AM_Boss_Sweep",
+    "DashThrust": "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust",
+    "LeapSlam": "/Game/Animations/AM_Boss_LeapSlam.AM_Boss_LeapSlam",
+    "QuintupleStrike": "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike",
+    "SwordWave": "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave",
+    "JumpSlam": "/Game/Animations/AM_Boss_JumpSlam.AM_Boss_JumpSlam",
+    "Backstep": "/Game/Animations/AM_Boss_Backstep.AM_Boss_Backstep",
+    "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
+    "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
+    "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath",
+    "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
+    "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+    "KnockBack": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
+    "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+    "KnockUpFall": "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall",
+    "GetUp": "/Game/Animations/AM_GetUp.AM_GetUp"
+  },
+  "LockOnBone": "spine_05",
+  "ExecutionPromptBone": "head",
+  "AIStateTree": "/Game/AI/ST_Boss.ST_Boss",
+  "Projectiles": {
+    "SwordWave": {
+      "ProjectileClass": "/Game/Projectiles/BP_SwordWave.BP_SwordWave_C",
+      "Params": {
+        "Speed": 1500,
+        "Range": 2000
+      }
+    }
+  }
 }

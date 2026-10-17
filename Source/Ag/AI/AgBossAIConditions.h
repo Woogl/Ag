@@ -26,7 +26,10 @@ struct FAgBossAICondition_BossDead : public FStateTreeAIConditionBase
 	GENERATED_BODY()
 
 	using FInstanceDataType = FAgBossAIConditionInstanceData;
-	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
 
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
@@ -38,7 +41,10 @@ struct FAgBossAICondition_PlayerDead : public FStateTreeAIConditionBase
 	GENERATED_BODY()
 
 	using FInstanceDataType = FAgBossAIConditionInstanceData;
-	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
 
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
@@ -50,7 +56,10 @@ struct FAgBossAICondition_Reacting : public FStateTreeAIConditionBase
 	GENERATED_BODY()
 
 	using FInstanceDataType = FAgBossAIConditionInstanceData;
-	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
 
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
@@ -65,7 +74,10 @@ struct FAgBossAICondition_PhaseTransitionReady : public FStateTreeAIConditionBas
 	GENERATED_BODY()
 
 	using FInstanceDataType = FAgBossAIConditionInstanceData;
-	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
 
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
@@ -90,7 +102,10 @@ struct FAgBossAICondition_BackstepReady : public FStateTreeAIConditionBase
 	GENERATED_BODY()
 
 	using FInstanceDataType = FAgBossAICondition_BackstepReadyInstanceData;
-	virtual const UStruct* GetInstanceDataType() const override { return FInstanceDataType::StaticStruct(); }
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
 
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };

@@ -4,8 +4,6 @@
 
 #include "AbilitySystem/AgDamageExecution.h"
 #include "AbilitySystem/AgHitResultGameplayEffectComponent.h"
-#include "AbilitySystemComponent.h"
-#include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAttackData.h"
 #include "GameplayEffectComponents/TargetTagRequirementsGameplayEffectComponent.h"
@@ -17,21 +15,11 @@ UAgEffect_Damage::UAgEffect_Damage()
 	FGameplayEffectExecutionDefinition& Execution = Executions.AddDefaulted_GetRef();
 	Execution.CalculationClass = UAgDamageExecution::StaticClass();
 
-	UTargetTagRequirementsGameplayEffectComponent* TargetTags = CreateDefaultSubobject<UTargetTagRequirementsGameplayEffectComponent>(TEXT("TargetTagRequirements"));
+	UTargetTagRequirementsGameplayEffectComponent* TargetTags =
+	    CreateDefaultSubobject<UTargetTagRequirementsGameplayEffectComponent>(TEXT("TargetTagRequirements"));
 	TargetTags->ApplicationTagRequirements.IgnoreTags.AddTag(AgGameplayTags::State_Dead);
 	GEComponents.Add(TargetTags);
 	GEComponents.Add(CreateDefaultSubobject<UAgHitResultGameplayEffectComponent>(TEXT("HitResult")));
-}
-
-void UAgEffect_Damage::ApplyAttack(AAgCharacterBase* Attacker, AActor* Causer, AAgCharacterBase* Target, const FAgPlayerAttackHit& Hit, const FVector& HitLocation)
-{
-	UAbilitySystemComponent* SourceASC = Attacker->GetAbilitySystemComponent();
-	FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
-	Context.AddInstigator(Attacker, Causer);
-
-	const FGameplayEffectSpecHandle Spec = SourceASC->MakeOutgoingSpec(StaticClass(), 1.f, Context);
-	SetAttack(*Spec.Data, Hit, HitLocation);
-	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
 }
 
 void UAgEffect_Damage::SetAttack(FGameplayEffectSpec& Spec, const FAgPlayerAttackHit& Hit, const FVector& HitLocation)
