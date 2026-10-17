@@ -8,6 +8,7 @@
 #include "AgAbilityTaskParams.generated.h"
 
 class ULevelSequence;
+struct FGameplayEffectSpec;
 
 UENUM()
 enum class EAgResource : uint8
@@ -27,6 +28,9 @@ struct FAgResourceCostParams
 
 	UPROPERTY()
 	float Amount = 0.f;
+
+	/** 자원 효과(Resource) 스펙에 이 비용을 음수로 넣습니다. 다른 자원은 0입니다. */
+	void AddToSpec(FGameplayEffectSpec& Spec) const;
 };
 
 USTRUCT()
@@ -52,6 +56,9 @@ struct FAgDrainResourceParams
 
 	UPROPERTY()
 	float AmountPerSecond = 0.f;
+
+	/** 소모 효과(ResourceDrain) 스펙에 한 주기에 줄일 양(초당 소모량 × 스펙의 주기)을 음수로 넣습니다. 다른 자원은 0입니다. */
+	void AddToSpec(FGameplayEffectSpec& Spec) const;
 };
 
 USTRUCT()
@@ -79,6 +86,9 @@ struct FAgGrantResourcesParams
 
 	UPROPERTY()
 	float UP = 0.f;
+
+	/** 자원 효과(Resource) 스펙에 얻는 SP·MP·UP를 넣습니다. */
+	void AddToSpec(FGameplayEffectSpec& Spec) const;
 };
 
 USTRUCT()

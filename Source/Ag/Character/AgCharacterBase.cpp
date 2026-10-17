@@ -3,8 +3,6 @@
 #include "Character/AgCharacterBase.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgEffect_Kill.h"
-#include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
@@ -18,6 +16,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgEffectData.h"
 #include "Game/AgBossStageGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -51,6 +50,7 @@ AAgCharacterBase::AAgCharacterBase()
 	AttributeSet = CreateDefaultSubobject<UAgAttributeSet>(TEXT("AttributeSet"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 	MontageTimeline = CreateDefaultSubobject<UAgMontageTimelineComponent>(TEXT("MontageTimeline"));
+	CharacterDataClass = UAgCharacterData::StaticClass();
 
 	// 캐릭터는 카메라를 가리지 않습니다(카메라 '카메라 충돌').
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -79,6 +79,30 @@ bool AAgCharacterBase::CanLosePP() const
 	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 }
 
+TArray<FString> AAgCharacterBase::GetCharacterDataIds() const
+{
+	TArray<FString> Options;
+	for (FName Id : UAgAssetManager::Get().GetCharacterDataIds(CharacterDataClass))
+	{
+		Options.Add(Id.ToString());
+	}
+	return Options;
+}
+
+void AAgCharacterBase::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+
+	// 보스 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 보스 데이터를 읽으므로, 그 전에 연결합니다.
+	CharacterData = UAgAssetManager::Get().FindCharacterData(CharacterDataId);
+	// 처음 읽기에 실패한 데이터로는 전투를 시작하지 않습니다. 다시 읽기 실패는 기존 정상 값을 유지합니다.
+	if (!CharacterData || !CharacterData->IsA(CharacterDataClass) || !CharacterData->HasValidJsonData())
+	{
+		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing, has the wrong type or is not valid."), *GetName(),
+		    *CharacterDataId.ToString());
+	}
+}
+
 void AAgCharacterBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -88,12 +112,6 @@ void AAgCharacterBase::PostInitializeComponents()
 
 void AAgCharacterBase::BeginPlay()
 {
-	// 처음 읽기에 실패한 데이터로는 전투를 시작하지 않습니다. 다시 읽기 실패는 기존 정상 값을 유지합니다.
-	if (!CharacterData || !CharacterData->HasValidJsonData())
-	{
-		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character JSON data is not valid."), *GetName());
-		return;
-	}
 	Super::BeginPlay();
 
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
@@ -141,9 +159,6 @@ void AAgCharacterBase::PossessedBy(AController* NewController)
 
 void AAgCharacterBase::InitializeAttributes()
 {
-	// 캐릭터 데이터는 캐릭터 블루프린트가 정하는 필수 데이터입니다. 여기서 한 번 확인하고, 다른 곳은 있다고 보고 씁니다.
-	checkf(CharacterData, TEXT("%s has no character data. Set it on the character blueprint."), *GetName());
-
 	const FAgAttributes& Attributes = CharacterData->Attributes;
 	UAbilitySystemComponent& ASC = *AbilitySystemComponent;
 
@@ -169,8 +184,10 @@ void AAgCharacterBase::InitializeAttributes()
 
 void AAgCharacterBase::GrantAbilities()
 {
-	for (const FAgAbilityData& Ability : CharacterData->Abilities)
+	for (FName AbilityId : CharacterData->Abilities)
 	{
+		// 어빌리티 정의는 데이터를 읽을 때 캐릭터의 목록과 함께 검사했습니다.
+		const FAgAbilityData& Ability = *UAgAssetManager::Get().FindAbility(AbilityId);
 		FGameplayAbilitySpec Spec(UAgGameplayAbility::StaticClass());
 		AbilityIds.Add(Spec.Handle, Ability.Id);
 		Spec.GetDynamicSpecSourceTags() = Ability.Tags;
@@ -216,12 +233,10 @@ void AAgCharacterBase::UpdateMoveSpeed()
 
 void AAgCharacterBase::ApplyEffects()
 {
-	for (const TSubclassOf<UGameplayEffect>& Effect : CharacterData->Effects)
+	for (FName EffectId : CharacterData->Effects)
 	{
-		if (Effect)
-		{
-			AbilitySystemComponent->ApplyGameplayEffectToSelf(Effect.GetDefaultObject(), 1.f, AbilitySystemComponent->MakeEffectContext());
-		}
+		AbilitySystemComponent->ApplyGameplayEffectToSelf(
+		    UAgAssetManager::Get().FindEffect(EffectId), 1.f, AbilitySystemComponent->MakeEffectContext());
 	}
 }
 
@@ -229,7 +244,7 @@ void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
 {
 	if (Data.NewValue < Data.OldValue)
 	{
-		RestartRegenDelay(PPRegenDelay, AgGameplayTags::State_Regen_PPDelay, UAgAssetManager::Get().GetCombatRules().PPRegenDelay);
+		RestartRegenDelay(PPRegenDelay, EAgEffect::PPRegenDelay);
 	}
 }
 
@@ -251,13 +266,14 @@ void AAgCharacterBase::UpdateTimeDilation()
 	CustomTimeDilation = (bHitstop ? HitstopTimeDilation : 1.f) * TimeCompensation;
 }
 
-void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration)
+void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, EAgEffect DelayEffect)
 {
 	if (Handle.IsValid())
 	{
 		AbilitySystemComponent->RemoveActiveGameplayEffect(Handle);
 	}
-	Handle = UAgEffect_TimedTag::Apply(AbilitySystemComponent, DelayTag, Duration);
+	Handle = AbilitySystemComponent->ApplyGameplayEffectToSelf(
+	    UAgAssetManager::Get().GetEffect(DelayEffect), 1.f, AbilitySystemComponent->MakeEffectContext());
 }
 
 void AAgCharacterBase::SetMotionConstraints(UObject& RequestOwner, const FAgCharacterMotionConstraints& Constraints)
@@ -409,7 +425,8 @@ void AAgCharacterBase::Kill()
 		return;
 	}
 
-	AbilitySystemComponent->ApplyGameplayEffectToSelf(GetDefault<UAgEffect_Kill>(), 1.f, AbilitySystemComponent->MakeEffectContext());
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(
+	    UAgAssetManager::Get().GetEffect(EAgEffect::Kill), 1.f, AbilitySystemComponent->MakeEffectContext());
 }
 
 void AAgCharacterBase::FellOutOfWorld(const UDamageType& DamageType)

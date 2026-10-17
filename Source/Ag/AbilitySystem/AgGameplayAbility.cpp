@@ -3,8 +3,6 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgEffect_Cooldown.h"
-#include "AbilitySystem/AgEffect_Cost.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
@@ -23,12 +21,22 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_LockOn.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgEffectData.h"
 #include "Data/AgMontageTimeline.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Ag.h"
 
 namespace
 {
+	/** 이 어빌리티 인스턴스가 건 쿨다운 효과 */
+	FGameplayEffectQuery CooldownQuery(const UObject* Source)
+	{
+		FGameplayEffectQuery Query =
+		    FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
+		Query.EffectSource = Source;
+		return Query;
+	}
+
 	FGameplayAttribute ResourceAttribute(EAgResource Resource)
 	{
 		switch (Resource)
@@ -50,7 +58,6 @@ UAgGameplayAbility::UAgGameplayAbility()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalOnly;
 	bRetriggerInstancedAbility = true;
-	CostGameplayEffectClass = UAgEffect_Cost::StaticClass();
 }
 
 AAgCharacterBase* UAgGameplayAbility::GetAgCharacter() const
@@ -203,6 +210,32 @@ bool UAgGameplayAbility::CheckCost(
 	return false;
 }
 
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
+{
+	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, Effect);
+}
+
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(
+    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, EAgEffect Effect) const
+{
+	UAgAbilitySystemComponent* ASC = ActorInfo ? Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get()) : nullptr;
+	if (!ASC)
+	{
+		return FGameplayEffectSpecHandle();
+	}
+	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(Effect, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
+	if (Spec.IsValid())
+	{
+		FGameplayAbilitySpec* AbilitySpec = ASC->FindAbilitySpecFromHandle(Handle);
+		ApplyAbilityTagsToGameplayEffectSpec(*Spec.Data, AbilitySpec);
+		if (AbilitySpec)
+		{
+			Spec.Data->SetByCallerTagMagnitudes = AbilitySpec->SetByCallerTagMagnitudes;
+		}
+	}
+	return Spec;
+}
+
 FAgResourceCostParams UAgGameplayAbility::GetCost() const
 {
 	const FAgAbilityData* Definition = IsActive() ? &ExecutionDefinition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
@@ -214,11 +247,11 @@ void UAgGameplayAbility::ApplyCost(
 {
 	if (ExecutionDefinition.bHasCost && ExecutionDefinition.Cost.Amount > 0.f)
 	{
-		const FGameplayEffectSpecHandle Spec =
-		    MakeOutgoingGameplayEffectSpec(Handle, ActorInfo, ActivationInfo, CostGameplayEffectClass, GetAbilityLevel(Handle, ActorInfo));
+		// 비용은 자원 효과를 음수로 겁니다.
+		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, EAgEffect::Resource);
 		if (Spec.IsValid())
 		{
-			UAgEffect_Cost::SetCost(*Spec.Data, ExecutionDefinition.Cost);
+			ExecutionDefinition.Cost.AddToSpec(*Spec.Data);
 			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 		}
 	}
@@ -228,15 +261,24 @@ bool UAgGameplayAbility::CheckCooldown(
     FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* RelevantTags) const
 {
 	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
-	return Spec && !UAgEffect_Cooldown::IsActive(ActorInfo->AbilitySystemComponent.Get(), Spec->GetPrimaryInstance());
+	return Spec && ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).IsEmpty();
 }
 
 void UAgGameplayAbility::ApplyCooldown(
     FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	if (ExecutionDefinition.Cooldown > 0.f)
+	UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get());
+	if (ExecutionDefinition.Cooldown > 0.f && ASC)
 	{
-		UAgEffect_Cooldown::Apply(ActorInfo->AbilitySystemComponent.Get(), this, ExecutionDefinition.Cooldown);
+		// 출처로 이 어빌리티 인스턴스를 넣어, 행동마다의 쿨다운을 구분합니다.
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+		Context.AddSourceObject(this);
+		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Cooldown, GetAbilityLevel(Handle, ActorInfo), Context);
+		if (Spec.IsValid())
+		{
+			Spec.Data->SetDuration(ExecutionDefinition.Cooldown, /*bLockDuration*/ true);
+			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+		}
 	}
 }
 
@@ -245,9 +287,18 @@ void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(
 {
 	Remaining = Duration = 0.f;
 	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
-	if (Spec)
+	if (!Spec)
 	{
-		UAgEffect_Cooldown::GetTimeRemaining(ActorInfo->AbilitySystemComponent.Get(), Spec->GetPrimaryInstance(), Remaining, Duration);
+		return;
+	}
+	for (const TPair<float, float>& Entry :
+	    ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemainingAndDuration(CooldownQuery(Spec->GetPrimaryInstance())))
+	{
+		if (Entry.Key > Remaining)
+		{
+			Remaining = Entry.Key;
+			Duration = Entry.Value;
+		}
 	}
 }
 

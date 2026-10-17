@@ -4,16 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Data/AgAbilityData.h"
-#include "Engine/DataAsset.h"
 #include "Math/Interval.h"
 #include "AgCharacterData.generated.h"
 
-class AAgProjectile;
-class FJsonObject;
-class UAgGameplayAbility;
 class UAnimMontage;
-class UGameplayEffect;
-class ULevelSequence;
 class UStateTree;
 class UTargetingPreset;
 
@@ -64,26 +58,13 @@ struct FAgAttributes
 	float MOV = 0.f;
 };
 
-USTRUCT()
-struct FAgProjectileDefinition
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	TSubclassOf<AAgProjectile> ProjectileClass;
-
-	UPROPERTY()
-	FAgProjectileParams Params;
-};
-
 /**
- * 플레이어와 보스가 함께 쓰는 데이터(구현 계획서 'JSON과 DataAsset').
- * 데이터 에셋(DA_Player, DA_Boss)은 JSON 파일 연결과 읽기 전용 데이터 표시를 담당합니다.
- * 수치·설정·에셋 참조는 모두 Transient이며, 에셋 매니저가 JsonFileName의 JSON을 검증하고 한 번에 채웁니다.
+ * 플레이어와 보스가 함께 쓰는 데이터(구현 계획서 'JSON 데이터'). Characters.json의 캐릭터 항목 하나입니다.
+ * 수치·설정·에셋 참조는 모두 Transient이며, 에셋 매니저가 JSON을 검증하고 한 번에 채웁니다. 객체는 에셋 매니저가 들고 있습니다.
  * 필드마다 기획서의 어느 항목인지는 데이터 위치표(Docs/Program/데이터 위치표.md)를 따릅니다.
  */
 UCLASS(Abstract, BlueprintType)
-class UAgCharacterData : public UDataAsset
+class UAgCharacterData : public UObject
 {
 	GENERATED_BODY()
 
@@ -99,23 +80,11 @@ public:
 		bHasValidJsonData = true;
 	}
 
-	virtual void PostLoad() override;
-
-#if WITH_EDITOR
-	virtual void PostEditUndo() override;
-#endif
-
-	void ValidateProjectiles(TArray<FString>& Errors) const;
-
-	/** 어빌리티 목록에서 ID로 항목을 찾습니다. 없으면 null입니다. */
+	/** 이 캐릭터의 어빌리티 목록에 있는 ID면 Abilities.json의 정의를 돌려줍니다. 없으면 null입니다. */
 	const FAgAbilityData* FindAbility(FName Id) const;
 
 	/** 몽타주 ID로 몽타주를 찾습니다. 없으면 오류 로그를 남기고 null입니다. */
 	UAnimMontage* FindMontage(FName Id) const;
-
-	/** Transient 필드를 채우는 프로젝트 Data 폴더의 JSON 파일 (Player.json, Boss.json) */
-	UPROPERTY(VisibleAnywhere, Category = "Data")
-	FString JsonFileName;
 
 	/** 이름. 전투 HUD '보스 상태'에 표시합니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
@@ -125,15 +94,11 @@ public:
 	FAgAttributes Attributes;
 
 	/**
-	 * 어빌리티 목록: 이 캐릭터가 가진 어빌리티(행동, 보스 패턴, 상태)마다 항목 하나. 캐릭터는 시작할 때 항목마다
-	 * 단일 UAgGameplayAbility를 ID별 독립 스펙으로 부여합니다.
+	 * 어빌리티 목록: 이 캐릭터가 가진 어빌리티(행동, 보스 패턴, 상태)의 Abilities.json ID. 캐릭터는 시작할 때 이 순서로
+	 * 항목마다 단일 UAgGameplayAbility를 ID별 독립 스펙으로 부여합니다.
 	 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
-	TArray<FAgAbilityData> Abilities;
-
-	/** PP 리젠: 리젠 대기 시간이 지난 뒤의 초당 회복량 (전투 시스템 'PP 리젠'). 0이면 회복하지 않습니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
-	float PPRegenRate = 0.f;
+	TArray<FName> Abilities;
 
 	/** 사망 연출 시간. 끝나면 결과 UI를 띄웁니다. (플레이어 사양·보스 사양 '사망') */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Death", meta = (Units = "s", ClampMin = 0))
@@ -143,22 +108,19 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "cm", ClampMin = 0))
 	float StopDistance = 0.f;
 
-	/** 시작할 때 거는 GameplayEffect(SP·PP 리젠, 달리기의 SP 소모, 그로기 면역). 회복량은 각 효과가 이 데이터에서 읽습니다. */
+	/** 시작할 때 거는 효과의 Effects.json ID(SP·PP 리젠, 그로기 면역) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
-	TArray<TSubclassOf<UGameplayEffect>> Effects;
+	TArray<FName> Effects;
 
-	/** 몽타주 ID마다 그 몽타주. ID는 구현 계획서 'JSON과 DataAsset'의 '어빌리티의 데이터'를 따릅니다. */
+	/** 몽타주 ID마다 그 몽타주. ID는 구현 계획서 'JSON 데이터'의 '어빌리티의 데이터'를 따릅니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Assets")
 	TMap<FName, TObjectPtr<UAnimMontage>> Montages;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Projectiles")
-	TMap<FName, FAgProjectileDefinition> Projectiles;
 
 private:
 	bool bHasValidJsonData = false;
 };
 
-/** DA_Player, Player.json */
+/** Characters.json의 Player */
 UCLASS(BlueprintType)
 class UAgPlayerData : public UAgCharacterData
 {
@@ -172,22 +134,6 @@ public:
 	/** 선입력: 허용되지 않는 상태에서 누른 입력을 기억하는 시간 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Input", meta = (Units = "s", ClampMin = 0))
 	float InputBufferTime = 0.f;
-
-	/** 자원 회복: 가드 중이 아닐 때 리젠 대기 시간이 지난 뒤의 초당 SP 회복량 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
-	float SPRegenRate = 0.f;
-
-	/** 자원 회복: 가드 중의 초당 SP 회복량 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (ClampMin = 0))
-	float SPRegenRateGuarding = 0.f;
-
-	/** 자원 회복: 마지막으로 SP를 소모한 뒤의 리젠 대기 시간 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (Units = "s", ClampMin = 0))
-	float SPRegenDelay = 0.f;
-
-	/** 자원 회복: SP가 0이 됐을 때의 리젠 대기 시간 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Resources", meta = (Units = "s", ClampMin = 0))
-	float SPRegenDelayEmpty = 0.f;
 
 	/** SP 소모: 가드로 막은 공격. 가드 경감 배율 적용 전 HP 감소량에 곱하는 비율 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0))
@@ -244,7 +190,7 @@ public:
 	float SprintSpeedRatio = 1.f;
 };
 
-/** DA_Boss, Boss.json */
+/** Characters.json의 Boss */
 UCLASS(BlueprintType)
 class UAgBossData : public UAgCharacterData
 {

@@ -3,13 +3,18 @@
 #include "Core/AgAssetManager.h"
 
 #include "Ag.h"
-#include "Data/AgCameraData.h"
+#include "Animation/AnimMontage.h"
 #include "Data/AgAbilityData.h"
+#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgEffectData.h"
+#include "Data/AgJsonRead.h"
 #include "Data/AgMontageTimeline.h"
+#include "Data/AgProjectileData.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
+#include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "JsonObjectConverter.h"
 #include "Misc/FileHelper.h"
@@ -21,8 +26,6 @@
 #include "UObject/UnrealType.h"
 #include "UObject/Package.h"
 #if WITH_EDITOR
-#include "Animation/AnimMontage.h"
-#include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/FileManager.h"
 #endif
 
@@ -31,10 +34,14 @@ namespace
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
 	const TCHAR* const JsonFolderName = TEXT("Data");
 
-	/** 공통 JSON 파일. 캐릭터 JSON은 캐릭터 DataAsset의 JsonFileName이 가리킵니다. */
+	/** 데이터 파일. 파일마다 그 파일을 읽는 클래스가 정해져 있어 이름을 바꿀 일이 없습니다. */
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
 	const TCHAR* const CameraDataFile = TEXT("Camera.json");
+	const TCHAR* const EffectsFile = TEXT("Effects.json");
+	const TCHAR* const ProjectilesFile = TEXT("Projectiles.json");
 	const TCHAR* const MontageTimelinesFile = TEXT("MontageTimelines.json");
+	const TCHAR* const AbilitiesFile = TEXT("Abilities.json");
+	const TCHAR* const CharactersFile = TEXT("Characters.json");
 
 	/** 파일마다 화면에 띄우는 오류 수. 로그에는 모두 남깁니다. */
 	constexpr int32 MaxErrorsOnScreen = 5;
@@ -273,99 +280,16 @@ namespace
 
 #endif // WITH_EDITOR
 
-	void Report(const UObject& Target, const FString& FileName, const TArray<FString>& Errors)
+	/** 파일을 읽어 JSON 객체로 바꿉니다. 오류가 있으면 null입니다. */
+	TSharedPtr<FJsonObject> ReadJsonFile(const TCHAR* FileName, TArray<FString>& Errors)
 	{
-		const FString File = FileName.IsEmpty() ? Target.GetName() : FString::Printf(TEXT("Data/%s"), *FileName);
-		for (const FString& Error : Errors)
+		FString Text;
+		const FString Path = FPaths::Combine(UAgAssetManager::GetJsonFolder(), FileName);
+		if (!FFileHelper::LoadFileToString(Text, *Path))
 		{
-			UE_LOG(LogAg, Error, TEXT("%s: %s"), *File, *Error);
+			Errors.Add(FString::Printf(TEXT("can't read %s"), *Path));
+			return nullptr;
 		}
-		if (!GEngine)
-		{
-			return;
-		}
-		// 새 메시지가 위에 쌓이므로, 오류를 뒤에서부터 넣고 요약을 마지막에 넣습니다.
-		for (int32 Index = FMath::Min(Errors.Num(), MaxErrorsOnScreen) - 1; Index >= 0; --Index)
-		{
-			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("    %s"), *Errors[Index]));
-		}
-		GEngine->AddOnScreenDebugMessage(
-		    INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("%s was not applied, %d error(s) (all in the log):"), *File, Errors.Num()));
-	}
-
-}
-
-UAgAssetManager::UAgAssetManager()
-{
-	CombatRules = CreateDefaultSubobject<UAgCombatRules>(TEXT("CombatRules"));
-	CameraData = CreateDefaultSubobject<UAgCameraData>(TEXT("CameraData"));
-	MontageTimelines = CreateDefaultSubobject<UAgMontageTimelineData>(TEXT("MontageTimelines"));
-}
-
-UAgAssetManager& UAgAssetManager::Get()
-{
-	// DefaultEngine.ini의 AssetManagerClassName이 이 클래스가 아니면 여기서 멈춥니다.
-	check(GEngine);
-	return *CastChecked<UAgAssetManager>(GEngine->AssetManager);
-}
-
-FString UAgAssetManager::GetJsonFolder()
-{
-	return FPaths::Combine(FPaths::ProjectDir(), JsonFolderName);
-}
-
-void UAgAssetManager::StartInitialLoading()
-{
-	Super::StartInitialLoading();
-
-	LoadJsonValues(*CombatRules, CombatRulesFile);
-	LoadJsonValues(*CameraData, CameraDataFile);
-	// 캐릭터 데이터를 검증할 때 시간표를 보므로 캐릭터보다 먼저 읽습니다.
-	LoadJsonValues(*MontageTimelines, MontageTimelinesFile);
-}
-
-const UAgCombatRules& UAgAssetManager::GetCombatRules() const
-{
-	return *CombatRules;
-}
-
-const UAgCameraData& UAgAssetManager::GetCameraData() const
-{
-	return *CameraData;
-}
-
-const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const
-{
-	return *MontageTimelines;
-}
-
-bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
-{
-#if WITH_EDITOR
-	for (TMap<TWeakObjectPtr<UObject>, FString>::TIterator It = LoadedFiles.CreateIterator(); It; ++It)
-	{
-		if (!It.Key().IsValid())
-		{
-			It.RemoveCurrent();
-		}
-	}
-	LoadedFiles.Add(&Target, FileName);
-#endif
-
-	TArray<FString> Errors;
-	TSharedPtr<FJsonObject> Json;
-	FString Text;
-	const FString Path = FPaths::Combine(GetJsonFolder(), FileName);
-	if (FileName.IsEmpty())
-	{
-		Errors.Add(TEXT("no data file is set"));
-	}
-	else if (!FFileHelper::LoadFileToString(Text, *Path))
-	{
-		Errors.Add(FString::Printf(TEXT("can't read %s"), *Path));
-	}
-	else
-	{
 #if WITH_EDITOR
 		// JSON DOM은 중복 키를 덮어쓸 수 있으므로 원문에서 FName 기준으로 먼저 검사합니다.
 		const TSharedRef<TJsonReader<>> KeyReader = TJsonReaderFactory<>::Create(Text);
@@ -397,132 +321,350 @@ bool UAgAssetManager::LoadJsonValues(UObject& Target, const FString& FileName)
 			}
 		}
 #endif
+		TSharedPtr<FJsonObject> Json;
 		const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
 		if (!FJsonSerializer::Deserialize(Reader, Json) || !Json.IsValid())
 		{
 			Errors.Add(FString::Printf(TEXT("syntax error: %s"), *Reader->GetErrorMessage()));
+			return nullptr;
 		}
+		return Errors.IsEmpty() ? Json : nullptr;
 	}
 
-	TArray<const FProperty*> Properties;
-	for (TFieldIterator<FProperty> It(Target.GetClass()); It; ++It)
+	/** Json으로 Target의 Transient 속성을 모두 채웁니다. 에디터에서는 키와 값을 속성에 맞춰 먼저 검사합니다. 오류 경로 앞에 Path를 붙입니다. */
+	void ReadProperties(const FJsonObject& Json, UObject& Target, const FString& Path, TArray<FString>& Errors)
 	{
-		if (It->HasAnyPropertyFlags(CPF_Transient))
+		TArray<const FProperty*> Properties;
+		for (TFieldIterator<FProperty> It(Target.GetClass()); It; ++It)
 		{
-			Properties.Add(*It);
-		}
-	}
-	// 대상과 같은 타입의 임시 객체에만 변환합니다. 실패하면 원래 객체는 바뀌지 않습니다.
-	UObject* Candidate = NewObject<UObject>(this, Target.GetClass());
-	JsonLoadTargets.Add(Candidate);
-	ON_SCOPE_EXIT
-	{
-		JsonLoadTargets.RemoveSingle(Candidate);
-	};
-
-	TFunction<void(const FProperty*)> ConvertProperty = [&](const FProperty* Property)
-	{
-		FText FailReason;
-		const TSharedPtr<FJsonValue> Value = Json->TryGetField(Property->GetName());
-		if (!Value.IsValid() || !FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
-		                            Property->ContainerPtrToValuePtr<void>(Candidate), 0, 0, false, &FailReason))
-		{
-			Errors.Add(FString::Printf(TEXT("%s: %s"), *Property->GetName(), *FailReason.ToString()));
-		}
-	};
-
-	// 어빌리티 목록과 몽타주 시간표는 고정 스키마 파서가 따로 읽습니다.
-	const FProperty* AbilitiesProperty =
-	    Cast<UAgCharacterData>(Candidate) ? FindFProperty<FProperty>(Target.GetClass(), TEXT("Abilities")) : nullptr;
-	const FProperty* TimelinesProperty =
-	    Cast<UAgMontageTimelineData>(Candidate) ? FindFProperty<FProperty>(Target.GetClass(), TEXT("Timelines")) : nullptr;
-	if (Json.IsValid())
-	{
-		if (UAgCharacterData* Character = Cast<UAgCharacterData>(Candidate))
-		{
-			AgAbilityData::Parse(*Json, Character->Abilities, Errors);
-		}
-		if (UAgMontageTimelineData* Timelines = Cast<UAgMontageTimelineData>(Candidate))
-		{
-			AgMontageTimeline::Parse(*Json, Timelines->Timelines, Errors);
-#if WITH_EDITOR
-			if (Errors.IsEmpty())
+			if (It->HasAnyPropertyFlags(CPF_Transient))
 			{
-				AgMontageTimeline::ValidateAssets(Timelines->Timelines, Errors);
+				Properties.Add(*It);
 			}
-#endif
 		}
 #if WITH_EDITOR
-		FJsonObject OtherFields = *Json;
-		TArray<const FProperty*> OtherProperties = Properties;
-		if (AbilitiesProperty)
+		const int32 Before = Errors.Num();
+		CheckObject(Json, Properties, Path, Errors);
+		if (Errors.Num() != Before)
 		{
-			OtherFields.RemoveField(TEXT("Abilities"));
-			OtherProperties.Remove(AbilitiesProperty);
-		}
-		if (TimelinesProperty)
-		{
-			OtherFields = FJsonObject();
-			OtherProperties.Remove(TimelinesProperty);
-		}
-		if (Errors.IsEmpty())
-		{
-			CheckObject(OtherFields, OtherProperties, FString(), Errors);
+			return;
 		}
 #endif
-	}
-	if (Errors.IsEmpty())
-	{
 		for (const FProperty* Property : Properties)
 		{
-			if (Property != AbilitiesProperty && Property != TimelinesProperty)
+			FText FailReason;
+			const TSharedPtr<FJsonValue> Value = Json.TryGetField(Property->GetName());
+			if (!Value.IsValid() || !FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
+			                            Property->ContainerPtrToValuePtr<void>(&Target), 0, 0, false, &FailReason))
 			{
-				ConvertProperty(Property);
+				Errors.Add(Path + Property->GetName() + TEXT(": ") + FailReason.ToString());
 			}
 		}
 	}
-	if (Errors.IsEmpty())
+
+	/** 검사를 마친 새 객체의 값(Transient 속성)을 지금 객체에 복사합니다. 지금 객체를 가리키는 쪽은 그대로 새 값을 봅니다. */
+	void CopyJsonProperties(const UObject& From, UObject& To)
 	{
-		if (const UAgCharacterData* Character = Cast<UAgCharacterData>(Candidate))
+		for (TFieldIterator<FProperty> It(To.GetClass()); It; ++It)
 		{
-			Character->ValidateProjectiles(Errors);
-			AgAbilityData::ValidateReferences(*Character, Errors);
+			if (It->HasAnyPropertyFlags(CPF_Transient))
+			{
+				It->CopyCompleteValue(It->ContainerPtrToValuePtr<void>(&To), It->ContainerPtrToValuePtr<void>(&From));
+			}
 		}
 	}
-	if (!Errors.IsEmpty())
+
+	void Report(const TCHAR* FileName, const TArray<FString>& Errors)
 	{
-		Report(Target, FileName, Errors);
+		const FString File = FString::Printf(TEXT("Data/%s"), FileName);
+		for (const FString& Error : Errors)
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: %s"), *File, *Error);
+		}
+		if (!GEngine)
+		{
+			return;
+		}
+		// 새 메시지가 위에 쌓이므로, 오류를 뒤에서부터 넣고 요약을 마지막에 넣습니다.
+		for (int32 Index = FMath::Min(Errors.Num(), MaxErrorsOnScreen) - 1; Index >= 0; --Index)
+		{
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("    %s"), *Errors[Index]));
+		}
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red,
+		    FString::Printf(TEXT("%s has %d error(s), so no data file was applied (all in the log):"), *File, Errors.Num()));
+	}
+
+}
+
+UAgAssetManager::UAgAssetManager()
+{
+	CombatRules = CreateDefaultSubobject<UAgCombatRules>(TEXT("CombatRules"));
+	CameraData = CreateDefaultSubobject<UAgCameraData>(TEXT("CameraData"));
+	Effects = CreateDefaultSubobject<UAgEffectSet>(TEXT("Effects"));
+	Projectiles = CreateDefaultSubobject<UAgProjectileSet>(TEXT("Projectiles"));
+	MontageTimelines = CreateDefaultSubobject<UAgMontageTimelineData>(TEXT("MontageTimelines"));
+	Abilities = CreateDefaultSubobject<UAgAbilitySet>(TEXT("Abilities"));
+	Characters.Add(TEXT("Player"), CreateDefaultSubobject<UAgPlayerData>(TEXT("Player")));
+	Characters.Add(TEXT("Boss"), CreateDefaultSubobject<UAgBossData>(TEXT("Boss")));
+}
+
+UAgAssetManager& UAgAssetManager::Get()
+{
+	// DefaultEngine.ini의 AssetManagerClassName이 이 클래스가 아니면 여기서 멈춥니다.
+	check(GEngine);
+	return *CastChecked<UAgAssetManager>(GEngine->AssetManager);
+}
+
+FString UAgAssetManager::GetJsonFolder()
+{
+	return FPaths::Combine(FPaths::ProjectDir(), JsonFolderName);
+}
+
+void UAgAssetManager::StartInitialLoading()
+{
+	Super::StartInitialLoading();
+
+	LoadJsonData();
+}
+
+const UAgCombatRules& UAgAssetManager::GetCombatRules() const
+{
+	return *CombatRules;
+}
+
+const UAgCameraData& UAgAssetManager::GetCameraData() const
+{
+	return *CameraData;
+}
+
+const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const
+{
+	return *MontageTimelines;
+}
+
+const FAgAbilityData* UAgAssetManager::FindAbility(FName Id) const
+{
+	return Abilities->Abilities.Find(Id);
+}
+
+const TMap<FName, FAgProjectileDefinition>& UAgAssetManager::GetProjectiles() const
+{
+	return Projectiles->Projectiles;
+}
+
+const UGameplayEffect* UAgAssetManager::FindEffect(FName Id) const
+{
+	const TObjectPtr<UGameplayEffect>* Found = Effects->Effects.Find(Id);
+	return Found ? Found->Get() : nullptr;
+}
+
+const UGameplayEffect* UAgAssetManager::GetEffect(EAgEffect Effect) const
+{
+	return FindEffect(AgEffectData::Id(Effect));
+}
+
+UAgCharacterData* UAgAssetManager::FindCharacterData(FName Id) const
+{
+	const TObjectPtr<UAgCharacterData>* Found = Characters.Find(Id);
+	return Found ? Found->Get() : nullptr;
+}
+
+TArray<FName> UAgAssetManager::GetCharacterDataIds(const UClass* DataClass) const
+{
+	TArray<FName> Ids;
+	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
+	{
+		if (!DataClass || Pair.Value->IsA(DataClass))
+		{
+			Ids.Add(Pair.Key);
+		}
+	}
+	return Ids;
+}
+
+bool UAgAssetManager::LoadJsonData()
+{
+	++DataVersion;
+	// 새 객체에 모두 읽고, 모두 통과해야 지금 객체에 복사합니다. 실패하면 기존 값이 그대로 남습니다.
+	UAgCombatRules* NewRules = NewObject<UAgCombatRules>(this);
+	UAgCameraData* NewCamera = NewObject<UAgCameraData>(this);
+	UAgEffectSet* NewEffects = NewObject<UAgEffectSet>(this);
+	UAgProjectileSet* NewProjectiles = NewObject<UAgProjectileSet>(this);
+	UAgMontageTimelineData* NewTimelines = NewObject<UAgMontageTimelineData>(this);
+	UAgAbilitySet* NewAbilities = NewObject<UAgAbilitySet>(this);
+	JsonLoadTargets.Reset();
+	JsonLoadTargets.Add(NewRules);
+	JsonLoadTargets.Add(NewCamera);
+	JsonLoadTargets.Add(NewEffects);
+	JsonLoadTargets.Add(NewProjectiles);
+	JsonLoadTargets.Add(NewTimelines);
+	JsonLoadTargets.Add(NewAbilities);
+	TMap<FName, UAgCharacterData*> NewCharacters;
+	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
+	{
+		UAgCharacterData* Candidate = NewObject<UAgCharacterData>(this, Pair.Value->GetClass());
+		NewCharacters.Add(Pair.Key, Candidate);
+		JsonLoadTargets.Add(Candidate);
+	}
+	ON_SCOPE_EXIT
+	{
+		JsonLoadTargets.Reset();
+	};
+
+	TArray<FString> RulesErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(CombatRulesFile, RulesErrors))
+	{
+		ReadProperties(*Json, *NewRules, FString(), RulesErrors);
+	}
+	TArray<FString> CameraErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(CameraDataFile, CameraErrors))
+	{
+		ReadProperties(*Json, *NewCamera, FString(), CameraErrors);
+	}
+	TArray<FString> EffectErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(EffectsFile, EffectErrors))
+	{
+		AgEffectData::Parse(*Json, *this, DataVersion, NewEffects->Effects, EffectErrors);
+	}
+	TArray<FString> ProjectileErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(ProjectilesFile, ProjectileErrors))
+	{
+		// 파일 전체가 투사체 ID의 맵이라, 그 맵 속성 하나를 가진 객체로 읽습니다.
+		FJsonObject File;
+		File.SetObjectField(TEXT("Projectiles"), Json);
+		ReadProperties(File, *NewProjectiles, FString(), ProjectileErrors);
+		for (const TPair<FName, FAgProjectileDefinition>& Pair : NewProjectiles->Projectiles)
+		{
+			if (Pair.Value.Params.Speed <= 0.f || Pair.Value.Params.Range <= 0.f)
+			{
+				ProjectileErrors.Add(Pair.Key.ToString() + TEXT(".Params: Speed and Range must be positive"));
+			}
+		}
+	}
+	TArray<FString> TimelineErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(MontageTimelinesFile, TimelineErrors))
+	{
+		AgMontageTimeline::Parse(*Json, NewTimelines->Timelines, TimelineErrors);
+#if WITH_EDITOR
+		if (TimelineErrors.IsEmpty())
+		{
+			AgMontageTimeline::ValidateAssets(NewTimelines->Timelines, TimelineErrors);
+		}
+#endif
+	}
+	TArray<FString> AbilityErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(AbilitiesFile, AbilityErrors))
+	{
+		AgAbilityData::Parse(*Json, NewAbilities->Abilities, AbilityErrors);
+	}
+	TArray<FString> CharacterErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(CharactersFile, CharacterErrors))
+	{
+		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Json->Values)
+		{
+			if (!NewCharacters.Contains(FName(*FString(Pair.Key))))
+			{
+				CharacterErrors.Add(FString(Pair.Key) + TEXT(": unknown character ID"));
+			}
+		}
+		for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
+		{
+			const FString Path = Pair.Key.ToString();
+			if (const AgJsonRead::FObject Entry = AgJsonRead::ObjectAt(*Json, Path, Path, CharacterErrors))
+			{
+				ReadProperties(*Entry, *Pair.Value, Path + TEXT("."), CharacterErrors);
+			}
+		}
+	}
+
+	// 파일 사이의 참조는 양쪽 파일을 읽었을 때만 검사합니다.
+	if (TimelineErrors.IsEmpty() && ProjectileErrors.IsEmpty())
+	{
+		for (const TPair<FName, FAgMontageTimeline>& Pair : NewTimelines->Timelines)
+		{
+			for (const FAgTimelineSpawnProjectile& Shot : Pair.Value.SpawnProjectile)
+			{
+				if (!NewProjectiles->Projectiles.Contains(Shot.ProjectileId))
+				{
+					TimelineErrors.Add(Pair.Key.ToString() + TEXT(".SpawnProjectile: unknown projectile ") + Shot.ProjectileId.ToString());
+				}
+			}
+		}
+	}
+	if (CharacterErrors.IsEmpty() && AbilityErrors.IsEmpty() && EffectErrors.IsEmpty())
+	{
+		for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
+		{
+			AgAbilityData::ValidateCharacter(
+			    *Pair.Value, NewAbilities->Abilities, NewEffects->Effects, Pair.Key.ToString() + TEXT("."), CharacterErrors);
+		}
+	}
+
+	const TPair<const TCHAR*, const TArray<FString>*> Results[] = {{CombatRulesFile, &RulesErrors}, {CameraDataFile, &CameraErrors},
+	    {EffectsFile, &EffectErrors}, {ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors},
+	    {AbilitiesFile, &AbilityErrors}, {CharactersFile, &CharacterErrors}};
+	bool bFailed = false;
+	for (const TPair<const TCHAR*, const TArray<FString>*>& Result : Results)
+	{
+		if (!Result.Value->IsEmpty())
+		{
+			Report(Result.Key, *Result.Value);
+			bFailed = true;
+		}
+	}
+	if (bFailed)
+	{
 		return false;
 	}
-	for (const FProperty* Property : Properties)
+
+	CopyJsonProperties(*NewRules, *CombatRules);
+	CopyJsonProperties(*NewCamera, *CameraData);
+	CopyJsonProperties(*NewEffects, *Effects);
+	CopyJsonProperties(*NewProjectiles, *Projectiles);
+	CopyJsonProperties(*NewTimelines, *MontageTimelines);
+	CopyJsonProperties(*NewAbilities, *Abilities);
+	for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
 	{
-		Property->CopyCompleteValue(Property->ContainerPtrToValuePtr<void>(&Target), Property->ContainerPtrToValuePtr<void>(Candidate));
-	}
-	if (UAgCharacterData* CharacterData = Cast<UAgCharacterData>(&Target))
-	{
-		CharacterData->MarkJsonDataLoaded();
+		UAgCharacterData& Target = *Characters.FindChecked(Pair.Key);
+		CopyJsonProperties(*Pair.Value, Target);
+		Target.MarkJsonDataLoaded();
 	}
 	return true;
 }
 
 #if WITH_EDITOR
+void UAgAssetManager::ReloadJsonData()
+{
+	if (LoadJsonData() && GEngine)
+	{
+		// 스탯처럼 스폰할 때 한 번 넣는 값은 다음 PIE부터 바뀝니다(구현 계획서 'JSON 데이터' 다시 읽기).
+		GEngine->AddOnScreenDebugMessage(
+		    INDEX_NONE, 5.f, FColor::Green, TEXT("Data reloaded. Spawn settings apply on the next play start."));
+	}
+}
+
 void UAgAssetManager::ModifyCook(
     TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook)
 {
 	Super::ModifyCook(TargetPlatforms, PackagesToCook, PackagesToNeverCook);
-	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 공통 JSON 전체를 검사합니다.
-	TSet<FString> ValidatedFiles;
-	TFunction<void(UObject&, const FString&)> LoadForCook = [&](UObject& Data, const FString& FileName)
+	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 JSON 전체를 검사합니다.
+	if (!LoadJsonData())
 	{
-		if (!LoadJsonValues(Data, FileName))
-		{
-			UE_LOG(LogAg, Error, TEXT("Cannot cook invalid JSON: %s"), *FileName);
-			return;
-		}
-		ValidatedFiles.Add(FileName.ToLower());
+		UE_LOG(LogAg, Error, TEXT("Cannot cook invalid JSON data"));
+		return;
+	}
+
+	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE는 실행 중에 만들고 클래스만 가리킵니다.
+	TArray<UObject*> DataObjects = {CombatRules, CameraData, Projectiles, MontageTimelines, Abilities};
+	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
+	{
+		DataObjects.Add(Pair.Value);
+	}
+	for (UObject* Data : DataObjects)
+	{
 		TArray<UObject*> References;
 		FReferenceFinder Finder(References, nullptr, false, true, false, false);
-		Finder.AddPropertyReferencesWithStructARO(Data.GetClass(), &Data);
+		Finder.AddPropertyReferencesWithStructARO(Data->GetClass(), Data);
 		for (UObject* Reference : References)
 		{
 			const FString PackageName = Reference->GetOutermost()->GetName();
@@ -531,84 +673,75 @@ void UAgAssetManager::ModifyCook(
 				PackagesToCook.AddUnique(FName(*PackageName));
 			}
 		}
-	};
-	LoadForCook(*CombatRules, CombatRulesFile);
-	LoadForCook(*CameraData, CameraDataFile);
-	LoadForCook(*MontageTimelines, MontageTimelinesFile);
+	}
 
-	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다.
-	IAssetRegistry& Registry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
-	Registry.SearchAllAssets(true);
-	TArray<FAssetData> Assets;
-	Registry.GetAssetsByClass(UAgCharacterData::StaticClass()->GetClassPathName(), Assets, true);
+	// 쓰는 곳이 없는 정의는 배포하지 않습니다.
+	TSet<FName> UsedAbilities;
+	TSet<FName> UsedEffects;
 	TSet<FName> UsedMontages;
-	for (const FAssetData& Asset : Assets)
+	TSet<FName> UsedProjectiles;
+	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
-		UAgCharacterData* Data = Cast<UAgCharacterData>(Asset.GetAsset());
-		if (!Data)
+		UsedAbilities.Append(Pair.Value->Abilities);
+		UsedEffects.Append(Pair.Value->Effects);
+		for (const TPair<FName, TObjectPtr<UAnimMontage>>& Montage : Pair.Value->Montages)
 		{
-			UE_LOG(LogAg, Error, TEXT("Cannot load character data for cook: %s"), *Asset.GetObjectPathString());
-			continue;
-		}
-		LoadForCook(*Data, Data->JsonFileName);
-		for (const TPair<FName, TObjectPtr<UAnimMontage>>& Pair : Data->Montages)
-		{
-			if (Pair.Value)
+			if (Montage.Value)
 			{
-				UsedMontages.Add(FName(*Pair.Value->GetPathName()));
+				UsedMontages.Add(FName(*Montage.Value->GetPathName()));
 			}
 		}
 	}
-	// 시간표는 캐릭터가 재생하는 몽타주에만 둡니다.
+	const UEnum* CodeEffects = StaticEnum<EAgEffect>();
+	for (int32 Index = 0; Index < CodeEffects->NumEnums() - 1; ++Index)
+	{
+		UsedEffects.Add(AgEffectData::Id(static_cast<EAgEffect>(CodeEffects->GetValueByIndex(Index))));
+	}
 	for (const TPair<FName, FAgMontageTimeline>& Pair : MontageTimelines->Timelines)
 	{
 		if (!UsedMontages.Contains(Pair.Key))
 		{
 			UE_LOG(LogAg, Error, TEXT("%s: no character data plays this montage (%s)"), MontageTimelinesFile, *Pair.Key.ToString());
 		}
+		for (const FAgTimelineSpawnProjectile& Shot : Pair.Value.SpawnProjectile)
+		{
+			UsedProjectiles.Add(Shot.ProjectileId);
+		}
 	}
-	// UFS에 포함되지만 로더에 연결되지 않은 파일도 배포하지 않습니다.
+	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
+	{
+		if (!UsedAbilities.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: no character uses this ability (%s)"), AbilitiesFile, *Pair.Key.ToString());
+		}
+	}
+	for (const TPair<FName, TObjectPtr<UGameplayEffect>>& Pair : Effects->Effects)
+	{
+		if (!UsedEffects.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: neither C++ nor a character uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
+		}
+	}
+	for (const TPair<FName, FAgProjectileDefinition>& Pair : Projectiles->Projectiles)
+	{
+		if (!UsedProjectiles.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: no montage timeline launches this projectile (%s)"), ProjectilesFile, *Pair.Key.ToString());
+		}
+	}
+
+	// UFS에 포함되지만 로더가 읽지 않는 파일도 배포하지 않습니다.
+	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(), FString(CameraDataFile).ToLower(), FString(EffectsFile).ToLower(),
+	    FString(ProjectilesFile).ToLower(), FString(MontageTimelinesFile).ToLower(), FString(AbilitiesFile).ToLower(),
+	    FString(CharactersFile).ToLower()};
 	TArray<FString> Files;
 	IFileManager::Get().FindFiles(Files, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
 	for (const FString& File : Files)
 	{
-		if (!ValidatedFiles.Contains(File.ToLower()))
+		if (!DataFiles.Contains(File.ToLower()))
 		{
 			UE_LOG(LogAg, Error, TEXT("Cannot stage unvalidated JSON: %s"), *File);
 		}
 	}
 }
-
-void UAgAssetManager::ReloadJsonFiles(const TArray<FString>& FileNames)
-{
-	for (const FString& FileName : FileNames)
-	{
-		// 다시 읽으면 기록이 바뀌므로 대상을 먼저 모읍니다.
-		TArray<UObject*> Objects;
-		for (const TPair<TWeakObjectPtr<UObject>, FString>& Entry : LoadedFiles)
-		{
-			UObject* Object = Entry.Key.Get();
-			if (Object && Entry.Value.Equals(FileName, ESearchCase::IgnoreCase))
-			{
-				Objects.Add(Object);
-			}
-		}
-		if (Objects.IsEmpty())
-		{
-			continue;
-		}
-		bool bSucceeded = true;
-		for (UObject* Object : Objects)
-		{
-			bSucceeded &= LoadJsonValues(*Object, FileName);
-		}
-		if (bSucceeded && GEngine)
-		{
-			// 스탯은 스폰할 때 한 번 넣고 다시 넣지 않으므로 다음 PIE부터 바뀝니다(구현 계획서 'JSON과 DataAsset' 다시 읽기).
-			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
-			    FString::Printf(TEXT("Data/%s reloaded. Spawn settings apply on the next play start."), *FileName));
-		}
-	}
-}
-
 #endif

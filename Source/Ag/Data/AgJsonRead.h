@@ -9,7 +9,7 @@
 #include "JsonObjectConverter.h"
 #include "UObject/UnrealType.h"
 
-/** 어빌리티 목록과 몽타주 시간표가 함께 쓰는 고정 스키마 JSON 읽기. 오류는 필드 경로와 함께 Errors에 더합니다. */
+/** 어빌리티, 효과, 몽타주 시간표가 함께 쓰는 고정 스키마 JSON 읽기. 오류는 필드 경로와 함께 Errors에 더합니다. */
 namespace AgJsonRead
 {
 	using FObject = TSharedPtr<FJsonObject>;
@@ -64,6 +64,31 @@ namespace AgJsonRead
 			return false;
 		}
 		Out = static_cast<float>(Value->AsNumber());
+		return true;
+	}
+
+	/** 네이티브 태그 이름의 배열을 읽습니다. 모르는 태그와 같은 태그를 두 번 쓴 것은 오류입니다. */
+	inline bool Tags(const FJsonObject& Object, const FString& Key, const FString& Path, FGameplayTagContainer& Out, TArray<FString>& Errors)
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
+		if (!Object.TryGetArrayField(Key, Values))
+		{
+			Errors.Add(Path + TEXT(".") + Key + TEXT(": expected tag array"));
+			return false;
+		}
+		for (const TSharedPtr<FJsonValue>& Value : *Values)
+		{
+			const FGameplayTag Tag =
+			    Value->Type == EJson::String ? FGameplayTag::RequestGameplayTag(FName(*Value->AsString()), false) : FGameplayTag();
+			if (!Tag.IsValid() || Out.HasTagExact(Tag))
+			{
+				Errors.Add(Path + TEXT(".") + Key + TEXT(": unknown or duplicate native tag"));
+			}
+			else
+			{
+				Out.AddTag(Tag);
+			}
+		}
 		return true;
 	}
 

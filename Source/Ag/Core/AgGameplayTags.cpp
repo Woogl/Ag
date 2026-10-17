@@ -88,6 +88,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_DamageMultiplier, "SetByCaller.DamageMultiplier", "공격의 대미지 배율");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_PoiseMultiplier, "SetByCaller.PoiseMultiplier", "공격의 PP 배율");
 
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage, "Effect.Damage", "대미지 효과(Effects.json의 Damage)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Cooldown, "Effect.Cooldown", "행동 쿨다운 효과(Effects.json의 Cooldown)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_Flinch, "Effect.Damage.Reaction.Flinch", "피격 반응 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockUp, "Effect.Damage.Reaction.KnockUp", "피격 반응 넉업");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockBack, "Effect.Damage.Reaction.KnockBack", "피격 반응 넉백");

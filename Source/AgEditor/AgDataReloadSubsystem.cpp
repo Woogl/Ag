@@ -43,16 +43,13 @@ void UAgDataReloadSubsystem::Deinitialize()
 
 void UAgDataReloadSubsystem::HandleFilesChanged(const TArray<FFileChangeData>& Changes)
 {
-	TArray<FString> FileNames;
+	// 파일 사이에 참조가 있으므로, 하나가 바뀌어도 모든 파일을 함께 다시 읽습니다.
 	for (const FFileChangeData& Change : Changes)
 	{
 		if (FPaths::GetExtension(Change.Filename).Equals(TEXT("json"), ESearchCase::IgnoreCase))
 		{
-			FileNames.AddUnique(FPaths::GetCleanFilename(Change.Filename));
+			UAgAssetManager::Get().ReloadJsonData();
+			return;
 		}
-	}
-	if (!FileNames.IsEmpty())
-	{
-		UAgAssetManager::Get().ReloadJsonFiles(FileNames);
 	}
 }

@@ -8,6 +8,7 @@
 - '몽타주 노티파이' 표와 공용 지점 노티파이는 시간표 항목으로 바꿉니다. 연출(GameplayCue)은 몽타주 노티파이로 남깁니다.
 - '한 프레임 앞에 둔다' 같은 배치 요령은 시간표 판정 규칙의 순서로 대신합니다.
 - 기능의 실행 시점(구간 기능과 시작 기능의 구분)은 이 문서를 고칠 때 다시 정합니다.
+- 같은 날 데이터를 종류별 JSON으로 나눴습니다([JSON 데이터](<JSON 데이터.md>)). 캐릭터 값은 `Characters.json`, 행동 정의는 `Abilities.json`(두 캐릭터가 같은 정의를 함께 씀), GameplayEffect는 `Effects.json`의 효과 정의입니다. 이 문서의 데이터 변경과 예시는 이 구조로 다시 씁니다.
 
 ## 결정과 목표
 
@@ -156,7 +157,7 @@ State.Busy는 지금 규칙을 그대로 둡니다. 플레이어 행동(Ability.
 | 보스 AI | 플레이어의 평타·점프 공격 시작 반응을 엔진 발동 알림(AbilityActivatedCallbacks)과 행동 태그, 공격 대상으로 판단. 페이즈 전환이 정상으로 끝나면 2페이즈로 넘어감 | `Event.BasicAttackStarted`, 어빌리티의 2페이즈 진입 |
 
 - `State.Airborne`은 IsFalling 검사를 태그로 바꾼 것입니다. 점프 공격은 RequiredTags에 State.Jumping과 State.Airborne을, 처형 대상 조건과 도약 착지 타격은 BlockedTags에 State.Airborne을 둡니다. 판정은 지금과 같습니다.
-- 처형 사망처럼 이어 재생할 사망 모션은 Boss.json의 `DeathMotions`(`{"Executed": "ExecutedDeath"}`)에 둡니다. 사망할 때 재생 중인 모션이 여기 있으면 그 위치에서 이어 재생하고 끝난 뒤 래그돌로 바꿉니다(전투 시스템 '사망 처리').
+- 처형 사망처럼 이어 재생할 사망 모션은 보스 데이터(`Characters.json`의 `Boss`)의 `DeathMotions`(`{"Executed": "ExecutedDeath"}`)에 둡니다. 사망할 때 재생 중인 모션이 여기 있으면 그 위치에서 이어 재생하고 끝난 뒤 래그돌로 바꿉니다(전투 시스템 '사망 처리').
 - 락온 대상과 처형 안내는 행동 ID 대신 태그로 찾은 스펙의 LockOn 기능과 Target 조건을 읽습니다.
 
 ## 행동별 이관표
@@ -187,18 +188,18 @@ State.Busy는 지금 규칙을 그대로 둡니다. 플레이어 행동(Ability.
 
 | 대상 | 변경 |
 | - | - |
-| 평타 | `PlayMontageAndWait.MontageIds`, `bAllowRetrigger: true`. Player.json 최상위 `BasicAttackMontageIds`를 지웁니다. |
+| 평타 | `PlayMontageAndWait.MontageIds`, `bAllowRetrigger: true`. 플레이어 데이터(`Characters.json`의 `Player`)의 `BasicAttackMontageIds`를 지웁니다. |
 | 점프 | `Tasks: {"Jump": {}}` |
 | 점프 공격 | RequiredTags에 State.Airborne. `PhysicsTranslation`, `WaitLanding.Land` |
 | 회피, 극한 회피 | 회피는 `NoMoveInputMontageId`. 보상 셋(GrantResources, TimedTag, SlowMotion)은 PerfectDodge로 옮기고 RefundCost를 더합니다. |
 | 가드, 패리 | 가드는 OwnedTags State.Guarding과 TimedTag만 남깁니다. GrantResources는 Parry로 옮깁니다. |
-| 처형 | `Target`. Player.json 최상위 `ExecutionDistance`를 `MotionWarping.Alignment.StopDistance`로 옮깁니다. |
+| 처형 | `Target`. 플레이어 데이터의 `ExecutionDistance`를 `MotionWarping.Alignment.StopDistance`로 옮깁니다. |
 | 궁극기 | `PlayCutscene.UltimateCamera.NextSection`, `Attack.Finish.Range`(TargetQuery.Finish에서) |
 | 피격 반응 | 넉업·넉백·가드 밀림·가드 브레이크에 FaceTarget. 넉업에 KnockUpLaunch·WaitFalling·WaitLanding·PlayMontage |
 | 보스 공격 패턴 7개 | Tags를 `Ability.Boss.Pattern.Attack`으로 |
 | 도약 | `PhysicsTranslation`, `WaitLanding.Land`, `CameraShake.Landing`(카메라 데이터의 LeapLandingShake·LeapLandingShakeRange에서), `Attack.LandingHit`의 Range·BlockedTags(TargetQuery.Landing에서) |
 | 그로기, 처형 피격, 페이즈 전환 | 그로기는 `bStartOnGround`·`GroggyRecovery`·`RefillPP`. 처형 피격 스펙을 더하고 그로기의 HoldTag.Executed·충돌 설정을 그리로 옮깁니다. 페이즈 전환에 RefillPP |
-| 사망 | 두 파일의 Death 스펙을 지우고 Boss.json에 `DeathMotions`를 더합니다. |
+| 사망 | `Abilities.json`의 Death 정의와 두 캐릭터 `Abilities`의 `Death`를 지우고 보스 데이터에 `DeathMotions`를 더합니다. |
 
 가드와 패리:
 
@@ -342,7 +343,7 @@ State.Busy는 지금 규칙을 그대로 둡니다. 플레이어 행동(Ability.
 
 | 순서 | 작업 |
 | - | - |
-| 1 | 새 기능 Params와 실행 시점의 스키마, 일반화한 검증, Player/Boss JSON 이관 |
+| 1 | 새 기능 Params와 실행 시점의 스키마, 일반화한 검증, `Abilities.json`·`Characters.json` 이관 |
 | 2 | 공통 Ability: 시작·구간·지점·완료 기능 실행, 행동 대상, 모션 선택과 전환, 종료 규칙. 공용 지점 노티파이 |
 | 3 | 이벤트 반응 스펙, 입력 계층, 캐릭터(State.Airborne, 점프·착지 모션, 사망 처리), 보스 그로기 시간, 피격 처리, 보스 AI |
 | 4 | 위 표의 몽타주 노티파이 교체 |
@@ -355,4 +356,4 @@ State.Busy는 지금 규칙을 그대로 둡니다. 플레이어 행동(Ability.
 | 동작 | 평타 콤보와 초기화, 점프와 착지 모션, 점프 공격, 회피와 극한 회피(한 번만), 가드·패리·가드 밀림·후딜 복귀, 락온, 처형, 궁극기 순서(컷신, 베기 선, 시간 정지 해제 뒤 마무리), 넉업·넉백, 보스 8개 패턴과 재생 배율, 그로기(공중 시작, 시간, HUD, 처형 피격, PP 회복), 페이즈 전환, 사망과 처형 사망이 지금과 같습니다. 단 '동작이 달라지는 곳'은 표를 따릅니다. |
 | 데이터 | 잘못된 기능·참조·모션·섹션은 로드할 때 파일, 행동 ID, 필드 경로와 함께 오류가 납니다. |
 
-반영할 문서: [AbilityTask 기반 어빌리티 설계안](<AbilityTask 기반 어빌리티 설계안.md>), [캐릭터와 GAS](<캐릭터와 GAS.md>), [입력 처리](<입력 처리.md>), [보스](<보스.md>), [전투 규칙](<전투 규칙.md>), [대미지와 피격 처리](<대미지와 피격 처리.md>), [애니메이션과 이동](<애니메이션과 이동.md>), [사망 처리](<사망 처리.md>), [카메라, HUD, 화면 UI, 게임 플로우](<카메라, HUD, 화면 UI, 게임 플로우.md>), [JSON과 DataAsset](<JSON과 DataAsset.md>), [데이터 위치표](<데이터 위치표.md>), [구현 위치표](<구현 위치표.md>)
+반영할 문서: [AbilityTask 기반 어빌리티 설계안](<AbilityTask 기반 어빌리티 설계안.md>), [캐릭터와 GAS](<캐릭터와 GAS.md>), [입력 처리](<입력 처리.md>), [보스](<보스.md>), [전투 규칙](<전투 규칙.md>), [대미지와 피격 처리](<대미지와 피격 처리.md>), [애니메이션과 이동](<애니메이션과 이동.md>), [사망 처리](<사망 처리.md>), [카메라, HUD, 화면 UI, 게임 플로우](<카메라, HUD, 화면 UI, 게임 플로우.md>), [JSON 데이터](<JSON 데이터.md>), [데이터 위치표](<데이터 위치표.md>), [구현 위치표](<구현 위치표.md>)

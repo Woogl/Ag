@@ -2,11 +2,6 @@
 
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgEffect_Resource.h"
-#include "AbilitySystem/AgEffect_ResourceDrain.h"
-#include "AbilitySystem/AgEffect_TimedTag.h"
-#include "AbilitySystem/AgEffect_ParryPPLoss.h"
-#include "AbilitySystem/AgEffect_PPRefill.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
@@ -29,6 +24,7 @@
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgEffectData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgCameraData.h"
 #include "Components/CapsuleComponent.h"
@@ -54,7 +50,7 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Character);
 	const UAgCharacterData* Data = Character->GetCharacterData();
 	ExecutionMontages = Data->Montages;
-	ExecutionProjectiles = Data->Projectiles;
+	ExecutionProjectiles = UAgAssetManager::Get().GetProjectiles();
 	WarpStopDistance = Data->StopDistance;
 	if (const UAgPlayerData* PlayerData = Cast<UAgPlayerData>(Data))
 	{
@@ -79,10 +75,12 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	const FAgAbilityTasks& Tasks = ExecutionDefinition.Tasks;
 	if (Tasks.bHasDrainResource)
 	{
-		const FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(UAgEffect_ResourceDrain::StaticClass());
-		const float Amount = -Tasks.DrainResource.AmountPerSecond * Spec.Data->GetPeriod();
-		UAgEffect_Resource::SetAmounts(*Spec.Data, Tasks.DrainResource.Resource == EAgResource::SP ? Amount : 0.f,
-		    Tasks.DrainResource.Resource == EAgResource::MP ? Amount : 0.f, Tasks.DrainResource.Resource == EAgResource::UP ? Amount : 0.f);
+		// 주기마다 초당 소모량 × 주기만큼 줄입니다.
+		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, EAgEffect::ResourceDrain);
+		if (Spec.IsValid())
+		{
+			Tasks.DrainResource.AddToSpec(*Spec.Data);
+		}
 		const FActiveGameplayEffectHandle Applied = ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 		if (!IsActive())
 		{
@@ -322,7 +320,7 @@ UAgAbilityTask_HoldTag* UAgGameplayAbility::HoldConfiguredTag(FName ParamsId)
 	const FAgHoldTagParams* Params = ExecutionDefinition.Tasks.HoldTag.Find(ParamsId);
 	if (!Params)
 	{
-		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s.Tasks.HoldTag.%s: missing"), *GetAgCharacter()->GetCharacterData()->JsonFileName,
+		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s.Tasks.HoldTag.%s: missing"), *GetAgCharacter()->GetCharacterData()->GetName(),
 		    *GetAbilityId().ToString(), *ParamsId.ToString());
 		return nullptr;
 	}
@@ -338,9 +336,24 @@ void UAgGameplayAbility::ApplyReward(FName ParamsId)
 	{
 		return;
 	}
-	const FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(UAgEffect_Resource::StaticClass());
-	UAgEffect_Resource::SetAmounts(*Spec.Data, Params->SP, Params->MP, Params->UP);
-	ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, Spec);
+	const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::Resource);
+	if (Spec.IsValid())
+	{
+		Params->AddToSpec(*Spec.Data);
+		ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, Spec);
+	}
+}
+
+FActiveGameplayEffectHandle UAgGameplayAbility::ApplyTimedTag(const FAgTimedTagParams& Params)
+{
+	const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::TimedTag);
+	if (!Spec.IsValid())
+	{
+		return FActiveGameplayEffectHandle();
+	}
+	Spec.Data->SetDuration(Params.Duration, /*bLockDuration*/ true);
+	Spec.Data->DynamicGrantedTags.AddTag(Params.Tag);
+	return ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, Spec);
 }
 
 void UAgGameplayAbility::ApplySingleAttack(
@@ -395,7 +408,7 @@ void UAgGameplayAbility::StartGuard(bool bOpenParry)
 		if (Params)
 		{
 			UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-			const FActiveGameplayEffectHandle Applied = UAgEffect_TimedTag::Apply(ASC, Params->Tag, Params->Duration);
+			const FActiveGameplayEffectHandle Applied = ApplyTimedTag(*Params);
 			// 태그 획득 콜백이 Ability를 끝내면 EndAbility는 아직 이 핸들을 받지 못했습니다.
 			if (!IsActive() || bEnding)
 			{
@@ -490,8 +503,12 @@ void UAgGameplayAbility::HandleEvent(FGameplayEventData Event)
 		}
 		if (const AAgCharacterBase* Attacker = Cast<AAgCharacterBase>(Event.ContextHandle.GetInstigator()))
 		{
-			const FGameplayEffectSpecHandle Spec = MakeOutgoingGameplayEffectSpec(UAgEffect_ParryPPLoss::StaticClass());
-			GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(*Spec.Data, Attacker->GetAbilitySystemComponent());
+			const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::ParryPPLoss);
+			if (Spec.IsValid())
+			{
+				GetAbilitySystemComponentFromActorInfo()->ApplyGameplayEffectSpecToTarget(
+				    *Spec.Data, Attacker->GetAbilitySystemComponent());
+			}
 		}
 		if (!IsActive())
 		{
@@ -511,14 +528,20 @@ void UAgGameplayAbility::HandleEvent(FGameplayEventData Event)
 		{
 			return;
 		}
-		const FGameplayEffectSpecHandle Refund = MakeOutgoingGameplayEffectSpec(UAgEffect_Resource::StaticClass());
-		UAgEffect_Resource::SetAmounts(*Refund.Data, SPSpent, 0.f, 0.f);
-		ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, Refund);
+		const FGameplayEffectSpecHandle RefundSpec = MakeEffectSpec(EAgEffect::Resource);
+		if (RefundSpec.IsValid())
+		{
+			// 이 회피에 쓴 SP를 돌려받습니다.
+			FAgGrantResourcesParams Refund;
+			Refund.SP = SPSpent;
+			Refund.AddToSpec(*RefundSpec.Data);
+			ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, RefundSpec);
+		}
 		if (!IsActive())
 		{
 			return;
 		}
-		UAgEffect_TimedTag::Apply(GetAbilitySystemComponentFromActorInfo(), Chance.Tag, Chance.Duration);
+		ApplyTimedTag(Chance);
 		if (!IsActive())
 		{
 			return;
@@ -662,7 +685,7 @@ void UAgGameplayAbility::HandleMotionCompleted()
 	}
 	if (Id == TEXT("Groggy") || Id == TEXT("PhaseTransition"))
 	{
-		ApplyGameplayEffectToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, GetDefault<UAgEffect_PPRefill>(), 1.f);
+		ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, MakeEffectSpec(EAgEffect::PPRefill));
 		if (Id == TEXT("PhaseTransition") && IsActive())
 		{
 			CastChecked<AAgBossCharacter>(GetAgCharacter())->EnterPhase2();

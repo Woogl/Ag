@@ -1,0 +1,9 @@
+{
+  "SwordWave": {
+    "ProjectileClass": "/Game/Projectiles/BP_SwordWave.BP_SwordWave_C",
+    "Params": {
+      "Speed": 1500,
+      "Range": 2000
+    }
+  }
+}

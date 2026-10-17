@@ -16,6 +16,7 @@
 #include "Components/PostProcessComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgEffectData.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -29,6 +30,8 @@
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
+	CharacterDataClass = UAgPlayerData::StaticClass();
+
 	// 캐릭터는 이동 방향을 바라보고, 카메라는 마우스로 돌립니다(플레이어 사양 '이동').
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -536,11 +539,9 @@ float AAgPlayerCharacter::GetMoveSpeedMultiplier() const
 
 void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
 {
-	const UAgPlayerData* PlayerData = CastChecked<UAgPlayerData>(GetCharacterData());
 	if (Data.NewValue < Data.OldValue)
 	{
-		RestartRegenDelay(SPRegenDelay, AgGameplayTags::State_Regen_SPDelay,
-		    Data.NewValue <= 0.f ? PlayerData->SPRegenDelayEmpty : PlayerData->SPRegenDelay);
+		RestartRegenDelay(SPRegenDelay, Data.NewValue <= 0.f ? EAgEffect::SPRegenDelayEmpty : EAgEffect::SPRegenDelay);
 	}
 }
 
@@ -588,7 +589,7 @@ TArray<AAgCharacterBase*> AAgPlayerCharacter::FindEnemies(float Range) const
 	UTargetingSubsystem* Targeting = UTargetingSubsystem::Get(GetWorld());
 	if (!Data->EnemyTargeting || !Targeting)
 	{
-		UE_LOG(LogAg, Error, TEXT("Enemy targeting preset is not set (DA_Player > EnemyTargeting)."));
+		UE_LOG(LogAg, Error, TEXT("Enemy targeting preset is not set (Characters.json > Player > EnemyTargeting)."));
 		return {};
 	}
 

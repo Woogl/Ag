@@ -4,7 +4,6 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
-#include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
@@ -16,6 +15,7 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "EngineUtils.h"
+#include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
 #include "GameFramework/PlayerController.h"
 #include "InputAction.h"
@@ -72,7 +72,7 @@ void UAgHUDWidget::HandlePlayerSPChanged(const FOnAttributeChangeData& Data)
 {
 	// 대미지 GE가 SP를 줄이는 것은 가드와 가드 브레이크뿐입니다(전투 시스템 '피격 처리 순서').
 	const UGameplayEffect* Effect = Data.GEModData ? Data.GEModData->EffectSpec.Def.Get() : nullptr;
-	if (Data.NewValue < Data.OldValue && Effect && Effect->IsA<UAgEffect_Damage>())
+	if (Data.NewValue < Data.OldValue && Effect && Effect->GetAssetTags().HasTagExact(AgGameplayTags::Effect_Damage))
 	{
 		bPlayerSPGuardDrop = true;
 	}

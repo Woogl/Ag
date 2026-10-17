@@ -1,13 +1,13 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
-#include "AbilitySystem/AgEffect_Damage.h"
-#include "Abilities/GameplayAbility.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgCollision.h"
+#include "Data/AgEffectData.h"
 #include "Engine/World.h"
 
 namespace
@@ -109,9 +109,13 @@ void UAgAbilityTask_Attack::Activate()
 			{
 				continue;
 			}
-			const FGameplayEffectSpecHandle Spec = Ability->MakeOutgoingGameplayEffectSpec(UAgEffect_Damage::StaticClass());
-			UAgEffect_Damage::SetAttack(*Spec.Data, Params.MakeHit(bFinisher), HitLocation.Get(Target->GetActorLocation()));
-			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
+			const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
+			if (Spec.IsValid())
+			{
+				Spec.Data->GetContext().AddOrigin(HitLocation.Get(Target->GetActorLocation()));
+				Params.MakeHit(bFinisher).AddToSpec(*Spec.Data);
+				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
+			}
 		}
 		EndTask();
 		return;
@@ -191,9 +195,13 @@ void UAgAbilityTask_Attack::SweepWeapon()
 			// 무적 등으로 피해가 없어도 한 판정에서는 대상마다 한 번만 처리합니다.
 			TouchedActors.Add(Target);
 			const FVector Location = Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint;
-			const FGameplayEffectSpecHandle Spec = Ability->MakeOutgoingGameplayEffectSpec(UAgEffect_Damage::StaticClass());
-			UAgEffect_Damage::SetAttack(*Spec.Data, Hit, Location);
-			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
+			const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
+			if (Spec.IsValid())
+			{
+				Spec.Data->GetContext().AddOrigin(Location);
+				Hit.AddToSpec(*Spec.Data);
+				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
+			}
 			if (!IsActive() || !Ability->IsActive())
 			{
 				EndTask();

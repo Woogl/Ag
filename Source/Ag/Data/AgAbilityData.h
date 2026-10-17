@@ -8,6 +8,7 @@
 
 class FJsonObject;
 class UAgCharacterData;
+class UGameplayEffect;
 
 USTRUCT()
 struct FAgAbilityActivation
@@ -92,10 +93,25 @@ struct FAgAbilityData
 	bool HasSameGrantSettings(const FAgAbilityData& Other) const;
 };
 
+/** Abilities.json의 값: 어빌리티 ID마다 정의(구현 계획서 'JSON 데이터'). 캐릭터는 어빌리티 목록에 ID를 적어 씁니다. */
+UCLASS()
+class UAgAbilitySet : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
+	TMap<FName, FAgAbilityData> Abilities;
+};
+
 namespace AgAbilityData
 {
-	/** 고정 스키마만 읽습니다. 실패 시 OutAbilities를 변경하지 않습니다. */
-	bool Parse(const FJsonObject& Json, TArray<FAgAbilityData>& OutAbilities, TArray<FString>& Errors);
-	void ValidateReferences(const UAgCharacterData& Data, TArray<FString>& Errors);
+	/** 고정 스키마만 읽고, C++ 사건이 요구하는 이름을 검사합니다. 실패 시 OutAbilities를 변경하지 않습니다. */
+	bool Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& OutAbilities, TArray<FString>& Errors);
+
+	/** 캐릭터의 어빌리티·효과 ID와, 그 어빌리티들이 이 캐릭터에서 쓰는 몽타주를 검사합니다. 오류에는 Path를 앞에 붙입니다. */
+	void ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities,
+	    const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const FString& Path, TArray<FString>& Errors);
+
 	TArray<FName> MontageIds(const UAgCharacterData& Data, const FAgAbilityData& Ability);
 }

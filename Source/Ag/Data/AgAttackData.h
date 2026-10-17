@@ -6,6 +6,8 @@
 #include "GameplayTagContainer.h"
 #include "AgAttackData.generated.h"
 
+struct FGameplayEffectSpec;
+
 /** 전투 시스템 '피격 반응' */
 UENUM(BlueprintType)
 enum class EAgHitReaction : uint8
@@ -61,6 +63,9 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 
 	/** 카메라 '상황별 단계': 처형의 마지막 일격과 궁극기 마무리. 데이터가 아니라 그 어빌리티가 켭니다. */
 	bool bFinisher = false;
+
+	/** 이 타의 값을 대미지 효과 스펙에 넣습니다: 배율과 충전은 SetByCaller, 반응·가드 불가·마지막 일격은 동적 에셋 태그 */
+	void AddToSpec(FGameplayEffectSpec& Spec) const;
 };
 
 /** 투사체를 쏘는 행동마다 정하는 값 (전투 시스템 '검기') */

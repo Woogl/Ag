@@ -1,0 +1,170 @@
+{
+  "Player": {
+    "DisplayName": "",
+    "Attributes": {
+      "HP": 1000,
+      "MaxHP": 1000,
+      "SP": 100,
+      "MaxSP": 100,
+      "MP": 0,
+      "MaxMP": 100,
+      "UP": 0,
+      "MaxUP": 100,
+      "PP": 0,
+      "MaxPP": 0,
+      "ATK": 100,
+      "DEF": 50,
+      "MOV": 400
+    },
+    "Abilities": [
+      "BasicAttack",
+      "Jump",
+      "JumpAttack",
+      "Dodge",
+      "DodgeCounter",
+      "Guard",
+      "Skill",
+      "Ultimate",
+      "Execution",
+      "Sprint",
+      "LockOn",
+      "KnockBack",
+      "KnockUp",
+      "GuardPushback",
+      "GuardBreak",
+      "Death"
+    ],
+    "DeathPresentationTime": 3,
+    "StopDistance": 100,
+    "InputBufferTime": 0.3,
+    "GuardSPCostRatio": 0.25,
+    "GuardMoveSpeedRatio": 0.65,
+    "ParryPPRatio": 0.08,
+    "UltimateSlowMotionSpeed": 0.3,
+    "UltimateSlowMotionDuration": 0.8,
+    "UltimateSlashDistance": {
+      "Min": 300,
+      "Max": 1000
+    },
+    "UltimateSlashHeight": {
+      "Min": 0,
+      "Max": 300
+    },
+    "LockOnRange": 2000,
+    "LockOnReleaseRange": 3000,
+    "SprintSpeedRatio": 1.5,
+    "Effects": [
+      "SPRegen",
+      "SPRegenGuarding",
+      "GroggyImmune"
+    ],
+    "Montages": {
+      "BasicAttack1": "/Game/Animations/AM_Player_BasicAttack1.AM_Player_BasicAttack1",
+      "BasicAttack2": "/Game/Animations/AM_Player_BasicAttack2.AM_Player_BasicAttack2",
+      "BasicAttack3": "/Game/Animations/AM_Player_BasicAttack3.AM_Player_BasicAttack3",
+      "BasicAttack4": "/Game/Animations/AM_Player_BasicAttack4.AM_Player_BasicAttack4",
+      "BasicAttack5": "/Game/Animations/AM_Player_BasicAttack5.AM_Player_BasicAttack5",
+      "Roll": "/Game/Animations/AM_Player_Roll.AM_Player_Roll",
+      "Backstep": "/Game/Animations/AM_Player_Backstep.AM_Player_Backstep",
+      "GuardFlinch": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch",
+      "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
+      "GuardBreak": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak",
+      "Parry": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
+      "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
+      "DodgeCounter": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
+      "Jump": "/Game/Animations/AM_Player_Jump.AM_Player_Jump",
+      "Land": "/Game/Animations/AM_Player_Land.AM_Player_Land",
+      "JumpAttack": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
+      "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
+      "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
+      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+      "KnockBack": "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack",
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "KnockUpFall": "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall",
+      "GetUp": "/Game/Animations/AM_GetUp.AM_GetUp"
+    },
+    "ExecutionDistance": 95,
+    "EnemyTargeting": "/Game/Data/TP_Enemy.TP_Enemy",
+    "BasicAttackMontageIds": [
+      "BasicAttack1",
+      "BasicAttack2",
+      "BasicAttack3",
+      "BasicAttack4",
+      "BasicAttack5"
+    ]
+  },
+  "Boss": {
+    "DisplayName": "커스터",
+    "Attributes": {
+      "HP": 3000,
+      "MaxHP": 3000,
+      "SP": 0,
+      "MaxSP": 0,
+      "MP": 0,
+      "MaxMP": 0,
+      "UP": 0,
+      "MaxUP": 0,
+      "PP": 1500,
+      "MaxPP": 1500,
+      "ATK": 150,
+      "DEF": 100,
+      "MOV": 250
+    },
+    "Abilities": [
+      "DoubleStrike",
+      "Sweep",
+      "DashThrust",
+      "LeapSlam",
+      "QuintupleStrike",
+      "SwordWave",
+      "JumpSlam",
+      "Backstep",
+      "KnockBack",
+      "KnockUp",
+      "Groggy",
+      "PhaseTransition",
+      "Death"
+    ],
+    "DeathPresentationTime": 4,
+    "StopDistance": 150,
+    "PatternPlayRate": 0.8,
+    "NearDistance": 300,
+    "FarDistance": 1000,
+    "RetryInterval": 0.5,
+    "PatternRecoveryWaitPhase1": {
+      "Min": 1,
+      "Max": 2
+    },
+    "PatternRecoveryWaitPhase2": {
+      "Min": 0.5,
+      "Max": 1.2
+    },
+    "FixedRecoveryWait": 1,
+    "Phase2HPRatio": 0.5,
+    "Effects": [
+      "PPRegen"
+    ],
+    "Montages": {
+      "DoubleStrike": "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike",
+      "Sweep": "/Game/Animations/AM_Boss_Sweep.AM_Boss_Sweep",
+      "DashThrust": "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust",
+      "LeapSlam": "/Game/Animations/AM_Boss_LeapSlam.AM_Boss_LeapSlam",
+      "QuintupleStrike": "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike",
+      "SwordWave": "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave",
+      "JumpSlam": "/Game/Animations/AM_Boss_JumpSlam.AM_Boss_JumpSlam",
+      "Backstep": "/Game/Animations/AM_Boss_Backstep.AM_Boss_Backstep",
+      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
+      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
+      "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath",
+      "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
+      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+      "KnockBack": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "KnockUpFall": "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall",
+      "GetUp": "/Game/Animations/AM_GetUp.AM_GetUp"
+    },
+    "LockOnBone": "spine_05",
+    "ExecutionPromptBone": "head",
+    "AIStateTree": "/Game/AI/ST_Boss.ST_Boss"
+  }
+}

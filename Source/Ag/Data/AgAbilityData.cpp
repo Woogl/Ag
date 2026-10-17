@@ -3,8 +3,6 @@
 #include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgJsonRead.h"
-#include "Data/AgMontageTimeline.h"
-#include "Core/AgAssetManager.h"
 #include "Animation/AnimMontage.h"
 #include "Dom/JsonObject.h"
 #include "JsonObjectConverter.h"
@@ -14,30 +12,6 @@
 namespace
 {
 	using namespace AgJsonRead;
-
-	bool Tags(const FJsonObject& Object, const FString& Key, const FString& Path, FGameplayTagContainer& Out, TArray<FString>& Errors)
-	{
-		const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
-		if (!Object.TryGetArrayField(Key, Values))
-		{
-			Errors.Add(Path + TEXT(".") + Key + TEXT(": expected tag array"));
-			return false;
-		}
-		for (const TSharedPtr<FJsonValue>& Value : *Values)
-		{
-			const FGameplayTag Tag =
-			    Value->Type == EJson::String ? FGameplayTag::RequestGameplayTag(FName(*Value->AsString()), false) : FGameplayTag();
-			if (!Tag.IsValid() || Out.HasTagExact(Tag))
-			{
-				Errors.Add(Path + TEXT(".") + Key + TEXT(": unknown or duplicate native tag"));
-			}
-			else
-			{
-				Out.AddTag(Tag);
-			}
-		}
-		return true;
-	}
 
 	template <typename T>
 	void ReadMap(const FJsonObject& Tasks, const TCHAR* Name, TMap<FName, T>& Out, const FString& Path, TArray<FString>& Errors)
@@ -196,142 +170,13 @@ bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
 	       FAgAbilityActivation::StaticStruct()->CompareScriptStruct(&Activation, &Other.Activation, 0);
 }
 
-bool AgAbilityData::Parse(const FJsonObject& Json, TArray<FAgAbilityData>& OutAbilities, TArray<FString>& Errors)
+namespace
 {
-	const int32 Before = Errors.Num();
-	const TArray<TSharedPtr<FJsonValue>>* Entries = nullptr;
-	if (!Json.TryGetArrayField(TEXT("Abilities"), Entries))
+	/** C++ 사건이 이름으로 찾는 설정이 정의에 있는지 확인합니다. */
+	void ValidateRequiredNames(const FAgAbilityData& Ability, TArray<FString>& Errors)
 	{
-		Errors.Add(TEXT("Abilities: expected array"));
-		return false;
-	}
-	TArray<FAgAbilityData> Candidate;
-	TSet<FName> Ids;
-	for (int32 Index = 0; Index < Entries->Num(); ++Index)
-	{
-		const TSharedPtr<FJsonObject>* Entry = nullptr;
-		FString Path = FString::Printf(TEXT("Abilities[%d]"), Index);
-		if (!(*Entries)[Index]->TryGetObject(Entry))
-		{
-			Errors.Add(Path + TEXT(": expected object"));
-			continue;
-		}
-		FAgAbilityData Data;
-		FString Id;
-		if (!(*Entry)->TryGetStringField(TEXT("Id"), Id) || FName(*Id).IsNone() || Ids.Contains(FName(*Id)))
-		{
-			Errors.Add(Path + TEXT(".Id: missing or duplicate ID"));
-		}
-		Data.Id = FName(*Id);
-		Ids.Add(Data.Id);
-		Path += TEXT("(") + Id + TEXT(")");
-		Keys(**Entry, Path, {TEXT("Id"), TEXT("Tags"), TEXT("Cooldown"), TEXT("Activation"), TEXT("Cost"), TEXT("Tasks")},
-		    {TEXT("PatternSelection")}, Errors);
-		Tags(**Entry, TEXT("Tags"), Path, Data.Tags, Errors);
-		Number(**Entry, TEXT("Cooldown"), Path, Data.Cooldown, Errors);
-		if (FObject Activation = ObjectAt(**Entry, TEXT("Activation"), Path + TEXT(".Activation"), Errors))
-		{
-			Keys(*Activation, Path + TEXT(".Activation"),
-			    {TEXT("RequiredTags"), TEXT("BlockedTags"), TEXT("OwnedTags"), TEXT("BlockTags"), TEXT("CancelTags"), TEXT("TriggerEvents"),
-			        TEXT("bAllowRetrigger")},
-			    {}, Errors);
-			Tags(*Activation, TEXT("RequiredTags"), Path + TEXT(".Activation"), Data.Activation.RequiredTags, Errors);
-			Tags(*Activation, TEXT("BlockedTags"), Path + TEXT(".Activation"), Data.Activation.BlockedTags, Errors);
-			Tags(*Activation, TEXT("OwnedTags"), Path + TEXT(".Activation"), Data.Activation.OwnedTags, Errors);
-			Tags(*Activation, TEXT("BlockTags"), Path + TEXT(".Activation"), Data.Activation.BlockTags, Errors);
-			Tags(*Activation, TEXT("CancelTags"), Path + TEXT(".Activation"), Data.Activation.CancelTags, Errors);
-			Tags(*Activation, TEXT("TriggerEvents"), Path + TEXT(".Activation"), Data.Activation.TriggerEvents, Errors);
-			const TSharedPtr<FJsonValue> Retrigger = Activation->TryGetField(TEXT("bAllowRetrigger"));
-			if (!Retrigger || Retrigger->Type != EJson::Boolean)
-			{
-				Errors.Add(Path + TEXT(".Activation.bAllowRetrigger: expected boolean"));
-			}
-			else
-			{
-				Data.Activation.bAllowRetrigger = Retrigger->AsBool();
-			}
-		}
-		const TSharedPtr<FJsonValue> Cost = (*Entry)->TryGetField(TEXT("Cost"));
-		Data.bHasCost = Cost && Cost->Type != EJson::Null;
-		if (Data.bHasCost)
-		{
-			if (const FObject Params = ObjectAt(**Entry, TEXT("Cost"), Path + TEXT(".Cost"), Errors))
-			{
-				Read(*Params, Data.Cost, Path + TEXT(".Cost"), Errors);
-			}
-		}
-		if (const FObject Tasks = ObjectAt(**Entry, TEXT("Tasks"), Path + TEXT(".Tasks"), Errors))
-		{
-			ReadTasks(*Tasks, Data.Tasks, Path + TEXT(".Tasks"), Errors);
-		}
-		Data.bHasPatternSelection = (*Entry)->HasField(TEXT("PatternSelection"));
-		if (Data.bHasPatternSelection)
-		{
-			const FString Field = Path + TEXT(".PatternSelection");
-			if (const FObject Pattern = ObjectAt(**Entry, TEXT("PatternSelection"), Field, Errors))
-			{
-				Keys(*Pattern, Field,
-				    {TEXT("Phases"), TEXT("WeightNear"), TEXT("WeightMid"), TEXT("WeightFar"), TEXT("ResponseRange"),
-				        TEXT("ResponseChance")},
-				    {}, Errors);
-				Number(*Pattern, TEXT("WeightNear"), Field, Data.PatternSelection.WeightNear, Errors);
-				Number(*Pattern, TEXT("WeightMid"), Field, Data.PatternSelection.WeightMid, Errors);
-				Number(*Pattern, TEXT("WeightFar"), Field, Data.PatternSelection.WeightFar, Errors);
-				Number(*Pattern, TEXT("ResponseRange"), Field, Data.PatternSelection.ResponseRange, Errors);
-				Number(*Pattern, TEXT("ResponseChance"), Field, Data.PatternSelection.ResponseChance, Errors);
-				if (Data.PatternSelection.ResponseChance > 1.f)
-				{
-					Errors.Add(Field + TEXT(".ResponseChance: must be <= 1"));
-				}
-				const TArray<TSharedPtr<FJsonValue>>* Phases = nullptr;
-				if (!Pattern->TryGetArrayField(TEXT("Phases"), Phases))
-				{
-					Errors.Add(Field + TEXT(".Phases: expected array"));
-				}
-				else
-				{
-					for (const TSharedPtr<FJsonValue>& Phase : *Phases)
-					{
-						if (Phase->Type != EJson::Number || (Phase->AsNumber() != 1 && Phase->AsNumber() != 2))
-						{
-							Errors.Add(Field + TEXT(".Phases: expected phase 1 or 2"));
-						}
-						else
-						{
-							Data.PatternSelection.Phases.Add(static_cast<int32>(Phase->AsNumber()));
-						}
-					}
-				}
-			}
-		}
-		Candidate.Add(MoveTemp(Data));
-	}
-	if (Before != Errors.Num())
-	{
-		return false;
-	}
-	OutAbilities = MoveTemp(Candidate);
-	return true;
-}
-
-void AgAbilityData::ValidateReferences(const UAgCharacterData& Data, TArray<FString>& Errors)
-{
-	if (const UAgPlayerData* Player = Cast<UAgPlayerData>(&Data);
-	    Player && Data.FindAbility(TEXT("BasicAttack")) && Player->BasicAttackMontageIds.IsEmpty())
-	{
-		Errors.Add(TEXT("BasicAttackMontageIds: requires at least one montage"));
-	}
-	for (const FAgAbilityData& Ability : Data.Abilities)
-	{
-		const FString Path = TEXT("Abilities.") + Ability.Id.ToString() + TEXT(".Tasks.");
+		const FString Path = Ability.Id.ToString() + TEXT(".Tasks.");
 		const FAgAbilityTasks& Tasks = Ability.Tasks;
-		for (FName MontageId : MontageIds(Data, Ability))
-		{
-			if (!Data.Montages.FindRef(MontageId))
-			{
-				Errors.Add(Path + TEXT("MontageId: missing montage ") + MontageId.ToString());
-			}
-		}
 		TFunction<void(bool, const TCHAR*)> Require = [&](bool bPresent, const TCHAR* Field)
 		{
 			if (!bPresent)
@@ -389,39 +234,170 @@ void AgAbilityData::ValidateReferences(const UAgCharacterData& Data, TArray<FStr
 		{
 			Require(Tasks.bHasLockOn, TEXT("LockOn"));
 		}
-		if (Tasks.bHasPlayMontageAndWait)
-		{
-			const FAgPlayMontageAndWaitParams& Params = Tasks.PlayMontageAndWait;
-			UAnimMontage* Montage = Data.Montages.FindRef(Params.MontageId);
-			if (!Montage)
-			{
-				Errors.Add(Path + TEXT("PlayMontageAndWait.MontageId: missing montage ") + Params.MontageId.ToString());
-			}
-			else if (Params.bHasRootMotionDistance &&
-			         Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext())
-			                 .GetTranslation()
-			                 .Size2D() <= UE_SMALL_NUMBER)
-			{
-				Errors.Add(Path + TEXT("PlayMontageAndWait.RootMotionDistance: montage has no horizontal root motion"));
-			}
-		}
 	}
-	// 이 캐릭터가 재생하는 몽타주의 시간표가 쏘는 투사체는 이 캐릭터의 Projectiles에 있어야 합니다.
-	const UAgMontageTimelineData& Timelines = UAgAssetManager::Get().GetMontageTimelines();
-	for (const TPair<FName, TObjectPtr<UAnimMontage>>& Pair : Data.Montages)
+}
+
+bool AgAbilityData::Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& OutAbilities, TArray<FString>& Errors)
+{
+	const int32 Before = Errors.Num();
+	TMap<FName, FAgAbilityData> Candidate;
+	for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Json.Values)
 	{
-		const FAgMontageTimeline* Timeline = Pair.Value ? Timelines.Find(*Pair.Value) : nullptr;
-		if (!Timeline)
+		const FString Path(Pair.Key);
+		FAgAbilityData Data;
+		Data.Id = FName(*Path);
+		if (Data.Id.IsNone() || Candidate.Contains(Data.Id))
+		{
+			Errors.Add(Path + TEXT(": empty or duplicate ability ID"));
+			continue;
+		}
+		const FObject Entry = ObjectAt(Json, Path, Path, Errors);
+		if (!Entry)
 		{
 			continue;
 		}
-		for (const FAgTimelineSpawnProjectile& Shot : Timeline->SpawnProjectile)
+		Keys(*Entry, Path, {TEXT("Tags"), TEXT("Cooldown"), TEXT("Activation"), TEXT("Cost"), TEXT("Tasks")}, {TEXT("PatternSelection")},
+		    Errors);
+		Tags(*Entry, TEXT("Tags"), Path, Data.Tags, Errors);
+		Number(*Entry, TEXT("Cooldown"), Path, Data.Cooldown, Errors);
+		if (FObject Activation = ObjectAt(*Entry, TEXT("Activation"), Path + TEXT(".Activation"), Errors))
 		{
-			if (!Data.Projectiles.Contains(Shot.ProjectileId))
+			Keys(*Activation, Path + TEXT(".Activation"),
+			    {TEXT("RequiredTags"), TEXT("BlockedTags"), TEXT("OwnedTags"), TEXT("BlockTags"), TEXT("CancelTags"), TEXT("TriggerEvents"),
+			        TEXT("bAllowRetrigger")},
+			    {}, Errors);
+			Tags(*Activation, TEXT("RequiredTags"), Path + TEXT(".Activation"), Data.Activation.RequiredTags, Errors);
+			Tags(*Activation, TEXT("BlockedTags"), Path + TEXT(".Activation"), Data.Activation.BlockedTags, Errors);
+			Tags(*Activation, TEXT("OwnedTags"), Path + TEXT(".Activation"), Data.Activation.OwnedTags, Errors);
+			Tags(*Activation, TEXT("BlockTags"), Path + TEXT(".Activation"), Data.Activation.BlockTags, Errors);
+			Tags(*Activation, TEXT("CancelTags"), Path + TEXT(".Activation"), Data.Activation.CancelTags, Errors);
+			Tags(*Activation, TEXT("TriggerEvents"), Path + TEXT(".Activation"), Data.Activation.TriggerEvents, Errors);
+			const TSharedPtr<FJsonValue> Retrigger = Activation->TryGetField(TEXT("bAllowRetrigger"));
+			if (!Retrigger || Retrigger->Type != EJson::Boolean)
 			{
-				Errors.Add(TEXT("Montages.") + Pair.Key.ToString() + TEXT(": timeline projectile ") + Shot.ProjectileId.ToString() +
-				           TEXT(" missing in Projectiles"));
+				Errors.Add(Path + TEXT(".Activation.bAllowRetrigger: expected boolean"));
 			}
+			else
+			{
+				Data.Activation.bAllowRetrigger = Retrigger->AsBool();
+			}
+		}
+		const TSharedPtr<FJsonValue> Cost = Entry->TryGetField(TEXT("Cost"));
+		Data.bHasCost = Cost && Cost->Type != EJson::Null;
+		if (Data.bHasCost)
+		{
+			if (const FObject Params = ObjectAt(*Entry, TEXT("Cost"), Path + TEXT(".Cost"), Errors))
+			{
+				Read(*Params, Data.Cost, Path + TEXT(".Cost"), Errors);
+			}
+		}
+		if (const FObject Tasks = ObjectAt(*Entry, TEXT("Tasks"), Path + TEXT(".Tasks"), Errors))
+		{
+			ReadTasks(*Tasks, Data.Tasks, Path + TEXT(".Tasks"), Errors);
+		}
+		Data.bHasPatternSelection = Entry->HasField(TEXT("PatternSelection"));
+		if (Data.bHasPatternSelection)
+		{
+			const FString Field = Path + TEXT(".PatternSelection");
+			if (const FObject Pattern = ObjectAt(*Entry, TEXT("PatternSelection"), Field, Errors))
+			{
+				Keys(*Pattern, Field,
+				    {TEXT("Phases"), TEXT("WeightNear"), TEXT("WeightMid"), TEXT("WeightFar"), TEXT("ResponseRange"),
+				        TEXT("ResponseChance")},
+				    {}, Errors);
+				Number(*Pattern, TEXT("WeightNear"), Field, Data.PatternSelection.WeightNear, Errors);
+				Number(*Pattern, TEXT("WeightMid"), Field, Data.PatternSelection.WeightMid, Errors);
+				Number(*Pattern, TEXT("WeightFar"), Field, Data.PatternSelection.WeightFar, Errors);
+				Number(*Pattern, TEXT("ResponseRange"), Field, Data.PatternSelection.ResponseRange, Errors);
+				Number(*Pattern, TEXT("ResponseChance"), Field, Data.PatternSelection.ResponseChance, Errors);
+				if (Data.PatternSelection.ResponseChance > 1.f)
+				{
+					Errors.Add(Field + TEXT(".ResponseChance: must be <= 1"));
+				}
+				const TArray<TSharedPtr<FJsonValue>>* Phases = nullptr;
+				if (!Pattern->TryGetArrayField(TEXT("Phases"), Phases))
+				{
+					Errors.Add(Field + TEXT(".Phases: expected array"));
+				}
+				else
+				{
+					for (const TSharedPtr<FJsonValue>& Phase : *Phases)
+					{
+						if (Phase->Type != EJson::Number || (Phase->AsNumber() != 1 && Phase->AsNumber() != 2))
+						{
+							Errors.Add(Field + TEXT(".Phases: expected phase 1 or 2"));
+						}
+						else
+						{
+							Data.PatternSelection.Phases.Add(static_cast<int32>(Phase->AsNumber()));
+						}
+					}
+				}
+			}
+		}
+		Candidate.Add(Data.Id, MoveTemp(Data));
+	}
+	if (Before == Errors.Num())
+	{
+		for (const TPair<FName, FAgAbilityData>& Pair : Candidate)
+		{
+			ValidateRequiredNames(Pair.Value, Errors);
+		}
+	}
+	if (Before != Errors.Num())
+	{
+		return false;
+	}
+	OutAbilities = MoveTemp(Candidate);
+	return true;
+}
+
+void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities,
+    const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const FString& Path, TArray<FString>& Errors)
+{
+	TSet<FName> Seen;
+	for (FName Id : Data.Abilities)
+	{
+		if (!Abilities.Contains(Id) || Seen.Contains(Id))
+		{
+			Errors.Add(Path + TEXT("Abilities: unknown or duplicate ability ") + Id.ToString());
+		}
+		Seen.Add(Id);
+	}
+	for (FName Id : Data.Effects)
+	{
+		if (!Effects.Contains(Id))
+		{
+			Errors.Add(Path + TEXT("Effects: unknown effect ") + Id.ToString());
+		}
+	}
+	if (const UAgPlayerData* Player = Cast<UAgPlayerData>(&Data);
+	    Player && Data.Abilities.Contains(TEXT("BasicAttack")) && Player->BasicAttackMontageIds.IsEmpty())
+	{
+		Errors.Add(Path + TEXT("BasicAttackMontageIds: requires at least one montage"));
+	}
+	for (FName Id : Data.Abilities)
+	{
+		const FAgAbilityData* Ability = Abilities.Find(Id);
+		if (!Ability)
+		{
+			continue;
+		}
+		const FString AbilityPath = Path + TEXT("Abilities.") + Id.ToString() + TEXT(": ");
+		for (FName MontageId : MontageIds(Data, *Ability))
+		{
+			if (!Data.Montages.FindRef(MontageId))
+			{
+				Errors.Add(AbilityPath + TEXT("missing montage ") + MontageId.ToString());
+			}
+		}
+		const FAgPlayMontageAndWaitParams& Params = Ability->Tasks.PlayMontageAndWait;
+		const UAnimMontage* Montage = Ability->Tasks.bHasPlayMontageAndWait ? Data.Montages.FindRef(Params.MontageId) : nullptr;
+		if (Montage && Params.bHasRootMotionDistance &&
+		    Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D() <=
+		        UE_SMALL_NUMBER)
+		{
+			Errors.Add(AbilityPath + TEXT("PlayMontageAndWait.RootMotionDistance: montage has no horizontal root motion"));
 		}
 	}
 }

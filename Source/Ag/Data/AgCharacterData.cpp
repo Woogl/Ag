@@ -2,50 +2,13 @@
 
 #include "Data/AgCharacterData.h"
 
-#include "AbilitySystem/AgGameplayAbility.h"
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
 #include "Core/AgAssetManager.h"
-#include "Dom/JsonObject.h"
-#include "Dom/JsonValue.h"
-
-void UAgCharacterData::ValidateProjectiles(TArray<FString>& Errors) const
-{
-	for (const TPair<FName, FAgProjectileDefinition>& Pair : Projectiles)
-	{
-		if (Pair.Value.Params.Speed <= 0.f || Pair.Value.Params.Range <= 0.f)
-		{
-			Errors.Add(FString::Printf(TEXT("Projectiles.%s: Speed and Range must be positive"), *Pair.Key.ToString()));
-		}
-	}
-}
-
-void UAgCharacterData::PostLoad()
-{
-	Super::PostLoad();
-
-	// 수치·설정·에셋 참조는 JSON에서 읽고, 에셋에는 저장하지 않습니다.
-	UAgAssetManager::Get().LoadJsonValues(*this, JsonFileName);
-}
-
-#if WITH_EDITOR
-void UAgCharacterData::PostEditUndo()
-{
-	Super::PostEditUndo();
-
-	// 실행 취소·다시 실행은 Transient 속성(파일에서 읽은 값)까지 그 편집 때의 값으로 되돌립니다. 기준은 파일이므로 다시 읽습니다.
-	UAgAssetManager::Get().LoadJsonValues(*this, JsonFileName);
-}
-
-#endif
 
 const FAgAbilityData* UAgCharacterData::FindAbility(FName Id) const
 {
-	return Abilities.FindByPredicate(
-	    [Id](const FAgAbilityData& Ability)
-	    {
-		    return Ability.Id == Id;
-	    });
+	return Abilities.Contains(Id) ? UAgAssetManager::Get().FindAbility(Id) : nullptr;
 }
 
 UAnimMontage* UAgCharacterData::FindMontage(FName Id) const

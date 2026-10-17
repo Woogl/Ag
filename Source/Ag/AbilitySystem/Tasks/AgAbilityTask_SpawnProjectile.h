@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask_SpawnActor.h"
 #include "Data/AgMontageTimeline.h"
-#include "Data/AgCharacterData.h"
+#include "Data/AgProjectileData.h"
 #include "AgAbilityTask_SpawnProjectile.generated.h"
 class AAgProjectile;
 

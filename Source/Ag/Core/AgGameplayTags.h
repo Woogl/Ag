@@ -91,6 +91,8 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_PoiseMultiplier);
 
 	// 대미지 GE 스펙에 다는 태그: 공격의 성질(적용하는 쪽이 담)과 피격 결과(실행 계산이 담)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Cooldown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockBack);

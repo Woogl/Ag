@@ -1,0 +1,976 @@
+{
+  "BasicAttack": {
+    "Tags": [
+      "Ability.Action.BasicAttack"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {}
+  },
+  "Jump": {
+    "Tags": [
+      "Ability.Action.Jump"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.Jumping"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {}
+  },
+  "JumpAttack": {
+    "Tags": [
+      "Ability.Action.JumpAttack"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [
+        "State.Jumping"
+      ],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "JumpAttack"
+      },
+      "LaunchVertical": {
+        "VelocityZ": -1000
+      }
+    }
+  },
+  "Dodge": {
+    "Tags": [
+      "Ability.Action.Dodge"
+    ],
+    "Cooldown": 0.4,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": true
+    },
+    "Cost": {
+      "Resource": "SP",
+      "Amount": 20
+    },
+    "Tasks": {
+      "GrantResources": {
+        "PerfectDodge": {
+          "SP": 0,
+          "MP": 10,
+          "UP": 10
+        }
+      },
+      "TimedTag": {
+        "CounterChance": {
+          "Tag": "State.DodgeCounterChance",
+          "Duration": 1
+        }
+      },
+      "SlowMotion": {
+        "PerfectDodge": {
+          "Speed": 0.3,
+          "RealDuration": 0.3
+        }
+      }
+    }
+  },
+  "DodgeCounter": {
+    "Tags": [
+      "Ability.Action.DodgeCounter"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [
+        "State.DodgeCounterChance"
+      ],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "DodgeCounter"
+      }
+    }
+  },
+  "Guard": {
+    "Tags": [
+      "Ability.Action.Guard"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [
+        "Event.Guard.Resume"
+      ],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "HoldTag": {
+        "Guarding": {
+          "Tag": "State.Guarding"
+        }
+      },
+      "TimedTag": {
+        "ParryWindow": {
+          "Tag": "State.ParryWindow",
+          "Duration": 0.3
+        }
+      },
+      "GrantResources": {
+        "Parry": {
+          "SP": 0,
+          "MP": 15,
+          "UP": 10
+        }
+      }
+    }
+  },
+  "Skill": {
+    "Tags": [
+      "Ability.Action.Skill"
+    ],
+    "Cooldown": 3,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": {
+      "Resource": "MP",
+      "Amount": 30
+    },
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "Skill"
+      }
+    }
+  },
+  "Ultimate": {
+    "Tags": [
+      "Ability.Action.Ultimate"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.Invincible"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": {
+      "Resource": "UP",
+      "Amount": 100
+    },
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "Ultimate"
+      },
+      "TimeStop": {},
+      "PlayCutscene": {
+        "UltimateCamera": {
+          "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"
+        }
+      },
+      "TargetQuery": {
+        "Finish": {
+          "Range": 1000
+        }
+      },
+      "Attack": {
+        "Finish": {
+          "DamageMultiplier": 5,
+          "PoiseMultiplier": 5,
+          "HitReaction": "KnockUp",
+          "bGuardable": true,
+          "MPCharge": 0,
+          "UPCharge": 0
+        }
+      }
+    }
+  },
+  "Execution": {
+    "Tags": [
+      "Ability.Action.Execution"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.Execution",
+        "State.Invincible"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "Execution"
+      },
+      "TargetQuery": {
+        "Execution": {
+          "Range": 300
+        }
+      },
+      "Attack": {
+        "Stab": {
+          "DamageMultiplier": 1.5,
+          "PoiseMultiplier": 0,
+          "HitReaction": "None",
+          "bGuardable": true,
+          "MPCharge": 0,
+          "UPCharge": 0
+        },
+        "Finish": {
+          "DamageMultiplier": 4.5,
+          "PoiseMultiplier": 0,
+          "HitReaction": "None",
+          "bGuardable": true,
+          "MPCharge": 0,
+          "UPCharge": 0
+        }
+      }
+    }
+  },
+  "Sprint": {
+    "Tags": [
+      "Ability.Sprint"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Busy",
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.Sprinting"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint"
+      ],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "DrainResource": {
+        "Resource": "SP",
+        "AmountPerSecond": 12
+      }
+    }
+  },
+  "LockOn": {
+    "Tags": [
+      "Ability.LockOn"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "LockOn": {}
+    }
+  },
+  "KnockBack": {
+    "Tags": [
+      "Ability.Reaction.HitReaction.KnockBack"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.HitReaction"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint",
+        "Ability.Boss.Pattern",
+        "Ability.Reaction.HitReaction"
+      ],
+      "TriggerEvents": [
+        "Event.Hit.KnockBack"
+      ],
+      "bAllowRetrigger": true
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "KnockBack"
+      },
+      "HoldTag": {
+        "Downed": {
+          "Tag": "State.Invincible"
+        }
+      }
+    }
+  },
+  "KnockUp": {
+    "Tags": [
+      "Ability.Reaction.HitReaction.KnockUp"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.HitReaction"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint",
+        "Ability.Boss.Pattern",
+        "Ability.Reaction.HitReaction"
+      ],
+      "TriggerEvents": [
+        "Event.Hit.KnockUp"
+      ],
+      "bAllowRetrigger": true
+    },
+    "Cost": null,
+    "Tasks": {
+      "HoldTag": {
+        "Downed": {
+          "Tag": "State.Invincible"
+        }
+      }
+    }
+  },
+  "GuardPushback": {
+    "Tags": [
+      "Ability.Reaction.HitReaction.GuardPushback"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.HitReaction",
+        "State.Guarding"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint",
+        "Ability.Boss.Pattern",
+        "Ability.Reaction.HitReaction"
+      ],
+      "TriggerEvents": [
+        "Event.Guard.Pushback"
+      ],
+      "bAllowRetrigger": true
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "GuardPushback"
+      }
+    }
+  },
+  "GuardBreak": {
+    "Tags": [
+      "Ability.Reaction.HitReaction.GuardBreak"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.HitReaction"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Action",
+        "Ability.Sprint",
+        "Ability.Boss.Pattern",
+        "Ability.Reaction.HitReaction"
+      ],
+      "TriggerEvents": [
+        "Event.Guard.Break"
+      ],
+      "bAllowRetrigger": true
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "GuardBreak"
+      }
+    }
+  },
+  "Death": {
+    "Tags": [
+      "Ability.Reaction.Death"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Dead"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [
+        "Event.Death"
+      ],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {}
+  },
+  "DoubleStrike": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "DoubleStrike"
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        1,
+        2
+      ],
+      "WeightNear": 40,
+      "WeightMid": 0,
+      "WeightFar": 0,
+      "ResponseRange": 0,
+      "ResponseChance": 0
+    }
+  },
+  "Sweep": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 5,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "Sweep"
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        1,
+        2
+      ],
+      "WeightNear": 30,
+      "WeightMid": 0,
+      "WeightFar": 0,
+      "ResponseRange": 0,
+      "ResponseChance": 0
+    }
+  },
+  "DashThrust": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 10,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "DashThrust"
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        1,
+        2
+      ],
+      "WeightNear": 0,
+      "WeightMid": 40,
+      "WeightFar": 60,
+      "ResponseRange": 0,
+      "ResponseChance": 0
+    }
+  },
+  "LeapSlam": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 12,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "LeapSlam"
+      },
+      "Attack": {
+        "LandingHit": {
+          "DamageMultiplier": 2,
+          "PoiseMultiplier": 1,
+          "HitReaction": "KnockUp",
+          "bGuardable": false,
+          "MPCharge": 0,
+          "UPCharge": 0
+        }
+      },
+      "LaunchToTarget": {
+        "AirTime": 1.35,
+        "TargetOffset": 150,
+        "MaxDistance": 1200
+      },
+      "TargetQuery": {
+        "Landing": {
+          "Range": 350
+        }
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        2
+      ],
+      "WeightNear": 0,
+      "WeightMid": 40,
+      "WeightFar": 40,
+      "ResponseRange": 0,
+      "ResponseChance": 0
+    }
+  },
+  "QuintupleStrike": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 8,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "QuintupleStrike"
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        2
+      ],
+      "WeightNear": 40,
+      "WeightMid": 0,
+      "WeightFar": 0,
+      "ResponseRange": 0,
+      "ResponseChance": 0
+    }
+  },
+  "SwordWave": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 10,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "SwordWave"
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        2
+      ],
+      "WeightNear": 0,
+      "WeightMid": 20,
+      "WeightFar": 60,
+      "ResponseRange": 0,
+      "ResponseChance": 0
+    }
+  },
+  "JumpSlam": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 6,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "JumpSlam"
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        1,
+        2
+      ],
+      "WeightNear": 30,
+      "WeightMid": 30,
+      "WeightFar": 0,
+      "ResponseRange": 0,
+      "ResponseChance": 0
+    }
+  },
+  "Backstep": {
+    "Tags": [
+      "Ability.Boss.Pattern"
+    ],
+    "Cooldown": 4,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.HitReaction",
+        "State.Groggy",
+        "State.Execution",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [],
+      "BlockTags": [],
+      "CancelTags": [],
+      "TriggerEvents": [],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "Backstep",
+        "RootMotionDistance": 500
+      }
+    },
+    "PatternSelection": {
+      "Phases": [
+        1,
+        2
+      ],
+      "WeightNear": 0,
+      "WeightMid": 0,
+      "WeightFar": 0,
+      "ResponseRange": 400,
+      "ResponseChance": 0.3
+    }
+  },
+  "Groggy": {
+    "Tags": [
+      "Ability.Reaction.Groggy"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Groggy",
+        "State.GroggyImmune",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [
+        "State.Groggy"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Boss.Pattern",
+        "Ability.Action",
+        "Ability.Sprint",
+        "Ability.Reaction.HitReaction"
+      ],
+      "TriggerEvents": [
+        "Event.Groggy"
+      ],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "HoldTag": {
+        "Executed": {
+          "Tag": "State.Execution"
+        }
+      },
+      "SetCollisionResponseToChannel": {
+        "PassThroughPawn": {
+          "Channel": "Pawn",
+          "Response": "Ignore"
+        }
+      }
+    }
+  },
+  "PhaseTransition": {
+    "Tags": [
+      "Ability.Reaction.PhaseTransition"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Groggy",
+        "State.Dead",
+        "State.NonCombat"
+      ],
+      "OwnedTags": [
+        "State.Invincible",
+        "State.Boss.RotationLocked"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Boss.Pattern"
+      ],
+      "TriggerEvents": [
+        "Event.PhaseTransition"
+      ],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Tasks": {
+      "PlayMontageAndWait": {
+        "MontageId": "PhaseTransition"
+      }
+    }
+  }
+}

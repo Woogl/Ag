@@ -8,6 +8,7 @@
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Character/AgBossCharacter.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "StateTreeExecutionContext.h"
@@ -173,16 +174,18 @@ int32 FAgBossAITask_RunPattern::PickWeighted(TConstArrayView<float> Weights, flo
 	return LastPositive;
 }
 
-void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgAbilityData> Abilities, float Distance, float NearDistance,
+void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance,
     float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights)
 {
 	OutIds.Reset();
 	OutWeights.Reset();
-	for (const FAgAbilityData& Ability : Abilities)
+	for (FName Id : AbilityIds)
 	{
+		const FAgAbilityData* Ability = UAgAssetManager::Get().FindAbility(Id);
 		// 패턴이 아닌 어빌리티(피격 반응, 사망 등)는 전용 값이 패턴 공통 값이 아닙니다.
-		const FAgPatternSelection* Pattern =
-		    Ability.bHasPatternSelection && Ability.Tags.HasTag(AgGameplayTags::Ability_Boss_Pattern) ? &Ability.PatternSelection : nullptr;
+		const FAgPatternSelection* Pattern = Ability && Ability->bHasPatternSelection && Ability->Tags.HasTag(AgGameplayTags::Ability_Boss_Pattern)
+		                                         ? &Ability->PatternSelection
+		                                         : nullptr;
 		if (!Pattern)
 		{
 			continue;
@@ -191,9 +194,9 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FAgAbilityData> 
 		// 거리 구간: NearDistance까지 근거리, FarDistance까지 중거리, 그보다 멀면 원거리
 		const float Weight =
 		    Distance <= NearDistance ? Pattern->WeightNear : (Distance <= FarDistance ? Pattern->WeightMid : Pattern->WeightFar);
-		if (Weight > 0.f && Pattern->Phases.Contains(Phase) && IsReady(Ability.Id))
+		if (Weight > 0.f && Pattern->Phases.Contains(Phase) && IsReady(Id))
 		{
-			OutIds.Add(Ability.Id);
+			OutIds.Add(Id);
 			OutWeights.Add(Weight);
 		}
 	}

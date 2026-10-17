@@ -1,0 +1,180 @@
+{
+  "Damage": {
+    "DurationPolicy": "Instant",
+    "AssetTags": [
+      "Effect.Damage"
+    ],
+    "Executions": [
+      "/Script/Ag.AgDamageExecution"
+    ],
+    "ApplicationIgnoredTags": [
+      "State.Dead"
+    ],
+    "Components": [
+      "/Script/Ag.AgHitResultGameplayEffectComponent"
+    ]
+  },
+  "Resource": {
+    "DurationPolicy": "Instant",
+    "Modifiers": [
+      {
+        "Attribute": "SP",
+        "Op": "Add",
+        "SetByCaller": "SetByCaller.SP"
+      },
+      {
+        "Attribute": "MP",
+        "Op": "Add",
+        "SetByCaller": "SetByCaller.MP"
+      },
+      {
+        "Attribute": "UP",
+        "Op": "Add",
+        "SetByCaller": "SetByCaller.UP"
+      }
+    ]
+  },
+  "ResourceDrain": {
+    "DurationPolicy": "Infinite",
+    "Period": 0.1,
+    "ExecutePeriodicOnApplication": false,
+    "Modifiers": [
+      {
+        "Attribute": "SP",
+        "Op": "Add",
+        "SetByCaller": "SetByCaller.SP"
+      },
+      {
+        "Attribute": "MP",
+        "Op": "Add",
+        "SetByCaller": "SetByCaller.MP"
+      },
+      {
+        "Attribute": "UP",
+        "Op": "Add",
+        "SetByCaller": "SetByCaller.UP"
+      }
+    ]
+  },
+  "Cooldown": {
+    "DurationPolicy": "HasDuration",
+    "AssetTags": [
+      "Effect.Cooldown"
+    ]
+  },
+  "TimedTag": {
+    "DurationPolicy": "HasDuration"
+  },
+  "Hitstop": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 0.12,
+    "GrantedTags": [
+      "State.Hitstop"
+    ]
+  },
+  "SPRegenDelay": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 1,
+    "GrantedTags": [
+      "State.Regen.SPDelay"
+    ]
+  },
+  "SPRegenDelayEmpty": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 1.5,
+    "GrantedTags": [
+      "State.Regen.SPDelay"
+    ]
+  },
+  "PPRegenDelay": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 6,
+    "GrantedTags": [
+      "State.Regen.PPDelay"
+    ]
+  },
+  "Kill": {
+    "DurationPolicy": "Instant",
+    "Modifiers": [
+      {
+        "Attribute": "HP",
+        "Op": "Override",
+        "Value": 0
+      }
+    ]
+  },
+  "PPRefill": {
+    "DurationPolicy": "Instant",
+    "Modifiers": [
+      {
+        "Attribute": "PP",
+        "Op": "Override",
+        "FromAttribute": "MaxPP"
+      }
+    ]
+  },
+  "ParryPPLoss": {
+    "DurationPolicy": "Instant",
+    "Executions": [
+      "/Script/Ag.AgParryPPLossExecution"
+    ]
+  },
+  "GroggyImmune": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": [
+      "State.GroggyImmune"
+    ]
+  },
+  "SPRegen": {
+    "DurationPolicy": "Infinite",
+    "Period": 0.1,
+    "ExecutePeriodicOnApplication": false,
+    "PeriodicInhibitionPolicy": "ResetPeriod",
+    "Modifiers": [
+      {
+        "Attribute": "SP",
+        "Op": "Add",
+        "PerSecond": 40
+      }
+    ],
+    "OngoingIgnoredTags": [
+      "State.Regen.SPDelay",
+      "State.Guarding"
+    ]
+  },
+  "SPRegenGuarding": {
+    "DurationPolicy": "Infinite",
+    "Period": 0.1,
+    "ExecutePeriodicOnApplication": false,
+    "PeriodicInhibitionPolicy": "ResetPeriod",
+    "Modifiers": [
+      {
+        "Attribute": "SP",
+        "Op": "Add",
+        "PerSecond": 20
+      }
+    ],
+    "OngoingRequiredTags": [
+      "State.Guarding"
+    ],
+    "OngoingIgnoredTags": [
+      "State.Regen.SPDelay"
+    ]
+  },
+  "PPRegen": {
+    "DurationPolicy": "Infinite",
+    "Period": 0.1,
+    "ExecutePeriodicOnApplication": false,
+    "PeriodicInhibitionPolicy": "ResetPeriod",
+    "Modifiers": [
+      {
+        "Attribute": "PP",
+        "Op": "Add",
+        "PerSecond": 50
+      }
+    ],
+    "OngoingIgnoredTags": [
+      "State.Regen.PPDelay"
+    ]
+  }
+}

@@ -8,7 +8,7 @@
 
 class AAgBossAIController;
 
-/** 보스 AI(ST_Boss)의 전환 조건. 수치는 에셋에 적지 않고 보스 데이터(Boss.json)에서 읽습니다. */
+/** 보스 AI(ST_Boss)의 전환 조건. 수치는 에셋에 적지 않고 보스 데이터(Characters.json의 Boss)에서 읽습니다. */
 
 USTRUCT()
 struct FAgBossAIConditionInstanceData

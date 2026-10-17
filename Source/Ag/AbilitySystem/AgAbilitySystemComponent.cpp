@@ -1,5 +1,7 @@
 // Copyright Woogle. All Rights Reserved.
 #include "AbilitySystem/AgAbilitySystemComponent.h"
+#include "Core/AgAssetManager.h"
+#include "Data/AgEffectData.h"
 
 void UAgAbilitySystemComponent::CancelAbilitiesWithSpecTags(const FGameplayTagContainer& Tags, UGameplayAbility* Ignore)
 {
@@ -26,4 +28,19 @@ void UAgAbilitySystemComponent::ApplyAbilityBlockAndCancelTags(const FGameplayTa
 	{
 		CancelAbilitiesWithSpecTags(CancelTags, RequestingAbility);
 	}
+}
+
+FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(
+    EAgEffect Effect, float Level, FGameplayEffectContextHandle Context) const
+{
+	const UGameplayEffect* Definition = UAgAssetManager::Get().GetEffect(Effect);
+	if (!Definition)
+	{
+		return FGameplayEffectSpecHandle();
+	}
+	if (!Context.IsValid())
+	{
+		Context = MakeEffectContext();
+	}
+	return FGameplayEffectSpecHandle(new FGameplayEffectSpec(Definition, Context, Level));
 }

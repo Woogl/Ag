@@ -15,6 +15,7 @@
 
 AAgBossCharacter::AAgBossCharacter()
 {
+	CharacterDataClass = UAgBossData::StaticClass();
 	AIControllerClass = AAgBossAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 

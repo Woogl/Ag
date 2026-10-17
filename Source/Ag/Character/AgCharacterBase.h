@@ -14,6 +14,7 @@
 class UAbilitySystemComponent;
 class UAgAttributeSet;
 class UAgCharacterData;
+enum class EAgEffect : uint8;
 struct FAgAbilityData;
 class UGameplayAbility;
 class UMotionWarpingComponent;
@@ -36,7 +37,6 @@ class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, publ
 	GENERATED_BODY()
 
 #if WITH_DEV_AUTOMATION_TESTS
-	friend class FAgAbilityExecutionTest;
 #endif
 
 public:
@@ -148,6 +148,7 @@ public:
 	FAgCharacterDiedSignature OnDied;
 
 protected:
+	virtual void PreInitializeComponents() override;
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 
@@ -181,14 +182,25 @@ protected:
 	/** MOV × GetMoveSpeedMultiplier()를 캐릭터 무브먼트의 최대 걷기 속도에 넣습니다. */
 	void UpdateMoveSpeed();
 
-	/** 리젠 대기를 처음부터 다시 셉니다: 도는 대기를 지우고 새로 적용합니다. */
-	void RestartRegenDelay(FActiveGameplayEffectHandle& Handle, const FGameplayTag& DelayTag, float Duration);
+	/** 리젠 대기를 처음부터 다시 셉니다: 도는 대기를 지우고 대기 효과(Effects.json)를 새로 겁니다. */
+	void RestartRegenDelay(FActiveGameplayEffectHandle& Handle, EAgEffect DelayEffect);
 
-	/** DA_Player 또는 DA_Boss. 기획 값은 그 JSON(Player.json, Boss.json)에서 채웁니다. */
-	UPROPERTY(EditDefaultsOnly, Category = "Data")
+	/** Characters.json의 캐릭터 ID. 목록에는 이 캐릭터 클래스의 데이터 클래스에 맞는 ID만 나옵니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))
+	FName CharacterDataId;
+
+	/** 이 캐릭터 클래스가 쓰는 데이터 클래스. 캐릭터 코드가 그 클래스의 필드를 읽으므로 생성자에서 정합니다. */
+	TSubclassOf<UAgCharacterData> CharacterDataClass;
+
+	/** CharacterDataId의 데이터. 컴포넌트를 초기화하기 전에 연결합니다. */
+	UPROPERTY(Transient)
 	TObjectPtr<UAgCharacterData> CharacterData;
 
 private:
+	/** 블루프린트에서 CharacterDataId를 고르는 목록 */
+	UFUNCTION()
+	TArray<FString> GetCharacterDataIds() const;
+
 	/** 스탯을 캐릭터 데이터의 초기값으로 정합니다. */
 	void InitializeAttributes();
 

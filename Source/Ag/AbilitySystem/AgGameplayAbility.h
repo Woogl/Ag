@@ -6,6 +6,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgProjectileData.h"
 #include "AgGameplayAbility.generated.h"
 
 class AAgCharacterBase;
@@ -20,6 +21,7 @@ class UAgAbilityTask_LockOn;
 class UAgRootMotionModifier_MotionWarping;
 struct FAgTimelineEvent;
 struct FAnimMontageInstance;
+enum class EAgEffect : uint8;
 enum class EAgProjectileOrigin : uint8;
 
 USTRUCT()
@@ -68,6 +70,13 @@ public:
 	virtual void GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	    float& TimeRemaining, float& Duration) const override;
 	FAgResourceCostParams GetCost() const;
+	/**
+	 * 엔진 MakeOutgoingGameplayEffectSpec이 GE 클래스로 하는 일(어빌리티 컨텍스트, 어빌리티 태그, 스펙의 SetByCaller)을
+	 * Effects.json의 효과로 합니다. 효과가 없으면 빈 핸들입니다.
+	 */
+	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect) const;
+	FGameplayEffectSpecHandle MakeEffectSpec(
+	    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, EAgEffect Effect) const;
 	AAgCharacterBase* GetLockOnTarget() const;
 	FName GetAbilityId() const
 	{
@@ -89,8 +98,8 @@ public:
 		return IsActive() && Motion.InstanceId == InstanceId && InstanceId != INDEX_NONE;
 	}
 
-	bool PrepareWarpTarget(int32 InstanceId, float WindowStart, const FAgMotionWarpingParams& Params, AActor*& Target, float& Gap,
-	    bool& bFacingOnly);
+	bool PrepareWarpTarget(
+	    int32 InstanceId, float WindowStart, const FAgMotionWarpingParams& Params, AActor*& Target, float& Gap, bool& bFacingOnly);
 	void RegisterWarp(UAgRootMotionModifier_MotionWarping* Modifier);
 	static AAgCharacterBase* FindExecutionTarget(const AAgPlayerCharacter* Player);
 
@@ -124,7 +133,8 @@ private:
 	void StartWindowTask(int32 InstanceId, int32 Key, FName Function, TFunctionRef<UAbilityTask*()> MakeTask);
 	void EndWindowTask(int32 InstanceId, int32 Key);
 	UAbilityTask* MakeDashTask(const FAgDashParams& Params, int32 InstanceId, int32 Key);
-	void LaunchProjectile(int32 InstanceId, FName ProjectileId, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName);
+	void LaunchProjectile(
+	    int32 InstanceId, FName ProjectileId, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName);
 	void JumpToMotionSection(FName Section);
 	void ClearMotion(bool bStop);
 	void UpdateMotionConstraints();
@@ -139,6 +149,9 @@ private:
 	void StartKnockUp();
 	void StartDeath(const FGameplayEventData* Event);
 	void ApplyReward(FName ParamsId);
+
+	/** 어빌리티 데이터의 태그를 그 시간 동안 붙입니다(TimedTag 효과). */
+	FActiveGameplayEffectHandle ApplyTimedTag(const FAgTimedTagParams& Params);
 	void ApplySingleAttack(
 	    FName ParamsId, const TArray<AAgCharacterBase*>& Targets, bool bFinisher = false, TOptional<FVector> HitLocation = {});
 	void NotifyBasicAttackStarted();

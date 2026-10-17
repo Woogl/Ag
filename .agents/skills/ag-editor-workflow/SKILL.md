@@ -85,6 +85,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
   - 부모 C++ 클래스의 UPROPERTY와 같은 이름의 블루프린트 변수는 컴파일이 실패한다.
 - 컴파일 뒤 `bp.get_editor_property("status")`를 확인하고, 오류 상태로 저장하지 않는다.
 - 부모 클래스는 `unreal.BlueprintEditorLibrary.reparent_blueprint(bp, cls)` 뒤 컴파일해 바꾼다. 옛 부모에만 있던 속성은 사라지니 먼저 읽어 둔다.
+- C++ 속성을 Transient로 바꿔도, 블루프린트에 전에 저장된 그 속성의 값은 블루프린트 CDO에 다시 읽혀 저장할 때 참조(import)로 남는다. 그 참조 에셋을 지울 때는 에디터를 닫고 에셋 파일을 지운 뒤, 에디터를 다시 켜 블루프린트를 다시 저장하고 `.uasset`에 옛 경로가 없는지 `grep -a`로 확인한다. 컴파일하면 레벨에 배치된 인스턴스가 다시 만들어져 레벨이 dirty가 되므로 저장만 한다.
 - 테스트용 액터를 에디터 월드에 스폰하면 레벨이 dirty가 된다. 잴 것이 있으면 임시 스폰(`EditorActorSubsystem.spawn_actor_from_class(cls, loc, rot, True)`)으로 띄우고 지운다.
 
 ### 애니메이션
@@ -159,11 +160,11 @@ PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Program/개발 
 | 어트리뷰트 값 쓰기 | 값 구조체에 `set_editor_property("base_value", x)`와 `"current_value"`를 쓴 뒤 세트에 `set_editor_property("HP", v)`. 최대값부터 쓴다. |
 | 게임플레이 이벤트 | `unreal.AbilitySystemLibrary.send_gameplay_event_to_actor` |
 | GameplayCue 실행 | `unreal.GameplayCueFunctionLibrary.execute_gameplay_cue_on_actor` |
-| GameplayEffect 적용 | `spec = asc.make_outgoing_spec(cls, 1.0, asc.make_effect_context())`, `unreal.AbilitySystemLibrary.assign_tag_set_by_caller_magnitude`·`set_duration`·`add_granted_tag`(각각 핸들을 돌려준다), `asc.apply_gameplay_effect_spec_to_self(spec)` |
+| GameplayEffect 적용 | 프로젝트 효과는 `Effects.json`에서 만든 객체라, 클래스를 받는 `asc.make_outgoing_spec(cls, ...)`로는 스펙을 만들 수 없다. 자원·스탯은 '어트리뷰트 값 쓰기'로 바꾼다. 엔진 GE 클래스는 `spec = asc.make_outgoing_spec(cls, 1.0, asc.make_effect_context())`, `unreal.AbilitySystemLibrary.assign_tag_set_by_caller_magnitude`·`set_duration`·`add_granted_tag`(각각 핸들을 돌려준다), `asc.apply_gameplay_effect_spec_to_self(spec)` |
 | 캐릭터 무브먼트 | `char.get_editor_property("character_movement")` |
 | PIE 월드 | `unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()` |
 | 콘솔 명령 | `unreal.SystemLibrary.execute_console_command(world, cmd, unreal.GameplayStatics.get_player_controller(world, 0))` |
-| 공통 데이터 객체 | `unreal.ObjectIterator(unreal.AgCombatRules)`에서 `Default__`가 아닌 것 |
+| JSON 데이터 객체 | 에디터의 에셋 매니저는 `/Engine/Transient.UnrealEdEngine_0:AgAssetManager_0`이다. 하위 객체를 `unreal.find_object(None, <매니저 경로> + '.Effects')`처럼 이름(`CombatRules`, `CameraData`, `Effects`, `Projectiles`, `MontageTimelines`, `Abilities`)으로 찾는다. 파이썬 타입이 없는 클래스(`UAgEffectSet` 등)도 이렇게 찾는다. `ObjectIterator`로 찾으면 매니저 CDO의 같은 이름 하위 객체(`/Script/Ag.Default__AgAssetManager:<이름>`)와 읽을 때 만든 임시 객체도 함께 나온다. |
 | 파이썬 타입이 없는 클래스 | CDO를 `unreal.find_object(None, '/Script/<모듈>.Default__<클래스>')`로 찾는다 |
 | 속성 이름 | `get_editor_property`·`set_editor_property`는 네이티브 C++ 이름(`bThrottleCPUWhenNotForeground`, `MaxHP`)도 받는다 |
 

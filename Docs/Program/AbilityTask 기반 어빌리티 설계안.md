@@ -263,7 +263,7 @@ Tasks의 Attack·HoldTag·SetCollisionResponseToChannel에는 C++이 이름으�
 
 SetCollisionResponseToChannel은 소유 캐릭터의 캡슐을 대상으로 요청한 채널 응답을 적용·복원합니다. 대상 컴포넌트는 실행 입력이며, 예시의 Pawn·Ignore는 해당 UE 채널·응답에 대응합니다. 동일 대상·채널의 순차 실행 계약은 위 ‘캐릭터와 실행 기능의 책임 경계’를 따릅니다.
 
-몽타주 재생 배율은 공통 재생 호출부가 현재 행동의 실행 입력으로 전달합니다. 보스 공격 패턴은 Boss.json의 PatternPlayRate를 읽고, Backstep·피격 등 그 배율을 사용하지 않는 모션은 그대로 재생합니다. 보스 캐릭터이거나 Ability.Boss.Pattern 태그가 있다는 이유만으로 모든 모션에 공격 배율을 적용하지 않습니다. Params에 배율 출처 선택 필드나 공통 배율 수치를 중복 기록하지 않으며, 엔진 몽타주 Task를 새 게임 Task로 감싸지 않습니다.
+몽타주 재생 배율은 공통 재생 호출부가 현재 행동의 실행 입력으로 전달합니다. 보스 공격 패턴은 보스 데이터(`Characters.json`의 `Boss`)의 PatternPlayRate를 읽고, Backstep·피격 등 그 배율을 사용하지 않는 모션은 그대로 재생합니다. 보스 캐릭터이거나 Ability.Boss.Pattern 태그가 있다는 이유만으로 모든 모션에 공격 배율을 적용하지 않습니다. Params에 배율 출처 선택 필드나 공통 배율 수치를 중복 기록하지 않으며, 엔진 몽타주 Task를 새 게임 Task로 감싸지 않습니다.
 
 보호 설정도 몽타주 재생 Params에 넣지 않습니다. 구간 보호는 시간표 HoldTag 구간으로, Ability 전체 보호는 Activation.OwnedTags로 표현합니다.
 
@@ -280,7 +280,7 @@ SetCollisionResponseToChannel은 소유 캐릭터의 캡슐을 대상으로 요�
 - 알 수 없는 기능·Params 필드, 중복 키·잘못된 타입·enum·태그·없는 에셋 ID·필수값 누락은 오류입니다. 이름별 맵의 키는 설정 이름으로 허용하되 같은 맵의 이름 중복은 금지합니다. 게임플레이 태그는 네이티브 선언만 사용합니다.
 - 각 Params 항목에는 명시적인 C++ 호출 또는 다른 기능의 읽기 전용 데이터 참조가 있어야 합니다. 다른 기능이 데이터만 참조한다고 해당 Task를 생성하지 않습니다. 실행도 참조도 없는 항목은 사용되는 설정으로 간주하지 않습니다.
 - PlayCutscene의 Sequence는 유효한 Level Sequence 참조여야 하며 패키지에 포함되는지 확인합니다. 시간표 발사 항목의 ProjectileId 검사는 [몽타주 시간표](<몽타주 시간표.md>) '검증'을 따릅니다.
-- DrainResource의 Resource는 Cost와 같은 SP·MP·UP 매핑을 사용하고, AmountPerSecond는 0보다 큰 유한한 수입니다. 지속 소모가 없으면 블록을 생략합니다. Period·소진 시 행동·GE 클래스 선택 같은 필드는 추가하지 않습니다.
+- DrainResource의 Resource는 Cost와 같은 SP·MP·UP 매핑을 사용하고, AmountPerSecond는 0보다 큰 유한한 수입니다. 지속 소모가 없으면 블록을 생략합니다. Period·소진 시 행동·효과 선택 같은 필드는 추가하지 않습니다.
 - TimedTag.Duration은 양수 게임 시간, SlowMotion.Speed는 0보다 크고 1 이하이며 RealDuration은 양수 실제 시간입니다. GrantResources의 세 수치는 0 이상이고 합계는 양수입니다. 모든 수치는 유한해야 합니다. Cost와 보상 수치는 서로 다른 필드이며 시작 비용을 보상 설정에서 추정하지 않습니다.
 - LaunchVertical.VelocityZ는 유한한 부호 있는 cm/s입니다. LaunchToTarget.AirTime은 양수, TargetOffset·MaxDistance와 TargetQuery.Range는 0 이상의 유한한 cm 값입니다.
 - PlayMontageAndWait.RootMotionDistance를 쓰면 양수의 총 수평 이동 거리(cm)여야 하고 원본 모션에 유효한 수평 루트 이동이 있어야 합니다. 생략은 엔진 기본 이동 배율 1을 뜻합니다. 다른 필수 필드 누락을 이 선택 필드와 같은 방식으로 허용하지 않습니다.
@@ -289,7 +289,7 @@ SetCollisionResponseToChannel은 소유 캐릭터의 캡슐을 대상으로 요�
 
 ## 기능별 설정과 실행
 
-이 절은 행동 `Tasks`에 적는 기능의 부분 예시와, 몽타주 시간표 항목으로 실행하는 기능의 설명입니다. 실제 데이터는 `Data/Player.json`·`Data/Boss.json`과 `Data/MontageTimelines.json`에 있습니다. 실제 대상·방향·컴포넌트·재생 인스턴스 등은 호출 시 전달하며, 설정 항목이 있다는 이유만으로 실행하지 않습니다.
+이 절은 행동 `Tasks`에 적는 기능의 부분 예시와, 몽타주 시간표 항목으로 실행하는 기능의 설명입니다. 실제 데이터는 `Data/Abilities.json`과 `Data/MontageTimelines.json`에 있습니다. 실제 대상·방향·컴포넌트·재생 인스턴스 등은 호출 시 전달하며, 설정 항목이 있다는 이유만으로 실행하지 않습니다.
 
 ### PlayMontageAndWait
 
@@ -339,7 +339,7 @@ Backstep처럼 모션의 총 이동 거리를 지정해야 할 때만 RootMotion
 
 Resource는 소모할 자원, AmountPerSecond는 초당 소모량입니다. 예시 값은 [플레이어 사양](<../Design/플레이어 사양.md>)의 'SP 소모'를 따릅니다. 이 기능은 발동 시 시작하므로 단일 고정 Params 객체를 사용하며 설정 이름이나 시간표 항목은 필요하지 않습니다. 시작 비용은 공통 Cost에 별도로 적습니다.
 
-공통 Ability가 커밋 성공 후 UAgEffect_ResourceDrain의 Spec을 만들고 자신에게 적용합니다. 이 GE는 무한 지속의 주기 효과이며, 적용 간격 0.1초와 적용 직후에는 소모하지 않는 규칙을 따릅니다. 주기마다 AmountPerSecond × Spec의 Period만큼 감소시킵니다. UAgEffect_Resource의 SetByCaller 방식처럼 선택된 자원의 수정량만 음수로 전달하고 나머지는 0으로 둡니다. 클래스별 기획 수치나 JSON의 GEClass 선택 필드는 두지 않습니다. 주기는 구현 간격이며 기획 수치의 추가 원본으로 사용하지 않습니다.
+공통 Ability가 커밋 성공 후 소모 효과(`ResourceDrain`)의 Spec을 만들고 자신에게 적용합니다. 이 효과는 무한 지속의 주기 효과이며, 적용 간격 0.1초(효과의 `Period`)와 적용 직후에는 소모하지 않는 규칙을 따릅니다. 주기마다 AmountPerSecond × Spec의 Period만큼 감소시킵니다. 자원 효과(`Resource`)의 SetByCaller 방식처럼 선택된 자원의 수정량만 음수로 전달하고 나머지는 0으로 둡니다. 행동마다 효과를 고르는 필드는 두지 않습니다. 주기는 구현 간격이며 기획 수치의 추가 원본으로 사용하지 않습니다.
 
 자원 변경은 ASC·AttributeSet을 거치므로 범위 제한과 SP 감소에 따른 리젠 대기 처리를 유지합니다. 한 주기 소모량보다 적게 남아도 마지막 잔량을 소모해 0이 되며 음수가 되지 않습니다. 시작 시 한 주기분을 선결제하거나 종료 시 남은 부분 주기를 추가 정산하지 않습니다. GE의 월드 게임 시간 기준을 유지하며 몽타주·캐릭터 Tick에 소모 시간을 연결하지 않습니다.
 
@@ -347,7 +347,7 @@ Resource는 소모할 자원, AmountPerSecond는 초당 소모량입니다. 예�
 
 ### TimedTag
 
-UAgEffect_TimedTag에 전달할 설정입니다. 가드의 패리 판정과 그동안의 이동 제한은 하나의 ParryWindow를 함께 사용합니다.
+시간 태그 효과(`TimedTag`)에 전달할 설정입니다. 가드의 패리 판정과 그동안의 이동 제한은 하나의 ParryWindow를 함께 사용합니다.
 
 ```json
 {
@@ -368,7 +368,7 @@ Dodge의 CounterChance도 같은 고정 타입을 사용하지만 극한 회피 
 
 ### GrantResources
 
-UAgEffect_Resource를 한 번 적용하는 고정 보상 설정입니다.
+자원 효과(`Resource`)를 한 번 적용하는 고정 보상 설정입니다.
 
 ```json
 {
@@ -581,7 +581,7 @@ Dash의 네 수치는 이동 자체의 설정입니다. 구간 시작에서 방�
 }
 ```
 
-락온 입력 처리에서 UAgAbilityTask_LockOn의 읽기 전용 대상 조회로 대상을 선택하고 Task에 전달합니다. 대상 보관·상실 검사·락온 지점 계산·카메라 추적은 이 Task가 맡으며, 종료 시 대상과 회전 상태를 정리합니다. Ability는 실행 Task만 참조하고 Player.GetLockOnTarget은 해당 Task의 대상을 읽습니다. 입력·이동 회전·공격 보조 방향·보스 마커는 이 조회를 사용하며 별도 대상 저장소를 두지 않습니다. 모션 구간에 종속된 기능이 아니므로 시간표 항목으로 쓰지 않습니다. 대상 선택·해제 거리와 카메라 수치는 Player.json·Camera.json 원본을 사용합니다. 키 재입력·대상 상실 시 락온 종료 처리가 Ability와 Task를 정리합니다.
+락온 입력 처리에서 UAgAbilityTask_LockOn의 읽기 전용 대상 조회로 대상을 선택하고 Task에 전달합니다. 대상 보관·상실 검사·락온 지점 계산·카메라 추적은 이 Task가 맡으며, 종료 시 대상과 회전 상태를 정리합니다. Ability는 실행 Task만 참조하고 Player.GetLockOnTarget은 해당 Task의 대상을 읽습니다. 입력·이동 회전·공격 보조 방향·보스 마커는 이 조회를 사용하며 별도 대상 저장소를 두지 않습니다. 모션 구간에 종속된 기능이 아니므로 시간표 항목으로 쓰지 않습니다. 대상 선택·해제 거리와 카메라 수치는 플레이어 데이터(`Characters.json`의 `Player`)·`Camera.json` 원본을 사용합니다. 키 재입력·대상 상실 시 락온 종료 처리가 Ability와 Task를 정리합니다.
 
 ### PlayCutscene
 
@@ -619,7 +619,7 @@ WaitGameplayEvent·WaitMovementModeChange·WaitVelocityChange·Groggy의 WaitDel
 
 ## 행동별 조합
 
-여러 기능을 함께 쓰는 행동의 연결입니다. 완전한 항목은 `Data/Player.json`·`Data/Boss.json`과 `Data/MontageTimelines.json`에 있습니다.
+여러 기능을 함께 쓰는 행동의 연결입니다. 완전한 항목은 `Data/Abilities.json`과 `Data/MontageTimelines.json`에 있습니다.
 
 ### 스킬: 모션과 공격 구간
 
@@ -712,7 +712,7 @@ UpdateSprint는 이동·Shift·가드 입력과 회피 후딜 전환 조건을 �
 
 비용 검사는 게임 상태를 바꾸지 않고 Task 객체도 생성하지 않습니다. CanActivateAbility에서 현재 자원을 검사하고, 실제 커밋 직전에 다시 확인합니다. Cost는 Ability에 한 번만 정의하며 여러 독립 Task를 구성해도 중복 소모하지 않습니다. Task별 동적 비용 산출·합산 경로를 만들지 않습니다.
 
-Cost의 Resource·Amount는 공통 CheckCost에서 검사하고 CommitAbility의 ApplyCost에서 한 번 적용합니다. UAgEffect_Cost는 UAgEffect_Resource의 즉시 자원 Modifier를 재사용하며 SetCost가 해당 자원에 음수 Amount, 나머지 자원에 0을 Spec의 SetByCaller 값으로 넣습니다. 별도 비용 Execution 계산 클래스나 GE에서 Ability를 역조회하는 경로는 두지 않습니다. ApplyCost는 실행 사본의 Cost로 Spec을 구성하고 엔진의 ApplyGameplayEffectSpecToOwner를 사용합니다. CheckCost는 활성 스펙의 재발동 사전 검사에도 쓰이므로 현재 정의를 확인합니다. 실행 진입에서는 CheckResources가 실행 사본을 커밋 전에 검사하고, ApplyCost는 그 사본만 적용합니다. SetByCaller가 채워지지 않은 기본 GE 정의로 중복 검사하지 않습니다. Cost가 null이거나 Amount가 0이면 비용 GE 적용을 생략합니다. 부여 시점에 비용 GE 유무를 고정하지 않습니다. HUD와 비활성 발동 검사도 해당 ID의 스펙 인스턴스와 정의를 사용합니다.
+Cost의 Resource·Amount는 공통 CheckCost에서 검사하고 CommitAbility의 ApplyCost에서 한 번 적용합니다. 비용은 자원 효과(`Resource`)를 쓰며, 비용 Params(`FAgResourceCostParams::AddToSpec`)가 해당 자원에 음수 Amount, 나머지 자원에 0을 Spec의 SetByCaller 값으로 넣습니다. 별도 비용 Execution 계산 클래스나 GE에서 Ability를 역조회하는 경로는 두지 않습니다. ApplyCost는 실행 사본의 Cost로 Spec을 구성하고 엔진의 ApplyGameplayEffectSpecToOwner를 사용합니다. CheckCost는 활성 스펙의 재발동 사전 검사에도 쓰이므로 현재 정의를 확인합니다. 실행 진입에서는 CheckResources가 실행 사본을 커밋 전에 검사하고, ApplyCost는 그 사본만 적용합니다. SetByCaller가 채워지지 않은 기본 GE 정의로 중복 검사하지 않습니다. Cost가 null이거나 Amount가 0이면 비용 효과 적용을 생략합니다. 부여 시점에 비용 유무를 고정하지 않습니다. HUD와 비활성 발동 검사도 해당 ID의 스펙 인스턴스와 정의를 사용합니다.
 
 Cooldown이 0이면 쿨다운 GE 적용을 생략하고, 양수이면 설정한 시간으로 적용합니다. Cost가 null이고 Cooldown이 0인 행동도 커밋 경로는 유지하되 비용·쿨다운 GE를 적용하지 않습니다. 비용·쿨다운 유무와 관계없이 해당 행동의 시작 조건 검사는 유지합니다.
 

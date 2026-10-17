@@ -2,9 +2,8 @@
 
 #include "AbilitySystem/AgHitResultGameplayEffectComponent.h"
 
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgEffect_Resource.h"
-#include "AbilitySystem/AgEffect_TimedTag.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -13,9 +12,12 @@
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
+#include "Data/AgAbilityTaskParams.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgEffectData.h"
+#include "GameplayEffect.h"
 #include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -196,14 +198,15 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageNumber, CueParameters);
 	}
 
-	// 히트스톱은 캐릭터마다 태그로 겁니다. 투사체는 쏜 캐릭터를 멈추지 않고, 처형에는 히트스톱이 없습니다.
+	// 히트스톱은 캐릭터마다 히트스톱 효과(태그)로 겁니다. 투사체는 쏜 캐릭터를 멈추지 않고, 처형에는 히트스톱이 없습니다.
 	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 	{
-		const float HitstopTime = UAgAssetManager::Get().GetCombatRules().HitstopTime;
-		UAgEffect_TimedTag::Apply(TargetASC, AgGameplayTags::State_Hitstop, HitstopTime);
+		const UGameplayEffect* Hitstop = UAgAssetManager::Get().GetEffect(EAgEffect::Hitstop);
+		TargetASC->ApplyGameplayEffectToSelf(Hitstop, 1.f, TargetASC->MakeEffectContext());
 		if (Causer == Attacker)
 		{
-			UAgEffect_TimedTag::Apply(Attacker->GetAbilitySystemComponent(), AgGameplayTags::State_Hitstop, HitstopTime);
+			UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
+			AttackerASC->ApplyGameplayEffectToSelf(Hitstop, 1.f, AttackerASC->MakeEffectContext());
 		}
 	}
 
@@ -219,9 +222,15 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	const float UPCharge = GESpec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP);
 	if (bHit && (MPCharge > 0.f || UPCharge > 0.f))
 	{
-		UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
-		const FGameplayEffectSpecHandle Charge = AttackerASC->MakeOutgoingSpec(UAgEffect_Resource::StaticClass(), 1.f, AttackerASC->MakeEffectContext());
-		UAgEffect_Resource::SetAmounts(*Charge.Data, 0.f, MPCharge, UPCharge);
-		AttackerASC->ApplyGameplayEffectSpecToSelf(*Charge.Data);
+		UAgAbilitySystemComponent* AttackerASC = CastChecked<UAgAbilitySystemComponent>(Attacker->GetAbilitySystemComponent());
+		const FGameplayEffectSpecHandle ChargeSpec = AttackerASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
+		if (ChargeSpec.IsValid())
+		{
+			FAgGrantResourcesParams Charge;
+			Charge.MP = MPCharge;
+			Charge.UP = UPCharge;
+			Charge.AddToSpec(*ChargeSpec.Data);
+			AttackerASC->ApplyGameplayEffectSpecToSelf(*ChargeSpec.Data);
+		}
 	}
 }

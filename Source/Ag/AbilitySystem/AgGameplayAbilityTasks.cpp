@@ -116,7 +116,7 @@ UAbilityTask* UAgGameplayAbility::MakeDashTask(const FAgDashParams& Params, int3
 	if (!Target)
 	{
 		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s Dash: missing target input (play %d window %d)"),
-		    *GetAgCharacter()->GetCharacterData()->JsonFileName, *GetAbilityId().ToString(), InstanceId, Key);
+		    *GetAgCharacter()->GetCharacterData()->GetName(), *GetAbilityId().ToString(), InstanceId, Key);
 		return nullptr;
 	}
 	DashTask = UAgAbilityTask_Dash::Dash(this, Params, GetAgCharacter()->GetActorForwardVector(), Target->GetActorLocation(), Target);
@@ -186,7 +186,7 @@ void UAgGameplayAbility::LaunchProjectile(
 	if (!Projectile)
 	{
 		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s: projectile %s missing in Projectiles (play %d)"),
-		    *GetAgCharacter()->GetCharacterData()->JsonFileName, *GetAbilityId().ToString(), *ProjectileId.ToString(), InstanceId);
+		    *GetAgCharacter()->GetCharacterData()->GetName(), *GetAbilityId().ToString(), *ProjectileId.ToString(), InstanceId);
 		return;
 	}
 	UAgAbilityTask_SpawnProjectile::SpawnProjectile(this, InstanceId, *Projectile, Attack, Origin, SocketName)->ReadyForActivation();

@@ -1,9 +1,8 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
-#include "AbilitySystem/AgEffect_Damage.h"
 #include "AbilitySystemComponent.h"
-#include "Abilities/GameplayAbility.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "Abilities/GameplayAbilityTargetTypes.h"
 
 #include "Animation/AnimInstance.h"
@@ -12,7 +11,7 @@
 #include "Combat/AgProjectile.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Data/AgCharacterData.h"
+#include "Data/AgEffectData.h"
 #include "Ag.h"
 
 UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId,
@@ -113,8 +112,12 @@ void UAgAbilityTask_SpawnProjectile::HandleSpawned(AActor* Actor)
 	{
 		PendingProjectile->AddActorWorldOffset(FVector(0.f, 0.f, PendingProjectile->GetCollisionHalfHeight()));
 	}
-	const FGameplayEffectSpecHandle DamageSpec = Ability->MakeOutgoingGameplayEffectSpec(UAgEffect_Damage::StaticClass());
-	UAgEffect_Damage::SetAttack(*DamageSpec.Data, Hit, PendingProjectile->GetActorLocation());
+	const FGameplayEffectSpecHandle DamageSpec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
+	if (DamageSpec.IsValid())
+	{
+		DamageSpec.Data->GetContext().AddOrigin(PendingProjectile->GetActorLocation());
+		Hit.AddToSpec(*DamageSpec.Data);
+	}
 	PendingProjectile->Launch(DamageSpec, Direction, FlightParams);
 	PendingProjectile = nullptr;
 }
