@@ -76,8 +76,10 @@ namespace
 		FString Task;
 		Object.TryGetStringField(TEXT("Task"), Task);
 		Out.Task = FName(*Task);
-		static const TArray<FString> TimeKeys = {TEXT("Start"), TEXT("End"), TEXT("Time")};
-		AgTaskParams::Read(Object, Out.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point, Out.Params, Path, Errors, TimeKeys);
+		static const TArray<FString> WindowKeys = {TEXT("Start"), TEXT("End")};
+		static const TArray<FString> PointKeys = {TEXT("Time")};
+		const EAgTaskPlacement Placement = Out.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point;
+		AgTaskParams::Read(Object, Placement, Out.Params, Path, Errors, Out.bWindow ? WindowKeys : PointKeys);
 		return Errors.Num() == Before;
 	}
 }

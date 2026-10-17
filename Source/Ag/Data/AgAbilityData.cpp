@@ -85,10 +85,21 @@ bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
 
 namespace
 {
-	/** C++ 사건이 쓰는 설정이 정의에 있는지 확인합니다. */
+	/** C++ 사건이 쓰는 설정이 정의에 있는지 확인합니다. 사건은 Attack 말고는 Task마다 첫 항목만 읽으므로 같은 Task는 한 번만 적습니다. */
 	void ValidateRequiredTasks(const FAgAbilityData& Ability, TArray<FString>& Errors)
 	{
 		const FString Path = Ability.Id.ToString() + TEXT(".Tasks: ");
+		TSet<FName> Listed;
+		for (const FInstancedStruct& Params : Ability.Tasks)
+		{
+			const FName Task = AgTaskParams::GetTaskName(*Params.GetScriptStruct());
+			bool bListed = false;
+			Listed.Add(Task, &bListed);
+			if (bListed && Task != TEXT("Attack"))
+			{
+				Errors.Add(Path + Task.ToString() + TEXT(" listed more than once"));
+			}
+		}
 		TFunction<void(const TCHAR*)> Require = [&](const TCHAR* Task)
 		{
 			if (!HasTask(Ability, Task))

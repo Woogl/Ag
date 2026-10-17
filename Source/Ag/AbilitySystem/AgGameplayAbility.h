@@ -8,6 +8,7 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgProjectileData.h"
 #include "Engine/EngineBaseTypes.h"
+#include "Engine/EngineTypes.h"
 #include "StructUtils/InstancedStruct.h"
 #include "AgGameplayAbility.generated.h"
 
