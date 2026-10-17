@@ -6,25 +6,48 @@
 #include "Animation/AnimMontage.h"
 #include "Dom/JsonObject.h"
 #include "JsonObjectConverter.h"
-#include "LevelSequence.h"
 #include "UObject/UnrealType.h"
 
 namespace
 {
 	using namespace AgJsonRead;
 
-	template <typename T>
-	void ReadArray(const FJsonObject& Tasks, const TCHAR* Name, TArray<T>& Out, const FString& Path, TArray<FString>& Errors)
+	void ReadMontage(const FJsonObject& Entry, FAgAbilityData& Out, const FString& Path, TArray<FString>& Errors)
 	{
-		if (!Tasks.HasField(Name))
+		Out.bHasMontage = Entry.HasField(TEXT("Montage"));
+		if (!Out.bHasMontage)
 		{
 			return;
 		}
-		const FString Field = Path + TEXT(".") + Name;
-		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
-		if (!Tasks.TryGetArrayField(Name, Items) || Items->IsEmpty())
+		const FString Field = Path + TEXT(".Montage");
+		const FObject Montage = ObjectAt(Entry, TEXT("Montage"), Field, Errors);
+		if (!Montage)
 		{
-			Errors.Add(Field + TEXT(": must be a non-empty array"));
+			return;
+		}
+		Keys(*Montage, Field, {TEXT("MontageId")}, {TEXT("RootMotionDistance")}, Errors);
+		FString Id;
+		if (!Montage->TryGetStringField(TEXT("MontageId"), Id) || FName(*Id).IsNone())
+		{
+			Errors.Add(Field + TEXT(".MontageId: missing name"));
+		}
+		Out.Montage.MontageId = FName(*Id);
+		Out.Montage.bHasRootMotionDistance = Montage->HasField(TEXT("RootMotionDistance"));
+		if (Out.Montage.bHasRootMotionDistance &&
+		    Number(*Montage, TEXT("RootMotionDistance"), Field, Out.Montage.RootMotionDistance, Errors) &&
+		    Out.Montage.RootMotionDistance <= 0.f)
+		{
+			Errors.Add(Field + TEXT(".RootMotionDistance: must be positive"));
+		}
+	}
+
+	void ReadTasks(const FJsonObject& Entry, FAgAbilityData& Out, const FString& Path, TArray<FString>& Errors)
+	{
+		const FString Field = Path + TEXT(".Tasks");
+		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+		if (!Entry.TryGetArrayField(TEXT("Tasks"), Items))
+		{
+			Errors.Add(Field + TEXT(": expected array"));
 			return;
 		}
 		for (int32 Index = 0; Index < Items->Num(); ++Index)
@@ -33,121 +56,25 @@ namespace
 			const TSharedPtr<FJsonObject>* Item = nullptr;
 			if (!(*Items)[Index]->TryGetObject(Item))
 			{
-				Errors.Add(ItemPath + TEXT(": must be an object"));
+				Errors.Add(ItemPath + TEXT(": expected object"));
 				continue;
 			}
-			T Value;
-			if (Read(**Item, Value, ItemPath, Errors))
+			FInstancedStruct Params;
+			if (AgTaskParams::Read(**Item, EAgTaskPlacement::Activation, Params, ItemPath, Errors))
 			{
-				Out.Add(Value);
+				Out.Tasks.Add(MoveTemp(Params));
 			}
 		}
 	}
 
-	template <typename T>
-	void ReadSingle(const FJsonObject& Tasks, const TCHAR* Name, T& Out, bool& bPresent, const FString& Path, TArray<FString>& Errors)
+	bool HasTask(const FAgAbilityData& Ability, FName Task)
 	{
-		bPresent = Tasks.HasField(Name);
-		if (!bPresent)
-		{
-			return;
-		}
-		if (const FObject Object = ObjectAt(Tasks, Name, Path + TEXT(".") + Name, Errors))
-		{
-			Read(*Object, Out, Path + TEXT(".") + Name, Errors);
-		}
+		return Ability.Tasks.ContainsByPredicate(
+		    [Task](const FInstancedStruct& Params)
+		    {
+			    return Params.GetScriptStruct() && AgTaskParams::GetTaskName(*Params.GetScriptStruct()) == Task;
+		    });
 	}
-
-	void ReadTasks(const FJsonObject& Object, FAgAbilityTasks& Out, const FString& Path, TArray<FString>& Errors)
-	{
-		Keys(Object, Path, {},
-		    {TEXT("PlayMontageAndWait"), TEXT("DrainResource"), TEXT("TimedTag"), TEXT("GrantResources"), TEXT("SlowMotion"),
-		        TEXT("LaunchVertical"), TEXT("LaunchToTarget"), TEXT("TargetQuery"), TEXT("Attack"), TEXT("HoldTag"),
-		        TEXT("SetCollisionResponseToChannel"), TEXT("TimeStop"), TEXT("LockOn"), TEXT("PlayCutscene")},
-		    Errors);
-		ReadSingle(Object, TEXT("TimedTag"), Out.TimedTag, Out.bHasTimedTag, Path, Errors);
-		ReadSingle(Object, TEXT("GrantResources"), Out.GrantResources, Out.bHasGrantResources, Path, Errors);
-		ReadSingle(Object, TEXT("SlowMotion"), Out.SlowMotion, Out.bHasSlowMotion, Path, Errors);
-		ReadSingle(Object, TEXT("TargetQuery"), Out.TargetQuery, Out.bHasTargetQuery, Path, Errors);
-		ReadArray(Object, TEXT("Attack"), Out.Attack, Path, Errors);
-		ReadSingle(Object, TEXT("HoldTag"), Out.HoldTag, Out.bHasHoldTag, Path, Errors);
-		ReadSingle(Object, TEXT("SetCollisionResponseToChannel"), Out.SetCollisionResponseToChannel,
-		    Out.bHasSetCollisionResponseToChannel, Path, Errors);
-		ReadSingle(Object, TEXT("PlayCutscene"), Out.PlayCutscene, Out.bHasPlayCutscene, Path, Errors);
-		ReadSingle(Object, TEXT("DrainResource"), Out.DrainResource, Out.bHasDrainResource, Path, Errors);
-		ReadSingle(Object, TEXT("LaunchVertical"), Out.LaunchVertical, Out.bHasLaunchVertical, Path, Errors);
-		ReadSingle(Object, TEXT("LaunchToTarget"), Out.LaunchToTarget, Out.bHasLaunchToTarget, Path, Errors);
-		Out.bHasPlayMontageAndWait = Object.HasField(TEXT("PlayMontageAndWait"));
-		if (Out.bHasPlayMontageAndWait)
-		{
-			const FString Field = Path + TEXT(".PlayMontageAndWait");
-			if (FObject Params = ObjectAt(Object, TEXT("PlayMontageAndWait"), Field, Errors))
-			{
-				Keys(*Params, Field, {TEXT("MontageId")}, {TEXT("RootMotionDistance")}, Errors);
-				FString Id;
-				if (!Params->TryGetStringField(TEXT("MontageId"), Id) || FName(*Id).IsNone())
-				{
-					Errors.Add(Field + TEXT(".MontageId: missing name"));
-				}
-				Out.PlayMontageAndWait.MontageId = FName(*Id);
-				Out.PlayMontageAndWait.bHasRootMotionDistance = Params->HasField(TEXT("RootMotionDistance"));
-				if (Out.PlayMontageAndWait.bHasRootMotionDistance)
-				{
-					Number(*Params, TEXT("RootMotionDistance"), Field, Out.PlayMontageAndWait.RootMotionDistance, Errors);
-					if (Out.PlayMontageAndWait.RootMotionDistance <= 0.f)
-					{
-						Errors.Add(Field + TEXT(".RootMotionDistance: must be positive"));
-					}
-				}
-			}
-		}
-		Out.bHasTimeStop = Object.HasField(TEXT("TimeStop"));
-		Out.bHasLockOn = Object.HasField(TEXT("LockOn"));
-		for (const TCHAR* Name : {TEXT("TimeStop"), TEXT("LockOn")})
-		{
-			if (Object.HasField(Name))
-			{
-				if (FObject Empty = ObjectAt(Object, Name, Path + TEXT(".") + Name, Errors))
-				{
-					Keys(*Empty, Path + TEXT(".") + Name, {}, {}, Errors);
-				}
-			}
-		}
-		if (Out.bHasDrainResource && Out.DrainResource.AmountPerSecond <= 0.f)
-		{
-			Errors.Add(Path + TEXT(".DrainResource.AmountPerSecond: must be positive"));
-		}
-		if (Out.bHasLaunchToTarget && Out.LaunchToTarget.AirTime <= 0.f)
-		{
-			Errors.Add(Path + TEXT(".LaunchToTarget.AirTime: must be positive"));
-		}
-		if (Out.bHasTimedTag && Out.TimedTag.Duration <= 0.f)
-		{
-			Errors.Add(Path + TEXT(".TimedTag.Duration: must be positive"));
-		}
-		if (Out.bHasGrantResources && Out.GrantResources.SP + Out.GrantResources.MP + Out.GrantResources.UP <= 0.f)
-		{
-			Errors.Add(Path + TEXT(".GrantResources: reward must be positive"));
-		}
-		if (Out.bHasSlowMotion && (Out.SlowMotion.Speed <= 0.f || Out.SlowMotion.Speed > 1.f || Out.SlowMotion.RealDuration <= 0.f))
-		{
-			Errors.Add(Path + TEXT(".SlowMotion: invalid speed or duration"));
-		}
-	}
-
-}
-
-FAgPlayerAttackHit FAgAttackParams::MakeHit(bool bFinisher) const
-{
-	FAgPlayerAttackHit Hit;
-	Hit.DamageMultiplier = DamageMultiplier;
-	Hit.PoiseMultiplier = PoiseMultiplier;
-	Hit.HitReaction = HitReaction;
-	Hit.bGuardable = bGuardable;
-	Hit.MPCharge = MPCharge;
-	Hit.UPCharge = UPCharge;
-	Hit.bFinisher = bFinisher;
-	return Hit;
 }
 
 bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
@@ -161,62 +88,61 @@ namespace
 	/** C++ 사건이 쓰는 설정이 정의에 있는지 확인합니다. */
 	void ValidateRequiredTasks(const FAgAbilityData& Ability, TArray<FString>& Errors)
 	{
-		const FString Path = Ability.Id.ToString() + TEXT(".Tasks.");
-		const FAgAbilityTasks& Tasks = Ability.Tasks;
-		TFunction<void(bool, const TCHAR*)> Require = [&](bool bPresent, const TCHAR* Field)
+		const FString Path = Ability.Id.ToString() + TEXT(".Tasks: ");
+		TFunction<void(const TCHAR*)> Require = [&](const TCHAR* Task)
 		{
-			if (!bPresent)
+			if (!HasTask(Ability, Task))
 			{
-				Errors.Add(Path + Field + TEXT(": required by C++ event"));
+				Errors.Add(Path + Task + TEXT(" required by C++ event"));
 			}
 		};
 		const FName Id = Ability.Id;
 		if (Id == TEXT("Dodge"))
 		{
-			Require(Tasks.bHasGrantResources, TEXT("GrantResources"));
-			Require(Tasks.bHasTimedTag, TEXT("TimedTag"));
-			Require(Tasks.bHasSlowMotion, TEXT("SlowMotion"));
+			Require(TEXT("GrantResources"));
+			Require(TEXT("TimedTag"));
+			Require(TEXT("SlowMotion"));
 		}
 		if (Id == TEXT("Guard"))
 		{
-			Require(Tasks.bHasHoldTag, TEXT("HoldTag"));
-			Require(Tasks.bHasTimedTag, TEXT("TimedTag"));
-			Require(Tasks.bHasGrantResources, TEXT("GrantResources"));
+			Require(TEXT("HoldTag"));
+			Require(TEXT("TimedTag"));
+			Require(TEXT("GrantResources"));
 		}
 		if (Id == TEXT("KnockBack") || Id == TEXT("KnockUp"))
 		{
-			Require(Tasks.bHasHoldTag, TEXT("HoldTag"));
+			Require(TEXT("HoldTag"));
 		}
 		if (Id == TEXT("Groggy"))
 		{
-			Require(Tasks.bHasHoldTag, TEXT("HoldTag"));
-			Require(Tasks.bHasSetCollisionResponseToChannel, TEXT("SetCollisionResponseToChannel"));
+			Require(TEXT("HoldTag"));
+			Require(TEXT("SetCollisionResponseToChannel"));
 		}
 		if (Id == TEXT("Ultimate"))
 		{
-			Require(Tasks.bHasTimeStop, TEXT("TimeStop"));
-			Require(Tasks.bHasPlayCutscene, TEXT("PlayCutscene"));
-			Require(Tasks.bHasTargetQuery, TEXT("TargetQuery"));
-			Require(!Tasks.Attack.IsEmpty(), TEXT("Attack"));
+			Require(TEXT("TimeStop"));
+			Require(TEXT("PlayCutscene"));
+			Require(TEXT("TargetQuery"));
+			Require(TEXT("Attack"));
 		}
 		if (Id == TEXT("Execution"))
 		{
-			Require(Tasks.bHasTargetQuery, TEXT("TargetQuery"));
-			Require(!Tasks.Attack.IsEmpty(), TEXT("Attack"));
+			Require(TEXT("TargetQuery"));
+			Require(TEXT("Attack"));
 		}
 		if (Id == TEXT("LeapSlam"))
 		{
-			Require(Tasks.bHasLaunchToTarget, TEXT("LaunchToTarget"));
-			Require(Tasks.bHasTargetQuery, TEXT("TargetQuery"));
-			Require(!Tasks.Attack.IsEmpty(), TEXT("Attack"));
+			Require(TEXT("LaunchToTarget"));
+			Require(TEXT("TargetQuery"));
+			Require(TEXT("Attack"));
 		}
 		if (Id == TEXT("JumpAttack"))
 		{
-			Require(Tasks.bHasLaunchVertical, TEXT("LaunchVertical"));
+			Require(TEXT("LaunchVertical"));
 		}
 		if (Id == TEXT("LockOn"))
 		{
-			Require(Tasks.bHasLockOn, TEXT("LockOn"));
+			Require(TEXT("LockOn"));
 		}
 	}
 }
@@ -240,8 +166,8 @@ bool AgAbilityData::Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& 
 		{
 			continue;
 		}
-		Keys(*Entry, Path, {TEXT("Tags"), TEXT("Cooldown"), TEXT("Activation"), TEXT("Cost"), TEXT("Tasks")}, {TEXT("PatternSelection")},
-		    Errors);
+		Keys(*Entry, Path, {TEXT("Tags"), TEXT("Cooldown"), TEXT("Activation"), TEXT("Cost"), TEXT("Tasks")},
+		    {TEXT("Montage"), TEXT("PatternSelection")}, Errors);
 		Tags(*Entry, TEXT("Tags"), Path, Data.Tags, Errors);
 		Number(*Entry, TEXT("Cooldown"), Path, Data.Cooldown, Errors);
 		if (FObject Activation = ObjectAt(*Entry, TEXT("Activation"), Path + TEXT(".Activation"), Errors))
@@ -275,10 +201,8 @@ bool AgAbilityData::Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& 
 				Read(*Params, Data.Cost, Path + TEXT(".Cost"), Errors);
 			}
 		}
-		if (const FObject Tasks = ObjectAt(*Entry, TEXT("Tasks"), Path + TEXT(".Tasks"), Errors))
-		{
-			ReadTasks(*Tasks, Data.Tasks, Path + TEXT(".Tasks"), Errors);
-		}
+		ReadMontage(*Entry, Data, Path, Errors);
+		ReadTasks(*Entry, Data, Path, Errors);
 		Data.bHasPatternSelection = Entry->HasField(TEXT("PatternSelection"));
 		if (Data.bHasPatternSelection)
 		{
@@ -375,13 +299,13 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 				Errors.Add(AbilityPath + TEXT("missing montage ") + MontageId.ToString());
 			}
 		}
-		const FAgPlayMontageAndWaitParams& Params = Ability->Tasks.PlayMontageAndWait;
-		const UAnimMontage* Montage = Ability->Tasks.bHasPlayMontageAndWait ? Data.Montages.FindRef(Params.MontageId) : nullptr;
+		const FAgAbilityMontage& Params = Ability->Montage;
+		const UAnimMontage* Montage = Ability->bHasMontage ? Data.Montages.FindRef(Params.MontageId) : nullptr;
 		if (Montage && Params.bHasRootMotionDistance &&
 		    Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D() <=
 		        UE_SMALL_NUMBER)
 		{
-			Errors.Add(AbilityPath + TEXT("PlayMontageAndWait.RootMotionDistance: montage has no horizontal root motion"));
+			Errors.Add(AbilityPath + TEXT("Montage.RootMotionDistance: montage has no horizontal root motion"));
 		}
 	}
 }
@@ -389,9 +313,9 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 TArray<FName> AgAbilityData::MontageIds(const UAgCharacterData& Data, const FAgAbilityData& Ability)
 {
 	TArray<FName> Result;
-	if (Ability.Tasks.bHasPlayMontageAndWait)
+	if (Ability.bHasMontage)
 	{
-		Result.AddUnique(Ability.Tasks.PlayMontageAndWait.MontageId);
+		Result.AddUnique(Ability.Montage.MontageId);
 	}
 	const FName Id = Ability.Id;
 	if (Id == TEXT("BasicAttack"))

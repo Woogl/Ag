@@ -2,8 +2,13 @@
 
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 
-#include "Abilities/GameplayAbility.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
+
+UAbilityTask* FAgHoldTagParams::MakeTask(const FAgTaskContext& Context) const
+{
+	return UAgAbilityTask_HoldTag::HoldTag(&Context.Runner, Tag);
+}
 
 UAgAbilityTask_HoldTag* UAgAbilityTask_HoldTag::HoldTag(UGameplayAbility* OwningAbility, const FGameplayTag& Tag)
 {

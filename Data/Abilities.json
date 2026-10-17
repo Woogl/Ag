@@ -23,7 +23,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {}
+    "Tasks": []
   },
   "Jump": {
     "Tags": [
@@ -50,7 +50,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {}
+    "Tasks": []
   },
   "JumpAttack": {
     "Tags": [
@@ -77,14 +77,12 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "JumpAttack"
-      },
-      "LaunchVertical": {
-        "VelocityZ": -1000
-      }
-    }
+    "Montage": {
+      "MontageId": "JumpAttack"
+    },
+    "Tasks": [
+      {"Task": "LaunchVertical", "VelocityZ": -1000}
+    ]
   },
   "Dodge": {
     "Tags": [
@@ -113,21 +111,11 @@
       "Resource": "SP",
       "Amount": 20
     },
-    "Tasks": {
-      "GrantResources": {
-        "SP": 0,
-        "MP": 10,
-        "UP": 10
-      },
-      "TimedTag": {
-        "Tag": "State.DodgeCounterChance",
-        "Duration": 1
-      },
-      "SlowMotion": {
-        "Speed": 0.3,
-        "RealDuration": 0.3
-      }
-    }
+    "Tasks": [
+      {"Task": "GrantResources", "SP": 0, "MP": 10, "UP": 10},
+      {"Task": "TimedTag", "Tag": "State.DodgeCounterChance", "Duration": 1},
+      {"Task": "SlowMotion", "Speed": 0.3, "RealDuration": 0.3}
+    ]
   },
   "DodgeCounter": {
     "Tags": [
@@ -155,11 +143,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "DodgeCounter"
-      }
-    }
+    "Montage": {
+      "MontageId": "DodgeCounter"
+    },
+    "Tasks": []
   },
   "Guard": {
     "Tags": [
@@ -187,20 +174,11 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "HoldTag": {
-        "Tag": "State.Guarding"
-      },
-      "TimedTag": {
-        "Tag": "State.ParryWindow",
-        "Duration": 0.3
-      },
-      "GrantResources": {
-        "SP": 0,
-        "MP": 15,
-        "UP": 10
-      }
-    }
+    "Tasks": [
+      {"Task": "HoldTag", "Tag": "State.Guarding"},
+      {"Task": "TimedTag", "Tag": "State.ParryWindow", "Duration": 0.3},
+      {"Task": "GrantResources", "SP": 0, "MP": 15, "UP": 10}
+    ]
   },
   "Skill": {
     "Tags": [
@@ -229,11 +207,10 @@
       "Resource": "MP",
       "Amount": 30
     },
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "Skill"
-      }
-    }
+    "Montage": {
+      "MontageId": "Skill"
+    },
+    "Tasks": []
   },
   "Ultimate": {
     "Tags": [
@@ -264,28 +241,15 @@
       "Resource": "UP",
       "Amount": 100
     },
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "Ultimate"
-      },
-      "TimeStop": {},
-      "PlayCutscene": {
-        "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"
-      },
-      "TargetQuery": {
-        "Range": 1000
-      },
-      "Attack": [
-        {
-          "DamageMultiplier": 5,
-          "PoiseMultiplier": 5,
-          "HitReaction": "KnockUp",
-          "bGuardable": true,
-          "MPCharge": 0,
-          "UPCharge": 0
-        }
-      ]
-    }
+    "Montage": {
+      "MontageId": "Ultimate"
+    },
+    "Tasks": [
+      {"Task": "TimeStop"},
+      {"Task": "PlayCutscene", "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"},
+      {"Task": "TargetQuery", "Range": 1000},
+      {"Task": "Attack", "DamageMultiplier": 5, "PoiseMultiplier": 5, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
+    ]
   },
   "Execution": {
     "Tags": [
@@ -314,32 +278,14 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "Execution"
-      },
-      "TargetQuery": {
-        "Range": 300
-      },
-      "Attack": [
-        {
-          "DamageMultiplier": 1.5,
-          "PoiseMultiplier": 0,
-          "HitReaction": "None",
-          "bGuardable": true,
-          "MPCharge": 0,
-          "UPCharge": 0
-        },
-        {
-          "DamageMultiplier": 4.5,
-          "PoiseMultiplier": 0,
-          "HitReaction": "None",
-          "bGuardable": true,
-          "MPCharge": 0,
-          "UPCharge": 0
-        }
-      ]
-    }
+    "Montage": {
+      "MontageId": "Execution"
+    },
+    "Tasks": [
+      {"Task": "TargetQuery", "Range": 300},
+      {"Task": "Attack", "DamageMultiplier": 1.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Task": "Attack", "DamageMultiplier": 4.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
+    ]
   },
   "Sprint": {
     "Tags": [
@@ -367,12 +313,9 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "DrainResource": {
-        "Resource": "SP",
-        "AmountPerSecond": 12
-      }
-    }
+    "Tasks": [
+      {"Task": "DrainResource", "Resource": "SP", "AmountPerSecond": 12}
+    ]
   },
   "LockOn": {
     "Tags": [
@@ -389,9 +332,9 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "LockOn": {}
-    }
+    "Tasks": [
+      {"Task": "LockOn"}
+    ]
   },
   "KnockBack": {
     "Tags": [
@@ -421,14 +364,12 @@
       "bAllowRetrigger": true
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "KnockBack"
-      },
-      "HoldTag": {
-        "Tag": "State.Invincible"
-      }
-    }
+    "Montage": {
+      "MontageId": "KnockBack"
+    },
+    "Tasks": [
+      {"Task": "HoldTag", "Tag": "State.Invincible"}
+    ]
   },
   "KnockUp": {
     "Tags": [
@@ -458,11 +399,9 @@
       "bAllowRetrigger": true
     },
     "Cost": null,
-    "Tasks": {
-      "HoldTag": {
-        "Tag": "State.Invincible"
-      }
-    }
+    "Tasks": [
+      {"Task": "HoldTag", "Tag": "State.Invincible"}
+    ]
   },
   "GuardPushback": {
     "Tags": [
@@ -493,11 +432,10 @@
       "bAllowRetrigger": true
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "GuardPushback"
-      }
-    }
+    "Montage": {
+      "MontageId": "GuardPushback"
+    },
+    "Tasks": []
   },
   "GuardBreak": {
     "Tags": [
@@ -527,11 +465,10 @@
       "bAllowRetrigger": true
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "GuardBreak"
-      }
-    }
+    "Montage": {
+      "MontageId": "GuardBreak"
+    },
+    "Tasks": []
   },
   "Death": {
     "Tags": [
@@ -552,7 +489,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {}
+    "Tasks": []
   },
   "DoubleStrike": {
     "Tags": [
@@ -575,11 +512,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "DoubleStrike"
-      }
+    "Montage": {
+      "MontageId": "DoubleStrike"
     },
+    "Tasks": [],
     "PatternSelection": {
       "Phases": [
         1,
@@ -613,11 +549,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "Sweep"
-      }
+    "Montage": {
+      "MontageId": "Sweep"
     },
+    "Tasks": [],
     "PatternSelection": {
       "Phases": [
         1,
@@ -651,11 +586,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "DashThrust"
-      }
+    "Montage": {
+      "MontageId": "DashThrust"
     },
+    "Tasks": [],
     "PatternSelection": {
       "Phases": [
         1,
@@ -689,29 +623,14 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "LeapSlam"
-      },
-      "Attack": [
-        {
-          "DamageMultiplier": 2,
-          "PoiseMultiplier": 1,
-          "HitReaction": "KnockUp",
-          "bGuardable": false,
-          "MPCharge": 0,
-          "UPCharge": 0
-        }
-      ],
-      "LaunchToTarget": {
-        "AirTime": 1.35,
-        "TargetOffset": 150,
-        "MaxDistance": 1200
-      },
-      "TargetQuery": {
-        "Range": 350
-      }
+    "Montage": {
+      "MontageId": "LeapSlam"
     },
+    "Tasks": [
+      {"Task": "Attack", "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": false, "MPCharge": 0, "UPCharge": 0},
+      {"Task": "LaunchToTarget", "AirTime": 1.35, "TargetOffset": 150, "MaxDistance": 1200},
+      {"Task": "TargetQuery", "Range": 350}
+    ],
     "PatternSelection": {
       "Phases": [
         2
@@ -744,11 +663,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "QuintupleStrike"
-      }
+    "Montage": {
+      "MontageId": "QuintupleStrike"
     },
+    "Tasks": [],
     "PatternSelection": {
       "Phases": [
         2
@@ -781,11 +699,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "SwordWave"
-      }
+    "Montage": {
+      "MontageId": "SwordWave"
     },
+    "Tasks": [],
     "PatternSelection": {
       "Phases": [
         2
@@ -818,11 +735,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "JumpSlam"
-      }
+    "Montage": {
+      "MontageId": "JumpSlam"
     },
+    "Tasks": [],
     "PatternSelection": {
       "Phases": [
         1,
@@ -856,12 +772,11 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "Backstep",
-        "RootMotionDistance": 500
-      }
+    "Montage": {
+      "MontageId": "Backstep",
+      "RootMotionDistance": 500
     },
+    "Tasks": [],
     "PatternSelection": {
       "Phases": [
         1,
@@ -903,15 +818,10 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "HoldTag": {
-        "Tag": "State.Execution"
-      },
-      "SetCollisionResponseToChannel": {
-        "Channel": "Pawn",
-        "Response": "Ignore"
-      }
-    }
+    "Tasks": [
+      {"Task": "HoldTag", "Tag": "State.Execution"},
+      {"Task": "SetCollisionResponseToChannel", "Channel": "Pawn", "Response": "Ignore"}
+    ]
   },
   "PhaseTransition": {
     "Tags": [
@@ -939,10 +849,9 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": {
-      "PlayMontageAndWait": {
-        "MontageId": "PhaseTransition"
-      }
-    }
+    "Montage": {
+      "MontageId": "PhaseTransition"
+    },
+    "Tasks": []
   }
 }

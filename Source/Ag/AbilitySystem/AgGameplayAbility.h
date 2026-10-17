@@ -7,6 +7,8 @@
 #include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgProjectileData.h"
+#include "Engine/EngineBaseTypes.h"
+#include "StructUtils/InstancedStruct.h"
 #include "AgGameplayAbility.generated.h"
 
 class AAgCharacterBase;
@@ -19,11 +21,12 @@ class UAgAbilityTask_Dash;
 class UAgAbilityTask_TimeStop;
 class UAgAbilityTask_LockOn;
 class UAgRootMotionModifier_MotionWarping;
-struct FAgTimelineEvent;
+class UMotionWarpingComponent;
+struct FAgTrackParams;
 struct FAnimMontageInstance;
 enum class EAgEffect : uint8;
-enum class EAgProjectileOrigin : uint8;
 
+/** 시간표 구간 하나의 실행. 재생의 몽타주 인스턴스와 그 재생의 항목 번호로 구분합니다. */
 USTRUCT()
 struct FAgAbilityWindowExecution
 {
@@ -31,9 +34,30 @@ struct FAgAbilityWindowExecution
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask> Task;
-	FName Function;
+	FName TaskName;
 	int32 MontageInstanceId = INDEX_NONE;
-	int32 TimelineKey = INDEX_NONE;
+	int32 Entry = INDEX_NONE;
+};
+
+/** 재생 중인 시간표 항목 하나. 재생을 시작할 때 시간표에서 복사하고 시각을 몽타주 시각으로 바꿉니다. */
+USTRUCT()
+struct FAgTimelineEntry
+{
+	GENERATED_BODY()
+
+	/** 항목의 Params. 컷신 Sequence 같은 에셋 참조를 GC가 봅니다. */
+	UPROPERTY()
+	FInstancedStruct Params;
+
+	FName Task;
+
+	/** 구간의 시작이나 지점의 시각(몽타주 시각) */
+	float Start = 0.f;
+
+	/** 구간의 끝(몽타주 시각) */
+	float End = 0.f;
+	bool bWindow = false;
+	bool bActive = false;
 };
 
 USTRUCT()
@@ -49,7 +73,6 @@ struct FAgAbilityMontageExecution
 	bool bControlsFacing = false;
 	TWeakObjectPtr<AAgCharacterBase> Target;
 	float TargetPhaseStart = 0.f;
-	FDelegateHandle TimelineHandle;
 };
 
 /** 모든 행동을 ID별 독립 GAS 스펙으로 부여합니다. 설정은 실행 요청과 구분합니다. */
@@ -99,9 +122,15 @@ public:
 	}
 
 	bool PrepareWarpTarget(
-	    int32 InstanceId, float WindowStart, const FAgMotionWarpingParams& Params, AActor*& Target, float& Gap, bool& bFacingOnly);
+	    int32 InstanceId, float WindowStart, const FAgTrackParams& Params, AActor*& Target, float& Gap, bool& bFacingOnly);
 	void RegisterWarp(UAgRootMotionModifier_MotionWarping* Modifier);
 	static AAgCharacterBase* FindExecutionTarget(const AAgPlayerCharacter* Player);
+
+	/** 이 행동을 시작할 때 복사한 투사체 정의. 없으면 null입니다. */
+	const FAgProjectileDefinition* FindProjectile(FName ProjectileId) const
+	{
+		return ExecutionProjectiles.Find(ProjectileId);
+	}
 
 protected:
 	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -118,6 +147,23 @@ protected:
 	    FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 private:
+	/** 시간표 판정을 부르는 까닭. 재생 시작과 섹션 이동에서는 그 위치의 지점도 실행합니다. */
+	enum class ETimelineMode : uint8
+	{
+		Start,
+		Advance,
+		Jump
+	};
+
+	/** 시간표 판정 틱. 몽타주가 진행된 뒤(캐릭터 무브먼트와 메시 다음) 같은 프레임의 공격 판정(TG_PostPhysics)보다 먼저 돕니다. */
+	struct FAgTimelineTickFunction : public FTickFunction
+	{
+		UAgGameplayAbility* Target = nullptr;
+		virtual void ExecuteTick(
+		    float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent) override;
+		virtual FString DiagnosticMessage() override;
+	};
+
 	AAgCharacterBase* GetAgCharacter() const;
 	const FAgAbilityData* FindDefinition(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const;
 	bool CheckStartConditions(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const;
@@ -128,13 +174,24 @@ private:
 	bool PlayMotion(FName Id, bool bPlayerAction = false, float Rate = 1.f, FName Section = NAME_None, float TranslationScale = 1.f,
 	    float StartTime = 0.f);
 	void BindMontageInstance(const FAnimMontageInstance& Instance);
-	void HandleTimelineEvent(const FAgTimelineEvent& Event);
 	void HandleMontageEvent(int32 InstanceId, FGameplayTag Event);
-	void StartWindowTask(int32 InstanceId, int32 Key, FName Function, TFunctionRef<UAbilityTask*()> MakeTask);
-	void EndWindowTask(int32 InstanceId, int32 Key);
-	UAbilityTask* MakeDashTask(const FAgDashParams& Params, int32 InstanceId, int32 Key);
-	void LaunchProjectile(
-	    int32 InstanceId, FName ProjectileId, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName);
+
+	/** 재생을 시작한 직후 그 몽타주의 시간표를 복사하고, 시작 위치에 걸친 구간과 그 위치의 지점을 실행합니다. */
+	void BeginTimeline(const FAnimMontageInstance& Instance);
+
+	/** 섹션을 옮긴 직후 판정 위치를 맞춥니다. 건너뛴 지점은 실행하지 않고, 옮긴 위치의 지점은 실행합니다. */
+	void ResyncTimeline();
+	void TickTimeline();
+	void EvaluateTimeline(float NewPosition, ETimelineMode Mode);
+
+	/** 재생이 끝났습니다. 켜진 구간을 끝내고 판정을 멈춥니다. */
+	void EndTimeline();
+
+	/** 판정을 멈추고 시간표를 버립니다. 구간의 실행은 부르는 쪽이 정리합니다. */
+	void StopTimeline();
+	void StartTimelineWindow(int32 Entry);
+	void EndTimelineWindow(int32 InstanceId, int32 Entry);
+	void RunTimelinePoint(int32 Entry);
 	void JumpToMotionSection(FName Section);
 	void ClearMotion(bool bStop);
 	void UpdateMotionConstraints();
@@ -192,6 +249,10 @@ private:
 	UFUNCTION()
 	void HandleTargetLost();
 
+	/** 추적 구간을 엔진이 워핑 노티파이를 찾는 때(워핑 컴포넌트의 OnPreUpdate)에 같은 조건으로 엔진 Motion Warping에 등록합니다. */
+	UFUNCTION()
+	void HandleWarpingPreUpdate(UMotionWarpingComponent* Warping);
+
 	UPROPERTY()
 	FAgAbilityData GrantedDefinition;
 
@@ -215,6 +276,17 @@ private:
 
 	UPROPERTY()
 	TArray<FAgAbilityWindowExecution> Windows;
+
+	/** 재생 중인 몽타주의 시간표(구현 계획서 '행동 ID 분기 제거 설계안'의 '시간표 판정') */
+	UPROPERTY()
+	TArray<FAgTimelineEntry> TimelineEntries;
+
+	/** 시간표를 판정하는 재생. 없으면 INDEX_NONE입니다. */
+	int32 TimelineInstanceId = INDEX_NONE;
+
+	/** 앞 판정의 재생 위치 */
+	float TimelinePosition = 0.f;
+	FAgTimelineTickFunction TimelineTick;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UAgRootMotionModifier_MotionWarping>> Warps;

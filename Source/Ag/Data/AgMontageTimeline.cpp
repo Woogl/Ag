@@ -1,7 +1,13 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "Data/AgMontageTimeline.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_SetCollisionResponseToChannel.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
+#include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Data/AgJsonRead.h"
+#include "Data/AgTaskParams.h"
 #include "Animation/AnimMontage.h"
 #include "Dom/JsonObject.h"
 #if WITH_EDITOR
@@ -17,135 +23,61 @@ namespace
 	/** 시간표 시각을 몽타주 길이나 몽타주에 남긴 노티파이의 시각과 비교할 때 같은 시각으로 보는 차이 */
 	constexpr float TimeTolerance = 1.e-3f;
 
-	/** 기능 이름의 배열을 읽습니다. 배열이 있으면 항목이 하나 이상 있어야 합니다. */
-	template <typename T>
-	void ReadEntries(const FJsonObject& Timeline, const TCHAR* Name, TArray<T>& Out, const FString& Path, TArray<FString>& Errors,
-	    TFunctionRef<bool(const FJsonObject&, T&, const FString&)> ReadEntry)
-	{
-		if (!Timeline.HasField(Name))
-		{
-			return;
-		}
-		const FString Field = Path + TEXT(".") + Name;
-		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
-		if (!Timeline.TryGetArrayField(Name, Items) || Items->IsEmpty())
-		{
-			Errors.Add(Field + TEXT(": expected nonempty array"));
-			return;
-		}
-		for (int32 Index = 0; Index < Items->Num(); ++Index)
-		{
-			const FString Item = FString::Printf(TEXT("%s[%d]"), *Field, Index);
-			const TSharedPtr<FJsonObject>* Object = nullptr;
-			if (!(*Items)[Index]->TryGetObject(Object))
-			{
-				Errors.Add(Item + TEXT(": expected object"));
-				continue;
-			}
-			T Value;
-			if (ReadEntry(**Object, Value, Item))
-			{
-				Out.Add(Value);
-			}
-		}
-	}
-
-	/** 구간 항목: 고정 필드를 읽고 Start < End를 확인합니다. */
-	template <typename T> bool ReadWindow(const FJsonObject& Object, T& Out, const FString& Path, TArray<FString>& Errors)
-	{
-		if (!Read(Object, Out, Path, Errors))
-		{
-			return false;
-		}
-		if (Out.Start >= Out.End)
-		{
-			Errors.Add(Path + TEXT(": Start must be before End"));
-			return false;
-		}
-		return true;
-	}
-
-	bool ReadMotionWarping(const FJsonObject& Object, FAgTimelineMotionWarping& Out, const FString& Path, TArray<FString>& Errors)
+	/** 항목 하나: 구간(Start, End)이나 지점(Time)과 그 Task의 Params */
+	bool ReadItem(const FJsonObject& Object, FAgTimelineItem& Out, const FString& Path, TArray<FString>& Errors)
 	{
 		const int32 Before = Errors.Num();
-		Keys(Object, Path, {TEXT("Start"), TEXT("End"), TEXT("TargetingRange"), TEXT("MaxWarpDistance"), TEXT("RotationMethod")}, {}, Errors);
-		Number(Object, TEXT("Start"), Path, Out.Start, Errors);
-		Number(Object, TEXT("End"), Path, Out.End, Errors);
-		// null은 제한 없음입니다(어빌리티와 AbilityTask 'MotionWarping').
-		for (const TCHAR* Key : {TEXT("TargetingRange"), TEXT("MaxWarpDistance")})
+		const bool bPoint = Object.HasField(TEXT("Time"));
+		Out.bWindow = Object.HasField(TEXT("Start"));
+		if (bPoint == Out.bWindow)
 		{
-			const TSharedPtr<FJsonValue> Value = Object.TryGetField(Key);
-			const bool bLimited = Value && Value->Type != EJson::Null;
-			float Limit = 0.f;
-			if (bLimited)
-			{
-				Number(Object, Key, Path, Limit, Errors);
-			}
-			if (FString(Key) == TEXT("TargetingRange"))
-			{
-				Out.Params.bHasTargetingRange = bLimited;
-				Out.Params.TargetingRange = Limit;
-			}
-			else
-			{
-				Out.Params.bHasMaxWarpDistance = bLimited;
-				Out.Params.MaxWarpDistance = Limit;
-			}
+			Errors.Add(Path + TEXT(": expected Start (window) or Time (point)"));
+			return false;
 		}
-		FString Method;
-		Object.TryGetStringField(TEXT("RotationMethod"), Method);
-		if (Method == TEXT("ConstantRate"))
+		if (bPoint)
 		{
-			Out.RotationMethod = EMotionWarpRotationMethod::ConstantRate;
-		}
-		else if (Method == TEXT("Slerp"))
-		{
-			Out.RotationMethod = EMotionWarpRotationMethod::Slerp;
+			Number(Object, TEXT("Time"), Path, Out.Start, Errors);
 		}
 		else
 		{
-			Errors.Add(Path + TEXT(".RotationMethod: expected ConstantRate or Slerp"));
+			Number(Object, TEXT("Start"), Path, Out.Start, Errors);
+			// End를 적지 않으면 그 섹션 끝까지이고, 섹션을 넘는 구간은 {"Section", "Time"(선택)}으로 적습니다.
+			const TSharedPtr<FJsonValue> End = Object.TryGetField(TEXT("End"));
+			Out.bEndAtSectionEnd = !End.IsValid();
+			if (End && End->Type == EJson::Number)
+			{
+				if (Number(Object, TEXT("End"), Path, Out.End, Errors) && Out.End <= Out.Start)
+				{
+					Errors.Add(Path + TEXT(": Start must be before End"));
+				}
+			}
+			else if (End && End->Type == EJson::Object)
+			{
+				const TSharedPtr<FJsonObject> EndObject = End->AsObject();
+				const FString EndPath = Path + TEXT(".End");
+				Keys(*EndObject, EndPath, {TEXT("Section")}, {TEXT("Time")}, Errors);
+				FString Section;
+				if (!EndObject->TryGetStringField(TEXT("Section"), Section) || FName(*Section).IsNone())
+				{
+					Errors.Add(EndPath + TEXT(".Section: expected section name"));
+				}
+				Out.EndSection = FName(*Section);
+				Out.bEndAtSectionEnd = !EndObject->HasField(TEXT("Time"));
+				if (!Out.bEndAtSectionEnd)
+				{
+					Number(*EndObject, TEXT("Time"), EndPath, Out.End, Errors);
+				}
+			}
+			else if (End)
+			{
+				Errors.Add(Path + TEXT(".End: expected a number or a section end object"));
+			}
 		}
-		if (Errors.Num() == Before && Out.Start >= Out.End)
-		{
-			Errors.Add(Path + TEXT(": Start must be before End"));
-		}
-		return Errors.Num() == Before;
-	}
-
-	bool ReadSpawnProjectile(const FJsonObject& Object, FAgTimelineSpawnProjectile& Out, const FString& Path, TArray<FString>& Errors)
-	{
-		const int32 Before = Errors.Num();
-		Keys(Object, Path, {TEXT("Time"), TEXT("ProjectileId"), TEXT("Origin"), TEXT("Attack")}, {TEXT("SocketName")}, Errors);
-		Number(Object, TEXT("Time"), Path, Out.Time, Errors);
-		FString Text;
-		if (!Object.TryGetStringField(TEXT("ProjectileId"), Text) || FName(*Text).IsNone())
-		{
-			Errors.Add(Path + TEXT(".ProjectileId: expected name"));
-		}
-		Out.ProjectileId = FName(*Text);
-		Text.Reset();
-		Object.TryGetStringField(TEXT("Origin"), Text);
-		const int64 Origin = StaticEnum<EAgProjectileOrigin>()->GetValueByNameString(Text);
-		if (Origin == INDEX_NONE)
-		{
-			Errors.Add(Path + TEXT(".Origin: invalid enum"));
-		}
-		else
-		{
-			Out.Origin = static_cast<EAgProjectileOrigin>(Origin);
-		}
-		Text.Reset();
-		const bool bHasSocket = Object.TryGetStringField(TEXT("SocketName"), Text) && !FName(*Text).IsNone();
-		if (bHasSocket != (Out.Origin == EAgProjectileOrigin::MeshSocket))
-		{
-			Errors.Add(Path + TEXT(".SocketName: required only for MeshSocket"));
-		}
-		Out.SocketName = bHasSocket ? FName(*Text) : NAME_None;
-		if (const FObject Attack = ObjectAt(Object, TEXT("Attack"), Path + TEXT(".Attack"), Errors))
-		{
-			Read(*Attack, Out.Attack, Path + TEXT(".Attack"), Errors);
-		}
+		FString Task;
+		Object.TryGetStringField(TEXT("Task"), Task);
+		Out.Task = FName(*Task);
+		static const TArray<FString> TimeKeys = {TEXT("Start"), TEXT("End"), TEXT("Time")};
+		AgTaskParams::Read(Object, Out.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point, Out.Params, Path, Errors, TimeKeys);
 		return Errors.Num() == Before;
 	}
 }
@@ -168,70 +100,39 @@ bool AgMontageTimeline::Parse(const FJsonObject& Json, TMap<FName, FAgMontageTim
 			Errors.Add(Path + TEXT(": expected montage object path with an object value"));
 			continue;
 		}
-		const FJsonObject& Entries = **Object;
-		AgJsonRead::Keys(Entries, Path, {},
-		    {TEXT("Attack"), TEXT("HoldTag"), TEXT("SetCollisionResponseToChannel"), TEXT("Dash"), TEXT("MotionWarping"),
-		        TEXT("GameplayEvent"), TEXT("SpawnProjectile")},
-		    Errors);
-		if (Entries.Values.IsEmpty())
-		{
-			Errors.Add(Path + TEXT(": no entries"));
-		}
 		FAgMontageTimeline Timeline;
-		ReadEntries<FAgTimelineAttack>(Entries, TEXT("Attack"), Timeline.Attack, Path, Errors,
-		    [&Errors](const FJsonObject& Item, FAgTimelineAttack& Value, const FString& ItemPath)
-		    {
-			    return ReadWindow(Item, Value, ItemPath, Errors);
-		    });
-		ReadEntries<FAgTimelineHoldTag>(Entries, TEXT("HoldTag"), Timeline.HoldTag, Path, Errors,
-		    [&Errors](const FJsonObject& Item, FAgTimelineHoldTag& Value, const FString& ItemPath)
-		    {
-			    return ReadWindow(Item, Value, ItemPath, Errors);
-		    });
-		ReadEntries<FAgTimelineCollisionResponse>(Entries, TEXT("SetCollisionResponseToChannel"), Timeline.SetCollisionResponseToChannel,
-		    Path, Errors,
-		    [&Errors](const FJsonObject& Item, FAgTimelineCollisionResponse& Value, const FString& ItemPath)
-		    {
-			    return ReadWindow(Item, Value, ItemPath, Errors);
-		    });
-		ReadEntries<FAgTimelineDash>(Entries, TEXT("Dash"), Timeline.Dash, Path, Errors,
-		    [&Errors](const FJsonObject& Item, FAgTimelineDash& Value, const FString& ItemPath)
-		    {
-			    if (!ReadWindow(Item, Value, ItemPath, Errors))
-			    {
-				    return false;
-			    }
-			    if (Value.Speed <= 0.f || Value.MaxDistance <= 0.f)
-			    {
-				    Errors.Add(ItemPath + TEXT(": Speed and MaxDistance must be positive"));
-				    return false;
-			    }
-			    return true;
-		    });
-		ReadEntries<FAgTimelineMotionWarping>(Entries, TEXT("MotionWarping"), Timeline.MotionWarping, Path, Errors,
-		    [&Errors](const FJsonObject& Item, FAgTimelineMotionWarping& Value, const FString& ItemPath)
-		    {
-			    return ReadMotionWarping(Item, Value, ItemPath, Errors);
-		    });
-		ReadEntries<FAgTimelineGameplayEvent>(Entries, TEXT("GameplayEvent"), Timeline.GameplayEvent, Path, Errors,
-		    [&Errors](const FJsonObject& Item, FAgTimelineGameplayEvent& Value, const FString& ItemPath)
-		    {
-			    if (!AgJsonRead::Read(Item, Value, ItemPath, Errors))
-			    {
-				    return false;
-			    }
-			    if (!Value.Event.ToString().StartsWith(TEXT("Event.")))
-			    {
-				    Errors.Add(ItemPath + TEXT(".Event: expected a tag under Event"));
-				    return false;
-			    }
-			    return true;
-		    });
-		ReadEntries<FAgTimelineSpawnProjectile>(Entries, TEXT("SpawnProjectile"), Timeline.SpawnProjectile, Path, Errors,
-		    [&Errors](const FJsonObject& Item, FAgTimelineSpawnProjectile& Value, const FString& ItemPath)
-		    {
-			    return ReadSpawnProjectile(Item, Value, ItemPath, Errors);
-		    });
+		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& SectionPair : (*Object)->Values)
+		{
+			const FString SectionName = FString(SectionPair.Key);
+			const FString SectionPath = Path + TEXT(".") + SectionName;
+			const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+			if (FName(*SectionName).IsNone() || !SectionPair.Value->TryGetArray(Items) || Items->IsEmpty())
+			{
+				Errors.Add(SectionPath + TEXT(": expected a section name with a nonempty item array"));
+				continue;
+			}
+			FAgTimelineSection& Section = Timeline.Sections.AddDefaulted_GetRef();
+			Section.Name = FName(*SectionName);
+			for (int32 Index = 0; Index < Items->Num(); ++Index)
+			{
+				const FString ItemPath = FString::Printf(TEXT("%s[%d]"), *SectionPath, Index);
+				const TSharedPtr<FJsonObject>* Item = nullptr;
+				if (!(*Items)[Index]->TryGetObject(Item))
+				{
+					Errors.Add(ItemPath + TEXT(": expected object"));
+					continue;
+				}
+				FAgTimelineItem Value;
+				if (ReadItem(**Item, Value, ItemPath, Errors))
+				{
+					Section.Items.Add(MoveTemp(Value));
+				}
+			}
+		}
+		if (Timeline.Sections.IsEmpty())
+		{
+			Errors.Add(Path + TEXT(": no sections"));
+		}
 		Candidate.Add(FName(*Path), MoveTemp(Timeline));
 	}
 	if (Errors.Num() != Before)
@@ -240,6 +141,42 @@ bool AgMontageTimeline::Parse(const FJsonObject& Json, TMap<FName, FAgMontageTim
 	}
 	Out = MoveTemp(Candidate);
 	return true;
+}
+
+bool AgMontageTimeline::ResolveTimes(
+    const UAnimMontage& Montage, FName Section, const FAgTimelineItem& Item, float& OutStart, float& OutEnd)
+{
+	const int32 SectionIndex = Montage.GetSectionIndex(Section);
+	const int32 EndIndex = Item.EndSection.IsNone() ? SectionIndex : Montage.GetSectionIndex(Item.EndSection);
+	if (SectionIndex == INDEX_NONE || EndIndex == INDEX_NONE)
+	{
+		return false;
+	}
+	float SectionStart = 0.f;
+	float SectionEnd = 0.f;
+	Montage.GetSectionStartAndEndTime(SectionIndex, SectionStart, SectionEnd);
+	float EndSectionStart = 0.f;
+	float EndSectionEnd = 0.f;
+	Montage.GetSectionStartAndEndTime(EndIndex, EndSectionStart, EndSectionEnd);
+	OutStart = SectionStart + Item.Start;
+	OutEnd = Item.bEndAtSectionEnd ? EndSectionEnd : EndSectionStart + Item.End;
+	return true;
+}
+
+TArray<FName> AgMontageTimeline::GetProjectileIds(const FAgMontageTimeline& Timeline)
+{
+	TArray<FName> Ids;
+	for (const FAgTimelineSection& Section : Timeline.Sections)
+	{
+		for (const FAgTimelineItem& Item : Section.Items)
+		{
+			if (const FAgSpawnProjectileParams* Shot = Item.Params.GetPtr<FAgSpawnProjectileParams>())
+			{
+				Ids.AddUnique(Shot->ProjectileId);
+			}
+		}
+	}
+	return Ids;
 }
 
 #if WITH_EDITOR
@@ -254,8 +191,60 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			Errors.Add(Path + TEXT(": missing montage or redirected path"));
 			continue;
 		}
-		const FAgMontageTimeline& Timeline = Pair.Value;
-		const float Length = Montage->GetPlayLength();
+
+		// 섹션과 길이를 확인하고, 아래 검사에 쓰도록 항목의 시각을 몽타주 시각으로 바꿉니다.
+		struct FResolved
+		{
+			const FAgTimelineItem* Item = nullptr;
+			FString Name;
+			float Start = 0.f;
+			float End = 0.f;
+		};
+		TArray<FResolved> Items;
+		for (const FAgTimelineSection& Section : Pair.Value.Sections)
+		{
+			const int32 SectionIndex = Montage->GetSectionIndex(Section.Name);
+			if (SectionIndex == INDEX_NONE)
+			{
+				Errors.Add(Path + TEXT(".") + Section.Name.ToString() + TEXT(": the montage has no such section"));
+				continue;
+			}
+			const float SectionLength = Montage->GetSectionLength(SectionIndex);
+			for (int32 Index = 0; Index < Section.Items.Num(); ++Index)
+			{
+				const FAgTimelineItem& Item = Section.Items[Index];
+				const FString Name = FString::Printf(TEXT("%s.%s[%d]"), *Path, *Section.Name.ToString(), Index);
+				const int32 EndIndex = Item.EndSection.IsNone() ? SectionIndex : Montage->GetSectionIndex(Item.EndSection);
+				if (EndIndex == INDEX_NONE)
+				{
+					Errors.Add(Name + TEXT(".End: the montage has no section ") + Item.EndSection.ToString());
+					continue;
+				}
+				const float EndLength = Montage->GetSectionLength(EndIndex);
+				if (!Item.bWindow && Item.Start > SectionLength + TimeTolerance)
+				{
+					Errors.Add(FString::Printf(TEXT("%s: Time %.4f is after the section length %.4f"), *Name, Item.Start, SectionLength));
+				}
+				if (Item.bWindow && Item.Start >= SectionLength)
+				{
+					Errors.Add(
+					    FString::Printf(TEXT("%s: Start %.4f must be before the section end %.4f"), *Name, Item.Start, SectionLength));
+				}
+				if (Item.bWindow && !Item.bEndAtSectionEnd && Item.End > EndLength + TimeTolerance)
+				{
+					Errors.Add(FString::Printf(TEXT("%s: End %.4f is after the section length %.4f"), *Name, Item.End, EndLength));
+				}
+				FResolved& Resolved = Items.AddDefaulted_GetRef();
+				Resolved.Item = &Item;
+				Resolved.Name = Name;
+				ResolveTimes(*Montage, Section.Name, Item, Resolved.Start, Resolved.End);
+				if (Item.bWindow && Resolved.End <= Resolved.Start)
+				{
+					Errors.Add(Name + TEXT(": End must be after Start on the montage timeline"));
+				}
+			}
+		}
+
 		const TFunction<bool(float, float)> OverlapsLoop = [Montage](float Start, float End)
 		{
 			for (int32 Index = 0; Index < Montage->CompositeSections.Num(); ++Index)
@@ -271,85 +260,56 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			}
 			return false;
 		};
-		const TFunction<void(const FString&, float, float)> CheckWindow = [&](const FString& Item, float Start, float End)
+		bool bHasTrack = false;
+		bool bHasHit = false;
+		for (int32 Index = 0; Index < Items.Num(); ++Index)
 		{
-			if (End > Length + TimeTolerance)
+			const FResolved& Window = Items[Index];
+			const FInstancedStruct& Params = Window.Item->Params;
+			bHasTrack |= Params.GetPtr<FAgTrackParams>() != nullptr;
+			bHasHit |= Params.GetPtr<FAgAttackParams>() != nullptr || Params.GetPtr<FAgSpawnProjectileParams>() != nullptr;
+			if (!Window.Item->bWindow && OverlapsLoop(Window.Start, Window.Start))
 			{
-				Errors.Add(FString::Printf(TEXT("%s.%s: End %.4f is after the montage length %.4f"), *Path, *Item, End, Length));
+				Errors.Add(Window.Name + TEXT(": a point can't be inside a looping section"));
 			}
-		};
-		const TFunction<void(const FString&, float)> CheckPoint = [&](const FString& Item, float Time)
-		{
-			if (Time > Length + TimeTolerance)
+			if (Params.GetPtr<FAgTrackParams>() && OverlapsLoop(Window.Start, Window.End))
 			{
-				Errors.Add(FString::Printf(TEXT("%s.%s: Time %.4f is after the montage length %.4f"), *Path, *Item, Time, Length));
+				Errors.Add(Window.Name + TEXT(": a tracking window can't overlap a looping section"));
 			}
-			if (OverlapsLoop(Time, Time))
+
+			// 경쟁: 같은 채널의 충돌 응답끼리, 돌진끼리는 겹치지 않습니다.
+			const FAgSetCollisionResponseToChannelParams* Collision = Params.GetPtr<FAgSetCollisionResponseToChannelParams>();
+			const bool bDash = Params.GetPtr<FAgDashParams>() != nullptr;
+			for (int32 Other = Index + 1; Other < Items.Num() && (Collision || bDash); ++Other)
 			{
-				Errors.Add(Path + TEXT(".") + Item + TEXT(": a point can't be inside a looping section"));
-			}
-		};
-		for (int32 Index = 0; Index < Timeline.Attack.Num(); ++Index)
-		{
-			CheckWindow(FString::Printf(TEXT("Attack[%d]"), Index), Timeline.Attack[Index].Start, Timeline.Attack[Index].End);
-		}
-		for (int32 Index = 0; Index < Timeline.HoldTag.Num(); ++Index)
-		{
-			CheckWindow(FString::Printf(TEXT("HoldTag[%d]"), Index), Timeline.HoldTag[Index].Start, Timeline.HoldTag[Index].End);
-		}
-		for (int32 Index = 0; Index < Timeline.SetCollisionResponseToChannel.Num(); ++Index)
-		{
-			const FAgTimelineCollisionResponse& Window = Timeline.SetCollisionResponseToChannel[Index];
-			CheckWindow(FString::Printf(TEXT("SetCollisionResponseToChannel[%d]"), Index), Window.Start, Window.End);
-			for (int32 Other = Index + 1; Other < Timeline.SetCollisionResponseToChannel.Num(); ++Other)
-			{
-				const FAgTimelineCollisionResponse& OtherWindow = Timeline.SetCollisionResponseToChannel[Other];
-				if (OtherWindow.Channel == Window.Channel && OtherWindow.Start < Window.End && Window.Start < OtherWindow.End)
+				const FResolved& OtherWindow = Items[Other];
+				if (OtherWindow.Start >= Window.End || Window.Start >= OtherWindow.End)
 				{
-					Errors.Add(FString::Printf(TEXT("%s.SetCollisionResponseToChannel[%d]: overlaps [%d] on the same channel"), *Path,
-					    Index, Other));
+					continue;
+				}
+				const FAgSetCollisionResponseToChannelParams* OtherCollision =
+				    OtherWindow.Item->Params.GetPtr<FAgSetCollisionResponseToChannelParams>();
+				if (Collision && OtherCollision && OtherCollision->Channel == Collision->Channel)
+				{
+					Errors.Add(Window.Name + TEXT(": overlaps ") + OtherWindow.Name + TEXT(" on the same channel"));
+				}
+				if (bDash && OtherWindow.Item->Params.GetPtr<FAgDashParams>())
+				{
+					Errors.Add(Window.Name + TEXT(": overlaps ") + OtherWindow.Name);
 				}
 			}
-		}
-		for (int32 Index = 0; Index < Timeline.Dash.Num(); ++Index)
-		{
-			const FAgTimelineDash& Window = Timeline.Dash[Index];
-			CheckWindow(FString::Printf(TEXT("Dash[%d]"), Index), Window.Start, Window.End);
-			for (int32 Other = Index + 1; Other < Timeline.Dash.Num(); ++Other)
-			{
-				if (Timeline.Dash[Other].Start < Window.End && Window.Start < Timeline.Dash[Other].End)
-				{
-					Errors.Add(FString::Printf(TEXT("%s.Dash[%d]: overlaps [%d]"), *Path, Index, Other));
-				}
-			}
+
 			// 돌진하는 동안 모션의 루트 이동을 쓰지 않도록, 몽타주에 남긴 루트 모션 끄기가 돌진과 함께 시작해야 합니다.
-			const bool bRootMotionOff = Montage->Notifies.ContainsByPredicate(
-			    [&Window](const FAnimNotifyEvent& Event)
-			    {
-				    return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
-				           FMath::IsNearlyEqual(Event.GetTime(), Window.Start, TimeTolerance);
-			    });
+			const bool bRootMotionOff = !bDash || Montage->Notifies.ContainsByPredicate(
+			                                          [&Window](const FAnimNotifyEvent& Event)
+			                                          {
+				                                          return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
+				                                                 FMath::IsNearlyEqual(Event.GetTime(), Window.Start, TimeTolerance);
+			                                          });
 			if (!bRootMotionOff)
 			{
-				Errors.Add(FString::Printf(TEXT("%s.Dash[%d]: needs a root motion off notify starting with the dash"), *Path, Index));
+				Errors.Add(Window.Name + TEXT(": needs a root motion off notify starting with the dash"));
 			}
-		}
-		for (int32 Index = 0; Index < Timeline.MotionWarping.Num(); ++Index)
-		{
-			const FAgTimelineMotionWarping& Window = Timeline.MotionWarping[Index];
-			CheckWindow(FString::Printf(TEXT("MotionWarping[%d]"), Index), Window.Start, Window.End);
-			if (OverlapsLoop(Window.Start, Window.End))
-			{
-				Errors.Add(FString::Printf(TEXT("%s.MotionWarping[%d]: a warping window can't overlap a looping section"), *Path, Index));
-			}
-		}
-		for (int32 Index = 0; Index < Timeline.GameplayEvent.Num(); ++Index)
-		{
-			CheckPoint(FString::Printf(TEXT("GameplayEvent[%d]"), Index), Timeline.GameplayEvent[Index].Time);
-		}
-		for (int32 Index = 0; Index < Timeline.SpawnProjectile.Num(); ++Index)
-		{
-			CheckPoint(FString::Printf(TEXT("SpawnProjectile[%d]"), Index), Timeline.SpawnProjectile[Index].Time);
 		}
 
 		// 몽타주에는 연출과 루트 모션 노티파이만 남습니다. 프로젝트 노티파이나 엔진 워핑 노티파이가 함께 있으면 같은 일이 두 번
@@ -362,15 +322,15 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				Errors.Add(Path + TEXT(": a montage with a timeline can't have project notifies (") + Notify->GetClass()->GetName() +
 				           TEXT(")"));
 			}
-			if (!Timeline.MotionWarping.IsEmpty() && Cast<UAnimNotifyState_MotionWarping>(Event.NotifyStateClass))
+			if (bHasTrack && Cast<UAnimNotifyState_MotionWarping>(Event.NotifyStateClass))
 			{
-				Errors.Add(Path + TEXT(": warping windows belong to the timeline, not to engine notifies"));
+				Errors.Add(Path + TEXT(": tracking windows belong to the timeline, not to engine warping notifies"));
 			}
 		}
 
 		// 공격 예고는 판정 구간이 시작될 때(투사체는 발사할 때) 끝납니다(보스 사양 '공격 예고'). 판정을 몽타주가 정하지 않는
 		// 패턴(LeapSlam의 착지)은 공격 구간도 발사도 없어 검사하지 않습니다.
-		if (!Timeline.Attack.IsEmpty() || !Timeline.SpawnProjectile.IsEmpty())
+		if (bHasHit)
 		{
 			for (const FAnimNotifyEvent& Event : Montage->Notifies)
 			{
@@ -379,16 +339,13 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 					continue;
 				}
 				const float CueEnd = Event.GetTime() + Event.GetDuration();
-				const bool bMatched = Timeline.Attack.ContainsByPredicate(
-				                          [CueEnd](const FAgTimelineAttack& Attack)
-				                          {
-					                          return FMath::IsNearlyEqual(Attack.Start, CueEnd, TimeTolerance);
-				                          }) ||
-				                      Timeline.SpawnProjectile.ContainsByPredicate(
-				                          [CueEnd](const FAgTimelineSpawnProjectile& Shot)
-				                          {
-					                          return FMath::IsNearlyEqual(Shot.Time, CueEnd, TimeTolerance);
-				                          });
+				const bool bMatched = Items.ContainsByPredicate(
+				    [CueEnd](const FResolved& Item)
+				    {
+					    const bool bHit = (Item.Item->bWindow && Item.Item->Params.GetPtr<FAgAttackParams>()) ||
+					                      (!Item.Item->bWindow && Item.Item->Params.GetPtr<FAgSpawnProjectileParams>());
+					    return bHit && FMath::IsNearlyEqual(Item.Start, CueEnd, TimeTolerance);
+				    });
 				if (!bMatched)
 				{
 					Errors.Add(FString::Printf(

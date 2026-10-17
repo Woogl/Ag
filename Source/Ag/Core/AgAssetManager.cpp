@@ -582,11 +582,11 @@ bool UAgAssetManager::LoadJsonData()
 	{
 		for (const TPair<FName, FAgMontageTimeline>& Pair : NewTimelines->Timelines)
 		{
-			for (const FAgTimelineSpawnProjectile& Shot : Pair.Value.SpawnProjectile)
+			for (FName ProjectileId : AgMontageTimeline::GetProjectileIds(Pair.Value))
 			{
-				if (!NewProjectiles->Projectiles.Contains(Shot.ProjectileId))
+				if (!NewProjectiles->Projectiles.Contains(ProjectileId))
 				{
-					TimelineErrors.Add(Pair.Key.ToString() + TEXT(".SpawnProjectile: unknown projectile ") + Shot.ProjectileId.ToString());
+					TimelineErrors.Add(Pair.Key.ToString() + TEXT(": SpawnProjectile uses unknown projectile ") + ProjectileId.ToString());
 				}
 			}
 		}
@@ -703,10 +703,7 @@ void UAgAssetManager::ModifyCook(
 		{
 			UE_LOG(LogAg, Error, TEXT("%s: no character data plays this montage (%s)"), MontageTimelinesFile, *Pair.Key.ToString());
 		}
-		for (const FAgTimelineSpawnProjectile& Shot : Pair.Value.SpawnProjectile)
-		{
-			UsedProjectiles.Add(Shot.ProjectileId);
-		}
+		UsedProjectiles.Append(AgMontageTimeline::GetProjectileIds(Pair.Value));
 	}
 	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
 	{

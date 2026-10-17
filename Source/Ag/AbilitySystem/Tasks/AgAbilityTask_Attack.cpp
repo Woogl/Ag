@@ -42,6 +42,24 @@ namespace
 
 }
 
+FAgPlayerAttackHit FAgAttackParams::MakeHit(bool bFinisher) const
+{
+	FAgPlayerAttackHit Hit;
+	Hit.DamageMultiplier = DamageMultiplier;
+	Hit.PoiseMultiplier = PoiseMultiplier;
+	Hit.HitReaction = HitReaction;
+	Hit.bGuardable = bGuardable;
+	Hit.MPCharge = MPCharge;
+	Hit.UPCharge = UPCharge;
+	Hit.bFinisher = bFinisher;
+	return Hit;
+}
+
+UAbilityTask* FAgAttackParams::MakeTask(const FAgTaskContext& Context) const
+{
+	return UAgAbilityTask_Attack::Sweep(&Context.Runner, *this);
+}
+
 UAgAbilityTask_Attack::UAgAbilityTask_Attack()
 {
 	AttackTick.Target = this;

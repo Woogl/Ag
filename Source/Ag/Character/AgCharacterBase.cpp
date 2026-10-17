@@ -21,7 +21,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "MotionWarpingComponent.h"
-#include "Animation/AgMontageTimelineComponent.h"
 
 namespace
 {
@@ -49,7 +48,6 @@ AAgCharacterBase::AAgCharacterBase()
 	AbilitySystemComponent = CreateDefaultSubobject<UAgAbilitySystemComponent>(TEXT("AbilitySystem"));
 	AttributeSet = CreateDefaultSubobject<UAgAttributeSet>(TEXT("AttributeSet"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
-	MontageTimeline = CreateDefaultSubobject<UAgMontageTimelineComponent>(TEXT("MontageTimeline"));
 	CharacterDataClass = UAgCharacterData::StaticClass();
 
 	// 캐릭터는 카메라를 가리지 않습니다(카메라 '카메라 충돌').

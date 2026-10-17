@@ -1,6 +1,6 @@
 # 행동 ID 분기 제거 설계안
 
-2026-10-17 설계 검토 중입니다. 두 번째 검토에서 정한 방향(단일 Ability는 엔진 어빌리티 기능과 단순한 Runner만 맡고, 기능은 자기 스키마를 가진 독립 Task로 나눔)으로 다시 썼고, 세 번째 검토에서 Task를 범용 기능만 남겼습니다. 네 번째 검토에서 Runner의 재생 옵션과 구간 끝 붙잡기를 없앴고, Attack은 대상을 고르지 않고 판정 범위에 닿는 적을 치게 했으며, Launch의 파라미터를 줄였습니다. 다섯 번째 검토에서 애니메이션이 만들지 않는 이동(띄우기, 도약, 돌진, 내리꽂기)을 엔진 루트 모션 소스로 모았습니다. 여섯 번째 검토에서 값 없는 상태(캐릭터 통과, 최소 간격, 시간 정지)를 상태 태그로 바꾸고, 공중 회전을 추적 구간(Track)에 합쳐 Task를 11개로 줄였습니다. 일곱 번째 검토에서 대상과의 간격을 행동마다 하나로 모으고, 보스는 행동하지 않을 때만 자동으로 돌게 바꿔 `State.KeepDistance`와 `State.RotationLocked`를 없앴습니다. 2026-10-17 승인했고, 기획서([보스 사양](<../Design/보스 사양.md>)의 '회전', Backstep, LeapSlam '착지 목표')는 반영했습니다. 구현하는 동안 [어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>)와 [몽타주 시간표](<몽타주 시간표.md>)의 규칙 대신 이 문서의 규칙을 따르고, 구현이 끝나면 결정을 주제 문서로 옮긴 뒤 이 문서를 지웁니다.
+2026-10-17 설계 검토 중입니다. 두 번째 검토에서 정한 방향(단일 Ability는 엔진 어빌리티 기능과 단순한 Runner만 맡고, 기능은 자기 스키마를 가진 독립 Task로 나눔)으로 다시 썼고, 세 번째 검토에서 Task를 범용 기능만 남겼습니다. 네 번째 검토에서 Runner의 재생 옵션과 구간 끝 붙잡기를 없앴고, Attack은 대상을 고르지 않고 판정 범위에 닿는 적을 치게 했으며, Launch의 파라미터를 줄였습니다. 다섯 번째 검토에서 애니메이션이 만들지 않는 이동(띄우기, 도약, 돌진, 내리꽂기)을 엔진 루트 모션 소스로 모았습니다. 여섯 번째 검토에서 값 없는 상태(캐릭터 통과, 최소 간격, 시간 정지)를 상태 태그로 바꾸고, 공중 회전을 추적 구간(Track)에 합쳐 Task를 11개로 줄였습니다. 일곱 번째 검토에서 대상과의 간격을 행동마다 하나로 모으고, 보스는 행동하지 않을 때만 자동으로 돌게 바꿔 `State.KeepDistance`와 `State.RotationLocked`를 없앴습니다. 2026-10-17 승인했고, 기획서([보스 사양](<../Design/보스 사양.md>)의 '회전', Backstep, LeapSlam '착지 목표')는 반영했습니다. ①단계(Runner와 Task 스키마)를 구현해 빌드와 시나리오 테스트를 기다립니다. 구현하는 동안 [어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>)와 [몽타주 시간표](<몽타주 시간표.md>)의 규칙 대신 이 문서의 규칙을 따르고, 구현이 끝나면 결정을 주제 문서로 옮긴 뒤 이 문서를 지웁니다.
 
 ## 결정과 목표
 
@@ -183,8 +183,8 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task, 행동 ID, 몽�
 ### 스키마와 등록
 
 - Task의 Params는 공통 부모 `FAgTaskParams`(USTRUCT)를 상속하고 그 Task의 헤더에 둡니다. Task 이름 `X`의 Params는 `FAgXParams`이며, 읽을 때 JSON의 `Task` 값으로 이 구조체를 찾아 `FInstancedStruct`에 담습니다. 구조체 메타데이터는 에디터 전용이라 이름 규칙으로 찾습니다.
-- Params의 가상 함수가 자기 필드 읽기(모르는 필드·형식 오류·필수 누락은 오류), 값·참조 검증, 둘 수 있는 곳(발동·구간·지점)과 행동 대상이 필요한지 알리기, 자기 Task 만들기를 맡습니다.
-- `AgAbilityTaskParams.h`에 모아 둔 Params와 설정 여부 플래그(`bHas...`), `FAgAbilityTasks`는 없어집니다.
+- 필드는 범용 리플렉션 읽기(`AgJsonRead::ReadStruct`)가 읽고 모르는 필드·형식 오류·필수 누락을 오류로 냅니다. Params의 가상 함수는 선택·null·음수를 쓸 수 있는 필드(`GetFieldRules`), 값·참조 검증과 선택 필드의 유무(`Validate`), 둘 수 있는 곳(발동·구간·지점)과 행동 대상이 필요한지 알리기, 자기 Task 만들기(`MakeTask`)를 맡습니다.
+- `AgAbilityTaskParams.h`에 모아 둔 Params와 설정 여부 플래그(`bHas...`), `FAgAbilityTasks`는 없어집니다. ①단계에서는 행동 분기가 읽는 설정(DrainResource, TimedTag, GrantResources, SlowMotion, LaunchVertical, LaunchToTarget, TargetQuery와 시간표의 GameplayEvent)을 같은 방식의 Params로 이 헤더에 남기고, 발동 Task 배열의 Attack·HoldTag·SetCollisionResponseToChannel·PlayCutscene·TimeStop·LockOn 항목도 행동 분기가 값을 읽습니다. ②단계에서 범용 Task와 효과 데이터로 옮기며 지웁니다.
 - 추적 구간(Track)은 Task가 아니라 Runner가 맡는 항목입니다. 그 Params(`FAgTrackParams`)도 같은 방식으로 읽고 검증합니다.
 - 새 Task는 둘 이상의 행동이 쓰거나 쓸 수 있는 기능일 때만 더합니다. 한 행동의 규칙은 효과 데이터와 주인 객체로 풉니다.
 

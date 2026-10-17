@@ -6,22 +6,40 @@
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Character/AgCharacterBase.h"
+#include "Data/AgJsonRead.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Ag.h"
 
+void FAgTrackParams::GetFieldRules(FAgJsonFieldRules& Rules) const
+{
+	Rules.Nullable.Add(GET_MEMBER_NAME_CHECKED(FAgTrackParams, TargetingRange));
+	Rules.Nullable.Add(GET_MEMBER_NAME_CHECKED(FAgTrackParams, MaxWarpDistance));
+}
+
+void FAgTrackParams::Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors)
+{
+	const TSharedPtr<FJsonValue> Range = Json.TryGetField(TEXT("TargetingRange"));
+	const TSharedPtr<FJsonValue> Distance = Json.TryGetField(TEXT("MaxWarpDistance"));
+	bHasTargetingRange = Range && Range->Type != EJson::Null;
+	bHasMaxWarpDistance = Distance && Distance->Type != EJson::Null;
+	if (RotationMethod != EMotionWarpRotationMethod::ConstantRate && RotationMethod != EMotionWarpRotationMethod::Slerp)
+	{
+		Errors.Add(Path + TEXT(".RotationMethod: expected ConstantRate or Slerp"));
+	}
+}
+
 UAgRootMotionModifier_MotionWarping::UAgRootMotionModifier_MotionWarping(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// 엔진 기본값 외에 워핑 항목이 모두 함께 쓰는 설정입니다.
+	// 엔진 기본값 외에 추적 구간이 모두 함께 쓰는 설정입니다.
 	WarpTargetName = TEXT("AttackTarget");
 }
 
-void UAgRootMotionModifier_MotionWarping::SetTimelineSettings(
-    const FAgMotionWarpingParams& InParams, EMotionWarpRotationMethod InRotationMethod)
+void UAgRootMotionModifier_MotionWarping::SetTrackSettings(const FAgTrackParams& InParams)
 {
 	Params = InParams;
-	RotationMethod = InRotationMethod;
+	RotationMethod = Params.RotationMethod;
 	bWarpTranslation = !(Params.bHasMaxWarpDistance && Params.MaxWarpDistance <= 0.f);
 }
 
@@ -43,8 +61,8 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		AActor* Selected = nullptr;
 		if (!Owner || !Instance || !Owner->PrepareWarpTarget(Instance->GetInstanceID(), StartTime, Params, Selected, Gap, bFacingOnly))
 		{
-			UE_LOG(LogAg, Error, TEXT("MotionWarping: missing playback owner (animation %s, window %.3f..%.3f)"),
-			    *GetNameSafe(Animation.Get()), StartTime, EndTime);
+			UE_LOG(LogAg, Error, TEXT("Track: missing playback owner (animation %s, window %.3f..%.3f)"), *GetNameSafe(Animation.Get()),
+			    StartTime, EndTime);
 			SetState(ERootMotionModifierState::Disabled);
 			return;
 		}

@@ -4,12 +4,50 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
-#include "Data/AgAbilityTaskParams.h"
+#include "Data/AgAttackData.h"
+#include "Data/AgTaskParams.h"
 #include "Engine/EngineBaseTypes.h"
 #include "AgAbilityTask_Attack.generated.h"
 
 class AAgCharacterBase;
 class UCapsuleComponent;
+
+/**
+ * 한 타의 판정 데이터(Attack Task의 Params). 시간표 구간이면 그동안 무기 판정을 하고, 발동 Task 배열의 항목은 행동 처리가
+ * 정한 대상을 차례대로 한 번씩 칩니다.
+ */
+USTRUCT()
+struct FAgAttackParams : public FAgTaskParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float DamageMultiplier = 0.f;
+
+	UPROPERTY()
+	float PoiseMultiplier = 0.f;
+
+	UPROPERTY()
+	EAgHitReaction HitReaction = EAgHitReaction::None;
+
+	UPROPERTY()
+	bool bGuardable = false;
+
+	UPROPERTY()
+	float MPCharge = 0.f;
+
+	UPROPERTY()
+	float UPCharge = 0.f;
+
+	FAgPlayerAttackHit MakeHit(bool bFinisher = false) const;
+
+	virtual EAgTaskPlacement GetPlacements() const override
+	{
+		return EAgTaskPlacement::Activation | EAgTaskPlacement::Window;
+	}
+
+	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
+};
 
 /** 한 판정의 적중과 수명만 소유합니다. 이동·모션·다른 Task를 제어하지 않습니다. */
 UCLASS()

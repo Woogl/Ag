@@ -2,8 +2,17 @@
 
 #include "AbilitySystem/Tasks/AgAbilityTask_SetCollisionResponseToChannel.h"
 
+#include "AbilitySystem/AgGameplayAbility.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/PrimitiveComponent.h"
-#include "Abilities/GameplayAbility.h"
+#include "GameFramework/Character.h"
+
+UAbilityTask* FAgSetCollisionResponseToChannelParams::MakeTask(const FAgTaskContext& Context) const
+{
+	const ACharacter* Character = Cast<ACharacter>(Context.Runner.GetAvatarActorFromActorInfo());
+	return UAgAbilityTask_SetCollisionResponseToChannel::SetCollisionResponseToChannel(
+	    &Context.Runner, Character ? Character->GetCapsuleComponent() : nullptr, Channel, Response);
+}
 
 UAgAbilityTask_SetCollisionResponseToChannel* UAgAbilityTask_SetCollisionResponseToChannel::SetCollisionResponseToChannel(
     UGameplayAbility* OwningAbility, UPrimitiveComponent* InComponent, ECollisionChannel InChannel, ECollisionResponse InResponse)

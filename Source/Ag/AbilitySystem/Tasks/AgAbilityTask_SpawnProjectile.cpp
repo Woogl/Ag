@@ -12,7 +12,34 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Data/AgEffectData.h"
+#include "Data/AgJsonRead.h"
 #include "Ag.h"
+
+void FAgSpawnProjectileParams::GetFieldRules(FAgJsonFieldRules& Rules) const
+{
+	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgSpawnProjectileParams, SocketName));
+}
+
+void FAgSpawnProjectileParams::Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors)
+{
+	if (Json.HasField(TEXT("SocketName")) != (Origin == EAgProjectileOrigin::MeshSocket))
+	{
+		Errors.Add(Path + TEXT(".SocketName: required only for MeshSocket"));
+	}
+}
+
+UAbilityTask* FAgSpawnProjectileParams::MakeTask(const FAgTaskContext& Context) const
+{
+	const FAgProjectileDefinition* Projectile = Context.Runner.FindProjectile(ProjectileId);
+	if (!Projectile)
+	{
+		UE_LOG(LogAg, Error, TEXT("Abilities.%s: projectile %s missing in Projectiles (play %d)"),
+		    *Context.Runner.GetAbilityId().ToString(), *ProjectileId.ToString(), Context.MontageInstanceId);
+		return nullptr;
+	}
+	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(
+	    &Context.Runner, Context.MontageInstanceId, *Projectile, Attack, Origin, SocketName);
+}
 
 UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId,
     const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName)

@@ -3,153 +3,67 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/AgAbilityTaskParams.h"
-#include "RootMotionModifier.h"
+#include "StructUtils/InstancedStruct.h"
 #include "AgMontageTimeline.generated.h"
 
 class FJsonObject;
 class UAnimMontage;
 
-/** 투사체를 쏘는 위치 */
-UENUM()
-enum class EAgProjectileOrigin : uint8
-{
-	CharacterFeetForward,
-	MeshSocket
-};
-
-/** 공격 판정 구간. 값은 한 타의 공격 데이터입니다. */
+/** 시간표 항목 하나: 구간이나 지점과 그 Task의 Params. 시각은 항목을 둔 섹션의 시작 기준(초)입니다. */
 USTRUCT()
-struct FAgTimelineAttack : public FAgAttackParams
+struct FAgTimelineItem
 {
 	GENERATED_BODY()
+
+	/** Task 이름. 오류와 로그에 씁니다. */
+	UPROPERTY()
+	FName Task;
+
+	/** Task별 Params(FAgTaskParams를 상속한 구조체) */
+	UPROPERTY()
+	FInstancedStruct Params;
+
+	/** 구간이면 Start·End가 있고, 지점이면 Start가 그 시각(Time)입니다. */
+	UPROPERTY()
+	bool bWindow = false;
 
 	UPROPERTY()
 	float Start = 0.f;
 
+	/** 구간이 끝나는 섹션. None이면 항목을 둔 섹션입니다. */
 	UPROPERTY()
-	float End = 0.f;
-};
+	FName EndSection;
 
-/** 태그를 유지하는 구간 */
-USTRUCT()
-struct FAgTimelineHoldTag : public FAgHoldTagParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	float Start = 0.f;
-
-	UPROPERTY()
-	float End = 0.f;
-};
-
-/** 캡슐의 충돌 응답을 바꾸는 구간 */
-USTRUCT()
-struct FAgTimelineCollisionResponse : public FAgCollisionResponseParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	float Start = 0.f;
-
-	UPROPERTY()
-	float End = 0.f;
-};
-
-/** 돌진 구간 */
-USTRUCT()
-struct FAgTimelineDash : public FAgDashParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	float Start = 0.f;
-
-	UPROPERTY()
-	float End = 0.f;
-};
-
-/** 엔진 Motion Warping 구간. 최대 워핑 거리 0은 위치 보정 없이 회전만 합니다. */
-USTRUCT()
-struct FAgTimelineMotionWarping
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	float Start = 0.f;
-
+	/** 구간이 끝나는 시각(끝나는 섹션의 시작 기준). bEndAtSectionEnd면 쓰지 않습니다. */
 	UPROPERTY()
 	float End = 0.f;
 
+	/** End의 시각을 적지 않아 끝나는 섹션의 끝까지인 구간 */
 	UPROPERTY()
-	FAgMotionWarpingParams Params;
-
-	UPROPERTY()
-	EMotionWarpRotationMethod RotationMethod = EMotionWarpRotationMethod::ConstantRate;
+	bool bEndAtSectionEnd = false;
 };
 
-/** 재생을 소유한 어빌리티에 보내는 사건 */
+/** 섹션 하나의 항목. 같은 시각·같은 단계의 항목은 배열 순서로 실행합니다. */
 USTRUCT()
-struct FAgTimelineGameplayEvent
+struct FAgTimelineSection
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	float Time = 0.f;
+	FName Name;
 
 	UPROPERTY()
-	FGameplayTag Event;
+	TArray<FAgTimelineItem> Items;
 };
 
-/** 투사체 한 발. Attack은 그 투사체의 공격 데이터입니다. */
-USTRUCT()
-struct FAgTimelineSpawnProjectile
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	float Time = 0.f;
-
-	UPROPERTY()
-	FName ProjectileId;
-
-	UPROPERTY()
-	EAgProjectileOrigin Origin = EAgProjectileOrigin::CharacterFeetForward;
-
-	UPROPERTY()
-	FName SocketName;
-
-	UPROPERTY()
-	FAgAttackParams Attack;
-};
-
-/** 몽타주 하나의 시간표. 시각은 몽타주 타임라인의 초(재생 위치)입니다. */
+/** 몽타주 하나의 시간표. 섹션은 JSON에 적은 순서입니다. */
 USTRUCT()
 struct FAgMontageTimeline
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FAgTimelineAttack> Attack;
-
-	UPROPERTY()
-	TArray<FAgTimelineHoldTag> HoldTag;
-
-	UPROPERTY()
-	TArray<FAgTimelineCollisionResponse> SetCollisionResponseToChannel;
-
-	UPROPERTY()
-	TArray<FAgTimelineDash> Dash;
-
-	UPROPERTY()
-	TArray<FAgTimelineMotionWarping> MotionWarping;
-
-	UPROPERTY()
-	TArray<FAgTimelineGameplayEvent> GameplayEvent;
-
-	UPROPERTY()
-	TArray<FAgTimelineSpawnProjectile> SpawnProjectile;
+	TArray<FAgTimelineSection> Sections;
 };
 
 /** MontageTimelines.json의 값. 키는 몽타주 에셋 경로입니다. */
@@ -168,11 +82,17 @@ public:
 
 namespace AgMontageTimeline
 {
-	/** 고정 스키마만 읽습니다. 실패하면 Out을 바꾸지 않습니다. */
+	/** 몽타주 → 섹션 → 항목 배열을 읽습니다. 실패하면 Out을 바꾸지 않습니다. */
 	bool Parse(const FJsonObject& Json, TMap<FName, FAgMontageTimeline>& Out, TArray<FString>& Errors);
 
+	/** 항목의 시각을 몽타주 시각(재생 위치)으로 바꿉니다. 지점은 OutStart만 씁니다. 섹션이 몽타주에 없으면 거짓입니다. */
+	bool ResolveTimes(const UAnimMontage& Montage, FName Section, const FAgTimelineItem& Item, float& OutStart, float& OutEnd);
+
+	/** 시간표의 발사 항목이 쓰는 투사체 ID */
+	TArray<FName> GetProjectileIds(const FAgMontageTimeline& Timeline);
+
 #if WITH_EDITOR
-	/** 몽타주 에셋과 대조합니다: 길이, 반복 섹션, 겹치는 제어, 몽타주에 남긴 노티파이와의 시각 */
+	/** 몽타주 에셋과 대조합니다: 섹션과 길이, 반복 섹션, 겹치는 제어, 몽타주에 남긴 노티파이와의 시각 */
 	void ValidateAssets(const TMap<FName, FAgMontageTimeline>& Timelines, TArray<FString>& Errors);
 #endif
 }

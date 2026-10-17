@@ -9,6 +9,19 @@
 #include "JsonObjectConverter.h"
 #include "UObject/UnrealType.h"
 
+/** 구조체 필드의 JSON 규칙. 적지 않은 필드는 필수이고 null이 아니며, 수는 0 이상입니다. */
+struct FAgJsonFieldRules
+{
+	/** 없어도 되는 필드. 없거나 null이면 C++ 초기값입니다. */
+	TArray<FName> Optional;
+
+	/** 키는 있어야 하고 null을 쓸 수 있는 필드. null이면 C++ 초기값입니다. */
+	TArray<FName> Nullable;
+
+	/** 음수를 쓸 수 있는 수 필드 */
+	TArray<FName> Signed;
+};
+
 /** 어빌리티, 효과, 몽타주 시간표가 함께 쓰는 고정 스키마 JSON 읽기. 오류는 필드 경로와 함께 Errors에 더합니다. */
 namespace AgJsonRead
 {
@@ -92,26 +105,41 @@ namespace AgJsonRead
 		return true;
 	}
 
-	/** 고정 Params의 리플렉션 필드와 JSON을 대조합니다. 선택·null 필드는 부르는 쪽에서 명시적으로 처리합니다. */
-	template <typename T> bool Read(const FJsonObject& Object, T& Out, const FString& Path, TArray<FString>& Errors)
+	/**
+	 * Struct의 리플렉션 필드와 JSON을 대조해 Out에 읽습니다. 필드마다의 규칙은 Rules를 따르고, Ignored는 부르는 쪽이 읽는
+	 * 키입니다. 구조체 필드는 객체로 적고 그 안의 필드는 모두 필수입니다. 실패하면 Out의 일부만 바뀌었을 수 있습니다.
+	 */
+	inline bool ReadStruct(const FJsonObject& Object, const UScriptStruct& Struct, void* Out, const FString& Path, TArray<FString>& Errors,
+	    const FAgJsonFieldRules& Rules = FAgJsonFieldRules(), const TArray<FString>& Ignored = TArray<FString>())
 	{
 		const int32 Before = Errors.Num();
 		FJsonObject Normalized = Object;
 		TSet<FString> Fields;
-		for (TFieldIterator<FProperty> It(T::StaticStruct()); It; ++It)
+		for (const FString& Key : Ignored)
+		{
+			Fields.Add(Key);
+			Normalized.RemoveField(Key);
+		}
+		for (TFieldIterator<FProperty> It(&Struct); It; ++It)
 		{
 			const FProperty* Property = *It;
+			const FName PropertyName = Property->GetFName();
 			const FString Key = Property->GetName();
 			Fields.Add(Key);
 			const TSharedPtr<FJsonValue> Value = Object.TryGetField(Key);
 			const FString Field = Path + TEXT(".") + Key;
-			if (!Value)
+			if (!Value || Value->Type == EJson::Null)
 			{
-				Errors.Add(Field + TEXT(": missing"));
+				if (!Rules.Optional.Contains(PropertyName) && !(Value && Rules.Nullable.Contains(PropertyName)))
+				{
+					Errors.Add(Field + (Value ? TEXT(": can't be null") : TEXT(": missing")));
+				}
+				Normalized.RemoveField(Key);
 				continue;
 			}
 			const FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property);
 			const FNumericProperty* NumericProperty = CastField<FNumericProperty>(Property);
+			const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
 			const UEnum* Enum = EnumProperty ? EnumProperty->GetEnum() : NumericProperty ? NumericProperty->GetIntPropertyEnum() : nullptr;
 			if (Enum)
 			{
@@ -141,8 +169,8 @@ namespace AgJsonRead
 			}
 			else if (NumericProperty)
 			{
-				float Ignored;
-				Number(Object, Key, Path, Ignored, Errors, Key == TEXT("VelocityZ"));
+				float Unused = 0.f;
+				Number(Object, Key, Path, Unused, Errors, Rules.Signed.Contains(PropertyName));
 			}
 			else if (Property->IsA<FBoolProperty>())
 			{
@@ -151,6 +179,18 @@ namespace AgJsonRead
 					Errors.Add(Field + TEXT(": expected boolean"));
 				}
 			}
+			else if (StructProperty && StructProperty->Struct != FGameplayTag::StaticStruct())
+			{
+				// 구조체 필드는 그 자리에서 읽고 바깥 구조체의 변환에서는 뺍니다.
+				const TSharedPtr<FJsonObject>* Nested = nullptr;
+				if (!Value->TryGetObject(Nested))
+				{
+					Errors.Add(Field + TEXT(": expected object"));
+					continue;
+				}
+				ReadStruct(**Nested, *StructProperty->Struct, StructProperty->ContainerPtrToValuePtr<void>(Out), Field, Errors);
+				Normalized.RemoveField(Key);
+			}
 			else
 			{
 				if (Value->Type != EJson::String || Value->AsString().IsEmpty())
@@ -158,13 +198,9 @@ namespace AgJsonRead
 					Errors.Add(Field + TEXT(": expected nonempty string"));
 					continue;
 				}
-				if (const FStructProperty* Struct = CastField<FStructProperty>(Property);
-				    Struct && Struct->Struct == FGameplayTag::StaticStruct())
+				if (StructProperty && !FGameplayTag::RequestGameplayTag(FName(*Value->AsString()), false).IsValid())
 				{
-					if (!FGameplayTag::RequestGameplayTag(FName(*Value->AsString()), false).IsValid())
-					{
-						Errors.Add(Field + TEXT(": unknown native tag"));
-					}
+					Errors.Add(Field + TEXT(": unknown native tag"));
 				}
 				if (const FObjectPropertyBase* Reference = CastField<FObjectPropertyBase>(Property))
 				{
@@ -187,12 +223,19 @@ namespace AgJsonRead
 		{
 			return false;
 		}
+		// 선택 필드가 빠질 수 있으므로 엄격 모드를 쓰지 않습니다. 형식은 위에서 모두 확인했습니다.
 		FText Reason;
-		if (!FJsonObjectConverter::JsonObjectToUStruct(MakeShared<FJsonObject>(Normalized), T::StaticStruct(), &Out, 0, 0, true, &Reason))
+		if (!FJsonObjectConverter::JsonObjectToUStruct(MakeShared<FJsonObject>(Normalized), &Struct, Out, 0, 0, false, &Reason))
 		{
 			Errors.Add(Path + TEXT(": ") + Reason.ToString());
 			return false;
 		}
 		return true;
+	}
+
+	/** 고정 Params의 리플렉션 필드를 모두 필수로 읽습니다. */
+	template <typename T> bool Read(const FJsonObject& Object, T& Out, const FString& Path, TArray<FString>& Errors)
+	{
+		return ReadStruct(Object, *T::StaticStruct(), &Out, Path, Errors);
 	}
 }

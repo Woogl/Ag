@@ -3,14 +3,15 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
-#include "Animation/AgMontageTimelineComponent.h"
 #include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -19,11 +20,13 @@
 #include "Character/AgPlayerCharacter.h"
 #include "Character/AgBossCharacter.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_LockOn.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
 #include "Data/AgMontageTimeline.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "MotionWarpingComponent.h"
 #include "Ag.h"
 
 namespace
@@ -58,6 +61,11 @@ UAgGameplayAbility::UAgGameplayAbility()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalOnly;
 	bRetriggerInstancedAbility = true;
+
+	// 시간표 판정은 재생이 있는 동안만 켭니다(BeginTimeline, StopTimeline).
+	TimelineTick.Target = this;
+	TimelineTick.bCanEverTick = true;
+	TimelineTick.TickGroup = TG_PrePhysics;
 }
 
 AAgCharacterBase* UAgGameplayAbility::GetAgCharacter() const
@@ -95,6 +103,7 @@ void UAgGameplayAbility::OnRemoveAbility(const FGameplayAbilityActorInfo* ActorI
 	{
 		Character->ForgetAbility(Spec.Handle);
 	}
+	TimelineTick.UnRegisterTickFunction();
 	Super::OnRemoveAbility(ActorInfo, Spec);
 	GrantedDefinition = {};
 }
@@ -180,11 +189,10 @@ bool UAgGameplayAbility::CheckResources(const FAgAbilityData& Data, const FGamep
 	{
 		return false;
 	}
-	if (Data.Tasks.bHasDrainResource)
+	if (const FAgDrainResourceParams* Drain = Data.FindTask<FAgDrainResourceParams>())
 	{
-		const FAgDrainResourceParams& Drain = Data.Tasks.DrainResource;
-		const float Remaining = ASC->GetNumericAttribute(ResourceAttribute(Drain.Resource)) -
-		                        (Data.bHasCost && Data.Cost.Resource == Drain.Resource ? Data.Cost.Amount : 0.f);
+		const float Remaining = ASC->GetNumericAttribute(ResourceAttribute(Drain->Resource)) -
+		                        (Data.bHasCost && Data.Cost.Resource == Drain->Resource ? Data.Cost.Amount : 0.f);
 		if (Remaining <= 0.f)
 		{
 			return false;
@@ -376,8 +384,8 @@ bool UAgGameplayAbility::PlayMotion(FName Id, bool bPlayerAction, float Rate, FN
 	BindMontageInstance(*Instance);
 	if (OwnsMontage(InstanceId))
 	{
-		// 시작 위치에 걸친 구간과 그 위치의 지점은 여기서 바로 실행합니다. 이 알림에서 재생 자체가 끝날 수 있습니다.
-		GetAgCharacter()->GetMontageTimeline()->BeginPlayback(InstanceId);
+		// 시작 위치에 걸친 구간과 그 위치의 지점은 여기서 바로 실행합니다. 그 실행에서 재생 자체가 끝날 수 있습니다.
+		BeginTimeline(*Instance);
 	}
 	if (OwnsMontage(InstanceId) && !Anim->GetMontageInstanceForID(InstanceId))
 	{
@@ -389,9 +397,9 @@ bool UAgGameplayAbility::PlayMotion(FName Id, bool bPlayerAction, float Rate, FN
 void UAgGameplayAbility::JumpToMotionSection(FName Section)
 {
 	MontageJumpToSection(Section);
-	if (IsActive() && !bEnding && Motion.InstanceId != INDEX_NONE)
+	if (IsActive() && !bEnding && Motion.InstanceId != INDEX_NONE && Motion.InstanceId == TimelineInstanceId)
 	{
-		GetAgCharacter()->GetMontageTimeline()->Resync(Motion.InstanceId);
+		ResyncTimeline();
 	}
 }
 
@@ -400,11 +408,20 @@ void UAgGameplayAbility::BindMontageInstance(const FAnimMontageInstance& Instanc
 	if (IsActive() && Motion.Montage == Instance.Montage)
 	{
 		Motion.InstanceId = Instance.GetInstanceID();
-		Motion.TimelineHandle = GetAgCharacter()->GetMontageTimeline()->OnTimelineEvent.AddUObject(this, &ThisClass::HandleTimelineEvent);
-		// 공격, 발사, 워핑이 있는 모션은 회전을 직접 정합니다.
-		const FAgMontageTimeline* Timeline = UAgMontageTimelineComponent::FindTimeline(*Instance.Montage);
-		Motion.bControlsFacing =
-		    Timeline && (!Timeline->Attack.IsEmpty() || !Timeline->SpawnProjectile.IsEmpty() || !Timeline->MotionWarping.IsEmpty());
+		// 공격, 발사, 추적 구간이 있는 모션은 회전을 직접 정합니다.
+		Motion.bControlsFacing = false;
+		if (const FAgMontageTimeline* Timeline = UAgAssetManager::Get().GetMontageTimelines().Find(*Instance.Montage))
+		{
+			for (const FAgTimelineSection& Section : Timeline->Sections)
+			{
+				Motion.bControlsFacing |= Section.Items.ContainsByPredicate(
+				    [](const FAgTimelineItem& Item)
+				    {
+					    return Item.Params.GetPtr<FAgAttackParams>() || Item.Params.GetPtr<FAgSpawnProjectileParams>() ||
+					           Item.Params.GetPtr<FAgTrackParams>();
+				    });
+			}
+		}
 		if (Motion.bControlsFacing)
 		{
 			Motion.Target = GetAgCharacter()->FindAttackTarget();
@@ -447,9 +464,9 @@ void UAgGameplayAbility::ClearMotion(bool bStop)
 {
 	const FAgAbilityMontageExecution Previous = Motion;
 	Motion = {};
+	StopTimeline();
 	if (AAgCharacterBase* Character = GetAgCharacter())
 	{
-		Character->GetMontageTimeline()->OnTimelineEvent.Remove(Previous.TimelineHandle);
 		Character->ClearMotionConstraints(*this);
 	}
 	UAbilityTask_PlayMontageAndWait* PreviousTask = MotionTask.Get();
@@ -524,6 +541,7 @@ void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGa
 		DrainEffect.Invalidate();
 	}
 	ClearMotion(true);
+	TimelineTick.UnRegisterTickFunction();
 	EndBusy();
 	if (AAgCharacterBase* Character = GetAgCharacter())
 	{

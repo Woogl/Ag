@@ -4,10 +4,26 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
+#include "Data/AgTaskParams.h"
 #include "AgAbilityTask_PlayCutscene.generated.h"
 
 class ALevelSequenceActor;
 class ULevelSequence;
+
+/** 재생할 컷신(PlayCutscene Task의 Params). 행동 처리가 재생할 때를 정합니다. */
+USTRUCT()
+struct FAgPlayCutsceneParams : public FAgTaskParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<ULevelSequence> Sequence;
+
+	virtual EAgTaskPlacement GetPlacements() const override
+	{
+		return EAgTaskPlacement::Activation;
+	}
+};
 
 /**
  * 컷신(레벨 시퀀스) 하나를 Origin의 위치·방향을 기준으로 재생합니다(시퀀스의 Transform Origin). 재생하는 동안 플레이어 컨트롤러는

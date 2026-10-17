@@ -4,10 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
+#include "Data/AgTaskParams.h"
 #include "AgAbilityTask_LockOn.generated.h"
 
 class AAgCharacterBase;
 class AAgPlayerCharacter;
+
+/** 락온을 쓰는 행동의 표시(LockOn Task의 Params). 행동 처리가 대상을 정해 시작합니다. */
+USTRUCT()
+struct FAgLockOnParams : public FAgTaskParams
+{
+	GENERATED_BODY()
+
+	virtual EAgTaskPlacement GetPlacements() const override
+	{
+		return EAgTaskPlacement::Activation;
+	}
+};
 
 /**
  * 락온 대상을 보관하고 카메라를 대상의 락온 지점 쪽으로 돌립니다. 대상 상실 시 알리고, 종료 시 대상과 회전 상태를 정리합니다.

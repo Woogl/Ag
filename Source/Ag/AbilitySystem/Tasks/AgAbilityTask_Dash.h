@@ -4,10 +4,37 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
-#include "Data/AgAbilityTaskParams.h"
+#include "Data/AgTaskParams.h"
 #include "AgAbilityTask_Dash.generated.h"
 
 class UCharacterMovementComponent;
+
+/** 돌진 구간(Dash Task의 Params). 공격 대상 쪽으로 출발해 대상까지의 거리에 Overshoot를 더한 만큼(MaxDistance까지) 갑니다. */
+USTRUCT()
+struct FAgDashParams : public FAgTaskParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float Speed = 0.f;
+
+	UPROPERTY()
+	float HomingTurnRate = 0.f;
+
+	UPROPERTY()
+	float Overshoot = 0.f;
+
+	UPROPERTY()
+	float MaxDistance = 0.f;
+
+	virtual EAgTaskPlacement GetPlacements() const override
+	{
+		return EAgTaskPlacement::Window;
+	}
+
+	virtual void Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors) override;
+	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
+};
 
 /**
  * 루트 모션 소스로 일정 속도로 돌진하며 선택적으로 대상을 향해 유도합니다. 거리를 다 가거나 막히거나 Finish를 부르면 끝납니다.

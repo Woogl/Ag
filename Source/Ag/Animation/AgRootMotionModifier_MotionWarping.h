@@ -3,11 +3,42 @@
 
 #include "CoreMinimal.h"
 #include "RootMotionModifier_SkewWarp.h"
-#include "Data/AgAbilityTaskParams.h"
+#include "Data/AgTaskParams.h"
 #include "AgRootMotionModifier_MotionWarping.generated.h"
 class UAgGameplayAbility;
 
-/** 몽타주 시간표의 워핑 항목 하나. 항목의 값과 재생을 소유한 어빌리티가 정한 대상만 씁니다. 공격 판정을 조회하지 않습니다. */
+/**
+ * 추적 구간(Track)의 값. Task가 아니라 Runner가 엔진 Motion Warping에 등록하는 시간표 구간입니다. 거리 상한은 null이면 제한
+ * 없음이고, 최대 워핑 거리 0은 위치 보정 없이 회전만 합니다.
+ */
+USTRUCT()
+struct FAgTrackParams : public FAgTaskParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float TargetingRange = 0.f;
+
+	UPROPERTY()
+	float MaxWarpDistance = 0.f;
+
+	/** ConstantRate나 Slerp */
+	UPROPERTY()
+	EMotionWarpRotationMethod RotationMethod = EMotionWarpRotationMethod::ConstantRate;
+
+	bool bHasTargetingRange = false;
+	bool bHasMaxWarpDistance = false;
+
+	virtual EAgTaskPlacement GetPlacements() const override
+	{
+		return EAgTaskPlacement::Window;
+	}
+
+	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
+	virtual void Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors) override;
+};
+
+/** 추적 구간 하나. 구간의 값과 재생을 소유한 어빌리티가 정한 대상만 씁니다. 공격 판정을 조회하지 않습니다. */
 UCLASS()
 class UAgRootMotionModifier_MotionWarping : public URootMotionModifier_SkewWarp
 {
@@ -16,13 +47,13 @@ class UAgRootMotionModifier_MotionWarping : public URootMotionModifier_SkewWarp
 public:
 	UAgRootMotionModifier_MotionWarping(const FObjectInitializer& ObjectInitializer);
 
-	/** 워핑 항목의 값. 최대 워핑 거리 0은 위치 보정 없이 회전만 합니다. */
-	void SetTimelineSettings(const FAgMotionWarpingParams& InParams, EMotionWarpRotationMethod InRotationMethod);
+	/** 추적 구간의 값 */
+	void SetTrackSettings(const FAgTrackParams& InParams);
 	virtual void Update(const FMotionWarpingUpdateContext& Context) override;
 	virtual void OnStateChanged(ERootMotionModifierState LastState) override;
 
 private:
-	FAgMotionWarpingParams Params;
+	FAgTrackParams Params;
 	TWeakObjectPtr<UAgGameplayAbility> OwnerAbility;
 	TWeakObjectPtr<AActor> Target;
 	FVector Origin = FVector::ZeroVector;

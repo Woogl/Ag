@@ -2,10 +2,13 @@
 
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
 
+#include "AbilitySystem/AgGameplayAbility.h"
+#include "Character/AgCharacterBase.h"
+#include "Data/AgCharacterData.h"
 #include "GameFramework/Character.h"
-#include "Abilities/GameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
+#include "Ag.h"
 
 namespace
 {
@@ -17,6 +20,28 @@ namespace
 
 	/** 예상 이동(cm)이 이보다 짧은 틱은 막혔는지 판단하지 않습니다(히트스톱으로 돌진이 거의 멈춘 틱). */
 	constexpr float MinJudgedMove = 2.f;
+}
+
+void FAgDashParams::Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors)
+{
+	if (Speed <= 0.f || MaxDistance <= 0.f)
+	{
+		Errors.Add(Path + TEXT(": Speed and MaxDistance must be positive"));
+	}
+}
+
+UAbilityTask* FAgDashParams::MakeTask(const FAgTaskContext& Context) const
+{
+	AAgCharacterBase* Character = Cast<AAgCharacterBase>(Context.Runner.GetAvatarActorFromActorInfo());
+	AActor* Target = Character ? Character->FindAttackTarget() : nullptr;
+	if (!Target)
+	{
+		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s Dash: missing target input (play %d)"),
+		    Character ? *Character->GetCharacterData()->GetName() : TEXT("None"), *Context.Runner.GetAbilityId().ToString(),
+		    Context.MontageInstanceId);
+		return nullptr;
+	}
+	return UAgAbilityTask_Dash::Dash(&Context.Runner, *this, Character->GetActorForwardVector(), Target->GetActorLocation(), Target);
 }
 
 UAgAbilityTask_Dash::UAgAbilityTask_Dash()
