@@ -12,10 +12,11 @@
 | Task | 기능 하나와 그 Params의 스키마·검증 |
 | 행동 정의(`Abilities.json`) | 발동 조건과 트리거, 대상 선정, 재생할 몽타주와 시작 섹션, 종료 방식, 발동 동안 실행하는 Task |
 | 몽타주 시간표(`MontageTimelines.json`) | 섹션 안의 시각에 실행하는 Task(구간·지점) |
-| 주인 객체 | 행동이 아닌 규칙: 입력(트리거 태그, 점프), 공중 상태·점프 모션·사망(캐릭터), 그로기 시간(보스 캐릭터), 패리 결과(피격 처리), 평타 반응과 2페이즈 진입(보스 AI) |
+| 주인 객체 | 행동이 아닌 규칙: 입력(행동 태그 검색, 트리거 태그, 점프), 공중 상태·점프 모션·사망(캐릭터), 그로기 시간(보스 캐릭터), 패리 결과(피격 처리), 평타 반응과 2페이즈 진입(보스 AI) |
 
 - 새 기능은 Task 파일 하나(Task와 그 Params)로 더하고 Runner는 고치지 않습니다. 있는 Task를 조합한 새 행동·패턴은 JSON과 몽타주만으로 더합니다.
 - Task는 자기 일만 하고 다른 Task를 모릅니다. Runner는 Task 종류, 행동 ID, 몽타주 ID를 모릅니다. 행동 전체를 맡는 흐름 Task와 자식 Ability는 만들지 않습니다.
+- 입력 계층과 HUD는 행동 ID 대신 행동 태그로 스펙을 찾습니다. 같은 키를 쓰는 새 캐릭터의 행동도 데이터만으로 붙습니다.
 - 행동이 끝나는 방식은 행동 정의에 적고 추측하지 않습니다. 대부분은 몽타주가 끝날 때, 토글형(가드, 달리기, 락온, 점프)은 트리거 태그가 사라질 때 끝납니다.
 - 여러 모션을 쓰는 행동(평타, 회피, 넉업, 점프)은 한 몽타주의 섹션으로 합칩니다.
 - 대상이 필요한 행동은 발동할 때 TargetingPreset(GameplayTargetingSystem)으로 대상을 정합니다.
@@ -50,6 +51,7 @@ flowchart LR
 | [몽타주 시간표](<몽타주 시간표.md>) '형식': 몽타주 → 기능 이름 → 항목, 시각은 몽타주 타임라인 | 몽타주 → 섹션 → 항목 배열이고, 시각은 섹션 시작 기준입니다. 항목은 `Task` 필드로 종류를 정합니다. GameplayEvent 항목과 그 사건 여섯 종(후딜 시작 포함)은 없어집니다. |
 | 같은 문서 '판정 규칙'의 '순서'·'섹션 이동', '항목별 실행' | 같은 시각은 배열 순서, Task가 요청한 전환은 같은 시각의 항목을 마친 뒤 적용, 섹션이 바뀌어도 같은 Task·같은 값의 구간은 이어 갑니다(아래 '시간표 판정'). |
 | 같은 문서 첫 문단·'원본': 시간표에는 게임 규칙이 쓰는 시각만 둠 | 기획서가 정한 연출인 카메라 셰이크(LeapSlam 착지)도 시간표 지점에 둡니다. `Camera.json`의 `LeapLandingShake`·`LeapLandingShakeRange`를 지웁니다. |
+| 같은 문서 '태그 검색과 취소': 개별 행동 조회는 ID→스펙 핸들 경로 | 플레이어의 입력 계층, 락온 대상 조회, 처형 안내도 HUD처럼 스펙 태그(정확히 일치)로 찾습니다(아래 '입력 계층의 행동 찾기'). 보스 AI는 지금처럼 데이터에 적힌 ID를 씁니다. |
 | [입력 처리](<입력 처리.md>) '기술 결정': 가드 재개 이벤트, 행동 모션 실행 기록으로 이동 제한, 실행 중 어빌리티에 보내는 입력 이벤트 | 입력 계층은 트리거 태그(`Input.Guard`, `Input.Sprint`, `Input.LockOn`)와 이동 입력 태그(`Input.Move`)를 붙이고 뗍니다. 실행 중 행동에 보내는 이벤트는 평타의 `Input.Attack`만 남습니다. |
 | [사망 처리](<사망 처리.md>) '사망 처리 순서', '클래스 구조': Death 어빌리티 | 캐릭터가 `Event.Death`를 받아 사망을 처리합니다. '처형 사망'의 판단 기준(공격 쪽 태그)은 그대로입니다. |
 | [애니메이션과 이동](<애니메이션과 이동.md>) '점프', '점프 공격', '넉업': 점프 어빌리티가 Jump를 부르고 모션을 재생하며 State.Jumping을 가짐, 넉업은 세 몽타주 | 엔진 점프, 점프 모션, State.Jumping은 캐릭터가, 넉업은 합친 몽타주의 섹션이 맡습니다. |
@@ -237,7 +239,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 
 | 주인 | 맡는 것 | 대신 지우는 것 |
 | - | - | - |
-| 플레이어 캐릭터(입력 계층) | 위 트리거 태그, 이동 입력이 있는 동안의 `Input.Move`. 평타 키는 평타가 실행 중이면 `Input.Attack` 이벤트를 보내고, 아니면 발동합니다(평타 키의 점프 공격·회피 반격 우선순위는 그대로). 가드 키를 누른 채 후딜이 시작될 때 가드가 실행 중이면 후딜에 든 패리 모션(`Ability.Action.Parry`)을 취소합니다. 이동 입력 제한은 `State.Acting`과 지금 태그로 봅니다. | 실행 중 어빌리티에 보내던 `Input.Guard`·`Input.LockOn` 이벤트, `Input.GuardReleased`, `Event.Guard.Resume`, 이동 제한 기록 조회(`BlocksMovementInput`) |
+| 플레이어 캐릭터(입력 계층) | 키에 맞는 행동을 행동 태그로 찾습니다(아래 '입력 계층의 행동 찾기'). 위 트리거 태그, 이동 입력이 있는 동안의 `Input.Move`. 평타 키는 평타가 실행 중이면 `Input.Attack` 이벤트를 보내고, 아니면 발동합니다(평타 키의 점프 공격·회피 반격 우선순위는 그대로). 가드 키를 누른 채 후딜이 시작될 때 가드가 실행 중이면 후딜에 든 패리 모션(`Ability.Action.Parry`)을 취소합니다. 이동 입력 제한은 `State.Acting`과 지금 태그로 봅니다. | 실행 중 어빌리티에 보내던 `Input.Guard`·`Input.LockOn` 이벤트, `Input.GuardReleased`, `Event.Guard.Resume`, 이동 제한 기록 조회(`BlocksMovementInput`) |
 | 캐릭터 | `State.Airborne`(이동 모드가 떨어지는 중인 동안). 점프의 `State.Jumping`과 점프 모션: 플레이어는 [애니메이션과 이동](<애니메이션과 이동.md>) '점프'의 규칙대로 `Jump` 몽타주의 Start·Land 섹션을 재생합니다. 이동 제약은 HoldFacing·KeepDistance·PhysicsTranslation의 요청을 소유자별로 보관해 합칩니다. 사망은 `Event.Death`를 받아 처리합니다(아래 사망 모션). | Death 스펙과 `Ability.Reaction.Death`, 어빌리티의 점프·사망 분기, 소유자가 하나뿐인 이동 제약 |
 | 보스 캐릭터 | 그로기 시간: State.Groggy가 있고 땅에 있으면 흐르기 시작해 State.Groggy가 사라지면 멈춥니다. HUD와 GroggyRecovery가 이 값을 읽습니다. | 어빌리티의 그로기 시간 호출 |
 | 피격 처리(`UAgHitResultGameplayEffectComponent`) | 패리 성공 시 공격자의 PP 감소 효과와 방어자의 패리 구간 제거(전투 시스템 '피격 처리 순서') | 가드 어빌리티의 PP 감소와 패리 구간 닫기 |
@@ -246,6 +248,26 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 - 사망 모션: 캐릭터 데이터에 `DeathMotions`(`[{"Montage": "Executed", "KilledBy": "Ability.Action.Execution", "Death": "ExecutedDeath"}]`)를 둡니다. 사망할 때 Montage를 재생 중이고 사망 이벤트의 공격 쪽 태그에 KilledBy가 있으면, 다른 어빌리티를 취소하기 전에 재생 위치를 보관하고 Death 모션을 그 위치에서 이어 재생한 뒤 끝나면 래그돌로 바꿉니다. 처형 피격 중 다른 공격으로 죽으면 일반 사망인 지금 규칙과 같습니다.
 - 캐릭터가 직접 재생하는 몽타주(점프, 사망)의 종료 콜백은 EndPlay에서 메시를 해제하기 전에 끊습니다. 지금 EndPlay가 어빌리티를 먼저 취소해 막는 문제와 같은 이유입니다.
 - 캐릭터가 직접 재생하는 몽타주에는 판정할 Runner가 없으므로 시간표를 두지 않습니다(검증).
+
+### 입력 계층의 행동 찾기
+
+입력 계층은 행동 ID 대신 행동 태그로 스펙을 찾습니다. 키와 행동 태그의 대응은 입력 규칙이라 입력 계층(C++)에 두고, 그 태그를 가진 정의가 무엇인지는 캐릭터의 행동 목록이 정합니다. 그래서 같은 키를 쓰는 새 캐릭터의 행동은 다른 ID로 정의하고 Tags만 맞추면 데이터만으로 붙습니다(마일스톤2의 플레이어 추가). HUD는 이미 스킬·궁극기 슬롯을 태그로 찾습니다.
+
+| 키·처리 | 찾는 행동 태그 |
+| - | - |
+| 평타 키 | 공중이면 `Ability.Action.JumpAttack`, 회피 반격 기회가 있으면 `Ability.Action.DodgeCounter`, 그 밖에는 `Ability.Action.BasicAttack`(실행 중이면 `Input.Attack` 이벤트). 순서는 지금과 같습니다. |
+| 가드 키 | `Ability.Action.Guard`(트리거 태그를 붙여도 되는지 확인) |
+| 회피·달리기 키 | `Ability.Action.Dodge`, 회피 후딜의 달리기는 `Ability.Sprint` |
+| 점프 키 | `Ability.Action.Jump`(엔진 Jump를 불러도 되는지 확인) |
+| 스킬, 궁극기, 처형 키 | `Ability.Action.Skill`, `Ability.Action.Ultimate`, `Ability.Action.Execution` |
+| 락온 키, 락온 대상 조회 | `Ability.LockOn` |
+| 패리 후딜 복귀(취소) | `Ability.Action.Parry` |
+| 처형 안내 HUD(Targeting 평가) | `Ability.Action.Execution` |
+
+- 스펙 태그(`GetDynamicSpecSourceTags`)가 그 태그와 정확히 같은 스펙을 찾습니다. 엔진 `TryActivateAbilitiesByTag`는 클래스 태그를 보므로 쓰지 않습니다. HUD의 검색을 `UAgAbilitySystemComponent`의 함수 하나로 옮겨 입력 계층과 함께 씁니다.
+- 한 캐릭터에서 위 태그를 정확히 가진 행동은 태그마다 하나 이하입니다(검증). 없으면 그 키는 아무것도 하지 않습니다.
+- 새 키를 더할 때(입력 태그, Enhanced Input 에셋)만 이 표와 C++가 바뀝니다.
+- 보스 AI는 지금처럼 캐릭터의 행동 목록과 StateTree 에셋에 적힌 ID를 씁니다. ID가 데이터에서 오므로 코드에는 행동 ID가 없습니다.
 
 ## 행동별 이관표
 
@@ -549,7 +571,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 - 시간표 키: 어떤 행동의 Montage가 재생하는 몽타주만 키가 될 수 있습니다. 캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)의 시간표는 오류입니다.
 - 시간표 항목: 섹션은 그 몽타주에 있고, 0 ≤ Start < End ≤ 섹션 길이, 0 ≤ Time ≤ 섹션 길이입니다. 전환의 섹션은 그 몽타주에 있고, 전환 지점은 섹션 끝보다 앞입니다. 기다리는 Task의 구간은 반복 섹션을 끝까지 덮습니다. 반복 섹션 안의 지점과 워핑 구간은 지금처럼 오류입니다.
 - 지금 규칙 유지: 경쟁 구간(Dash끼리, 같은 채널의 충돌 응답끼리), 몽타주의 노티파이(프로젝트·워핑 노티파이 금지, 예고 끝과 판정 시작, Dash 시작의 루트 모션 끄기), 투사체 ID
-- 캐릭터 데이터: DeathMotions의 몽타주 ID, 점프 몽타주의 Start·Land 섹션
+- 캐릭터 데이터: DeathMotions의 몽타주 ID, 점프 몽타주의 Start·Land 섹션. 플레이어는 '입력 계층의 행동 찾기' 표의 태그를 정확히 가진 행동이 태그마다 하나 이하이며, 검증은 입력 계층과 같은 C++ 표를 읽습니다.
 - 오류에는 파일, 행동 ID나 몽타주 경로·섹션, 항목 번호, 필드 경로를 붙입니다.
 
 ## 엔진 동작 확인
@@ -584,12 +606,12 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 | 단계 | 작업 |
 | - | - |
 | ① Runner와 Task 스키마 | 시간표 컴포넌트를 Runner로 흡수, Task별 Params와 등록, 새 JSON 형식(발동 Task 배열, 섹션별 시간표)과 범용 검증. 몽타주는 그대로이고 행동 분기는 새 데이터를 읽게만 바꿔 동작이 같습니다. |
-| ② 발동·종료·대상 | Triggers와 End, Targeting과 프리셋, 새 Task, Parry·Executed 스펙, 주인 객체(입력 계층, 캐릭터, 보스 그로기 시간, 피격 처리, 보스 AI), Rate Scale. 섹션 합치기가 필요 없는 행동의 분기를 지웁니다. |
+| ② 발동·종료·대상 | Triggers와 End, Targeting과 프리셋, 새 Task, Parry·Executed 스펙, 주인 객체(입력 계층과 행동 태그 검색, 캐릭터, 보스 그로기 시간, 피격 처리, 보스 AI), Rate Scale. 섹션 합치기가 필요 없는 행동의 분기를 지웁니다. |
 | ③ 섹션 합치기 | 평타·회피·넉업·점프 몽타주 합치기, StartSections와 전환, 남은 분기·태그·데이터 필드·함수 삭제, 관련 문서 갱신 |
 
 | 검증 대상 | 완료 기준 |
 | - | - |
-| 구조 | `Source/Ag/AbilitySystem`과 데이터 검증에 행동 ID·몽타주 ID·섹션 이름 비교가 없고, `UAgMontageTimelineComponent`가 없습니다. Runner는 Task 종류를 모르고, Task는 다른 Task를 부르지 않습니다. |
+| 구조 | `Source/Ag/AbilitySystem`과 데이터 검증에 행동 ID·몽타주 ID·섹션 이름 비교가 없고, 플레이어 캐릭터와 HUD는 행동 ID로 스펙을 찾지 않으며, `UAgMontageTimelineComponent`가 없습니다. Runner는 Task 종류를 모르고, Task는 다른 Task를 부르지 않습니다. |
 | 동작 | 평타 콤보와 초기화, 점프와 착지 모션, 점프 공격, 회피와 극한 회피(한 번만), 가드·패리·가드 밀림·후딜 복귀, 달리기, 락온과 해제, 처형, 궁극기 순서(컷신, 베기 선, 시간 정지 해제 뒤 마무리), 넉업·넉백, 보스 8개 패턴과 재생 속도, 그로기(공중 시작, 시간, HUD, 처형 피격, PP 회복), 페이즈 전환, 사망과 처형 사망이 지금과 같습니다. 단 '동작이 달라지는 곳'은 표를 따릅니다. |
 | 데이터 | 잘못된 Task·필드·참조·몽타주·섹션은 읽을 때 파일과 경로를 붙인 오류가 납니다. |
 
