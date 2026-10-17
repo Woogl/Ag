@@ -127,7 +127,7 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	/** 입력에서 사용하는 콤보 모션 순서. 타격 수치는 Tasks.Attack이 소유합니다. */
+	/** 입력에서 사용하는 콤보 모션 순서. 타격 수치는 몽타주 시간표가 소유합니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
 	TArray<FName> BasicAttackMontageIds;
 

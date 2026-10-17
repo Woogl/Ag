@@ -1,6 +1,6 @@
-# AbilityTask 기반 어빌리티 설계안
+# 어빌리티와 AbilityTask
 
-2026-10-16 구현. 모든 행동이 단일 `UAgGameplayAbility`와 기능별 고정 Params를 씁니다. 2026-10-17 몽타주 안의 구간과 사건을 몽타주 노티파이에서 [몽타주 시간표](<몽타주 시간표.md>)로 옮겼습니다. 아래는 지금 구조의 규칙입니다.
+모든 행동이 단일 `UAgGameplayAbility`와 기능별 고정 Params를 쓰는 구조의 규칙입니다. 몽타주 안의 구간과 사건은 [몽타주 시간표](<몽타주 시간표.md>)를 따릅니다.
 
 ## 결정과 목표
 
@@ -185,22 +185,22 @@ Busy는 다음 행동의 발동 제한과 선입력·가드 자동 재개 시점
 | Player.JumpAttack | 고정 모션 시작, 시간표의 내리꽂기 사건에서 LaunchVertical. 판정 구간 하나와 회전 워핑은 시간표 | 실제 착지에서 Land 섹션 이동. 모션 완료 시 종료·물리 속도 기반 루트 이동 설정 복원 |
 | Player.Dodge | 방향 입력에 따라 Roll/Backstep 재생. 두 모션의 시간표에 무적·극한 회피 구간. 극한 회피 사건은 아래 '행동별 조합'의 회피를 따름 | 선택한 모션의 실제 재생을 기록. 자연 완료 시 종료. CounterChance·월드 슬로우모션은 남음 |
 | Player.DodgeCounter | 고정 모션, 시간표의 판정·워핑·무적 구간 | 모션 완료. 활성화 시 반격 기회 소비는 입력 알림 처리 유지 |
-| Player.Guard | 신규 가드와 패리/가드 밀림 복귀에서 Guarding. 신규 가드에만 TimedTag.ParryWindow 적용. 이동 가능 검사는 같은 State.ParryWindow를 사용. Event.Parry에서 Parry 보상·공격자의 PP 감소·Parry 모션 | 가드 유지는 입력으로 종료. 패리 모션 완료는 가드 종료로 직결하지 않으며 키 유지/해제·후딜 재입력 규칙 적용 |
+| Player.Guard | 신규 가드와 패리/가드 밀림 복귀에서 HoldTag(State.Guarding). 신규 가드에만 TimedTag(State.ParryWindow) 적용. 이동 가능 검사는 같은 State.ParryWindow를 사용. Event.Parry에서 Parry 보상·공격자의 PP 감소·Parry 모션 | 가드 유지는 입력으로 종료. 패리 모션 완료는 가드 종료로 직결하지 않으며 키 유지/해제·후딜 재입력 규칙 적용 |
 | Player.Skill | 고정 모션, 시간표의 판정·워핑 구간 | 모션 완료 |
-| Player.Ultimate | 시작에서 TimeStop·UltimateCamera, 컷신 완료에서 Judgment 섹션으로 옮기고 베기 선 Cue를 붙임(선 하나하나는 몽타주의 엔진 GameplayCue 노티파이가 실행). 마무리 사건에서 Cue 제거·TimeStop 종료 후 TargetQuery.Finish 조회·Attack.Finish 단발 판정 | 컷신 완료는 재생 단계만 전환. 후딜을 포함한 모션 완료 시 Ability 종료. 중단 때 남은 컷신·Cue·시간 정지 정리 |
-| Player.Execution | TargetQuery.Execution으로 지정 대상 확보. 대상에게 Executed 사건 전달 후 자기 모션. 정렬 워핑은 시간표 구간에서 지정 대상·간격 사용. 시간표의 두 ExecutionBlow 사건을 첫 타 Stab, 둘째 타 Finish에 연결 | 모션 완료. 단계는 두 타의 의미로 선택하며 맵 순서 사용 없음. 둘째 타에만 마지막 일격 실행 입력 전달 |
+| Player.Ultimate | 시작에서 TimeStop·PlayCutscene, 컷신 완료에서 Judgment 섹션으로 옮기고 베기 선 Cue를 붙임(선 하나하나는 몽타주의 엔진 GameplayCue 노티파이가 실행). 마무리 사건에서 Cue 제거·TimeStop 종료 후 TargetQuery 조회·Attack 단발 판정 | 컷신 완료는 재생 단계만 전환. 후딜을 포함한 모션 완료 시 Ability 종료. 중단 때 남은 컷신·Cue·시간 정지 정리 |
+| Player.Execution | TargetQuery로 지정 대상 확보. 대상에게 Executed 사건 전달 후 자기 모션. 정렬 워핑은 시간표 구간에서 지정 대상·간격 사용. 시간표의 ExecutionBlow 사건마다 Tasks.Attack 배열의 다음 타격을 연결 | 모션 완료. 마지막 타격에만 마지막 일격 실행 입력 전달 |
 | Player.Sprint | 발동 후 DrainResource. UpdateSprint가 이동·키·SP 소진 검사 | 입력/상태 종료에서 소모 GE 제거. 점프 중에는 유지 |
 | Player.LockOn | 대상 선택 후 LockOn 요청 | 락온 해제·대상 상실 때 종료 요청. 후보/해제 범위는 Player 원본 유지 |
-| Player/Boss.KnockBack | 고정 모션. 시간표의 DownGrounded 사건에서 HoldTag.Downed | 모션 완료 때 종료하고 무적 해제. 발동 전체를 무적으로 만들지 않음 |
-| Player/Boss.KnockUp | 공통 KnockUpAirTime·KnockUpHeight로 엔진 물리 Task 실행. 상승/낙하/착지 사건에서 KnockUp·KnockUpFall·GetUp 모션. 접지(시간표의 DownGrounded) 이후 Downed | 상승·낙하 모션의 끝을 Ability 완료로 보지 않음. 최종 GetUp 완료로 정상 종료 |
+| Player/Boss.KnockBack | 고정 모션. 시간표의 DownGrounded 사건에서 HoldTag(무적) | 모션 완료 때 종료하고 무적 해제. 발동 전체를 무적으로 만들지 않음 |
+| Player/Boss.KnockUp | 공통 KnockUpAirTime·KnockUpHeight로 엔진 물리 Task 실행. 상승/낙하/착지 사건에서 KnockUp·KnockUpFall·GetUp 모션. 접지(시간표의 DownGrounded) 이후 HoldTag(무적) | 상승·낙하 모션의 끝을 Ability 완료로 보지 않음. 최종 GetUp 완료로 정상 종료 |
 | Player.GuardPushback | 고정 모션, Activation.OwnedTags의 HitReaction·Guarding | 모션 완료. 키 유지 시 캐릭터가 Event.Guard.Resume 요청 |
 | Player.GuardBreak | 고정 모션과 HitReaction | 모션 완료 |
 | Boss.DoubleStrike·Sweep·QuintupleStrike·JumpSlam | 고정 모션. 시간표의 판정·워핑 구간 | 모션 완료. 회전만 하는 워핑은 최대 워핑 거리 0 |
 | Boss.DashThrust | 고정 모션. 시간표의 회전 워핑, 돌진·판정·충돌 해제 구간, 자세 유지 사건 | 돌진이 끝나면(거리 완료·막힘) 소유 Ability가 남은 판정·이동·충돌 구간을 닫고 자세 유지를 풂. 재개 뒤 모션 완료 |
-| Boss.LeapSlam | 고정 모션·시간표의 회전 워핑. 시작에서 LaunchToTarget 함수 호출. 실제 착지에서 End 섹션 이동·카메라 처리와 TargetQuery.Landing 조회 후 LandingHit 단발 판정 | 초기 속도 적용으로 행동 종료하지 않음. 착지 이후 모션 완료 시 물리 속도 기반 루트 이동 설정 복원 |
+| Boss.LeapSlam | 고정 모션·시간표의 회전 워핑. 시작에서 LaunchToTarget 함수 호출. 실제 착지에서 End 섹션 이동·카메라 처리와 TargetQuery 조회 후 Attack 단발 판정 | 초기 속도 적용으로 행동 종료하지 않음. 착지 이후 모션 완료 시 물리 속도 기반 루트 이동 설정 복원 |
 | Boss.SwordWave | 고정 모션·시간표의 회전 워핑과 발사 지점 세 곳. 매 발 항목의 공격 값을 투사체에 전달 | 모션 완료. 생성된 투사체는 이후에도 자기 수명 유지 |
 | Boss.Backstep | PatternSelection으로 선택, RootMotionDistance를 적용한 고정 모션 | 모션 완료. 공격 배율 PatternPlayRate 미적용 |
-| Boss.Groggy | 공중이면 착지 대기 후 Groggy 모션·그로기 시간 시작. Executed 사건에서 HoldTag.Executed·PassThroughPawn, 시간 대기 취소 후 Executed 모션으로 교체 | 정상 그로기 또는 처형 피격 모션 완료 때 PPRefill 후 종료. 취소·사망에서 PP를 채우지 않음. 처형 대상에게 무적을 추가하지 않음 |
+| Boss.Groggy | 공중이면 착지 대기 후 Groggy 모션·그로기 시간 시작. Executed 사건에서 HoldTag·SetCollisionResponseToChannel(Pawn 통과), 시간 대기 취소 후 Executed 모션으로 교체 | 정상 그로기 또는 처형 피격 모션 완료 때 PPRefill 후 종료. 취소·사망에서 PP를 채우지 않음. 처형 대상에게 무적을 추가하지 않음 |
 | Boss.PhaseTransition | 고정 모션, OwnedTags의 Invincible·Boss.RotationLocked | 정상 완료에서 PPRefill→EnterPhase2→종료. 취소 시 성공 처리를 하지 않음 |
 | Player/Boss.Death | 사망 처리에서 래그돌 또는 처형 사망 모션 이어 재생 | State.Dead는 캐릭터가 지속 소유하며 Activation.OwnedTags에 넣지 않음. 결과 화면 대기는 GameMode 책임 |
 
@@ -212,9 +212,9 @@ JumpAttack의 State.Jumping 요구는 PreActivate 이전 검사입니다. 같은
 
 ### 코드 호출 검증
 
-몽타주 구간의 시각과 값은 [몽타주 시간표](<몽타주 시간표.md>)의 '검증'을 따릅니다. BasicAttack의 타별 모션 목록은 JSON 배열로 검증합니다. KnockBack/KnockUp의 접지 무적과 Groggy의 처형 상태는 모션 전체 구간으로 대체하지 않고 실제 상태 사건에서 해당 이름의 기능을 호출합니다.
+몽타주 구간의 시각과 값은 [몽타주 시간표](<몽타주 시간표.md>)의 '검증'을 따릅니다. BasicAttack의 타별 모션 목록은 JSON 배열로 검증합니다. KnockBack/KnockUp의 접지 무적과 Groggy의 처형 상태는 모션 전체 구간으로 대체하지 않고 실제 상태 사건에서 해당 기능을 호출합니다.
 
-C++이 이름으로 부르는 Tasks 설정도 데이터 검증 대상입니다. 예를 들어 Guard를 부여하면서 TimedTag.ParryWindow가 없거나 Execution의 두 타 설정 중 하나가 없으면 로드 시 전체 경로를 포함한 오류를 냅니다. 이를 위해 별도 런타임 등록 체계는 만들지 않으며, 기능별 스키마 검사와 현재 사건 연결의 명시적 필수 참조 검사를 사용합니다. 명시적 호출이 없는 일반 기능 조합에 Guard·Execution의 필수 항목을 강제하지 않습니다.
+C++ 사건이 쓰는 Tasks 설정도 데이터 검증 대상입니다. 예를 들어 Guard를 부여하면서 TimedTag가 없거나 Execution의 Attack이 비어 있으면 로드 시 전체 경로를 포함한 오류를 냅니다. 이를 위해 별도 런타임 등록 체계는 만들지 않으며, 기능별 스키마 검사와 현재 사건 연결의 명시적 필수 참조 검사를 사용합니다. 명시적 호출이 없는 일반 기능 조합에 Guard·Execution의 필수 항목을 강제하지 않습니다.
 
 ## 데이터 형식과 검증
 
@@ -225,7 +225,7 @@ C++이 이름으로 부르는 Tasks 설정도 데이터 검증 대상입니다. 
 | Id, Tags, Cooldown | 행동 ID, 스펙 식별·분류 태그, 쿨다운 |
 | Activation | RequiredTags, BlockedTags, OwnedTags, BlockTags, CancelTags, TriggerEvents, bAllowRetrigger |
 | Cost | Resource·Amount만 갖는 FAgResourceCostParams 객체. 시작 비용이 없으면 null |
-| Tasks | 기능 이름을 고정 필드로 가진 구조체. 각 기능의 고정 스키마에 따라 단일 Params 객체 또는 설정 이름별 Params 맵 사용. 실행 시점은 위 '설정과 실행 시점의 구분'을 따름 |
+| Tasks | 기능 이름을 고정 필드로 가진 구조체. 각 기능의 고정 스키마에 따라 단일 Params 객체를 쓰고, Attack만 차례대로 치는 단발 타격의 배열을 씀. 실행 시점은 위 '설정과 실행 시점의 구분'을 따름 |
 | PatternSelection | 보스 패턴에만 있는 Phases·거리별 Weight·ResponseRange·ResponseChance |
 
 모든 어빌리티는 공통 CommitAbility 경로를 사용합니다. 비용·쿨다운의 적용 여부는 Cost·Cooldown 값으로 결정하며 별도 정책 선택 필드를 두지 않습니다. 구체 처리 순서는 아래 '비용·발동 조건의 보존'을 따릅니다.
@@ -240,26 +240,26 @@ Cost의 Resource는 현재 SP·MP·UP를 해당 FGameplayAttribute에 대응시�
 | - | - | - | - |
 | PlayMontageAndWait | Params 객체 | FAgPlayMontageAndWaitParams | MontageId. RootMotionDistance는 선택 필드 |
 | DrainResource | Params 객체 | FAgDrainResourceParams | Resource, AmountPerSecond |
-| TimedTag | 설정 이름 → Params 맵 | FAgTimedTagParams | Tag, Duration |
-| GrantResources | 설정 이름 → Params 맵 | FAgGrantResourcesParams | SP, MP, UP |
-| SlowMotion | 설정 이름 → Params 맵 | FAgSlowMotionParams | Speed, RealDuration |
+| TimedTag | Params 객체 | FAgTimedTagParams | Tag, Duration |
+| GrantResources | Params 객체 | FAgGrantResourcesParams | SP, MP, UP |
+| SlowMotion | Params 객체 | FAgSlowMotionParams | Speed, RealDuration |
 | LaunchVertical | Params 객체 | FAgLaunchVerticalParams | VelocityZ |
 | LaunchToTarget | Params 객체 | FAgLaunchToTargetParams | AirTime, TargetOffset, MaxDistance |
-| TargetQuery | 설정 이름 → Params 맵 | FAgTargetQueryParams | Range |
-| Attack | 설정 이름 → Params 맵 | FAgAttackParams | DamageMultiplier, PoiseMultiplier, HitReaction, bGuardable, MPCharge, UPCharge |
-| HoldTag | 설정 이름 → Params 맵 | FAgHoldTagParams | Tag |
-| SetCollisionResponseToChannel | 설정 이름 → Params 맵 | FAgCollisionResponseParams | Channel, Response |
+| TargetQuery | Params 객체 | FAgTargetQueryParams | Range |
+| Attack | Params 배열(차례대로 치는 단발 타격) | FAgAttackParams | DamageMultiplier, PoiseMultiplier, HitReaction, bGuardable, MPCharge, UPCharge |
+| HoldTag | Params 객체 | FAgHoldTagParams | Tag |
+| SetCollisionResponseToChannel | Params 객체 | FAgCollisionResponseParams | Channel, Response |
 | TimeStop | 단일 빈 객체 | 추가 Params 없음 | {}로 사용 여부만 표시 |
 | LockOn | 단일 빈 객체 | 추가 Params 없음 | {}로 사용 여부만 표시 |
-| PlayCutscene | 설정 이름 → Params 맵 | FAgPlayCutsceneParams | Sequence |
+| PlayCutscene | Params 객체 | FAgPlayCutsceneParams | Sequence |
 
-Tasks의 Attack·HoldTag·SetCollisionResponseToChannel에는 C++이 이름으로 부르는 설정만 둡니다. 몽타주 구간과 지점의 값은 [몽타주 시간표](<몽타주 시간표.md>) 항목이 직접 가지며, 항목의 값 필드는 같은 고정 Params 구조체(FAgAttackParams, FAgHoldTagParams, FAgCollisionResponseParams, FAgDashParams, FAgMotionWarpingParams)를 씁니다.
+Tasks의 Attack·HoldTag·SetCollisionResponseToChannel에는 C++ 사건이 쓰는 설정만 둡니다. 몽타주 구간과 지점의 값은 [몽타주 시간표](<몽타주 시간표.md>) 항목이 직접 가지며, 항목의 값 필드는 같은 고정 Params 구조체(FAgAttackParams, FAgHoldTagParams, FAgCollisionResponseParams, FAgDashParams, FAgMotionWarpingParams)를 씁니다.
 
-**Attack Params 하나는 한 타의 판정 데이터**입니다. 시간표 Attack 구간은 그 값을 직접 갖고 구간마다 무기 스윕 실행을 하나 만듭니다. 궁극기·착지·처형의 명시적 단발 요청은 Tasks.Attack의 이름 항목으로 전달받은 대상 목록에 한 번 판정한 뒤 끝납니다. 이 두 호출은 고정 C++ 진입점으로 구분하며 JSON에 Kind·Mode를 추가하지 않습니다. Attack은 전달받은 Params로 스윕·적중·피해 처리와 자기 판정의 수명만 맡으며 이동이나 모션을 시작하지 않습니다. 단발 판정에서 같은 대상을 중복 처리하지 않으며, 타격 위치·마지막 일격 여부·피해 출처는 사건의 실행 입력으로 전달합니다.
+**Attack Params 하나는 한 타의 판정 데이터**입니다. 시간표 Attack 구간은 그 값을 직접 갖고 구간마다 무기 스윕 실행을 하나 만듭니다. 궁극기·착지·처형의 명시적 단발 요청은 Tasks.Attack 배열의 항목으로 전달받은 대상 목록에 한 번 판정한 뒤 끝납니다. 이 두 호출은 고정 C++ 진입점으로 구분하며 JSON에 Kind·Mode를 추가하지 않습니다. Attack은 전달받은 Params로 스윕·적중·피해 처리와 자기 판정의 수명만 맡으며 이동이나 모션을 시작하지 않습니다. 단발 판정에서 같은 대상을 중복 처리하지 않으며, 타격 위치·마지막 일격 여부·피해 출처는 사건의 실행 입력으로 전달합니다.
 
 무기 스윕의 이전 위치·적중 대상 집합은 각 UAgAbilityTask_Attack이 직접 보관합니다. CharacterBase에는 판정 배열·핸들·시작/종료 API를 두지 않습니다. Task는 무기 캡슐을 조회하고 진입 위치를 즉시 판정한 뒤, 자기 메시의 틱을 선행 조건으로 둔 FTickFunction을 TG_PostPhysics에 등록해 물리와 무기 포즈 갱신 뒤 TickTask에서 스윕합니다. 기본 GameplayTask 틱은 ASC의 TG_DuringPhysics를 공유하므로 공격 Task만 이 틱 함수를 사용하며 ASC와 다른 Task의 틱 순서는 바꾸지 않습니다. 종료·취소·소유자 사망 시 Task가 자기 틱을 해제하고 참조와 적중 기록을 정리합니다. 피해 적용 중 동기 취소되면 같은 스윕의 나머지 대상도 처리하지 않습니다.
 
-이름으로 부르는 기능의 맵은 TMap<FName, FAgAttackParams>·TMap<FName, FAgHoldTagParams>처럼 기능마다 타입이 고정됩니다. 설정 이름은 같은 Ability·Task 안에서 유일하며 배열 순서에 의존하지 않고, 실행 객체나 실행 순서를 뜻하지 않습니다. 새 Task를 추가할 때는 그 Task의 Params 타입과 호출 연결을 추가합니다. PlayMontageAndWait·DrainResource·LaunchVertical·LaunchToTarget은 단일 Params 객체로 둡니다. TimeStop·LockOn은 단일 빈 객체로 사용 여부만 표시합니다. 단일 객체인지 이름별 맵인지는 기능별 스키마로 고정하며, 항목 개수에 따라 JSON 형식을 바꾸거나 두 형식을 동시에 허용하지 않습니다.
+기능 블록은 기능마다 타입이 고정된 단일 Params 객체이고, Attack만 C++ 사건이 차례대로 치는 단발 타격의 배열입니다. 설정 이름으로 항목을 찾지 않으며, 한 행동이 같은 기능을 여러 값으로 쓰려면 그 값을 몽타주 시간표 항목으로 둡니다. 새 Task를 추가할 때는 그 Task의 Params 타입과 호출 연결을 추가합니다. TimeStop·LockOn은 단일 빈 객체로 사용 여부만 표시합니다. 기능별 형식은 스키마로 고정하며, 항목 개수에 따라 JSON 형식을 바꾸지 않습니다.
 
 SetCollisionResponseToChannel은 소유 캐릭터의 캡슐을 대상으로 요청한 채널 응답을 적용·복원합니다. 대상 컴포넌트는 실행 입력이며, 예시의 Pawn·Ignore는 해당 UE 채널·응답에 대응합니다. 동일 대상·채널의 순차 실행 계약은 위 ‘캐릭터와 실행 기능의 책임 경계’를 따릅니다.
 
@@ -272,12 +272,12 @@ SetCollisionResponseToChannel은 소유 캐릭터의 캡슐을 대상으로 요�
 ### 설정 여부·참조·검증
 
 - Id·Tags·Cooldown·Activation·Cost·Tasks는 항상 적습니다. Cost가 없으면 null, Task 설정이 없으면 Tasks를 빈 객체로 적습니다.
-- 사용하지 않는 Tasks 기능 블록은 생략합니다. 이름별 맵 형식의 기능 블록에는 항목을 하나 이상 적고, 각 항목에 해당 고정 Params의 필수 필드를 모두 적습니다. TimeStop·LockOn은 단일 빈 객체로 사용 여부만 표시합니다.
+- 사용하지 않는 Tasks 기능 블록은 생략합니다. 기능 블록에는 해당 고정 Params의 필수 필드를 모두 적고, Attack 배열에는 항목을 하나 이상 적습니다. TimeStop·LockOn은 단일 빈 객체로 사용 여부만 표시합니다.
 - 로더는 구체 Params의 설정 여부를 별도로 보존합니다. 0·빈 객체·C++ 초기값으로 설정 여부를 추측하지 않습니다.
 - C++ 타입은 컴파일 시 고정합니다. IAgConfiguredAbilityTask·TaskClass·CDO 팩토리·FInstancedStruct·TInstancedStruct와 어빌리티별 Params 상속은 사용하지 않습니다.
 - 캐릭터 최상위 Montages가 에셋 경로 원본입니다. MontageId는 이를 직접 참조하며, Ability 안에 별도 모션 맵을 만들거나 ID로 누락 값을 추측하지 않습니다.
 - 몽타주 구간의 시각과 값은 몽타주 시간표에 둡니다. 애니메이션 에셋에는 연출과 루트 모션 노티파이만 둡니다([몽타주 시간표](<몽타주 시간표.md>) '기술 결정').
-- 알 수 없는 기능·Params 필드, 중복 키·잘못된 타입·enum·태그·없는 에셋 ID·필수값 누락은 오류입니다. 이름별 맵의 키는 설정 이름으로 허용하되 같은 맵의 이름 중복은 금지합니다. 게임플레이 태그는 네이티브 선언만 사용합니다.
+- 알 수 없는 기능·Params 필드, 중복 키·잘못된 타입·enum·태그·없는 에셋 ID·필수값 누락은 오류입니다. 게임플레이 태그는 네이티브 선언만 사용합니다.
 - 각 Params 항목에는 명시적인 C++ 호출 또는 다른 기능의 읽기 전용 데이터 참조가 있어야 합니다. 다른 기능이 데이터만 참조한다고 해당 Task를 생성하지 않습니다. 실행도 참조도 없는 항목은 사용되는 설정으로 간주하지 않습니다.
 - PlayCutscene의 Sequence는 유효한 Level Sequence 참조여야 하며 패키지에 포함되는지 확인합니다. 시간표 발사 항목의 ProjectileId 검사는 [몽타주 시간표](<몽타주 시간표.md>) '검증'을 따릅니다.
 - DrainResource의 Resource는 Cost와 같은 SP·MP·UP 매핑을 사용하고, AmountPerSecond는 0보다 큰 유한한 수입니다. 지속 소모가 없으면 블록을 생략합니다. Period·소진 시 행동·효과 선택 같은 필드는 추가하지 않습니다.
@@ -337,7 +337,7 @@ Backstep처럼 모션의 총 이동 거리를 지정해야 할 때만 RootMotion
 }
 ```
 
-Resource는 소모할 자원, AmountPerSecond는 초당 소모량입니다. 예시 값은 [플레이어 사양](<../Design/플레이어 사양.md>)의 'SP 소모'를 따릅니다. 이 기능은 발동 시 시작하므로 단일 고정 Params 객체를 사용하며 설정 이름이나 시간표 항목은 필요하지 않습니다. 시작 비용은 공통 Cost에 별도로 적습니다.
+Resource는 소모할 자원, AmountPerSecond는 초당 소모량입니다. 예시 값은 [플레이어 사양](<../Design/플레이어 사양.md>)의 'SP 소모'를 따릅니다. 이 기능은 발동 시 시작하므로 단일 고정 Params 객체를 사용하며 시간표 항목은 필요하지 않습니다. 시작 비용은 공통 Cost에 별도로 적습니다.
 
 공통 Ability가 커밋 성공 후 소모 효과(`ResourceDrain`)의 Spec을 만들고 자신에게 적용합니다. 이 효과는 무한 지속의 주기 효과이며, 적용 간격 0.1초(효과의 `Period`)와 적용 직후에는 소모하지 않는 규칙을 따릅니다. 주기마다 AmountPerSecond × Spec의 Period만큼 감소시킵니다. 자원 효과(`Resource`)의 SetByCaller 방식처럼 선택된 자원의 수정량만 음수로 전달하고 나머지는 0으로 둡니다. 행동마다 효과를 고르는 필드는 두지 않습니다. 주기는 구현 간격이며 기획 수치의 추가 원본으로 사용하지 않습니다.
 
@@ -353,10 +353,8 @@ Resource는 소모할 자원, AmountPerSecond는 초당 소모량입니다. 예�
 {
   "Tasks": {
     "TimedTag": {
-      "ParryWindow": {
-        "Tag": "State.ParryWindow",
-        "Duration": 0.3
-      }
+      "Tag": "State.ParryWindow",
+      "Duration": 0.3
     }
   }
 }
@@ -364,7 +362,7 @@ Resource는 소모할 자원, AmountPerSecond는 초당 소모량입니다. 예�
 
 신규 가드 시작에서 ParryWindow GE 하나를 적용합니다. 새 입력·선입력뿐 아니라 다른 행동의 후딜/종료에 키를 누른 채 가드를 시작하는 경우도 신규 가드입니다. 시간 태그를 다시 열지 않는 경우는 키를 유지한 패리 모션 후딜 복귀와 가드 밀림 종료의 Event.Guard.Resume뿐입니다. CanMove는 State.ParryWindow가 있는 동안 이동 입력 적용을 막습니다. 패리 성공·가드 종료·취소에서 자기 GE를 제거하고, 이후 이동 제한은 패리 모션 등 현재 상태의 규칙을 따릅니다. 가드 이동 제한용 구간·HoldTag·GE·별도 시간 필드는 만들지 않습니다.
 
-Dodge의 CounterChance도 같은 고정 타입을 사용하지만 극한 회피 성공 때 대상 ASC에 부여하며, 회피가 끝난 뒤에도 만료 또는 반격 소비까지 유지됩니다. 종료 정책 선택 필드는 추가하지 않습니다. 각 사건 처리에서 효과의 실제 소유자와 제거 시점을 정합니다.
+Dodge의 TimedTag(회피 반격 기회)도 같은 고정 타입을 사용하지만 극한 회피 성공 때 대상 ASC에 부여하며, 회피가 끝난 뒤에도 만료 또는 반격 소비까지 유지됩니다. 종료 정책 선택 필드는 추가하지 않습니다. 각 사건 처리에서 효과의 실제 소유자와 제거 시점을 정합니다.
 
 ### GrantResources
 
@@ -374,17 +372,15 @@ Dodge의 CounterChance도 같은 고정 타입을 사용하지만 극한 회피 
 {
   "Tasks": {
     "GrantResources": {
-      "Parry": {
-        "SP": 0,
-        "MP": 15,
-        "UP": 10
-      }
+      "SP": 0,
+      "MP": 15,
+      "UP": 10
     }
   }
 }
 ```
 
-SP·MP·UP는 각각 지급할 고정 양이며 적용 대상 ASC는 호출 시 전달합니다. 패리 성공에서 Parry 항목을 적용합니다. 극한 회피의 고정 보상은 아래 '행동별 조합'의 회피를 따릅니다. 이미 지급한 자원을 Ability 종료 때 회수하지 않습니다.
+SP·MP·UP는 각각 지급할 고정 양이며 적용 대상 ASC는 호출 시 전달합니다. 가드는 패리 성공에서 이 보상을 적용합니다. 극한 회피의 고정 보상은 아래 '행동별 조합'의 회피를 따릅니다. 이미 지급한 자원을 Ability 종료 때 회수하지 않습니다.
 
 극한 회피의 SP 환급은 실제 커밋 차감량 SPSpent를 실행 입력으로 자원 GE에 별도로 전달합니다. Cost.Amount를 복제하거나 GrantResources의 SP를 덮어쓰지 않습니다. 비용 산출식·AmountSource·Rule 같은 데이터 표현을 추가하지 않습니다.
 
@@ -394,10 +390,8 @@ SP·MP·UP는 각각 지급할 고정 양이며 적용 대상 ASC는 호출 시 
 {
   "Tasks": {
     "SlowMotion": {
-      "PerfectDodge": {
-        "Speed": 0.3,
-        "RealDuration": 0.3
-      }
+      "Speed": 0.3,
+      "RealDuration": 0.3
     }
   }
 }
@@ -445,15 +439,13 @@ LaunchToTarget은 FAgLaunchToTargetParams와 실행 입력을 받는 일반 재�
 {
   "Tasks": {
     "TargetQuery": {
-      "Execution": {
-        "Range": 300
-      }
+      "Range": 300
     }
   }
 }
 ```
 
-Range는 캡슐 중심 사이의 수평 거리(cm)입니다. 후보·조건과 원점은 호출부가 제공합니다. Execution은 그로기·미처형·접지 조건을 만족하는 가장 가까운 적을 발동 검사·HUD·실제 시작에서 조회합니다. Ultimate/Finish는 적 검색 결과 중 범위 안의 적을, LeapSlam/Landing은 AI 대상 한 명이 지상에 있고 범위 안에 있는지를 확인합니다. 착지 판정을 모든 주변 액터에 대한 광역 공격으로 확장하지 않습니다.
+Range는 캡슐 중심 사이의 수평 거리(cm)입니다. 후보·조건과 원점은 호출부가 제공합니다. Execution은 그로기·미처형·접지 조건을 만족하는 가장 가까운 적을 발동 검사·HUD·실제 시작에서 조회합니다. Ultimate는 적 검색 결과 중 범위 안의 적을, LeapSlam은 AI 대상 한 명이 지상에 있고 범위 안에 있는지를 확인합니다. 착지 판정을 모든 주변 액터에 대한 광역 공격으로 확장하지 않습니다.
 
 조회 결과는 실행 입력으로 넘깁니다. TargetQuery 설정이 다른 Task를 실행하지 않으며, 조회 함수도 Attack을 호출하지 않습니다. 궁극기·착지·처형의 구체 사건 처리에서 조회 후 Attack의 명시적 단발 판정을 별도로 요청합니다.
 
@@ -488,7 +480,7 @@ Range는 캡슐 중심 사이의 수평 거리(cm)입니다. 후보·조건과 �
 
 ### Attack
 
-한 번의 공격 판정에 사용할 데이터입니다. 모션 구간의 판정은 시간표 Attack 항목이, 명시적 단발 판정은 Tasks.Attack의 이름 항목이 값을 가집니다.
+한 번의 공격 판정에 사용할 데이터입니다. 모션 구간의 판정은 시간표 Attack 항목이, 명시적 단발 판정은 Tasks.Attack 배열의 항목이 값을 가집니다.
 
 ```json
 {"Start": 0.4333, "End": 0.4833, "DamageMultiplier": 3, "PoiseMultiplier": 6, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 25}
@@ -497,8 +489,8 @@ Range는 캡슐 중심 사이의 수평 거리(cm)입니다. 후보·조건과 �
 ```json
 {
   "Tasks": {
-    "Attack": {
-      "Finish": {
+    "Attack": [
+      {
         "DamageMultiplier": 5,
         "PoiseMultiplier": 5,
         "HitReaction": "KnockUp",
@@ -506,12 +498,12 @@ Range는 캡슐 중심 사이의 수평 거리(cm)입니다. 후보·조건과 �
         "MPCharge": 0,
         "UPCharge": 0
       }
-    }
+    ]
   }
 }
 ```
 
-구간 시작에서 항목의 값으로 새 Attack 실행을 만들고 구간 끝에서 그 실행만 종료합니다. 같은 값의 구간이 여러 개여도 실행과 적중 기록은 각각 독립적입니다. 궁극기 마무리의 Finish처럼 이름 항목은 사건 처리가 대상 목록과 함께 단발 판정을 요청합니다.
+구간 시작에서 항목의 값으로 새 Attack 실행을 만들고 구간 끝에서 그 실행만 종료합니다. 같은 값의 구간이 여러 개여도 실행과 적중 기록은 각각 독립적입니다. 궁극기 마무리처럼 Tasks.Attack의 항목은 사건 처리가 대상 목록과 함께 단발 판정을 요청합니다. 처형은 타격 사건마다 다음 항목을 치고, 마지막 항목이 마지막 일격입니다.
 
 ### Dash
 
@@ -525,7 +517,7 @@ Dash의 네 수치는 이동 자체의 설정입니다. 구간 시작에서 방�
 
 ### HoldTag
 
-구간 동안 태그를 유지하는 설정입니다. 모션 구간의 보호는 시간표 HoldTag 항목이, 사건으로 시작하는 태그(가드 유지 Guarding, 넉백·넉업 접지 Downed, 처형 피격 Executed)는 Tasks.HoldTag의 이름 항목이 값을 가집니다.
+구간 동안 태그를 유지하는 설정입니다. 모션 구간의 보호는 시간표 HoldTag 항목이, 사건으로 시작하는 태그(가드 유지, 넉백·넉업 접지 뒤 무적, 처형 피격)는 그 행동의 Tasks.HoldTag가 값을 가집니다.
 
 ```json
 {"Start": 0, "End": 0.3, "Tag": "State.Invincible"}
@@ -535,9 +527,7 @@ Dash의 네 수치는 이동 자체의 설정입니다. 구간 시작에서 방�
 {
   "Tasks": {
     "HoldTag": {
-      "Guarding": {
-        "Tag": "State.Guarding"
-      }
+      "Tag": "State.Guarding"
     }
   }
 }
@@ -547,7 +537,7 @@ Dash의 네 수치는 이동 자체의 설정입니다. 구간 시작에서 방�
 
 ### SetCollisionResponseToChannel
 
-자기 캡슐의 채널 응답을 바꾸는 설정입니다. 돌진 찌르기는 시간표 구간이, 처형 피격은 그로기 Tasks의 PassThroughPawn 이름 항목이 값을 가집니다.
+자기 캡슐의 채널 응답을 바꾸는 설정입니다. 돌진 찌르기는 시간표 구간이, 처형 피격은 그로기 Tasks의 SetCollisionResponseToChannel이 값을 가집니다.
 
 ```json
 {"Start": 0.9166667, "End": 1.8, "Channel": "Pawn", "Response": "Ignore"}
@@ -591,15 +581,13 @@ Dash의 네 수치는 이동 자체의 설정입니다. 구간 시작에서 방�
 {
   "Tasks": {
     "PlayCutscene": {
-      "UltimateCamera": {
-        "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"
-      }
+      "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"
     }
   }
 }
 ```
 
-궁극기의 시작 처리에서 PlayCutscene/UltimateCamera를 명시적으로 호출하며, 기준 액터 Origin은 실행 입력으로 전달합니다. 컷신 완료 통지는 궁극기 모션 전환에 연결하고 Ability 전체의 완료로 해석하지 않습니다. 시간표 항목으로 쓰지 않습니다. 재생·취소 시 카메라와 시네마틱 모드 복원은 Task 책임입니다.
+궁극기의 시작 처리에서 PlayCutscene을 명시적으로 호출하며, 기준 액터 Origin은 실행 입력으로 전달합니다. 컷신 완료 통지는 궁극기 모션 전환에 연결하고 Ability 전체의 완료로 해석하지 않습니다. 시간표 항목으로 쓰지 않습니다. 재생·취소 시 카메라와 시네마틱 모드 복원은 Task 책임입니다.
 
 ### SpawnProjectile
 
@@ -637,7 +625,7 @@ WaitGameplayEvent·WaitMovementModeChange·WaitVelocityChange·Groggy의 WaitDel
 
 ### 가드: 유지 태그·패리 구간·성공 보상
 
-Guard Task나 Guard 전용 Params는 없습니다. Tasks에는 HoldTag.Guarding, TimedTag.ParryWindow, GrantResources.Parry를 둡니다.
+Guard Task나 Guard 전용 Params는 없습니다. Tasks에는 HoldTag(State.Guarding), TimedTag(State.ParryWindow), GrantResources(패리 보상)를 둡니다.
 
 신규 가드는 Guarding을 시작하고 ParryWindow GE 하나를 적용합니다. State.ParryWindow를 패리 판정과 CanMove의 이동 제한에 함께 사용하여 같은 구간을 따르게 합니다. 별도 이동 잠금 태그·시간·구간은 없습니다. 다른 행동의 후딜/종료나 GuardBreak 종료 때 키를 유지해 시작하는 가드도 여기에 포함됩니다. 키 유지 상태의 패리 모션 후딜 복귀·가드 밀림 종료의 Event.Guard.Resume은 남은 ParryWindow를 정리하고 Guarding만 유지하며, 새 패리 구간이나 이동 제한을 만들지 않습니다.
 
@@ -647,9 +635,9 @@ Guard Task나 Guard 전용 Params는 없습니다. Tasks에는 HoldTag.Guarding,
 
 ### 회피: 비용·구간 보호·극한 회피 보상
 
-Cost(SP)와 Tasks의 GrantResources.PerfectDodge, TimedTag.CounterChance, SlowMotion.PerfectDodge를 둡니다. 무적과 극한 회피 구간은 Roll·Backstep 시간표의 HoldTag 구간입니다.
+Cost(SP)와 Tasks의 GrantResources(극한 회피 보상), TimedTag(회피 반격 기회), SlowMotion을 둡니다. 무적과 극한 회피 구간은 Roll·Backstep 시간표의 HoldTag 구간입니다.
 
-이동 입력이 있으면 Roll, 없으면 Backstep을 입력 처리에서 선택합니다. Event.PerfectDodge는 Ability당 한 번만 처리하여 실제 사용 SP를 환급하고, GrantResources.PerfectDodge·TimedTag.CounterChance·SlowMotion.PerfectDodge를 각각 호출합니다. 이 이벤트는 새 Ability를 발동하는 TriggerEvents가 아니라 현재 회피의 구독입니다. 회피 모션 종료는 반격 기회나 월드 슬로우모션을 제거하지 않습니다.
+이동 입력이 있으면 Roll, 없으면 Backstep을 입력 처리에서 선택합니다. Event.PerfectDodge는 Ability당 한 번만 처리하여 실제 사용 SP를 환급하고, GrantResources·TimedTag·SlowMotion을 각각 호출합니다. 이 이벤트는 새 Ability를 발동하는 TriggerEvents가 아니라 현재 회피의 구독입니다. 회피 모션 종료는 반격 기회나 월드 슬로우모션을 제거하지 않습니다.
 
 ## GAS를 그대로 활용하기 위한 연결
 
@@ -728,7 +716,7 @@ Cooldown이 0이면 쿨다운 GE 적용을 생략하고, 양수이면 설정한 
 
 태그·판정·RootMotion·충돌·시간 정지의 정리는 해당 기능의 OnDestroy 또는 소유자 정리 경로가 담당합니다. Ability 종료에서는 모든 남은 실행을 정리하며, 구간 끝에서는 그 구간의 실행만 정리합니다. 시간표나 Task가 Ability 전체를 직접 종료하지 않습니다.
 
-Attack의 값은 시간표 구간에서, 단발 판정이면 Ability의 Tasks.Attack 이름 항목에서 옵니다. 같은 몽타주를 여러 행동이 써도 시간표는 몽타주 단위이므로 같은 값을 씁니다([몽타주 시간표](<몽타주 시간표.md>) '기술 결정'). 실행 중 Task에는 그 Params 사본을 전달합니다. MotionWarping은 시간표 항목의 값을 쓰며 공격 데이터에 의존하지 않습니다.
+Attack의 값은 시간표 구간에서, 단발 판정이면 Ability의 Tasks.Attack 배열 항목에서 옵니다. 같은 몽타주를 여러 행동이 써도 시간표는 몽타주 단위이므로 같은 값을 씁니다([몽타주 시간표](<몽타주 시간표.md>) '기술 결정'). 실행 중 Task에는 그 Params 사본을 전달합니다. MotionWarping은 시간표 항목의 값을 쓰며 공격 데이터에 의존하지 않습니다.
 
 보스 AI는 Params 상속 타입 대신 스펙 분류와 PatternSelection을 사용합니다. Backstep의 반응 선택 값은 PatternSelection에, 이동 수치는 해당 이동 기능에 둡니다. 패턴 후보 목록을 별도 배열로 복제하지 않습니다.
 

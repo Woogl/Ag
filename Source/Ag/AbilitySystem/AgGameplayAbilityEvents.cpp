@@ -267,13 +267,12 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	}
 	if (Id == TEXT("Ultimate"))
 	{
-		const FAgPlayCutsceneParams* Params = Tasks.PlayCutscene.Find(TEXT("UltimateCamera"));
-		if (!Params)
+		if (!Tasks.bHasPlayCutscene)
 		{
 			Finish(true);
 			return;
 		}
-		UAgAbilityTask_PlayCutscene* Cutscene = UAgAbilityTask_PlayCutscene::PlayCutscene(this, Params->Sequence, Character);
+		UAgAbilityTask_PlayCutscene* Cutscene = UAgAbilityTask_PlayCutscene::PlayCutscene(this, Tasks.PlayCutscene.Sequence, Character);
 		Cutscene->OnFinished.AddDynamic(this, &ThisClass::HandleCutsceneFinished);
 		Cutscene->ReadyForActivation();
 	}
@@ -315,31 +314,28 @@ void UAgGameplayAbility::FaceActor(const AActor* Actor)
 	}
 }
 
-UAgAbilityTask_HoldTag* UAgGameplayAbility::HoldConfiguredTag(FName ParamsId)
+UAgAbilityTask_HoldTag* UAgGameplayAbility::HoldConfiguredTag()
 {
-	const FAgHoldTagParams* Params = ExecutionDefinition.Tasks.HoldTag.Find(ParamsId);
-	if (!Params)
+	if (!ExecutionDefinition.Tasks.bHasHoldTag)
 	{
-		UE_LOG(LogAg, Error, TEXT("%s Abilities.%s.Tasks.HoldTag.%s: missing"), *GetAgCharacter()->GetCharacterData()->GetName(),
-		    *GetAbilityId().ToString(), *ParamsId.ToString());
+		UE_LOG(LogAg, Error, TEXT("Abilities.%s.Tasks.HoldTag: missing"), *GetAbilityId().ToString());
 		return nullptr;
 	}
-	UAgAbilityTask_HoldTag* Task = UAgAbilityTask_HoldTag::HoldTag(this, Params->Tag);
+	UAgAbilityTask_HoldTag* Task = UAgAbilityTask_HoldTag::HoldTag(this, ExecutionDefinition.Tasks.HoldTag.Tag);
 	Task->ReadyForActivation();
 	return Task;
 }
 
-void UAgGameplayAbility::ApplyReward(FName ParamsId)
+void UAgGameplayAbility::ApplyReward()
 {
-	const FAgGrantResourcesParams* Params = ExecutionDefinition.Tasks.GrantResources.Find(ParamsId);
-	if (!Params)
+	if (!ExecutionDefinition.Tasks.bHasGrantResources)
 	{
 		return;
 	}
 	const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::Resource);
 	if (Spec.IsValid())
 	{
-		Params->AddToSpec(*Spec.Data);
+		ExecutionDefinition.Tasks.GrantResources.AddToSpec(*Spec.Data);
 		ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, Spec);
 	}
 }
@@ -357,11 +353,11 @@ FActiveGameplayEffectHandle UAgGameplayAbility::ApplyTimedTag(const FAgTimedTagP
 }
 
 void UAgGameplayAbility::ApplySingleAttack(
-    FName ParamsId, const TArray<AAgCharacterBase*>& Targets, bool bFinisher, TOptional<FVector> HitLocation)
+    int32 Index, const TArray<AAgCharacterBase*>& Targets, bool bFinisher, TOptional<FVector> HitLocation)
 {
-	if (const FAgAttackParams* Params = ExecutionDefinition.Tasks.Attack.Find(ParamsId))
+	if (ExecutionDefinition.Tasks.Attack.IsValidIndex(Index))
 	{
-		UAgAbilityTask_Attack::Strike(this, *Params, Targets, bFinisher, HitLocation)->ReadyForActivation();
+		UAgAbilityTask_Attack::Strike(this, ExecutionDefinition.Tasks.Attack[Index], Targets, bFinisher, HitLocation)->ReadyForActivation();
 	}
 }
 
@@ -372,7 +368,7 @@ AAgCharacterBase* UAgGameplayAbility::FindExecutionTarget(const AAgPlayerCharact
 		return nullptr;
 	}
 	const FAgAbilityData* Definition = Player->GetCharacterData()->FindAbility(TEXT("Execution"));
-	const FAgTargetQueryParams* Query = Definition ? Definition->Tasks.TargetQuery.Find(TEXT("Execution")) : nullptr;
+	const FAgTargetQueryParams* Query = Definition && Definition->Tasks.bHasTargetQuery ? &Definition->Tasks.TargetQuery : nullptr;
 	if (!Query)
 	{
 		return nullptr;
@@ -404,11 +400,10 @@ void UAgGameplayAbility::StartGuard(bool bOpenParry)
 	}
 	if (bOpenParry)
 	{
-		const FAgTimedTagParams* Params = ExecutionDefinition.Tasks.TimedTag.Find(TEXT("ParryWindow"));
-		if (Params)
+		if (ExecutionDefinition.Tasks.bHasTimedTag)
 		{
 			UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo();
-			const FActiveGameplayEffectHandle Applied = ApplyTimedTag(*Params);
+			const FActiveGameplayEffectHandle Applied = ApplyTimedTag(ExecutionDefinition.Tasks.TimedTag);
 			// 태그 획득 콜백이 Ability를 끝내면 EndAbility는 아직 이 핸들을 받지 못했습니다.
 			if (!IsActive() || bEnding)
 			{
@@ -427,7 +422,7 @@ void UAgGameplayAbility::SetGuarding(bool bGuarding)
 {
 	if (bGuarding && !GuardingTag)
 	{
-		UAgAbilityTask_HoldTag* Task = HoldConfiguredTag(TEXT("Guarding"));
+		UAgAbilityTask_HoldTag* Task = HoldConfiguredTag();
 		if (IsActive() && !bEnding && Task && !Task->IsFinished())
 		{
 			GuardingTag = Task;
@@ -496,7 +491,7 @@ void UAgGameplayAbility::HandleEvent(FGameplayEventData Event)
 	}
 	else if (Event.EventTag == AgGameplayTags::Event_Parry && Id == TEXT("Guard") && Motion.MontageId != TEXT("Parry"))
 	{
-		ApplyReward(TEXT("Parry"));
+		ApplyReward();
 		if (!IsActive())
 		{
 			return;
@@ -521,9 +516,9 @@ void UAgGameplayAbility::HandleEvent(FGameplayEventData Event)
 	else if (Event.EventTag == AgGameplayTags::Event_PerfectDodge && Id == TEXT("Dodge") && !bPerfectDodged)
 	{
 		bPerfectDodged = true;
-		const FAgTimedTagParams Chance = ExecutionDefinition.Tasks.TimedTag.FindChecked(TEXT("CounterChance"));
-		const FAgSlowMotionParams Slow = ExecutionDefinition.Tasks.SlowMotion.FindChecked(TEXT("PerfectDodge"));
-		ApplyReward(TEXT("PerfectDodge"));
+		const FAgTimedTagParams Chance = ExecutionDefinition.Tasks.TimedTag;
+		const FAgSlowMotionParams Slow = ExecutionDefinition.Tasks.SlowMotion;
+		ApplyReward();
 		if (!IsActive())
 		{
 			return;
@@ -554,13 +549,12 @@ void UAgGameplayAbility::HandleEvent(FGameplayEventData Event)
 	}
 	else if (Event.EventTag == AgGameplayTags::Event_Executed && Id == TEXT("Groggy"))
 	{
-		HoldConfiguredTag(TEXT("Executed"));
+		HoldConfiguredTag();
 		if (!IsActive())
 		{
 			return;
 		}
-		const FAgCollisionResponseParams& Collision =
-		    ExecutionDefinition.Tasks.SetCollisionResponseToChannel.FindChecked(TEXT("PassThroughPawn"));
+		const FAgCollisionResponseParams& Collision = ExecutionDefinition.Tasks.SetCollisionResponseToChannel;
 		UAgAbilityTask_SetCollisionResponseToChannel::SetCollisionResponseToChannel(
 		    this, GetAgCharacter()->GetCapsuleComponent(), Collision.Channel, Collision.Response)
 		    ->ReadyForActivation();
@@ -597,7 +591,7 @@ void UAgGameplayAbility::HandleMontageEvent(int32 InstanceId, FGameplayTag Event
 	{
 		if (!DownedTag)
 		{
-			DownedTag = HoldConfiguredTag(TEXT("Downed"));
+			DownedTag = HoldConfiguredTag();
 		}
 	}
 	else if (Event == AgGameplayTags::Event_JumpAttackPlunge && ExecutionDefinition.Tasks.bHasLaunchVertical)
@@ -614,10 +608,12 @@ void UAgGameplayAbility::HandleMontageEvent(int32 InstanceId, FGameplayTag Event
 	}
 	else if (Event == AgGameplayTags::Event_ExecutionBlow && GetAbilityId() == TEXT("Execution"))
 	{
-		if (ExecutionStrike < 2 && ExecutionTarget.IsValid())
+		// 처형 타격 사건마다 다음 타격을 치고, 마지막 타격이 마지막 일격입니다.
+		const int32 Strikes = ExecutionDefinition.Tasks.Attack.Num();
+		if (ExecutionStrike < Strikes && ExecutionTarget.IsValid())
 		{
-			const bool bLast = ExecutionStrike++ == 1;
-			ApplySingleAttack(bLast ? TEXT("Finish") : TEXT("Stab"), {ExecutionTarget.Get()}, bLast);
+			const int32 Strike = ExecutionStrike++;
+			ApplySingleAttack(Strike, {ExecutionTarget.Get()}, Strike == Strikes - 1);
 		}
 	}
 	else if (Event == AgGameplayTags::Event_UltimateFinish && GetAbilityId() == TEXT("Ultimate"))
@@ -633,8 +629,8 @@ void UAgGameplayAbility::HandleMontageEvent(int32 InstanceId, FGameplayTag Event
 		{
 			return;
 		}
-		const FAgTargetQueryParams& Query = ExecutionDefinition.Tasks.TargetQuery.FindChecked(TEXT("Finish"));
-		ApplySingleAttack(TEXT("Finish"), CastChecked<AAgPlayerCharacter>(GetAgCharacter())->FindEnemies(Query.Range), true);
+		const FAgTargetQueryParams& Query = ExecutionDefinition.Tasks.TargetQuery;
+		ApplySingleAttack(0, CastChecked<AAgPlayerCharacter>(GetAgCharacter())->FindEnemies(Query.Range), true);
 	}
 }
 
@@ -844,11 +840,11 @@ void UAgGameplayAbility::HandleLanded(EMovementMode Mode)
 		{
 			Controller->PlayCameraShake(Camera.LeapLandingShake);
 		}
-		const FAgTargetQueryParams& Query = ExecutionDefinition.Tasks.TargetQuery.FindChecked(TEXT("Landing"));
+		const FAgTargetQueryParams& Query = ExecutionDefinition.Tasks.TargetQuery;
 		AAgCharacterBase* Target = Boss->GetTarget();
 		if (Target && !Target->GetCharacterMovement()->IsFalling() && Boss->GetHorizontalDistanceTo(Target) <= Query.Range)
 		{
-			ApplySingleAttack(TEXT("LandingHit"), {Target}, false, Boss->GetActorLocation());
+			ApplySingleAttack(0, {Target}, false, Boss->GetActorLocation());
 		}
 	}
 }

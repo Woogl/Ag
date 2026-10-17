@@ -24,9 +24,6 @@ class AAgProjectile : public AActor
 	GENERATED_BODY()
 
 public:
-#if WITH_DEV_AUTOMATION_TESTS
-	friend class FAgProjectileEffectTest;
-#endif
 	AAgProjectile();
 
 	/** 발사 Ability가 만든 피해 스펙을 보관하고, 스폰 변환을 유지한 채 Direction 쪽으로 날립니다. */

@@ -71,7 +71,7 @@ namespace
 		Keys(Object, Path, {TEXT("Start"), TEXT("End"), TEXT("TargetingRange"), TEXT("MaxWarpDistance"), TEXT("RotationMethod")}, {}, Errors);
 		Number(Object, TEXT("Start"), Path, Out.Start, Errors);
 		Number(Object, TEXT("End"), Path, Out.End, Errors);
-		// null은 제한 없음입니다(AbilityTask 기반 어빌리티 설계안 'MotionWarping').
+		// null은 제한 없음입니다(어빌리티와 AbilityTask 'MotionWarping').
 		for (const TCHAR* Key : {TEXT("TargetingRange"), TEXT("MaxWarpDistance")})
 		{
 			const TSharedPtr<FJsonValue> Value = Object.TryGetField(Key);

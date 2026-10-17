@@ -242,32 +242,40 @@ struct FAgAbilityTasks
 	FAgLaunchToTargetParams LaunchToTarget;
 
 	UPROPERTY()
-	TMap<FName, FAgTimedTagParams> TimedTag;
+	FAgTimedTagParams TimedTag;
 
 	UPROPERTY()
-	TMap<FName, FAgGrantResourcesParams> GrantResources;
+	FAgGrantResourcesParams GrantResources;
 
 	UPROPERTY()
-	TMap<FName, FAgSlowMotionParams> SlowMotion;
+	FAgSlowMotionParams SlowMotion;
 
 	UPROPERTY()
-	TMap<FName, FAgTargetQueryParams> TargetQuery;
+	FAgTargetQueryParams TargetQuery;
+
+	/** C++ 사건이 차례대로 치는 단발 타격(처형의 찌르기와 마지막 일격, 궁극기 마무리, 도약 착지 타격) */
+	UPROPERTY()
+	TArray<FAgAttackParams> Attack;
 
 	UPROPERTY()
-	TMap<FName, FAgAttackParams> Attack;
+	FAgHoldTagParams HoldTag;
 
 	UPROPERTY()
-	TMap<FName, FAgHoldTagParams> HoldTag;
+	FAgCollisionResponseParams SetCollisionResponseToChannel;
 
 	UPROPERTY()
-	TMap<FName, FAgCollisionResponseParams> SetCollisionResponseToChannel;
-
-	UPROPERTY()
-	TMap<FName, FAgPlayCutsceneParams> PlayCutscene;
+	FAgPlayCutsceneParams PlayCutscene;
 	bool bHasPlayMontageAndWait = false;
 	bool bHasDrainResource = false;
 	bool bHasLaunchVertical = false;
 	bool bHasLaunchToTarget = false;
+	bool bHasTimedTag = false;
+	bool bHasGrantResources = false;
+	bool bHasSlowMotion = false;
+	bool bHasTargetQuery = false;
+	bool bHasHoldTag = false;
+	bool bHasSetCollisionResponseToChannel = false;
+	bool bHasPlayCutscene = false;
 	bool bHasTimeStop = false;
 	bool bHasLockOn = false;
 };

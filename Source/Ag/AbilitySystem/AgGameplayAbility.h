@@ -148,15 +148,16 @@ private:
 	void StartGroggy();
 	void StartKnockUp();
 	void StartDeath(const FGameplayEventData* Event);
-	void ApplyReward(FName ParamsId);
+	void ApplyReward();
 
 	/** 어빌리티 데이터의 태그를 그 시간 동안 붙입니다(TimedTag 효과). */
 	FActiveGameplayEffectHandle ApplyTimedTag(const FAgTimedTagParams& Params);
+	/** 어빌리티 데이터의 Index번째 단발 타격으로 Targets를 칩니다. */
 	void ApplySingleAttack(
-	    FName ParamsId, const TArray<AAgCharacterBase*>& Targets, bool bFinisher = false, TOptional<FVector> HitLocation = {});
+	    int32 Index, const TArray<AAgCharacterBase*>& Targets, bool bFinisher = false, TOptional<FVector> HitLocation = {});
 	void NotifyBasicAttackStarted();
 	void FaceActor(const AActor* Actor);
-	UAgAbilityTask_HoldTag* HoldConfiguredTag(FName ParamsId);
+	UAgAbilityTask_HoldTag* HoldConfiguredTag();
 
 	UFUNCTION()
 	void HandleEvent(FGameplayEventData Event);

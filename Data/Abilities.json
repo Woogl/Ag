@@ -115,23 +115,17 @@
     },
     "Tasks": {
       "GrantResources": {
-        "PerfectDodge": {
-          "SP": 0,
-          "MP": 10,
-          "UP": 10
-        }
+        "SP": 0,
+        "MP": 10,
+        "UP": 10
       },
       "TimedTag": {
-        "CounterChance": {
-          "Tag": "State.DodgeCounterChance",
-          "Duration": 1
-        }
+        "Tag": "State.DodgeCounterChance",
+        "Duration": 1
       },
       "SlowMotion": {
-        "PerfectDodge": {
-          "Speed": 0.3,
-          "RealDuration": 0.3
-        }
+        "Speed": 0.3,
+        "RealDuration": 0.3
       }
     }
   },
@@ -195,22 +189,16 @@
     "Cost": null,
     "Tasks": {
       "HoldTag": {
-        "Guarding": {
-          "Tag": "State.Guarding"
-        }
+        "Tag": "State.Guarding"
       },
       "TimedTag": {
-        "ParryWindow": {
-          "Tag": "State.ParryWindow",
-          "Duration": 0.3
-        }
+        "Tag": "State.ParryWindow",
+        "Duration": 0.3
       },
       "GrantResources": {
-        "Parry": {
-          "SP": 0,
-          "MP": 15,
-          "UP": 10
-        }
+        "SP": 0,
+        "MP": 15,
+        "UP": 10
       }
     }
   },
@@ -282,17 +270,13 @@
       },
       "TimeStop": {},
       "PlayCutscene": {
-        "UltimateCamera": {
-          "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"
-        }
+        "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"
       },
       "TargetQuery": {
-        "Finish": {
-          "Range": 1000
-        }
+        "Range": 1000
       },
-      "Attack": {
-        "Finish": {
+      "Attack": [
+        {
           "DamageMultiplier": 5,
           "PoiseMultiplier": 5,
           "HitReaction": "KnockUp",
@@ -300,7 +284,7 @@
           "MPCharge": 0,
           "UPCharge": 0
         }
-      }
+      ]
     }
   },
   "Execution": {
@@ -335,12 +319,10 @@
         "MontageId": "Execution"
       },
       "TargetQuery": {
-        "Execution": {
-          "Range": 300
-        }
+        "Range": 300
       },
-      "Attack": {
-        "Stab": {
+      "Attack": [
+        {
           "DamageMultiplier": 1.5,
           "PoiseMultiplier": 0,
           "HitReaction": "None",
@@ -348,7 +330,7 @@
           "MPCharge": 0,
           "UPCharge": 0
         },
-        "Finish": {
+        {
           "DamageMultiplier": 4.5,
           "PoiseMultiplier": 0,
           "HitReaction": "None",
@@ -356,7 +338,7 @@
           "MPCharge": 0,
           "UPCharge": 0
         }
-      }
+      ]
     }
   },
   "Sprint": {
@@ -444,9 +426,7 @@
         "MontageId": "KnockBack"
       },
       "HoldTag": {
-        "Downed": {
-          "Tag": "State.Invincible"
-        }
+        "Tag": "State.Invincible"
       }
     }
   },
@@ -480,9 +460,7 @@
     "Cost": null,
     "Tasks": {
       "HoldTag": {
-        "Downed": {
-          "Tag": "State.Invincible"
-        }
+        "Tag": "State.Invincible"
       }
     }
   },
@@ -715,8 +693,8 @@
       "PlayMontageAndWait": {
         "MontageId": "LeapSlam"
       },
-      "Attack": {
-        "LandingHit": {
+      "Attack": [
+        {
           "DamageMultiplier": 2,
           "PoiseMultiplier": 1,
           "HitReaction": "KnockUp",
@@ -724,16 +702,14 @@
           "MPCharge": 0,
           "UPCharge": 0
         }
-      },
+      ],
       "LaunchToTarget": {
         "AirTime": 1.35,
         "TargetOffset": 150,
         "MaxDistance": 1200
       },
       "TargetQuery": {
-        "Landing": {
-          "Range": 350
-        }
+        "Range": 350
       }
     },
     "PatternSelection": {
@@ -929,15 +905,11 @@
     "Cost": null,
     "Tasks": {
       "HoldTag": {
-        "Executed": {
-          "Tag": "State.Execution"
-        }
+        "Tag": "State.Execution"
       },
       "SetCollisionResponseToChannel": {
-        "PassThroughPawn": {
-          "Channel": "Pawn",
-          "Response": "Ignore"
-        }
+        "Channel": "Pawn",
+        "Response": "Ignore"
       }
     }
   },

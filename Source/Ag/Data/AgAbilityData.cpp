@@ -14,38 +14,32 @@ namespace
 	using namespace AgJsonRead;
 
 	template <typename T>
-	void ReadMap(const FJsonObject& Tasks, const TCHAR* Name, TMap<FName, T>& Out, const FString& Path, TArray<FString>& Errors)
+	void ReadArray(const FJsonObject& Tasks, const TCHAR* Name, TArray<T>& Out, const FString& Path, TArray<FString>& Errors)
 	{
 		if (!Tasks.HasField(Name))
 		{
 			return;
 		}
 		const FString Field = Path + TEXT(".") + Name;
-		const FObject Map = ObjectAt(Tasks, Name, Field, Errors);
-		if (!Map)
+		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+		if (!Tasks.TryGetArrayField(Name, Items) || Items->IsEmpty())
 		{
+			Errors.Add(Field + TEXT(": must be a non-empty array"));
 			return;
 		}
-		if (Map->Values.IsEmpty())
+		for (int32 Index = 0; Index < Items->Num(); ++Index)
 		{
-			Errors.Add(Field + TEXT(": requires at least one ParamsId"));
-		}
-		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Map->Values)
-		{
-			const FName Id(*Pair.Key);
-			if (Id.IsNone() || Out.Contains(Id))
+			const FString ItemPath = FString::Printf(TEXT("%s[%d]"), *Field, Index);
+			const TSharedPtr<FJsonObject>* Item = nullptr;
+			if (!(*Items)[Index]->TryGetObject(Item))
 			{
-				Errors.Add(Field + TEXT(".") + Pair.Key + TEXT(": empty or duplicate ParamsId"));
+				Errors.Add(ItemPath + TEXT(": must be an object"));
 				continue;
 			}
-			const FObject Params = ObjectAt(*Map, FString(Pair.Key), Field + TEXT(".") + Pair.Key, Errors);
-			if (Params)
+			T Value;
+			if (Read(**Item, Value, ItemPath, Errors))
 			{
-				T Value;
-				if (Read(*Params, Value, Field + TEXT(".") + Pair.Key, Errors))
-				{
-					Out.Add(Id, Value);
-				}
+				Out.Add(Value);
 			}
 		}
 	}
@@ -71,14 +65,15 @@ namespace
 		        TEXT("LaunchVertical"), TEXT("LaunchToTarget"), TEXT("TargetQuery"), TEXT("Attack"), TEXT("HoldTag"),
 		        TEXT("SetCollisionResponseToChannel"), TEXT("TimeStop"), TEXT("LockOn"), TEXT("PlayCutscene")},
 		    Errors);
-		ReadMap(Object, TEXT("TimedTag"), Out.TimedTag, Path, Errors);
-		ReadMap(Object, TEXT("GrantResources"), Out.GrantResources, Path, Errors);
-		ReadMap(Object, TEXT("SlowMotion"), Out.SlowMotion, Path, Errors);
-		ReadMap(Object, TEXT("TargetQuery"), Out.TargetQuery, Path, Errors);
-		ReadMap(Object, TEXT("Attack"), Out.Attack, Path, Errors);
-		ReadMap(Object, TEXT("HoldTag"), Out.HoldTag, Path, Errors);
-		ReadMap(Object, TEXT("SetCollisionResponseToChannel"), Out.SetCollisionResponseToChannel, Path, Errors);
-		ReadMap(Object, TEXT("PlayCutscene"), Out.PlayCutscene, Path, Errors);
+		ReadSingle(Object, TEXT("TimedTag"), Out.TimedTag, Out.bHasTimedTag, Path, Errors);
+		ReadSingle(Object, TEXT("GrantResources"), Out.GrantResources, Out.bHasGrantResources, Path, Errors);
+		ReadSingle(Object, TEXT("SlowMotion"), Out.SlowMotion, Out.bHasSlowMotion, Path, Errors);
+		ReadSingle(Object, TEXT("TargetQuery"), Out.TargetQuery, Out.bHasTargetQuery, Path, Errors);
+		ReadArray(Object, TEXT("Attack"), Out.Attack, Path, Errors);
+		ReadSingle(Object, TEXT("HoldTag"), Out.HoldTag, Out.bHasHoldTag, Path, Errors);
+		ReadSingle(Object, TEXT("SetCollisionResponseToChannel"), Out.SetCollisionResponseToChannel,
+		    Out.bHasSetCollisionResponseToChannel, Path, Errors);
+		ReadSingle(Object, TEXT("PlayCutscene"), Out.PlayCutscene, Out.bHasPlayCutscene, Path, Errors);
 		ReadSingle(Object, TEXT("DrainResource"), Out.DrainResource, Out.bHasDrainResource, Path, Errors);
 		ReadSingle(Object, TEXT("LaunchVertical"), Out.LaunchVertical, Out.bHasLaunchVertical, Path, Errors);
 		ReadSingle(Object, TEXT("LaunchToTarget"), Out.LaunchToTarget, Out.bHasLaunchToTarget, Path, Errors);
@@ -126,26 +121,17 @@ namespace
 		{
 			Errors.Add(Path + TEXT(".LaunchToTarget.AirTime: must be positive"));
 		}
-		for (const TPair<FName, FAgTimedTagParams>& Pair : Out.TimedTag)
+		if (Out.bHasTimedTag && Out.TimedTag.Duration <= 0.f)
 		{
-			if (Pair.Value.Duration <= 0.f)
-			{
-				Errors.Add(Path + TEXT(".TimedTag.") + Pair.Key.ToString() + TEXT(".Duration: must be positive"));
-			}
+			Errors.Add(Path + TEXT(".TimedTag.Duration: must be positive"));
 		}
-		for (const TPair<FName, FAgGrantResourcesParams>& Pair : Out.GrantResources)
+		if (Out.bHasGrantResources && Out.GrantResources.SP + Out.GrantResources.MP + Out.GrantResources.UP <= 0.f)
 		{
-			if (Pair.Value.SP + Pair.Value.MP + Pair.Value.UP <= 0.f)
-			{
-				Errors.Add(Path + TEXT(".GrantResources.") + Pair.Key.ToString() + TEXT(": reward must be positive"));
-			}
+			Errors.Add(Path + TEXT(".GrantResources: reward must be positive"));
 		}
-		for (const TPair<FName, FAgSlowMotionParams>& Pair : Out.SlowMotion)
+		if (Out.bHasSlowMotion && (Out.SlowMotion.Speed <= 0.f || Out.SlowMotion.Speed > 1.f || Out.SlowMotion.RealDuration <= 0.f))
 		{
-			if (Pair.Value.Speed <= 0.f || Pair.Value.Speed > 1.f || Pair.Value.RealDuration <= 0.f)
-			{
-				Errors.Add(Path + TEXT(".SlowMotion.") + Pair.Key.ToString() + TEXT(": invalid speed or duration"));
-			}
+			Errors.Add(Path + TEXT(".SlowMotion: invalid speed or duration"));
 		}
 	}
 
@@ -172,8 +158,8 @@ bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
 
 namespace
 {
-	/** C++ 사건이 이름으로 찾는 설정이 정의에 있는지 확인합니다. */
-	void ValidateRequiredNames(const FAgAbilityData& Ability, TArray<FString>& Errors)
+	/** C++ 사건이 쓰는 설정이 정의에 있는지 확인합니다. */
+	void ValidateRequiredTasks(const FAgAbilityData& Ability, TArray<FString>& Errors)
 	{
 		const FString Path = Ability.Id.ToString() + TEXT(".Tasks.");
 		const FAgAbilityTasks& Tasks = Ability.Tasks;
@@ -187,44 +173,42 @@ namespace
 		const FName Id = Ability.Id;
 		if (Id == TEXT("Dodge"))
 		{
-			Require(Tasks.GrantResources.Contains(TEXT("PerfectDodge")), TEXT("GrantResources.PerfectDodge"));
-			Require(Tasks.TimedTag.Contains(TEXT("CounterChance")), TEXT("TimedTag.CounterChance"));
-			Require(Tasks.SlowMotion.Contains(TEXT("PerfectDodge")), TEXT("SlowMotion.PerfectDodge"));
+			Require(Tasks.bHasGrantResources, TEXT("GrantResources"));
+			Require(Tasks.bHasTimedTag, TEXT("TimedTag"));
+			Require(Tasks.bHasSlowMotion, TEXT("SlowMotion"));
 		}
 		if (Id == TEXT("Guard"))
 		{
-			Require(Tasks.HoldTag.Contains(TEXT("Guarding")), TEXT("HoldTag.Guarding"));
-			Require(Tasks.TimedTag.Contains(TEXT("ParryWindow")), TEXT("TimedTag.ParryWindow"));
-			Require(Tasks.GrantResources.Contains(TEXT("Parry")), TEXT("GrantResources.Parry"));
+			Require(Tasks.bHasHoldTag, TEXT("HoldTag"));
+			Require(Tasks.bHasTimedTag, TEXT("TimedTag"));
+			Require(Tasks.bHasGrantResources, TEXT("GrantResources"));
 		}
 		if (Id == TEXT("KnockBack") || Id == TEXT("KnockUp"))
 		{
-			Require(Tasks.HoldTag.Contains(TEXT("Downed")), TEXT("HoldTag.Downed"));
+			Require(Tasks.bHasHoldTag, TEXT("HoldTag"));
 		}
 		if (Id == TEXT("Groggy"))
 		{
-			Require(Tasks.HoldTag.Contains(TEXT("Executed")), TEXT("HoldTag.Executed"));
-			Require(Tasks.SetCollisionResponseToChannel.Contains(TEXT("PassThroughPawn")),
-			    TEXT("SetCollisionResponseToChannel.PassThroughPawn"));
+			Require(Tasks.bHasHoldTag, TEXT("HoldTag"));
+			Require(Tasks.bHasSetCollisionResponseToChannel, TEXT("SetCollisionResponseToChannel"));
 		}
 		if (Id == TEXT("Ultimate"))
 		{
 			Require(Tasks.bHasTimeStop, TEXT("TimeStop"));
-			Require(Tasks.PlayCutscene.Contains(TEXT("UltimateCamera")), TEXT("PlayCutscene.UltimateCamera"));
-			Require(Tasks.TargetQuery.Contains(TEXT("Finish")), TEXT("TargetQuery.Finish"));
-			Require(Tasks.Attack.Contains(TEXT("Finish")), TEXT("Attack.Finish"));
+			Require(Tasks.bHasPlayCutscene, TEXT("PlayCutscene"));
+			Require(Tasks.bHasTargetQuery, TEXT("TargetQuery"));
+			Require(!Tasks.Attack.IsEmpty(), TEXT("Attack"));
 		}
 		if (Id == TEXT("Execution"))
 		{
-			Require(Tasks.TargetQuery.Contains(TEXT("Execution")), TEXT("TargetQuery.Execution"));
-			Require(Tasks.Attack.Contains(TEXT("Stab")), TEXT("Attack.Stab"));
-			Require(Tasks.Attack.Contains(TEXT("Finish")), TEXT("Attack.Finish"));
+			Require(Tasks.bHasTargetQuery, TEXT("TargetQuery"));
+			Require(!Tasks.Attack.IsEmpty(), TEXT("Attack"));
 		}
 		if (Id == TEXT("LeapSlam"))
 		{
 			Require(Tasks.bHasLaunchToTarget, TEXT("LaunchToTarget"));
-			Require(Tasks.TargetQuery.Contains(TEXT("Landing")), TEXT("TargetQuery.Landing"));
-			Require(Tasks.Attack.Contains(TEXT("LandingHit")), TEXT("Attack.LandingHit"));
+			Require(Tasks.bHasTargetQuery, TEXT("TargetQuery"));
+			Require(!Tasks.Attack.IsEmpty(), TEXT("Attack"));
 		}
 		if (Id == TEXT("JumpAttack"))
 		{
@@ -341,7 +325,7 @@ bool AgAbilityData::Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& 
 	{
 		for (const TPair<FName, FAgAbilityData>& Pair : Candidate)
 		{
-			ValidateRequiredNames(Pair.Value, Errors);
+			ValidateRequiredTasks(Pair.Value, Errors);
 		}
 	}
 	if (Before != Errors.Num())

@@ -17,10 +17,6 @@ class UAgAbilityTask_Attack : public UAbilityTask
 {
 	GENERATED_BODY()
 
-#if WITH_DEV_AUTOMATION_TESTS
-	friend class FAgAbilityExecutionTest;
-#endif
-
 public:
 	UAgAbilityTask_Attack();
 

@@ -36,9 +36,6 @@ class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, publ
 {
 	GENERATED_BODY()
 
-#if WITH_DEV_AUTOMATION_TESTS
-#endif
-
 public:
 	AAgCharacterBase();
 
