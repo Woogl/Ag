@@ -1,6 +1,6 @@
 # 행동 ID 분기 제거 설계안
 
-2026-10-17 설계 검토 중입니다. 두 번째 검토에서 정한 방향(단일 Ability는 엔진 어빌리티 기능과 단순한 Runner만 맡고, 기능은 자기 스키마를 가진 독립 Task로 나눔)으로 다시 썼고, 세 번째 검토에서 Task를 범용 기능만 남겼습니다. 네 번째 검토에서 Runner의 재생 옵션과 구간 끝 붙잡기를 없앴고, Attack은 대상을 고르지 않고 판정 범위에 닿는 적을 치게 했으며, Launch의 파라미터를 줄였습니다. 승인되면 [어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>)와 [몽타주 시간표](<몽타주 시간표.md>)의 규칙을 이 문서의 규칙으로 바꾸고, 구현이 끝나면 결정을 주제 문서로 옮긴 뒤 이 문서를 지웁니다.
+2026-10-17 설계 검토 중입니다. 두 번째 검토에서 정한 방향(단일 Ability는 엔진 어빌리티 기능과 단순한 Runner만 맡고, 기능은 자기 스키마를 가진 독립 Task로 나눔)으로 다시 썼고, 세 번째 검토에서 Task를 범용 기능만 남겼습니다. 네 번째 검토에서 Runner의 재생 옵션과 구간 끝 붙잡기를 없앴고, Attack은 대상을 고르지 않고 판정 범위에 닿는 적을 치게 했으며, Launch의 파라미터를 줄였습니다. 다섯 번째 검토에서 애니메이션이 만들지 않는 이동(띄우기, 도약, 돌진, 내리꽂기)을 엔진 루트 모션 소스로 모았습니다. 승인되면 [어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>)와 [몽타주 시간표](<몽타주 시간표.md>)의 규칙을 이 문서의 규칙으로 바꾸고, 구현이 끝나면 결정을 주제 문서로 옮긴 뒤 이 문서를 지웁니다.
 
 ## 결정과 목표
 
@@ -13,12 +13,13 @@
 | 행동 정의(`Abilities.json`) | 발동 조건과 트리거, 대상 선정, 재생할 몽타주, 종료 방식, 발동 동안 실행하는 Task |
 | 몽타주 시간표(`MontageTimelines.json`) | 섹션 안의 시각에 실행하는 Task(구간·지점) |
 | 효과 데이터(`Effects.json`) | 계속 흐르는 시간(패리 구간, 회피 반격 기회, 그로기 시간), 보상(패리, 극한 회피), 지속 소모(달리기)의 값. 모션을 따르는 시간은 시간표에 둡니다(아래 '시간 기준'). |
-| 주인 객체 | 행동이 아닌 규칙: 입력(행동 태그 검색, 트리거 태그, 점프, 락온 카메라), 공중 상태·이동 사건·회전 고정·물리 이동·점프 모션·사망(캐릭터), 그로기가 끝날 때의 PP 회복(보스 캐릭터), 패리·극한 회피의 결과와 보상(피격 처리), 평타 반응과 2페이즈 진입(보스 AI) |
+| 주인 객체 | 행동이 아닌 규칙: 입력(행동 태그 검색, 트리거 태그, 점프, 락온 카메라), 공중 상태·이동 사건·회전 고정·점프 모션·사망(캐릭터), 그로기가 끝날 때의 PP 회복(보스 캐릭터), 패리·극한 회피의 결과와 보상(피격 처리), 평타 반응과 2페이즈 진입(보스 AI) |
 
 - 있는 Task를 조합한 새 행동·패턴은 JSON과 몽타주만으로 더합니다. 새로운 종류의 기능만 Task 파일 하나(Task와 그 Params)로 더하고 Runner는 고치지 않습니다.
 - Task는 자기 일만 하고 다른 Task를 모릅니다. Runner는 Task 종류, 행동 ID, 몽타주 ID를 모릅니다. 행동 전체를 맡는 흐름 Task와 자식 Ability는 만들지 않습니다.
 - 한 행동만 쓰는 규칙은 Task로 만들지 않습니다. 값은 효과 데이터에, 규칙은 그 규칙의 주인 객체에 둡니다.
-- Runner는 몽타주를 처음부터 재생하고 Task가 요청한 전환만 합니다. 재생 옵션은 두지 않습니다. 회전 고정과 물리 이동은 행동이 갖는 상태 태그를 캐릭터가 읽고, 몸 돌리기와 최소 간격은 Task가 맡습니다.
+- Runner는 몽타주를 처음부터 재생하고 Task가 요청한 전환만 합니다. 재생 옵션은 두지 않습니다. 회전 고정은 행동이 갖는 상태 태그를 캐릭터가 읽고, 몸 돌리기와 최소 간격은 Task가 맡습니다.
+- 애니메이션이 만든 이동은 몽타주 루트 모션과 Motion Warping이, 그 밖의 이동(띄우기, 도약, 돌진, 내리꽂기)은 엔진 루트 모션 소스(Launch, Dash)가 맡습니다. 캐릭터 무브먼트는 몽타주가 루트 모션을 주면 루트 모션 소스를 쓰지 않으므로, 소스로 움직이는 동안은 몽타주 루트 모션을 끄고 회전은 Face 구간이 맡습니다.
 - 몽타주의 흐름(시작 섹션 고르기, 기다림, 다음 동작)은 섹션과 Transition으로 적습니다. 기다림은 언제나 반복 섹션과 그 섹션을 덮는 전환입니다.
 - Attack은 맞을 대상을 고르지 않습니다. 켜진 동안 판정 범위(무기, 또는 주인 둘레의 공격 범위)에 닿는 적을 모두 칩니다.
 - 입력 계층과 HUD는 행동 ID 대신 행동 태그로 스펙을 찾습니다. 같은 키를 쓰는 새 캐릭터의 행동도 데이터만으로 붙습니다.
@@ -48,7 +49,7 @@ flowchart LR
 | 같은 문서 '설정과 실행 시점의 구분', '시간표 항목 연결', '현재 기획에 필요한 연결', '행동별 호출·종료 연결', '별도 JSON 설정이 없는 내부 Task', '행동별 조합' | 실행 시점은 Task를 둔 곳(발동 Task 목록, 시간표 구간·지점)으로 정합니다. 착지·입력·컷신 종료 같은 사건은 Transition과 PlayCutscene이, 행동 고유 규칙은 효과 데이터와 주인 객체가 맡습니다(아래 '행동별 이관표'). |
 | 같은 문서 'Ability 종료와 Task 종료' | 행동 정의의 `End`로 정합니다(아래 '종료'). |
 | 같은 문서 '상태 소유권과 실제 충돌', '처형 상태 통합과 행동 제한': Busy는 공통 처리가 관리하고 행동별 설정으로 고르지 않음, State.Acting 없이 행동 모션 실행 기록으로 이동 입력 제한 | Busy는 시간표의 HoldTag 구간(후딜이 없으면 OwnedTags)으로, 이동 입력 제한은 OwnedTags의 `State.Acting`으로 데이터에 적습니다. |
-| 같은 문서 '캐릭터와 실행 기능의 책임 경계': 회전 제어는 시간표에 공격·발사·워핑이 있는지로 정하고, 대상은 모션 시작과 워핑 구간 진입에서 정함 | 회전 고정과 물리 이동은 행동의 OwnedTags(`State.RotationLocked`, `State.PhysicsTranslation`)로 적고 캐릭터가 읽습니다. 최소 간격은 KeepDistance, 재생할 때의 몸 돌리기는 Face가 맡습니다. 대상은 아래 '대상'을 따릅니다. |
+| 같은 문서 '캐릭터와 실행 기능의 책임 경계': 회전 제어는 시간표에 공격·발사·워핑이 있는지로 정하고, 대상은 모션 시작과 워핑 구간 진입에서 정함 | 회전 고정은 행동의 OwnedTags(`State.RotationLocked`)로 적고 캐릭터가 읽습니다. 최소 간격은 KeepDistance, 몸 돌리기는 Face(재생할 때 바로, 또는 구간 동안 회전 속도로)가 맡습니다. 대상은 아래 '대상'을 따릅니다. |
 | 같은 문서 '행동별 조합'의 Boss.PhaseTransition: OwnedTags의 `State.Boss.RotationLocked` | `State.RotationLocked`로 바꿔 보스 공격 패턴과 함께 씁니다. |
 | 같은 문서 '기능별 설정과 실행', '행동별 조합'의 가드·회피: 기능별 Tasks 설정(PlayMontageAndWait, DrainResource, TimedTag, GrantResources, SlowMotion, LaunchVertical, LaunchToTarget, TargetQuery, Tasks.Attack, TimeStop, LockOn, PlayCutscene), 패리·극한 회피 보상은 가드·회피 어빌리티가 줌, 공통 재생 호출부의 PatternPlayRate | 아래 'Task 목록', '몽타주와 섹션', '효과 데이터'로 바꿉니다. 패리·극한 회피의 보상은 피격 처리가 줍니다. PatternPlayRate는 지우고, 0.8은 보스 공격 패턴 몽타주 일곱 개의 Rate Scale로 옮깁니다. |
 | 같은 문서 'TargetQuery': 처형·궁극기·LeapSlam이 대상을 조회한 뒤 단발 Attack을 요청하고, 착지 판정을 주변 액터 전체로 넓히지 않음 | Attack은 대상을 고르지 않고 켜진 동안 판정 범위에 닿는 적을 모두 칩니다. 처형은 무기 판정이고(칼이 찌르기부터 발차기까지 보스 몸통을 꿰뚫음, [마일스톤1 구현 계획](<마일스톤1 구현 계획.md>)의 '처형 두 모션의 정렬'), 궁극기와 LeapSlam은 Radius의 공격 범위입니다. 보스의 적은 플레이어 하나라 LeapSlam의 결과는 같습니다. |
@@ -63,6 +64,8 @@ flowchart LR
 | [입력 처리](<입력 처리.md>) '기술 결정': 가드 재개 이벤트, 행동 모션 실행 기록으로 이동 제한, 실행 중 어빌리티에 보내는 입력 이벤트 | 입력 계층은 트리거 태그(`Input.Guard`, `Input.Sprint`, `Input.LockOn`)와 이동 입력 태그(`Input.Move`)를 붙이고 뗍니다. 실행 중 행동에 보내는 이벤트는 평타의 `Input.Attack`만 남습니다. |
 | [사망 처리](<사망 처리.md>) '사망 처리 순서', '클래스 구조': Death 어빌리티 | 캐릭터가 `Event.Death`를 받아 사망을 처리합니다. '처형 사망'의 판단 기준(공격 쪽 태그)은 그대로입니다. |
 | [애니메이션과 이동](<애니메이션과 이동.md>) '점프', '점프 공격', '넉업': 점프 어빌리티가 Jump를 부르고 모션을 재생하며 State.Jumping을 가짐, 넉업은 세 몽타주와 속도 감시 | 엔진 점프, 점프 모션, State.Jumping은 캐릭터가 맡습니다. 넉업은 합친 몽타주의 섹션과, 캐릭터가 보내는 정점·착지 이벤트로 넘어갑니다. |
+| 같은 문서 '점프 공격', 'LeapSlam', '플레이어 공격 워핑 저작': 도약과 내리꽂기는 `LaunchCharacter`이고, 공중에서 회전 워핑을 쓰려고 몽타주 루트 모션을 켠 뒤 그 이동을 물리 속도로 바꿈 | 도약은 Launch(엔진 JumpForce), 내리꽂기는 Dash(엔진 ConstantForce)로 움직이고, 공중 회전은 워핑 대신 Face 구간입니다. 두 몽타주는 소스가 움직이는 섹션의 루트 모션을 끄고, 물리 속도로 바꾸는 처리는 없어집니다. |
+| [데이터 위치표](<데이터 위치표.md>)의 '공격 중 위치·회전 보정: 회전 속도' 행: ConstantRate 회전 워핑에 재생 배율을 보정해 적용 | 워핑 회전도 실제 시간 초당 360°(캐릭터 회전 속도)로 돌게 둡니다. 엔진의 ConstantRate가 재생 배율과 무관하면 나누는 보정을 지웁니다(아래 '엔진 동작 확인'). |
 | [보스 사양](<../Design/보스 사양.md>) LeapSlam '착지 목표': 플레이어 위치에서 보스 쪽으로 1.5m | 같은 문서 '패턴 공통 규칙'의 대상과의 최소 간격(1.5m)을 따른다고 적습니다. 값은 같고, 데이터는 캐릭터의 `StopDistance` 하나입니다(Launch). |
 
 ## Runner
@@ -138,7 +141,7 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task, 행동 ID, 몽�
 | 지금 | 바뀐 뒤 |
 | - | - |
 | 회전 고정: 시간표에 공격·발사·워핑이 있는 모션은 자동 회전을 멈춤 | 행동의 OwnedTags `State.RotationLocked`. 캐릭터가 읽습니다. |
-| 물리 이동: 점프 공격과 LeapSlam은 루트 모션 이동을 물리 속도로 바꿈 | OwnedTags `State.PhysicsTranslation`. 캐릭터가 읽습니다. |
+| 물리 이동: 점프 공격과 LeapSlam은 공중에서 회전 워핑을 쓰려고 몽타주 루트 모션을 켜고, 그 이동을 물리 속도로 바꿈 | 없어집니다. 도약은 Launch, 내리꽂기는 Dash가 움직이고, 공중 회전은 Face 구간입니다. 두 몽타주는 그 섹션의 루트 모션을 끕니다. |
 | 최소 간격: 회전 고정 모션(처형 제외)의 루트 모션 이동을 대상 앞에서 자름 | KeepDistance(발동 Task) |
 | 재생 전 몸 돌리기: 피격 반응·패리·처형 피격은 공격 쪽으로, 회피는 이동 입력 방향으로 | Face(발동 Task) |
 | 시작 섹션 고르기: 회피의 Roll·Backstep | 첫 섹션 0초의 Transition 지점 |
@@ -146,6 +149,7 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task, 행동 ID, 몽�
 
 - 자동 회전은 지금 보스만 합니다(플레이어는 `GetFacingTarget`이 없음). 그래서 `State.RotationLocked`는 보스 공격 패턴 일곱 개와 페이즈 전환에만 둡니다. 플레이어 공격의 회전 고정은 지금도 효과가 없습니다.
 - RootMotionDistance는 기획서의 값(보스 Backstep '후방으로 5m')이라 JSON에 두고, 엔진 몽타주 재생 Task(`PlayMontageAndWait`)에 루트 이동 배율로 넘기므로 재생과 함께 적습니다.
+- 몽타주 루트 모션과 루트 모션 소스(Launch, Dash)는 같은 순간에 함께 쓰지 않습니다. 캐릭터 무브먼트는 몽타주가 루트 모션을 주면 루트 모션 소스를 쓰지 않기 때문입니다([애니메이션과 이동](<애니메이션과 이동.md>) '넉업'). 그래서 소스가 움직이는 섹션은 몽타주 루트 모션을 끄고(시퀀스 설정이나 엔진 `AnimNotifyState_DisableRootMotion`), 그 섹션의 회전은 워핑 대신 Face 구간이 맡습니다.
 - 재생 배율은 몽타주의 Rate Scale 그대로입니다. 보스 공격 패턴의 0.8은 패턴 몽타주의 Rate Scale에 둡니다.
 - 바로 이어지는 동작은 섹션 링크로 잇습니다. 다른 동작으로 넘어갈 때는 전환에 BlendTime을 적어 그 섹션부터 다시 재생합니다. 같은 재생 안의 섹션 이동에는 블렌드가 없어 자세가 튀기 때문입니다. BlendTime은 합치기 전 각 몽타주의 Blend In 시간을 옮깁니다.
 - 시작 섹션을 고르는 행동은 후보 하나를 첫 섹션에 두고, 그 0초에 조건이 있는 Transition 지점을 둡니다. 회피는 Backstep이 첫 섹션이고 이동 입력(`Input.Move`)이 있으면 Roll로 옮깁니다. 같은 판정 안에서 옮기므로 Backstep의 0초 구간은 열리지 않고(아래 '시간표 판정'의 순서와 전환), 첫 화면과 첫 루트 모션은 Roll입니다.
@@ -189,7 +193,7 @@ Task가 시작하고 끝나는 때는 둔 곳이 정하고, 도는 동안의 시
 
 | 시간 | 따르는 것 | 히트스톱 중 | 쓰는 곳(전투 시스템 '히트스톱 중의 시간') |
 | - | - | - | - |
-| 모션 시간 | 시간표 구간·지점(몽타주 재생 위치), 캐릭터 무브먼트의 이동(Dash, Launch, 워핑) | 멈춤 | 선딜, 판정 구간, 후딜(Busy), 무적 구간, 극한 회피 구간, 보스 패턴 안의 모든 시간 |
+| 모션 시간 | 시간표 구간·지점(몽타주 재생 위치), 캐릭터 무브먼트의 이동(Dash, Launch, 워핑), Face 구간의 회전 | 멈춤 | 선딜, 판정 구간, 후딜(Busy), 무적 구간, 극한 회피 구간, 보스 패턴 안의 모든 시간 |
 | 월드 시간 | 효과의 지속 시간(발동·지점의 ApplyEffect), 월드 타이머 | 계속 흐름 | 쿨다운, 패리 구간, 회피 반격 기회, 그로기 지속 시간, 리젠과 소모 |
 | 주인의 시간 | PlayCutscene(매 프레임 주인의 시간 배율을 재생 속도로) | 멈춤 | 궁극기 컷신 |
 
@@ -206,17 +210,17 @@ Task가 시작하고 끝나는 때는 둔 곳이 정하고, 도는 동안의 시
 | HoldTag | 발동, 구간, 지점 | Tag | 태그를 유지합니다. 지점이면 그 시각부터 행동이 끝날 때까지입니다. |
 | ApplyEffect | 발동, 구간, 지점 | Effect. 발동·지점만: bRemoveOnEnd | `Effects.json`의 효과를 주인에게 겁니다. 구간이면 구간 시작에 걸고 구간 끝에 지웁니다(모션 시간). 발동·지점이면 효과의 지속 시간(월드 시간)을 따르고, bRemoveOnEnd면 행동이 끝날 때 지웁니다. |
 | SetCollisionResponseToChannel | 발동, 구간 | Channel, Response | 캡슐의 채널 응답을 바꾸고 끝날 때 되돌립니다. |
-| Face | 발동, 지점 | To(Target, MoveInput) | 몸을 바로 돌립니다. Target이면 행동 대상 쪽, MoveInput이면 이동 입력 방향이고 입력이 없으면 돌지 않습니다. |
+| Face | 발동, 구간, 지점 | To(Target, MoveInput). 구간만(선택): Range | 발동·지점이면 몸을 바로 돌립니다. Target이면 행동 대상 쪽, MoveInput이면 이동 입력 방향이고 입력이 없으면 돌지 않습니다. 구간이면(To Target만) 그동안 캐릭터 회전 속도(`RotationRate.Yaw`, 초당 360°)로 돕니다. 행동 대상이 없거나 Range 밖이면 캐릭터의 대체 대상(플레이어는 락온 대상) 쪽으로 돌고, 행동 대상을 따라 돌다가 대상이 Range 밖으로 나가면 멈춥니다(지금 회전 워핑과 같은 규칙). 몽타주 루트 모션이 없는 구간의 회전에 씁니다. |
 | KeepDistance | 발동 | 없음 | 행동 동안 루트 모션 이동이 행동 대상에게 캐릭터의 `StopDistance`보다 가까이 가지 않게 합니다. 다시 재생해 대상이 바뀌면 새 대상을 씁니다. |
-| Dash | 구간 | Speed, HomingTurnRate, Overshoot, MaxDistance. 선택: Next | 행동 대상 쪽으로 돌진합니다. 공격이 막히면(`Event.AttackBlocked`) 그 자리에서 멈춥니다. 돌진이 끝나면(막힘, 거리) Next로 전환합니다. 돌진하는 동안의 자세는 구간이 덮는 반복 섹션이 유지합니다. |
-| Launch | 발동, 지점 | AirTime. 선택: Height, To(Target), MaxDistance. 또는 VelocityZ만 | AirTime이면 체공 시간이 AirTime인 포물선으로 띄웁니다. 최고 높이는 Height이고 엔진 중력과 무관하게 그 경로를 따르며(지금 넉업의 루트 모션 점프), Height가 없으면 엔진 중력이 정합니다(지금 LeapSlam의 발사). To가 Target이면 행동 대상 위치에서 주인 쪽으로 캐릭터의 `StopDistance`만큼 떨어진 곳에 내리도록 수평으로도 보내고(수평 거리는 MaxDistance까지), 없으면 제자리에서 수직으로 띄웁니다. VelocityZ면 공중일 때 수직 속도만 그 값으로 바꿉니다(점프 공격 내리꽂기). |
+| Dash | 구간 | Speed, To(Target, Down). 선택: Next. Target만(선택): HomingTurnRate, Overshoot, MaxDistance | 엔진 루트 모션 소스(`FRootMotionSource_ConstantForce`)로 Speed의 일정 속도로 움직이고, 끝나면 속도를 0으로 둡니다. Target이면 행동 대상 쪽으로 돌진하며 방향을 초당 HomingTurnRate까지 바꿉니다(없으면 직선). 출발할 때 대상까지의 수평 거리에 Overshoot를 더한 거리(MaxDistance까지)를 실제 경로로 가거나, 벽에 막히거나, 공격이 막히면(`Event.AttackBlocked`) 그 자리에서 멈춥니다. Down이면 수평 속도는 그대로 두고 Speed로 떨어집니다. 스스로 멈추면 Next로 전환하고, 구간이 끝나면 멈춥니다. 돌진하는 동안의 자세는 구간이 덮는 반복 섹션이 유지합니다. |
+| Launch | 발동, 지점 | AirTime. 선택: Height, To(Target), MaxDistance | 엔진 루트 모션 점프(`FRootMotionSource_JumpForce`, 지금 넉업의 설정)로 체공 시간이 AirTime인 포물선을 그리며 띄우고, 착지하면 끝내며 속도를 0으로 둡니다. 최고 높이는 Height이고, 없으면 엔진 중력으로 정해지는 높이(중력 × AirTime² ÷ 8)라 엔진 중력의 포물선과 같습니다. To가 Target이면 행동 대상 위치에서 주인 쪽으로 캐릭터의 `StopDistance`만큼 떨어진 곳에 내리도록 수평으로도 보내고(수평 거리는 MaxDistance까지), 없으면 제자리에서 수직으로 띄웁니다. |
 | SpawnProjectile | 지점 | ProjectileId, Origin, SocketName, Attack | 투사체 한 발 |
 | SendGameplayEvent | 발동, 지점 | Event, Recipient(Owner, Target) | Instigator가 주인, Target이 행동 대상인 게임플레이 이벤트를 받는 쪽에 보냅니다. |
 | Transition | 구간, 지점 | Next. 선택: RequiredTags, BlockedTags. 구간만(선택): Event 또는 BeforeTagEnds, bOptional | 정한 때에 주인이 RequiredTags를 모두 갖고 BlockedTags를 하나도 갖지 않으면 전환합니다. 그때는 지점이면 그 시각이고, 구간이면 주인이 Event를 받을 때나 BeforeTagEnds의 태그를 주는 효과가 끝나기 Next 섹션 길이만큼 전(이미 지났으면 바로)이며, 둘 다 없으면 구간 안에서 조건이 맞게 되는 때입니다. bOptional은 전환하지 않고 구간이 끝나도 되는 전환입니다. |
 | PlayCutscene | 구간 | Sequence, Next | 구간이 시작되면 컷신을 재생하고 끝나면 전환합니다. 재생 속도는 매 프레임 주인의 시간 배율(`CustomTimeDilation`)을 따르므로 시간 정지와의 시작 순서에 기대지 않습니다. |
 | TimeStop | 구간 | 없음 | 구간 동안 주인 말고 시간을 멈춥니다. |
 | CameraShake | 지점 | Shake, Range | 로컬 플레이어와의 수평 거리가 Range 이내면 셰이크를 재생합니다. |
-| MotionWarping(항목) | 구간 | 지금 필드, StopDistance(선택) | Runner가 엔진 워핑에 등록합니다. 대상은 행동 대상이고, StopDistance는 대상과 맞출 간격입니다. 생략하면 캐릭터의 `StopDistance`입니다. 대상이 TargetingRange 밖이면 지금처럼 회전만 합니다. |
+| MotionWarping(항목) | 구간 | 지금 필드, StopDistance(선택) | Runner가 엔진 워핑에 등록합니다. 대상은 행동 대상이고, StopDistance는 대상과 맞출 간격입니다. 생략하면 캐릭터의 `StopDistance`입니다. 대상이 TargetingRange 밖이면 지금처럼 회전만 합니다. ConstantRate 회전은 실제 시간 초당 360°(캐릭터 회전 속도)로 돌게 둡니다(아래 '엔진 동작 확인'). 몽타주 루트 모션이 있는 구간에만 둡니다. |
 
 지금 기능 중 Task로 남지 않는 것과 옮기는 곳입니다.
 
@@ -226,12 +230,14 @@ Task가 시작하고 끝나는 때는 둔 곳이 정하고, 도는 동안의 시
 | TargetQuery | 행동의 Targeting. 처형·궁극기·LeapSlam의 타격은 Attack의 판정 범위 |
 | DrainResource, TimedTag, GrantResources | ApplyEffect와 효과 데이터(SprintDrain, ParryWindow, PerfectDodgeWindow 등) |
 | SlowMotion, 극한 회피·패리 보상 | 피격 처리(값은 효과 데이터와 플레이어 데이터) |
-| LaunchVertical, LaunchToTarget, 넉업 루트 모션 점프 | Launch |
+| LaunchToTarget, 넉업 루트 모션 점프 | Launch(엔진 JumpForce) |
+| LaunchVertical(점프 공격 내리꽂기) | Dash의 To Down(엔진 ConstantForce) |
 | LockOn | 대상은 Targeting, 카메라 추적은 플레이어 캐릭터, 해제는 입력 계층 |
 | 착지·하강·입력·그로기 시간 대기 | Transition과 캐릭터의 이동 사건(`Event.Landed`, `Event.Apex`), 그로기 시간 효과(GroggyTime) |
 | 회피의 Roll·Backstep 선택, 그로기의 착지 대기 | 첫 섹션의 Transition(`Input.Move`가 있으면, 공중이 아니면) |
 | 돌진 찌르기의 자세 유지와 남은 구간 닫기 | 반복 섹션 Hold와 Dash의 Next |
-| 회전 고정, 물리 이동 | 상태 태그 `State.RotationLocked`, `State.PhysicsTranslation`(캐릭터가 읽음) |
+| 회전 고정 | 상태 태그 `State.RotationLocked`(캐릭터가 읽음) |
+| 물리 이동 교체와 공중의 회전 워핑(점프 공격, LeapSlam) | 없어짐. 이동은 Launch·Dash, 회전은 Face 구간 |
 | 최소 간격, 피격 반응·패리·회피의 몸 돌리기 | KeepDistance, Face |
 | 그로기·처형 피격·페이즈 전환의 PP 회복 | 보스 캐릭터(그로기가 끝날 때), 보스 AI(페이즈 전환이 끝날 때) |
 
@@ -273,7 +279,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 주인 | 맡는 것 | 대신 지우는 것 |
 | - | - | - |
 | 플레이어 캐릭터(입력 계층) | 키에 맞는 행동을 행동 태그로 찾습니다(아래 '입력 계층의 행동 찾기'). 위 트리거 태그, 이동 입력이 있는 동안의 `Input.Move`. 평타 키는 평타가 실행 중이면 `Input.Attack` 이벤트를 보내고, 아니면 발동합니다(평타 키의 점프 공격·회피 반격 우선순위는 그대로). 가드 키를 누른 채 후딜이 시작될 때 가드가 실행 중이면 후딜에 든 패리 모션(`Ability.Action.Parry`)을 취소합니다. 락온 중 카메라 추적. 이동 입력 제한은 `State.Acting`과 지금 태그로 봅니다. | 실행 중 어빌리티에 보내던 `Input.Guard`·`Input.LockOn` 이벤트, `Input.GuardReleased`, `Event.Guard.Resume`, 이동 제한 기록 조회(`BlocksMovementInput`), LockOn Task |
-| 캐릭터 | `State.Airborne`(이동 모드가 떨어지는 중인 동안). 이동 사건: 착지하면 `Event.Landed`, 공중에서 수직 속도가 오름에서 내림으로 바뀌면 `Event.Apex`를 자기에게 보냅니다. 회전 고정: `State.RotationLocked`가 있으면 자동 회전을 멈춥니다(보스는 지금처럼 피격 반응·그로기·처형·비전투 태그에도 멈춤). 루트 모션 이동: `State.PhysicsTranslation`이 있으면 회전은 쓰고 이동은 공중에서 물리 속도, 땅에서 0으로 바꾸고, 없으면 KeepDistance가 등록한 대상과 간격으로 자릅니다(지금 `ClampRootMotion`의 순서). 점프의 `State.Jumping`과 점프 모션: 플레이어는 [애니메이션과 이동](<애니메이션과 이동.md>) '점프'의 규칙대로 `Jump` 몽타주의 Start·Land 섹션을 재생합니다. 사망은 `Event.Death`를 받아 처리합니다(아래 사망 모션). | Death 스펙과 `Ability.Reaction.Death`, 어빌리티의 점프·착지 대기·넉업 속도 감시·사망 분기, 이동 제약(`FAgCharacterMotionConstraints`)의 회전·물리 이동 플래그, `State.Boss.RotationLocked` |
+| 캐릭터 | `State.Airborne`(이동 모드가 떨어지는 중인 동안). 이동 사건: 착지하면 `Event.Landed`, 공중에서 수직 속도가 오름에서 내림으로 바뀌면 `Event.Apex`를 자기에게 보냅니다. 회전 고정: `State.RotationLocked`가 있으면 자동 회전을 멈춥니다(보스는 지금처럼 피격 반응·그로기·처형·비전투 태그에도 멈춤). 루트 모션 이동: KeepDistance가 등록한 대상과 간격으로 자릅니다(`ClampRootMotion`). 점프의 `State.Jumping`과 점프 모션: 플레이어는 [애니메이션과 이동](<애니메이션과 이동.md>) '점프'의 규칙대로 `Jump` 몽타주의 Start·Land 섹션을 재생합니다. 사망은 `Event.Death`를 받아 처리합니다(아래 사망 모션). | Death 스펙과 `Ability.Reaction.Death`, 어빌리티의 점프·착지 대기·넉업 속도 감시·사망 분기, 이동 제약(`FAgCharacterMotionConstraints`)의 회전 플래그와 물리 이동 교체, `State.Boss.RotationLocked` |
 | 보스 캐릭터 | 그로기가 끝나면(State.Groggy가 사라졌고 살아 있으면) PP를 MaxPP로 채우고(`PPRefill`), 다음 그로기와 섞이지 않게 남은 GroggyTime 효과를 지웁니다. 처형 피격이 State.Groggy를 이어 받으므로, 처형 피격이 끝날 때 한 번 채웁니다. | 보스 그로기 타이머(그로기 시간은 GroggyTime 효과로), 어빌리티의 그로기 시간 호출과 PP 회복 |
 | 피격 처리(`UAgHitResultGameplayEffectComponent`) | 패리: 공격자의 PP 감소(`ParryPPLoss`), 방어자의 패리 구간(ParryWindow) 제거, 보상(`ParryReward`), 그다음 `Event.Parry`(패리 모션). 극한 회피: 극한 회피 구간(PerfectDodgeWindow) 제거로 회피마다 한 번만, 그 효과를 건 행동의 Cost만큼 환급, 보상(`PerfectDodgeReward`), 회피 반격 기회(`DodgeCounterChance`), 슬로우모션(플레이어 데이터의 값). 순서는 전투 시스템 '피격 처리 순서'를 따릅니다. 대미지 숫자는 Attack이 정한 피격 위치에 띄우되, 처형의 타격은 대상의 캡슐 중심에 띄웁니다(전투 HUD '대미지 숫자'). | 가드·회피 어빌리티의 보상, PP 감소, 패리 구간 닫기, `Event.PerfectDodge` |
 | 보스 AI | 평타 시작 알림(`Event.BasicAttackStarted`)은 그대로 받습니다. 보내는 쪽만 평타·점프 공격 시간표의 SendGameplayEvent 지점으로 바뀝니다. 페이즈 전환이 정상 종료로 끝나면(`OnAbilityEnded`) PP를 채우고 2페이즈로 넘어갑니다. | 어빌리티의 평타 시작 알림 함수, PP 회복, 2페이즈 진입 |
@@ -309,7 +315,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | - | - | - |
 | 평타 | 입력 이벤트 대기, BasicAttackMontageIds의 타 선택, 다음 타, 평타 시작 알림 | Targeting(TP_Enemy), KeepDistance, `BasicAttack` 몽타주(섹션 Attack1~5). 섹션마다 Busy 구간, 시작의 SendGameplayEvent(평타 시작 알림), 후딜부터 섹션 끝까지 Transition(`Input.Attack`, 다음 섹션을 BlendTime으로 다시 재생, Attack5 다음은 Attack1, bOptional). 입력 없이 섹션이 끝나면 몽타주가 끝나 콤보가 초기화됩니다. |
 | 점프 | CanJump 검사, Busy·착지 대기·Jump·점프 모션, 모션 완료 무시, 착지 모션과 종료, StopJumping | 트리거 `State.Jumping`, End TriggerTag, OwnedTags State.Busy. 점프와 모션은 캐릭터 |
-| 점프 공격 | IsFalling 검사, 물리 속도 이동·착지 대기, 평타 시작 알림, 착지 때 Land 섹션, 내리꽂기 사건 | RequiredTags State.Jumping, OwnedTags State.PhysicsTranslation, Targeting(TP_Enemy). 시간표: Start·Fall의 Transition(`Event.Landed` → Land), Launch 지점(VelocityZ), SendGameplayEvent 지점, Start에서 Land로 넘어가는 Attack·Busy 구간 |
+| 점프 공격 | IsFalling 검사, 물리 속도 이동·착지 대기, 평타 시작 알림, 착지 때 Land 섹션, 내리꽂기 사건 | RequiredTags State.Jumping, Targeting(TP_Enemy). 시간표: Start의 Face 구간(지금 회전 워핑 구간, Range 3m), Start·Fall의 Transition(`Event.Landed` → Land), 내리꽂기 시각부터 Fall 끝까지의 Dash 구간(Down, 초속 10m), SendGameplayEvent 지점, Start에서 Land로 넘어가는 Attack·Busy 구간 |
 | 회피 | 극한 회피 대기, 입력 방향 회전과 Roll·Backstep 선택, 극한 회피 보상 | Face(MoveInput), `Dodge` 몽타주(첫 섹션 Backstep, 그다음 Roll). 시간표: Backstep 0초의 Transition 지점(`Input.Move`가 있으면 Roll), 두 섹션의 ApplyEffect 구간(PerfectDodgeWindow). 보상과 한 번만 주는 규칙은 피격 처리 |
 | 회피 반격, 스킬 | 없음 | Targeting(TP_Enemy), KeepDistance, 시간표 Busy 구간 |
 | 가드 | 키 유지 검사, 입력·패리 대기, 가드 태그·패리 구간, 패리 모션과 그 후딜·완료 처리, 종료 때 패리 구간 닫기 | 트리거 `Input.Guard`, End TriggerTag, OwnedTags State.Guarding, ApplyEffect(ParryWindow, bRemoveOnEnd). 패리 모션은 Parry 스펙, 패리 후딜 복귀는 입력 계층, 패리 결과와 보상은 피격 처리 |
@@ -326,7 +332,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 페이즈 전환 | 완료 때 PP 회복과 2페이즈 진입 | 몽타주와 OwnedTags(`State.Boss.RotationLocked`는 `State.RotationLocked`로). PP 회복과 2페이즈는 보스 AI |
 | 사망 | 처형 사망 판단과 이어 재생, 래그돌 | 캐릭터의 사망 처리와 DeathMotions |
 | DoubleStrike, Sweep, QuintupleStrike, SwordWave, JumpSlam | 재생 배율 | Targeting(TP_AITarget), OwnedTags State.RotationLocked, KeepDistance, 몽타주 Rate Scale 0.8 |
-| 도약(LeapSlam) | 보스 대상 검사, 물리 속도 이동·착지 대기, 발사, 착지 때 End 섹션·셰이크·착지 타격 | Targeting(TP_AITarget, 필수), OwnedTags State.RotationLocked·State.PhysicsTranslation, Launch(AirTime 1.35, To Target, MaxDistance 12m). 시간표는 아래 표 |
+| 도약(LeapSlam) | 보스 대상 검사, 물리 속도 이동·착지 대기, 발사, 착지 때 End 섹션·셰이크·착지 타격 | Targeting(TP_AITarget, 필수), OwnedTags State.RotationLocked, Launch(AirTime 1.35, To Target, MaxDistance 12m). 공중 회전은 Face 구간입니다. 시간표는 아래 표 |
 | 돌진 찌르기(DashThrust) | 막힘 대기, 돌진 종료 때 남은 구간 닫기, 자세 유지 사건과 멈춤 | Targeting(TP_AITarget), OwnedTags State.RotationLocked, KeepDistance. 몽타주 섹션 Start·Hold(찌르는 자세의 반복)·Recover와 시간표의 Dash(막힘 정지, 끝나면 Recover)·판정·충돌 구간(아래 예시) |
 | Backstep(보스) | 재생 배율 제외 | Montage의 RootMotionDistance. Rate Scale을 바꾸지 않고, State.RotationLocked를 두지 않아 지금처럼 플레이어 쪽으로 돕니다. |
 | 데이터 검증 | 행동 ID별 필수 항목, 행동 ID별 모션 목록 | 아래 '검증' |
@@ -347,7 +353,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 
 - 모션이 있는 플레이어 행동(평타, 점프 공격, 회피, 회피 반격, 스킬, 궁극기, 처형, 패리)은 OwnedTags에 `State.Acting`을 둡니다.
 - Busy는 시간표의 HoldTag 구간(시작부터 지금 후딜 시작까지)으로 둡니다. 후딜이 없는 처형과 점프는 OwnedTags에 `State.Busy`를 둡니다.
-- 보스 공격 패턴 일곱 개와 페이즈 전환은 OwnedTags에 `State.RotationLocked`를, 점프 공격과 LeapSlam은 `State.PhysicsTranslation`을 둡니다.
+- 보스 공격 패턴 일곱 개와 페이즈 전환은 OwnedTags에 `State.RotationLocked`를 둡니다.
 
 가드와 패리:
 
@@ -493,7 +499,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
     "Tasks": [{"Task": "KeepDistance"}]
   },
   "LeapSlam": {
-    "Activation": {"OwnedTags": ["State.RotationLocked", "State.PhysicsTranslation"]},
+    "Activation": {"OwnedTags": ["State.RotationLocked"]},
     "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget", "bRequired": true},
     "Montage": {"MontageId": "LeapSlam"},
     "End": "Montage",
@@ -596,8 +602,8 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 | 몽타주 | 섹션별 항목 |
 | - | - |
 | AM_KnockUp(합침) | Rise: Transition(`Event.Apex` → Fall, BlendTime 지금 AM_KnockUpFall의 Blend In), Transition(`Event.Landed` → Land, 같은 BlendTime). Fall(반복): Transition(`Event.Landed` → Land, 블렌드 없음). Land: HoldTag 지점(State.Invincible, 지금 쓰러짐 사건 위치), Transition 지점(GetUp, BlendTime 지금 AM_GetUp의 Blend In. 시각은 지금 기상이 시작되는 낙하 몽타주의 블렌드 아웃 시작). GetUp: 없음 |
-| AM_Player_JumpAttack | Start: 회전 워핑(지금 값), SendGameplayEvent 지점(0, 평타 시작 알림), Launch 지점(지금 내리꽂기 사건 위치, VelocityZ −1000), Transition(`Event.Landed` → Land). Fall(반복): Transition(`Event.Landed` → Land). Attack(Start 0.23부터 Land의 지금 끝 위치까지)과 Busy(Start 0부터 Land의 지금 후딜 시작까지)는 End에 Land 섹션을 적은 구간 하나씩입니다. |
-| AM_Boss_LeapSlam | End 앞의 섹션들: Transition(`Event.Landed` → End). End: CameraShake 지점(0, Medium, 1500), Attack 지점(0, Radius 350, bGroundOnly, 지금 LeapSlam의 Attack 값). 회전 워핑은 지금과 같습니다. |
+| AM_Player_JumpAttack | Start: Face 구간(지금 회전 워핑 구간, To Target, Range 300), SendGameplayEvent 지점(0, 평타 시작 알림), Transition(`Event.Landed` → Land). Fall(반복): Transition(`Event.Landed` → Land). 내리꽂기는 지금 내리꽂기 사건 위치부터 Fall 끝까지의 Dash 구간(To Down, Speed 1000)이고, 착지해 Land로 넘어가면 끝납니다. Attack(Start 0.23부터 Land의 지금 끝 위치까지)과 Busy(Start 0부터 Land의 지금 후딜 시작까지)는 End에 Land 섹션을 적은 구간 하나씩입니다. |
+| AM_Boss_LeapSlam | 첫 섹션: Face 구간(지금 회전 워핑 구간 0~0.15, To Target). End 앞의 섹션들: Transition(`Event.Landed` → End). End: CameraShake 지점(0, Medium, 1500), Attack 지점(0, Radius 350, bGroundOnly, 지금 LeapSlam의 Attack 값). |
 | AM_Player_Ultimate | 첫 섹션(반복): PlayCutscene(지금 Sequence, Judgment). TimeStop(첫 섹션 0부터 Judgment의 마무리 시각까지)과 Busy(첫 섹션 0부터 Judgment의 지금 후딜 시작까지)는 End에 Judgment를 적은 구간입니다. Judgment: Attack 지점(마무리 시각, Radius 1000, 지금 궁극기의 Attack 값, bFinisher). 같은 시각이면 구간 끝이 먼저라 시간 정지가 풀린 뒤 칩니다. |
 | AM_Boss_Groggy | Fall(반복): Transition 구간(BlockedTags `State.Airborne` → Start, BlendTime 지금 AM_Boss_Groggy의 Blend In). Start: ApplyEffect 지점(0, GroggyTime, bRemoveOnEnd false). 반복 섹션: Transition(BeforeTagEnds `State.GroggyTime` → End) |
 | AM_Player_DodgeCounter, AM_Player_Skill, AM_Player_Parry, 평타 2~5타 | 지금 후딜 시작까지 Busy 구간. 평타는 1타와 같은 배치입니다. |
@@ -612,6 +618,8 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 | AM_Player_Jump | 첫 섹션을 Start로 하고, AM_Player_Land를 섹션 Land로 더해 Start와 잇지 않습니다. |
 | AM_Boss_DashThrust | 지금 자세 유지 시각(1.0366666)에서 나눠 Start, Hold(그 시각의 자세 한 프레임을 자기에게 잇는 반복), Recover로 둡니다. Start는 Hold로 잇고 Recover는 Hold와 잇지 않습니다. 돌진 시작의 루트 모션 끄기 노티파이는 지금 범위를 유지하고 Hold도 덮습니다. |
 | AM_Boss_Groggy | 맨 앞에 반복 섹션 Fall(보스 ABP의 `AirborneAnimation` 시퀀스)을 더하고, 지금 첫 섹션의 이름을 Start로 둡니다. |
+| AM_Player_JumpAttack | Start·Fall의 루트 모션을 끕니다(지금 Start는 회전 워핑 때문에 켬). Land는 루트 모션을 켜 둬 착지하면 그 모션대로 섭니다. |
+| AM_Boss_LeapSlam | 모든 섹션의 루트 모션을 끕니다(지금은 회전 워핑 때문에 켬). |
 | 보스 공격 패턴 7개 | Rate Scale 0.8(DoubleStrike, Sweep, DashThrust, LeapSlam, QuintupleStrike, SwordWave, JumpSlam) |
 | AM_Player_Ultimate | Judgment 섹션 시작부터 마무리까지 엔진 `UAnimNotify_GameplayCueState`(`GameplayCue.UltimateSlashes`) |
 | 기다리는 구간의 몽타주 | 반복 섹션 확인: 궁극기 첫 섹션, 그로기 Fall과 반복 섹션, 점프 공격 Fall, 도약 공중, 넉업 Rise·Fall, 돌진 찌르기 Hold |
@@ -632,7 +640,7 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 
 | 구분 | 태그 |
 | - | - |
-| 더함 | `State.Airborne`, `State.Acting`, `State.GroggyTime`, `State.RotationLocked`, `State.PhysicsTranslation`, `Input.Move`, `Input.Sprint`, `Event.Landed`, `Event.Apex`, `Ability.Action.Parry`, `Ability.Reaction.Executed` |
+| 더함 | `State.Airborne`, `State.Acting`, `State.GroggyTime`, `State.RotationLocked`, `Input.Move`, `Input.Sprint`, `Event.Landed`, `Event.Apex`, `Ability.Action.Parry`, `Ability.Reaction.Executed` |
 | 지움 | `Event.Guard.Resume`, `Input.GuardReleased`, `Event.PerfectDodge`, `Event.RecoveryStarted`, `Event.ExecutionBlow`, `Event.UltimateFinish`, `Event.JumpAttackPlunge`, `Event.DownGrounded`, `Event.Boss.DashHold`, `Ability.Reaction.Death`, `State.Boss.RotationLocked` |
 | 쓰임이 바뀜 | `Input.Guard`·`Input.LockOn`(입력 계층이 트리거 태그로 붙임), `State.Jumping`(캐릭터가 붙임), `State.ParryWindow`·`State.PerfectDodgeWindow`·`State.DodgeCounterChance`(효과가 줌), `Event.BasicAttackStarted`(시간표 지점이 보냄) |
 
@@ -640,11 +648,12 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 
 - 지우는 것: 행동 ID별 필수 항목 검사(`ValidateRequiredTasks`), BasicAttackMontageIds 검사, 행동 ID별 모션 목록
 - 행동 정의: Task 이름은 등록된 Task이고, 각 Params가 읽기·검증·둘 수 있는 곳을 검사합니다. End가 Montage면 Montage가, TriggerTag면 OwnedTagPresent 트리거가 정확히 하나 있습니다. Triggers의 Source는 GameplayEvent나 OwnedTagPresent입니다. Targeting의 Preset은 있는 에셋이고 Range는 0 이상의 유한한 수입니다. RootMotionDistance는 0보다 큰 유한한 수이고, 에디터에서는 그 몽타주의 루트 이동이 0이 아닌지 봅니다.
-- Task 값: ApplyEffect의 Effect는 `Effects.json`에 있고, 구간에 두면 무한 효과입니다. Attack의 Radius는 0보다 큰 유한한 수입니다. Launch는 AirTime과 VelocityZ 중 정확히 하나가 있고, Height·To는 AirTime과, MaxDistance는 To와 함께 씁니다. Transition은 지점이면 Event·BeforeTagEnds·bOptional이 없고, 구간이면 Event와 BeforeTagEnds 중 하나 이하이며 둘 다 없으면 RequiredTags나 BlockedTags가 있습니다.
+- Task 값: ApplyEffect의 Effect는 `Effects.json`에 있고, 구간에 두면 무한 효과입니다. Attack의 Radius는 0보다 큰 유한한 수입니다. Launch의 MaxDistance는 To와 함께 씁니다. Dash의 HomingTurnRate·Overshoot·MaxDistance는 To Target에만 씁니다. Face의 구간은 To Target이고, Range는 구간에만 씁니다. Transition은 지점이면 Event·BeforeTagEnds·bOptional이 없고, 구간이면 Event와 BeforeTagEnds 중 하나 이하이며 둘 다 없으면 RequiredTags나 BlockedTags가 있습니다.
 - 행동 대상: 행동 대상이 필요한 것(Face의 To Target, KeepDistance, Launch의 To Target, Dash, Recipient가 Target인 SendGameplayEvent)이 행동 정의나 그 몽타주의 시간표에 있으면, 그 행동은 Targeting이나 GameplayEvent 트리거를 가집니다.
 - 시간표 키: 어떤 행동의 Montage가 재생하는 몽타주만 키가 될 수 있습니다. 캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)의 시간표는 오류입니다.
 - 시간표 항목: 섹션은 그 몽타주에 있고, 0 ≤ Time ≤ 섹션 길이, 0 ≤ Start < 섹션 길이입니다. End는 같은 섹션이면 Start보다 뒤이고 섹션 길이 이하이며, 다른 섹션이면 몽타주 타임라인에서 Start보다 뒤입니다. 전환의 섹션은 그 몽타주에 있고, 전환 지점은 섹션 끝보다 앞입니다. 기다리는 구간(bOptional이 아닌 구간 Transition, PlayCutscene, Next가 있는 Dash)은 반복 섹션을 끝까지 덮습니다. 반복 섹션 안의 지점과 워핑 구간은 지금처럼 오류입니다.
-- 지금 규칙 유지: 경쟁 구간(Dash끼리, 같은 채널의 충돌 응답끼리), 몽타주의 노티파이(프로젝트·워핑 노티파이 금지, 예고 끝과 판정 시작, Dash 시작의 루트 모션 끄기), 투사체 ID
+- 지금 규칙 유지: 경쟁 구간(Dash끼리, 같은 채널의 충돌 응답끼리), 몽타주의 노티파이(프로젝트·워핑 노티파이 금지, 예고 끝과 판정 시작), 투사체 ID
+- 루트 모션 소스: Dash 구간에는 몽타주 루트 모션이 없어야 합니다(지금의 Dash 시작 루트 모션 끄기 노티파이, 또는 루트 모션을 끈 시퀀스). Launch는 시간표와 무관하게 착지할 때까지 움직이므로, 도는 동안 몽타주가 루트 모션을 주면 오류를 남깁니다. MotionWarping 구간은 몽타주 루트 모션이 있는 곳에만 둡니다.
 - 캐릭터 데이터: DeathMotions의 몽타주 ID, 점프 몽타주의 Start·Land 섹션. 플레이어는 '입력 계층의 행동 찾기' 표의 태그를 정확히 가진 행동이 태그마다 하나 이하이며, 검증은 입력 계층과 같은 C++ 표를 읽습니다.
 - 오류에는 파일, 행동 ID나 몽타주 경로·섹션, 항목 번호, 필드 경로를 붙입니다.
 
@@ -665,7 +674,11 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 | 효과 컨텍스트에서 그 효과를 건 어빌리티 인스턴스를 찾을 수 있음 | `GameplayEffectTypes.h`의 `GetAbilityInstance_NotReplicated` | 극한 회피 환급량 |
 | 레벨 시퀀스 재생 속도를 재생 중에 바꿀 수 있고, 시퀀스는 게임 전체 시간 배율을 따름 | `MovieSceneSequencePlayer`의 SetPlayRate | 시간 정지가 시작·끝나는 프레임의 컷신 속도 |
 | 착지할 때 Landed가 이동 모드 변경보다 먼저 불림 | `CharacterMovementComponent.cpp`의 ProcessLanded | 착지 모션을 고를 때 State.Jumping과 점프 행동이 남아 있는지 |
-| 루트 모션 점프 중 캐릭터 무브먼트의 수직 속도가 경로를 따름 | `AbilityTask_ApplyRootMotionJumpForce`, 루트 모션 소스 | 넉업의 `Event.Apex` 시점 |
+| 루트 모션 점프 중 캐릭터 무브먼트의 수직 속도가 경로를 따름 | `FRootMotionSource_JumpForce` | 넉업의 `Event.Apex` 시점 |
+| 몽타주가 루트 모션을 주는 동안 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않음 | `CharacterMovementComponent.cpp`의 `ApplyRootMotionToVelocity` | 도약·내리꽂기·돌진·넉업 동안 몽타주 루트 모션이 꺼져 있어 소스가 먹는지 |
+| JumpForce의 높이 경로가 포물선이고 수평이 등속이라, 높이를 중력 × 체공 시간² ÷ 8로 두면 엔진 중력의 포물선과 같음 | `FRootMotionSource_JumpForce`의 `GetRelativeLocation` | LeapSlam의 궤적, 착지 시각과 위치 |
+| ConstantRate 워핑의 프레임당 회전 한도는 이동 틱의 실제 시간 × `WarpMaxRotationRate`이고 재생 배율이 들어가지 않음 | `URootMotionModifier_Warp`의 `WarpRotation` | 배율 0.8 보스 패턴의 워핑 회전이 초당 360°인지. 지금 코드는 회전 속도를 재생 배율로 나눕니다. |
+| 점프 공격 Land 모션의 루트 이동이 작아, 켜 둬도 착지 뒤 밀려나지 않음 | AM_Player_JumpAttack의 Land 시퀀스 | 착지 뒤 위치. 밀려나면 Land의 루트 모션도 끄고, 내리꽂기 전에 착지하면 점프의 수평 속도로 잠깐 미끄러지는 것을 '동작이 달라지는 곳'에 더합니다. |
 | 엔진 GameplayCue 상태 노티파이가 메시 주인을 대상으로 Cue를 켜고 끔 | `AnimNotify_GameplayCueState.cpp` | 베기 선이 Judgment에서 켜지고 마무리에서 꺼지는지 |
 | Rate Scale은 재생 배율처럼 위치·루트 모션·노티파이에 적용됨 | `FAnimMontageInstance`의 Advance | 보스 패턴의 속도와 이동 거리 |
 | 그로기를 취소한 뒤 처형 피격 몽타주를 재생해도 블렌드가 같음 | 지금은 같은 Ability 안에서 바로 Montage_Play, 바뀐 뒤에는 그로기를 블렌드 아웃으로 멈춘 뒤 재생 | 처형 정렬(워핑, 간격) |
@@ -681,20 +694,22 @@ Id·Tags·Cooldown·Activation·Cost·End·Tasks는 항상 적습니다. 아래 
 | 점프 입력과 같은 프레임에 점프 행동을 막는 상태가 시작됨(드묾) | 점프하지 않음 | 점프는 하지만 점프 행동이 시작되지 않아 그 점프 동안 Busy가 없음 | 받아들입니다. 입력 계층이 Jump 직전에 발동 가능을 확인하므로, 그 사이 피격 반응 같은 상태가 시작될 때만 생기고 그 상태가 행동을 막습니다. |
 | 처형 타격의 피격 VFX | 보스의 캡슐 중심 | 칼이 닿은 곳(대미지 숫자는 지금처럼 캡슐 중심) | 받아들입니다. 기획서는 대미지 숫자의 위치만 정하고(전투 HUD), 다른 무기 타격과 같아집니다. |
 | LeapSlam 착지 타격의 피격 VFX | 보스 위치 | 맞은 대상의 캡슐 중심 | 받아들입니다. 공격 범위 타격의 피격 위치를 궁극기 마무리와 같게 대상의 캡슐 중심으로 둡니다. |
+| 보스 공격 패턴의 회전 속도(워핑, LeapSlam의 공중 회전) | 회전 속도를 재생 배율 0.8로 나눠 초당 450°일 수 있음 | 초당 360° | 기획서('공격 중 위치·회전 보정'의 초당 360°)를 따르는 수정입니다. 엔진 확인에서 재생 배율이 회전에 들어간다고 나오면 지금도 360°라 차이가 없습니다. |
+| 점프 공격 내리꽂기의 낙하 속도 | 초속 10m에서 중력으로 빨라짐 | 초속 10m 등속 | 받아들입니다. 기획서의 '초속 10m로 떨어집니다' 그대로이고, 1m 높이에서 착지가 약 5ms 늦어집니다. |
 
 ## 구현 순서와 완료 조건
 
-바꾸기 전에 '지금과 같다'를 판단할 기준값(넉업 전환 시각, 돌진 자세 유지 위치, 콤보와 넉업의 블렌드, 그로기 복귀 시각, 회피 방향과 이동 거리)을 재 둡니다. 단계마다 빌드와 시나리오 테스트로 확인한 뒤 다음 단계로 갑니다.
+바꾸기 전에 '지금과 같다'를 판단할 기준값(넉업 전환 시각, 돌진 자세 유지 위치, 콤보와 넉업의 블렌드, 그로기 복귀 시각, 회피 방향과 이동 거리, LeapSlam의 궤적과 착지 위치, 보스 워핑의 회전 속도)을 재 둡니다. 단계마다 빌드와 시나리오 테스트로 확인한 뒤 다음 단계로 갑니다.
 
 | 단계 | 작업 |
 | - | - |
 | ① Runner와 Task 스키마 | 시간표 컴포넌트를 Runner로 흡수, Task별 Params와 등록, 새 JSON 형식(발동 Task 배열, 섹션별 시간표)과 범용 검증. 몽타주는 그대로이고 행동 분기는 새 데이터를 읽게만 바꿔 동작이 같습니다. |
-| ② 발동·종료·대상과 규칙 이전 | Triggers와 End, Targeting과 프리셋, 상태 태그(`State.RotationLocked`, `State.PhysicsTranslation`), 범용 Task(Face, KeepDistance 포함)와 Attack의 판정 범위, 효과 데이터, Parry·Executed 스펙, 주인 객체(입력 계층과 행동 태그 검색, 캐릭터의 이동 사건, 보스의 PP 회복, 피격 처리의 패리·극한 회피 보상, 보스 AI, HUD), Rate Scale. 섹션 작업이 필요 없는 행동의 분기를 지웁니다. |
+| ② 발동·종료·대상과 규칙 이전 | Triggers와 End, Targeting과 프리셋, 상태 태그(`State.RotationLocked`), 범용 Task(Face, KeepDistance 포함)와 Attack의 판정 범위, 루트 모션 소스 이동(Launch의 JumpForce, Dash의 Down)과 공중 회전의 Face 구간(점프 공격·LeapSlam 몽타주의 루트 모션 끄기 포함), 효과 데이터, Parry·Executed 스펙, 주인 객체(입력 계층과 행동 태그 검색, 캐릭터의 이동 사건, 보스의 PP 회복, 피격 처리의 패리·극한 회피 보상, 보스 AI, HUD), Rate Scale. 섹션 작업이 필요 없는 행동의 분기를 지웁니다. |
 | ③ 섹션 작업 | 평타·회피·넉업·점프 몽타주 합치기, 돌진 찌르기 Hold와 그로기 Fall 섹션, 첫 섹션의 Transition과 전환, 남은 분기·태그·데이터 필드·함수 삭제, 관련 문서 갱신 |
 
 | 검증 대상 | 완료 기준 |
 | - | - |
-| 구조 | `Source/Ag/AbilitySystem`과 데이터 검증에 행동 ID·몽타주 ID·섹션 이름 비교가 없고, 플레이어 캐릭터와 HUD는 행동 ID로 스펙을 찾지 않으며, `UAgMontageTimelineComponent`가 없습니다. Task는 위 목록의 14개이고, Runner는 몽타주를 재생하고 Task가 요청한 전환만 하며 Task 종류를 모르고, Task는 다른 Task를 부르지 않습니다. |
+| 구조 | `Source/Ag/AbilitySystem`과 데이터 검증에 행동 ID·몽타주 ID·섹션 이름 비교가 없고, 플레이어 캐릭터와 HUD는 행동 ID로 스펙을 찾지 않으며, `UAgMontageTimelineComponent`가 없습니다. Task는 위 목록의 14개이고, Runner는 몽타주를 재생하고 Task가 요청한 전환만 하며 Task 종류를 모르고, Task는 다른 Task를 부르지 않습니다. 애니메이션 밖의 이동은 모두 루트 모션 소스이고, 캐릭터의 루트 모션 처리는 최소 간격 자르기만 남습니다. |
 | 동작 | 평타 콤보와 초기화, 점프와 착지 모션, 점프 공격, 회피와 극한 회피(한 번만), 가드·패리·가드 밀림·후딜 복귀, 달리기, 락온과 해제, 처형, 궁극기 순서(컷신, 베기 선, 시간 정지 해제 뒤 마무리), 넉업·넉백, 보스 8개 패턴과 재생 속도, 그로기(공중 시작, 시간, HUD, 처형 피격, PP 회복), 페이즈 전환, 사망과 처형 사망이 지금과 같습니다. 단 '동작이 달라지는 곳'은 표를 따릅니다. |
 | 데이터 | 잘못된 Task·필드·참조·효과·몽타주·섹션은 읽을 때 파일과 경로를 붙인 오류가 납니다. |
 
