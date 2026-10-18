@@ -136,7 +136,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
 	TArray<FName> Effects;
 
-	/** 몽타주 ID마다 그 몽타주. ID는 구현 계획서 'JSON 데이터'의 '어빌리티의 데이터'를 따릅니다. */
+	/** 몽타주 ID마다 그 몽타주. ID는 구현 계획서 'JSON 데이터'의 'ID 규칙'을 따릅니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Assets")
 	TMap<FName, TObjectPtr<UAnimMontage>> Montages;
 

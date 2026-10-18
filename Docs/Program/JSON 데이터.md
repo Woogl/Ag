@@ -17,7 +17,7 @@
 | 검증 시점 | JSON 데이터의 검증은 에디터 로딩·재로드와 쿡에서 수행합니다. 쿡에서는 배포할 모든 JSON의 최신 내용을 검증하고, 하나라도 오류가 있으면 쿡과 패키징을 실패시킵니다. 검증한 JSON과 배포하는 JSON은 같아야 합니다. 패키징된 게임은 에디터 에셋 검사를 반복하지 않습니다. 고정 스키마 해석과 파일 사이 참조처럼 실행에 필수인 확인은 로딩 계약으로 유지합니다. 파일 읽기·JSON 파싱·값 변환·고정 스키마 해석·에셋 로딩과 이 과정의 실패 처리는 유지하며, 검증 전용 처리와 분리합니다. | 배포 전에 데이터 오류를 차단하고, 검증이 끝난 데이터를 게임 실행 중 다시 검사하지 않습니다. |
 | 오류 검사 | 문법, 모르는 키, 빠진 키, 값 형식, 태그·열거형, 정수의 소수, 숫자의 유한성과 저장 타입 범위, 메타데이터의 허용 범위를 검사합니다. 맵의 빈 이름·중복 이름과 에셋 경로의 형식·존재·타입, 클래스의 부모 타입과 abstract 여부도 검사합니다. 리다이렉터를 거친 경로는 현재 경로로 고치도록 알립니다. 정의 ID의 빈 값·중복을 FName 기준으로 거부합니다. 파일 사이의 참조(캐릭터의 어빌리티·효과 ID, 행동과 사망 모션이 그 캐릭터에서 쓰는 몽타주 ID, 행동의 대상 프리셋 ID, ApplyEffect의 효과 ID, 시간표의 투사체 ID), Task별 필수값, 코드가 직접 재생하는 몽타주의 섹션(점프의 `Start`·`Land`), 코드가 거는 효과의 모양을 검사합니다. 행동 정의의 검사는 [어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>) '검증'을 따릅니다. 몽타주 시간표의 검사는 [몽타주 시간표](<몽타주 시간표.md>)의 '검증'을 따릅니다. 실패하면 파일명과 필드 경로를 로그·화면에 표시하고 이전 정상 데이터 전체를 유지합니다. 캐릭터 데이터의 최초 로딩에 실패하면 전투를 시작하지 않습니다. | 경로 오타나 잘못된 타입을 재생 시점 이전에 발견하고 부분 반영을 막습니다. 호출 코드가 요구하는 모션 ID의 누락은 아래 몽타주 관리의 조회 오류로도 알립니다. |
 | 다시 읽기 | 에디터는 Data 폴더의 JSON 저장을 감지해 모든 파일을 함께 다시 읽고, 모두 통과해야 바꿉니다. 파일 사이에 참조가 있어, 한 파일이라도 오류가 있으면 다른 파일의 변경도 반영되지 않습니다. 행동의 수치·대상·몽타주·Task와 시간표는 다음 발동부터, 행동 태그와 `Activation`(태그 조건, 트리거, 재발동 정책)은 캐릭터를 다시 만든 뒤부터 적용됩니다([어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>) '실행 사본과 다시 읽기'). 스탯·시작 효과·AI 트리 등 스폰 때 설정하는 값은 다음 플레이부터 적용됩니다. 코드가 거는 효과는 다음에 걸 때부터 새 정의를 쓰고, 걸려 있는 효과는 끝날 때까지 이전 GE로 동작합니다. 이미 재생 중인 몽타주를 강제로 교체하지 않습니다. 패키징 빌드는 파일을 감시하지 않습니다. 배열 원소 포인터·참조는 함수 안에서만 사용하고, 이후에는 ID로 다시 조회합니다. | 에디터 재시작이나 C++ 빌드 없이 JSON을 고쳐 다시 플레이할 수 있습니다. 다시 읽기에 실패하면 기존 정상 값을 유지합니다. |
-| 패키징 | JSON 파일은 `RuntimeDependencies`로 UFS에 넣습니다. 전체 JSON의 검증과 실패 처리는 '검증 시점'을 따릅니다. 로더가 읽지 않는 JSON 파일과 쓰는 곳이 없는 정의(캐릭터가 쓰지 않는 어빌리티, 코드·캐릭터·ApplyEffect가 쓰지 않는 효과, 시간표가 쏘지 않는 투사체, 행동이 쓰지 않는 대상 프리셋, 캐릭터가 재생하지 않는 몽타주의 시간표)는 쿡 오류로 처리합니다. `UAgAssetManager::ModifyCook`은 같은 묶음 읽기로 모든 파일을 검사하고, 읽은 객체의 참조(Transient 포함)가 속한 패키지를 쿡 목록에 추가합니다. 네이티브 클래스의 /Script 패키지는 제외합니다. 별도의 수동 에셋 목록은 두지 않습니다. | JSON 문자열과 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡 단계에 직접 전달해야 합니다. |
+| 패키징 | JSON 파일은 `RuntimeDependencies`로 UFS에 넣습니다. 전체 JSON의 검증과 실패 처리는 '검증 시점'을 따릅니다. 로더가 읽지 않는 JSON 파일과 쓰는 곳이 없는 정의(캐릭터가 쓰지 않는 어빌리티, 코드·캐릭터·ApplyEffect가 쓰지 않는 효과, 시간표가 쏘지 않는 투사체, 행동이 쓰지 않는 대상 프리셋)는 쿡 오류로 처리합니다. 행동이 재생하지 않는 몽타주의 시간표는 읽을 때의 오류입니다([몽타주 시간표](<몽타주 시간표.md>) '검증'). `UAgAssetManager::ModifyCook`은 같은 묶음 읽기로 모든 파일을 검사하고, 읽은 객체의 참조(Transient 포함)가 속한 패키지를 쿡 목록에 추가합니다. 네이티브 클래스의 /Script 패키지는 제외합니다. 별도의 수동 에셋 목록은 두지 않습니다. | JSON 문자열과 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡 단계에 직접 전달해야 합니다. |
 | 데이터를 찾는 방법 | 파일 이름과 그 파일을 읽는 클래스는 에셋 매니저에 정해 둡니다. 캐릭터 블루프린트는 `CharacterDataId`를 목록에서 고르며, 목록에는 그 캐릭터 클래스의 데이터 클래스에 맞는 ID만 나옵니다. 캐릭터는 컴포넌트를 초기화하기 전(`PreInitializeComponents`)에 한 번 확인하고(없거나 맞지 않으면 멈춤), 그 밖의 코드는 있다고 보고 씁니다([캐릭터와 GAS](<캐릭터와 GAS.md>) '데이터 연결'). 캐릭터 블루프린트에는 데이터만 넣고 이벤트 그래프는 쓰지 않습니다. | 코드에 에셋 경로를 쓰지 않습니다. 파일마다 그 파일을 읽는 클래스가 정해져 있어 이름을 바꿀 일이 없습니다. |
 | 어빌리티의 데이터 | 캐릭터는 어빌리티 목록의 ID마다 단일 Runner를 독립 스펙으로 부여하고, 각 스펙 인스턴스가 자기 ID의 정의를 씁니다. 발동할 때 정의와 몽타주를, 재생을 시작할 때 그 몽타주의 시간표를 복사하고, 발동 Task와 시간표 Task는 그 사본으로 만듭니다. 부여할 때 연결한 행동 태그와 `Activation`이 바뀌면 캐릭터를 다시 만들 때까지 발동을 거부합니다. | 진행 중인 실행에 새 파일의 일부가 섞이지 않고, 클래스 CDO를 행동별 설정으로 덮지 않습니다. |
 
@@ -104,35 +104,37 @@ flowchart LR
 
 효과 정의에는 그 효과에서 하나로 정해진 값을 둡니다. 쓰는 곳마다 다른 값은 시간표와 행동 정의에 두고, 적용할 때 SetByCaller와 지속 시간으로 넘깁니다. 쓰는 곳마다 다른 값은 공격 배율과 적중 충전량(시간표의 공격 값), 행동의 비용·쿨다운입니다. 한 행동만 쓰는 시간·보상·소모(패리 구간, 극한 회피, 회피 반격 기회, 그로기 시간, 달리기 소모)는 그 효과의 값이라 효과 정의에 둡니다([어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>) '결정과 목표').
 
+정의 열은 효과의 모양만 적고, 시간·양 같은 값은 `Effects.json`을 따릅니다.
+
 | 효과 ID | 정의 | 거는 곳 |
 | - | - | - |
 | `Damage` | `Instant`, 계산 `UAgDamageExecution`, `State.Dead`인 대상 제외, 컴포넌트 `UAgHitResultGameplayEffectComponent`, `AssetTags` `Effect.Damage` | Attack, 투사체(배율·반응 태그·충전량은 Attack 항목과 투사체 정의의 공격 값) |
 | `Resource` | `Instant`, SP·MP·UP를 SetByCaller로 더함 | 행동 비용(음수), 극한 회피의 SP 반환, 적중 충전 |
 | `Cooldown` | `HasDuration`, `AssetTags` `Effect.Cooldown` | 행동 쿨다운(시간은 행동의 `Cooldown`, 출처는 그 어빌리티 인스턴스) |
-| `Hitstop` | `HasDuration` 0.12초, `State.Hitstop` 부여 | 피격 처리 |
-| `SPRegenDelay`, `SPRegenDelayEmpty` | `HasDuration` 1초 / 1.5초, `State.Regen.SPDelay` 부여 | 플레이어의 SP 감소 |
-| `PPRegenDelay` | `HasDuration` 6초, `State.Regen.PPDelay` 부여 | PP 감소 |
+| `Hitstop` | `HasDuration`, `State.Hitstop` 부여 | 피격 처리 |
+| `SPRegenDelay`, `SPRegenDelayEmpty` | `HasDuration`, `State.Regen.SPDelay` 부여 | 플레이어의 SP 감소 |
+| `PPRegenDelay` | `HasDuration`, `State.Regen.PPDelay` 부여 | PP 감소 |
 | `Kill` | `Instant`, HP를 0으로 `Override` | 치트 명령, 월드 밖으로 떨어짐 |
 | `PPRefill` | `Instant`, PP를 `FromAttribute` MaxPP로 `Override` | 그로기 끝, 페이즈 전환 |
 | `ParryPPLoss` | `Instant`, 계산 `UAgParryPPLossExecution` | 패리 |
-| `ParryReward` | `Instant`, MP 15, UP 10 더함 | 패리 |
-| `PerfectDodgeReward` | `Instant`, MP 10, UP 10 더함 | 극한 회피 |
-| `ParryWindow` | `HasDuration` 0.3초, `State.ParryWindow` 부여 | 가드의 ApplyEffect(가드가 끝나면 지움). 패리가 지웁니다. |
+| `ParryReward` | `Instant`, MP·UP를 더함 | 패리 |
+| `PerfectDodgeReward` | `Instant`, MP·UP를 더함 | 극한 회피 |
+| `ParryWindow` | `HasDuration`, `State.ParryWindow` 부여 | 가드의 ApplyEffect(가드가 끝나면 지움). 패리가 지웁니다. |
 | `PerfectDodgeWindow` | `Infinite`, `State.PerfectDodgeWindow` 부여 | 회피 시간표의 ApplyEffect 구간. 극한 회피가 지웁니다. |
-| `DodgeCounterChance` | `HasDuration` 1초, `State.DodgeCounterChance` 부여 | 극한 회피 |
-| `GroggyTime` | `HasDuration` 5초, `State.GroggyTime` 부여 | 그로기 시간표의 ApplyEffect 지점. 그로기가 끝나면 보스 캐릭터가 지웁니다. |
-| `SprintDrain` | `Infinite`, 주기 0.1초, 걸 때 실행 안 함, SP 초당 -12 | 달리기의 ApplyEffect(달리기가 끝나면 지움) |
+| `DodgeCounterChance` | `HasDuration`, `State.DodgeCounterChance` 부여 | 극한 회피 |
+| `GroggyTime` | `HasDuration`, `State.GroggyTime` 부여 | 그로기 시간표의 ApplyEffect 지점. 그로기가 끝나면 보스 캐릭터가 지웁니다. |
+| `SprintDrain` | `Infinite`, 주기 실행, 걸 때 실행 안 함, SP를 줄임 | 달리기의 ApplyEffect(달리기가 끝나면 지움) |
 | `GroggyImmune` | `Infinite`, `State.GroggyImmune` 부여 | 플레이어 시작 효과 |
-| `SPRegen` | `Infinite`, 주기 0.1초, 걸 때 실행 안 함, 주기 재시작(`ResetPeriod`), SP 초당 40, `State.Regen.SPDelay`·`State.Guarding` 동안 꺼짐 | 플레이어 시작 효과 |
-| `SPRegenGuarding` | `SPRegen`과 같은 모양, SP 초당 20, `State.Guarding` 동안만, `State.Regen.SPDelay` 동안 꺼짐 | 플레이어 시작 효과 |
-| `PPRegen` | 같은 모양, PP 초당 50, `State.Regen.PPDelay` 동안 꺼짐 | 보스 시작 효과 |
+| `SPRegen` | `Infinite`, 주기 실행, 걸 때 실행 안 함, 주기 재시작(`ResetPeriod`), SP를 더함, `State.Regen.SPDelay`·`State.Guarding` 동안 꺼짐 | 플레이어 시작 효과 |
+| `SPRegenGuarding` | `SPRegen`과 같은 모양, `State.Guarding` 동안만, `State.Regen.SPDelay` 동안 꺼짐 | 플레이어 시작 효과 |
+| `PPRegen` | 같은 모양, PP를 더함, `State.Regen.PPDelay` 동안 꺼짐 | 보스 시작 효과 |
 
 ### 코드가 효과를 쓰는 방법
 
 - 코드가 거는 효과는 `EAgEffect`의 값이고, 값 이름이 효과 ID입니다. 로더는 이 효과마다 코드가 넘기는 값을 받을 수 있는 모양인지 검사합니다(지속 방식, 지속 시간을 코드가 정하는지, 주기, 코드가 넣는 SetByCaller 태그, 코드가 찾는 에셋 태그, 코드가 기대하는 부여 태그).
 - 데이터가 거는 효과(행동 정의와 시간표의 ApplyEffect)는 효과 ID로 적습니다. 로더는 그 ID가 있는지와, 구간에 두면 `Infinite`인지 검사합니다. 구간의 길이는 시간표가 정하기 때문입니다.
 - 스펙은 GE 객체로 만들고, 엔진의 클래스 기준 함수와 같은 자리에 둡니다. ASC의 `MakeEffectSpec`은 엔진 `MakeOutgoingSpec`의 객체판입니다. 어빌리티의 `MakeEffectSpec`은 엔진 `MakeOutgoingGameplayEffectSpec`처럼 여기에 어빌리티 컨텍스트, 어빌리티 태그, 스펙의 SetByCaller를 더하며, Task도 소유 어빌리티의 것을 씁니다. ApplyEffect도 Runner의 `MakeEffectSpec`을 써서, 걸린 효과의 컨텍스트에서 그 행동의 인스턴스를 얻을 수 있습니다. 넘길 값이 없는 효과(시작 효과, 히트스톱, 리젠 대기, `Kill`, `PPRefill`, 패리·극한 회피의 보상과 회피 반격 기회)는 ASC의 `ApplyGameplayEffectToSelf`에 GE 객체를 넘깁니다.
-- 스펙에 값을 넣는 일은 그 값을 가진 구조체가 맡습니다(`AddToSpec`). 공격 한 타의 값은 `FAgPlayerAttackHit`, 행동의 비용은 `FAgResourceCostParams`입니다. 극한 회피의 SP 반환과 적중 충전은 자원 효과에 `AgResource`의 함수로 양을 넣습니다. 맞은 위치, 시간, 태그는 거는 쪽이 엔진 함수(`AddOrigin`, `SetDuration`, `DynamicGrantedTags`)로 넣습니다.
+- 스펙에 값을 넣는 일은 그 값을 가진 구조체가 맡습니다(`AddToSpec`). 공격 한 타의 값은 `FAgPlayerAttackHit`, 행동의 비용은 `FAgResourceCostParams`입니다. 극한 회피의 SP 반환과 적중 충전은 자원 효과에 `AgResource`의 함수로 양을 넣습니다. 맞은 위치와 시간은 거는 쪽이 엔진 함수(`AddOrigin`, `SetDuration`)로 넣습니다.
 - 걸린 효과는 효과의 `AssetTags`나 부여 태그로 알아봅니다: 쿨다운 조회는 `Effect.Cooldown`과 출처 어빌리티로, HUD의 가드 SP 감소 판별은 `Effect.Damage`로 찾습니다. 패리와 극한 회피는 구간 효과를 부여 태그(`State.ParryWindow`, `State.PerfectDodgeWindow`)로 찾아 지우고, 극한 회피는 그 효과의 컨텍스트에 있는 행동의 `Cost`만큼 SP를 돌려줍니다.
 
 ### 엔진 제약

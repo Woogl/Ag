@@ -30,7 +30,7 @@ struct FAgScaleRootMotionParams : public FAgTaskParams
 
 /**
  * 행동 몽타주 전체 루트 모션의 수평 이동 거리가 Distance가 되도록 캐릭터의 루트 모션 이동 배율을 정하고, 끝날 때 건 배율이 그대로면
- * 되돌립니다. 발동 Task는 몽타주를 재생한 같은 프레임에 시작하므로 첫 루트 모션부터 적용됩니다.
+ * 되돌립니다. 발동 Task는 몽타주를 재생하기 전(같은 프레임)에 시작하므로 첫 루트 모션부터 적용됩니다.
  */
 UCLASS()
 class UAgAbilityTask_ScaleRootMotion : public UAbilityTask
