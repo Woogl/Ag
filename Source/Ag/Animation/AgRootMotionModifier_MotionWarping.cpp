@@ -17,7 +17,7 @@ void FAgTrackParams::GetFieldRules(FAgJsonFieldRules& Rules) const
 	Rules.Nullable.Add(GET_MEMBER_NAME_CHECKED(FAgTrackParams, MaxWarpDistance));
 }
 
-void FAgTrackParams::Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors)
+void FAgTrackParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
 {
 	const TSharedPtr<FJsonValue> Range = Json.TryGetField(TEXT("TargetingRange"));
 	const TSharedPtr<FJsonValue> Distance = Json.TryGetField(TEXT("MaxWarpDistance"));
@@ -45,6 +45,12 @@ void UAgRootMotionModifier_MotionWarping::SetTrackSettings(const FAgTrackParams&
 
 void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateContext& Context)
 {
+	// 재생을 맡은 Runner가 지운 구간(ClearWarps)은 엔진이 이번 갱신 뒤에 지우도록 그대로 둡니다. 다른 상태로 바꾸면 남아서 같은 몽타주의
+	// 새 재생이 같은 구간에 Modifier를 더하지 못합니다.
+	if (GetState() == ERootMotionModifierState::MarkedForRemoval)
+	{
+		return;
+	}
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetActorOwner());
 	if (!Character || Context.Animation != Animation || Context.PreviousPosition < StartTime || Context.PreviousPosition >= EndTime)
 	{
@@ -59,7 +65,7 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		const FAnimMontageInstance* Instance = RootInstance && RootInstance->Montage == Animation.Get() ? RootInstance : nullptr;
 		UAgGameplayAbility* Owner = Cast<UAgGameplayAbility>(Character->GetAbilitySystemComponent()->GetAnimatingAbility());
 		AActor* Selected = nullptr;
-		if (!Owner || !Instance || !Owner->PrepareWarpTarget(Instance->GetInstanceID(), StartTime, Params, Selected, Gap, bFacingOnly))
+		if (!Owner || !Instance || !Owner->PrepareTrackTarget(Instance->GetInstanceID(), Params, Selected, Gap, bFacingOnly))
 		{
 			UE_LOG(LogAg, Error, TEXT("Track: missing playback owner (animation %s, window %.3f..%.3f)"), *GetNameSafe(Animation.Get()),
 			    StartTime, EndTime);
@@ -84,10 +90,8 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		SetState(ERootMotionModifierState::Disabled);
 		return;
 	}
-	if (RotationMethod == EMotionWarpRotationMethod::ConstantRate && FMath::Abs(Context.PlayRate) > UE_SMALL_NUMBER)
-	{
-		WarpMaxRotationRate = Character->GetCharacterMovement()->RotationRate.Yaw / FMath::Abs(Context.PlayRate);
-	}
+	// 엔진 ConstantRate의 프레임당 회전 한도는 이동 틱의 시간 × 회전 속도라, 재생 배율과 관계없이 캐릭터 회전 속도로 돕니다.
+	WarpMaxRotationRate = static_cast<float>(Character->GetCharacterMovement()->RotationRate.Yaw);
 	const FVector Location = Character->GetActorLocation();
 	const FVector Direction = (Target->GetActorLocation() - Location).GetSafeNormal2D();
 	FVector Goal = Location;

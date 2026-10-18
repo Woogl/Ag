@@ -2,6 +2,7 @@
 
 #include "UI/AgHUDWidget.h"
 
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
@@ -206,14 +207,23 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	SetBarRatio(*BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
 	UpdateTrail(BossHPTrail, *BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
-	// 그로기: 빈 바를 그로기 지속 시간 동안 다시 채웁니다. 처형으로 그로기가 길어지면 끝날 때까지 가득 찬 채로 둡니다.
+	// 그로기: 빈 바를 그로기 시간(착지한 순간부터 세는 GroggyTime 효과) 동안 다시 채웁니다. 착지 전은 빈 바이고, 처형이나
+	// 히트스톱으로 그로기가 길어져 효과가 끝난 뒤에는 끝날 때까지 가득 찬 채로 둡니다.
 	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
-	if (BossCharacter.GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+	const UAbilitySystemComponent* BossASC = BossCharacter.GetAbilitySystemComponent();
+	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
-		const float GroggyDuration = UAgAssetManager::Get().GetCombatRules().GroggyDuration;
-		const float Elapsed = BossCharacter.GetGroggyElapsedTime();
-		const bool bCounting = GroggyDuration > 0.f && Elapsed >= 0.f;
-		PPBarRatio = bCounting ? FMath::Min(Elapsed / GroggyDuration, 1.f) : 0.f;
+		const FGameplayEffectQuery Query =
+		    FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_GroggyTime));
+		const TArray<TPair<float, float>> Times = BossASC->GetActiveEffectsTimeRemainingAndDuration(Query);
+		if (!Times.IsEmpty() && Times[0].Value > 0.f)
+		{
+			PPBarRatio = FMath::Clamp(1.f - Times[0].Key / Times[0].Value, 0.f, 1.f);
+		}
+		else
+		{
+			PPBarRatio = BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne) ? 0.f : 1.f;
+		}
 	}
 	BossPPBar->SetPercent(PPBarRatio);
 	// 잔상은 바에 표시한 값을 따라갑니다. 그로기 중에는 다시 채우는 값입니다.
@@ -223,16 +233,15 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 const UGameplayAbility* UAgHUDWidget::FindAbility(
     const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
 {
-	for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
+	// 입력 계층과 같은 행동 태그 검색입니다.
+	const UAgAbilitySystemComponent* AgASC = Cast<UAgAbilitySystemComponent>(&ASC);
+	const FGameplayAbilitySpec* Spec = AgASC ? AgASC->FindSpecByTag(AbilityTag) : nullptr;
+	if (!Spec || !Spec->GetPrimaryInstance())
 	{
-		const UGameplayAbility* Ability = Spec.GetPrimaryInstance();
-		if (Ability && Spec.GetDynamicSpecSourceTags().HasTagExact(AbilityTag))
-		{
-			OutHandle = Spec.Handle;
-			return Ability;
-		}
+		return nullptr;
 	}
-	return nullptr;
+	OutHandle = Spec->Handle;
+	return Spec->GetPrimaryInstance();
 }
 
 bool UAgHUDWidget::CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag)

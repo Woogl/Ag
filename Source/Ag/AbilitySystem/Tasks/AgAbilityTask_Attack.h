@@ -13,8 +13,8 @@ class AAgCharacterBase;
 class UCapsuleComponent;
 
 /**
- * 한 타의 판정 데이터(Attack Task의 Params). 시간표 구간이면 그동안 무기 판정을 하고, 발동 Task 배열의 항목은 행동 처리가
- * 정한 대상을 차례대로 한 번씩 칩니다.
+ * 한 타의 판정 데이터(Attack Task의 Params). 구간이면 켜진 동안 판정 범위에 닿는 적을 대상마다 한 번 치고, 지점이면 그 시각에
+ * 닿아 있는 적을 칩니다. 판정 범위는 무기(무기 충돌 스윕)이고, Radius가 있으면 주인 둘레의 공격 범위입니다.
  */
 USTRUCT()
 struct FAgAttackParams : public FAgTaskParams
@@ -39,13 +39,29 @@ struct FAgAttackParams : public FAgTaskParams
 	UPROPERTY()
 	float UPCharge = 0.f;
 
-	FAgPlayerAttackHit MakeHit(bool bFinisher = false) const;
+	/** 선택. 마지막 일격(Effect.Damage.Finisher)입니다. */
+	UPROPERTY()
+	bool bFinisher = false;
+
+	/** 선택. 주인 둘레의 공격 범위(캡슐 중심 사이 수평 거리, cm). 없으면 무기 판정입니다. */
+	UPROPERTY()
+	float Radius = 0.f;
+
+	/** 선택. 공중의 대상(State.Airborne)은 맞지 않습니다. */
+	UPROPERTY()
+	bool bGroundOnly = false;
+
+	bool bHasRadius = false;
+
+	FAgPlayerAttackHit MakeHit() const;
 
 	virtual EAgTaskPlacement GetPlacements() const override
 	{
-		return EAgTaskPlacement::Activation | EAgTaskPlacement::Window;
+		return EAgTaskPlacement::Window | EAgTaskPlacement::Point;
 	}
 
+	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
+	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
@@ -58,9 +74,8 @@ class UAgAbilityTask_Attack : public UAbilityTask
 public:
 	UAgAbilityTask_Attack();
 
-	static UAgAbilityTask_Attack* Sweep(UGameplayAbility* Owner, const FAgAttackParams& Params);
-	static UAgAbilityTask_Attack* Strike(UGameplayAbility* Owner, const FAgAttackParams& Params, const TArray<AAgCharacterBase*>& Targets,
-	    bool bFinisher, TOptional<FVector> HitLocation = {});
+	/** bOnce면 시작할 때 한 번 판정하고 끝납니다(지점). */
+	static UAgAbilityTask_Attack* Attack(UGameplayAbility* Owner, const FAgAttackParams& Params, bool bOnce);
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
 	virtual void OnDestroy(bool bOwnerFinished) override;
@@ -76,16 +91,20 @@ private:
 	};
 
 	bool GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const;
+
+	/** 판정 범위에 닿는 적을 칩니다. 이 판정에서 이미 친 대상은 다시 치지 않습니다. */
+	void Detect();
 	void SweepWeapon();
+	void HitArea();
+
+	/** 치면 거짓을 돌려줍니다: 판정이나 행동이 이 타격으로 끝났습니다. */
+	bool Hit(AAgCharacterBase& Target, const FVector& Location);
 
 	FAgAttackParams Params;
-	TOptional<FVector> HitLocation;
-	TArray<TWeakObjectPtr<AAgCharacterBase>> Targets;
 	TWeakObjectPtr<UCapsuleComponent> WeaponCollision;
 	TSet<TWeakObjectPtr<AActor>> TouchedActors;
 	FVector LastEdgeStart = FVector::ZeroVector;
 	FVector LastEdgeEnd = FVector::ZeroVector;
 	FAgAttackTickFunction AttackTick;
-	bool bSingleStrike = false;
-	bool bFinisher = false;
+	bool bOnce = false;
 };

@@ -23,6 +23,7 @@
       "Dodge",
       "DodgeCounter",
       "Guard",
+      "Parry",
       "Skill",
       "Ultimate",
       "Execution",
@@ -31,18 +32,19 @@
       "KnockBack",
       "KnockUp",
       "GuardPushback",
-      "GuardBreak",
-      "Death"
+      "GuardBreak"
     ],
     "DeathPresentationTime": 3,
     "StopDistance": 100,
+    "DeathMotions": [],
     "InputBufferTime": 0.3,
     "GuardSPCostRatio": 0.25,
     "GuardMoveSpeedRatio": 0.65,
     "ParryPPRatio": 0.08,
     "UltimateSlowMotionSpeed": 0.3,
     "UltimateSlowMotionDuration": 0.8,
-    "LockOnRange": 2000,
+    "PerfectDodgeSlowMotionSpeed": 0.3,
+    "PerfectDodgeSlowMotionDuration": 0.3,
     "LockOnReleaseRange": 3000,
     "SprintSpeedRatio": 1.5,
     "Effects": [
@@ -51,13 +53,8 @@
       "GroggyImmune"
     ],
     "Montages": {
-      "BasicAttack1": "/Game/Animations/AM_Player_BasicAttack1.AM_Player_BasicAttack1",
-      "BasicAttack2": "/Game/Animations/AM_Player_BasicAttack2.AM_Player_BasicAttack2",
-      "BasicAttack3": "/Game/Animations/AM_Player_BasicAttack3.AM_Player_BasicAttack3",
-      "BasicAttack4": "/Game/Animations/AM_Player_BasicAttack4.AM_Player_BasicAttack4",
-      "BasicAttack5": "/Game/Animations/AM_Player_BasicAttack5.AM_Player_BasicAttack5",
-      "Roll": "/Game/Animations/AM_Player_Roll.AM_Player_Roll",
-      "Backstep": "/Game/Animations/AM_Player_Backstep.AM_Player_Backstep",
+      "BasicAttack": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
+      "Dodge": "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge",
       "GuardFlinch": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch",
       "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
       "GuardBreak": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak",
@@ -65,25 +62,13 @@
       "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
       "DodgeCounter": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
       "Jump": "/Game/Animations/AM_Player_Jump.AM_Player_Jump",
-      "Land": "/Game/Animations/AM_Player_Land.AM_Player_Land",
       "JumpAttack": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
       "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
       "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
       "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
       "KnockBack": "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "KnockUpFall": "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall",
-      "GetUp": "/Game/Animations/AM_GetUp.AM_GetUp"
-    },
-    "ExecutionDistance": 95,
-    "EnemyTargeting": "/Game/Data/TP_Enemy.TP_Enemy",
-    "BasicAttackMontageIds": [
-      "BasicAttack1",
-      "BasicAttack2",
-      "BasicAttack3",
-      "BasicAttack4",
-      "BasicAttack5"
-    ]
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp"
+    }
   },
   "Boss": {
     "DisplayName": "커스터",
@@ -114,12 +99,18 @@
       "KnockBack",
       "KnockUp",
       "Groggy",
-      "PhaseTransition",
-      "Death"
+      "Executed",
+      "PhaseTransition"
     ],
     "DeathPresentationTime": 4,
     "StopDistance": 150,
-    "PatternPlayRate": 0.8,
+    "DeathMotions": [
+      {
+        "Montage": "Executed",
+        "KilledBy": "Ability.Action.Execution",
+        "Death": "ExecutedDeath"
+      }
+    ],
     "NearDistance": 300,
     "FarDistance": 1000,
     "RetryInterval": 0.5,
@@ -151,9 +142,7 @@
       "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
       "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
       "KnockBack": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "KnockUpFall": "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall",
-      "GetUp": "/Game/Animations/AM_GetUp.AM_GetUp"
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp"
     },
     "LockOnBone": "spine_05",
     "ExecutionPromptBone": "head",

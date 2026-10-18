@@ -2,6 +2,7 @@
 
 #include "Core/AgAssetManager.h"
 
+#include "AbilitySystem/Tasks/AgAbilityTask_ApplyEffect.h"
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
 #include "Data/AgAbilityData.h"
@@ -591,12 +592,39 @@ bool UAgAssetManager::LoadJsonData()
 			}
 		}
 	}
-	if (CharacterErrors.IsEmpty() && AbilityErrors.IsEmpty() && EffectErrors.IsEmpty())
+	if (AbilityErrors.IsEmpty() && EffectErrors.IsEmpty())
 	{
+		AgAbilityData::ValidateEffects(NewAbilities->Abilities, NewEffects->Effects, AbilityErrors);
+	}
+	if (TimelineErrors.IsEmpty() && EffectErrors.IsEmpty())
+	{
+		AgMontageTimeline::ValidateEffects(NewTimelines->Timelines, NewEffects->Effects, TimelineErrors);
+	}
+	if (CharacterErrors.IsEmpty() && AbilityErrors.IsEmpty() && EffectErrors.IsEmpty() && TimelineErrors.IsEmpty())
+	{
+		// 시간표는 행동이 재생하는 몽타주에만 둡니다. 캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)에는 판정할 Runner가 없습니다.
+		TSet<FName> AbilityMontages;
 		for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
 		{
-			AgAbilityData::ValidateCharacter(
-			    *Pair.Value, NewAbilities->Abilities, NewEffects->Effects, Pair.Key.ToString() + TEXT("."), CharacterErrors);
+			AgAbilityData::ValidateCharacter(*Pair.Value, NewAbilities->Abilities, NewEffects->Effects, NewTimelines->Timelines,
+			                                 Pair.Key.ToString() + TEXT("."), CharacterErrors);
+			for (FName AbilityId : Pair.Value->Abilities)
+			{
+				const FAgAbilityData* Ability = NewAbilities->Abilities.Find(AbilityId);
+				const UAnimMontage* Montage =
+				    Ability && Ability->bHasMontage ? Pair.Value->FindMontage(Ability->Montage.MontageId) : nullptr;
+				if (Montage)
+				{
+					AbilityMontages.Add(FName(*Montage->GetPathName()));
+				}
+			}
+		}
+		for (const TPair<FName, FAgMontageTimeline>& Pair : NewTimelines->Timelines)
+		{
+			if (!AbilityMontages.Contains(Pair.Key))
+			{
+				TimelineErrors.Add(Pair.Key.ToString() + TEXT(": no ability plays this montage, so it can't have a timeline"));
+			}
 		}
 	}
 
@@ -678,32 +706,40 @@ void UAgAssetManager::ModifyCook(
 	// 쓰는 곳이 없는 정의는 배포하지 않습니다.
 	TSet<FName> UsedAbilities;
 	TSet<FName> UsedEffects;
-	TSet<FName> UsedMontages;
 	TSet<FName> UsedProjectiles;
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
 		UsedAbilities.Append(Pair.Value->Abilities);
 		UsedEffects.Append(Pair.Value->Effects);
-		for (const TPair<FName, TObjectPtr<UAnimMontage>>& Montage : Pair.Value->Montages)
-		{
-			if (Montage.Value)
-			{
-				UsedMontages.Add(FName(*Montage.Value->GetPathName()));
-			}
-		}
 	}
 	const UEnum* CodeEffects = StaticEnum<EAgEffect>();
 	for (int32 Index = 0; Index < CodeEffects->NumEnums() - 1; ++Index)
 	{
 		UsedEffects.Add(AgEffectData::Id(static_cast<EAgEffect>(CodeEffects->GetValueByIndex(Index))));
 	}
+	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
+	{
+		for (const FInstancedStruct& Task : Pair.Value.Tasks)
+		{
+			if (const FAgApplyEffectParams* Apply = Task.GetPtr<FAgApplyEffectParams>())
+			{
+				UsedEffects.Add(Apply->Effect);
+			}
+		}
+	}
 	for (const TPair<FName, FAgMontageTimeline>& Pair : MontageTimelines->Timelines)
 	{
-		if (!UsedMontages.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no character data plays this montage (%s)"), MontageTimelinesFile, *Pair.Key.ToString());
-		}
 		UsedProjectiles.Append(AgMontageTimeline::GetProjectileIds(Pair.Value));
+		for (const FAgTimelineSection& Section : Pair.Value.Sections)
+		{
+			for (const FAgTimelineItem& Item : Section.Items)
+			{
+				if (const FAgApplyEffectParams* Apply = Item.Params.GetPtr<FAgApplyEffectParams>())
+				{
+					UsedEffects.Add(Apply->Effect);
+				}
+			}
+		}
 	}
 	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
 	{
@@ -716,7 +752,7 @@ void UAgAssetManager::ModifyCook(
 	{
 		if (!UsedEffects.Contains(Pair.Key))
 		{
-			UE_LOG(LogAg, Error, TEXT("%s: neither C++ nor a character uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
+			UE_LOG(LogAg, Error, TEXT("%s: no C++, character or ApplyEffect uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
 		}
 	}
 	for (const TPair<FName, FAgProjectileDefinition>& Pair : Projectiles->Projectiles)

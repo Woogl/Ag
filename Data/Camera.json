@@ -21,7 +21,5 @@
   "GuardBreakShake": "Large",
   "ExecutionStabShake": "Small",
   "ExecutionBlowShake": "Large",
-  "FinisherShake": "Large",
-  "LeapLandingShake": "Medium",
-  "LeapLandingShakeRange": 1500
+  "FinisherShake": "Large"
 }

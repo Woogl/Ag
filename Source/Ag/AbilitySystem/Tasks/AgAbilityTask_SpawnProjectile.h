@@ -18,7 +18,7 @@ enum class EAgProjectileOrigin : uint8
 	MeshSocket
 };
 
-/** 투사체 한 발(SpawnProjectile Task의 Params). Attack은 그 투사체의 공격 데이터입니다. */
+/** 투사체 한 발(SpawnProjectile Task의 Params). Attack은 그 투사체의 공격 데이터이고, 판정 범위(Radius, bGroundOnly)는 쓰지 않습니다. */
 USTRUCT()
 struct FAgSpawnProjectileParams : public FAgTaskParams
 {
@@ -44,7 +44,7 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 	}
 
 	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors) override;
+	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

@@ -9,7 +9,6 @@
 
 class UAnimMontage;
 class UStateTree;
-class UTargetingPreset;
 
 /** 플레이어 사양·보스 사양의 '스탯' 표: 스탯(어트리뷰트)마다 초기값과 최대값 */
 USTRUCT(BlueprintType)
@@ -59,6 +58,27 @@ struct FAgAttributes
 };
 
 /**
+ * 사망 모션: Montage를 재생하는 중에 사망 이벤트의 공격 쪽 태그에 KilledBy가 있으면, 그 재생 위치에서 Death를 이어 재생한 뒤
+ * 래그돌로 바꿉니다(처형 사망).
+ */
+USTRUCT(BlueprintType)
+struct FAgDeathMotion
+{
+	GENERATED_BODY()
+
+	/** 캐릭터 데이터 Montages의 ID */
+	UPROPERTY(VisibleAnywhere, Category = "Death")
+	FName Montage;
+
+	UPROPERTY(VisibleAnywhere, Category = "Death")
+	FGameplayTag KilledBy;
+
+	/** 캐릭터 데이터 Montages의 ID */
+	UPROPERTY(VisibleAnywhere, Category = "Death")
+	FName Death;
+};
+
+/**
  * 플레이어와 보스가 함께 쓰는 데이터(구현 계획서 'JSON 데이터'). Characters.json의 캐릭터 항목 하나입니다.
  * 수치·설정·에셋 참조는 모두 Transient이며, 에셋 매니저가 JSON을 검증하고 한 번에 채웁니다. 객체는 에셋 매니저가 들고 있습니다.
  * 필드마다 기획서의 어느 항목인지는 데이터 위치표(Docs/Program/데이터 위치표.md)를 따릅니다.
@@ -104,9 +124,13 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Death", meta = (Units = "s", ClampMin = 0))
 	float DeathPresentationTime = 0.f;
 
-	/** 공격 중 이동: 정지 간격 (캡슐 중심 사이 수평 거리) */
+	/** 대상과의 간격(캡슐 중심 사이 수평 거리). 행동의 Targeting에 StopDistance가 없으면 이 값입니다. */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "cm", ClampMin = 0))
 	float StopDistance = 0.f;
+
+	/** 사망 처리의 사망 모션 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Death")
+	TArray<FAgDeathMotion> DeathMotions;
 
 	/** 시작할 때 거는 효과의 Effects.json ID(SP·PP 리젠, 그로기 면역) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
@@ -127,10 +151,6 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	/** 입력에서 사용하는 콤보 모션 순서. 타격 수치는 몽타주 시간표가 소유합니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
-	TArray<FName> BasicAttackMontageIds;
-
 	/** 선입력: 허용되지 않는 상태에서 누른 입력을 기억하는 시간 */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Input", meta = (Units = "s", ClampMin = 0))
 	float InputBufferTime = 0.f;
@@ -155,27 +175,17 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
 	float UltimateSlowMotionDuration = 0.f;
 
-	/**
-	 * 처형의 찌르기까지 플레이어가 보스 정면에 붙는 간격(캡슐 중심 사이 수평 거리). 두 처형 모션이 맞물리는 간격으로,
-	 * 기획서에 수치가 없어 두 모션의 원래 배치에서 잰 값입니다.
-	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Execution", meta = (Units = "cm", ClampMin = 0))
-	float ExecutionDistance = 0.f;
+	/** 슬로우모션: 극한 회피의 속도 */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (ClampMin = 0.01, ClampMax = 1))
+	float PerfectDodgeSlowMotionSpeed = 1.f;
 
-	/** 락온 타겟팅 범위 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
-	float LockOnRange = 0.f;
+	/** 슬로우모션: 극한 회피의 지속 시간 (실제 시간) */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
+	float PerfectDodgeSlowMotionDuration = 0.f;
 
-	/** 락온 해제 조건: 대상이 이 거리보다 멀어지면 락온을 풉니다. */
+	/** 락온 해제 조건: 대상이 이 거리보다 멀어지면 락온을 풉니다(입력 계층). */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
 	float LockOnReleaseRange = 0.f;
-
-	/**
-	 * TP_Enemy: 공격 중 이동, 락온, 처형, 궁극기 마무리의 대상 후보(플레이어 주변의 캐릭터)를 모읍니다. 범위와 조건은
-	 * 쓰는 곳마다 따로 확인합니다.
-	 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Targeting")
-	TObjectPtr<UTargetingPreset> EnemyTargeting;
 
 	/** 이동 '달리기': 속도 (MOV의 배수) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint", meta = (ClampMin = 0))
@@ -189,10 +199,6 @@ class UAgBossData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	/** 모션 재생 속도: 공격 패턴 모션의 재생 속도 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Pattern Rules", meta = (ClampMin = 0.01))
-	float PatternPlayRate = 1.f;
-
 	/** 패턴 선택: 근거리의 상한 (캡슐 중심 사이 수평 거리) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))
 	float NearDistance = 0.f;

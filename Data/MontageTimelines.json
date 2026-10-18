@@ -1,11 +1,10 @@
 {
   "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust": {
-    "Default": [
-      {"Task": "Attack", "Start": 0.9166667, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
-      {"Task": "SetCollisionResponseToChannel", "Start": 0.9166667, "Channel": "Pawn", "Response": "Ignore"},
-      {"Task": "Dash", "Start": 0.9166667, "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000},
+    "Start": [
       {"Task": "Track", "Start": 0, "End": 0.9, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 1.0366666, "Event": "Event.Boss.DashHold"}
+      {"Task": "Dash", "Start": 0.9166667, "End": {"Section": "Hold"}, "To": "Target", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000, "Next": {"Section": "Recover", "BlendTime": 0.1}},
+      {"Task": "Attack", "Start": 0.9166667, "End": {"Section": "Hold"}, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Task": "HoldTag", "Start": 0.9166667, "End": {"Section": "Hold"}, "Tag": "State.PassThrough"}
     ]
   },
   "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike": {
@@ -16,6 +15,17 @@
       {"Task": "Track", "Start": 0.52, "End": 1.42, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
     ]
   },
+  "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy": {
+    "Fall": [
+      {"Task": "Transition", "Start": 0, "BlockedTags": ["State.Airborne"], "Next": {"Section": "Start", "BlendTime": 0.25}}
+    ],
+    "Start": [
+      {"Task": "ApplyEffect", "Time": 0, "Effect": "GroggyTime"}
+    ],
+    "Loop": [
+      {"Task": "Transition", "Start": 0, "BeforeTagEnds": "State.GroggyTime", "Next": {"Section": "End"}}
+    ]
+  },
   "/Game/Animations/AM_Boss_JumpSlam.AM_Boss_JumpSlam": {
     "Default": [
       {"Task": "Attack", "Start": 0.533, "End": 0.613, "DamageMultiplier": 1.6, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
@@ -24,12 +34,17 @@
   },
   "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack": {
     "Default": [
-      {"Task": "GameplayEvent", "Time": 0.1, "Event": "Event.DownGrounded"}
+      {"Task": "HoldTag", "Time": 0.1, "Tag": "State.Invincible"}
     ]
   },
   "/Game/Animations/AM_Boss_LeapSlam.AM_Boss_LeapSlam": {
     "Start": [
-      {"Task": "Track", "Start": 0, "End": 0.15, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"}
+      {"Task": "Track", "Start": 0, "End": 0.15, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Task": "Transition", "Start": 0, "End": {"Section": "Loop"}, "Event": "Event.Landed", "Next": {"Section": "End"}}
+    ],
+    "End": [
+      {"Task": "CameraShake", "Time": 0, "Shake": "Medium", "Range": 1500},
+      {"Task": "Attack", "Time": 0, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": false, "MPCharge": 0, "UPCharge": 0, "Radius": 350, "bGroundOnly": true}
     ]
   },
   "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike": {
@@ -62,51 +77,67 @@
       {"Task": "SpawnProjectile", "Time": 1.79, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward", "Attack": {"DamageMultiplier": 1.2, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}}
     ]
   },
-  "/Game/Animations/AM_KnockUpFall.AM_KnockUpFall": {
+  "/Game/Animations/AM_KnockUp.AM_KnockUp": {
+    "Rise": [
+      {"Task": "Transition", "Start": 0, "Event": "Event.Apex", "Next": {"Section": "Fall", "BlendTime": 0.2}},
+      {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Next": {"Section": "Land", "BlendTime": 0.2}}
+    ],
+    "Fall": [
+      {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Next": {"Section": "Land"}}
+    ],
     "Land": [
-      {"Task": "GameplayEvent", "Time": 0.1, "Event": "Event.DownGrounded"}
+      {"Task": "HoldTag", "Time": 0.1, "Tag": "State.Invincible"},
+      {"Task": "Transition", "Time": 0.7, "Next": {"Section": "GetUp", "BlendTime": 0.25}}
     ]
   },
-  "/Game/Animations/AM_Player_Backstep.AM_Player_Backstep": {
-    "Default": [
-      {"Task": "HoldTag", "Start": 0, "End": 0.15, "Tag": "State.PerfectDodgeWindow"},
-      {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Invincible"},
-      {"Task": "GameplayEvent", "Time": 0.4, "Event": "Event.RecoveryStarted"}
-    ]
-  },
-  "/Game/Animations/AM_Player_BasicAttack1.AM_Player_BasicAttack1": {
-    "Default": [
-      {"Task": "Attack", "Start": 0.27, "End": 0.3, "DamageMultiplier": 0.8, "PoiseMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+  "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack": {
+    "Attack1": [
+      {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
       {"Task": "Track", "Start": 0, "End": 0.22, "TargetingRange": 200, "MaxWarpDistance": 110, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 0.3, "Event": "Event.RecoveryStarted"}
-    ]
-  },
-  "/Game/Animations/AM_Player_BasicAttack2.AM_Player_BasicAttack2": {
-    "Default": [
-      {"Task": "Attack", "Start": 0.28, "End": 0.32, "DamageMultiplier": 0.8, "PoiseMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Busy"},
+      {"Task": "Attack", "Start": 0.27, "End": 0.3, "DamageMultiplier": 0.8, "PoiseMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "Transition", "Start": 0.3, "Event": "Input.Attack", "bOptional": true, "Next": {"Section": "Attack2", "BlendTime": 0.25}}
+    ],
+    "Attack2": [
+      {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
       {"Task": "Track", "Start": 0, "End": 0.23, "TargetingRange": 250, "MaxWarpDistance": 160, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 0.32, "Event": "Event.RecoveryStarted"}
-    ]
-  },
-  "/Game/Animations/AM_Player_BasicAttack3.AM_Player_BasicAttack3": {
-    "Default": [
-      {"Task": "Attack", "Start": 0.25, "End": 0.3, "DamageMultiplier": 1, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "HoldTag", "Start": 0, "End": 0.32, "Tag": "State.Busy"},
+      {"Task": "Attack", "Start": 0.28, "End": 0.32, "DamageMultiplier": 0.8, "PoiseMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "Transition", "Start": 0.32, "Event": "Input.Attack", "bOptional": true, "Next": {"Section": "Attack3", "BlendTime": 0.25}}
+    ],
+    "Attack3": [
+      {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
       {"Task": "Track", "Start": 0, "End": 0.2, "TargetingRange": 250, "MaxWarpDistance": 160, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 0.3, "Event": "Event.RecoveryStarted"}
-    ]
-  },
-  "/Game/Animations/AM_Player_BasicAttack4.AM_Player_BasicAttack4": {
-    "Default": [
-      {"Task": "Attack", "Start": 0.27, "End": 0.33, "DamageMultiplier": 1, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Busy"},
+      {"Task": "Attack", "Start": 0.25, "End": 0.3, "DamageMultiplier": 1, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "Transition", "Start": 0.3, "Event": "Input.Attack", "bOptional": true, "Next": {"Section": "Attack4", "BlendTime": 0.25}}
+    ],
+    "Attack4": [
+      {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
       {"Task": "Track", "Start": 0, "End": 0.22, "TargetingRange": 260, "MaxWarpDistance": 170, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 0.33, "Event": "Event.RecoveryStarted"}
+      {"Task": "HoldTag", "Start": 0, "End": 0.33, "Tag": "State.Busy"},
+      {"Task": "Attack", "Start": 0.27, "End": 0.33, "DamageMultiplier": 1, "PoiseMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "Transition", "Start": 0.33, "Event": "Input.Attack", "bOptional": true, "Next": {"Section": "Attack5", "BlendTime": 0.25}}
+    ],
+    "Attack5": [
+      {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
+      {"Task": "Track", "Start": 0, "End": 0.25, "TargetingRange": 260, "MaxWarpDistance": 170, "RotationMethod": "ConstantRate"},
+      {"Task": "HoldTag", "Start": 0, "End": 0.9166667, "Tag": "State.Busy"},
+      {"Task": "Attack", "Start": 0.3, "End": 0.35000002, "DamageMultiplier": 1.2, "PoiseMultiplier": 2, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 10},
+      {"Task": "Transition", "Start": 0.9166667, "Event": "Input.Attack", "bOptional": true, "Next": {"Section": "Attack1", "BlendTime": 0.25}}
     ]
   },
-  "/Game/Animations/AM_Player_BasicAttack5.AM_Player_BasicAttack5": {
-    "Default": [
-      {"Task": "Attack", "Start": 0.3, "End": 0.35000002, "DamageMultiplier": 1.2, "PoiseMultiplier": 2, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 10},
-      {"Task": "Track", "Start": 0, "End": 0.25, "TargetingRange": 260, "MaxWarpDistance": 170, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 0.9166667, "Event": "Event.RecoveryStarted"}
+  "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge": {
+    "Backstep": [
+      {"Task": "Transition", "Time": 0, "RequiredTags": ["Input.Move"], "Next": {"Section": "Roll"}},
+      {"Task": "HoldTag", "Start": 0, "End": 0.4, "Tag": "State.Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.15, "Effect": "PerfectDodgeWindow"},
+      {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Invincible"}
+    ],
+    "Roll": [
+      {"Task": "HoldTag", "Start": 0, "End": 0.6, "Tag": "State.Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.15, "Effect": "PerfectDodgeWindow"},
+      {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Invincible"}
     ]
   },
   "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter": {
@@ -114,56 +145,51 @@
       {"Task": "Attack", "Start": 0.15, "End": 0.23, "DamageMultiplier": 2.5, "PoiseMultiplier": 5, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 8, "UPCharge": 0},
       {"Task": "HoldTag", "Start": 0, "End": 0.23, "Tag": "State.Invincible"},
       {"Task": "Track", "Start": 0, "End": 0.1, "TargetingRange": 850, "MaxWarpDistance": 750, "RotationMethod": "Slerp"},
-      {"Task": "GameplayEvent", "Time": 0.23, "Event": "Event.RecoveryStarted"}
+      {"Task": "HoldTag", "Start": 0, "End": 0.23, "Tag": "State.Busy"}
     ]
   },
   "/Game/Animations/AM_Player_Execute.AM_Player_Execute": {
     "Default": [
       {"Task": "Track", "Start": 0.0001, "End": 0.3333333, "TargetingRange": null, "MaxWarpDistance": null, "RotationMethod": "Slerp"},
-      {"Task": "GameplayEvent", "Time": 0.33333334, "Event": "Event.ExecutionBlow"},
-      {"Task": "GameplayEvent", "Time": 0.8, "Event": "Event.ExecutionBlow"}
+      {"Task": "Attack", "Start": 0.33333334, "End": 0.8, "DamageMultiplier": 1.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Task": "Attack", "Start": 0.8, "DamageMultiplier": 4.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0, "bFinisher": true}
     ]
   },
   "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack": {
     "Start": [
-      {"Task": "Attack", "Start": 0.23, "End": {"Section": "Land", "Time": 0.05}, "DamageMultiplier": 1.5, "PoiseMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
       {"Task": "Track", "Start": 0, "End": 0.18, "TargetingRange": 300, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 0.3, "Event": "Event.JumpAttackPlunge"}
-    ],
-    "Land": [
-      {"Task": "GameplayEvent", "Time": 0.35, "Event": "Event.RecoveryStarted"}
+      {"Task": "HoldTag", "Start": 0, "End": {"Section": "Land", "Time": 0.35}, "Tag": "State.Busy"},
+      {"Task": "Attack", "Start": 0.23, "End": {"Section": "Land", "Time": 0.05}, "DamageMultiplier": 1.5, "PoiseMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "Transition", "Start": 0, "End": {"Section": "Fall"}, "Event": "Event.Landed", "Next": {"Section": "Land"}},
+      {"Task": "Dash", "Start": 0.3, "End": {"Section": "Fall"}, "To": "Down", "Speed": 1000}
     ]
   },
   "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack": {
     "Default": [
-      {"Task": "GameplayEvent", "Time": 0.1, "Event": "Event.DownGrounded"}
+      {"Task": "HoldTag", "Time": 0.1, "Tag": "State.Invincible"}
     ]
   },
   "/Game/Animations/AM_Player_Parry.AM_Player_Parry": {
     "Default": [
-      {"Task": "GameplayEvent", "Time": 0.25, "Event": "Event.RecoveryStarted"}
-    ]
-  },
-  "/Game/Animations/AM_Player_Roll.AM_Player_Roll": {
-    "Default": [
-      {"Task": "HoldTag", "Start": 0, "End": 0.15, "Tag": "State.PerfectDodgeWindow"},
-      {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Invincible"},
-      {"Task": "GameplayEvent", "Time": 0.6, "Event": "Event.RecoveryStarted"}
+      {"Task": "HoldTag", "Start": 0, "End": 0.25, "Tag": "State.Busy"}
     ]
   },
   "/Game/Animations/AM_Player_Skill.AM_Player_Skill": {
     "Default": [
       {"Task": "Attack", "Start": 0.4333, "End": 0.4833, "DamageMultiplier": 3, "PoiseMultiplier": 6, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 25},
       {"Task": "Track", "Start": 0, "End": 0.3833, "TargetingRange": 340, "MaxWarpDistance": 240, "RotationMethod": "ConstantRate"},
-      {"Task": "GameplayEvent", "Time": 0.4833, "Event": "Event.RecoveryStarted"}
+      {"Task": "HoldTag", "Start": 0, "End": 0.4833, "Tag": "State.Busy"}
     ]
   },
   "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate": {
-    "Judgment": [
-      {"Task": "GameplayEvent", "Time": 2.0665667, "Event": "Event.RecoveryStarted"}
+    "Start": [
+      {"Task": "HoldTag", "Start": 0, "End": {"Section": "Judgment"}, "Tag": "State.TimeStop"},
+      {"Task": "HoldTag", "Start": 0, "End": {"Section": "Judgment", "Time": 2.0665667}, "Tag": "State.Busy"},
+      {"Task": "PlayCutscene", "Start": 0, "End": {"Section": "Hold"}, "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene", "Next": {"Section": "Judgment"}}
     ],
     "Draw": [
-      {"Task": "GameplayEvent", "Time": 0, "Event": "Event.UltimateFinish"}
+      {"Task": "Attack", "Time": 0, "DamageMultiplier": 5, "PoiseMultiplier": 5, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0, "bFinisher": true, "Radius": 1000}
     ]
   }
 }

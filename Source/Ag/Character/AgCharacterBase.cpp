@@ -4,11 +4,14 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_Launch.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
@@ -30,6 +33,9 @@ namespace
 	/** 히트스톱 중의 시간 배율: 모션, 몽타주, 이동이 거의 멈춥니다. */
 	constexpr float HitstopTimeDilation = 1.e-4f;
 
+	/** 사망할 때 공격 쪽에서 밀려나는 속도(cm/s) */
+	constexpr float DeathPushSpeed = 300.f;
+
 	/** 움찔·가드 움찔 몽타주의 ID (캐릭터 데이터의 Montages) */
 	const FName FlinchMontageId(TEXT("Flinch"));
 	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
@@ -41,7 +47,7 @@ const FName AAgCharacterBase::WeaponCollisionTag(TEXT("WeaponCollision"));
 
 AAgCharacterBase::AAgCharacterBase()
 {
-	// 이동과 물리 갱신 뒤 일반 회전을 처리합니다.
+	// 이동과 물리 갱신 뒤 자동 회전과 이동 사건을 처리합니다.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PostPhysics;
 
@@ -119,6 +125,14 @@ void AAgCharacterBase::BeginPlay()
 	    .AddUObject(this, &ThisClass::HandlePPChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved)
 	    .AddUObject(this, &ThisClass::HandleHitstopChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PassThrough, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandlePassThroughChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_TimeStop, EGameplayTagEventType::NewOrRemoved)
+	    .AddUObject(this, &ThisClass::HandleTimeStopChanged);
+	DeathEventHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death)
+	                       .AddUObject(this, &ThisClass::HandleDeathEvent);
+	PawnResponse = GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_Pawn);
+	AbilitySystemComponent->SetLooseGameplayTagCount(AgGameplayTags::State_Airborne, GetCharacterMovement()->IsFalling() ? 1 : 0);
 	InitializeAttributes();
 	GrantAbilities();
 	ApplyEffects();
@@ -134,7 +148,14 @@ void AAgCharacterBase::BeginPlay()
 void AAgCharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	// ASC는 자기가 등록 해제될 때에야 어빌리티를 취소합니다. 그 전에 메시가 등록 해제되며 몽타주를 끊으면, 살아 있는
-	// 어빌리티가 그 콜백에서 메시를 바꿉니다(처형 사망의 래그돌이 이미 지운 물리 상태를 다시 만듦).
+	// 어빌리티나 사망 모션의 콜백이 그때 메시를 바꿉니다(처형 사망의 래그돌이 이미 지운 물리 상태를 다시 만듦).
+	bEndingPlay = true;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (FAnimMontageInstance* DeathMotion = AnimInstance ? AnimInstance->GetMontageInstanceForID(DeathMotionInstanceId) : nullptr)
+	{
+		DeathMotion->OnMontageBlendingOutStarted.Unbind();
+	}
+	AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death).Remove(DeathEventHandle);
 	AbilitySystemComponent->CancelAllAbilities();
 
 	Super::EndPlay(EndPlayReason);
@@ -144,6 +165,7 @@ void AAgCharacterBase::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	UpdateApex();
 	UpdateFacing(DeltaSeconds);
 }
 
@@ -153,6 +175,49 @@ void AAgCharacterBase::PossessedBy(AController* NewController)
 
 	// 빙의할 때마다 ASC가 새 컨트롤러를 알도록 액터 정보를 갱신합니다.
 	AbilitySystemComponent->RefreshAbilityActorInfo();
+}
+
+void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
+{
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	Payload.Instigator = this;
+	Payload.Target = this;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
+}
+
+void AAgCharacterBase::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	// 띄우는 동안의 착지 가운데 Launch가 착지로 보지 않은 것(체공 시간의 앞부분)은 다시 떠오르므로 알리지 않습니다. 착지로 본
+	// Launch는 엔진 착지 알림(Super::Landed) 안에서 소스를 이미 지웠습니다.
+	if (!IsDead() && !GetCharacterMovement()->GetRootMotionSource(UAgAbilityTask_Launch::SourceName).IsValid())
+	{
+		SendEventToSelf(AgGameplayTags::Event_Landed);
+	}
+}
+
+void AAgCharacterBase::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
+{
+	Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
+
+	if (HasActorBegunPlay())
+	{
+		AbilitySystemComponent->SetLooseGameplayTagCount(AgGameplayTags::State_Airborne, GetCharacterMovement()->IsFalling() ? 1 : 0);
+	}
+}
+
+void AAgCharacterBase::UpdateApex()
+{
+	// 루트 모션 점프(넉업)도 캐릭터 무브먼트의 속도가 경로를 따릅니다.
+	const UCharacterMovementComponent* Movement = GetCharacterMovement();
+	const float VelocityZ = Movement->IsFalling() ? static_cast<float>(Movement->Velocity.Z) : 0.f;
+	if (PreviousVelocityZ > 0.f && VelocityZ <= 0.f && Movement->IsFalling() && !IsDead())
+	{
+		SendEventToSelf(AgGameplayTags::Event_Apex);
+	}
+	PreviousVelocityZ = VelocityZ;
 }
 
 void AAgCharacterBase::InitializeAttributes()
@@ -184,16 +249,17 @@ void AAgCharacterBase::GrantAbilities()
 {
 	for (FName AbilityId : CharacterData->Abilities)
 	{
-		// 어빌리티 정의는 데이터를 읽을 때 캐릭터의 목록과 함께 검사했습니다.
+		// 어빌리티 정의는 데이터를 읽을 때 캐릭터의 목록과 함께 검사했습니다. 엔진은 부여할 때 스펙의 트리거를 등록합니다.
 		const FAgAbilityData& Ability = *UAgAssetManager::Get().FindAbility(AbilityId);
 		FGameplayAbilitySpec Spec(UAgGameplayAbility::StaticClass());
 		AbilityIds.Add(Spec.Handle, Ability.Id);
 		Spec.GetDynamicSpecSourceTags() = Ability.Tags;
-		for (const FGameplayTag& Tag : Ability.Activation.TriggerEvents)
+		for (const FAgAbilityTrigger& Trigger : Ability.Activation.Triggers)
 		{
-			FAbilityTriggerData& Trigger = Spec.DynamicAbilityTriggers.AddDefaulted_GetRef();
-			Trigger.TriggerTag = Tag;
-			Trigger.TriggerSource = EGameplayAbilityTriggerSource::GameplayEvent;
+			FAbilityTriggerData& Data = Spec.DynamicAbilityTriggers.AddDefaulted_GetRef();
+			Data.TriggerTag = Trigger.Tag;
+			Data.TriggerSource = Trigger.Source == EAgTriggerSource::OwnedTagPresent ? EGameplayAbilityTriggerSource::OwnedTagPresent
+			                                                                         : EGameplayAbilityTriggerSource::GameplayEvent;
 		}
 		if (!AbilitySystemComponent->GiveAbility(Spec).IsValid())
 		{
@@ -252,6 +318,28 @@ void AAgCharacterBase::HandleHitstopChanged(const FGameplayTag Tag, int32 NewCou
 	UpdateTimeDilation();
 }
 
+void AAgCharacterBase::HandlePassThroughChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// 태그는 겹쳐도 개수로 세므로 마지막 것이 빠질 때 되돌립니다. 죽은 캐릭터는 캐릭터 간 충돌을 끈 채로 둡니다.
+	if (!IsDead())
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, NewCount > 0 ? ECR_Ignore : PawnResponse.GetValue());
+	}
+}
+
+void AAgCharacterBase::HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	UAgTimeSubsystem* TimeSubsystem = GetWorld()->GetSubsystem<UAgTimeSubsystem>();
+	if (NewCount > 0)
+	{
+		TimeSubsystem->StartTimeStop(*this, *this);
+	}
+	else
+	{
+		TimeSubsystem->EndTimeStop(*this);
+	}
+}
+
 void AAgCharacterBase::SetTimeCompensation(float Compensation)
 {
 	TimeCompensation = Compensation;
@@ -274,24 +362,11 @@ void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, EA
 	    UAgAssetManager::Get().GetEffect(DelayEffect), 1.f, AbilitySystemComponent->MakeEffectContext());
 }
 
-void AAgCharacterBase::SetMotionConstraints(UObject& RequestOwner, const FAgCharacterMotionConstraints& Constraints)
-{
-	MotionConstraintOwner = &RequestOwner;
-	MotionConstraints = Constraints;
-}
-
-void AAgCharacterBase::ClearMotionConstraints(const UObject& RequestOwner)
-{
-	if (MotionConstraintOwner.Get() == &RequestOwner)
-	{
-		MotionConstraintOwner.Reset();
-		MotionConstraints = {};
-	}
-}
-
 bool AAgCharacterBase::IsFacingFixed() const
 {
-	return MotionConstraintOwner.IsValid() && MotionConstraints.bControlsFacing;
+	// 행동 중의 몸 돌리기는 그 행동의 Face와 추적 구간(Track)이 맡습니다.
+	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
+	return (Animating && Animating->IsActive()) || AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
 }
 
 void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
@@ -313,28 +388,18 @@ void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
 
 FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds)
 {
-	if (!MotionConstraintOwner.IsValid())
-	{
-		return WorldRootMotion;
-	}
-	if (MotionConstraints.bTranslationFromVelocity)
-	{
-		// 회전은 워핑 결과를 쓰고, 공중 궤적은 물리 속도를 유지합니다. 착지 후 모션으로 밀려나지 않습니다.
-		FTransform Result = WorldRootMotion;
-		Result.SetTranslation(Movement->IsFalling() ? Movement->Velocity * DeltaSeconds : FVector::ZeroVector);
-		return Result;
-	}
-	const AActor* Target = MotionConstraints.StopTarget.Get();
+	const UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(AbilitySystemComponent->GetAnimatingAbility());
+	const AActor* Target = Runner ? Runner->GetTargetingTarget() : nullptr;
 	if (!Target)
 	{
 		return WorldRootMotion;
 	}
 
-	// 이번 프레임의 루트 모션에서 정지 간격 안으로 들어가는 만큼을 잘라냅니다.
+	// 이번 프레임의 루트 모션에서 그 행동의 간격 안으로 들어가는 만큼을 잘라냅니다.
 	FVector Delta = WorldRootMotion.GetTranslation();
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	const float Toward = FVector::DotProduct(FVector(Delta.X, Delta.Y, 0.f), ToTarget);
-	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - MotionConstraints.StopDistance);
+	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - Runner->GetStopDistance());
 	if (Toward <= Allowed)
 	{
 		return WorldRootMotion;
@@ -366,7 +431,56 @@ void AAgCharacterBase::PlayGuardFlinch()
 	}
 }
 
-void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathAbility, bool bRagdoll)
+void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
+{
+	if (IsDead() || bEndingPlay)
+	{
+		return;
+	}
+
+	// 사망 모션: 다른 행동을 취소하기 전에 재생 위치를 보관하고, 그 위치에서 사망 모션을 이어 재생합니다(처형 사망).
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	for (const FAgDeathMotion& Motion : CharacterData->DeathMotions)
+	{
+		UAnimMontage* Playing = CharacterData->FindMontage(Motion.Montage);
+		UAnimMontage* Death = CharacterData->FindMontage(Motion.Death);
+		if (!AnimInstance || !Playing || !Death || !Payload || !Payload->InstigatorTags.HasTagExact(Motion.KilledBy) ||
+		    !AnimInstance->Montage_IsPlaying(Playing))
+		{
+			continue;
+		}
+		const float Position = AnimInstance->Montage_GetPosition(Playing);
+		Die(FVector::ZeroVector, false);
+		FAnimMontageInstance* Instance = AnimInstance->Montage_Play(Death, 1.f, EMontagePlayReturnType::MontageLength, Position) > 0.f
+		                                     ? AnimInstance->GetActiveInstanceForMontage(Death)
+		                                     : nullptr;
+		if (!Instance)
+		{
+			StartRagdoll(FVector::ZeroVector);
+			return;
+		}
+		DeathMotionInstanceId = Instance->GetInstanceID();
+		Instance->OnMontageBlendingOutStarted = FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleDeathMotionBlendingOut);
+		return;
+	}
+
+	// 마지막 공격의 피격 방향으로 밀립니다.
+	const AActor* Attacker = Payload ? Payload->Instigator.Get() : nullptr;
+	const FVector Push =
+	    Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * DeathPushSpeed : FVector::ZeroVector;
+	Die(Push);
+}
+
+void AAgCharacterBase::HandleDeathMotionBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	DeathMotionInstanceId = INDEX_NONE;
+	if (!bEndingPlay)
+	{
+		StartRagdoll(FVector::ZeroVector);
+	}
+}
+
+void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
 {
 	if (IsDead())
 	{
@@ -375,15 +489,15 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, UGameplayAbility* DeathA
 
 	// 1-2. 모든 행동을 멈추고, 이후의 피격은 무시합니다(IsDead). 몽타주의 워핑과 열린 판정도 함께 정리합니다.
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
-	AbilitySystemComponent->CancelAllAbilities(DeathAbility);
+	AbilitySystemComponent->CancelAllAbilities();
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && bRagdoll)
 	{
 		AnimInstance->StopAllMontages(0.f);
 	}
 
-	// 3. 입력(플레이어)과 이동을 멈춥니다. 보스의 AI는 사망 상태로 넘어가 이동 입력을 더 주지 않습니다. 처형 사망
-	// 모션은 루트 모션으로 계속 움직입니다.
+	// 3. 입력(플레이어)과 이동을 멈춥니다. 보스의 AI는 사망 상태로 넘어가 이동 입력을 더 주지 않습니다. 사망 모션은
+	// 루트 모션으로 계속 움직입니다.
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PlayerController);

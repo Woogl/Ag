@@ -24,18 +24,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (ClampMin = 1))
 	float DefenseConstant = 0.f;
 
-	/** 넉업: 땅에서 맞았을 때의 체공 시간. 중력과 관계없이 정한 포물선을 따릅니다. */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (Units = "s", ClampMin = 0))
-	float KnockUpAirTime = 0.f;
-
-	/** 넉업: 최고 높이 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (Units = "cm", ClampMin = 0))
-	float KnockUpHeight = 0.f;
-
-	/** 그로기 지속 시간. 그로기 모션의 시작부터 원래 자세로 돌아오는 모션의 끝까지 */
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Groggy", meta = (Units = "s", ClampMin = 0))
-	float GroggyDuration = 0.f;
-
 	/** HUD 감소 잔상: 바가 줄어든 뒤 잔상이 기다리는 시간 (게임 시간) */
 	UPROPERTY(Transient, VisibleAnywhere, Category = "HUD|Trail", meta = (Units = "s", ClampMin = 0))
 	float HUDTrailDelay = 0.f;

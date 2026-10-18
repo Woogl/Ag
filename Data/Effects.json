@@ -34,36 +34,11 @@
       }
     ]
   },
-  "ResourceDrain": {
-    "DurationPolicy": "Infinite",
-    "Period": 0.1,
-    "ExecutePeriodicOnApplication": false,
-    "Modifiers": [
-      {
-        "Attribute": "SP",
-        "Op": "Add",
-        "SetByCaller": "SetByCaller.SP"
-      },
-      {
-        "Attribute": "MP",
-        "Op": "Add",
-        "SetByCaller": "SetByCaller.MP"
-      },
-      {
-        "Attribute": "UP",
-        "Op": "Add",
-        "SetByCaller": "SetByCaller.UP"
-      }
-    ]
-  },
   "Cooldown": {
     "DurationPolicy": "HasDuration",
     "AssetTags": [
       "Effect.Cooldown"
     ]
-  },
-  "TimedTag": {
-    "DurationPolicy": "HasDuration"
   },
   "Hitstop": {
     "DurationPolicy": "HasDuration",
@@ -175,6 +150,75 @@
     ],
     "OngoingIgnoredTags": [
       "State.Regen.PPDelay"
+    ]
+  },
+  "ParryWindow": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 0.3,
+    "GrantedTags": [
+      "State.ParryWindow"
+    ]
+  },
+  "PerfectDodgeWindow": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": [
+      "State.PerfectDodgeWindow"
+    ]
+  },
+  "DodgeCounterChance": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 1,
+    "GrantedTags": [
+      "State.DodgeCounterChance"
+    ]
+  },
+  "GroggyTime": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 5,
+    "GrantedTags": [
+      "State.GroggyTime"
+    ]
+  },
+  "SprintDrain": {
+    "DurationPolicy": "Infinite",
+    "Period": 0.1,
+    "ExecutePeriodicOnApplication": false,
+    "Modifiers": [
+      {
+        "Attribute": "SP",
+        "Op": "Add",
+        "PerSecond": -12
+      }
+    ]
+  },
+  "ParryReward": {
+    "DurationPolicy": "Instant",
+    "Modifiers": [
+      {
+        "Attribute": "MP",
+        "Op": "Add",
+        "Value": 15
+      },
+      {
+        "Attribute": "UP",
+        "Op": "Add",
+        "Value": 10
+      }
+    ]
+  },
+  "PerfectDodgeReward": {
+    "DurationPolicy": "Instant",
+    "Modifiers": [
+      {
+        "Attribute": "MP",
+        "Op": "Add",
+        "Value": 10
+      },
+      {
+        "Attribute": "UP",
+        "Op": "Add",
+        "Value": 10
+      }
     ]
   }
 }

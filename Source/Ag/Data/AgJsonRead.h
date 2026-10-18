@@ -9,10 +9,13 @@
 #include "JsonObjectConverter.h"
 #include "UObject/UnrealType.h"
 
-/** 구조체 필드의 JSON 규칙. 적지 않은 필드는 필수이고 null이 아니며, 수는 0 이상입니다. */
+/**
+ * 구조체 필드의 JSON 규칙. 적지 않은 필드는 필수이고 null이 아니며, 수는 0 이상입니다. 구조체 필드 안쪽의 필드는
+ * '필드.안쪽 필드' 이름으로 적습니다(예: Next.BlendTime).
+ */
 struct FAgJsonFieldRules
 {
-	/** 없어도 되는 필드. 없거나 null이면 C++ 초기값입니다. */
+	/** 없어도 되는 필드. 없으면 C++ 초기값입니다. 적었으면 값이 있어야 하므로, 적었는지로 쓰는지를 정할 수 있습니다. */
 	TArray<FName> Optional;
 
 	/** 키는 있어야 하고 null을 쓸 수 있는 필드. null이면 C++ 초기값입니다. */
@@ -105,9 +108,30 @@ namespace AgJsonRead
 		return true;
 	}
 
+	/** Rules 가운데 Field의 안쪽 필드에 대한 규칙 */
+	inline FAgJsonFieldRules NestedRules(const FAgJsonFieldRules& Rules, const FString& Field)
+	{
+		const FString Prefix = Field + TEXT(".");
+		FAgJsonFieldRules Result;
+		const TPair<const TArray<FName>*, TArray<FName>*> Lists[] = {
+		    {&Rules.Optional, &Result.Optional}, {&Rules.Nullable, &Result.Nullable}, {&Rules.Signed, &Result.Signed}};
+		for (const TPair<const TArray<FName>*, TArray<FName>*>& List : Lists)
+		{
+			for (FName Name : *List.Key)
+			{
+				const FString Text = Name.ToString();
+				if (Text.StartsWith(Prefix))
+				{
+					List.Value->Add(FName(*Text.RightChop(Prefix.Len())));
+				}
+			}
+		}
+		return Result;
+	}
+
 	/**
 	 * Struct의 리플렉션 필드와 JSON을 대조해 Out에 읽습니다. 필드마다의 규칙은 Rules를 따르고, Ignored는 부르는 쪽이 읽는
-	 * 키입니다. 구조체 필드는 객체로 적고 그 안의 필드는 모두 필수입니다. 실패하면 Out의 일부만 바뀌었을 수 있습니다.
+	 * 키입니다. 구조체 필드는 객체로, 태그 모음은 태그 이름의 배열로 적습니다. 실패하면 Out의 일부만 바뀌었을 수 있습니다.
 	 */
 	inline bool ReadStruct(const FJsonObject& Object, const UScriptStruct& Struct, void* Out, const FString& Path, TArray<FString>& Errors,
 	    const FAgJsonFieldRules& Rules = FAgJsonFieldRules(), const TArray<FString>& Ignored = TArray<FString>())
@@ -130,7 +154,7 @@ namespace AgJsonRead
 			const FString Field = Path + TEXT(".") + Key;
 			if (!Value || Value->Type == EJson::Null)
 			{
-				if (!Rules.Optional.Contains(PropertyName) && !(Value && Rules.Nullable.Contains(PropertyName)))
+				if (!(Value ? Rules.Nullable.Contains(PropertyName) : Rules.Optional.Contains(PropertyName)))
 				{
 					Errors.Add(Field + (Value ? TEXT(": can't be null") : TEXT(": missing")));
 				}
@@ -179,6 +203,12 @@ namespace AgJsonRead
 					Errors.Add(Field + TEXT(": expected boolean"));
 				}
 			}
+			else if (StructProperty && StructProperty->Struct == FGameplayTagContainer::StaticStruct())
+			{
+				// 태그 모음은 그 자리에서 읽고 바깥 구조체의 변환에서는 뺍니다.
+				Tags(Object, Key, Path, *StructProperty->ContainerPtrToValuePtr<FGameplayTagContainer>(Out), Errors);
+				Normalized.RemoveField(Key);
+			}
 			else if (StructProperty && StructProperty->Struct != FGameplayTag::StaticStruct())
 			{
 				// 구조체 필드는 그 자리에서 읽고 바깥 구조체의 변환에서는 뺍니다.
@@ -188,7 +218,8 @@ namespace AgJsonRead
 					Errors.Add(Field + TEXT(": expected object"));
 					continue;
 				}
-				ReadStruct(**Nested, *StructProperty->Struct, StructProperty->ContainerPtrToValuePtr<void>(Out), Field, Errors);
+				ReadStruct(**Nested, *StructProperty->Struct, StructProperty->ContainerPtrToValuePtr<void>(Out), Field, Errors,
+				           NestedRules(Rules, Key));
 				Normalized.RemoveField(Key);
 			}
 			else
@@ -233,7 +264,7 @@ namespace AgJsonRead
 		return true;
 	}
 
-	/** 고정 Params의 리플렉션 필드를 모두 필수로 읽습니다. */
+	/** 구조체 T의 리플렉션 필드를 모두 필수로 읽습니다(비용, 트리거). */
 	template <typename T> bool Read(const FJsonObject& Object, T& Out, const FString& Path, TArray<FString>& Errors)
 	{
 		return ReadStruct(Object, *T::StaticStruct(), &Out, Path, Errors);

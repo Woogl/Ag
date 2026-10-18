@@ -4,6 +4,7 @@
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -12,7 +13,7 @@
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Data/AgAbilityTaskParams.h"
+#include "Data/AgAbilityData.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
@@ -81,6 +82,66 @@ namespace
 		}
 	}
 
+	/** 효과 데이터의 효과를 그 캐릭터 자신에게 겁니다. */
+	void ApplyToSelf(UAbilitySystemComponent& ASC, EAgEffect Effect)
+	{
+		ASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(Effect), 1.f, ASC.MakeEffectContext());
+	}
+
+	/**
+	 * 극한 회피(플레이어 사양 '극한 회피'): 극한 회피 구간 효과를 지워 회피마다 한 번만 발동하고, 그 효과를 건 행동(효과 컨텍스트의
+	 * 어빌리티)의 비용만큼 돌려준 뒤 보상(MP·UP 충전), 회피 반격 기회, 슬로우모션을 줍니다.
+	 */
+	void StartPerfectDodge(AAgCharacterBase& Dodger)
+	{
+		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Dodger.GetAbilitySystemComponent());
+		const FGameplayEffectQuery Query =
+		    FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_PerfectDodgeWindow));
+		const TArray<FActiveGameplayEffectHandle> Windows = ASC->GetActiveEffects(Query);
+		if (Windows.IsEmpty())
+		{
+			return;
+		}
+		const FActiveGameplayEffect* Window = ASC->GetActiveGameplayEffect(Windows[0]);
+		const UAgGameplayAbility* Dodge =
+		    Window ? Cast<UAgGameplayAbility>(Window->Spec.GetContext().GetAbilityInstance_NotReplicated()) : nullptr;
+		const FAgResourceCostParams Refund = Dodge ? Dodge->GetCost() : FAgResourceCostParams();
+		for (const FActiveGameplayEffectHandle& Handle : Windows)
+		{
+			ASC->RemoveActiveGameplayEffect(Handle);
+		}
+		if (Refund.Amount > 0.f)
+		{
+			const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
+			if (Spec.IsValid())
+			{
+				AgResource::SetAmount(*Spec.Data, Refund.Resource, Refund.Amount);
+				ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+			}
+		}
+		ApplyToSelf(*ASC, EAgEffect::PerfectDodgeReward);
+		ApplyToSelf(*ASC, EAgEffect::DodgeCounterChance);
+		if (const UAgPlayerData* Data = Cast<UAgPlayerData>(Dodger.GetCharacterData()))
+		{
+			Dodger.GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->PerfectDodgeSlowMotionSpeed,
+			                                                                     Data->PerfectDodgeSlowMotionDuration);
+		}
+	}
+
+	/** 패리(플레이어 사양 '패리'): 공격한 쪽의 PP 감소, 방어자의 패리 구간 닫기, 패리 보상(MP·UP 충전)입니다. 패리 모션은 이벤트로 시작합니다. */
+	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker)
+	{
+		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Defender.GetAbilitySystemComponent());
+		// PP 감소량은 방어자(Instigator)의 데이터와 공격한 쪽의 MaxPP로 정합니다.
+		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::ParryPPLoss, 1.f, ASC->MakeEffectContext());
+		if (Spec.IsValid())
+		{
+			ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Attacker.GetAbilitySystemComponent());
+		}
+		ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
+		ApplyToSelf(*ASC, EAgEffect::ParryReward);
+	}
+
 	/** 카메라 '상황별 단계'. 처형은 찌르기와 마지막 일격의 단계를 씁니다. */
 	EAgCameraShake GetHitShake(const UAgCameraData& Camera, const FGameplayTagContainer& SpecTags, bool bPlayerAttacked)
 	{
@@ -124,8 +185,7 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	const FGameplayTagContainer& SpecTags = std::as_const(GESpec).CapturedSourceTags.GetSpecTags();
 	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_PerfectDodge))
 	{
-		// 극한 회피: 보상은 회피 어빌리티가 회피마다 한 번 줍니다.
-		SendEvent(Target, AgGameplayTags::Event_PerfectDodge, Causer);
+		StartPerfectDodge(*Target);
 		return;
 	}
 
@@ -149,7 +209,8 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	{
 		if (bParry)
 		{
-			// 패리 모션과 패리 보상(MP·UP 충전, 공격한 쪽의 PP 감소)은 패리 구간을 연 가드 어빌리티가 맡습니다.
+			// 결과와 보상을 먼저 적용하고 패리 모션(패리 행동)을 시작합니다. 패리 모션은 Instigator 쪽으로 돕니다.
+			ApplyParry(*Target, *Attacker);
 			SendEvent(Target, AgGameplayTags::Event_Parry, Causer, Context);
 		}
 		else if (bGuard)
@@ -193,9 +254,15 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
 	{
-		// 숫자는 깎으려던 HP 감소량이라, 남은 HP보다 커도 그대로 띄웁니다.
-		CueParameters.RawMagnitude = -HPChange->TotalMagnitude;
-		TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageNumber, CueParameters);
+		// 숫자는 깎으려던 HP 감소량이라, 남은 HP보다 커도 그대로 띄웁니다. 처형의 타격은 피격 위치(칼이 닿은 곳) 대신 대상의
+		// 캡슐 중심에 띄웁니다(전투 HUD '대미지 숫자').
+		FGameplayCueParameters NumberParameters = CueParameters;
+		NumberParameters.RawMagnitude = -HPChange->TotalMagnitude;
+		if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
+		{
+			NumberParameters.Location = Target->GetActorLocation();
+		}
+		TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageNumber, NumberParameters);
 	}
 
 	// 히트스톱은 캐릭터마다 히트스톱 효과(태그)로 겁니다. 투사체는 쏜 캐릭터를 멈추지 않고, 처형에는 히트스톱이 없습니다.
@@ -226,10 +293,7 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		const FGameplayEffectSpecHandle ChargeSpec = AttackerASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
 		if (ChargeSpec.IsValid())
 		{
-			FAgGrantResourcesParams Charge;
-			Charge.MP = MPCharge;
-			Charge.UP = UPCharge;
-			Charge.AddToSpec(*ChargeSpec.Data);
+			AgResource::SetAmounts(*ChargeSpec.Data, 0.f, MPCharge, UPCharge);
 			AttackerASC->ApplyGameplayEffectSpecToSelf(*ChargeSpec.Data);
 		}
 	}

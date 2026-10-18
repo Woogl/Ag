@@ -81,7 +81,7 @@ bool AgTaskParams::Read(const FJsonObject& Item, EAgTaskPlacement Placement, FIn
 	{
 		return false;
 	}
-	Task.Validate(Item, Path, Errors);
+	Task.Validate(Item, Placement, Path, Errors);
 	if (Errors.Num() != Before)
 	{
 		return false;

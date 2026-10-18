@@ -43,9 +43,7 @@ namespace
 		return {
 		    {EAgEffect::Damage, EPolicy::Instant, false, false, {}, AgGameplayTags::Effect_Damage, FGameplayTag()},
 		    {EAgEffect::Resource, EPolicy::Instant, false, false, Resources, FGameplayTag(), FGameplayTag()},
-		    {EAgEffect::ResourceDrain, EPolicy::Infinite, false, true, Resources, FGameplayTag(), FGameplayTag()},
 		    {EAgEffect::Cooldown, EPolicy::HasDuration, true, false, {}, AgGameplayTags::Effect_Cooldown, FGameplayTag()},
-		    {EAgEffect::TimedTag, EPolicy::HasDuration, true, false, {}, FGameplayTag(), FGameplayTag()},
 		    {EAgEffect::Hitstop, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Hitstop},
 		    {EAgEffect::SPRegenDelay, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_SPDelay},
 		    {EAgEffect::SPRegenDelayEmpty, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_SPDelay},
@@ -53,6 +51,15 @@ namespace
 		    {EAgEffect::Kill, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
 		    {EAgEffect::PPRefill, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
 		    {EAgEffect::ParryPPLoss, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+		    {EAgEffect::ParryReward, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+		    {EAgEffect::PerfectDodgeReward, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+		    {EAgEffect::DodgeCounterChance,
+		     EPolicy::HasDuration,
+		     false,
+		     false,
+		     {},
+		     FGameplayTag(),
+		     AgGameplayTags::State_DodgeCounterChance},
 		};
 	}
 

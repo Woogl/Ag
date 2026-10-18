@@ -2,11 +2,14 @@
 
 #include "AI/AgBossAIController.h"
 
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Components/StateTreeAIComponent.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgEffectData.h"
 #include "Kismet/GameplayStatics.h"
 
 AAgBossAIController::AAgBossAIController()
@@ -55,6 +58,11 @@ void AAgBossAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
+	if (const AAgBossCharacter* Boss = GetBoss())
+	{
+		BossASC = Boss->GetAbilitySystemComponent();
+		AbilityEndedHandle = BossASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleBossAbilityEnded);
+	}
 	const UAgBossData* Data = GetBossData();
 	if (!Data || !Data->AIStateTree)
 	{
@@ -74,8 +82,28 @@ void AAgBossAIController::OnUnPossess()
 	}
 	TargetASC.Reset();
 	BasicAttackHandle.Reset();
+	if (BossASC.IsValid())
+	{
+		BossASC->OnAbilityEnded.Remove(AbilityEndedHandle);
+	}
+	BossASC.Reset();
+	AbilityEndedHandle.Reset();
 
 	Super::OnUnPossess();
+}
+
+void AAgBossAIController::HandleBossAbilityEnded(const FAbilityEndedData& Data)
+{
+	const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(Data.AbilityThatEnded);
+	AAgBossCharacter* Boss = GetBoss();
+	if (Data.bWasCancelled || !Ability || !Boss || Boss->IsDead() ||
+	    !Ability->GetDefinitionTags().HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition))
+	{
+		return;
+	}
+	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
+	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+	Boss->EnterPhase2();
 }
 
 void AAgBossAIController::Tick(float DeltaSeconds)

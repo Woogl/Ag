@@ -7,8 +7,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgCollision.h"
+#include "Core/AgGameplayTags.h"
 #include "Data/AgEffectData.h"
+#include "Data/AgJsonRead.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 
 namespace
 {
@@ -42,7 +45,7 @@ namespace
 
 }
 
-FAgPlayerAttackHit FAgAttackParams::MakeHit(bool bFinisher) const
+FAgPlayerAttackHit FAgAttackParams::MakeHit() const
 {
 	FAgPlayerAttackHit Hit;
 	Hit.DamageMultiplier = DamageMultiplier;
@@ -55,9 +58,25 @@ FAgPlayerAttackHit FAgAttackParams::MakeHit(bool bFinisher) const
 	return Hit;
 }
 
+void FAgAttackParams::GetFieldRules(FAgJsonFieldRules& Rules) const
+{
+	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgAttackParams, bFinisher));
+	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgAttackParams, Radius));
+	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgAttackParams, bGroundOnly));
+}
+
+void FAgAttackParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
+{
+	bHasRadius = Json.HasField(TEXT("Radius"));
+	if (bHasRadius && Radius <= 0.f)
+	{
+		Errors.Add(Path + TEXT(".Radius: must be positive"));
+	}
+}
+
 UAbilityTask* FAgAttackParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_Attack::Sweep(&Context.Runner, *this);
+	return UAgAbilityTask_Attack::Attack(&Context.Runner, *this, Context.Placement == EAgTaskPlacement::Point);
 }
 
 UAgAbilityTask_Attack::UAgAbilityTask_Attack()
@@ -82,27 +101,11 @@ FString UAgAbilityTask_Attack::FAgAttackTickFunction::DiagnosticMessage()
 	return Target->GetFullName() + TEXT("[AttackTick]");
 }
 
-UAgAbilityTask_Attack* UAgAbilityTask_Attack::Sweep(UGameplayAbility* Owner, const FAgAttackParams& InParams)
+UAgAbilityTask_Attack* UAgAbilityTask_Attack::Attack(UGameplayAbility* Owner, const FAgAttackParams& InParams, bool bInOnce)
 {
 	UAgAbilityTask_Attack* Task = NewAbilityTask<UAgAbilityTask_Attack>(Owner);
 	Task->Params = InParams;
-	return Task;
-}
-
-UAgAbilityTask_Attack* UAgAbilityTask_Attack::Strike(UGameplayAbility* Owner, const FAgAttackParams& InParams,
-    const TArray<AAgCharacterBase*>& InTargets, bool bInFinisher, TOptional<FVector> InHitLocation)
-{
-	UAgAbilityTask_Attack* Task = Sweep(Owner, InParams);
-	Task->HitLocation = InHitLocation;
-	Task->bSingleStrike = true;
-	Task->bFinisher = bInFinisher;
-	for (AAgCharacterBase* Target : InTargets)
-	{
-		if (Target)
-		{
-			Task->Targets.AddUnique(Target);
-		}
-	}
+	Task->bOnce = bInOnce;
 	return Task;
 }
 
@@ -115,39 +118,28 @@ void UAgAbilityTask_Attack::Activate()
 		EndTask();
 		return;
 	}
-	if (bSingleStrike)
+	if (!Params.bHasRadius)
 	{
-		for (const TWeakObjectPtr<AAgCharacterBase>& Target : Targets)
+		WeaponCollision = Character->FindComponentByTag<UCapsuleComponent>(AAgCharacterBase::WeaponCollisionTag);
+		if (!GetWeaponCollision(LastEdgeStart, LastEdgeEnd))
 		{
-			if (IsFinished() || !Ability->IsActive())
-			{
-				break;
-			}
-			if (!Target.IsValid() || Target->IsDead())
-			{
-				continue;
-			}
-			const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
-			if (Spec.IsValid())
-			{
-				Spec.Data->GetContext().AddOrigin(HitLocation.Get(Target->GetActorLocation()));
-				Params.MakeHit(bFinisher).AddToSpec(*Spec.Data);
-				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
-			}
+			EndTask();
+			return;
 		}
-		EndTask();
-		return;
 	}
-	WeaponCollision = Character->FindComponentByTag<UCapsuleComponent>(AAgCharacterBase::WeaponCollisionTag);
-	if (!GetWeaponCollision(LastEdgeStart, LastEdgeEnd))
+	if (bOnce)
 	{
-		EndTask();
+		Detect();
+		if (!IsFinished())
+		{
+			EndTask();
+		}
 		return;
 	}
 	// 첫 판정의 피해 콜백에서 취소되면 OnDestroy가 이미 등록된 틱까지 정리합니다.
 	AttackTick.AddPrerequisite(Character->GetMesh(), Character->GetMesh()->PrimaryComponentTick);
 	AttackTick.RegisterTickFunction(Character->GetLevel());
-	SweepWeapon();
+	Detect();
 }
 
 void UAgAbilityTask_Attack::TickTask(float DeltaTime)
@@ -157,12 +149,24 @@ void UAgAbilityTask_Attack::TickTask(float DeltaTime)
 		return;
 	}
 	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!Character || Character->IsDead() || !Ability || !Ability->IsActive() || !WeaponCollision.IsValid())
+	if (!Character || Character->IsDead() || !Ability || !Ability->IsActive() || (!Params.bHasRadius && !WeaponCollision.IsValid()))
 	{
 		EndTask();
 		return;
 	}
-	SweepWeapon();
+	Detect();
+}
+
+void UAgAbilityTask_Attack::Detect()
+{
+	if (Params.bHasRadius)
+	{
+		HitArea();
+	}
+	else
+	{
+		SweepWeapon();
+	}
 }
 
 bool UAgAbilityTask_Attack::GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const
@@ -193,7 +197,6 @@ void UAgAbilityTask_Attack::SweepWeapon()
 	const FCollisionShape Edge = FCollisionShape::MakeSphere(WeaponCollision->GetScaledCapsuleRadius());
 	const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgWeaponSweep), false, Character);
 	const FVector Center = Character->GetActorLocation();
-	const FAgPlayerAttackHit Hit = Params.MakeHit();
 
 	TArray<FHitResult> Touches;
 	for (int32 Step = 1; Step <= Steps; ++Step)
@@ -206,29 +209,64 @@ void UAgAbilityTask_Attack::SweepWeapon()
 		for (const FHitResult& Touch : Touches)
 		{
 			AAgCharacterBase* Target = Cast<AAgCharacterBase>(Touch.GetActor());
-			if (!Target || Character->GetTeamAttitudeTowards(*Target) != ETeamAttitude::Hostile || TouchedActors.Contains(Target))
+			if (Target && !Hit(*Target, Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint))
 			{
-				continue;
-			}
-			// 무적 등으로 피해가 없어도 한 판정에서는 대상마다 한 번만 처리합니다.
-			TouchedActors.Add(Target);
-			const FVector Location = Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint;
-			const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
-			if (Spec.IsValid())
-			{
-				Spec.Data->GetContext().AddOrigin(Location);
-				Hit.AddToSpec(*Spec.Data);
-				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
-			}
-			if (!IsActive() || !Ability->IsActive())
-			{
-				EndTask();
 				return;
 			}
 		}
 	}
 	LastEdgeStart = EdgeStart;
 	LastEdgeEnd = EdgeEnd;
+}
+
+void UAgAbilityTask_Attack::HitArea()
+{
+	// 공격 범위는 캡슐 중심 사이 수평 거리이고, 피격 위치는 대상의 캡슐 중심입니다.
+	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
+	TArray<AAgCharacterBase*> InRange;
+	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
+	{
+		if (*It != Character && Character->GetHorizontalDistanceTo(*It) <= Params.Radius)
+		{
+			InRange.Add(*It);
+		}
+	}
+	for (AAgCharacterBase* Target : InRange)
+	{
+		if (!Hit(*Target, Target->GetActorLocation()))
+		{
+			return;
+		}
+	}
+}
+
+bool UAgAbilityTask_Attack::Hit(AAgCharacterBase& Target, const FVector& Location)
+{
+	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
+	const bool bAirborne = Target.GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Airborne);
+	if (Target.IsDead() || Character->GetTeamAttitudeTowards(Target) != ETeamAttitude::Hostile || TouchedActors.Contains(&Target) ||
+	    (Params.bGroundOnly && bAirborne))
+	{
+		return true;
+	}
+	// 무적 등으로 피해가 없어도 한 판정에서는 대상마다 한 번만 처리합니다.
+	TouchedActors.Add(&Target);
+	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
+	if (Spec.IsValid())
+	{
+		Spec.Data->GetContext().AddOrigin(Location);
+		Params.MakeHit().AddToSpec(*Spec.Data);
+		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target.GetAbilitySystemComponent());
+	}
+	if (!IsActive() || !Ability->IsActive())
+	{
+		if (!IsFinished())
+		{
+			EndTask();
+		}
+		return false;
+	}
+	return true;
 }
 
 void UAgAbilityTask_Attack::OnDestroy(bool bInOwnerFinished)

@@ -13,16 +13,21 @@
         "State.Execution",
         "State.Dead"
       ],
-      "OwnedTags": [],
+      "OwnedTags": [
+        "State.Acting"
+      ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
+    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Montage": {"MontageId": "BasicAttack"},
+    "End": "Montage",
     "Tasks": []
   },
   "Jump": {
@@ -40,16 +45,19 @@
         "State.Dead"
       ],
       "OwnedTags": [
-        "State.Jumping"
+        "State.Busy"
       ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action"
       ],
-      "TriggerEvents": [],
+      "Triggers": [
+        {"Tag": "State.Jumping", "Source": "OwnedTagPresent"}
+      ],
       "bAllowRetrigger": false
     },
     "Cost": null,
+    "End": "TriggerTag",
     "Tasks": []
   },
   "JumpAttack": {
@@ -67,22 +75,22 @@
         "State.Execution",
         "State.Dead"
       ],
-      "OwnedTags": [],
+      "OwnedTags": [
+        "State.Acting"
+      ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "JumpAttack"
-    },
-    "Tasks": [
-      {"Task": "LaunchVertical", "VelocityZ": -1000}
-    ]
+    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Montage": {"MontageId": "JumpAttack"},
+    "End": "Montage",
+    "Tasks": []
   },
   "Dodge": {
     "Tags": [
@@ -98,23 +106,25 @@
         "State.Execution",
         "State.Dead"
       ],
-      "OwnedTags": [],
+      "OwnedTags": [
+        "State.Acting"
+      ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": true
     },
     "Cost": {
       "Resource": "SP",
       "Amount": 20
     },
+    "Montage": {"MontageId": "Dodge"},
+    "End": "Montage",
     "Tasks": [
-      {"Task": "GrantResources", "SP": 0, "MP": 10, "UP": 10},
-      {"Task": "TimedTag", "Tag": "State.DodgeCounterChance", "Duration": 1},
-      {"Task": "SlowMotion", "Speed": 0.3, "RealDuration": 0.3}
+      {"Task": "Face", "To": "MoveInput"}
     ]
   },
   "DodgeCounter": {
@@ -133,19 +143,21 @@
         "State.Execution",
         "State.Dead"
       ],
-      "OwnedTags": [],
+      "OwnedTags": [
+        "State.Acting"
+      ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "DodgeCounter"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Montage": {"MontageId": "DodgeCounter"},
+    "End": "Montage",
     "Tasks": []
   },
   "Guard": {
@@ -162,22 +174,50 @@
         "State.Execution",
         "State.Dead"
       ],
-      "OwnedTags": [],
+      "OwnedTags": [
+        "State.Guarding"
+      ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [
-        "Event.Guard.Resume"
+      "Triggers": [
+        {"Tag": "Input.Guard", "Source": "OwnedTagPresent"}
       ],
       "bAllowRetrigger": false
     },
     "Cost": null,
+    "End": "TriggerTag",
     "Tasks": [
-      {"Task": "HoldTag", "Tag": "State.Guarding"},
-      {"Task": "TimedTag", "Tag": "State.ParryWindow", "Duration": 0.3},
-      {"Task": "GrantResources", "SP": 0, "MP": 15, "UP": 10}
+      {"Task": "ApplyEffect", "Effect": "ParryWindow", "bRemoveOnEnd": true}
+    ]
+  },
+  "Parry": {
+    "Tags": [
+      "Ability.Action.Parry"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [],
+      "BlockedTags": [
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.Acting"
+      ],
+      "BlockTags": [],
+      "CancelTags": [],
+      "Triggers": [
+        {"Tag": "Event.Parry", "Source": "GameplayEvent"}
+      ],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Montage": {"MontageId": "Parry"},
+    "End": "Montage",
+    "Tasks": [
+      {"Task": "Face", "To": "Target"}
     ]
   },
   "Skill": {
@@ -194,22 +234,24 @@
         "State.Execution",
         "State.Dead"
       ],
-      "OwnedTags": [],
+      "OwnedTags": [
+        "State.Acting"
+      ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": {
       "Resource": "MP",
       "Amount": 30
     },
-    "Montage": {
-      "MontageId": "Skill"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Montage": {"MontageId": "Skill"},
+    "End": "Montage",
     "Tasks": []
   },
   "Ultimate": {
@@ -227,29 +269,24 @@
         "State.Dead"
       ],
       "OwnedTags": [
-        "State.Invincible"
+        "State.Invincible",
+        "State.Acting"
       ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": {
       "Resource": "UP",
       "Amount": 100
     },
-    "Montage": {
-      "MontageId": "Ultimate"
-    },
-    "Tasks": [
-      {"Task": "TimeStop"},
-      {"Task": "PlayCutscene", "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"},
-      {"Task": "TargetQuery", "Range": 1000},
-      {"Task": "Attack", "DamageMultiplier": 5, "PoiseMultiplier": 5, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
-    ]
+    "Montage": {"MontageId": "Ultimate"},
+    "End": "Montage",
+    "Tasks": []
   },
   "Execution": {
     "Tags": [
@@ -267,24 +304,24 @@
       ],
       "OwnedTags": [
         "State.Execution",
-        "State.Invincible"
+        "State.Invincible",
+        "State.Busy",
+        "State.Acting"
       ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "Execution"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy", "Range": 300, "TargetRequiredTags": ["State.Groggy"], "TargetBlockedTags": ["State.Execution", "State.Airborne"], "bRequired": true, "StopDistance": 95},
+    "Montage": {"MontageId": "Execution"},
+    "End": "Montage",
     "Tasks": [
-      {"Task": "TargetQuery", "Range": 300},
-      {"Task": "Attack", "DamageMultiplier": 1.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
-      {"Task": "Attack", "DamageMultiplier": 4.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}
+      {"Task": "SendGameplayEvent", "Event": "Event.Executed", "Recipient": "Target"}
     ]
   },
   "Sprint": {
@@ -309,12 +346,15 @@
         "Ability.Action",
         "Ability.Sprint"
       ],
-      "TriggerEvents": [],
+      "Triggers": [
+        {"Tag": "Input.Sprint", "Source": "OwnedTagPresent"}
+      ],
       "bAllowRetrigger": false
     },
     "Cost": null,
+    "End": "TriggerTag",
     "Tasks": [
-      {"Task": "DrainResource", "Resource": "SP", "AmountPerSecond": 12}
+      {"Task": "ApplyEffect", "Effect": "SprintDrain", "bRemoveOnEnd": true}
     ]
   },
   "LockOn": {
@@ -328,13 +368,15 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [
+        {"Tag": "Input.LockOn", "Source": "OwnedTagPresent"}
+      ],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Tasks": [
-      {"Task": "LockOn"}
-    ]
+    "Targeting": {"Preset": "/Game/Data/TP_LockOn.TP_LockOn", "Range": 2000, "bRequired": true},
+    "End": "TriggerTag",
+    "Tasks": []
   },
   "KnockBack": {
     "Tags": [
@@ -358,17 +400,16 @@
         "Ability.Boss.Pattern",
         "Ability.Reaction.HitReaction"
       ],
-      "TriggerEvents": [
-        "Event.Hit.KnockBack"
+      "Triggers": [
+        {"Tag": "Event.Hit.KnockBack", "Source": "GameplayEvent"}
       ],
       "bAllowRetrigger": true
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "KnockBack"
-    },
+    "Montage": {"MontageId": "KnockBack"},
+    "End": "Montage",
     "Tasks": [
-      {"Task": "HoldTag", "Tag": "State.Invincible"}
+      {"Task": "Face", "To": "Target"}
     ]
   },
   "KnockUp": {
@@ -393,14 +434,17 @@
         "Ability.Boss.Pattern",
         "Ability.Reaction.HitReaction"
       ],
-      "TriggerEvents": [
-        "Event.Hit.KnockUp"
+      "Triggers": [
+        {"Tag": "Event.Hit.KnockUp", "Source": "GameplayEvent"}
       ],
       "bAllowRetrigger": true
     },
     "Cost": null,
+    "Montage": {"MontageId": "KnockUp"},
+    "End": "Montage",
     "Tasks": [
-      {"Task": "HoldTag", "Tag": "State.Invincible"}
+      {"Task": "Face", "To": "Target"},
+      {"Task": "Launch", "AirTime": 0.6, "Height": 120}
     ]
   },
   "GuardPushback": {
@@ -421,21 +465,22 @@
       ],
       "BlockTags": [],
       "CancelTags": [
-        "Ability.Action",
+        "Ability.Action.Parry",
         "Ability.Sprint",
         "Ability.Boss.Pattern",
         "Ability.Reaction.HitReaction"
       ],
-      "TriggerEvents": [
-        "Event.Guard.Pushback"
+      "Triggers": [
+        {"Tag": "Event.Guard.Pushback", "Source": "GameplayEvent"}
       ],
       "bAllowRetrigger": true
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "GuardPushback"
-    },
-    "Tasks": []
+    "Montage": {"MontageId": "GuardPushback"},
+    "End": "Montage",
+    "Tasks": [
+      {"Task": "Face", "To": "Target"}
+    ]
   },
   "GuardBreak": {
     "Tags": [
@@ -459,37 +504,17 @@
         "Ability.Boss.Pattern",
         "Ability.Reaction.HitReaction"
       ],
-      "TriggerEvents": [
-        "Event.Guard.Break"
+      "Triggers": [
+        {"Tag": "Event.Guard.Break", "Source": "GameplayEvent"}
       ],
       "bAllowRetrigger": true
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "GuardBreak"
-    },
-    "Tasks": []
-  },
-  "Death": {
-    "Tags": [
-      "Ability.Reaction.Death"
-    ],
-    "Cooldown": 0,
-    "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Dead"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "TriggerEvents": [
-        "Event.Death"
-      ],
-      "bAllowRetrigger": false
-    },
-    "Cost": null,
-    "Tasks": []
+    "Montage": {"MontageId": "GuardBreak"},
+    "End": "Montage",
+    "Tasks": [
+      {"Task": "Face", "To": "Target"}
+    ]
   },
   "DoubleStrike": {
     "Tags": [
@@ -508,13 +533,13 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "DoubleStrike"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Montage": {"MontageId": "DoubleStrike"},
+    "End": "Montage",
     "Tasks": [],
     "PatternSelection": {
       "Phases": [
@@ -545,13 +570,13 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "Sweep"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Montage": {"MontageId": "Sweep"},
+    "End": "Montage",
     "Tasks": [],
     "PatternSelection": {
       "Phases": [
@@ -582,13 +607,13 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "DashThrust"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Montage": {"MontageId": "DashThrust"},
+    "End": "Montage",
     "Tasks": [],
     "PatternSelection": {
       "Phases": [
@@ -619,17 +644,15 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "LeapSlam"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget", "bRequired": true},
+    "Montage": {"MontageId": "LeapSlam"},
+    "End": "Montage",
     "Tasks": [
-      {"Task": "Attack", "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": false, "MPCharge": 0, "UPCharge": 0},
-      {"Task": "LaunchToTarget", "AirTime": 1.35, "TargetOffset": 150, "MaxDistance": 1200},
-      {"Task": "TargetQuery", "Range": 350}
+      {"Task": "Launch", "AirTime": 1.35, "To": "Target", "MaxDistance": 1200}
     ],
     "PatternSelection": {
       "Phases": [
@@ -659,13 +682,13 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "QuintupleStrike"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Montage": {"MontageId": "QuintupleStrike"},
+    "End": "Montage",
     "Tasks": [],
     "PatternSelection": {
       "Phases": [
@@ -695,13 +718,13 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "SwordWave"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Montage": {"MontageId": "SwordWave"},
+    "End": "Montage",
     "Tasks": [],
     "PatternSelection": {
       "Phases": [
@@ -731,13 +754,13 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "JumpSlam"
-    },
+    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Montage": {"MontageId": "JumpSlam"},
+    "End": "Montage",
     "Tasks": [],
     "PatternSelection": {
       "Phases": [
@@ -768,14 +791,12 @@
       "OwnedTags": [],
       "BlockTags": [],
       "CancelTags": [],
-      "TriggerEvents": [],
+      "Triggers": [],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "Backstep",
-      "RootMotionDistance": 500
-    },
+    "Montage": {"MontageId": "Backstep", "RootMotionDistance": 500},
+    "End": "Montage",
     "Tasks": [],
     "PatternSelection": {
       "Phases": [
@@ -812,15 +833,47 @@
         "Ability.Sprint",
         "Ability.Reaction.HitReaction"
       ],
-      "TriggerEvents": [
-        "Event.Groggy"
+      "Triggers": [
+        {"Tag": "Event.Groggy", "Source": "GameplayEvent"}
       ],
       "bAllowRetrigger": false
     },
     "Cost": null,
+    "Montage": {"MontageId": "Groggy"},
+    "End": "Montage",
+    "Tasks": []
+  },
+  "Executed": {
+    "Tags": [
+      "Ability.Reaction.Executed"
+    ],
+    "Cooldown": 0,
+    "Activation": {
+      "RequiredTags": [
+        "State.Groggy"
+      ],
+      "BlockedTags": [
+        "State.Dead"
+      ],
+      "OwnedTags": [
+        "State.Groggy",
+        "State.Execution",
+        "State.PassThrough"
+      ],
+      "BlockTags": [],
+      "CancelTags": [
+        "Ability.Reaction.Groggy"
+      ],
+      "Triggers": [
+        {"Tag": "Event.Executed", "Source": "GameplayEvent"}
+      ],
+      "bAllowRetrigger": false
+    },
+    "Cost": null,
+    "Montage": {"MontageId": "Executed"},
+    "End": "Montage",
     "Tasks": [
-      {"Task": "HoldTag", "Tag": "State.Execution"},
-      {"Task": "SetCollisionResponseToChannel", "Channel": "Pawn", "Response": "Ignore"}
+      {"Task": "Face", "To": "Target"}
     ]
   },
   "PhaseTransition": {
@@ -836,22 +889,20 @@
         "State.NonCombat"
       ],
       "OwnedTags": [
-        "State.Invincible",
-        "State.Boss.RotationLocked"
+        "State.Invincible"
       ],
       "BlockTags": [],
       "CancelTags": [
         "Ability.Boss.Pattern"
       ],
-      "TriggerEvents": [
-        "Event.PhaseTransition"
+      "Triggers": [
+        {"Tag": "Event.PhaseTransition", "Source": "GameplayEvent"}
       ],
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {
-      "MontageId": "PhaseTransition"
-    },
+    "Montage": {"MontageId": "PhaseTransition"},
+    "End": "Montage",
     "Tasks": []
   }
 }

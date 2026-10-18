@@ -18,13 +18,23 @@
 void FAgSpawnProjectileParams::GetFieldRules(FAgJsonFieldRules& Rules) const
 {
 	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgSpawnProjectileParams, SocketName));
+	Rules.Optional.Add(TEXT("Attack.bFinisher"));
+	Rules.Optional.Add(TEXT("Attack.Radius"));
+	Rules.Optional.Add(TEXT("Attack.bGroundOnly"));
 }
 
-void FAgSpawnProjectileParams::Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors)
+void FAgSpawnProjectileParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
 {
 	if (Json.HasField(TEXT("SocketName")) != (Origin == EAgProjectileOrigin::MeshSocket))
 	{
 		Errors.Add(Path + TEXT(".SocketName: required only for MeshSocket"));
+	}
+	// 투사체의 판정 범위는 투사체가 정합니다.
+	const TSharedPtr<FJsonObject>* AttackJson = nullptr;
+	if (Json.TryGetObjectField(TEXT("Attack"), AttackJson) &&
+	    ((*AttackJson)->HasField(TEXT("Radius")) || (*AttackJson)->HasField(TEXT("bGroundOnly"))))
+	{
+		Errors.Add(Path + TEXT(".Attack: a projectile uses no Radius or bGroundOnly"));
 	}
 }
 

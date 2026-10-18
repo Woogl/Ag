@@ -3,30 +3,19 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_HoldTag.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_TimeStop.h"
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
-#include "Abilities/Tasks/AbilityTask_WaitMovementModeChange.h"
-#include "Abilities/Tasks/AbilityTask_WaitDelay.h"
+#include "AbilitySystem/AgTargeting.h"
+#include "Abilities/Tasks/AbilityTask.h"
+#include "AbilitySystemGlobals.h"
 #include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "AbilitySystemGlobals.h"
 #include "Character/AgCharacterBase.h"
-#include "Character/AgPlayerCharacter.h"
-#include "Character/AgBossCharacter.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_LockOn.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
-#include "Data/AgMontageTimeline.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "MotionWarpingComponent.h"
+#include "Data/AgTaskParams.h"
 #include "Ag.h"
 
 namespace
@@ -53,7 +42,6 @@ namespace
 		}
 		return {};
 	}
-
 }
 
 UAgGameplayAbility::UAgGameplayAbility()
@@ -127,7 +115,13 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 	{
 		return false;
 	}
-	return CheckStartConditions(*Data, ActorInfo) && Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, RelevantTags);
+	if (!Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, RelevantTags))
+	{
+		return false;
+	}
+
+	// 필수 대상이 없으면 발동하지 않습니다. 발동할 때(커밋 직전) 한 번 더 평가합니다.
+	return !Data->bHasTargeting || !Data->Targeting.bRequired || FindTargetingTarget(*Data, ActorInfo);
 }
 
 bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags,
@@ -137,68 +131,31 @@ bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemC
 	       Super::DoesAbilitySatisfyTagRequirements(ASC, SourceTags, TargetTags, RelevantTags);
 }
 
-AAgCharacterBase* UAgGameplayAbility::GetLockOnTarget() const
+AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
 {
-	return IsActive() && LockOnTask ? LockOnTask->GetTarget() : nullptr;
+	AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
+	return Data.bHasTargeting && Avatar ? AgTargeting::FindTarget(Data.Targeting, *Avatar) : nullptr;
 }
 
-bool UAgGameplayAbility::CheckStartConditions(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
+bool UAgGameplayAbility::IsEventTrigger(const FGameplayEventData* TriggerEventData) const
 {
-	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
-	if (!Character)
-	{
-		return false;
-	}
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(Character);
-	if (Data.Id == TEXT("Jump"))
-	{
-		return Player && Player->CanJump();
-	}
-	if (Data.Id == TEXT("JumpAttack"))
-	{
-		return Character->GetCharacterMovement()->IsFalling();
-	}
-	if (Data.Id == TEXT("Guard"))
-	{
-		return Player && Player->IsGuardHeld();
-	}
-	if (Data.Id == TEXT("Execution"))
-	{
-		return FindExecutionTarget(Player) != nullptr;
-	}
-	if (Data.Id == TEXT("LeapSlam"))
-	{
-		const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(Character);
-		return Boss && Boss->GetTarget();
-	}
-	if (Data.Id == TEXT("LockOn"))
-	{
-		return Player && UAgAbilityTask_LockOn::FindTarget(*Player);
-	}
-	return true;
+	// 엔진은 이벤트 트리거를 부모 태그까지 맞춰 발동합니다. 태그 트리거로 발동해도 실행 정보가 오므로 출처를 가립니다.
+	return TriggerEventData && ExecutionDefinition.Activation.Triggers.ContainsByPredicate(
+	                               [TriggerEventData](const FAgAbilityTrigger& Trigger)
+	                               {
+		                               return Trigger.Source == EAgTriggerSource::GameplayEvent &&
+		                                      TriggerEventData->EventTag.MatchesTag(Trigger.Tag);
+	                               });
 }
 
-bool UAgGameplayAbility::CheckResources(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
+AActor* UAgGameplayAbility::GetActionTarget() const
 {
-	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
-	if (!ASC)
-	{
-		return false;
-	}
-	if (Data.bHasCost && ASC->GetNumericAttribute(ResourceAttribute(Data.Cost.Resource)) < Data.Cost.Amount)
-	{
-		return false;
-	}
-	if (const FAgDrainResourceParams* Drain = Data.FindTask<FAgDrainResourceParams>())
-	{
-		const float Remaining = ASC->GetNumericAttribute(ResourceAttribute(Drain->Resource)) -
-		                        (Data.bHasCost && Data.Cost.Resource == Drain->Resource ? Data.Cost.Amount : 0.f);
-		if (Remaining <= 0.f)
-		{
-			return false;
-		}
-	}
-	return true;
+	return IsActive() ? ActionTarget.Get() : nullptr;
+}
+
+AActor* UAgGameplayAbility::GetTargetingTarget() const
+{
+	return IsActive() && bTargetFromTargeting ? ActionTarget.Get() : nullptr;
 }
 
 bool UAgGameplayAbility::CheckCost(
@@ -206,7 +163,8 @@ bool UAgGameplayAbility::CheckCost(
 {
 	// 활성 스펙의 재발동 사전 검사도 여기로 들어오므로 새 요청의 현재 정의를 확인합니다.
 	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
-	if (Data && CheckResources(*Data, ActorInfo))
+	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
+	if (Data && ASC && (!Data->bHasCost || ASC->GetNumericAttribute(ResourceAttribute(Data->Cost.Resource)) >= Data->Cost.Amount))
 	{
 		return true;
 	}
@@ -220,18 +178,24 @@ bool UAgGameplayAbility::CheckCost(
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
 {
-	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, Effect);
+	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, UAgAssetManager::Get().GetEffect(Effect));
 }
 
-FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(
-    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, EAgEffect Effect) const
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffect& Effect) const
+{
+	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, &Effect);
+}
+
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                                             const UGameplayEffect* Effect) const
 {
 	UAgAbilitySystemComponent* ASC = ActorInfo ? Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get()) : nullptr;
-	if (!ASC)
+	if (!ASC || !Effect)
 	{
 		return FGameplayEffectSpecHandle();
 	}
-	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(Effect, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
+	// 컨텍스트에는 이 어빌리티 인스턴스가 들어갑니다(피격 처리가 극한 회피 구간 효과를 건 행동의 비용을 읽음).
+	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(*Effect, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
 	if (Spec.IsValid())
 	{
 		FGameplayAbilitySpec* AbilitySpec = ASC->FindAbilitySpecFromHandle(Handle);
@@ -256,7 +220,7 @@ void UAgGameplayAbility::ApplyCost(
 	if (ExecutionDefinition.bHasCost && ExecutionDefinition.Cost.Amount > 0.f)
 	{
 		// 비용은 자원 효과를 음수로 겁니다.
-		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, EAgEffect::Resource);
+		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, UAgAssetManager::Get().GetEffect(EAgEffect::Resource));
 		if (Spec.IsValid())
 		{
 			ExecutionDefinition.Cost.AddToSpec(*Spec.Data);
@@ -310,22 +274,79 @@ void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(
 	}
 }
 
-void UAgGameplayAbility::BeginBusy()
+void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                         FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	if (!BusyTag)
+	bEnding = false;
+	const FAgAbilityData* Definition = FindDefinition(Handle, ActorInfo);
+	const AAgCharacterBase* Character = GetAgCharacter();
+	if (!Definition || !Character)
 	{
-		BusyTag = UAgAbilityTask_HoldTag::HoldTag(this, AgGameplayTags::State_Busy);
-		BusyTag->ReadyForActivation();
+		Finish(true);
+		return;
 	}
-}
-
-void UAgGameplayAbility::EndBusy()
-{
-	UAgAbilityTask_HoldTag* Task = BusyTag.Get();
-	BusyTag = nullptr;
-	if (Task)
+	ExecutionDefinition = *Definition;
+	const UAgCharacterData* Data = Character->GetCharacterData();
+	const FAgAbilityTargeting& Targeting = ExecutionDefinition.Targeting;
+	ExecutionProjectiles = UAgAssetManager::Get().GetProjectiles();
+	StopDistance = ExecutionDefinition.bHasTargeting && Targeting.bHasStopDistance ? Targeting.StopDistance : Data->StopDistance;
+	Montage = ExecutionDefinition.bHasMontage ? Data->FindMontage(ExecutionDefinition.Montage.MontageId) : nullptr;
+	RootMotionScale = 1.f;
+	if (ExecutionDefinition.bHasMontage && !Montage)
 	{
-		Task->EndTask();
+		UE_LOG(LogAg, Error, TEXT("Abilities.%s: montage %s is missing in the character's Montages"), *GetAbilityId().ToString(),
+		       *ExecutionDefinition.Montage.MontageId.ToString());
+		Finish(true);
+		return;
+	}
+	if (Montage && ExecutionDefinition.Montage.bHasRootMotionDistance)
+	{
+		// 몽타주 전체 루트 모션이 그 거리가 되도록 이동 배율을 정합니다.
+		const float OriginalDistance = static_cast<float>(
+		    Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D());
+		if (OriginalDistance <= UE_SMALL_NUMBER)
+		{
+			UE_LOG(LogAg, Error, TEXT("Abilities.%s: %s has no root motion for RootMotionDistance"), *GetAbilityId().ToString(),
+			       *Montage->GetName());
+			Finish(true);
+			return;
+		}
+		RootMotionScale = ExecutionDefinition.Montage.RootMotionDistance / OriginalDistance;
+	}
+
+	// 1. 대상을 정하고 커밋합니다. 필수 대상이 없거나 커밋에 실패하면 Task를 실행하지 않고 끝냅니다.
+	ActionTarget = FindTargetingTarget(ExecutionDefinition, ActorInfo);
+	bTargetFromTargeting = ActionTarget.IsValid();
+	if (!ExecutionDefinition.bHasTargeting && IsEventTrigger(TriggerEventData))
+	{
+		ActionTarget = const_cast<AActor*>(TriggerEventData->Instigator.Get());
+	}
+	if ((ExecutionDefinition.bHasTargeting && Targeting.bRequired && !bTargetFromTargeting) ||
+	    !CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		Finish(true);
+		return;
+	}
+
+	// 2. 몽타주를 처음부터 재생하고 시작 위치의 구간·지점을 판정합니다. 재생에 실패하면 취소로 끝납니다.
+	if (IsActive() && !bEnding && Montage)
+	{
+		PlayMontage(NAME_None, -1.f);
+	}
+
+	// 3. 발동 Task를 배열 순서대로 시작합니다. 재생과 같은 프레임이라 첫 화면과 첫 루트 모션보다 먼저입니다. 중간에 행동이 끝나면
+	// 남은 Task는 실행하지 않습니다.
+	const TArray<FInstancedStruct> Tasks = ExecutionDefinition.Tasks;
+	for (const FInstancedStruct& Item : Tasks)
+	{
+		if (!IsActive() || bEnding)
+		{
+			return;
+		}
+		if (UAbilityTask* Task = Item.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this, EAgTaskPlacement::Activation, MontageInstanceId}))
+		{
+			Task->ReadyForActivation();
+		}
 	}
 }
 
@@ -337,188 +358,132 @@ void UAgGameplayAbility::Finish(bool bCancelled)
 	}
 }
 
-bool UAgGameplayAbility::PlayMotion(FName Id, bool bPlayerAction, float Rate, FName Section, float TranslationScale, float StartTime)
+bool UAgGameplayAbility::PlayMontage(FName Section, float BlendTime)
 {
-	UAnimMontage* Montage = ExecutionMontages.FindRef(Id);
-	if (!Montage || !IsActive())
+	UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo());
+	AAgCharacterBase* Character = GetAgCharacter();
+	if (!ASC || !Character || !Montage || !IsActive() || bEnding)
 	{
 		Finish(true);
 		return false;
 	}
-	ClearMotion(false);
-	if (!IsActive())
-	{
-		return false;
-	}
-	Motion.Montage = Montage;
-	Motion.MontageId = Id;
-	Motion.bBlocksMovement = bPlayerAction;
-	if (bPlayerAction)
-	{
-		BeginBusy();
-	}
+
+	// 다시 재생하면 이전 재생의 구간을 끝냅니다. 지점 Task는 남습니다. 이전 재생은 새 재생의 블렌드로 끝납니다. 끝나는 구간이
+	// 요청하는 전환은 이전 재생의 것이므로 받지 않도록 재생 ID를 먼저 비웁니다.
+	const int32 PreviousInstanceId = MontageInstanceId;
+	MontageInstanceId = INDEX_NONE;
+	EndTimeline();
+	ClearWarps();
 	if (!IsActive() || bEnding)
 	{
 		return false;
 	}
-	MotionTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-	    this, NAME_None, Montage, Rate, Section, true, TranslationScale, StartTime);
-	MotionTask->OnCompleted.AddDynamic(this, &ThisClass::HandleMotionCompleted);
-	MotionTask->OnInterrupted.AddDynamic(this, &ThisClass::HandleMotionCancelled);
-	MotionTask->OnCancelled.AddDynamic(this, &ThisClass::HandleMotionCancelled);
-	MotionTask->OnBlendOut.AddDynamic(this, &ThisClass::HandleMotionBlendOut);
-	UAbilityTask_PlayMontageAndWait* StartedTask = MotionTask;
-	StartedTask->ReadyForActivation();
-	if (!IsActive() || MotionTask != StartedTask || GetAbilitySystemComponentFromActorInfo()->GetAnimatingAbility() != this)
+	FAnimMontageInstance* Instance = ASC->PlayMontageWithBlendIn(*this, *Montage, BlendTime, Section);
+	if (!IsActive() || bEnding)
 	{
+		// 이전 재생이 끊기며 부른 콜백이 이 행동을 끝냈습니다. 새 재생은 ASC가 멈췄습니다.
 		return false;
 	}
-	UAnimInstance* Anim = GetActorInfo().GetAnimInstance();
-	FAnimMontageInstance* Instance = Anim ? Anim->GetActiveInstanceForMontage(Montage) : nullptr;
 	if (!Instance)
 	{
+		UE_LOG(LogAg, Error, TEXT("Abilities.%s: failed to play %s (section %s)"), *GetAbilityId().ToString(), *Montage->GetName(),
+		       *Section.ToString());
+		// 이전 재생이 남아 있으면 행동을 끝낼 때 멈추도록 다시 맡습니다.
+		MontageInstanceId = PreviousInstanceId;
 		Finish(true);
 		return false;
 	}
 	const int32 InstanceId = Instance->GetInstanceID();
-	BindMontageInstance(*Instance);
-	if (OwnsMontage(InstanceId))
-	{
-		// 시작 위치에 걸친 구간과 그 위치의 지점은 여기서 바로 실행합니다. 그 실행에서 재생 자체가 끝날 수 있습니다.
-		BeginTimeline(*Instance);
-	}
-	if (OwnsMontage(InstanceId) && !Anim->GetMontageInstanceForID(InstanceId))
-	{
-		Finish(true);
-	}
-	return MotionTask == StartedTask && OwnsMontage(InstanceId);
+	MontageInstanceId = InstanceId;
+	Instance->OnMontageBlendingOutStarted =
+	    FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleMontageBlendingOut, InstanceId);
+	Instance->OnMontageEnded = FOnMontageEnded::CreateUObject(this, &ThisClass::HandleMontageEnded, InstanceId);
+	Character->SetAnimRootMotionTranslationScale(RootMotionScale);
+
+	// 시작 위치에 걸친 구간과 그 위치의 지점은 여기서 바로 실행합니다. 그 실행에서 전환하거나 행동이 끝날 수 있습니다.
+	BeginTimeline(*Instance);
+	return true;
 }
 
-void UAgGameplayAbility::JumpToMotionSection(FName Section)
+void UAgGameplayAbility::JumpToSection(FName Section)
 {
-	MontageJumpToSection(Section);
-	if (IsActive() && !bEnding && Motion.InstanceId != INDEX_NONE && Motion.InstanceId == TimelineInstanceId)
+	UAnimInstance* Anim = GetActorInfo().GetAnimInstance();
+	const FAnimMontageInstance* Instance =
+	    Anim && MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
+	if (!Instance || !Montage)
+	{
+		return;
+	}
+
+	// 엔진은 블렌드 아웃 중인 재생을 옮기지 않으므로, 위치가 바뀌었을 때만 시간표를 다시 맞춥니다.
+	const float Before = Instance->GetPosition();
+	Anim->Montage_JumpToSection(Section, Montage);
+	if (IsActive() && !bEnding && MontageInstanceId == TimelineInstanceId && Instance->GetPosition() != Before)
 	{
 		ResyncTimeline();
 	}
 }
 
-void UAgGameplayAbility::BindMontageInstance(const FAnimMontageInstance& Instance)
+void UAgGameplayAbility::RequestTransition(const FAgTransition& Transition, int32 InstanceId)
 {
-	if (IsActive() && Motion.Montage == Instance.Montage)
-	{
-		Motion.InstanceId = Instance.GetInstanceID();
-		// 공격, 발사, 추적 구간이 있는 모션은 회전을 직접 정합니다.
-		Motion.bControlsFacing = false;
-		if (const FAgMontageTimeline* Timeline = UAgAssetManager::Get().GetMontageTimelines().Find(*Instance.Montage))
-		{
-			for (const FAgTimelineSection& Section : Timeline->Sections)
-			{
-				Motion.bControlsFacing |= Section.Items.ContainsByPredicate(
-				    [](const FAgTimelineItem& Item)
-				    {
-					    return Item.Params.GetPtr<FAgAttackParams>() || Item.Params.GetPtr<FAgSpawnProjectileParams>() ||
-					           Item.Params.GetPtr<FAgTrackParams>();
-				    });
-			}
-		}
-		if (Motion.bControlsFacing)
-		{
-			Motion.Target = GetAgCharacter()->FindAttackTarget();
-		}
-		UpdateMotionConstraints();
-	}
-}
-
-void UAgGameplayAbility::UpdateMotionConstraints()
-{
-	if (!IsActive() || bEnding || Motion.InstanceId == INDEX_NONE)
+	if (!OwnsMontage(InstanceId) || !Transition.IsSet())
 	{
 		return;
 	}
-	FAgCharacterMotionConstraints Constraints;
-	Constraints.bControlsFacing = Motion.bControlsFacing;
-	Constraints.bTranslationFromVelocity = bRootMotionTranslationFromVelocity;
-	if (Motion.bControlsFacing && GetAbilityId() != TEXT("Execution"))
+	if (!Montage || Montage->GetSectionIndex(Transition.Section) == INDEX_NONE)
 	{
-		Constraints.StopTarget = Motion.Target.Get();
-		Constraints.StopDistance = WarpStopDistance;
+		UE_LOG(LogAg, Error, TEXT("Abilities.%s: transition section %s is missing in %s"), *GetAbilityId().ToString(),
+		       *Transition.Section.ToString(), *GetNameSafe(Montage));
+		return;
 	}
-	GetAgCharacter()->SetMotionConstraints(*this, Constraints);
+	if (Transition.BlendTime < 0.f)
+	{
+		JumpToSection(Transition.Section);
+		return;
+	}
+
+	// 새 재생은 대상을 다시 정합니다(평타의 타마다 대상). 이벤트의 Instigator는 바뀌지 않습니다.
+	if (ExecutionDefinition.bHasTargeting)
+	{
+		ActionTarget = FindTargetingTarget(ExecutionDefinition, CurrentActorInfo);
+		bTargetFromTargeting = ActionTarget.IsValid();
+	}
+	PlayMontage(Transition.Section, Transition.BlendTime);
 }
 
-void UAgGameplayAbility::EndWindows()
+float UAgGameplayAbility::GetSectionLength(FName Section) const
 {
-	TArray<FAgAbilityWindowExecution> Ending = MoveTemp(Windows);
-	Windows.Reset();
-	for (FAgAbilityWindowExecution& Window : Ending)
+	const int32 Index = Montage ? Montage->GetSectionIndex(Section) : INDEX_NONE;
+	return Index == INDEX_NONE ? 0.f : Montage->GetSectionLength(Index);
+}
+
+void UAgGameplayAbility::HandleMontageBlendingOut(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId)
+{
+	// 다른 몽타주에 끊기면 그때 취소합니다. 이 행동이 다시 재생해 끝나는 이전 재생은 지금 재생이 아니라 무시합니다.
+	if (bInterrupted && OwnsMontage(InstanceId))
 	{
-		if (Window.Task && !Window.Task->IsFinished())
+		// 끝나는 구간이 요청하는 전환을 받지 않도록 재생 ID를 먼저 비웁니다.
+		MontageInstanceId = INDEX_NONE;
+		EndTimeline();
+		if (ExecutionDefinition.End == EAgAbilityEnd::Montage)
 		{
-			Window.Task->EndTask();
+			Finish(true);
 		}
 	}
 }
 
-void UAgGameplayAbility::ClearMotion(bool bStop)
+void UAgGameplayAbility::HandleMontageEnded(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId)
 {
-	const FAgAbilityMontageExecution Previous = Motion;
-	Motion = {};
-	StopTimeline();
-	if (AAgCharacterBase* Character = GetAgCharacter())
+	if (!OwnsMontage(InstanceId))
 	{
-		Character->ClearMotionConstraints(*this);
+		return;
 	}
-	UAbilityTask_PlayMontageAndWait* PreviousTask = MotionTask.Get();
-	MotionTask = nullptr;
-	if (PreviousTask)
+	MontageInstanceId = INDEX_NONE;
+	EndTimeline();
+	if (ExecutionDefinition.End == EAgAbilityEnd::Montage)
 	{
-		PreviousTask->OnCompleted.RemoveAll(this);
-		PreviousTask->OnInterrupted.RemoveAll(this);
-		PreviousTask->OnCancelled.RemoveAll(this);
-		PreviousTask->OnBlendOut.RemoveAll(this);
-		PreviousTask->EndTask();
+		Finish(bInterrupted);
 	}
-	EndWindows();
-	TArray<TObjectPtr<UAgRootMotionModifier_MotionWarping>> PreviousWarps = MoveTemp(Warps);
-	Warps.Reset();
-	for (UAgRootMotionModifier_MotionWarping* Warp : PreviousWarps)
-	{
-		if (Warp)
-		{
-			Warp->SetState(ERootMotionModifierState::MarkedForRemoval);
-		}
-	}
-	if (UAnimInstance* Anim = GetActorInfo().GetAnimInstance(); Anim && Previous.Montage)
-	{
-		if (const FAnimMontageInstance* Instance = Anim->GetMontageInstanceForID(Previous.InstanceId); Instance && Instance->IsActive())
-		{
-			if (bHoldingDash)
-			{
-				Anim->Montage_Resume(Previous.Montage);
-			}
-			if (bStop)
-			{
-				Anim->Montage_StopWithBlendOut(Previous.Montage->GetBlendOutArgs(), Previous.Montage);
-			}
-		}
-	}
-	bHoldingDash = false;
-	DashTask = nullptr;
-}
-
-void UAgGameplayAbility::Listen(FGameplayTag Event)
-{
-	UAbilityTask_WaitGameplayEvent* Task = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, Event, nullptr, false, true);
-	Task->EventReceived.AddDynamic(this, &ThisClass::HandleEvent);
-	Task->ReadyForActivation();
-}
-
-void UAgGameplayAbility::WaitForLanding()
-{
-	UAbilityTask_WaitMovementModeChange* Task = UAbilityTask_WaitMovementModeChange::CreateWaitMovementModeChange(this, MOVE_Walking);
-	Task->OnChange.AddDynamic(this, &ThisClass::HandleLanded);
-	Task->ReadyForActivation();
 }
 
 void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -534,36 +499,30 @@ void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGa
 		return;
 	}
 	bEnding = true;
-	CloseParryWindow();
-	if (DrainEffect.IsValid())
-	{
-		GetAbilitySystemComponentFromActorInfo()->RemoveActiveGameplayEffect(DrainEffect);
-		DrainEffect.Invalidate();
-	}
-	ClearMotion(true);
+	const int32 InstanceId = MontageInstanceId;
+	EndTimeline();
+	EndWindows();
+	ClearWarps();
+	MontageInstanceId = INDEX_NONE;
 	TimelineTick.UnRegisterTickFunction();
-	EndBusy();
+
+	// 끝나지 않은 재생은 몽타주의 블렌드 아웃으로 멈춥니다.
 	if (AAgCharacterBase* Character = GetAgCharacter())
 	{
-		if (GetAbilityId() == TEXT("Jump"))
+		Character->SetAnimRootMotionTranslationScale(1.f);
+		UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance();
+		FAnimMontageInstance* Instance = Anim && InstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(InstanceId) : nullptr;
+		if (Instance && Montage && !Instance->IsStopped())
 		{
-			Character->StopJumping();
-		}
-		if (GetAbilityId() == TEXT("Groggy"))
-		{
-			CastChecked<AAgBossCharacter>(Character)->SetGroggyTimerRunning(false);
+			Instance->OnMontageBlendingOutStarted.Unbind();
+			Instance->OnMontageEnded.Unbind();
+			Instance->Stop(FAlphaBlend(Montage->BlendOut));
 		}
 	}
-	GuardingTag = nullptr;
-	DownedTag = nullptr;
-	UltimateTimeStop = nullptr;
-	LockOnTask = nullptr;
-	GroggyWait = nullptr;
-	ExecutionMontages.Reset();
 	ExecutionProjectiles.Reset();
-	ComboMontageIds.Reset();
-	ExecutionTarget.Reset();
+	ActionTarget.Reset();
+	bTargetFromTargeting = false;
+	Montage = nullptr;
 	ExecutionDefinition = {};
-	bRootMotionTranslationFromVelocity = false;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

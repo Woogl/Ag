@@ -61,7 +61,7 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
 	float UPCharge = 0.f;
 
-	/** 카메라 '상황별 단계': 처형의 마지막 일격과 궁극기 마무리. 데이터가 아니라 그 어빌리티가 켭니다. */
+	/** 마지막 일격: 처형의 마지막 일격과 궁극기 마무리(카메라 '상황별 단계'). 시간표 Attack 항목의 bFinisher입니다. */
 	bool bFinisher = false;
 
 	/** 이 타의 값을 대미지 효과 스펙에 넣습니다: 배율과 충전은 SetByCaller, 반응·가드 불가·마지막 일격은 동적 에셋 태그 */

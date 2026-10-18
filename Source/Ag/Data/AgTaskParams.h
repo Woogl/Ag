@@ -27,12 +27,37 @@ enum class EAgTaskPlacement : uint8
 };
 ENUM_CLASS_FLAGS(EAgTaskPlacement)
 
+/**
+ * Task가 Runner에 요청하는 전환. BlendTime이 없으면 같은 재생 안에서 그 섹션으로 옮기고(블렌드 없음), 있으면 그 섹션부터
+ * 다시 재생합니다(새 재생, 그 시간의 블렌드 인).
+ */
+USTRUCT()
+struct FAgTransition
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FName Section;
+
+	/** 다시 재생할 때의 블렌드 시간(초). JSON에 적지 않으면 음수이고 같은 재생 안에서 옮깁니다. */
+	UPROPERTY()
+	float BlendTime = -1.f;
+
+	bool IsSet() const
+	{
+		return !Section.IsNone();
+	}
+};
+
 /** Runner가 Task를 만들 때 넘기는 실행 입력 */
 struct FAgTaskContext
 {
 	UAgGameplayAbility& Runner;
 
-	/** 시간표 항목이면 그 재생의 몽타주 인스턴스 ID입니다. */
+	/** 항목을 둔 곳 */
+	EAgTaskPlacement Placement = EAgTaskPlacement::Activation;
+
+	/** 시간표 항목이면 그 재생의 몽타주 인스턴스 ID이고, 발동 Task면 행동이 시작한 재생입니다(없으면 INDEX_NONE). */
 	int32 MontageInstanceId = INDEX_NONE;
 };
 
@@ -59,12 +84,30 @@ struct FAgTaskParams
 	{
 	}
 
-	/** 필드를 읽은 뒤 값과 참조를 검사하고, 선택 필드를 적었는지 Json(이 항목의 원문)으로 정합니다. */
-	virtual void Validate(const FJsonObject& Json, const FString& Path, TArray<FString>& Errors)
+	/** 필드를 읽은 뒤 둔 곳(Placement)에 맞는지, 값과 참조를 검사하고, 선택 필드를 적었는지 Json(이 항목의 원문)으로 정합니다. */
+	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
 	{
 	}
 
-	/** 이 Params로 Task를 만듭니다. 시작(ReadyForActivation)과 끝은 Runner가 정합니다. 행동 처리가 값을 읽는 설정이면 null입니다. */
+	/** 행동 대상을 쓰면 참입니다. 이 항목을 쓰는 행동은 Targeting이나 GameplayEvent 트리거를 가져야 합니다(검증). */
+	virtual bool NeedsTarget() const
+	{
+		return false;
+	}
+
+	/** 이 항목이 요청할 수 있는 전환. 없으면 null입니다(검증이 섹션을 확인합니다). */
+	virtual const FAgTransition* GetTransition() const
+	{
+		return nullptr;
+	}
+
+	/** 구간에 두면 전환을 기다리는 항목. 기다리는 동안 몽타주가 끝나지 않게 반복 섹션을 끝까지 덮어야 합니다(검증). */
+	virtual bool WaitsForTransition() const
+	{
+		return false;
+	}
+
+	/** 이 Params로 Task를 만듭니다. 시작(ReadyForActivation)과 구간의 끝은 Runner가 정합니다. 만들 수 없으면 null입니다. */
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const
 	{
 		return nullptr;

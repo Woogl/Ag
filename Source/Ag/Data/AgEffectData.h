@@ -17,9 +17,7 @@ enum class EAgEffect : uint8
 {
 	Damage,
 	Resource,
-	ResourceDrain,
 	Cooldown,
-	TimedTag,
 	Hitstop,
 	SPRegenDelay,
 	SPRegenDelayEmpty,
@@ -27,6 +25,9 @@ enum class EAgEffect : uint8
 	Kill,
 	PPRefill,
 	ParryPPLoss,
+	ParryReward,
+	PerfectDodgeReward,
+	DodgeCounterChance,
 };
 
 /** Effects.json의 값: 효과 ID마다 읽을 때 만든 GameplayEffect */

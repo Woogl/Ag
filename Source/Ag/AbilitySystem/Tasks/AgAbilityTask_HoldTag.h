@@ -8,7 +8,10 @@
 #include "GameplayTagContainer.h"
 #include "AgAbilityTask_HoldTag.generated.h"
 
-/** 상태 태그 하나(HoldTag Task의 Params). 시간표 구간이면 그동안 붙이고, 발동 Task 배열의 항목은 행동 처리가 붙일 때를 정합니다. */
+/**
+ * 값 없는 상태 태그 하나(HoldTag Task의 Params). 구간이면 그동안 붙이고, 지점이면 그 시각부터 행동이 끝날 때까지 붙입니다. 행동
+ * 내내 필요한 태그는 행동 정의 Activation의 OwnedTags에 둡니다.
+ */
 USTRUCT()
 struct FAgHoldTagParams : public FAgTaskParams
 {
@@ -19,16 +22,13 @@ struct FAgHoldTagParams : public FAgTaskParams
 
 	virtual EAgTaskPlacement GetPlacements() const override
 	{
-		return EAgTaskPlacement::Activation | EAgTaskPlacement::Window;
+		return EAgTaskPlacement::Window | EAgTaskPlacement::Point;
 	}
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
-/**
- * 도는 동안 주인에게 상태 태그 하나를 붙여 둡니다(예: 회피의 무적 구간, 가드 중). 어빌리티가 EndTask로 끝내거나 어빌리티가
- * 끝나면 태그를 뗍니다. 어빌리티가 도는 내내 붙는 태그는 이 태스크 대신 어빌리티의 ActivationOwnedTags에 둡니다.
- */
+/** 도는 동안 주인에게 상태 태그 하나를 붙여 둡니다(예: 회피의 무적 구간). Runner가 구간 끝에 끝내거나 행동이 끝나면 뗍니다. */
 UCLASS()
 class UAgAbilityTask_HoldTag : public UAbilityTask
 {

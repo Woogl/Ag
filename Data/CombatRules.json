@@ -1,9 +1,6 @@
 {
   "GuardReduction": 0.5,
   "DefenseConstant": 100,
-  "KnockUpAirTime": 0.6,
-  "KnockUpHeight": 120,
-  "GroggyDuration": 5,
   "HUDTrailDelay": 0.5,
   "HUDTrailShrinkTime": 0.3
 }

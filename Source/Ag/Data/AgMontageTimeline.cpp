@@ -1,9 +1,9 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "Data/AgMontageTimeline.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_ApplyEffect.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_SetCollisionResponseToChannel.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
 #include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Data/AgJsonRead.h"
@@ -14,6 +14,8 @@
 #include "AnimNotify_GameplayCue.h"
 #include "AnimNotifyState_MotionWarping.h"
 #include "Animation/AnimNotifies/AnimNotifyState_DisableRootMotion.h"
+#include "Core/AgGameplayTags.h"
+#include "GameplayCueInterface.h"
 #endif
 
 namespace
@@ -181,7 +183,58 @@ TArray<FName> AgMontageTimeline::GetProjectileIds(const FAgMontageTimeline& Time
 	return Ids;
 }
 
+void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& Timelines,
+                                        const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors)
+{
+	for (const TPair<FName, FAgMontageTimeline>& Pair : Timelines)
+	{
+		for (const FAgTimelineSection& Section : Pair.Value.Sections)
+		{
+			for (int32 Index = 0; Index < Section.Items.Num(); ++Index)
+			{
+				const FAgTimelineItem& Item = Section.Items[Index];
+				if (const FAgApplyEffectParams* Apply = Item.Params.GetPtr<FAgApplyEffectParams>())
+				{
+					Apply->ValidateEffect(Effects, Item.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point,
+					                      FString::Printf(TEXT("%s.%s[%d]"), *Pair.Key.ToString(), *Section.Name.ToString(), Index),
+					                      Errors);
+				}
+			}
+		}
+	}
+}
+
 #if WITH_EDITOR
+namespace
+{
+	/**
+	 * Start부터 End까지 몽타주가 루트 모션을 주는지. 몽타주의 어느 시퀀스에든 루트 모션이 있으면, 루트 모션이 없는 시퀀스의 구간도
+	 * 엔진은 몽타주 루트 모션(이동 없음)으로 처리해 루트 모션 소스를 쓰지 않으므로, 그 구간을 덮는 루트 모션 끄기 노티파이가 있어야
+	 * 루트 모션이 없습니다.
+	 */
+	bool GivesRootMotion(const UAnimMontage& Montage, float Start, float End)
+	{
+		return Montage.HasRootMotion() && !Montage.Notifies.ContainsByPredicate(
+		                                      [Start, End](const FAnimNotifyEvent& Event)
+		                                      {
+			                                      return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
+			                                             Event.GetTime() <= Start + TimeTolerance &&
+			                                             Event.GetTime() + Event.GetDuration() >= End - TimeTolerance;
+		                                      });
+	}
+
+	/** 공격 예고 Cue(가드 불가 예고, 패리 예고)의 상태 노티파이입니다. 엔진 노티파이의 Cue 태그는 리플렉션으로만 읽을 수 있습니다. */
+	bool IsTelegraphCue(const FAnimNotifyEvent& Event)
+	{
+		static const FStructProperty* CueProperty =
+		    FindFProperty<FStructProperty>(UAnimNotify_GameplayCueState::StaticClass(), TEXT("GameplayCue"));
+		UAnimNotifyState* State = Cast<UAnimNotify_GameplayCueState>(Event.NotifyStateClass);
+		const FGameplayCueTag* Cue = State && CueProperty ? CueProperty->ContainerPtrToValuePtr<FGameplayCueTag>(State) : nullptr;
+		return Cue && (Cue->GameplayCueTag == AgGameplayTags::GameplayCue_UnblockableTelegraph ||
+		               Cue->GameplayCueTag == AgGameplayTags::GameplayCue_ParryTelegraph);
+	}
+}
+
 void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Timelines, TArray<FString>& Errors)
 {
 	for (const TPair<FName, FAgMontageTimeline>& Pair : Timelines)
@@ -199,6 +252,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 		{
 			const FAgTimelineItem* Item = nullptr;
 			FString Name;
+			int32 SectionIndex = INDEX_NONE;
 			float Start = 0.f;
 			float End = 0.f;
 		};
@@ -236,9 +290,22 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				{
 					Errors.Add(FString::Printf(TEXT("%s: End %.4f is after the section length %.4f"), *Name, Item.End, EndLength));
 				}
+
+				// 전환할 섹션은 이 몽타주에 있고, 전환 지점은 섹션 끝보다 앞입니다(끝에서는 몽타주가 먼저 끝나거나 다음 섹션으로 넘어감).
+				const FAgTransition* Transition = Item.Params.Get<FAgTaskParams>().GetTransition();
+				if (Transition && Montage->GetSectionIndex(Transition->Section) == INDEX_NONE)
+				{
+					Errors.Add(Name + TEXT(".Next.Section: the montage has no section ") + Transition->Section.ToString());
+				}
+				if (Transition && !Item.bWindow && Item.Start >= SectionLength - TimeTolerance)
+				{
+					Errors.Add(FString::Printf(TEXT("%s: a transition point at %.4f must be before the section end %.4f"), *Name,
+					                           Item.Start, SectionLength));
+				}
 				FResolved& Resolved = Items.AddDefaulted_GetRef();
 				Resolved.Item = &Item;
 				Resolved.Name = Name;
+				Resolved.SectionIndex = SectionIndex;
 				ResolveTimes(*Montage, Section.Name, Item, Resolved.Start, Resolved.End);
 				if (Item.bWindow && Resolved.End <= Resolved.Start)
 				{
@@ -262,55 +329,79 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			}
 			return false;
 		};
+
+		// 기다리는 구간은 반복 섹션을 처음부터 끝까지 덮어, 기다리는 동안 몽타주가 끝나거나 구간을 벗어나지 않습니다.
+		const TFunction<bool(float, float)> CoversLoopToEnd = [Montage](float Start, float End)
+		{
+			for (int32 Index = 0; Index < Montage->CompositeSections.Num(); ++Index)
+			{
+				const FCompositeSection& Section = Montage->CompositeSections[Index];
+				float SectionStart = 0.f;
+				float SectionEnd = 0.f;
+				Montage->GetSectionStartAndEndTime(Index, SectionStart, SectionEnd);
+				if (Section.NextSectionName == Section.SectionName && Start <= SectionStart + TimeTolerance &&
+				    FMath::IsNearlyEqual(End, SectionEnd, TimeTolerance))
+				{
+					return true;
+				}
+			}
+			return false;
+		};
+
+		// 첫 섹션에서 섹션 링크로 이어지는 섹션. 그 밖의 섹션은 전환으로만 들어가 몽타주 시각으로 때를 정할 수 없습니다.
+		TSet<int32> LinkedSections;
+		for (int32 Index = Montage->GetSectionIndexFromPosition(0.f); Index != INDEX_NONE && !LinkedSections.Contains(Index);
+		     Index = Montage->GetSectionIndex(Montage->CompositeSections[Index].NextSectionName))
+		{
+			LinkedSections.Add(Index);
+		}
+
 		bool bHasTrack = false;
-		bool bHasHit = false;
+		TArray<float> HitTimes;
 		for (int32 Index = 0; Index < Items.Num(); ++Index)
 		{
 			const FResolved& Window = Items[Index];
 			const FInstancedStruct& Params = Window.Item->Params;
-			bHasTrack |= Params.GetPtr<FAgTrackParams>() != nullptr;
-			bHasHit |= Params.GetPtr<FAgAttackParams>() != nullptr || Params.GetPtr<FAgSpawnProjectileParams>() != nullptr;
+			const FAgTrackParams* Track = Params.GetPtr<FAgTrackParams>();
+			const bool bDash = Params.GetPtr<FAgDashParams>() != nullptr;
+			bHasTrack |= Track != nullptr;
+			const bool bHit = Params.GetPtr<FAgAttackParams>() || (!Window.Item->bWindow && Params.GetPtr<FAgSpawnProjectileParams>());
+			if (bHit && LinkedSections.Contains(Window.SectionIndex))
+			{
+				HitTimes.Add(Window.Start);
+			}
 			if (!Window.Item->bWindow && OverlapsLoop(Window.Start, Window.Start))
 			{
 				Errors.Add(Window.Name + TEXT(": a point can't be inside a looping section"));
 			}
-			if (Params.GetPtr<FAgTrackParams>() && OverlapsLoop(Window.Start, Window.End))
+			if (Track && OverlapsLoop(Window.Start, Window.End))
 			{
 				Errors.Add(Window.Name + TEXT(": a tracking window can't overlap a looping section"));
 			}
+			if (Window.Item->bWindow && Params.Get<FAgTaskParams>().WaitsForTransition() && !CoversLoopToEnd(Window.Start, Window.End))
+			{
+				Errors.Add(Window.Name + TEXT(": a window waiting for its transition must cover a looping section to its end"));
+			}
 
-			// 경쟁: 같은 채널의 충돌 응답끼리, 돌진끼리는 겹치지 않습니다.
-			const FAgSetCollisionResponseToChannelParams* Collision = Params.GetPtr<FAgSetCollisionResponseToChannelParams>();
-			const bool bDash = Params.GetPtr<FAgDashParams>() != nullptr;
-			for (int32 Other = Index + 1; Other < Items.Num() && (Collision || bDash); ++Other)
+			// 경쟁: 돌진끼리는 겹치지 않습니다.
+			for (int32 Other = Index + 1; Other < Items.Num() && bDash; ++Other)
 			{
 				const FResolved& OtherWindow = Items[Other];
-				if (OtherWindow.Start >= Window.End || Window.Start >= OtherWindow.End)
-				{
-					continue;
-				}
-				const FAgSetCollisionResponseToChannelParams* OtherCollision =
-				    OtherWindow.Item->Params.GetPtr<FAgSetCollisionResponseToChannelParams>();
-				if (Collision && OtherCollision && OtherCollision->Channel == Collision->Channel)
-				{
-					Errors.Add(Window.Name + TEXT(": overlaps ") + OtherWindow.Name + TEXT(" on the same channel"));
-				}
-				if (bDash && OtherWindow.Item->Params.GetPtr<FAgDashParams>())
+				if (OtherWindow.Item->Params.GetPtr<FAgDashParams>() && OtherWindow.Start < Window.End && Window.Start < OtherWindow.End)
 				{
 					Errors.Add(Window.Name + TEXT(": overlaps ") + OtherWindow.Name);
 				}
 			}
 
-			// 돌진하는 동안 모션의 루트 이동을 쓰지 않도록, 몽타주에 남긴 루트 모션 끄기가 돌진과 함께 시작해야 합니다.
-			const bool bRootMotionOff = !bDash || Montage->Notifies.ContainsByPredicate(
-			                                          [&Window](const FAnimNotifyEvent& Event)
-			                                          {
-				                                          return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
-				                                                 FMath::IsNearlyEqual(Event.GetTime(), Window.Start, TimeTolerance);
-			                                          });
-			if (!bRootMotionOff)
+			// 루트 모션 소스로 움직이는 돌진 구간에는 몽타주 루트 모션이 없어야 하고, 몽타주 루트 모션이 없는 추적 구간은 돌기만 합니다.
+			if (bDash && GivesRootMotion(*Montage, Window.Start, Window.End))
 			{
-				Errors.Add(Window.Name + TEXT(": needs a root motion off notify starting with the dash"));
+				Errors.Add(Window.Name + TEXT(": a dash window needs no montage root motion (a root motion off notify over the window)"));
+			}
+			if (Track && !GivesRootMotion(*Montage, Window.Start, Window.End) &&
+			    !(Track->bHasMaxWarpDistance && Track->MaxWarpDistance <= 0.f))
+			{
+				Errors.Add(Window.Name + TEXT(": a tracking window without montage root motion only turns, so MaxWarpDistance must be 0"));
 			}
 		}
 
@@ -330,29 +421,25 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			}
 		}
 
-		// 공격 예고는 판정 구간이 시작될 때(투사체는 발사할 때) 끝납니다(보스 사양 '공격 예고'). 판정을 몽타주가 정하지 않는
-		// 패턴(LeapSlam의 착지)은 공격 구간도 발사도 없어 검사하지 않습니다.
-		if (bHasHit)
+		// 공격 예고는 판정 구간이 시작될 때(투사체는 발사할 때) 끝납니다(보스 사양 '공격 예고'). 전환으로만 들어가는 섹션의 판정
+		// (LeapSlam의 착지)은 몽타주 시각으로 때를 정할 수 없어 검사하지 않습니다.
+		if (!HitTimes.IsEmpty())
 		{
 			for (const FAnimNotifyEvent& Event : Montage->Notifies)
 			{
-				if (!Cast<UAnimNotify_GameplayCueState>(Event.NotifyStateClass))
+				if (!IsTelegraphCue(Event))
 				{
 					continue;
 				}
 				const float CueEnd = Event.GetTime() + Event.GetDuration();
-				const bool bMatched = Items.ContainsByPredicate(
-				    [CueEnd](const FResolved& Item)
-				    {
-					    const bool bHit = (Item.Item->bWindow && Item.Item->Params.GetPtr<FAgAttackParams>()) ||
-					                      (!Item.Item->bWindow && Item.Item->Params.GetPtr<FAgSpawnProjectileParams>());
-					    return bHit && FMath::IsNearlyEqual(Item.Start, CueEnd, TimeTolerance);
-				    });
-				if (!bMatched)
+				if (!HitTimes.ContainsByPredicate(
+				        [CueEnd](float Time)
+				        {
+					        return FMath::IsNearlyEqual(Time, CueEnd, TimeTolerance);
+				        }))
 				{
 					Errors.Add(FString::Printf(
-					    TEXT("%s: the telegraph cue ending at %.4f must end when an attack window starts or a projectile spawns"), *Path,
-					    CueEnd));
+					    TEXT("%s: the telegraph cue ending at %.4f must end when an attack starts or a projectile spawns"), *Path, CueEnd));
 				}
 			}
 		}
