@@ -95,12 +95,16 @@ class Ctx:
         return self.player.get_actor_forward_vector()
 
     def montage(self, who):
+        """지금 몽타주 이름. 기본 섹션(Default)이 아닌 섹션이면 "AM_Player_BasicAttack:Attack3"처럼 섹션을 붙인다."""
         anim = (self.player if who == "p" else self.boss).get_editor_property("mesh").get_anim_instance()
         m = anim.get_current_active_montage() if anim else None
-        return m.get_name() if m else None
+        if not m:
+            return None
+        section = str(anim.montage_get_current_section(m))
+        return m.get_name() if section in ("Default", "None") else "%s:%s" % (m.get_name(), section)
 
     def seq(self, who, t_from=0.0, t_to=1e9):
-        """t_from~t_to초 사이에 재생된 몽타주 이름을 차례로(연속 중복 없이)."""
+        """t_from~t_to초 사이에 재생된 몽타주 이름(montage와 같은 형식)을 차례로(연속 중복 없이)."""
         out = []
         for r in self.rows:
             m = r["pm" if who == "p" else "bm"]

@@ -44,7 +44,7 @@ STEPS = [                            # (시작 후 초, 화면에 띄울 항목,
 ]
 
 def evaluate(c):                     # (전체 통과 여부, 판정 항목 목록)
-    chain = [m for m in c.seq("p", 2.5, 8.5) if m.startswith("AM_Player_BasicAttack")]
+    chain = [m for m in c.seq("p", 2.5, 8.5) if m.startswith("AM_Player_BasicAttack:")]
     dmg = c.boss_hp0 - c.attr("b", "HP")
     items = [(len(chain) >= 5, "1~5타가 이어짐 (%d타)" % len(chain)),
              (dmg > 0, "보스가 대미지를 받음 (%.0f)" % dmg)]
@@ -65,10 +65,10 @@ def evaluate(c):                     # (전체 통과 여부, 판정 항목 목�
 | `attr(who, name)`, `set_attr(who, name, value)` | 어트리뷰트(`HP`, `MP`, `UP`, `PP` 등)를 읽고 씁니다. 이 창의 메모리만 바꿉니다. 값만 바꾸고 변경 이벤트는 일으키지 않아서, HP를 0으로 해도 사망하지 않고 HUD도 바뀌지 않습니다. |
 | `console(command)` | 콘솔 명령을 실행합니다. 사망은 [테스트용 콘솔 명령](<../../Docs/Program/개발 도구와 검증.md>)(`AgKillBoss`, `AgKillPlayer`)으로 일으킵니다. |
 | `has(who, tag)` | 게임플레이 태그가 붙어 있는지 |
-| `montage(who)`, `seq(who, 시작, 끝)` | 지금 몽타주, 그 구간에 재생된 몽타주 순서 |
+| `montage(who)`, `seq(who, 시작, 끝)` | 지금 몽타주, 그 구간에 재생된 몽타주 순서. 기본 섹션(`Default`)이 아닌 섹션은 `AM_Player_BasicAttack:Attack3`처럼 섹션을 붙입니다. |
 | `pos()`, `forward()` | 플레이어 위치와 앞 방향 |
 | `banner(text, key)` | 화면에 글자 한 줄을 더합니다. 같은 `key`로 다시 부르면 그 줄이 바뀝니다. |
-| `rows`, `notes` | 프레임마다 기록한 값(몽타주, HP·SP·MP·UP, 보스 HP·PP, 가드·사망), 결과에 남길 메모 |
+| `rows`, `notes` | 프레임마다 기록한 값(몽타주와 섹션, HP·SP·MP·UP, 보스 HP·PP, 가드·사망), 결과에 남길 메모 |
 
 - 더 필요한 것은 단계 함수에서 `unreal` 모듈로 직접 합니다. 액터 속성을 쓸 때는 `set_editor_property(이름, 값, unreal.PropertyAccessChangeNotifyMode.NEVER)`로 씁니다. 알림과 함께 쓰면 엔진이 컴포넌트를 다시 등록하면서 캐릭터의 어빌리티가 모두 사라집니다.
 - 개발용 입력 속성 같은 에디터 전용 속성은 C++ 이름(`DevMashInput`)으로 씁니다.
