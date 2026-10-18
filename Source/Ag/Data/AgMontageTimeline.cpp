@@ -147,8 +147,8 @@ bool AgMontageTimeline::Parse(const FJsonObject& Json, TMap<FName, FAgMontageTim
 	return true;
 }
 
-bool AgMontageTimeline::ResolveTimes(
-    const UAnimMontage& Montage, FName Section, const FAgTimelineItem& Item, float& OutStart, float& OutEnd)
+bool AgMontageTimeline::ResolveTimes(const UAnimMontage& Montage, FName Section, const FAgTimelineItem& Item, float& OutStart,
+                                     float& OutEnd)
 {
 	const int32 SectionIndex = Montage.GetSectionIndex(Section);
 	const int32 EndIndex = Item.EndSection.IsNone() ? SectionIndex : Montage.GetSectionIndex(Item.EndSection);

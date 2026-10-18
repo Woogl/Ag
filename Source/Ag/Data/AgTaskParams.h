@@ -127,5 +127,5 @@ namespace AgTaskParams
 	 * Start, End, Time)입니다. 실패하면 Out을 바꾸지 않습니다.
 	 */
 	bool Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path, TArray<FString>& Errors,
-	    const TArray<FString>& Ignored = TArray<FString>());
+	          const TArray<FString>& Ignored = TArray<FString>());
 }

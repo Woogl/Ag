@@ -126,7 +126,7 @@ void UAgHUDWidget::HideStatus()
 TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
 {
 	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown,
-	    /*bHideCursorDuringViewportCapture*/ true);
+	                      /*bHideCursorDuringViewportCapture*/ true);
 }
 
 void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -169,7 +169,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 	SetValueText(*PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
 	UpdateTrail(PlayerHPTrail, *PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 	UpdateTrail(PlayerSPTrail, *PlayerSPTrailBar, Stats->GetMaxSP() > 0.f ? Stats->GetSP() / Stats->GetMaxSP() : 0.f, GameDeltaTime,
-	    bPlayerSPGuardDrop);
+	            bPlayerSPGuardDrop);
 	bPlayerSPGuardDrop = false;
 
 	// 슬롯은 MP·UP가 부족할 때만 흐리게 합니다. 스킬 쿨다운은 쿨다운 표시로 보여 줍니다.
@@ -230,8 +230,8 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	UpdateTrail(BossPPTrail, *BossPPTrailBar, PPBarRatio, GameDeltaTime);
 }
 
-const UGameplayAbility* UAgHUDWidget::FindAbility(
-    const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
+const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag,
+                                                  FGameplayAbilitySpecHandle& OutHandle)
 {
 	// 입력 계층과 같은 행동 태그 검색입니다.
 	const UAgAbilitySystemComponent* AgASC = Cast<UAgAbilitySystemComponent>(&ASC);

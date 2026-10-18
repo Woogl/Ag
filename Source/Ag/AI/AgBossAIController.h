@@ -41,8 +41,14 @@ public:
 	bool IsBossReacting() const;
 
 	/** 페이즈 전환은 보스전에서 한 번만 시작합니다. */
-	bool HasStartedPhaseTransition() const { return bPhaseTransitionStarted; }
-	void MarkPhaseTransitionStarted() { bPhaseTransitionStarted = true; }
+	bool HasStartedPhaseTransition() const
+	{
+		return bPhaseTransitionStarted;
+	}
+	void MarkPhaseTransitionStarted()
+	{
+		bPhaseTransitionStarted = true;
+	}
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;

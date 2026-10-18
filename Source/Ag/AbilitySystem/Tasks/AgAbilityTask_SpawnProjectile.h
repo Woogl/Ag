@@ -56,7 +56,8 @@ class UAgAbilityTask_SpawnProjectile : public UAbilityTask_SpawnActor
 
 public:
 	static UAgAbilityTask_SpawnProjectile* SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId,
-	    const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName);
+	                                                       const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack,
+	                                                       EAgProjectileOrigin Origin, FName SocketName);
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 

@@ -44,15 +44,17 @@ UAbilityTask* FAgSpawnProjectileParams::MakeTask(const FAgTaskContext& Context) 
 	if (!Projectile)
 	{
 		UE_LOG(LogAg, Error, TEXT("Abilities.%s: projectile %s missing in Projectiles (play %d)"),
-		    *Context.Runner.GetAbilityId().ToString(), *ProjectileId.ToString(), Context.MontageInstanceId);
+		       *Context.Runner.GetAbilityId().ToString(), *ProjectileId.ToString(), Context.MontageInstanceId);
 		return nullptr;
 	}
-	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(
-	    &Context.Runner, Context.MontageInstanceId, *Projectile, Attack, Origin, SocketName);
+	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(&Context.Runner, Context.MontageInstanceId, *Projectile, Attack, Origin,
+	                                                       SocketName);
 }
 
 UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId,
-    const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName)
+                                                                                const FAgProjectileDefinition& Projectile,
+                                                                                const FAgAttackParams& Attack, EAgProjectileOrigin Origin,
+                                                                                FName SocketName)
 {
 	UAgAbilityTask_SpawnProjectile* Task = NewAbilityTask<UAgAbilityTask_SpawnProjectile>(Owner);
 	Task->SourceInstanceId = MontageInstanceId;
@@ -107,7 +109,7 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 	else
 	{
 		UE_LOG(LogAg, Error, TEXT("%s projectile %s has invalid socket/origin %s"), *GetNameSafe(Montage),
-		    *GetNameSafe(ProjectileClass.Get()), *SpawnSocket.ToString());
+		       *GetNameSafe(ProjectileClass.Get()), *SpawnSocket.ToString());
 		EndTask();
 		return;
 	}

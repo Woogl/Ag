@@ -19,8 +19,8 @@ namespace
 	constexpr float PointTolerance = 1.e-4f;
 }
 
-void UAgGameplayAbility::FAgTimelineTickFunction::ExecuteTick(
-    float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
+void UAgGameplayAbility::FAgTimelineTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
+                                                              const FGraphEventRef& MyCompletionGraphEvent)
 {
 	if (IsValid(Target) && TickType != LEVELTICK_ViewportsOnly)
 	{
@@ -216,17 +216,17 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, ETimelineMode Mode)
 		FAgTimelineEntry& Entry = TimelineEntries[Item.Entry];
 		switch (Item.Phase)
 		{
-		case EPhase::Begin:
-			Entry.bActive = true;
-			StartTimelineWindow(Item.Entry);
-			break;
-		case EPhase::End:
-			Entry.bActive = false;
-			EndTimelineWindow(InstanceId, Item.Entry);
-			break;
-		case EPhase::Point:
-			RunTimelinePoint(Item.Entry);
-			break;
+			case EPhase::Begin:
+				Entry.bActive = true;
+				StartTimelineWindow(Item.Entry);
+				break;
+			case EPhase::End:
+				Entry.bActive = false;
+				EndTimelineWindow(InstanceId, Item.Entry);
+				break;
+			case EPhase::Point:
+				RunTimelinePoint(Item.Entry);
+				break;
 		}
 	}
 }

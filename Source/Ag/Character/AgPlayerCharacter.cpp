@@ -193,23 +193,19 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 	// 행동 키를 누르면 그 입력 태그를 넘깁니다. 키를 뗀 것은 가드, 회피·달리기, 점프 키만 봅니다.
 	const TPair<const UInputAction*, FGameplayTag> ActionKeys[] = {
-	    {AttackAction, AgGameplayTags::Input_Attack},
-	    {GuardAction, AgGameplayTags::Input_Guard},
-	    {DodgeAction, AgGameplayTags::Input_Dodge},
-	    {JumpAction, AgGameplayTags::Input_Jump},
-	    {SkillAction, AgGameplayTags::Input_Skill},
-	    {UltimateAction, AgGameplayTags::Input_Ultimate},
-	    {ExecuteAction, AgGameplayTags::Input_Execute},
-	    {LockOnAction, AgGameplayTags::Input_LockOn},
+	    {AttackAction, AgGameplayTags::Input_Attack},   {GuardAction, AgGameplayTags::Input_Guard},
+	    {DodgeAction, AgGameplayTags::Input_Dodge},     {JumpAction, AgGameplayTags::Input_Jump},
+	    {SkillAction, AgGameplayTags::Input_Skill},     {UltimateAction, AgGameplayTags::Input_Ultimate},
+	    {ExecuteAction, AgGameplayTags::Input_Execute}, {LockOnAction, AgGameplayTags::Input_LockOn},
 	};
 	for (const TPair<const UInputAction*, FGameplayTag>& ActionKey : ActionKeys)
 	{
 		EnhancedInput->BindAction(ActionKey.Key, ETriggerEvent::Started, this, &ThisClass::HandleInputPressed, ActionKey.Value);
 	}
-	EnhancedInput->BindAction(
-	    GuardAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Guard));
-	EnhancedInput->BindAction(
-	    DodgeAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased, FGameplayTag(AgGameplayTags::Input_Dodge));
+	EnhancedInput->BindAction(GuardAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased,
+	                          FGameplayTag(AgGameplayTags::Input_Guard));
+	EnhancedInput->BindAction(DodgeAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased,
+	                          FGameplayTag(AgGameplayTags::Input_Dodge));
 	EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased,
 	                          FGameplayTag(AgGameplayTags::Input_Jump));
 }

@@ -38,8 +38,8 @@ namespace
 	TArray<FRequiredShape> RequiredShapes()
 	{
 		using EPolicy = EGameplayEffectDurationType;
-		const TArray<FGameplayTag> Resources = {
-		    AgGameplayTags::SetByCaller_SP, AgGameplayTags::SetByCaller_MP, AgGameplayTags::SetByCaller_UP};
+		const TArray<FGameplayTag> Resources = {AgGameplayTags::SetByCaller_SP, AgGameplayTags::SetByCaller_MP,
+		                                        AgGameplayTags::SetByCaller_UP};
 		return {
 		    {EAgEffect::Damage, EPolicy::Instant, false, false, {}, AgGameplayTags::Effect_Damage, FGameplayTag()},
 		    {EAgEffect::Resource, EPolicy::Instant, false, false, Resources, FGameplayTag(), FGameplayTag()},
@@ -109,7 +109,7 @@ namespace
 	{
 		const int32 Before = Errors.Num();
 		Keys(Object, Path, {TEXT("Attribute"), TEXT("Op")}, {TEXT("Value"), TEXT("PerSecond"), TEXT("SetByCaller"), TEXT("FromAttribute")},
-		    Errors);
+		     Errors);
 		Attribute(Object, TEXT("Attribute"), Path, Out.Attribute, Errors);
 		FString Op;
 		Object.TryGetStringField(TEXT("Op"), Op);
@@ -191,17 +191,17 @@ namespace
 	{
 		const int32 Before = Errors.Num();
 		Keys(Entry, Path, {TEXT("DurationPolicy")},
-		    {TEXT("Duration"), TEXT("Period"), TEXT("ExecutePeriodicOnApplication"), TEXT("PeriodicInhibitionPolicy"), TEXT("Modifiers"),
-		        TEXT("Executions"), TEXT("AssetTags"), TEXT("GrantedTags"), TEXT("ApplicationIgnoredTags"), TEXT("OngoingRequiredTags"),
-		        TEXT("OngoingIgnoredTags"), TEXT("Components")},
-		    Errors);
+		     {TEXT("Duration"), TEXT("Period"), TEXT("ExecutePeriodicOnApplication"), TEXT("PeriodicInhibitionPolicy"), TEXT("Modifiers"),
+		      TEXT("Executions"), TEXT("AssetTags"), TEXT("GrantedTags"), TEXT("ApplicationIgnoredTags"), TEXT("OngoingRequiredTags"),
+		      TEXT("OngoingIgnoredTags"), TEXT("Components")},
+		     Errors);
 		EGameplayEffectDurationType Policy = EGameplayEffectDurationType::Instant;
 		EnumValue(Entry, TEXT("DurationPolicy"), Path, Policy, Errors);
 		// 즉시 효과는 걸려 있지 않으므로 주기, 부여 태그, 지속 조건을 쓸 수 없습니다.
 		if (Policy == EGameplayEffectDurationType::Instant)
 		{
 			for (const TCHAR* Key : {TEXT("Period"), TEXT("ExecutePeriodicOnApplication"), TEXT("PeriodicInhibitionPolicy"),
-			         TEXT("GrantedTags"), TEXT("OngoingRequiredTags"), TEXT("OngoingIgnoredTags")})
+			                         TEXT("GrantedTags"), TEXT("OngoingRequiredTags"), TEXT("OngoingIgnoredTags")})
 			{
 				if (Entry.HasField(Key))
 				{
@@ -422,8 +422,8 @@ FName AgEffectData::Id(EAgEffect Effect)
 	return FName(*StaticEnum<EAgEffect>()->GetNameStringByValue(static_cast<int64>(Effect)));
 }
 
-bool AgEffectData::Parse(
-    const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out, TArray<FString>& Errors)
+bool AgEffectData::Parse(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out,
+                         TArray<FString>& Errors)
 {
 	const int32 Before = Errors.Num();
 	TMap<FName, TObjectPtr<UGameplayEffect>> Candidate;

@@ -24,8 +24,9 @@ void UAgAbilitySystemComponent::CancelAbilitiesWithSpecTags(const FGameplayTagCo
 }
 
 void UAgAbilitySystemComponent::ApplyAbilityBlockAndCancelTags(const FGameplayTagContainer& AbilityTags,
-    UGameplayAbility* RequestingAbility, bool bEnableBlockTags, const FGameplayTagContainer& BlockTags, bool bExecuteCancelTags,
-    const FGameplayTagContainer& CancelTags)
+                                                               UGameplayAbility* RequestingAbility, bool bEnableBlockTags,
+                                                               const FGameplayTagContainer& BlockTags, bool bExecuteCancelTags,
+                                                               const FGameplayTagContainer& CancelTags)
 {
 	Super::ApplyAbilityBlockAndCancelTags(AbilityTags, RequestingAbility, bEnableBlockTags, BlockTags, false, CancelTags);
 	if (bExecuteCancelTags)
@@ -93,8 +94,8 @@ FAnimMontageInstance* UAgAbilitySystemComponent::PlayMontageWithBlendIn(UGamepla
 	return Instance;
 }
 
-FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(
-    EAgEffect Effect, float Level, FGameplayEffectContextHandle Context) const
+FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(EAgEffect Effect, float Level,
+                                                                    FGameplayEffectContextHandle Context) const
 {
 	const UGameplayEffect* Definition = UAgAssetManager::Get().GetEffect(Effect);
 	return Definition ? MakeEffectSpec(*Definition, Level, Context) : FGameplayEffectSpecHandle();

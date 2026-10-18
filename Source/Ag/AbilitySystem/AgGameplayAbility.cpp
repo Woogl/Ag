@@ -33,12 +33,12 @@ namespace
 	{
 		switch (Resource)
 		{
-		case EAgResource::SP:
-			return UAgAttributeSet::GetSPAttribute();
-		case EAgResource::MP:
-			return UAgAttributeSet::GetMPAttribute();
-		case EAgResource::UP:
-			return UAgAttributeSet::GetUPAttribute();
+			case EAgResource::SP:
+				return UAgAttributeSet::GetSPAttribute();
+			case EAgResource::MP:
+				return UAgAttributeSet::GetMPAttribute();
+			case EAgResource::UP:
+				return UAgAttributeSet::GetUPAttribute();
 		}
 		return {};
 	}
@@ -61,8 +61,8 @@ AAgCharacterBase* UAgGameplayAbility::GetAgCharacter() const
 	return Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
 }
 
-const FAgAbilityData* UAgGameplayAbility::FindDefinition(
-    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
+const FAgAbilityData* UAgGameplayAbility::FindDefinition(FGameplayAbilitySpecHandle Handle,
+                                                         const FGameplayAbilityActorInfo* ActorInfo) const
 {
 	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
 	return Character ? Character->FindAbility(Handle) : nullptr;
@@ -97,7 +97,8 @@ void UAgGameplayAbility::OnRemoveAbility(const FGameplayAbilityActorInfo* ActorI
 }
 
 bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-    const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* RelevantTags) const
+                                            const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags,
+                                            FGameplayTagContainer* RelevantTags) const
 {
 	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
 	const FGameplayAbilitySpec* Spec = ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
@@ -107,8 +108,8 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 	if (!Data || !Instance || !Instance->GrantedDefinition.HasSameGrantSettings(*Data))
 	{
 		UE_LOG(LogAg, Warning,
-		    TEXT("Ability %s: grant settings changed or unavailable; recreate character or regrant spec before activation"),
-		    Data ? *Data->Id.ToString() : TEXT("None"));
+		       TEXT("Ability %s: grant settings changed or unavailable; recreate character or regrant spec before activation"),
+		       Data ? *Data->Id.ToString() : TEXT("None"));
 		return false;
 	}
 	if (Spec->IsActive() && !Data->Activation.bAllowRetrigger)
@@ -125,7 +126,8 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 }
 
 bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags,
-    const FGameplayTagContainer* TargetTags, FGameplayTagContainer* RelevantTags) const
+                                                           const FGameplayTagContainer* TargetTags,
+                                                           FGameplayTagContainer* RelevantTags) const
 {
 	return !ASC.AreAbilityTagsBlocked(GrantedDefinition.Tags) &&
 	       Super::DoesAbilitySatisfyTagRequirements(ASC, SourceTags, TargetTags, RelevantTags);
@@ -158,8 +160,8 @@ AActor* UAgGameplayAbility::GetTargetingTarget() const
 	return IsActive() && bTargetFromTargeting ? ActionTarget.Get() : nullptr;
 }
 
-bool UAgGameplayAbility::CheckCost(
-    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* RelevantTags) const
+bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                   FGameplayTagContainer* RelevantTags) const
 {
 	// 활성 스펙의 재발동 사전 검사도 여기로 들어오므로 새 요청의 현재 정의를 확인합니다.
 	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
@@ -214,8 +216,8 @@ FAgResourceCostParams UAgGameplayAbility::GetCost() const
 	return Definition && Definition->bHasCost ? Definition->Cost : FAgResourceCostParams();
 }
 
-void UAgGameplayAbility::ApplyCost(
-    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
+void UAgGameplayAbility::ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                   FGameplayAbilityActivationInfo ActivationInfo) const
 {
 	if (ExecutionDefinition.bHasCost && ExecutionDefinition.Cost.Amount > 0.f)
 	{
@@ -229,15 +231,15 @@ void UAgGameplayAbility::ApplyCost(
 	}
 }
 
-bool UAgGameplayAbility::CheckCooldown(
-    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* RelevantTags) const
+bool UAgGameplayAbility::CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                       FGameplayTagContainer* RelevantTags) const
 {
 	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
 	return Spec && ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).IsEmpty();
 }
 
-void UAgGameplayAbility::ApplyCooldown(
-    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
+void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                       FGameplayAbilityActivationInfo ActivationInfo) const
 {
 	UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get());
 	if (ExecutionDefinition.Cooldown > 0.f && ASC)
@@ -254,8 +256,8 @@ void UAgGameplayAbility::ApplyCooldown(
 	}
 }
 
-void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(
-    FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& Remaining, float& Duration) const
+void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                                             float& Remaining, float& Duration) const
 {
 	Remaining = Duration = 0.f;
 	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
@@ -264,7 +266,7 @@ void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(
 		return;
 	}
 	for (const TPair<float, float>& Entry :
-	    ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemainingAndDuration(CooldownQuery(Spec->GetPrimaryInstance())))
+	     ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemainingAndDuration(CooldownQuery(Spec->GetPrimaryInstance())))
 	{
 		if (Entry.Key > Remaining)
 		{
@@ -487,7 +489,7 @@ void UAgGameplayAbility::HandleMontageEnded(UAnimMontage* EndedMontage, bool bIn
 }
 
 void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-    FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+                                    FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	if (bEnding || !IsActive())
 	{

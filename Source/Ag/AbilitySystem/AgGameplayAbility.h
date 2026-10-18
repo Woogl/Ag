@@ -77,12 +77,13 @@ public:
 	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	virtual void OnRemoveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	virtual bool CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
-	    FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	                                const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr,
+	                                FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual bool DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags = nullptr,
-	    const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+	                                               const FGameplayTagContainer* TargetTags = nullptr,
+	                                               FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    float& TimeRemaining, float& Duration) const override;
+	                                                 float& TimeRemaining, float& Duration) const override;
 
 	/** 행동의 비용. 실행 중이면 실행한 정의의 값입니다. */
 	FAgResourceCostParams GetCost() const;
@@ -147,17 +148,17 @@ public:
 
 protected:
 	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	                             FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 	virtual void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+	                        FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual bool CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    FGameplayTagContainer* RelevantTags = nullptr) const override;
+	                       FGameplayTagContainer* RelevantTags = nullptr) const override;
 	virtual void ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    FGameplayAbilityActivationInfo ActivationInfo) const override;
+	                       FGameplayAbilityActivationInfo ActivationInfo) const override;
 	virtual bool CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    FGameplayTagContainer* RelevantTags = nullptr) const override;
+	                           FGameplayTagContainer* RelevantTags = nullptr) const override;
 	virtual void ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-	    FGameplayAbilityActivationInfo ActivationInfo) const override;
+	                           FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 private:
 	/** 시간표 판정을 부르는 까닭. 재생 시작과 섹션 이동에서는 그 위치의 지점도 실행합니다. */
@@ -172,8 +173,8 @@ private:
 	struct FAgTimelineTickFunction : public FTickFunction
 	{
 		UAgGameplayAbility* Target = nullptr;
-		virtual void ExecuteTick(
-		    float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent) override;
+		virtual void ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
+		                         const FGraphEventRef& MyCompletionGraphEvent) override;
 		virtual FString DiagnosticMessage() override;
 	};
 

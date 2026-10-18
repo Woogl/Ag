@@ -87,8 +87,8 @@ UAgAbilityTask_Attack::UAgAbilityTask_Attack()
 	AttackTick.EndTickGroup = TG_PostPhysics;
 }
 
-void UAgAbilityTask_Attack::FAgAttackTickFunction::ExecuteTick(
-    float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
+void UAgAbilityTask_Attack::FAgAttackTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
+                                                               const FGraphEventRef& MyCompletionGraphEvent)
 {
 	if (IsValid(Target) && Target->IsActive() && TickType != LEVELTICK_ViewportsOnly)
 	{

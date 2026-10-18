@@ -32,7 +32,7 @@ namespace AgJsonRead
 
 	/** Required 키가 모두 있고 Required·Optional 밖의 키가 없는지 확인합니다. */
 	inline bool Keys(const FJsonObject& Object, const FString& Path, std::initializer_list<const TCHAR*> Required,
-	    std::initializer_list<const TCHAR*> Optional, TArray<FString>& Errors)
+	                 std::initializer_list<const TCHAR*> Optional, TArray<FString>& Errors)
 	{
 		const int32 Before = Errors.Num();
 		TSet<FString> Allowed;
@@ -69,8 +69,8 @@ namespace AgJsonRead
 		return *Object;
 	}
 
-	inline bool Number(
-	    const FJsonObject& Object, const FString& Key, const FString& Path, float& Out, TArray<FString>& Errors, bool bSigned = false)
+	inline bool Number(const FJsonObject& Object, const FString& Key, const FString& Path, float& Out, TArray<FString>& Errors,
+	                   bool bSigned = false)
 	{
 		const TSharedPtr<FJsonValue> Value = Object.TryGetField(Key);
 		if (!Value || Value->Type != EJson::Number || !FMath::IsFinite(Value->AsNumber()) ||
@@ -84,7 +84,8 @@ namespace AgJsonRead
 	}
 
 	/** 네이티브 태그 이름의 배열을 읽습니다. 모르는 태그와 같은 태그를 두 번 쓴 것은 오류입니다. */
-	inline bool Tags(const FJsonObject& Object, const FString& Key, const FString& Path, FGameplayTagContainer& Out, TArray<FString>& Errors)
+	inline bool Tags(const FJsonObject& Object, const FString& Key, const FString& Path, FGameplayTagContainer& Out,
+	                 TArray<FString>& Errors)
 	{
 		const TArray<TSharedPtr<FJsonValue>>* Values = nullptr;
 		if (!Object.TryGetArrayField(Key, Values))
@@ -134,7 +135,7 @@ namespace AgJsonRead
 	 * 키입니다. 구조체 필드는 객체로, 태그 모음은 태그 이름의 배열로 적습니다. 실패하면 Out의 일부만 바뀌었을 수 있습니다.
 	 */
 	inline bool ReadStruct(const FJsonObject& Object, const UScriptStruct& Struct, void* Out, const FString& Path, TArray<FString>& Errors,
-	    const FAgJsonFieldRules& Rules = FAgJsonFieldRules(), const TArray<FString>& Ignored = TArray<FString>())
+	                       const FAgJsonFieldRules& Rules = FAgJsonFieldRules(), const TArray<FString>& Ignored = TArray<FString>())
 	{
 		const int32 Before = Errors.Num();
 		FJsonObject Normalized = Object;

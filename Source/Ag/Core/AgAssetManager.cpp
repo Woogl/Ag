@@ -91,16 +91,16 @@ namespace
 	{
 		switch (Type)
 		{
-		case EJson::Array:
-			return TEXT("an array");
-		case EJson::Boolean:
-			return TEXT("true or false");
-		case EJson::Number:
-			return TEXT("a number");
-		case EJson::Object:
-			return TEXT("an object");
-		default:
-			return TEXT("a string");
+			case EJson::Array:
+				return TEXT("an array");
+			case EJson::Boolean:
+				return TEXT("true or false");
+			case EJson::Number:
+				return TEXT("a number");
+			case EJson::Object:
+				return TEXT("an object");
+			default:
+				return TEXT("a string");
 		}
 	}
 
@@ -355,8 +355,9 @@ namespace
 		{
 			FText FailReason;
 			const TSharedPtr<FJsonValue> Value = Json.TryGetField(Property->GetName());
-			if (!Value.IsValid() || !FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
-			                            Property->ContainerPtrToValuePtr<void>(&Target), 0, 0, false, &FailReason))
+			if (!Value.IsValid() ||
+			    !FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
+			                                                Property->ContainerPtrToValuePtr<void>(&Target), 0, 0, false, &FailReason))
 			{
 				Errors.Add(Path + Property->GetName() + TEXT(": ") + FailReason.ToString());
 			}
@@ -391,7 +392,8 @@ namespace
 		{
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("    %s"), *Errors[Index]));
 		}
-		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red,
+		GEngine->AddOnScreenDebugMessage(
+		    INDEX_NONE, 15.f, FColor::Red,
 		    FString::Printf(TEXT("%s has %d error(s), so no data file was applied (all in the log):"), *File, Errors.Num()));
 	}
 
@@ -628,9 +630,10 @@ bool UAgAssetManager::LoadJsonData()
 		}
 	}
 
-	const TPair<const TCHAR*, const TArray<FString>*> Results[] = {{CombatRulesFile, &RulesErrors}, {CameraDataFile, &CameraErrors},
-	    {EffectsFile, &EffectErrors}, {ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors},
-	    {AbilitiesFile, &AbilityErrors}, {CharactersFile, &CharacterErrors}};
+	const TPair<const TCHAR*, const TArray<FString>*> Results[] = {
+	    {CombatRulesFile, &RulesErrors},      {CameraDataFile, &CameraErrors},         {EffectsFile, &EffectErrors},
+	    {ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors}, {AbilitiesFile, &AbilityErrors},
+	    {CharactersFile, &CharacterErrors}};
 	bool bFailed = false;
 	for (const TPair<const TCHAR*, const TArray<FString>*>& Result : Results)
 	{
@@ -666,13 +669,13 @@ void UAgAssetManager::ReloadJsonData()
 	if (LoadJsonData() && GEngine)
 	{
 		// 스탯처럼 스폰할 때 한 번 넣는 값은 다음 PIE부터 바뀝니다(구현 계획서 'JSON 데이터' 다시 읽기).
-		GEngine->AddOnScreenDebugMessage(
-		    INDEX_NONE, 5.f, FColor::Green, TEXT("Data reloaded. Spawn settings apply on the next play start."));
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
+		                                 TEXT("Data reloaded. Spawn settings apply on the next play start."));
 	}
 }
 
-void UAgAssetManager::ModifyCook(
-    TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook)
+void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook,
+                                 TArray<FName>& PackagesToNeverCook)
 {
 	Super::ModifyCook(TargetPlatforms, PackagesToCook, PackagesToNeverCook);
 	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 JSON 전체를 검사합니다.
@@ -764,9 +767,10 @@ void UAgAssetManager::ModifyCook(
 	}
 
 	// UFS에 포함되지만 로더가 읽지 않는 파일도 배포하지 않습니다.
-	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(), FString(CameraDataFile).ToLower(), FString(EffectsFile).ToLower(),
-	    FString(ProjectilesFile).ToLower(), FString(MontageTimelinesFile).ToLower(), FString(AbilitiesFile).ToLower(),
-	    FString(CharactersFile).ToLower()};
+	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(),      FString(CameraDataFile).ToLower(),
+	                                 FString(EffectsFile).ToLower(),          FString(ProjectilesFile).ToLower(),
+	                                 FString(MontageTimelinesFile).ToLower(), FString(AbilitiesFile).ToLower(),
+	                                 FString(CharactersFile).ToLower()};
 	TArray<FString> Files;
 	IFileManager::Get().FindFiles(Files, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
 	for (const FString& File : Files)

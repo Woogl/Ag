@@ -103,7 +103,7 @@ void AAgCharacterBase::PreInitializeComponents()
 	if (!CharacterData || !CharacterData->IsA(CharacterDataClass) || !CharacterData->HasValidJsonData())
 	{
 		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing, has the wrong type or is not valid."), *GetName(),
-		    *CharacterDataId.ToString());
+		       *CharacterDataId.ToString());
 	}
 }
 
@@ -299,8 +299,8 @@ void AAgCharacterBase::ApplyEffects()
 {
 	for (FName EffectId : CharacterData->Effects)
 	{
-		AbilitySystemComponent->ApplyGameplayEffectToSelf(
-		    UAgAssetManager::Get().FindEffect(EffectId), 1.f, AbilitySystemComponent->MakeEffectContext());
+		AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(EffectId), 1.f,
+		                                                  AbilitySystemComponent->MakeEffectContext());
 	}
 }
 
@@ -358,8 +358,8 @@ void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, EA
 	{
 		AbilitySystemComponent->RemoveActiveGameplayEffect(Handle);
 	}
-	Handle = AbilitySystemComponent->ApplyGameplayEffectToSelf(
-	    UAgAssetManager::Get().GetEffect(DelayEffect), 1.f, AbilitySystemComponent->MakeEffectContext());
+	Handle = AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(DelayEffect), 1.f,
+	                                                           AbilitySystemComponent->MakeEffectContext());
 }
 
 bool AAgCharacterBase::IsFacingFixed() const
@@ -537,8 +537,8 @@ void AAgCharacterBase::Kill()
 		return;
 	}
 
-	AbilitySystemComponent->ApplyGameplayEffectToSelf(
-	    UAgAssetManager::Get().GetEffect(EAgEffect::Kill), 1.f, AbilitySystemComponent->MakeEffectContext());
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::Kill), 1.f,
+	                                                  AbilitySystemComponent->MakeEffectContext());
 }
 
 void AAgCharacterBase::FellOutOfWorld(const UDamageType& DamageType)

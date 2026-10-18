@@ -14,14 +14,14 @@ namespace
 	{
 		switch (Placement)
 		{
-		case EAgTaskPlacement::Activation:
-			return TEXT("in the ability Tasks");
-		case EAgTaskPlacement::Window:
-			return TEXT("as a timeline window");
-		case EAgTaskPlacement::Point:
-			return TEXT("as a timeline point");
-		default:
-			return TEXT("here");
+			case EAgTaskPlacement::Activation:
+				return TEXT("in the ability Tasks");
+			case EAgTaskPlacement::Window:
+				return TEXT("as a timeline window");
+			case EAgTaskPlacement::Point:
+				return TEXT("as a timeline point");
+			default:
+				return TEXT("here");
 		}
 	}
 }
@@ -55,7 +55,7 @@ FName AgTaskParams::GetTaskName(const UScriptStruct& Struct)
 }
 
 bool AgTaskParams::Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path,
-    TArray<FString>& Errors, const TArray<FString>& Ignored)
+                        TArray<FString>& Errors, const TArray<FString>& Ignored)
 {
 	const int32 Before = Errors.Num();
 	FString TaskName;
