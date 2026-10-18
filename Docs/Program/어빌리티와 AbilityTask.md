@@ -4,7 +4,7 @@
 
 ## 결정과 목표
 
-**`UAgGameplayAbility`는 엔진 어빌리티 기능과 단순한 시간표 Runner만 맡고, Task는 여러 행동이 함께 쓰는 범용 기능 11개만 둡니다. 행동 고유의 규칙은 효과 데이터(`Effects.json`)와 그 규칙의 주인 객체에 둡니다.**
+**`UAgGameplayAbility`는 엔진 어빌리티 기능과 단순한 시간표 Runner만 맡고, Task는 여러 행동이 함께 쓰는 범용 기능 12개만 둡니다. 행동 고유의 규칙은 효과 데이터(`Effects.json`)와 그 규칙의 주인 객체에 둡니다.**
 
 | 둔 곳 | 담는 것 |
 | - | - |
@@ -19,7 +19,7 @@
 - Task는 자기 일만 하고 다른 Task를 모릅니다. Runner는 Task 종류, 행동 ID, 몽타주 ID로 분기하지 않습니다. 행동 전체를 맡는 흐름 Task와 자식 Ability는 만들지 않습니다.
 - 한 행동만 쓰는 규칙은 Task로 만들지 않습니다. 값은 효과 데이터에, 규칙은 그 규칙의 주인 객체에 둡니다. 새 Task는 둘 이상의 행동이 쓰거나 쓸 수 있는 기능일 때만 더합니다.
 - Runner는 몽타주를 처음부터 재생하고 Task가 요청한 전환만 합니다. 재생 옵션은 두지 않습니다. 캐릭터 통과·시간 정지처럼 값 없는 상태는 행동이 갖는 상태 태그를 캐릭터가 읽어 처리합니다. 대상과의 간격은 행동의 Targeting에 하나만 두고, 추적 구간의 접근과 행동 내내의 최소 간격이 함께 씁니다. 보스는 행동하지 않을 때만 자동으로 돌고, 재생할 때의 몸 돌리기는 Face가 맡습니다.
-- 애니메이션이 만든 이동은 몽타주 루트 모션과 Motion Warping이, 그 밖의 이동(띄우기, 도약, 돌진, 내리꽂기)은 엔진 루트 모션 소스(Launch, Dash)가 맡습니다. 캐릭터 무브먼트는 몽타주가 루트 모션을 주면 루트 모션 소스를 쓰지 않으므로, 소스로 움직이는 동안은 몽타주 루트 모션을 끄고, 그동안의 추적 구간은 Runner가 캐릭터를 직접 돌립니다.
+- 애니메이션이 만든 이동은 몽타주 루트 모션과 Motion Warping이, 그 밖의 이동(띄우기, 도약, 돌진, 내리꽂기)은 엔진 루트 모션 소스(Launch, Dash)가 맡습니다. 캐릭터 무브먼트는 몽타주가 루트 모션을 주면 루트 모션 소스를 쓰지 않으므로, 소스로 움직이는 동안은 시간표의 DisableRootMotion 구간이 몽타주 루트 모션을 끄고, 그동안의 추적 구간은 Runner가 캐릭터를 직접 돌립니다.
 - 행동 정의와 시간표의 항목은 네 가지입니다. 값 없는 상태는 태그(Activation의 OwnedTags, 시간표의 HoldTag)로, 값이나 월드 시간이 있거나 다른 주인이 지워야 하는 상태는 효과(ApplyEffect)로, 다른 액터·시스템에 알릴 것은 이벤트(SendGameplayEvent)로 적고 받는 주인이 처리합니다. 값·대상·어빌리티 문맥이 필요하거나 결과를 돌려주는 것만 기능 Task입니다.
 - 몽타주의 흐름(시작 섹션 고르기, 기다림, 다음 동작)은 섹션과 Transition으로 적습니다. 기다림은 언제나 반복 섹션과 그 섹션을 덮는 전환입니다. 여러 모션을 쓰는 행동(평타, 회피, 넉업, 점프)은 한 몽타주의 섹션으로 합칩니다.
 - Attack은 맞을 대상을 고르지 않습니다. 켜진 동안 판정 범위(무기, 또는 주인 둘레의 공격 범위)에 닿는 적을 모두 칩니다.
@@ -120,13 +120,13 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task, 행동 ID, 몽�
 | 일 | 맡는 것 |
 | - | - |
 | 자동 회전 정지 | 캐릭터. 행동이 실행 중이면(재생 중인 Runner가 있음) 자동으로 돌지 않습니다. 자동으로 도는 것은 보스뿐입니다. |
-| 공중 이동 | 도약은 Launch, 내리꽂기는 Dash가 움직이고, 공중 회전은 추적 구간이 캐릭터를 직접 돌립니다. 두 몽타주는 그 섹션의 루트 모션을 끕니다. |
+| 공중 이동 | 도약은 Launch, 내리꽂기는 Dash가 움직이고, 공중 회전은 추적 구간이 캐릭터를 직접 돌립니다. 두 몽타주는 그 섹션의 루트 모션을 DisableRootMotion 구간으로 끕니다. |
 | 최소 간격 | Targeting으로 정한 대상이 있으면 그 행동의 간격으로 늘 지킵니다(처형 포함). |
 | 재생 전 몸 돌리기 | Face(발동 Task). 피격 반응·패리·처형 피격은 공격 쪽으로, 회피는 이동 입력 방향으로 돕니다. |
 | 시작 섹션 고르기 | 첫 섹션 0초의 Transition 지점(회피의 Roll·Backstep) |
 | 착지 뒤 시작 | 맨 앞 반복 섹션 Fall의 Transition(공중에서 시작한 그로기) |
 
-- 몽타주 루트 모션과 루트 모션 소스(Launch, Dash)는 같은 순간에 함께 쓰지 않습니다. 그래서 소스가 움직이는 섹션은 엔진 `AnimNotifyState_DisableRootMotion`으로 몽타주 루트 모션을 끄고, 그 섹션의 추적 구간은 워핑 대신 Runner가 캐릭터를 직접 돌립니다. 루트 모션이 있는 시퀀스가 하나라도 든 몽타주는 엔진이 몽타주 전체를 루트 모션 몽타주로 다루므로, 시퀀스 설정만으로는 끌 수 없습니다. Dash 구간은 이 노티파이가 덮는지 검사합니다([몽타주 시간표](<몽타주 시간표.md>) '검증').
+- 몽타주 루트 모션과 루트 모션 소스(Launch, Dash)는 같은 순간에 함께 쓰지 않습니다. 그래서 소스가 움직이는 섹션은 시간표의 DisableRootMotion 구간으로 몽타주 루트 모션을 끄고, 그 섹션의 추적 구간은 워핑 대신 Runner가 캐릭터를 직접 돌립니다. 루트 모션이 있는 시퀀스가 하나라도 든 몽타주는 엔진이 몽타주 전체를 루트 모션 몽타주로 다루므로, 시퀀스 설정만으로는 끌 수 없습니다. 끄는 구간은 몽타주 노티파이(엔진 `AnimNotifyState_DisableRootMotion`)가 아니라 시간표에 두어, 그 구간에 기대는 Dash·추적 구간과 한 파일에서 고치고 검사합니다. Dash 구간은 DisableRootMotion 구간이 덮는지 검사합니다([몽타주 시간표](<몽타주 시간표.md>) '검증').
 - 재생 배율은 몽타주의 Rate Scale 그대로입니다. 보스 공격 패턴의 0.8은 패턴 몽타주의 Rate Scale에 둡니다.
 - 바로 이어지는 동작은 섹션 링크로 잇습니다. 다른 동작으로 넘어갈 때는 전환에 BlendTime을 적어 그 섹션부터 다시 재생합니다. 같은 재생 안의 섹션 이동에는 블렌드가 없어 자세가 튀기 때문입니다. BlendTime은 섹션으로 합치기 전 각 몽타주의 Blend In 시간입니다.
 - 시작 섹션을 고르는 행동은 후보 하나를 첫 섹션에 두고, 그 0초에 조건이 있는 Transition 지점을 둡니다. 회피는 Backstep이 첫 섹션이고 이동 입력(`Input.Move`)이 있으면 Roll로 옮깁니다. 같은 판정 안에서 옮기므로 Backstep의 0초 구간은 열리지 않고([몽타주 시간표](<몽타주 시간표.md>) '판정 규칙'의 순서와 전환), 첫 화면과 첫 루트 모션은 Roll입니다.
@@ -175,6 +175,7 @@ Task가 시작하고 끝나는 때는 둔 곳이 정하고, 도는 동안의 시
 | Face | 발동, 지점 | To(Target, MoveInput) | 몸을 바로 돌립니다. Target이면 행동 대상 쪽, MoveInput이면 이동 입력 방향이고 입력이 없으면 돌지 않습니다. |
 | Dash | 구간 | Speed, To(Target, Down). 선택: Next. Target만(선택): HomingTurnRate, Overshoot, MaxDistance | 엔진 루트 모션 소스(`FRootMotionSource_ConstantForce`)로 Speed의 일정 속도로 움직이고, 끝나면 속도를 0으로 둡니다. Target이면 주인이 바라보는 방향으로 출발하고(앞의 추적 구간이 대상 쪽으로 돌려 둠), 방향을 초당 HomingTurnRate까지 대상 쪽으로 바꿉니다(없으면 직선). 출발할 때 대상까지의 수평 거리에 Overshoot를 더한 거리(MaxDistance까지, 대상이 없으면 MaxDistance)를 실제 경로로 가거나, 벽에 막히거나, 공격이 막히면(`Event.AttackBlocked`) 그 자리에서 멈춥니다. Down이면 수평 속도는 그대로 두고 Speed로 떨어지며, 공중이 아니게 되면 멈춥니다. 스스로 멈추면 Next로 전환하고, 구간이 끝나면 멈춥니다. 돌진하는 동안의 자세는 구간이 덮는 반복 섹션이 유지합니다. |
 | Launch | 발동, 지점 | AirTime. 선택: Height, To(Target), MaxDistance | 엔진 루트 모션 점프(`FRootMotionSource_JumpForce`)로 체공 시간이 AirTime인 포물선을 그리며 띄우고, 착지하면 끝내며 속도를 0으로 둡니다. 최고 높이는 Height이고, 없으면 엔진 중력으로 정해지는 높이(중력 × AirTime² ÷ 8)라 엔진 중력의 포물선과 같습니다. To가 Target이면 행동 대상 위치에서 주인 쪽으로 그 행동의 간격(Targeting의 StopDistance)만큼 떨어진 곳에 내리도록 수평으로도 보내고(수평 거리는 MaxDistance까지), 없으면 제자리에서 수직으로 띄웁니다. 체공 시간의 앞 절반에 닿은 땅은 착지로 보지 않고 계속 띄우며, 그 착지는 캐릭터도 알리지 않습니다(`Event.Landed`). 도는 동안 몽타주가 루트 모션을 주면 오류를 남깁니다. |
+| DisableRootMotion | 구간 | 없음 | 켜진 동안 그 재생(몽타주 인스턴스)의 몽타주 루트 모션을 끕니다. 엔진 `AnimNotifyState_DisableRootMotion`과 같은 인스턴스 카운터라, 캐릭터 무브먼트는 그동안 루트 모션 소스(Launch, Dash)를 씁니다. 같은 재생에서 구간이 끝나면 되돌리고, 행동이 재생을 내려놓으면(다시 재생, 끊김, 행동 종료) 그 재생이 블렌드 아웃하는 동안에도 꺼 둡니다. 재생 중간에 시작하는 구간은 그 시각을 지난 프레임의 판정(몽타주 진행 뒤)에서 켜지므로, 그 프레임에서 시각 뒤의 몽타주 루트 모션은 남습니다. 재생 시작과 섹션 이동 위치에 걸친 구간은 다음 진행 전에 켜집니다. |
 | SpawnProjectile | 지점 | ProjectileId, Origin, Attack. 선택: SocketName(Origin이 MeshSocket일 때만) | 투사체 한 발. Attack은 Attack Task와 같은 값 필드이고, Radius·bGroundOnly는 쓰지 않습니다. |
 | SendGameplayEvent | 발동, 지점 | Event, Recipient(Owner, Target) | Instigator가 주인, Target이 행동 대상인 게임플레이 이벤트를 받는 쪽에 보냅니다. |
 | Transition | 구간, 지점 | Next. 선택: RequiredTags, BlockedTags. 구간만(선택): Event 또는 BeforeTagEnds, bOptional | 정한 때에 주인이 RequiredTags를 모두 갖고 BlockedTags를 하나도 갖지 않으면 전환합니다. 그때는 지점이면 그 시각이고, 구간이면 주인이 Event를 받을 때나 BeforeTagEnds의 태그를 주는 효과가 끝나기 Next 섹션 길이만큼 전(이미 지났거나 효과가 먼저 지워지면 바로, 끝나는 때를 모르는 태그(무한 효과 등)면 사라질 때. 그때 조건이 맞지 않으면 맞게 될 때)이며, 둘 다 없으면 구간 안에서 조건이 맞게 되는 때입니다. bOptional은 전환하지 않고 구간이 끝나도 되는 전환입니다. |
@@ -258,7 +259,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | - | - |
 | 평타 | Targeting(TP_Enemy), `BasicAttack` 몽타주(섹션 Attack1~5). 섹션마다 Busy 구간, 시작의 SendGameplayEvent(평타 시작 알림), 추적 구간, Attack 구간, 후딜부터 섹션 끝까지 Transition(`Input.Attack`, 다음 섹션을 BlendTime으로 다시 재생, Attack5 다음은 Attack1, bOptional). 입력 없이 섹션이 끝나면 몽타주가 끝나 콤보가 초기화됩니다. |
 | 점프 | 트리거 `State.Jumping`, End TriggerTag, OwnedTags State.Busy. 점프와 모션은 캐릭터 |
-| 점프 공격 | RequiredTags State.Jumping, Targeting(TP_Enemy). 시간표: Start의 추적 구간(루트 모션 없이 직접 회전), Start·Fall의 Transition(`Event.Landed` → Land), 내리꽂기 시각부터 Fall 끝까지의 Dash 구간(Down, 초속 10m), SendGameplayEvent 지점, Start에서 Land로 넘어가는 Attack·Busy 구간 |
+| 점프 공격 | RequiredTags State.Jumping, Targeting(TP_Enemy). 시간표: Start·Fall의 DisableRootMotion 구간, Start의 추적 구간(루트 모션 없이 직접 회전), Start·Fall의 Transition(`Event.Landed` → Land), 내리꽂기 시각부터 Fall 끝까지의 Dash 구간(Down, 초속 10m), SendGameplayEvent 지점, Start에서 Land로 넘어가는 Attack·Busy 구간 |
 | 회피 | Face(MoveInput), `Dodge` 몽타주(첫 섹션 Backstep, 그다음 Roll). 시간표: Backstep 0초의 Transition 지점(`Input.Move`가 있으면 Roll), 두 섹션의 ApplyEffect 구간(PerfectDodgeWindow), 무적·Busy 구간. 보상과 한 번만 주는 규칙은 피격 처리 |
 | 회피 반격, 스킬 | Targeting(TP_Enemy), 시간표의 추적·Attack·Busy 구간 |
 | 가드 | 트리거 `Input.Guard`, End TriggerTag, OwnedTags State.Guarding, ApplyEffect(ParryWindow, bRemoveOnEnd). 패리 모션은 Parry 스펙, 패리 후딜 복귀는 입력 계층, 패리 결과와 보상은 피격 처리 |
@@ -269,13 +270,13 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 락온 | 트리거 `Input.LockOn`, End TriggerTag, Targeting(TP_LockOn, 범위 20m, 필수). 해제 조건과 카메라는 플레이어 캐릭터 |
 | 넉백, 가드 브레이크 | Face(Target). 넉백은 시간표의 HoldTag 지점(무적) |
 | 가드 밀림 | Face(Target). CancelTags가 행동 전체가 아니라 `Ability.Action.Parry`라 가드를 끝내지 않습니다. |
-| 넉업 | Face(Target), Launch(AirTime 0.6, Height 120), `KnockUp` 몽타주(섹션 Rise, Fall, Land, GetUp). 시간표: Rise의 Transition(`Event.Apex` → Fall, `Event.Landed` → Land), Fall(반복)의 Transition(`Event.Landed` → Land), Land의 HoldTag 지점(무적)과 Transition 지점(GetUp) |
+| 넉업 | Face(Target), Launch(AirTime 0.6, Height 120), `KnockUp` 몽타주(섹션 Rise, Fall, Land, GetUp). 시간표: 몽타주 전체의 DisableRootMotion 구간, Rise의 Transition(`Event.Apex` → Fall, `Event.Landed` → Land), Fall(반복)의 Transition(`Event.Landed` → Land), Land의 HoldTag 지점(무적)과 Transition 지점(GetUp) |
 | 그로기 | `Groggy` 몽타주(첫 섹션 Fall). 시간표: Fall의 Transition(공중이 아니면 Start), Start 첫 지점의 ApplyEffect(GroggyTime), 반복 섹션의 Transition(BeforeTagEnds `State.GroggyTime` → End). 처형 피격은 Executed 스펙, PP 회복은 보스 캐릭터 |
 | 처형 피격 | 트리거 `Event.Executed`, RequiredTags State.Groggy, OwnedTags State.Groggy·State.Execution·State.PassThrough, CancelTags 그로기. Face(Target), Executed 몽타주 |
 | 페이즈 전환 | 몽타주와 OwnedTags State.Invincible. PP 회복과 2페이즈는 보스 AI |
 | DoubleStrike, Sweep, QuintupleStrike, SwordWave, JumpSlam | Targeting(TP_AITarget), 몽타주 Rate Scale 0.8, 시간표의 추적·Attack 구간(SwordWave는 SpawnProjectile 지점) |
-| 도약(LeapSlam) | Targeting(TP_AITarget, 필수), Launch(AirTime 1.35, To Target, MaxDistance 12m), Rate Scale 0.8. 시간표: 첫 섹션의 추적 구간(직접 회전), End 앞 섹션들의 Transition(`Event.Landed` → End), End의 CameraShake 지점과 Attack 지점(Radius 3.5m, bGroundOnly) |
-| 돌진 찌르기(DashThrust) | Targeting(TP_AITarget), Rate Scale 0.8, 몽타주 섹션 Start·Hold(찌르는 자세의 반복)·Recover. 시간표: 추적 구간, 돌진 시작부터 Hold 끝까지의 Dash(막힘 정지, 끝나면 Recover)·Attack·HoldTag(State.PassThrough) 구간 |
+| 도약(LeapSlam) | Targeting(TP_AITarget, 필수), Launch(AirTime 1.35, To Target, MaxDistance 12m), Rate Scale 0.8. 시간표: 몽타주 전체의 DisableRootMotion 구간, 첫 섹션의 추적 구간(직접 회전), End 앞 섹션들의 Transition(`Event.Landed` → End), End의 CameraShake 지점과 Attack 지점(Radius 3.5m, bGroundOnly) |
+| 돌진 찌르기(DashThrust) | Targeting(TP_AITarget), Rate Scale 0.8, 몽타주 섹션 Start·Hold(찌르는 자세의 반복)·Recover. 시간표: 추적 구간, 돌진 시작부터 몽타주 끝까지의 DisableRootMotion 구간, 돌진 시작부터 Hold 끝까지의 Dash(막힘 정지, 끝나면 Recover)·Attack·HoldTag(State.PassThrough) 구간 |
 | Backstep(보스) | Montage의 RootMotionDistance. Rate Scale을 바꾸지 않습니다. 물러나는 동안 돌지 않습니다. |
 
 ## 검증
@@ -348,8 +349,8 @@ ID·Tags·Triggers·Required/Blocked/Owned/Block/Cancel·재발동 정책처럼 
 | 같은 몽타주를 다시 재생하면 새 인스턴스가 블렌드 인하고 이전 인스턴스는 그 시간으로 블렌드 아웃함 | `AnimInstance.cpp`의 Montage_Play | 테스트(평타 다음 타, 넉업 낙하·기상, 그로기 착지의 블렌드) |
 | 재생 직후 같은 프레임에 섹션을 옮기면 첫 화면과 첫 루트 모션이 옮긴 섹션의 것임 | `Montage_JumpToSection`, `FAnimMontageInstance::Advance` | 테스트(회피 Roll 시작) |
 | 다음 섹션을 잇지 않은 섹션이 끝나면 몽타주가 끝남 | `FAnimMontageInstance::Advance`의 섹션 끝 처리 | 테스트(평타 각 타와 회피 Backstep의 끝) |
-| 한 프레임을 자기에게 잇는 반복 섹션이 자세를 유지하고, 그동안 루트 모션 끄기 노티파이가 켜진 채로 있음 | `FAnimMontageInstance`의 섹션 반복, `AnimNotifyState_DisableRootMotion` | 테스트(돌진 찌르기 Hold의 자세와 위치) |
-| 몽타주가 루트 모션을 주는 동안 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않음. 노티파이로 끈 동안에는 소스를 씀 | `CharacterMovementComponent.cpp`, 몽타주 인스턴스의 `IsRootMotionDisabled` | 테스트(도약·내리꽂기·돌진·넉업) |
+| 한 프레임을 자기에게 잇는 반복 섹션이 자세를 유지함 | `FAnimMontageInstance`의 섹션 반복 | 테스트(돌진 찌르기 Hold의 자세와 위치) |
+| 몽타주가 루트 모션을 주는 동안 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않음. 몽타주 인스턴스의 루트 모션 끄기 카운터로 끈 동안에는 소스를 씀 | `CharacterMovementComponent.cpp`, `FAnimMontageInstance`의 `PushDisableRootMotion`·`PopDisableRootMotion`·`IsRootMotionDisabled`(엔진 `AnimNotifyState_DisableRootMotion`이 쓰는 카운터) | 테스트(도약·내리꽂기·돌진·넉업) |
 | 루트 모션 점프 중 캐릭터 무브먼트의 수직 속도가 경로를 따르고, 높이 경로가 포물선이며 수평이 등속임 | `FRootMotionSource_JumpForce` | 테스트(넉업의 `Event.Apex` 시점, LeapSlam의 궤적과 착지) |
 | ConstantRate 워핑의 프레임당 회전 한도는 이동 틱의 실제 시간 × `WarpMaxRotationRate`이고 재생 배율이 들어가지 않음 | `URootMotionModifier_Warp`의 `WarpRotation` | 테스트(배율 0.8 보스 패턴의 회전 속도) |
 | 레벨 시퀀스 재생 속도를 재생 중에 바꿀 수 있음 | `MovieSceneSequencePlayer`의 SetPlayRate | 테스트(시간 정지가 시작·끝나는 프레임의 컷신 속도) |

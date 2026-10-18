@@ -2,6 +2,7 @@
   "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust": {
     "Start": [
       {"Task": "Track", "Start": 0, "End": 0.9, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
+      {"Task": "DisableRootMotion", "Start": 0.9166667, "End": {"Section": "Recover"}},
       {"Task": "Dash", "Start": 0.9166667, "End": {"Section": "Hold"}, "To": "Target", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000, "Next": {"Section": "Recover", "BlendTime": 0.1}},
       {"Task": "Attack", "Start": 0.9166667, "End": {"Section": "Hold"}, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
       {"Task": "HoldTag", "Start": 0.9166667, "End": {"Section": "Hold"}, "Tag": "State.PassThrough"}
@@ -39,6 +40,7 @@
   },
   "/Game/Animations/AM_Boss_LeapSlam.AM_Boss_LeapSlam": {
     "Start": [
+      {"Task": "DisableRootMotion", "Start": 0, "End": {"Section": "End"}},
       {"Task": "Track", "Start": 0, "End": 0.15, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
       {"Task": "Transition", "Start": 0, "End": {"Section": "Loop"}, "Event": "Event.Landed", "Next": {"Section": "End"}}
     ],
@@ -79,6 +81,7 @@
   },
   "/Game/Animations/AM_KnockUp.AM_KnockUp": {
     "Rise": [
+      {"Task": "DisableRootMotion", "Start": 0, "End": {"Section": "GetUp"}},
       {"Task": "Transition", "Start": 0, "Event": "Event.Apex", "Next": {"Section": "Fall", "BlendTime": 0.2}},
       {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Next": {"Section": "Land", "BlendTime": 0.2}}
     ],
@@ -157,6 +160,7 @@
   },
   "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack": {
     "Start": [
+      {"Task": "DisableRootMotion", "Start": 0, "End": {"Section": "Fall"}},
       {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
       {"Task": "Track", "Start": 0, "End": 0.18, "TargetingRange": 300, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
       {"Task": "HoldTag", "Start": 0, "End": {"Section": "Land", "Time": 0.35}, "Tag": "State.Busy"},

@@ -88,6 +88,7 @@ Runner와 Task의 상세 규약은 [어빌리티와 AbilityTask](<어빌리티�
 | `UAgAbilityTask_Face` | `UAbilityTask` | 행동 대상이나 이동 입력 방향으로 몸을 바로 돌림 |
 | `UAgAbilityTask_Dash` | `UAbilityTask` | 일정 속도 루트 모션 소스 이동(대상 쪽 돌진과 유도, 아래로 떨어짐), 막힘·거리 검사, 멈추면 전환 요청 |
 | `UAgAbilityTask_Launch` | `UAbilityTask` | 루트 모션 점프로 띄우기·도약, 착지하면 끝 |
+| `UAgAbilityTask_DisableRootMotion` | `UAbilityTask` | 그 재생의 몽타주 루트 모션 끄기(인스턴스 카운터), 같은 재생에서 구간이 끝나면 되돌림 |
 | `UAgAbilityTask_SpawnProjectile` | `UAbilityTask_SpawnActor` | 발사 설정 사본과 실행 입력으로 한 발 생성·초기화 |
 | `UAgAbilityTask_SendGameplayEvent` | `UAbilityTask` | 주인이나 행동 대상에게 게임플레이 이벤트 보내기 |
 | `UAgAbilityTask_Transition` | `UAbilityTask` | 조건(태그, 이벤트, 효과가 끝나기 전)이 맞으면 Runner에 전환 요청 |

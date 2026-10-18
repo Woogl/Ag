@@ -4,6 +4,7 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_ApplyEffect.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_DisableRootMotion.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
 #include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Data/AgJsonRead.h"
@@ -207,22 +208,6 @@ void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& T
 #if WITH_EDITOR
 namespace
 {
-	/**
-	 * Start부터 End까지 몽타주가 루트 모션을 주는지. 몽타주의 어느 시퀀스에든 루트 모션이 있으면, 루트 모션이 없는 시퀀스의 구간도
-	 * 엔진은 몽타주 루트 모션(이동 없음)으로 처리해 루트 모션 소스를 쓰지 않으므로, 그 구간을 덮는 루트 모션 끄기 노티파이가 있어야
-	 * 루트 모션이 없습니다.
-	 */
-	bool GivesRootMotion(const UAnimMontage& Montage, float Start, float End)
-	{
-		return Montage.HasRootMotion() && !Montage.Notifies.ContainsByPredicate(
-		                                      [Start, End](const FAnimNotifyEvent& Event)
-		                                      {
-			                                      return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
-			                                             Event.GetTime() <= Start + TimeTolerance &&
-			                                             Event.GetTime() + Event.GetDuration() >= End - TimeTolerance;
-		                                      });
-	}
-
 	/** 공격 예고 Cue(가드 불가 예고, 패리 예고)의 상태 노티파이입니다. 엔진 노티파이의 Cue 태그는 리플렉션으로만 읽을 수 있습니다. */
 	bool IsTelegraphCue(const FAnimNotifyEvent& Event)
 	{
@@ -348,6 +333,19 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			return false;
 		};
 
+		// 몽타주의 어느 시퀀스에든 루트 모션이 있으면 엔진은 루트 모션이 없는 시퀀스의 구간도 몽타주 루트 모션(이동 없음)으로 처리해
+		// 루트 모션 소스를 쓰지 않으므로, 그 구간을 DisableRootMotion 구간이 덮어야 몽타주 루트 모션이 없습니다.
+		const TFunction<bool(float, float)> GivesRootMotion = [Montage, &Items](float Start, float End)
+		{
+			return Montage->HasRootMotion() && !Items.ContainsByPredicate(
+			                                       [Start, End](const FResolved& Other)
+			                                       {
+				                                       return Other.Item->bWindow &&
+				                                              Other.Item->Params.GetPtr<FAgDisableRootMotionParams>() &&
+				                                              Other.Start <= Start + TimeTolerance && Other.End >= End - TimeTolerance;
+			                                       });
+		};
+
 		// 첫 섹션에서 섹션 링크로 이어지는 섹션. 그 밖의 섹션은 전환으로만 들어가 몽타주 시각으로 때를 정할 수 없습니다.
 		TSet<int32> LinkedSections;
 		for (int32 Index = Montage->GetSectionIndexFromPosition(0.f); Index != INDEX_NONE && !LinkedSections.Contains(Index);
@@ -394,19 +392,18 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			}
 
 			// 루트 모션 소스로 움직이는 돌진 구간에는 몽타주 루트 모션이 없어야 하고, 몽타주 루트 모션이 없는 추적 구간은 돌기만 합니다.
-			if (bDash && GivesRootMotion(*Montage, Window.Start, Window.End))
+			if (bDash && GivesRootMotion(Window.Start, Window.End))
 			{
-				Errors.Add(Window.Name + TEXT(": a dash window needs no montage root motion (a root motion off notify over the window)"));
+				Errors.Add(Window.Name + TEXT(": a dash window needs no montage root motion (a DisableRootMotion window over it)"));
 			}
-			if (Track && !GivesRootMotion(*Montage, Window.Start, Window.End) &&
-			    !(Track->bHasMaxWarpDistance && Track->MaxWarpDistance <= 0.f))
+			if (Track && !GivesRootMotion(Window.Start, Window.End) && !(Track->bHasMaxWarpDistance && Track->MaxWarpDistance <= 0.f))
 			{
 				Errors.Add(Window.Name + TEXT(": a tracking window without montage root motion only turns, so MaxWarpDistance must be 0"));
 			}
 		}
 
-		// 몽타주에는 연출과 루트 모션 노티파이만 남습니다. 프로젝트 노티파이나 엔진 워핑 노티파이가 함께 있으면 같은 일이 두 번
-		// 일어납니다.
+		// 몽타주에는 연출 노티파이만 남습니다. 프로젝트 노티파이나 엔진 워핑·루트 모션 끄기 노티파이가 함께 있으면 같은 일을 두 곳에서
+		// 정하게 됩니다.
 		for (const FAnimNotifyEvent& Event : Montage->Notifies)
 		{
 			const UObject* Notify = Event.Notify ? static_cast<const UObject*>(Event.Notify) : Event.NotifyStateClass;
@@ -418,6 +415,10 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			if (bHasTrack && Cast<UAnimNotifyState_MotionWarping>(Event.NotifyStateClass))
 			{
 				Errors.Add(Path + TEXT(": tracking windows belong to the timeline, not to engine warping notifies"));
+			}
+			if (Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass))
+			{
+				Errors.Add(Path + TEXT(": root motion off windows belong to the timeline (DisableRootMotion), not to engine notifies"));
 			}
 		}
 

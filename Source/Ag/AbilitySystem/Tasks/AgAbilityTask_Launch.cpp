@@ -114,8 +114,8 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 		EndTask();
 		return;
 	}
-	// 캐릭터 무브먼트는 몽타주가 루트 모션을 주면(루트 모션이 없는 섹션이라도 몽타주에 루트 모션이 있고 끄기 노티파이 밖이면)
-	// 루트 모션 소스를 쓰지 않습니다.
+	// 캐릭터 무브먼트는 몽타주가 루트 모션을 주면(루트 모션이 없는 섹션이라도 몽타주에 루트 모션이 있고 DisableRootMotion 구간
+	// 밖이면) 루트 모션 소스를 쓰지 않습니다.
 	const FAnimMontageInstance* Instance = Character->GetRootMotionAnimMontageInstance();
 	if (!bReportedRootMotion && Instance && Instance->Montage && Instance->Montage->HasRootMotion() && !Instance->IsRootMotionDisabled())
 	{

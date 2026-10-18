@@ -104,8 +104,8 @@ void UAgAbilityTask_Dash::Activate()
 		                    .AddUObject(this, &ThisClass::HandleAttackBlocked);
 	}
 
-	// 지울 때까지 다른 속도를 덮어쓰고, 지울 때 속도를 0으로 둡니다. 몽타주 루트 모션이 있으면 소스가 먹지 않으므로 이 구간의
-	// 몽타주 루트 모션은 꺼 둡니다(검증).
+	// 지울 때까지 다른 속도를 덮어쓰고, 지울 때 속도를 0으로 둡니다. 몽타주 루트 모션이 있으면 소스가 먹지 않으므로 이 구간은
+	// DisableRootMotion 구간이 덮습니다(검증).
 	TSharedPtr<FRootMotionSource_ConstantForce> Source = MakeShared<FRootMotionSource_ConstantForce>();
 	Source->InstanceName = TEXT("AgDash");
 	Source->AccumulateMode = ERootMotionAccumulateMode::Override;
