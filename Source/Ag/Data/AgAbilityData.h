@@ -246,8 +246,8 @@ namespace AgAbilityData
 	bool Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& OutAbilities, TArray<FString>& Errors);
 
 	/**
-	 * 캐릭터의 어빌리티·효과·몽타주 ID, 사망 모션, 입력 계층이 찾는 행동 태그와, 그 어빌리티들의 행동 대상, 속도를 덮어쓰는 Task의
-	 * 종류, 발동 Task의 규칙(ValidateLinks)을 그 캐릭터의 몽타주로 검사합니다. 오류에는 Path를 앞에 붙입니다.
+	 * 캐릭터의 어빌리티·효과·몽타주 ID, 사망 모션, 입력 계층이 찾는 행동 태그와, 그 어빌리티들의 행동 대상, 발동 Task의 규칙
+	 * (ValidateLinks)과 전환할 섹션을 그 캐릭터의 몽타주로 검사합니다. 오류에는 Path를 앞에 붙입니다.
 	 */
 	void ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const TMap<FName, FAgMontageTimeline>& Timelines, const FString& Path, TArray<FString>& Errors);
 

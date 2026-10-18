@@ -45,7 +45,7 @@ struct FAgTimelineItem
 	bool bEndAtSectionEnd = false;
 };
 
-/** 섹션 하나의 항목. 같은 시각·같은 단계의 항목은 배열 순서로 실행합니다. */
+/** 섹션 하나의 항목. 시각 순서로 실행하고, 같은 시각의 항목 사이에는 순서가 없습니다. */
 USTRUCT()
 struct FAgTimelineSection
 {
@@ -101,9 +101,9 @@ namespace AgMontageTimeline
 
 #if WITH_EDITOR
 	/**
-	 * 몽타주 에셋과 대조합니다: 섹션과 길이, 전환할 섹션과 전환 지점, 반복 섹션(지점, 기다리는 구간), 속도를 덮어쓰는 구간끼리의
-	 * 겹침, 몽타주에 남긴 노티파이와 공격 예고의 시각. 항목마다 그 Task의 규칙(ValidateLinks)도 검사합니다. Effects는 효과
-	 * 파일을 읽지 못했으면 null입니다.
+	 * 몽타주 에셋과 대조합니다: 섹션과 길이, 전환할 섹션과 전환 지점(섹션 끝 앞, 같은 시각의 다른 항목 없음), 반복 섹션(지점,
+	 * 기다리는 구간), 몽타주에 남긴 노티파이와 공격 예고의 시각. 항목마다 그 Task의 규칙(ValidateLinks)도 검사합니다. Effects는
+	 * 효과 파일을 읽지 못했으면 null입니다.
 	 */
 	void ValidateAssets(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, TArray<FString>& Errors);
 #endif

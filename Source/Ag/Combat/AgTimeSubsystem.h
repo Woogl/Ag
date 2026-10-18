@@ -21,13 +21,16 @@ class UAgTimeSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	/** 실제 시간으로 RealDuration초 동안 게임 전체를 Speed배로 돌립니다. 도는 중에 다시 시작하면 처음부터 다시 셉니다. */
+	/**
+	 * 실제 시간으로 RealDuration초 동안 게임 전체를 Speed배로 돌립니다. 도는 중에 다시 시작하면 처음부터 다시 셉니다. 시간 정지
+	 * 중이면 시간 정지가 끝날 때 시작합니다(궁극기 마무리 1타가 시간 정지 끝보다 먼저 처리된 경우).
+	 */
 	void StartSlowMotion(float Speed, float RealDuration);
 
-	/** 시간 정지를 시작합니다. Exempt만 정상 속도로 돌고, 도는 슬로우모션은 끝납니다. */
+	/** 시간 정지를 시작합니다. Exempt만 정상 속도로 돌고, 도는 슬로우모션과 기다리던 슬로우모션은 끝납니다. */
 	bool StartTimeStop(UObject& Requester, AAgCharacterBase& Exempt);
 
-	/** 시간 정지를 끝내고 게임 전체를 원래 속도로 돌립니다. */
+	/** 시간 정지를 끝냅니다. 그동안 시작한 슬로우모션이 있으면 그 배율로, 없으면 원래 속도로 돌립니다. */
 	void EndTimeStop(UObject& Requester);
 
 	bool IsTimeStopped() const
@@ -42,9 +45,16 @@ public:
 	FAgTimeStopChanged OnTimeStopChanged;
 
 private:
+	/** 슬로우모션 배율을 거는 유일한 곳. 배율과 끝 타이머를 함께 겁니다. 시간 정지가 아닐 때만 부릅니다. */
+	void ApplySlowMotion(float Speed, float RealDuration);
+
 	void EndSlowMotion();
 
 	FTimerHandle SlowMotionTimer;
+
+	/** 시간 정지 중에 시작해 시간 정지가 끝나기를 기다리는 슬로우모션. 길이가 0이면 없습니다. */
+	float PendingSlowMotionSpeed = 1.f;
+	float PendingSlowMotionDuration = 0.f;
 
 	bool bTimeStopped = false;
 	TWeakObjectPtr<UObject> TimeStopRequester;

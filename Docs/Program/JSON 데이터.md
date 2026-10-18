@@ -166,7 +166,7 @@ UAnimMontage* FindMontage(FName Id) const;
 
 행동 정의의 `Montage.MontageId`와 사망 모션(`DeathMotions`)의 `Montage`·`Death`는 `Montages`의 ID를 참조하고 에셋 경로를 중복 저장하지 않습니다. 별도의 어빌리티→몽타주 연결표도 두지 않습니다. 에셋을 이동하거나 이름을 바꿀 때는 JSON 경로와 그 몽타주 시간표의 키(몽타주 경로)도 함께 바꿉니다.
 
-Runner와 캐릭터는 필요한 시점에 `FindMontage`로 조회합니다. 한 행동이 쓰는 여러 모션(평타의 타, 회피의 Backstep·Roll, 넉업의 상승·낙하·착지·기상)은 몽타주 하나의 섹션이고, 섹션 사이의 흐름은 시간표의 Transition이 정합니다([어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>) '몽타주와 섹션'). 캐릭터 데이터는 ID로 에셋을 찾는 역할만 맡습니다. 이동·가드 이동·공중 반복 모션은 [애니메이션과 이동](<애니메이션과 이동.md>)의 ABP 기본값을 사용합니다.
+Runner와 캐릭터는 필요한 시점에 `FindMontage`로 조회합니다. 한 행동이 쓰는 여러 모션(평타의 타, 회피의 Backstep·Roll, 넉업의 상승·낙하·착지·기상)은 몽타주 하나의 섹션이고, 섹션 사이의 흐름은 Transition이 정합니다(시작 섹션은 행동 정의의 발동 Transition, 그 뒤는 시간표. [어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>) '몽타주와 섹션'). 캐릭터 데이터는 ID로 에셋을 찾는 역할만 맡습니다. 이동·가드 이동·공중 반복 모션은 [애니메이션과 이동](<애니메이션과 이동.md>)의 ABP 기본값을 사용합니다.
 
 ### ID 규칙
 

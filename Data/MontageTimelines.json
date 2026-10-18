@@ -129,7 +129,6 @@
   },
   "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge": {
     "Backstep": [
-      {"Task": "Transition", "Time": 0, "RequiredTags": ["Input.Move"], "Next": {"Section": "Roll"}},
       {"Task": "HoldTag", "Start": 0, "End": 0.4, "Tag": "State.Busy"},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.15, "Effect": "PerfectDodgeWindow"},
       {"Task": "HoldTag", "Start": 0, "End": 0.3, "Tag": "State.Invincible"}

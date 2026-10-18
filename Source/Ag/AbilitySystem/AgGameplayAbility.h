@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
 #include "Data/AgAbilityData.h"
+#include "Data/AgTaskParams.h"
 #include "Engine/EngineBaseTypes.h"
 #include "StructUtils/InstancedStruct.h"
 #include "AgGameplayAbility.generated.h"
@@ -12,7 +13,6 @@
 class UAbilityTask;
 class UAnimMontage;
 class UGameplayEffect;
-struct FAgTransition;
 struct FAnimMontageInstance;
 enum class EAgEffect : uint8;
 
@@ -41,9 +41,10 @@ struct FAgTimelineEntry
 
 /**
  * 모든 행동의 Runner(구현 계획서 '어빌리티와 AbilityTask'의 'Runner'). 행동 ID마다 독립 GAS 스펙으로 부여되고, 행동
- * 정의의 태그 조건·트리거·비용·쿨다운·재발동을 엔진 어빌리티 기능에 연결합니다. 발동하면 대상을 정하고 커밋한 뒤 몽타주를
- * 처음부터 재생해 시간표를 판정하고, 발동 Task를 배열 순서대로 시작합니다. Task가 요청한 전환만 적용하며, Task 종류·행동 ID·몽타주
- * ID로 분기하지 않습니다. 행동 정의의 End가 정한 때 끝납니다.
+ * 정의의 태그 조건·트리거·비용·쿨다운·재발동을 엔진 어빌리티 기능에 연결합니다. 발동하면 대상을 정하고 커밋한 뒤 발동 Task를
+ * 시작하고, 몽타주를 재생 전에 온 전환 요청의 섹션(없으면 처음)부터 재생해 시간표의 시각에 맞춰 Task를 시작하고 끝냅니다. Task
+ * 사이의 순서는 정하지 않습니다. Task가 요청한 전환만 적용하며, Task 종류·행동 ID·몽타주 ID로 분기하지 않습니다. 행동 정의의
+ * End가 정한 때 끝납니다.
  */
 UCLASS()
 class UAgGameplayAbility : public UGameplayAbility
@@ -91,7 +92,7 @@ public:
 	/** Targeting으로 정한 행동 대상. 캐릭터가 이 대상에게 최소 간격을 지킵니다. 없으면 null입니다. */
 	AActor* GetTargetingTarget() const
 	{
-		return bTargetFromTargeting ? ActionTarget.Get() : nullptr;
+		return ExecutionDefinition.bHasTargeting ? ActionTarget.Get() : nullptr;
 	}
 
 	/** 대상과 맞출 간격(cm): Targeting의 StopDistance이고, 없으면 캐릭터의 StopDistance입니다. */
@@ -102,7 +103,8 @@ public:
 
 	/**
 	 * Task의 전환 요청. BlendTime이 없으면 같은 재생 안에서 그 섹션으로 옮기고, 있으면 그 섹션부터 그 블렌드로 다시 재생합니다.
-	 * InstanceId(Task를 만든 재생의 몽타주 인스턴스 ID)가 지금 재생이 아니면 무시합니다.
+	 * InstanceId(Task를 만든 재생의 몽타주 인스턴스 ID)가 지금 재생이 아니면 무시합니다. 재생 전(발동 Task를 시작하는 동안)에
+	 * InstanceId 없이 온 요청은 시작 섹션으로 기억하고, 여럿이면 먼저 온 하나를 씁니다.
 	 */
 	void RequestTransition(const FAgTransition& Transition, int32 InstanceId);
 
@@ -192,15 +194,14 @@ private:
 	UPROPERTY()
 	FAgAbilityData ExecutionDefinition;
 
-	UPROPERTY()
-	TObjectPtr<UAnimMontage> Montage;
-
 	TWeakObjectPtr<AActor> ActionTarget;
-	bool bTargetFromTargeting = false;
 	float StopDistance = 0.f;
 
 	/** 이 행동의 지금 재생. 시간표도 이 재생을 판정합니다. 없으면 INDEX_NONE입니다. */
 	int32 MontageInstanceId = INDEX_NONE;
+
+	/** 재생 전에 발동 Task가 보낸 전환 요청. 첫 재생을 이 섹션(없으면 처음)부터 합니다. */
+	FAgTransition StartTransition;
 
 	/** 지금 재생의 시간표. 비어 있으면 판정하지 않습니다. */
 	UPROPERTY()

@@ -336,30 +336,31 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 		TArray<float> HitTimes;
 		for (int32 Index = 0; Index < Items.Num(); ++Index)
 		{
-			const FResolved& Window = Items[Index];
-			const FAgTaskParams& Params = Window.Item->Params.Get<FAgTaskParams>();
-			if (Params.StartsHit() && LinkedSections.Contains(Window.SectionIndex))
+			const FResolved& Entry = Items[Index];
+			const FAgTaskParams& Params = Entry.Item->Params.Get<FAgTaskParams>();
+			if (Params.StartsHit() && LinkedSections.Contains(Entry.SectionIndex))
 			{
-				HitTimes.Add(Window.Start);
+				HitTimes.Add(Entry.Start);
 			}
-			if (!Window.Item->bWindow && OverlapsLoop(*Montage, Window.Start, Window.Start))
+			if (!Entry.Item->bWindow && OverlapsLoop(*Montage, Entry.Start, Entry.Start))
 			{
-				Errors.Add(Window.Name + TEXT(": a point can't be inside a looping section"));
+				Errors.Add(Entry.Name + TEXT(": a point can't be inside a looping section"));
 			}
-			if (Window.Item->bWindow && Params.WaitsForTransition() && !CoversLoopToEnd(Window.Start, Window.End))
+			if (Entry.Item->bWindow && Params.WaitsForTransition() && !CoversLoopToEnd(Entry.Start, Entry.End))
 			{
-				Errors.Add(Window.Name + TEXT(": a window waiting for its transition must cover a looping section to its end"));
+				Errors.Add(Entry.Name + TEXT(": a window waiting for its transition must cover a looping section to its end"));
 			}
 
-			// 경쟁: 속도를 덮어쓰는 구간끼리는 겹치지 않습니다.
-			const bool bOverridesVelocity = Window.Item->bWindow && Params.OverridesVelocity();
-			for (int32 Other = Index + 1; Other < Items.Num() && bOverridesVelocity; ++Other)
+			// 같은 시각의 항목 사이에는 순서가 없고 전환하면 남은 항목은 실행하지 않으므로, 전환 지점과 같은 시각에 시작하는 항목은
+			// 실행될지 정해지지 않습니다.
+			if (!Entry.Item->bWindow && Params.GetTransition())
 			{
-				const FResolved& OtherWindow = Items[Other];
-				if (OtherWindow.Item->bWindow && OtherWindow.Item->Params.Get<FAgTaskParams>().OverridesVelocity() &&
-					OtherWindow.Start < Window.End && Window.Start < OtherWindow.End)
+				for (int32 Other = 0; Other < Items.Num(); ++Other)
 				{
-					Errors.Add(Window.Name + TEXT(": overlaps ") + OtherWindow.Name);
+					if (Other != Index && FMath::IsNearlyEqual(Items[Other].Start, Entry.Start, TimeTolerance))
+					{
+						Errors.Add(Entry.Name + TEXT(": a transition point can't share its time with ") + Items[Other].Name);
+					}
 				}
 			}
 		}

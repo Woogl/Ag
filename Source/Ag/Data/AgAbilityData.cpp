@@ -202,7 +202,7 @@ namespace
 		}
 	}
 
-	/** 정의 안에서 정할 수 있는 규칙: 종료 방식에 필요한 것, 발동 Task의 행동 대상 */
+	/** 정의 안에서 정할 수 있는 규칙: 종료 방식에 필요한 것, 발동 Task의 행동 대상과 전환 */
 	void ValidateDefinition(const FAgAbilityData& Data, const FString& Path, TArray<FString>& Errors)
 	{
 		int32 TagTriggers = 0;
@@ -225,6 +225,16 @@ namespace
 		if (bNeedsTarget && !Data.bHasTargeting && !Data.HasEventTrigger())
 		{
 			Errors.Add(Path + TEXT(".Tasks: a task uses the ability target, so the ability needs Targeting or a GameplayEvent trigger"));
+		}
+
+		// 발동 Task의 전환은 첫 재생의 시작 섹션입니다.
+		const bool bTransition = Data.Tasks.ContainsByPredicate([](const FInstancedStruct& Task)
+		{
+			return Task.Get<FAgTaskParams>().GetTransition() != nullptr;
+		});
+		if (bTransition && !Data.bHasMontage)
+		{
+			Errors.Add(Path + TEXT(".Tasks: a transition task picks the start section, so the ability needs a Montage"));
 		}
 	}
 } // namespace
@@ -379,23 +389,25 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 			Errors.Add(AbilityPath + TEXT(": missing montage ") + Ability->Montage.MontageId.ToString());
 		}
 
-		// 효과와 몽타주가 필요한 발동 Task만의 규칙은 Task가 검사합니다.
+		// 효과와 몽타주가 필요한 발동 Task만의 규칙은 Task가 검사합니다. 발동 Task가 요청하는 전환의 섹션은 이 캐릭터의 몽타주에
+		// 있어야 합니다(시작 섹션).
 		FAgTaskLinks Links;
 		Links.Effects = &Effects;
 		Links.Montage = Montage;
 		for (int32 Index = 0; Index < Ability->Tasks.Num(); ++Index)
 		{
-			Ability->Tasks[Index].Get<FAgTaskParams>().ValidateLinks(Links, FString::Printf(TEXT("%s.Tasks[%d]"), *AbilityPath, Index),
-				Errors);
+			const FAgTaskParams& Params = Ability->Tasks[Index].Get<FAgTaskParams>();
+			const FString TaskPath = FString::Printf(TEXT("%s.Tasks[%d]"), *AbilityPath, Index);
+			Params.ValidateLinks(Links, TaskPath, Errors);
+			const FAgTransition* Transition = Params.GetTransition();
+			if (Transition && Montage && Montage->GetSectionIndex(Transition->Section) == INDEX_NONE)
+			{
+				Errors.Add(FString::Printf(TEXT("%s: section %s is missing in %s"), *TaskPath, *Transition->Section.ToString(),
+					*Montage->GetName()));
+			}
 		}
 
-		// 시간표 항목이 행동 대상을 쓰면 그 시간표를 재생하는 행동이 대상을 정해야 합니다. 속도를 덮어쓰는 Task가 두 종류면 우선순위가
-		// 높은 쪽(엔진 JumpForce Task)만 움직이므로, 한 행동(발동 Task와 그 몽타주의 시간표)에는 한 종류만 둡니다.
-		TArray<const FInstancedStruct*> Items;
-		for (const FInstancedStruct& Task : Ability->Tasks)
-		{
-			Items.Add(&Task);
-		}
+		// 시간표 항목이 행동 대상을 쓰면 그 시간표를 재생하는 행동이 대상을 정해야 합니다.
 		bool bTimelineNeedsTarget = false;
 		if (const FAgMontageTimeline* Timeline = Montage ? Timelines.Find(FName(*Montage->GetPathName())) : nullptr)
 		{
@@ -404,28 +416,13 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 				for (const FAgTimelineItem& Item : Section.Items)
 				{
 					bTimelineNeedsTarget |= Item.Params.Get<FAgTaskParams>().NeedsTarget();
-					Items.Add(&Item.Params);
 				}
-			}
-		}
-		TArray<FString> VelocityTasks;
-		for (const FInstancedStruct* Item : Items)
-		{
-			if (Item->Get<FAgTaskParams>().OverridesVelocity())
-			{
-				VelocityTasks.AddUnique(AgTaskParams::GetTaskName(*Item->GetScriptStruct()).ToString());
 			}
 		}
 		if (bTimelineNeedsTarget && !Ability->bHasTargeting && !Ability->HasEventTrigger())
 		{
 			Errors.Add(AbilityPath +
 					   TEXT(": its montage timeline uses the ability target, so it needs Targeting or a GameplayEvent trigger"));
-		}
-		if (VelocityTasks.Num() > 1)
-		{
-			VelocityTasks.Sort();
-			Errors.Add(AbilityPath + TEXT(": ") + FString::Join(VelocityTasks, TEXT(" and ")) +
-					   TEXT(" all override the velocity, so one ability can use only one of them"));
 		}
 	}
 }

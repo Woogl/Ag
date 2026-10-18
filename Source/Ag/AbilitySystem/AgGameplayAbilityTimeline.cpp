@@ -73,12 +73,12 @@ void UAgGameplayAbility::TickTimeline()
 
 void UAgGameplayAbility::EvaluateTimeline(float NewPosition, EAgTimelineMode Mode)
 {
-	// 같은 시각이면 구간 끝, 지점, 구간 시작 순서이고, 그래도 같으면 항목 순서입니다.
+	// 시각 순서로만 실행합니다. 같은 시각의 항목 사이에는 순서가 없습니다.
 	enum class EPhase : uint8
 	{
+		Begin,
 		End,
-		Point,
-		Begin
+		Point
 	};
 	struct FPending
 	{
@@ -130,22 +130,15 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, EAgTimelineMode Mod
 	TimelinePosition = NewPosition;
 	Pending.Sort([](const FPending& A, const FPending& B)
 	{
-		if (A.Time != B.Time)
-		{
-			return A.Time < B.Time;
-		}
-		if (A.Phase != B.Phase)
-		{
-			return A.Phase < B.Phase;
-		}
-		return A.Entry < B.Entry;
+		return A.Time < B.Time;
 	});
 
 	const int32 InstanceId = MontageInstanceId;
 	for (const FPending& Item : Pending)
 	{
 		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로(재생 ID를 비우거나 바꿈) 매번 확인합니다. 항목 실행 안에서 전환해 위치가
-		// 바뀌었으면 옮긴 위치의 판정이 이미 끝났으므로 남은 항목은 실행하지 않습니다.
+		// 바뀌었으면 옮긴 위치의 판정이 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환 지점과 같은 시각에는 다른 항목을
+		// 두지 않습니다(시간표 검증).
 		if (!IsActive() || MontageInstanceId != InstanceId || TimelinePosition != NewPosition)
 		{
 			return;

@@ -124,7 +124,8 @@
     "Montage": {"MontageId": "Dodge"},
     "End": "Montage",
     "Tasks": [
-      {"Task": "Face", "To": "MoveInput"}
+      {"Task": "Face", "To": "MoveInput"},
+      {"Task": "Transition", "RequiredTags": ["Input.Move"], "Next": {"Section": "Roll"}}
     ]
   },
   "DodgeCounter": {

@@ -48,14 +48,6 @@ const UScriptStruct* AgTaskParams::FindStruct(const FString& TaskName)
 	return Struct && Struct != Base && Struct->IsChildOf(Base) ? Struct : nullptr;
 }
 
-FName AgTaskParams::GetTaskName(const UScriptStruct& Struct)
-{
-	FString Name = Struct.GetName();
-	Name.RemoveFromStart(StructPrefix, ESearchCase::CaseSensitive);
-	Name.RemoveFromEnd(StructSuffix, ESearchCase::CaseSensitive);
-	return FName(*Name);
-}
-
 bool AgTaskParams::Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path, TArray<FString>& Errors, const TArray<FString>& Ignored)
 {
 	const int32 Before = Errors.Num();

@@ -158,7 +158,16 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffe
 
 void UAgGameplayAbility::RequestTransition(const FAgTransition& Transition, int32 InstanceId)
 {
-	// 전환할 섹션이 몽타주에 있는지는 데이터를 읽을 때 시간표 검증이 봅니다.
+	// 전환할 섹션이 몽타주에 있는지는 데이터를 읽을 때 검증이 봅니다. 재생이 없을 때 재생 ID 없이 온 요청(발동 Task)은 첫 재생의
+	// 시작 섹션으로 기억하고, 먼저 온 하나를 씁니다. 재생이 끝난 뒤에 온 것은 쓰이지 않습니다.
+	if (MontageInstanceId == INDEX_NONE && InstanceId == INDEX_NONE)
+	{
+		if (!StartTransition.IsSet())
+		{
+			StartTransition = Transition;
+		}
+		return;
+	}
 	if (!OwnsMontage(InstanceId) || !Transition.IsSet())
 	{
 		return;
@@ -173,7 +182,6 @@ void UAgGameplayAbility::RequestTransition(const FAgTransition& Transition, int3
 	if (ExecutionDefinition.bHasTargeting)
 	{
 		ActionTarget = FindTargetingTarget(ExecutionDefinition, CurrentActorInfo);
-		bTargetFromTargeting = ActionTarget.IsValid();
 	}
 	PlayMontage(Transition.Section, Transition.BlendTime);
 }
@@ -191,7 +199,7 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	const UAgCharacterData* Data = Character->GetCharacterData();
 	const FAgAbilityTargeting& Targeting = ExecutionDefinition.Targeting;
 	StopDistance = ExecutionDefinition.bHasTargeting && Targeting.bHasStopDistance ? Targeting.StopDistance : Data->StopDistance;
-	Montage = ExecutionDefinition.bHasMontage ? Data->FindMontage(ExecutionDefinition.Montage.MontageId) : nullptr;
+	UAnimMontage* Montage = ExecutionDefinition.bHasMontage ? Data->FindMontage(ExecutionDefinition.Montage.MontageId) : nullptr;
 	if (ExecutionDefinition.bHasMontage && !Montage)
 	{
 		UE_LOG(LogAg, Error, TEXT("Abilities.%s: montage %s is missing in the character's Montages"), *GetAbilityId().ToString(),
@@ -202,26 +210,25 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 
 	// 1. 대상을 정하고 커밋합니다. 필수 대상이 없거나 커밋에 실패하면 Task를 실행하지 않고 끝냅니다.
 	ActionTarget = FindTargetingTarget(ExecutionDefinition, ActorInfo);
-	bTargetFromTargeting = ActionTarget.IsValid();
 	if (!ExecutionDefinition.bHasTargeting && IsEventTrigger(TriggerEventData))
 	{
 		ActionTarget = const_cast<AActor*>(TriggerEventData->Instigator.Get());
 	}
-	if ((ExecutionDefinition.bHasTargeting && Targeting.bRequired && !bTargetFromTargeting) ||
+	if ((ExecutionDefinition.bHasTargeting && Targeting.bRequired && !ActionTarget.IsValid()) ||
 		!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		Finish(true);
 		return;
 	}
 
-	// 2. 몽타주를 처음부터 재생하고 시작 위치의 구간·지점을 판정합니다. 재생에 실패하면 취소로 끝납니다.
-	if (IsActive() && Montage)
-	{
-		PlayMontage(NAME_None, -1.f);
-	}
+	// 2. 재생할 몽타주를 엔진 어빌리티의 현재 몽타주로 둡니다. 실행 동안 행동의 몽타주는 이 값 하나이고, 재생 전에 시작하는 발동
+	// Task도 GetCurrentMontage로 읽습니다. 재생할 때 ASC가 같은 값을 다시 둡니다.
+	SetCurrentMontage(Montage);
 
-	// 3. 발동 Task를 배열 순서대로 시작합니다. 재생과 같은 프레임이라 첫 화면과 첫 루트 모션보다 먼저입니다. 중간에 행동이 끝나면
-	// 남은 Task는 실행하지 않습니다. Task를 시작하는 중에 행동이 끝나면 EndAbility가 실행 사본을 비우므로 목록을 복사해 돕니다.
+	// 3. 발동 Task를 모두 시작합니다. 아직 재생이 없어 재생 ID는 없고, 그동안 온 전환 요청은 시작 섹션으로 기억합니다. Task 사이의
+	// 순서는 정하지 않습니다. 중간에 행동이 끝나면 남은 Task는 실행하지 않습니다. Task를 시작하는 중에 행동이 끝나면 EndAbility가
+	// 실행 사본을 비우므로 목록을 복사해 돕니다.
+	StartTransition = {};
 	const TArray<FInstancedStruct> Tasks = ExecutionDefinition.Tasks;
 	for (const FInstancedStruct& Item : Tasks)
 	{
@@ -229,10 +236,17 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 		{
 			return;
 		}
-		if (UAbilityTask* Task = Item.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this, EAgTaskPlacement::Activation, MontageInstanceId}))
+		if (UAbilityTask* Task = Item.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this, EAgTaskPlacement::Activation}))
 		{
 			Task->ReadyForActivation();
 		}
+	}
+
+	// 4. 시작 섹션(없으면 처음)부터 재생하고 시작 위치의 구간·지점을 판정합니다. 재생에 실패하면 취소로 끝나고, 시작한 발동 Task는
+	// 엔진이 끝냅니다.
+	if (IsActive() && Montage)
+	{
+		PlayMontage(StartTransition.Section, StartTransition.BlendTime);
 	}
 }
 
@@ -249,15 +263,15 @@ void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGa
 		// 끝나지 않은 재생은 몽타주의 블렌드 아웃으로 멈춥니다.
 		UAnimInstance* Anim = CurrentActorInfo && InstanceId != INDEX_NONE ? CurrentActorInfo->GetAnimInstance() : nullptr;
 		FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(InstanceId) : nullptr;
-		if (Instance && Montage && !Instance->IsStopped())
+		if (Instance && Instance->Montage && !Instance->IsStopped())
 		{
 			Instance->OnMontageBlendingOutStarted.Unbind();
 			Instance->OnMontageEnded.Unbind();
-			Instance->Stop(FAlphaBlend(Montage->BlendOut));
+			Instance->Stop(FAlphaBlend(Instance->Montage->BlendOut));
 		}
+		// 재생하기 전에 끝나면 ASC가 현재 몽타주를 비우지 않으므로 여기서 비웁니다.
+		SetCurrentMontage(nullptr);
 		ActionTarget.Reset();
-		bTargetFromTargeting = false;
-		Montage = nullptr;
 		ExecutionDefinition = {};
 	}
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
@@ -368,6 +382,7 @@ void UAgGameplayAbility::Finish(bool bCancelled)
 void UAgGameplayAbility::PlayMontage(FName Section, float BlendTime)
 {
 	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo());
+	UAnimMontage* Montage = GetCurrentMontage();
 
 	// 다시 재생하면 이전 재생의 구간을 끝냅니다. 지점 Task는 남습니다. 이전 재생은 새 재생의 블렌드로 끝납니다. 끝나는 구간이
 	// 요청하는 전환은 이전 재생의 것이므로 받지 않도록 재생 ID를 먼저 비웁니다.
@@ -408,7 +423,7 @@ void UAgGameplayAbility::JumpToSection(FName Section)
 	UAnimInstance* Anim = CurrentActorInfo ? CurrentActorInfo->GetAnimInstance() : nullptr;
 	const FAnimMontageInstance* Instance =
 		Anim && MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
-	if (!Instance || !Montage)
+	if (!Instance)
 	{
 		return;
 	}
@@ -416,7 +431,7 @@ void UAgGameplayAbility::JumpToSection(FName Section)
 	// 엔진은 블렌드 아웃 중인 재생을 옮기지 않으므로, 위치가 바뀌었을 때만 시간표를 다시 맞춥니다. 건너뛴 지점은 실행하지 않고
 	// 옮긴 위치의 지점은 실행합니다.
 	const float Before = Instance->GetPosition();
-	Anim->Montage_JumpToSection(Section, Montage);
+	Anim->Montage_JumpToSection(Section, Instance->Montage);
 	if (IsActive() && Instance->GetPosition() != Before)
 	{
 		EvaluateTimeline(Instance->GetPosition(), EAgTimelineMode::Jump);

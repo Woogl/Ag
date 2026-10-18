@@ -60,7 +60,7 @@ struct FAgTaskContext
 	/** 항목을 둔 곳 */
 	EAgTaskPlacement Placement = EAgTaskPlacement::Activation;
 
-	/** 시간표 항목이면 그 재생의 몽타주 인스턴스 ID이고, 발동 Task면 행동이 시작한 재생입니다(없으면 INDEX_NONE). */
+	/** 시간표 항목이면 그 재생의 몽타주 인스턴스 ID입니다. 발동 Task는 재생 전에 시작하므로 INDEX_NONE입니다. */
 	int32 MontageInstanceId = INDEX_NONE;
 
 	/** 시간표 항목의 시각(몽타주 시각). 구간이면 Start·End이고, 지점이면 Start만 씁니다. */
@@ -141,12 +141,6 @@ struct FAgTaskParams
 		return false;
 	}
 
-	/** 루트 모션 소스로 주인의 속도를 덮어씁니다. 한 행동에는 이런 Task를 한 종류만 두고, 그 구간끼리 겹치지 않습니다(검증). */
-	virtual bool OverridesVelocity() const
-	{
-		return false;
-	}
-
 	/** 판정을 시작합니다. 몽타주의 공격 예고는 이런 항목의 시각에 끝나야 합니다(검증). */
 	virtual bool StartsHit() const
 	{
@@ -174,9 +168,6 @@ namespace AgTaskParams
 {
 	/** Task 이름의 Params 구조체. 등록되지 않은 이름이면 null입니다. */
 	const UScriptStruct* FindStruct(const FString& TaskName);
-
-	/** Params 구조체의 Task 이름 */
-	FName GetTaskName(const UScriptStruct& Struct);
 
 	/**
 	 * {"Task": 이름, 필드...} 항목 하나를 읽어 Out에 담습니다. Placement는 항목을 둔 곳이고, Ignored는 부르는 쪽이 읽는 키(시간표의

@@ -76,11 +76,6 @@ struct FAgDashParams : public FAgTaskParams
 		return Next.IsSet();
 	}
 
-	virtual bool OverridesVelocity() const override
-	{
-		return true;
-	}
-
 	/** 루트 모션 소스로 움직이는 구간에는 몽타주 루트 모션이 없습니다. */
 	virtual void ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;

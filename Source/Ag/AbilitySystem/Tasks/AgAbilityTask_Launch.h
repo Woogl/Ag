@@ -56,11 +56,6 @@ struct FAgLaunchParams : public FAgTaskParams
 		return bHasTo;
 	}
 
-	virtual bool OverridesVelocity() const override
-	{
-		return true;
-	}
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

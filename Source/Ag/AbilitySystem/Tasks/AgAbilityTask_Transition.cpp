@@ -25,9 +25,9 @@ void FAgTransitionParams::Validate(const FJsonObject& Json, EAgTaskPlacement Pla
 {
 	const bool bEvent = Json.HasField(TEXT("Event"));
 	const bool bTagEnds = Json.HasField(TEXT("BeforeTagEnds"));
-	if (Placement == EAgTaskPlacement::Point && (bEvent || bTagEnds || Json.HasField(TEXT("bOptional"))))
+	if (Placement != EAgTaskPlacement::Window && (bEvent || bTagEnds || Json.HasField(TEXT("bOptional"))))
 	{
-		Errors.Add(Path + TEXT(": a point uses no Event, BeforeTagEnds or bOptional"));
+		Errors.Add(Path + TEXT(": a point or an activation task uses no Event, BeforeTagEnds or bOptional"));
 	}
 	if (Placement == EAgTaskPlacement::Window && bEvent && bTagEnds)
 	{
@@ -41,15 +41,15 @@ void FAgTransitionParams::Validate(const FJsonObject& Json, EAgTaskPlacement Pla
 
 UAbilityTask* FAgTransitionParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_Transition::Transition(&Context.Runner, *this, Context.Placement == EAgTaskPlacement::Point,
+	return UAgAbilityTask_Transition::Transition(&Context.Runner, *this, Context.Placement != EAgTaskPlacement::Window,
 		Context.MontageInstanceId);
 }
 
-UAgAbilityTask_Transition* UAgAbilityTask_Transition::Transition(UGameplayAbility* Owner, const FAgTransitionParams& InParams, bool bInPoint, int32 InMontageInstanceId)
+UAgAbilityTask_Transition* UAgAbilityTask_Transition::Transition(UGameplayAbility* Owner, const FAgTransitionParams& InParams, bool bInOnce, int32 InMontageInstanceId)
 {
 	UAgAbilityTask_Transition* Task = NewAbilityTask<UAgAbilityTask_Transition>(Owner);
 	Task->Params = InParams;
-	Task->bPoint = bInPoint;
+	Task->bOnce = bInOnce;
 	Task->MontageInstanceId = InMontageInstanceId;
 	return Task;
 }
@@ -57,7 +57,7 @@ UAgAbilityTask_Transition* UAgAbilityTask_Transition::Transition(UGameplayAbilit
 void UAgAbilityTask_Transition::Activate()
 {
 	UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
-	if (!ASC || bPoint)
+	if (!ASC || bOnce)
 	{
 		TryTransition();
 		if (!IsFinished())
