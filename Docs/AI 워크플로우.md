@@ -123,6 +123,7 @@ flowchart TD
 | `Docs/Design` | 기획서 |
 | `Docs/Program` | 구현 계획서. 주제마다 문서 하나를 두고, 큰 변경은 구현 전에 설계안 문서를 따로 써서 검토받습니다. 설계안은 구현이 끝나면 결정을 주제 문서로 옮기고 지웁니다. |
 | `Docs/Art` | 에셋 조사 |
+| `Docs/Meeting` | 회의 자료(발표 영상 등) |
 | `Scripts/MotionImages` | 기획서 모션 그림을 만드는 스크립트와 그림 정의. 쓰는 법은 폴더의 README를 따릅니다. |
 | `Scripts/ScenarioTest` | AI가 동작 테스트 창을 띄워 시나리오를 실행하는 스크립트. 쓰는 법은 폴더의 README를 따릅니다. |
 | `.agents/skills` | AI가 되풀이하는 작업의 절차와 도구 요령(스킬). 규칙과 결정은 적지 않고 그것을 정한 문서를 가리킵니다. Claude Code는 `.claude/skills`를 이 폴더에 연결해 읽습니다(만드는 법은 `.gitignore`의 주석). |
