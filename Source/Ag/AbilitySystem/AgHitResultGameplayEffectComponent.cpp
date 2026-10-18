@@ -263,7 +263,7 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		{
 			NumberParameters.Location = Target->GetActorLocation();
 		}
-		TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageNumber, NumberParameters);
+		TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageFloater, NumberParameters);
 	}
 
 	// 히트스톱은 캐릭터마다 히트스톱 효과(태그)로 겁니다. 투사체는 쏜 캐릭터를 멈추지 않고, 처형에는 히트스톱이 없습니다.

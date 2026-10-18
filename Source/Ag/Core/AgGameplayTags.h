@@ -111,7 +111,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateFinish);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateSlashes);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_DamageNumber);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_DamageFloater);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryTelegraph);
 } // namespace AgGameplayTags

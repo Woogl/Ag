@@ -47,8 +47,13 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		SetState(ERootMotionModifierState::Disabled);
 		return;
 	}
-	// 엔진 ConstantRate의 프레임당 회전 한도는 이동 틱의 시간 × 회전 속도라, 재생 배율과 관계없이 캐릭터 회전 속도로 돕니다.
+	// 엔진 ConstantRate의 프레임당 회전 한도는 이동 틱의 시간 × 재생 배율(Rate Scale × 재생 속도) × 회전 한도라, 재생 배율로 나눠
+	// 재생 배율과 관계없이 캐릭터 회전 속도로 돕니다.
 	WarpMaxRotationRate = static_cast<float>(Character->GetCharacterMovement()->RotationRate.Yaw);
+	if (FMath::Abs(Context.PlayRate) > UE_SMALL_NUMBER)
+	{
+		WarpMaxRotationRate /= FMath::Abs(Context.PlayRate);
+	}
 	const FVector Location = Character->GetActorLocation();
 	const FVector Direction = (Target->GetActorLocation() - Location).GetSafeNormal2D();
 	FVector Goal = Location;

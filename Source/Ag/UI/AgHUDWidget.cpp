@@ -169,7 +169,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 	UpdateCooldown(*ASC, AgGameplayTags::Ability_Action_Skill, *SkillCooldownSweep, *SkillCooldownText);
 
 	// 머티리얼이 이 비율만큼 테두리를 위쪽 가운데부터 시계 방향으로 채웁니다.
-	if (UMaterialInstanceDynamic* Gauge = UltimateGauge->GetDynamicMaterial())
+	if (UMaterialInstanceDynamic* Gauge = UPGauge->GetDynamicMaterial())
 	{
 		Gauge->SetScalarParameterValue(RatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
 	}

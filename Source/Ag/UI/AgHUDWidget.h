@@ -20,7 +20,7 @@ struct FOnAttributeChangeData;
 
 /**
  * 전투 HUD. WBP_HUD의 부모로, 배치는 위젯에 있고 이 클래스는 값만 넣습니다.
- * 월드에 표시하는 락온 마커와 처형 안내는 보스에 있고, 대미지 숫자는 대미지 숫자 큐(GC_DamageNumber)가 띄웁니다.
+ * 월드에 표시하는 락온 마커와 처형 안내는 보스에 있고, 대미지 숫자는 대미지 숫자 큐(GC_DamageFloater)가 띄웁니다.
  * 활성인 동안 입력은 게임에만 가고 커서는 숨깁니다(게임 플로우 'Boss Stage').
  */
 UCLASS(Abstract)
@@ -102,7 +102,7 @@ protected:
 
 	/** 궁극기 슬롯: UP 게이지. 머티리얼이 UP 비율만큼 슬롯 테두리를 채웁니다. */
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> UltimateGauge;
+	TObjectPtr<UImage> UPGauge;
 
 	/** 보스 상태: 보스 이름 */
 	UPROPERTY(meta = (BindWidget))

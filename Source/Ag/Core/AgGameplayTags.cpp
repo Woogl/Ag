@@ -104,7 +104,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateFinish, "GameplayCue.UltimateFinish", "궁극기 마무리 적중의 이펙트와 효과음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateSlashes, "GameplayCue.UltimateSlashes",
 		"궁극기 베기 선: 켜진 동안 실행마다 하나씩 새기고, 꺼지면 모두 지움");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_DamageNumber, "GameplayCue.DamageNumber", "대미지 숫자");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_DamageFloater, "GameplayCue.DamageFloater", "대미지 숫자");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UnblockableTelegraph, "GameplayCue.UnblockableTelegraph", "가드 불가 예고");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_ParryTelegraph, "GameplayCue.ParryTelegraph", "패리 예고");
 } // namespace AgGameplayTags

@@ -190,7 +190,7 @@ Task가 시작하고 끝나는 때는 둔 곳이 정하고, 도는 동안의 시
 | Transition | 발동, 구간, 지점 | Next. 선택: RequiredTags, BlockedTags. 구간만(선택): Event 또는 BeforeTagEnds, bOptional | 정한 때에 주인이 RequiredTags를 모두 갖고 BlockedTags를 하나도 갖지 않으면 전환합니다. 그때는 지점이면 그 시각, 발동이면 재생 전(전환은 시작 섹션)이고, 구간이면 주인이 Event를 받을 때나 BeforeTagEnds의 태그를 주는 효과가 끝나기 Next 섹션 길이만큼 전(이미 지났거나 효과가 먼저 지워지면 바로, 끝나는 때를 모르는 태그(무한 효과 등)면 사라질 때. 그때 조건이 맞지 않으면 맞게 될 때)이며, 둘 다 없으면 구간 안에서 조건이 맞게 되는 때입니다. bOptional은 전환하지 않고 구간이 끝나도 되는 전환입니다. |
 | PlayCutscene | 구간 | Sequence, Next | 구간이 시작되면 주인을 기준 위치로 컷신을 재생하고 끝나면 전환합니다. 재생 속도는 매 프레임 주인의 시간 배율(`CustomTimeDilation`)을 따르므로 시간 정지와의 시작 순서에 기대지 않습니다. |
 | CameraShake | 지점 | Shake, Range | 로컬 플레이어와의 수평 거리가 Range 이내면 셰이크를 재생합니다. |
-| Track(추적 구간) | 구간 | TargetingRange, MaxWarpDistance, RotationMethod | 기획서의 추적 구간입니다. 그동안 행동 대상 쪽으로 돌고, MaxWarpDistance 안에서 대상 앞 그 행동의 간격(Targeting의 StopDistance)까지 다가갑니다. 몽타주가 루트 모션을 주면 구간을 시작할 때 엔진 Motion Warping에 Modifier를 등록하고([애니메이션과 이동](<애니메이션과 이동.md>) '추적 구간'), 주지 않으면(루트 모션 소스로 움직이는 공중 동작) 캐릭터를 직접 돌리며 다가가지 않습니다. ConstantRate는 실제 시간 초당 360°(캐릭터 회전 속도)로 돌고, Slerp는 구간 끝까지 다 돕니다. 대상이 없거나 TargetingRange 밖이면 캐릭터의 대체 대상(플레이어는 락온 대상) 쪽으로 돌기만 하고, 따라 돌다가 대상이 TargetingRange 밖으로 나가면 멈춥니다. |
+| Track(추적 구간) | 구간 | TargetingRange, MaxWarpDistance, RotationMethod | 기획서의 추적 구간입니다. 그동안 행동 대상 쪽으로 돌고, MaxWarpDistance 안에서 대상 앞 그 행동의 간격(Targeting의 StopDistance)까지 다가갑니다. 몽타주가 루트 모션을 주면 구간을 시작할 때 엔진 Motion Warping에 Modifier를 등록하고([애니메이션과 이동](<애니메이션과 이동.md>) '추적 구간'), 주지 않으면(루트 모션 소스로 움직이는 공중 동작) 캐릭터를 직접 돌리며 다가가지 않습니다. ConstantRate는 재생 배율과 관계없이 초당 캐릭터 회전 속도로 돌고, Slerp는 구간 끝까지 다 돕니다. 대상이 없거나 TargetingRange 밖이면 캐릭터의 대체 대상(플레이어는 락온 대상) 쪽으로 돌기만 하고, 따라 돌다가 대상이 TargetingRange 밖으로 나가면 멈춥니다. |
 
 ## 트리거
 
@@ -389,7 +389,7 @@ ID·Tags·Triggers·Required/Blocked/Owned/Block/Cancel·재발동 정책처럼 
 | 루트 모션 점프 중 캐릭터 무브먼트의 수직 속도가 경로를 따르고, 높이 경로가 포물선이며 수평이 등속임 | `FRootMotionSource_JumpForce` | 테스트(넉업의 `Event.Apex` 시점, LeapSlam의 궤적과 착지) |
 | 엔진 루트 모션 점프 Task는 시작부터 `MinimumLandedTriggerTime`(월드 시간) 전의 착지를 무시하고, `bFinishOnLanded`면 소스의 타임아웃을 끄고 그 뒤의 착지에서 끝남. 엔진 일정 힘 Task는 지속 시간이 음수면 스스로 끝나지 않음. 두 Task는 끝날 때 소스를 지움 | `AbilityTask_ApplyRootMotionJumpForce.cpp`, `AbilityTask_ApplyRootMotionConstantForce.cpp` | 소스 |
 | 지운 루트 모션 소스의 FinishVelocity(속도 0)는 다음 이동 갱신에서 적용됨 | `RootMotionSource.cpp`의 `CleanUpInvalidRootMotion` | 소스 |
-| ConstantRate 워핑의 프레임당 회전 한도는 이동 틱의 실제 시간 × `WarpMaxRotationRate`이고 재생 배율이 들어가지 않음 | `URootMotionModifier_Warp`의 `WarpRotation` | 테스트(배율 0.8 보스 패턴의 회전 속도) |
+| ConstantRate 워핑의 프레임당 회전 한도는 이동 틱의 시간 × 재생 배율(몽타주 Rate Scale × 재생 속도) × `WarpMaxRotationRate`임 | `URootMotionModifier_Warp`의 `WarpRotation`, `UMotionWarpingCharacterAdapter`의 `PlayRate` | 소스 |
 | 레벨 시퀀스 재생 속도를 재생 중에 바꿀 수 있음 | `MovieSceneSequencePlayer`의 SetPlayRate | 테스트(시간 정지가 시작·끝나는 프레임의 컷신 속도) |
 | 착지할 때 Landed가 이동 모드 변경보다 먼저 불림 | `CharacterMovementComponent.cpp`의 ProcessLanded | 테스트(착지 모션을 고를 때 점프 행동이 남아 있는지) |
 | 엔진 GameplayCue 상태 노티파이가 메시 주인을 대상으로 Cue를 켜고 끔 | `AnimNotify_GameplayCueState.cpp` | 테스트(베기 선이 Judgment에서 켜지고 마무리에서 꺼지는지) |
