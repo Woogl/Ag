@@ -1,31 +1,68 @@
-# Project formatting authority. Runner/version: Scripts/FormatCpp.ps1
-BasedOnStyle: Microsoft
+# 프로젝트 C++ 포맷 정본. 실행과 기준 버전: Scripts/FormatCpp.ps1
+# 기준: Epic C++ 코딩 표준과 엔진에 들어 있는 Epic 설정(Engine/Source/Runtime/AutoRTFM/.clang-format).
+# 프로젝트 선택: 함수 선언을 한 줄로 두려고 줄 길이 제한을 두지 않는다(ColumnLimit 0, 작성한 줄바꿈을 유지).
+BasedOnStyle: LLVM
 Language: Cpp
-UseTab: ForIndentation
+Standard: c++20
+UseTab: AlignWithSpaces
 IndentWidth: 4
 TabWidth: 4
 ContinuationIndentWidth: 4
-NamespaceIndentation: All
+ColumnLimit: 0
 AccessModifierOffset: -4
-IndentCaseLabels: true
-BreakBeforeBraces: Allman
-InsertBraces: true
-AllowShortFunctionsOnASingleLine: None
-AllowShortBlocksOnASingleLine: Never
+AlignAfterOpenBracket: DontAlign
+AlignOperands: Align
+AlignEscapedNewlines: Left
+AlignTrailingComments: true
+SpacesBeforeTrailingComments: 1
+AllowShortBlocksOnASingleLine: Empty
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-AllowShortLambdasOnASingleLine: None
-AllowShortEnumsOnASingleLine: false
+AllowShortLambdasOnASingleLine: Inline
+BreakTemplateDeclarations: Yes
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  BeforeWhile: true
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+LambdaBodyIndentation: OuterScope
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: Never
+Cpp11BracedListStyle: true
+EmptyLineBeforeAccessModifier: LogicalBlock
+FixNamespaceComments: true
+ShortNamespaceLines: 30
+NamespaceIndentation: All
+IndentCaseLabels: true
+IndentCaseBlocks: false
+IndentPPDirectives: None
 PointerAlignment: Left
 ReferenceAlignment: Left
 DerivePointerAlignment: false
-# Project choice; Epic does not prescribe this column limit.
-ColumnLimit: 140
+SpaceAfterTemplateKeyword: true
+InsertBraces: true
+InsertNewlineAtEOF: true
 SortIncludes: Never
 IncludeBlocks: Preserve
 SortUsingDeclarations: Never
 ReflowComments: Never
-FixNamespaceComments: false
 StatementMacros:
   - UCLASS
   - USTRUCT

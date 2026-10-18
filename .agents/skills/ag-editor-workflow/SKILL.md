@@ -25,6 +25,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
   - `config = remote.RemoteExecutionConfig()`, `config.multicast_bind_address = "127.0.0.1"`, `rx = remote.RemoteExecution(config)`, `rx.start()`.
   - `rx.remote_nodes`가 차면 `rx.open_command_connection(node)`, 코드는 `rx.run_command(code, unattended=True, exec_mode=remote.MODE_EXEC_FILE, raise_on_failure=False)`로 보내고, 끝나면 `rx.stop()`.
   - `MODE_EXEC_FILE`은 보낸 코드에 `.py`라는 글자가 있으면(주석이라도) 파일 경로로 여겨 실패한다.
+  - 보낸 코드의 전역 변수는 다음 명령에도 남는다. 에셋(노티파이 구조체 등)을 담은 전역 변수가 남아 있으면 그 에셋을 지울 때 '사용 중'으로 실패하므로, 에셋은 함수 안에서만 잡거나 지우기 전에 전역 변수를 비운다.
   - 다른 프로젝트의 에디터도 켜져 있으면 첫 노드가 이 프로젝트가 아닐 수 있다. `unreal.Paths.get_project_file_path()`로 먼저 확인한다.
   - 테스트 창도 원격 실행을 쓴다. 창마다 포트를 나누는 방법은 `Scripts/ScenarioTest`의 코드를 따른다.
 - `python -I`로 돌리는 스크립트는 `PYTHONIOENCODING`을 무시한다. 한글을 출력하려면 `sys.stdout.reconfigure(encoding="utf-8")`를 먼저 부른다.
@@ -92,12 +93,16 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 - 몽타주 섹션과 트랙 길이는 엔진 MCP와 파이썬으로 바꿀 수 없다. `AgAssetToolset.SetMontageSegments`·`SetMontageSections`를 쓴다. 섹션은 시작 시간 순서로 넘긴다(툴셋이 정렬하지 않는다).
 - 복제한 몽타주는 `SetMontageSegments` 뒤에도 옛 섹션의 시퀀스 참조가 남는다. `SetMontageSections`를 다시 부르고 저장한다.
+- `SetMontageSegments`로 몽타주가 길어지면 옛 끝에서 끝나던 노티파이 상태를 엔진이 새 끝까지 늘리지만, 끝 링크는 옛 구간에 남는다. 그 노티파이는 지우고(`remove_animation_notify_events_by_track`) 다시 넣는다.
 - 몽타주 안의 게임 규칙 시각(판정·보호·워핑·후딜 같은 사건)은 노티파이가 아니라 `Data/MontageTimelines.json`에서 고친다([몽타주 시간표](<../../../Docs/Program/몽타주 시간표.md>)). 몽타주에는 연출과 루트 모션 노티파이만 두며, 프로젝트 노티파이나 엔진 워핑 노티파이를 넣으면 시간표 검증이 오류를 낸다.
 - 몽타주 노티파이는 `get_properties`로 읽을 수 없다. `unreal.AnimationLibrary.get_animation_notify_events(montage)`로 읽고, 트랙별로는 `get_animation_notify_events_for_track`으로 읽는다.
 - 노티파이 시각을 float 값 그대로 읽으려면 `unreal.AnimationLibrary.get_anim_notify_event_trigger_time`(트리거 오프셋 포함)과 `get_anim_notify_event_duration`을 쓴다. 이벤트의 `trigger_time_offset`과 `Duration`은 파이썬에서 읽을 수 없고, `export_text()`의 값은 소수 6자리다.
 - 노티파이는 `unreal.AnimationLibrary.add_animation_notify_event(montage, 트랙 이름, 시각, 노티파이 클래스)`로 더하고, 돌려받은 노티파이에 속성(`gameplay_cue` 등)을 쓴 뒤 저장한다.
-- 몽타주 섹션의 시작 시간은 파이썬으로 읽을 수 없다(`composite_sections`에 접근하지 못한다). 슬롯 구간의 `start_pos`(`slot_anim_tracks`)나 노티파이 위치에서 알아낸다.
+- 몽타주 섹션의 시작 시간과 다음 섹션은 파이썬 속성으로 읽을 수 없다(`composite_sections`에 접근하지 못한다). `unreal.AssetExportTask`의 `exporter`에 `unreal.ObjectExporterT3D()`를 주고 `unreal.Exporter.run_asset_export_task`로 T3D를 내보내면 `CompositeSections`(시각 `LinkValue`, `NextSectionName`)와 `Notifies`(시각, 길이, `TriggerTimeOffset`, 끝 링크)가 소수 6자리로 나온다.
 - 엔진 노티파이는 정방향 재생에서 '앞 위치 < 노티파이 시각 ≤ 지금 위치'일 때만 울린다. 섹션 시작 시각에 정확히 둔 노티파이는 그 섹션으로 점프한 직후 울리지 않으니 조금 뒤에 둔다. 시간표의 지점은 섹션 이동 직후 그 위치의 지점도 실행한다.
+- 몽타주는 섹션 시작 시각에 정확히 둔 노티파이에 −0.0001초 오프셋을 줘 앞 섹션 끝에서 울린다. 반복 섹션 바로 뒤 섹션의 시작에 둔 노티파이 상태는 반복할 때마다 켜졌다 꺼지므로, 시작을 0.0001초 뒤에 둔다.
+- 몽타주 시작(0초)에 둔 루트 모션 끄기 노티파이는 엔진이 0.0001초 뒤에 켜고, 몽타주는 한 프레임 안에서 루트 모션을 먼저 뽑은 뒤 분기점 노티파이를 처리한다. 그래서 첫 프레임에 그 앞 조각의 루트 모션이 남고, 그 프레임은 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않고 수평 속도도 덮어쓴다. 몽타주 전체에서 루트 모션을 쓰지 않으려면 노티파이 대신 시퀀스의 루트 모션을 끄고 루트 뼈를 고정한다(`enable_root_motion` False, `force_root_lock` True).
+- 루트 모션 끄기 노티파이 구간 안에서 새로 재생한 몽타주 인스턴스(BlendTime 전환)도 첫 프레임의 루트 모션을 먼저 뽑고, 캐릭터 무브먼트는 그 속도를 다음 프레임들에도 이어 간다. 그 구간에 쓰는 시퀀스는 루트 모션을 끈다.
 - 몽타주를 이어 재생할 때, `OnBlendOut`은 길이에서 블렌드 아웃 시간을 뺀 때에 온다. 거기서 다음 몽타주를 시작하면 앞 모션이 잘리므로, 앞 몽타주의 `BlendOutTriggerTime`을 0으로 둔다.
 - 스크립트로 만든 블렌드 스페이스는 `ResampleData()`가 불리지 않아 기본 자세(A 포즈)를 재생한다. `OpenEditorForAsset`으로 열고 dirty로 만든 뒤 저장한다.
 - 애님 그래프 노드의 값이 핀으로 보이면(`bShowPin`) 컴파일할 때 핀 기본값이 덮어쓴다. `BlueprintTools.set_pin_value`로 바꾼다. 핀만 바꾸면 패키지가 dirty가 되지 않아 저장되지 않으니, 노드를 따로 dirty로 만들어 저장한 뒤 파일 시각을 확인한다.
@@ -113,6 +118,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 ### 구조체와 배열
 
 - MCP `set_properties`는 배열 크기와 요소를 한 번에 바꾸지 못한다. 먼저 남길 요소를 `get_properties`가 돌려준 그대로(객체 참조는 `{"refPath": ...}`) 넘겨 줄이고, 같은 크기에서 새 값을 넣는다.
+- 인스턴스 하위 객체 배열(TargetingPreset의 Task 등)에 요소를 더할 때는 남길 요소를 그대로 두고 새 자리에 클래스 경로(`{"refPath": "/Script/Ag.<클래스>"}`)를 넣는다. 그 클래스의 새 하위 객체가 생긴다.
 - 구조체 안의 EditDefaultsOnly 필드는 `set_editor_property`로 쓸 수 없다. `struct.import_text('(...)')`로 채운 뒤 구조체 전체를 CDO에 쓴다.
 - 머티리얼 Custom 노드의 입력은 `set_properties` 한 번에 하나씩, 요소를 통째로(`inputName`과 `input`) 넣어 늘린다.
 
