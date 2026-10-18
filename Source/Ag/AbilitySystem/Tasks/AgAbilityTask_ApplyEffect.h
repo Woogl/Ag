@@ -27,8 +27,7 @@ struct FAgApplyEffectParams : public FAgTaskParams
 	bool bRemoveOnEnd = false;
 
 	/** Effect가 Effects.json에 있는지, 구간이면 무한 효과인지 검사합니다. */
-	void ValidateEffect(const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, EAgTaskPlacement Placement, const FString& Path,
-	                    TArray<FString>& Errors) const;
+	void ValidateEffect(const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) const;
 
 	virtual EAgTaskPlacement GetPlacements() const override
 	{

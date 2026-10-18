@@ -67,8 +67,7 @@ public:
 #if WITH_EDITOR
 	/** Data 폴더의 JSON을 모두 다시 읽습니다. Data 폴더 감시가 부릅니다. */
 	AG_API void ReloadJsonData();
-	virtual void ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook,
-	    TArray<FName>& PackagesToNeverCook) override;
+	virtual void ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook) override;
 #endif
 
 protected:

@@ -56,8 +56,7 @@ struct FAgBossAITask_Wait : public FStateTreeAITaskBase
 		return FInstanceDataType::StaticStruct();
 	}
 
-	virtual EStateTreeRunStatus EnterState(
-	    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 };
 
@@ -84,8 +83,7 @@ struct FAgBossAITask_Approach : public FStateTreeAITaskBase
 		return FInstanceDataType::StaticStruct();
 	}
 
-	virtual EStateTreeRunStatus EnterState(
-	    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 };
 
@@ -123,8 +121,7 @@ struct FAgBossAITask_RunPattern : public FStateTreeAITaskBase
 		return FInstanceDataType::StaticStruct();
 	}
 
-	virtual EStateTreeRunStatus EnterState(
-	    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 
 private:
@@ -135,8 +132,7 @@ private:
 	 * 보스 사양 '패턴 선택' 1: 어빌리티 목록에서 지금 쓸 수 있는 패턴(전용 값이 패턴 공통 값이고, 그 거리 구간의 가중치가
 	 * 0보다 크고, 페이즈가 허용하고, IsReady가 쿨다운이 끝났다고 답함)의 ID와 그 구간의 가중치
 	 */
-	static void GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance,
-	    int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights);
+	static void GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights);
 };
 
 USTRUCT()
@@ -160,8 +156,7 @@ struct FAgBossAITask_PhaseTransition : public FStateTreeAITaskBase
 		return FInstanceDataType::StaticStruct();
 	}
 
-	virtual EStateTreeRunStatus EnterState(
-	    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 };
 
@@ -186,8 +181,7 @@ struct FAgBossAITask_WaitReaction : public FStateTreeAITaskBase
 		return FInstanceDataType::StaticStruct();
 	}
 
-	virtual EStateTreeRunStatus EnterState(
-	    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 };
 
@@ -217,6 +211,5 @@ struct FAgBossAITask_NonCombat : public FStateTreeAITaskBase
 		return FInstanceDataType::StaticStruct();
 	}
 
-	virtual EStateTreeRunStatus EnterState(
-	    FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
+	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 };

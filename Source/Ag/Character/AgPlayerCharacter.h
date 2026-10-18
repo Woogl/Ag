@@ -8,6 +8,7 @@
 #include "AgPlayerCharacter.generated.h"
 
 class UCameraComponent;
+class UGameplayAbility;
 class UInputAction;
 class UInputMappingContext;
 class UPostProcessComponent;

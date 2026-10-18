@@ -126,6 +126,5 @@ namespace AgTaskParams
 	 * {"Task": 이름, 필드...} 항목 하나를 읽어 Out에 담습니다. Placement는 항목을 둔 곳이고, Ignored는 부르는 쪽이 읽는 키(시간표의
 	 * Start, End, Time)입니다. 실패하면 Out을 바꾸지 않습니다.
 	 */
-	bool Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path, TArray<FString>& Errors,
-	          const TArray<FString>& Ignored = TArray<FString>());
+	bool Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path, TArray<FString>& Errors, const TArray<FString>& Ignored = TArray<FString>());
 }

@@ -9,21 +9,7 @@
 #include "GameplayEffect.h"
 #include "Ag.h"
 
-void FAgApplyEffectParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgApplyEffectParams, bRemoveOnEnd));
-}
-
-void FAgApplyEffectParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	if (Placement == EAgTaskPlacement::Window && Json.HasField(TEXT("bRemoveOnEnd")))
-	{
-		Errors.Add(Path + TEXT(".bRemoveOnEnd: a window removes its effect when it ends"));
-	}
-}
-
-void FAgApplyEffectParams::ValidateEffect(const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, EAgTaskPlacement Placement,
-                                          const FString& Path, TArray<FString>& Errors) const
+void FAgApplyEffectParams::ValidateEffect(const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) const
 {
 	const TObjectPtr<UGameplayEffect>* Found = Effects.Find(Effect);
 	if (!Found)
@@ -35,6 +21,19 @@ void FAgApplyEffectParams::ValidateEffect(const TMap<FName, TObjectPtr<UGameplay
 	if (Placement == EAgTaskPlacement::Window && (*Found)->DurationPolicy != EGameplayEffectDurationType::Infinite)
 	{
 		Errors.Add(Path + TEXT(".Effect: a window needs an Infinite effect"));
+	}
+}
+
+void FAgApplyEffectParams::GetFieldRules(FAgJsonFieldRules& Rules) const
+{
+	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgApplyEffectParams, bRemoveOnEnd));
+}
+
+void FAgApplyEffectParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
+{
+	if (Placement == EAgTaskPlacement::Window && Json.HasField(TEXT("bRemoveOnEnd")))
+	{
+		Errors.Add(Path + TEXT(".bRemoveOnEnd: a window removes its effect when it ends"));
 	}
 }
 

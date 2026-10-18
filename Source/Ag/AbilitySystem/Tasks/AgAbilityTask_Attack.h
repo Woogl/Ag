@@ -85,8 +85,7 @@ private:
 	struct FAgAttackTickFunction : public FTickFunction
 	{
 		UAgAbilityTask_Attack* Target = nullptr;
-		virtual void ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
-		                         const FGraphEventRef& MyCompletionGraphEvent) override;
+		virtual void ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent) override;
 		virtual FString DiagnosticMessage() override;
 	};
 

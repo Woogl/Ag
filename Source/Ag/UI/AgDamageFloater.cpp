@@ -20,8 +20,7 @@ AAgDamageFloater::AAgDamageFloater()
 	RootComponent = Widget;
 }
 
-void AAgDamageFloater::Spawn(UObject* WorldContextObject, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location,
-                             int32 Amount)
+void AAgDamageFloater::Spawn(UObject* WorldContextObject, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull);
 	if (!World || !WidgetClass)

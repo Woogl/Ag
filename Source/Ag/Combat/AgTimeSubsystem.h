@@ -30,7 +30,10 @@ public:
 	/** 시간 정지를 끝내고 게임 전체를 원래 속도로 돌립니다. */
 	void EndTimeStop(UObject& Requester);
 
-	bool IsTimeStopped() const { return bTimeStopped; }
+	bool IsTimeStopped() const
+	{
+		return bTimeStopped;
+	}
 
 	/** 시간 정지 중에 정상 속도로 돌려면 곱하는 배율(게임 전체 시간 배율의 역수). 시간 정지 중이 아니면 1입니다. */
 	float GetTimeStopCompensation() const;

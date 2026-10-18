@@ -41,7 +41,7 @@ const UScriptStruct* AgTaskParams::FindStruct(const FString& TaskName)
 		}
 	}
 	const UScriptStruct* Struct =
-	    FindObject<UScriptStruct>(nullptr, *FString::Printf(TEXT("/Script/Ag.%s%s%s"), StructPrefix, *TaskName, StructSuffix));
+		FindObject<UScriptStruct>(nullptr, *FString::Printf(TEXT("/Script/Ag.%s%s%s"), StructPrefix, *TaskName, StructSuffix));
 	const UScriptStruct* Base = FAgTaskParams::StaticStruct();
 	return Struct && Struct != Base && Struct->IsChildOf(Base) ? Struct : nullptr;
 }
@@ -54,8 +54,7 @@ FName AgTaskParams::GetTaskName(const UScriptStruct& Struct)
 	return FName(*Name);
 }
 
-bool AgTaskParams::Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path,
-                        TArray<FString>& Errors, const TArray<FString>& Ignored)
+bool AgTaskParams::Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path, TArray<FString>& Errors, const TArray<FString>& Ignored)
 {
 	const int32 Before = Errors.Num();
 	FString TaskName;

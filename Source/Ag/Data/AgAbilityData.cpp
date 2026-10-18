@@ -31,9 +31,9 @@ namespace
 			return;
 		}
 		Keys(*Activation, Field,
-		     {TEXT("RequiredTags"), TEXT("BlockedTags"), TEXT("OwnedTags"), TEXT("BlockTags"), TEXT("CancelTags"), TEXT("Triggers"),
-		      TEXT("bAllowRetrigger")},
-		     {}, Errors);
+			{TEXT("RequiredTags"), TEXT("BlockedTags"), TEXT("OwnedTags"), TEXT("BlockTags"), TEXT("CancelTags"), TEXT("Triggers"),
+				TEXT("bAllowRetrigger")},
+			{}, Errors);
 		Tags(*Activation, TEXT("RequiredTags"), Field, Out.Activation.RequiredTags, Errors);
 		Tags(*Activation, TEXT("BlockedTags"), Field, Out.Activation.BlockedTags, Errors);
 		Tags(*Activation, TEXT("OwnedTags"), Field, Out.Activation.OwnedTags, Errors);
@@ -87,9 +87,9 @@ namespace
 		}
 		FAgJsonFieldRules Rules;
 		Rules.Optional = {
-		    GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, Range), GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, TargetRequiredTags),
-		    GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, TargetBlockedTags), GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, bRequired),
-		    GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, StopDistance)};
+			GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, Range), GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, TargetRequiredTags),
+			GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, TargetBlockedTags), GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, bRequired),
+			GET_MEMBER_NAME_CHECKED(FAgAbilityTargeting, StopDistance)};
 		if (!ReadStruct(*Targeting, *FAgAbilityTargeting::StaticStruct(), &Out.Targeting, Field, Errors, Rules))
 		{
 			return;
@@ -104,11 +104,10 @@ namespace
 		// 적대하는 살아 있는 캐릭터만 남기고 Range와 대상 태그로 거르는 일은 프리셋 안의 프로젝트 필터가 합니다. 없으면 그 조건이
 		// 모두 무시되므로 읽을 때 막습니다.
 		const FTargetingTaskSet* TaskSet = Out.Targeting.Preset ? Out.Targeting.Preset->GetTargetingTaskSet() : nullptr;
-		const bool bHasFilter = TaskSet && TaskSet->Tasks.ContainsByPredicate(
-		                                       [](const TObjectPtr<UTargetingTask>& Task)
-		                                       {
-			                                       return Task && Task->IsA<UAgTargetingFilterTask_ActionTarget>();
-		                                       });
+		const bool bHasFilter = TaskSet && TaskSet->Tasks.ContainsByPredicate([](const TObjectPtr<UTargetingTask>& Task)
+		{
+			return Task && Task->IsA<UAgTargetingFilterTask_ActionTarget>();
+		});
 		if (!bHasFilter)
 		{
 			Errors.Add(Field + TEXT(".Preset: needs the filter task AgTargetingFilterTask_ActionTarget"));
@@ -137,8 +136,8 @@ namespace
 		Out.Montage.MontageId = FName(*Id);
 		Out.Montage.bHasRootMotionDistance = Montage->HasField(TEXT("RootMotionDistance"));
 		if (Out.Montage.bHasRootMotionDistance &&
-		    Number(*Montage, TEXT("RootMotionDistance"), Field, Out.Montage.RootMotionDistance, Errors) &&
-		    Out.Montage.RootMotionDistance <= 0.f)
+			Number(*Montage, TEXT("RootMotionDistance"), Field, Out.Montage.RootMotionDistance, Errors) &&
+			Out.Montage.RootMotionDistance <= 0.f)
 		{
 			Errors.Add(Field + TEXT(".RootMotionDistance: must be positive"));
 		}
@@ -148,7 +147,7 @@ namespace
 	{
 		FString Name;
 		const int64 Value =
-		    Entry.TryGetStringField(TEXT("End"), Name) ? StaticEnum<EAgAbilityEnd>()->GetValueByNameString(Name) : INDEX_NONE;
+			Entry.TryGetStringField(TEXT("End"), Name) ? StaticEnum<EAgAbilityEnd>()->GetValueByNameString(Name) : INDEX_NONE;
 		if (Value == INDEX_NONE)
 		{
 			Errors.Add(Path + TEXT(".End: expected Montage or TriggerTag"));
@@ -197,8 +196,8 @@ namespace
 			return;
 		}
 		Keys(*Pattern, Field,
-		     {TEXT("Phases"), TEXT("WeightNear"), TEXT("WeightMid"), TEXT("WeightFar"), TEXT("ResponseRange"), TEXT("ResponseChance")}, {},
-		     Errors);
+			{TEXT("Phases"), TEXT("WeightNear"), TEXT("WeightMid"), TEXT("WeightFar"), TEXT("ResponseRange"), TEXT("ResponseChance")}, {},
+			Errors);
 		Number(*Pattern, TEXT("WeightNear"), Field, Out.PatternSelection.WeightNear, Errors);
 		Number(*Pattern, TEXT("WeightMid"), Field, Out.PatternSelection.WeightMid, Errors);
 		Number(*Pattern, TEXT("WeightFar"), Field, Out.PatternSelection.WeightFar, Errors);
@@ -243,17 +242,16 @@ namespace
 		{
 			Errors.Add(Path + TEXT(".End: TriggerTag needs exactly one OwnedTagPresent trigger"));
 		}
-		const bool bNeedsTarget = Data.Tasks.ContainsByPredicate(
-		    [](const FInstancedStruct& Task)
-		    {
-			    return Task.Get<FAgTaskParams>().NeedsTarget();
-		    });
+		const bool bNeedsTarget = Data.Tasks.ContainsByPredicate([](const FInstancedStruct& Task)
+		{
+			return Task.Get<FAgTaskParams>().NeedsTarget();
+		});
 		if (bNeedsTarget && !Data.bHasTargeting && !Data.HasEventTrigger())
 		{
 			Errors.Add(Path + TEXT(".Tasks: a task uses the ability target, so the ability needs Targeting or a GameplayEvent trigger"));
 		}
 	}
-}
+} // namespace
 
 void AgResource::SetAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP)
 {
@@ -265,7 +263,7 @@ void AgResource::SetAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float
 void AgResource::SetAmount(FGameplayEffectSpec& Spec, EAgResource Resource, float Amount)
 {
 	SetAmounts(Spec, Resource == EAgResource::SP ? Amount : 0.f, Resource == EAgResource::MP ? Amount : 0.f,
-	           Resource == EAgResource::UP ? Amount : 0.f);
+		Resource == EAgResource::UP ? Amount : 0.f);
 }
 
 void FAgResourceCostParams::AddToSpec(FGameplayEffectSpec& Spec) const
@@ -281,11 +279,10 @@ bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
 
 bool FAgAbilityData::HasEventTrigger() const
 {
-	return Activation.Triggers.ContainsByPredicate(
-	    [](const FAgAbilityTrigger& Trigger)
-	    {
-		    return Trigger.Source == EAgTriggerSource::GameplayEvent;
-	    });
+	return Activation.Triggers.ContainsByPredicate([](const FAgAbilityTrigger& Trigger)
+	{
+		return Trigger.Source == EAgTriggerSource::GameplayEvent;
+	});
 }
 
 bool AgAbilityData::Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& OutAbilities, TArray<FString>& Errors)
@@ -309,7 +306,7 @@ bool AgAbilityData::Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& 
 		}
 		const int32 EntryErrors = Errors.Num();
 		Keys(*Entry, Path, {TEXT("Tags"), TEXT("Cooldown"), TEXT("Activation"), TEXT("Cost"), TEXT("End"), TEXT("Tasks")},
-		     {TEXT("Targeting"), TEXT("Montage"), TEXT("PatternSelection")}, Errors);
+			{TEXT("Targeting"), TEXT("Montage"), TEXT("PatternSelection")}, Errors);
 		Tags(*Entry, TEXT("Tags"), Path, Data.Tags, Errors);
 		Number(*Entry, TEXT("Cooldown"), Path, Data.Cooldown, Errors);
 		ReadActivation(*Entry, Data, Path, Errors);
@@ -341,9 +338,7 @@ bool AgAbilityData::Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& 
 	return true;
 }
 
-void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities,
-                                      const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects,
-                                      const TMap<FName, FAgMontageTimeline>& Timelines, const FString& Path, TArray<FString>& Errors)
+void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const TMap<FName, FAgMontageTimeline>& Timelines, const FString& Path, TArray<FString>& Errors)
 {
 	TSet<FName> Seen;
 	for (FName Id : Data.Abilities)
@@ -374,7 +369,7 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 		// 플레이어는 점프할 때와 착지할 때 점프 몽타주의 두 섹션을 재생합니다.
 		const UAnimMontage* Jump = Data.Montages.FindRef(AAgPlayerCharacter::JumpMontageId);
 		if (!Jump || Jump->GetSectionIndex(AAgPlayerCharacter::JumpStartSection) == INDEX_NONE ||
-		    Jump->GetSectionIndex(AAgPlayerCharacter::JumpLandSection) == INDEX_NONE)
+			Jump->GetSectionIndex(AAgPlayerCharacter::JumpLandSection) == INDEX_NONE)
 		{
 			Errors.Add(Path + TEXT("Montages.Jump: needs sections Start and Land"));
 		}
@@ -408,8 +403,8 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 			Errors.Add(AbilityPath + TEXT("missing montage ") + Ability->Montage.MontageId.ToString());
 		}
 		if (Montage && Ability->Montage.bHasRootMotionDistance &&
-		    Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D() <=
-		        UE_SMALL_NUMBER)
+			Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D() <=
+				UE_SMALL_NUMBER)
 		{
 			Errors.Add(AbilityPath + TEXT("Montage.RootMotionDistance: montage has no horizontal root motion"));
 		}
@@ -418,11 +413,10 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 		// 덮어써 함께 쓰면 나중에 건 쪽이 움직이지 못하므로, 한 행동에 함께 두지 않습니다.
 		const FAgMontageTimeline* Timeline = Montage ? Timelines.Find(FName(*Montage->GetPathName())) : nullptr;
 		bool bTimelineNeedsTarget = false;
-		bool bLaunch = Ability->Tasks.ContainsByPredicate(
-		    [](const FInstancedStruct& Task)
-		    {
-			    return Task.GetPtr<FAgLaunchParams>() != nullptr;
-		    });
+		bool bLaunch = Ability->Tasks.ContainsByPredicate([](const FInstancedStruct& Task)
+		{
+			return Task.GetPtr<FAgLaunchParams>() != nullptr;
+		});
 		bool bDash = false;
 		if (Timeline)
 		{
@@ -439,7 +433,7 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 		if (bTimelineNeedsTarget && !Ability->bHasTargeting && !Ability->HasEventTrigger())
 		{
 			Errors.Add(AbilityPath +
-			           TEXT("its montage timeline uses the ability target, so it needs Targeting or a GameplayEvent trigger"));
+					   TEXT("its montage timeline uses the ability target, so it needs Targeting or a GameplayEvent trigger"));
 		}
 		if (bLaunch && bDash)
 		{
@@ -448,8 +442,7 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 	}
 }
 
-void AgAbilityData::ValidateEffects(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects,
-                                    TArray<FString>& Errors)
+void AgAbilityData::ValidateEffects(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors)
 {
 	for (const TPair<FName, FAgAbilityData>& Pair : Abilities)
 	{
@@ -458,7 +451,7 @@ void AgAbilityData::ValidateEffects(const TMap<FName, FAgAbilityData>& Abilities
 			if (const FAgApplyEffectParams* Apply = Pair.Value.Tasks[Index].GetPtr<FAgApplyEffectParams>())
 			{
 				Apply->ValidateEffect(Effects, EAgTaskPlacement::Activation,
-				                      FString::Printf(TEXT("%s.Tasks[%d]"), *Pair.Key.ToString(), Index), Errors);
+					FString::Printf(TEXT("%s.Tasks[%d]"), *Pair.Key.ToString(), Index), Errors);
 			}
 		}
 	}

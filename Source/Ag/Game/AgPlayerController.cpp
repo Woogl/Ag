@@ -24,6 +24,28 @@ AAgPlayerController::AAgPlayerController()
 	CheatClass = UAgCheatManager::StaticClass();
 }
 
+void AAgPlayerController::PlayCameraShake(EAgCameraShake Shake)
+{
+	if (Shake == EAgCameraShake::None || !IsLocalController() || !PlayerCameraManager)
+	{
+		return;
+	}
+
+	const UAgCameraData& Camera = UAgAssetManager::Get().GetCameraData();
+	const FAgCameraShakeSettings* Settings = Camera.FindShakeSettings(Shake);
+	if (!Settings)
+	{
+		return;
+	}
+
+	FAddCameraShakeParams ShakeParams;
+	ShakeParams.Initializer.BindLambda([Settings, &Camera](UCameraShakeBase* ShakeInstance)
+	{
+		CastChecked<UAgCameraShake>(ShakeInstance)->Initialize(*Settings, Camera);
+	});
+	PlayerCameraManager->StartCameraShake(UAgCameraShake::StaticClass(), ShakeParams);
+}
+
 UCommonActivatableWidget* AAgPlayerController::PushScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass, int32 ZOrder)
 {
 	if (!ScreenClass)
@@ -57,26 +79,4 @@ void AAgPlayerController::ShowResult(TSubclassOf<UAgResultScreen> ResultScreenCl
 	{
 		ResultScreen->SetResult(bStageCleared);
 	}
-}
-
-void AAgPlayerController::PlayCameraShake(EAgCameraShake Shake)
-{
-	if (Shake == EAgCameraShake::None || !IsLocalController() || !PlayerCameraManager)
-	{
-		return;
-	}
-
-	const UAgCameraData& Camera = UAgAssetManager::Get().GetCameraData();
-	const FAgCameraShakeSettings* Settings = Camera.FindShakeSettings(Shake);
-	if (!Settings)
-	{
-		return;
-	}
-
-	FAddCameraShakeParams ShakeParams;
-	ShakeParams.Initializer.BindLambda([Settings, &Camera](UCameraShakeBase* ShakeInstance)
-	{
-		CastChecked<UAgCameraShake>(ShakeInstance)->Initialize(*Settings, Camera);
-	});
-	PlayerCameraManager->StartCameraShake(UAgCameraShake::StaticClass(), ShakeParams);
 }

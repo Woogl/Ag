@@ -92,20 +92,6 @@ void AAgBossAIController::OnUnPossess()
 	Super::OnUnPossess();
 }
 
-void AAgBossAIController::HandleBossAbilityEnded(const FAbilityEndedData& Data)
-{
-	const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(Data.AbilityThatEnded);
-	AAgBossCharacter* Boss = GetBoss();
-	if (Data.bWasCancelled || !Ability || !Boss || Boss->IsDead() ||
-	    !Ability->GetDefinitionTags().HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition))
-	{
-		return;
-	}
-	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
-	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
-	Boss->EnterPhase2();
-}
-
 void AAgBossAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -135,4 +121,18 @@ void AAgBossAIController::HandleTargetBasicAttack(const FGameplayEventData* Payl
 	{
 		StateTreeComponent->SendStateTreeEvent(AgGameplayTags::Event_BasicAttackStarted);
 	}
+}
+
+void AAgBossAIController::HandleBossAbilityEnded(const FAbilityEndedData& Data)
+{
+	const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(Data.AbilityThatEnded);
+	AAgBossCharacter* Boss = GetBoss();
+	if (Data.bWasCancelled || !Ability || !Boss || Boss->IsDead() ||
+		!Ability->GetDefinitionTags().HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition))
+	{
+		return;
+	}
+	UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
+	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+	Boss->EnterPhase2();
 }

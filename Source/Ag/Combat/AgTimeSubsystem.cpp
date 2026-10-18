@@ -29,12 +29,6 @@ void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 	UE_LOG(LogAg, Verbose, TEXT("Slow motion starts: speed %.2f for %.2f s of real time"), Speed, RealDuration);
 }
 
-void UAgTimeSubsystem::EndSlowMotion()
-{
-	GetWorld()->GetWorldSettings()->SetTimeDilation(1.f);
-	UE_LOG(LogAg, Verbose, TEXT("Slow motion ends"));
-}
-
 bool UAgTimeSubsystem::StartTimeStop(UObject& Requester, AAgCharacterBase& Exempt)
 {
 	if (bTimeStopped)
@@ -75,4 +69,10 @@ void UAgTimeSubsystem::EndTimeStop(UObject& Requester)
 float UAgTimeSubsystem::GetTimeStopCompensation() const
 {
 	return bTimeStopped ? 1.f / GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation() : 1.f;
+}
+
+void UAgTimeSubsystem::EndSlowMotion()
+{
+	GetWorld()->GetWorldSettings()->SetTimeDilation(1.f);
+	UE_LOG(LogAg, Verbose, TEXT("Slow motion ends"));
 }

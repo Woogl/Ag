@@ -32,7 +32,7 @@ void FAgSpawnProjectileParams::Validate(const FJsonObject& Json, EAgTaskPlacemen
 	// 투사체의 판정 범위는 투사체가 정합니다.
 	const TSharedPtr<FJsonObject>* AttackJson = nullptr;
 	if (Json.TryGetObjectField(TEXT("Attack"), AttackJson) &&
-	    ((*AttackJson)->HasField(TEXT("Radius")) || (*AttackJson)->HasField(TEXT("bGroundOnly"))))
+		((*AttackJson)->HasField(TEXT("Radius")) || (*AttackJson)->HasField(TEXT("bGroundOnly"))))
 	{
 		Errors.Add(Path + TEXT(".Attack: a projectile uses no Radius or bGroundOnly"));
 	}
@@ -44,17 +44,14 @@ UAbilityTask* FAgSpawnProjectileParams::MakeTask(const FAgTaskContext& Context) 
 	if (!Projectile)
 	{
 		UE_LOG(LogAg, Error, TEXT("Abilities.%s: projectile %s missing in Projectiles (play %d)"),
-		       *Context.Runner.GetAbilityId().ToString(), *ProjectileId.ToString(), Context.MontageInstanceId);
+			*Context.Runner.GetAbilityId().ToString(), *ProjectileId.ToString(), Context.MontageInstanceId);
 		return nullptr;
 	}
 	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(&Context.Runner, Context.MontageInstanceId, *Projectile, Attack, Origin,
-	                                                       SocketName);
+		SocketName);
 }
 
-UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId,
-                                                                                const FAgProjectileDefinition& Projectile,
-                                                                                const FAgAttackParams& Attack, EAgProjectileOrigin Origin,
-                                                                                FName SocketName)
+UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId, const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName)
 {
 	UAgAbilityTask_SpawnProjectile* Task = NewAbilityTask<UAgAbilityTask_SpawnProjectile>(Owner);
 	Task->SourceInstanceId = MontageInstanceId;
@@ -64,19 +61,6 @@ UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(
 	Task->SpawnOrigin = Origin;
 	Task->SpawnSocket = SocketName;
 	return Task;
-}
-
-bool UAgAbilityTask_SpawnProjectile::IsSourceActive() const
-{
-	if (!Ability || !Ability->IsActive() || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->GetAnimatingAbility() != Ability)
-	{
-		return false;
-	}
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr;
-	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(SourceInstanceId) : nullptr;
-	return Instance && Instance->IsActive() && Anim->GetActiveInstanceForMontage(Instance->Montage) == Instance &&
-	       AbilitySystemComponent->GetCurrentMontage() == Instance->Montage;
 }
 
 void UAgAbilityTask_SpawnProjectile::Activate()
@@ -99,7 +83,7 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 		Direction = Character->GetActorForwardVector().GetSafeNormal2D();
 		const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
 		Transform = FTransform(Direction.Rotation(), Character->GetActorLocation() + Direction * Capsule->GetScaledCapsuleRadius() -
-		                                                 FVector(0, 0, Capsule->GetScaledCapsuleHalfHeight()));
+														 FVector(0, 0, Capsule->GetScaledCapsuleHalfHeight()));
 	}
 	else if (SpawnOrigin == EAgProjectileOrigin::MeshSocket && !SpawnSocket.IsNone() && Character->GetMesh()->DoesSocketExist(SpawnSocket))
 	{
@@ -109,7 +93,7 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 	else
 	{
 		UE_LOG(LogAg, Error, TEXT("%s projectile %s has invalid socket/origin %s"), *GetNameSafe(Montage),
-		       *GetNameSafe(ProjectileClass.Get()), *SpawnSocket.ToString());
+			*GetNameSafe(ProjectileClass.Get()), *SpawnSocket.ToString());
 		EndTask();
 		return;
 	}
@@ -140,6 +124,16 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 	FinishSpawningActor(Ability, CachedTargetDataHandle, PendingProjectile);
 }
 
+void UAgAbilityTask_SpawnProjectile::OnDestroy(bool bInOwnerFinished)
+{
+	if (IsValid(PendingProjectile))
+	{
+		PendingProjectile->Destroy();
+	}
+	PendingProjectile = nullptr;
+	Super::OnDestroy(bInOwnerFinished);
+}
+
 void UAgAbilityTask_SpawnProjectile::HandleSpawned(AActor* Actor)
 {
 	if (!IsValid(Actor) || Actor != PendingProjectile || IsFinished() || !IsSourceActive())
@@ -161,12 +155,15 @@ void UAgAbilityTask_SpawnProjectile::HandleSpawned(AActor* Actor)
 	PendingProjectile = nullptr;
 }
 
-void UAgAbilityTask_SpawnProjectile::OnDestroy(bool bInOwnerFinished)
+bool UAgAbilityTask_SpawnProjectile::IsSourceActive() const
 {
-	if (IsValid(PendingProjectile))
+	if (!Ability || !Ability->IsActive() || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->GetAnimatingAbility() != Ability)
 	{
-		PendingProjectile->Destroy();
+		return false;
 	}
-	PendingProjectile = nullptr;
-	Super::OnDestroy(bInOwnerFinished);
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr;
+	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(SourceInstanceId) : nullptr;
+	return Instance && Instance->IsActive() && Anim->GetActiveInstanceForMontage(Instance->Montage) == Instance &&
+	       AbilitySystemComponent->GetCurrentMontage() == Instance->Montage;
 }

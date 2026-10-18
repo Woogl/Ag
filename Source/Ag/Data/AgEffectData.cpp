@@ -39,27 +39,27 @@ namespace
 	{
 		using EPolicy = EGameplayEffectDurationType;
 		const TArray<FGameplayTag> Resources = {AgGameplayTags::SetByCaller_SP, AgGameplayTags::SetByCaller_MP,
-		                                        AgGameplayTags::SetByCaller_UP};
+			AgGameplayTags::SetByCaller_UP};
 		return {
-		    {EAgEffect::Damage, EPolicy::Instant, false, false, {}, AgGameplayTags::Effect_Damage, FGameplayTag()},
-		    {EAgEffect::Resource, EPolicy::Instant, false, false, Resources, FGameplayTag(), FGameplayTag()},
-		    {EAgEffect::Cooldown, EPolicy::HasDuration, true, false, {}, AgGameplayTags::Effect_Cooldown, FGameplayTag()},
-		    {EAgEffect::Hitstop, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Hitstop},
-		    {EAgEffect::SPRegenDelay, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_SPDelay},
-		    {EAgEffect::SPRegenDelayEmpty, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_SPDelay},
-		    {EAgEffect::PPRegenDelay, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_PPDelay},
-		    {EAgEffect::Kill, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
-		    {EAgEffect::PPRefill, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
-		    {EAgEffect::ParryPPLoss, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
-		    {EAgEffect::ParryReward, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
-		    {EAgEffect::PerfectDodgeReward, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
-		    {EAgEffect::DodgeCounterChance,
-		     EPolicy::HasDuration,
-		     false,
-		     false,
-		     {},
-		     FGameplayTag(),
-		     AgGameplayTags::State_DodgeCounterChance},
+			{EAgEffect::Damage, EPolicy::Instant, false, false, {}, AgGameplayTags::Effect_Damage, FGameplayTag()},
+			{EAgEffect::Resource, EPolicy::Instant, false, false, Resources, FGameplayTag(), FGameplayTag()},
+			{EAgEffect::Cooldown, EPolicy::HasDuration, true, false, {}, AgGameplayTags::Effect_Cooldown, FGameplayTag()},
+			{EAgEffect::Hitstop, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Hitstop},
+			{EAgEffect::SPRegenDelay, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_SPDelay},
+			{EAgEffect::SPRegenDelayEmpty, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_SPDelay},
+			{EAgEffect::PPRegenDelay, EPolicy::HasDuration, false, false, {}, FGameplayTag(), AgGameplayTags::State_Regen_PPDelay},
+			{EAgEffect::Kill, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+			{EAgEffect::PPRefill, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+			{EAgEffect::ParryPPLoss, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+			{EAgEffect::ParryReward, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+			{EAgEffect::PerfectDodgeReward, EPolicy::Instant, false, false, {}, FGameplayTag(), FGameplayTag()},
+			{EAgEffect::DodgeCounterChance,
+				EPolicy::HasDuration,
+				false,
+				false,
+				{},
+				FGameplayTag(),
+				AgGameplayTags::State_DodgeCounterChance},
 		};
 	}
 
@@ -83,7 +83,7 @@ namespace
 	{
 		FString Name;
 		FProperty* Property =
-		    Object.TryGetStringField(Key, Name) ? FindFProperty<FProperty>(UAgAttributeSet::StaticClass(), FName(*Name)) : nullptr;
+			Object.TryGetStringField(Key, Name) ? FindFProperty<FProperty>(UAgAttributeSet::StaticClass(), FName(*Name)) : nullptr;
 		if (!Property || !FGameplayAttribute::IsGameplayAttributeDataProperty(Property))
 		{
 			Errors.Add(Path + TEXT(".") + Key + TEXT(": unknown attribute ") + Name);
@@ -109,7 +109,7 @@ namespace
 	{
 		const int32 Before = Errors.Num();
 		Keys(Object, Path, {TEXT("Attribute"), TEXT("Op")}, {TEXT("Value"), TEXT("PerSecond"), TEXT("SetByCaller"), TEXT("FromAttribute")},
-		     Errors);
+			Errors);
 		Attribute(Object, TEXT("Attribute"), Path, Out.Attribute, Errors);
 		FString Op;
 		Object.TryGetStringField(TEXT("Op"), Op);
@@ -175,7 +175,7 @@ namespace
 				// 대상의 현재 값을 적용하는 때에 읽습니다.
 				FAttributeBasedFloat AttributeBased;
 				AttributeBased.BackingAttribute =
-				    FGameplayEffectAttributeCaptureDefinition(Backing, EGameplayEffectAttributeCaptureSource::Target, false);
+					FGameplayEffectAttributeCaptureDefinition(Backing, EGameplayEffectAttributeCaptureSource::Target, false);
 				Out.ModifierMagnitude = FGameplayEffectModifierMagnitude(AttributeBased);
 			}
 		}
@@ -191,17 +191,17 @@ namespace
 	{
 		const int32 Before = Errors.Num();
 		Keys(Entry, Path, {TEXT("DurationPolicy")},
-		     {TEXT("Duration"), TEXT("Period"), TEXT("ExecutePeriodicOnApplication"), TEXT("PeriodicInhibitionPolicy"), TEXT("Modifiers"),
-		      TEXT("Executions"), TEXT("AssetTags"), TEXT("GrantedTags"), TEXT("ApplicationIgnoredTags"), TEXT("OngoingRequiredTags"),
-		      TEXT("OngoingIgnoredTags"), TEXT("Components")},
-		     Errors);
+			{TEXT("Duration"), TEXT("Period"), TEXT("ExecutePeriodicOnApplication"), TEXT("PeriodicInhibitionPolicy"), TEXT("Modifiers"),
+				TEXT("Executions"), TEXT("AssetTags"), TEXT("GrantedTags"), TEXT("ApplicationIgnoredTags"), TEXT("OngoingRequiredTags"),
+				TEXT("OngoingIgnoredTags"), TEXT("Components")},
+			Errors);
 		EGameplayEffectDurationType Policy = EGameplayEffectDurationType::Instant;
 		EnumValue(Entry, TEXT("DurationPolicy"), Path, Policy, Errors);
 		// 즉시 효과는 걸려 있지 않으므로 주기, 부여 태그, 지속 조건을 쓸 수 없습니다.
 		if (Policy == EGameplayEffectDurationType::Instant)
 		{
 			for (const TCHAR* Key : {TEXT("Period"), TEXT("ExecutePeriodicOnApplication"), TEXT("PeriodicInhibitionPolicy"),
-			                         TEXT("GrantedTags"), TEXT("OngoingRequiredTags"), TEXT("OngoingIgnoredTags")})
+					 TEXT("GrantedTags"), TEXT("OngoingRequiredTags"), TEXT("OngoingIgnoredTags")})
 			{
 				if (Entry.HasField(Key))
 				{
@@ -214,7 +214,7 @@ namespace
 			Errors.Add(Path + TEXT(".Duration: only for HasDuration"));
 		}
 		if ((Entry.HasField(TEXT("ExecutePeriodicOnApplication")) || Entry.HasField(TEXT("PeriodicInhibitionPolicy"))) &&
-		    !Entry.HasField(TEXT("Period")))
+			!Entry.HasField(TEXT("Period")))
 		{
 			Errors.Add(Path + TEXT(": periodic settings need Period"));
 		}
@@ -239,7 +239,7 @@ namespace
 			Effect->Period = FScalableFloat(Seconds);
 		}
 		if (Entry.HasField(TEXT("ExecutePeriodicOnApplication")) &&
-		    !Entry.TryGetBoolField(TEXT("ExecutePeriodicOnApplication"), Effect->bExecutePeriodicEffectOnApplication))
+			!Entry.TryGetBoolField(TEXT("ExecutePeriodicOnApplication"), Effect->bExecutePeriodicEffectOnApplication))
 		{
 			Errors.Add(Path + TEXT(".ExecutePeriodicOnApplication: expected boolean"));
 		}
@@ -316,7 +316,7 @@ namespace
 		if (!ApplicationIgnoredTags.IsEmpty() || !OngoingRequiredTags.IsEmpty() || !OngoingIgnoredTags.IsEmpty())
 		{
 			UTargetTagRequirementsGameplayEffectComponent& Requirements =
-			    Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>();
+				Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>();
 			Requirements.ApplicationTagRequirements.IgnoreTags = ApplicationIgnoredTags;
 			Requirements.OngoingTagRequirements.RequireTags = OngoingRequiredTags;
 			Requirements.OngoingTagRequirements.IgnoreTags = OngoingIgnoredTags;
@@ -379,7 +379,7 @@ namespace
 			if (Effect.DurationPolicy != Shape.DurationPolicy)
 			{
 				Errors.Add(Path + TEXT(".DurationPolicy: C++ needs ") +
-				           StaticEnum<EGameplayEffectDurationType>()->GetNameStringByValue(static_cast<int64>(Shape.DurationPolicy)));
+						   StaticEnum<EGameplayEffectDurationType>()->GetNameStringByValue(static_cast<int64>(Shape.DurationPolicy)));
 			}
 			float Duration = 0.f;
 			Effect.DurationMagnitude.GetStaticMagnitudeIfPossible(1.f, Duration);
@@ -393,13 +393,12 @@ namespace
 			}
 			for (const FGameplayTag& Tag : Shape.SetByCallerTags)
 			{
-				const bool bFound = Effect.Modifiers.ContainsByPredicate(
-				    [&Tag](const FGameplayModifierInfo& Modifier)
-				    {
-					    return Modifier.ModifierMagnitude.GetMagnitudeCalculationType() ==
-					               EGameplayEffectMagnitudeCalculation::SetByCaller &&
-					           Modifier.ModifierMagnitude.GetSetByCallerFloat().DataTag == Tag;
-				    });
+				const bool bFound = Effect.Modifiers.ContainsByPredicate([&Tag](const FGameplayModifierInfo& Modifier)
+				{
+					return Modifier.ModifierMagnitude.GetMagnitudeCalculationType() ==
+					           EGameplayEffectMagnitudeCalculation::SetByCaller &&
+					       Modifier.ModifierMagnitude.GetSetByCallerFloat().DataTag == Tag;
+				});
 				if (!bFound)
 				{
 					Errors.Add(Path + TEXT(".Modifiers: C++ sets ") + Tag.ToString());
@@ -415,15 +414,14 @@ namespace
 			}
 		}
 	}
-}
+} // namespace
 
 FName AgEffectData::Id(EAgEffect Effect)
 {
 	return FName(*StaticEnum<EAgEffect>()->GetNameStringByValue(static_cast<int64>(Effect)));
 }
 
-bool AgEffectData::Parse(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out,
-                         TArray<FString>& Errors)
+bool AgEffectData::Parse(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out, TArray<FString>& Errors)
 {
 	const int32 Before = Errors.Num();
 	TMap<FName, TObjectPtr<UGameplayEffect>> Candidate;

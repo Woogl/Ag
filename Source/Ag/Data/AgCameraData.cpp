@@ -6,9 +6,13 @@ const FAgCameraShakeSettings* UAgCameraData::FindShakeSettings(EAgCameraShake Sh
 {
 	switch (Shake)
 	{
-	case EAgCameraShake::Small: return &SmallShake;
-	case EAgCameraShake::Medium: return &MediumShake;
-	case EAgCameraShake::Large: return &LargeShake;
-	default: return nullptr;
+		case EAgCameraShake::Small:
+			return &SmallShake;
+		case EAgCameraShake::Medium:
+			return &MediumShake;
+		case EAgCameraShake::Large:
+			return &LargeShake;
+		default:
+			return nullptr;
 	}
 }

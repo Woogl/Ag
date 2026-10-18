@@ -137,7 +137,7 @@ namespace
 				}
 				Keys.Add(Name);
 				if (const FNumericProperty* KeyNumber = CastField<FNumericProperty>(MapProperty->KeyProp);
-				    KeyNumber && KeyNumber->IsInteger())
+					KeyNumber && KeyNumber->IsInteger())
 				{
 					int32 Index = 0;
 					if (!LexTryParseString(Index, *Key) || FString::FromInt(Index) != Key)
@@ -161,7 +161,7 @@ namespace
 			const FClassProperty* ClassProperty = CastField<FClassProperty>(Property);
 			const UClass* Class = Cast<UClass>(Object);
 			if (!Object || !Object->IsA(ObjectProperty->PropertyClass) ||
-			    (ClassProperty && (!Class || !Class->IsChildOf(ClassProperty->MetaClass) || Class->HasAnyClassFlags(CLASS_Abstract))))
+				(ClassProperty && (!Class || !Class->IsChildOf(ClassProperty->MetaClass) || Class->HasAnyClassFlags(CLASS_Abstract))))
 			{
 				Errors.Add(FString::Printf(TEXT("%s: %s is missing or has an invalid type"), *Path, *ObjectPath));
 			}
@@ -236,12 +236,12 @@ namespace
 			if (RangeProperty->HasMetaData(TEXT("ClampMin")) && Number < FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMin"))))
 			{
 				Errors.Add(
-				    FString::Printf(TEXT("%s: %g is below the minimum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMin"))));
+					FString::Printf(TEXT("%s: %g is below the minimum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMin"))));
 			}
 			if (RangeProperty->HasMetaData(TEXT("ClampMax")) && Number > FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMax"))))
 			{
 				Errors.Add(
-				    FString::Printf(TEXT("%s: %g is above the maximum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMax"))));
+					FString::Printf(TEXT("%s: %g is above the maximum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMax"))));
 			}
 #endif
 		}
@@ -256,11 +256,10 @@ namespace
 		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Json.Values)
 		{
 			const FString Key(*Field.Key);
-			const FProperty* const* Property = Properties.FindByPredicate(
-			    [&Key](const FProperty* Candidate)
-			    {
-				    return Candidate->GetName().Equals(Key, ESearchCase::IgnoreCase);
-			    });
+			const FProperty* const* Property = Properties.FindByPredicate([&Key](const FProperty* Candidate)
+			{
+				return Candidate->GetName().Equals(Key, ESearchCase::IgnoreCase);
+			});
 			if (Property)
 			{
 				CheckValue(Field.Value, *Property, Path + Key, Errors);
@@ -356,8 +355,8 @@ namespace
 			FText FailReason;
 			const TSharedPtr<FJsonValue> Value = Json.TryGetField(Property->GetName());
 			if (!Value.IsValid() ||
-			    !FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
-			                                                Property->ContainerPtrToValuePtr<void>(&Target), 0, 0, false, &FailReason))
+				!FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
+					Property->ContainerPtrToValuePtr<void>(&Target), 0, 0, false, &FailReason))
 			{
 				Errors.Add(Path + Property->GetName() + TEXT(": ") + FailReason.ToString());
 			}
@@ -393,11 +392,11 @@ namespace
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("    %s"), *Errors[Index]));
 		}
 		GEngine->AddOnScreenDebugMessage(
-		    INDEX_NONE, 15.f, FColor::Red,
-		    FString::Printf(TEXT("%s has %d error(s), so no data file was applied (all in the log):"), *File, Errors.Num()));
+			INDEX_NONE, 15.f, FColor::Red,
+			FString::Printf(TEXT("%s has %d error(s), so no data file was applied (all in the log):"), *File, Errors.Num()));
 	}
 
-}
+} // namespace
 
 UAgAssetManager::UAgAssetManager()
 {
@@ -421,13 +420,6 @@ UAgAssetManager& UAgAssetManager::Get()
 FString UAgAssetManager::GetJsonFolder()
 {
 	return FPaths::Combine(FPaths::ProjectDir(), JsonFolderName);
-}
-
-void UAgAssetManager::StartInitialLoading()
-{
-	Super::StartInitialLoading();
-
-	LoadJsonData();
 }
 
 const UAgCombatRules& UAgAssetManager::GetCombatRules() const
@@ -483,6 +475,132 @@ TArray<FName> UAgAssetManager::GetCharacterDataIds(const UClass* DataClass) cons
 		}
 	}
 	return Ids;
+}
+
+#if WITH_EDITOR
+void UAgAssetManager::ReloadJsonData()
+{
+	if (LoadJsonData() && GEngine)
+	{
+		// 스탯처럼 스폰할 때 한 번 넣는 값은 다음 PIE부터 바뀝니다(구현 계획서 'JSON 데이터' 다시 읽기).
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
+			TEXT("Data reloaded. Spawn settings apply on the next play start."));
+	}
+}
+
+void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook)
+{
+	Super::ModifyCook(TargetPlatforms, PackagesToCook, PackagesToNeverCook);
+	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 JSON 전체를 검사합니다.
+	if (!LoadJsonData())
+	{
+		UE_LOG(LogAg, Error, TEXT("Cannot cook invalid JSON data"));
+		return;
+	}
+
+	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE는 실행 중에 만들고 클래스만 가리킵니다.
+	TArray<UObject*> DataObjects = {CombatRules, CameraData, Projectiles, MontageTimelines, Abilities};
+	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
+	{
+		DataObjects.Add(Pair.Value);
+	}
+	for (UObject* Data : DataObjects)
+	{
+		TArray<UObject*> References;
+		FReferenceFinder Finder(References, nullptr, false, true, false, false);
+		Finder.AddPropertyReferencesWithStructARO(Data->GetClass(), Data);
+		for (UObject* Reference : References)
+		{
+			const FString PackageName = Reference->GetOutermost()->GetName();
+			if (!PackageName.StartsWith(TEXT("/Script/")) && PackageName != TEXT("/Engine/Transient"))
+			{
+				PackagesToCook.AddUnique(FName(*PackageName));
+			}
+		}
+	}
+
+	// 쓰는 곳이 없는 정의는 배포하지 않습니다.
+	TSet<FName> UsedAbilities;
+	TSet<FName> UsedEffects;
+	TSet<FName> UsedProjectiles;
+	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
+	{
+		UsedAbilities.Append(Pair.Value->Abilities);
+		UsedEffects.Append(Pair.Value->Effects);
+	}
+	const UEnum* CodeEffects = StaticEnum<EAgEffect>();
+	for (int32 Index = 0; Index < CodeEffects->NumEnums() - 1; ++Index)
+	{
+		UsedEffects.Add(AgEffectData::Id(static_cast<EAgEffect>(CodeEffects->GetValueByIndex(Index))));
+	}
+	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
+	{
+		for (const FInstancedStruct& Task : Pair.Value.Tasks)
+		{
+			if (const FAgApplyEffectParams* Apply = Task.GetPtr<FAgApplyEffectParams>())
+			{
+				UsedEffects.Add(Apply->Effect);
+			}
+		}
+	}
+	for (const TPair<FName, FAgMontageTimeline>& Pair : MontageTimelines->Timelines)
+	{
+		UsedProjectiles.Append(AgMontageTimeline::GetProjectileIds(Pair.Value));
+		for (const FAgTimelineSection& Section : Pair.Value.Sections)
+		{
+			for (const FAgTimelineItem& Item : Section.Items)
+			{
+				if (const FAgApplyEffectParams* Apply = Item.Params.GetPtr<FAgApplyEffectParams>())
+				{
+					UsedEffects.Add(Apply->Effect);
+				}
+			}
+		}
+	}
+	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
+	{
+		if (!UsedAbilities.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: no character uses this ability (%s)"), AbilitiesFile, *Pair.Key.ToString());
+		}
+	}
+	for (const TPair<FName, TObjectPtr<UGameplayEffect>>& Pair : Effects->Effects)
+	{
+		if (!UsedEffects.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: no C++, character or ApplyEffect uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
+		}
+	}
+	for (const TPair<FName, FAgProjectileDefinition>& Pair : Projectiles->Projectiles)
+	{
+		if (!UsedProjectiles.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: no montage timeline launches this projectile (%s)"), ProjectilesFile, *Pair.Key.ToString());
+		}
+	}
+
+	// UFS에 포함되지만 로더가 읽지 않는 파일도 배포하지 않습니다.
+	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(), FString(CameraDataFile).ToLower(),
+		FString(EffectsFile).ToLower(), FString(ProjectilesFile).ToLower(),
+		FString(MontageTimelinesFile).ToLower(), FString(AbilitiesFile).ToLower(),
+		FString(CharactersFile).ToLower()};
+	TArray<FString> Files;
+	IFileManager::Get().FindFiles(Files, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
+	for (const FString& File : Files)
+	{
+		if (!DataFiles.Contains(File.ToLower()))
+		{
+			UE_LOG(LogAg, Error, TEXT("Cannot stage unvalidated JSON: %s"), *File);
+		}
+	}
+}
+#endif
+
+void UAgAssetManager::StartInitialLoading()
+{
+	Super::StartInitialLoading();
+
+	LoadJsonData();
 }
 
 bool UAgAssetManager::LoadJsonData()
@@ -609,12 +727,12 @@ bool UAgAssetManager::LoadJsonData()
 		for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
 		{
 			AgAbilityData::ValidateCharacter(*Pair.Value, NewAbilities->Abilities, NewEffects->Effects, NewTimelines->Timelines,
-			                                 Pair.Key.ToString() + TEXT("."), CharacterErrors);
+				Pair.Key.ToString() + TEXT("."), CharacterErrors);
 			for (FName AbilityId : Pair.Value->Abilities)
 			{
 				const FAgAbilityData* Ability = NewAbilities->Abilities.Find(AbilityId);
 				const UAnimMontage* Montage =
-				    Ability && Ability->bHasMontage ? Pair.Value->FindMontage(Ability->Montage.MontageId) : nullptr;
+					Ability && Ability->bHasMontage ? Pair.Value->FindMontage(Ability->Montage.MontageId) : nullptr;
 				if (Montage)
 				{
 					AbilityMontages.Add(FName(*Montage->GetPathName()));
@@ -631,9 +749,9 @@ bool UAgAssetManager::LoadJsonData()
 	}
 
 	const TPair<const TCHAR*, const TArray<FString>*> Results[] = {
-	    {CombatRulesFile, &RulesErrors},      {CameraDataFile, &CameraErrors},         {EffectsFile, &EffectErrors},
-	    {ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors}, {AbilitiesFile, &AbilityErrors},
-	    {CharactersFile, &CharacterErrors}};
+		{CombatRulesFile, &RulesErrors}, {CameraDataFile, &CameraErrors}, {EffectsFile, &EffectErrors},
+		{ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors}, {AbilitiesFile, &AbilityErrors},
+		{CharactersFile, &CharacterErrors}};
 	bool bFailed = false;
 	for (const TPair<const TCHAR*, const TArray<FString>*>& Result : Results)
 	{
@@ -662,123 +780,3 @@ bool UAgAssetManager::LoadJsonData()
 	}
 	return true;
 }
-
-#if WITH_EDITOR
-void UAgAssetManager::ReloadJsonData()
-{
-	if (LoadJsonData() && GEngine)
-	{
-		// 스탯처럼 스폰할 때 한 번 넣는 값은 다음 PIE부터 바뀝니다(구현 계획서 'JSON 데이터' 다시 읽기).
-		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
-		                                 TEXT("Data reloaded. Spawn settings apply on the next play start."));
-	}
-}
-
-void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook,
-                                 TArray<FName>& PackagesToNeverCook)
-{
-	Super::ModifyCook(TargetPlatforms, PackagesToCook, PackagesToNeverCook);
-	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 JSON 전체를 검사합니다.
-	if (!LoadJsonData())
-	{
-		UE_LOG(LogAg, Error, TEXT("Cannot cook invalid JSON data"));
-		return;
-	}
-
-	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE는 실행 중에 만들고 클래스만 가리킵니다.
-	TArray<UObject*> DataObjects = {CombatRules, CameraData, Projectiles, MontageTimelines, Abilities};
-	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
-	{
-		DataObjects.Add(Pair.Value);
-	}
-	for (UObject* Data : DataObjects)
-	{
-		TArray<UObject*> References;
-		FReferenceFinder Finder(References, nullptr, false, true, false, false);
-		Finder.AddPropertyReferencesWithStructARO(Data->GetClass(), Data);
-		for (UObject* Reference : References)
-		{
-			const FString PackageName = Reference->GetOutermost()->GetName();
-			if (!PackageName.StartsWith(TEXT("/Script/")) && PackageName != TEXT("/Engine/Transient"))
-			{
-				PackagesToCook.AddUnique(FName(*PackageName));
-			}
-		}
-	}
-
-	// 쓰는 곳이 없는 정의는 배포하지 않습니다.
-	TSet<FName> UsedAbilities;
-	TSet<FName> UsedEffects;
-	TSet<FName> UsedProjectiles;
-	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
-	{
-		UsedAbilities.Append(Pair.Value->Abilities);
-		UsedEffects.Append(Pair.Value->Effects);
-	}
-	const UEnum* CodeEffects = StaticEnum<EAgEffect>();
-	for (int32 Index = 0; Index < CodeEffects->NumEnums() - 1; ++Index)
-	{
-		UsedEffects.Add(AgEffectData::Id(static_cast<EAgEffect>(CodeEffects->GetValueByIndex(Index))));
-	}
-	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
-	{
-		for (const FInstancedStruct& Task : Pair.Value.Tasks)
-		{
-			if (const FAgApplyEffectParams* Apply = Task.GetPtr<FAgApplyEffectParams>())
-			{
-				UsedEffects.Add(Apply->Effect);
-			}
-		}
-	}
-	for (const TPair<FName, FAgMontageTimeline>& Pair : MontageTimelines->Timelines)
-	{
-		UsedProjectiles.Append(AgMontageTimeline::GetProjectileIds(Pair.Value));
-		for (const FAgTimelineSection& Section : Pair.Value.Sections)
-		{
-			for (const FAgTimelineItem& Item : Section.Items)
-			{
-				if (const FAgApplyEffectParams* Apply = Item.Params.GetPtr<FAgApplyEffectParams>())
-				{
-					UsedEffects.Add(Apply->Effect);
-				}
-			}
-		}
-	}
-	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
-	{
-		if (!UsedAbilities.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no character uses this ability (%s)"), AbilitiesFile, *Pair.Key.ToString());
-		}
-	}
-	for (const TPair<FName, TObjectPtr<UGameplayEffect>>& Pair : Effects->Effects)
-	{
-		if (!UsedEffects.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no C++, character or ApplyEffect uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
-		}
-	}
-	for (const TPair<FName, FAgProjectileDefinition>& Pair : Projectiles->Projectiles)
-	{
-		if (!UsedProjectiles.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no montage timeline launches this projectile (%s)"), ProjectilesFile, *Pair.Key.ToString());
-		}
-	}
-
-	// UFS에 포함되지만 로더가 읽지 않는 파일도 배포하지 않습니다.
-	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(),      FString(CameraDataFile).ToLower(),
-	                                 FString(EffectsFile).ToLower(),          FString(ProjectilesFile).ToLower(),
-	                                 FString(MontageTimelinesFile).ToLower(), FString(AbilitiesFile).ToLower(),
-	                                 FString(CharactersFile).ToLower()};
-	TArray<FString> Files;
-	IFileManager::Get().FindFiles(Files, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
-	for (const FString& File : Files)
-	{
-		if (!DataFiles.Contains(File.ToLower()))
-		{
-			UE_LOG(LogAg, Error, TEXT("Cannot stage unvalidated JSON: %s"), *File);
-		}
-	}
-}
-#endif

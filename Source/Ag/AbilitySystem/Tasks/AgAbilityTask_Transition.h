@@ -73,8 +73,7 @@ class UAgAbilityTask_Transition : public UAbilityTask
 	GENERATED_BODY()
 
 public:
-	static UAgAbilityTask_Transition* Transition(UGameplayAbility* Owner, const FAgTransitionParams& Params, bool bPoint,
-	                                             int32 MontageInstanceId);
+	static UAgAbilityTask_Transition* Transition(UGameplayAbility* Owner, const FAgTransitionParams& Params, bool bPoint, int32 MontageInstanceId);
 
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;

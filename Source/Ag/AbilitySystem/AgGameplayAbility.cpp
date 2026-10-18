@@ -24,7 +24,7 @@ namespace
 	FGameplayEffectQuery CooldownQuery(const UObject* Source)
 	{
 		FGameplayEffectQuery Query =
-		    FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
+			FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
 		Query.EffectSource = Source;
 		return Query;
 	}
@@ -56,18 +56,6 @@ UAgGameplayAbility::UAgGameplayAbility()
 	TimelineTick.TickGroup = TG_PrePhysics;
 }
 
-AAgCharacterBase* UAgGameplayAbility::GetAgCharacter() const
-{
-	return Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
-}
-
-const FAgAbilityData* UAgGameplayAbility::FindDefinition(FGameplayAbilitySpecHandle Handle,
-                                                         const FGameplayAbilityActorInfo* ActorInfo) const
-{
-	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
-	return Character ? Character->FindAbility(Handle) : nullptr;
-}
-
 void UAgGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	if (!HasAnyFlags(RF_ClassDefaultObject))
@@ -96,9 +84,7 @@ void UAgGameplayAbility::OnRemoveAbility(const FGameplayAbilityActorInfo* ActorI
 	GrantedDefinition = {};
 }
 
-bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                            const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags,
-                                            FGameplayTagContainer* RelevantTags) const
+bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* RelevantTags) const
 {
 	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
 	const FGameplayAbilitySpec* Spec = ActorInfo && ActorInfo->AbilitySystemComponent.IsValid()
@@ -108,8 +94,8 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 	if (!Data || !Instance || !Instance->GrantedDefinition.HasSameGrantSettings(*Data))
 	{
 		UE_LOG(LogAg, Warning,
-		       TEXT("Ability %s: grant settings changed or unavailable; recreate character or regrant spec before activation"),
-		       Data ? *Data->Id.ToString() : TEXT("None"));
+			TEXT("Ability %s: grant settings changed or unavailable; recreate character or regrant spec before activation"),
+			Data ? *Data->Id.ToString() : TEXT("None"));
 		return false;
 	}
 	if (Spec->IsActive() && !Data->Activation.bAllowRetrigger)
@@ -125,57 +111,35 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 	return !Data->bHasTargeting || !Data->Targeting.bRequired || FindTargetingTarget(*Data, ActorInfo);
 }
 
-bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags,
-                                                           const FGameplayTagContainer* TargetTags,
-                                                           FGameplayTagContainer* RelevantTags) const
+bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* RelevantTags) const
 {
 	return !ASC.AreAbilityTagsBlocked(GrantedDefinition.Tags) &&
 	       Super::DoesAbilitySatisfyTagRequirements(ASC, SourceTags, TargetTags, RelevantTags);
 }
 
-AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
+void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& Remaining, float& Duration) const
 {
-	AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
-	return Data.bHasTargeting && Avatar ? AgTargeting::FindTarget(Data.Targeting, *Avatar) : nullptr;
-}
-
-bool UAgGameplayAbility::IsEventTrigger(const FGameplayEventData* TriggerEventData) const
-{
-	// 엔진은 이벤트 트리거를 부모 태그까지 맞춰 발동합니다. 태그 트리거로 발동해도 실행 정보가 오므로 출처를 가립니다.
-	return TriggerEventData && ExecutionDefinition.Activation.Triggers.ContainsByPredicate(
-	                               [TriggerEventData](const FAgAbilityTrigger& Trigger)
-	                               {
-		                               return Trigger.Source == EAgTriggerSource::GameplayEvent &&
-		                                      TriggerEventData->EventTag.MatchesTag(Trigger.Tag);
-	                               });
-}
-
-AActor* UAgGameplayAbility::GetActionTarget() const
-{
-	return IsActive() ? ActionTarget.Get() : nullptr;
-}
-
-AActor* UAgGameplayAbility::GetTargetingTarget() const
-{
-	return IsActive() && bTargetFromTargeting ? ActionTarget.Get() : nullptr;
-}
-
-bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                   FGameplayTagContainer* RelevantTags) const
-{
-	// 활성 스펙의 재발동 사전 검사도 여기로 들어오므로 새 요청의 현재 정의를 확인합니다.
-	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
-	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
-	if (Data && ASC && (!Data->bHasCost || ASC->GetNumericAttribute(ResourceAttribute(Data->Cost.Resource)) >= Data->Cost.Amount))
+	Remaining = Duration = 0.f;
+	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+	if (!Spec)
 	{
-		return true;
+		return;
 	}
-	const FGameplayTag& CostTag = UAbilitySystemGlobals::Get().ActivateFailCostTag;
-	if (RelevantTags && CostTag.IsValid())
+	for (const TPair<float, float>& Entry :
+		ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemainingAndDuration(CooldownQuery(Spec->GetPrimaryInstance())))
 	{
-		RelevantTags->AddTag(CostTag);
+		if (Entry.Key > Remaining)
+		{
+			Remaining = Entry.Key;
+			Duration = Entry.Value;
+		}
 	}
-	return false;
+}
+
+FAgResourceCostParams UAgGameplayAbility::GetCost() const
+{
+	const FAgAbilityData* Definition = IsActive() ? &ExecutionDefinition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
+	return Definition && Definition->bHasCost ? Definition->Cost : FAgResourceCostParams();
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
@@ -188,96 +152,50 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffe
 	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, &Effect);
 }
 
-FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                                             const UGameplayEffect* Effect) const
+AActor* UAgGameplayAbility::GetActionTarget() const
 {
-	UAgAbilitySystemComponent* ASC = ActorInfo ? Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get()) : nullptr;
-	if (!ASC || !Effect)
-	{
-		return FGameplayEffectSpecHandle();
-	}
-	// 컨텍스트에는 이 어빌리티 인스턴스가 들어갑니다(피격 처리가 극한 회피 구간 효과를 건 행동의 비용을 읽음).
-	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(*Effect, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
-	if (Spec.IsValid())
-	{
-		FGameplayAbilitySpec* AbilitySpec = ASC->FindAbilitySpecFromHandle(Handle);
-		ApplyAbilityTagsToGameplayEffectSpec(*Spec.Data, AbilitySpec);
-		if (AbilitySpec)
-		{
-			Spec.Data->SetByCallerTagMagnitudes = AbilitySpec->SetByCallerTagMagnitudes;
-		}
-	}
-	return Spec;
+	return IsActive() ? ActionTarget.Get() : nullptr;
 }
 
-FAgResourceCostParams UAgGameplayAbility::GetCost() const
+AActor* UAgGameplayAbility::GetTargetingTarget() const
 {
-	const FAgAbilityData* Definition = IsActive() ? &ExecutionDefinition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
-	return Definition && Definition->bHasCost ? Definition->Cost : FAgResourceCostParams();
+	return IsActive() && bTargetFromTargeting ? ActionTarget.Get() : nullptr;
 }
 
-void UAgGameplayAbility::ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                   FGameplayAbilityActivationInfo ActivationInfo) const
+void UAgGameplayAbility::RequestTransition(const FAgTransition& Transition, int32 InstanceId)
 {
-	if (ExecutionDefinition.bHasCost && ExecutionDefinition.Cost.Amount > 0.f)
-	{
-		// 비용은 자원 효과를 음수로 겁니다.
-		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, UAgAssetManager::Get().GetEffect(EAgEffect::Resource));
-		if (Spec.IsValid())
-		{
-			ExecutionDefinition.Cost.AddToSpec(*Spec.Data);
-			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
-		}
-	}
-}
-
-bool UAgGameplayAbility::CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                       FGameplayTagContainer* RelevantTags) const
-{
-	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
-	return Spec && ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).IsEmpty();
-}
-
-void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                       FGameplayAbilityActivationInfo ActivationInfo) const
-{
-	UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get());
-	if (ExecutionDefinition.Cooldown > 0.f && ASC)
-	{
-		// 출처로 이 어빌리티 인스턴스를 넣어, 행동마다의 쿨다운을 구분합니다.
-		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
-		Context.AddSourceObject(this);
-		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Cooldown, GetAbilityLevel(Handle, ActorInfo), Context);
-		if (Spec.IsValid())
-		{
-			Spec.Data->SetDuration(ExecutionDefinition.Cooldown, /*bLockDuration*/ true);
-			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
-		}
-	}
-}
-
-void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                                             float& Remaining, float& Duration) const
-{
-	Remaining = Duration = 0.f;
-	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
-	if (!Spec)
+	if (!OwnsMontage(InstanceId) || !Transition.IsSet())
 	{
 		return;
 	}
-	for (const TPair<float, float>& Entry :
-	     ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemainingAndDuration(CooldownQuery(Spec->GetPrimaryInstance())))
+	if (!Montage || Montage->GetSectionIndex(Transition.Section) == INDEX_NONE)
 	{
-		if (Entry.Key > Remaining)
-		{
-			Remaining = Entry.Key;
-			Duration = Entry.Value;
-		}
+		UE_LOG(LogAg, Error, TEXT("Abilities.%s: transition section %s is missing in %s"), *GetAbilityId().ToString(),
+			*Transition.Section.ToString(), *GetNameSafe(Montage));
+		return;
 	}
+	if (Transition.BlendTime < 0.f)
+	{
+		JumpToSection(Transition.Section);
+		return;
+	}
+
+	// 새 재생은 대상을 다시 정합니다(평타의 타마다 대상). 이벤트의 Instigator는 바뀌지 않습니다.
+	if (ExecutionDefinition.bHasTargeting)
+	{
+		ActionTarget = FindTargetingTarget(ExecutionDefinition, CurrentActorInfo);
+		bTargetFromTargeting = ActionTarget.IsValid();
+	}
+	PlayMontage(Transition.Section, Transition.BlendTime);
 }
 
-void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                         FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+float UAgGameplayAbility::GetSectionLength(FName Section) const
+{
+	const int32 Index = Montage ? Montage->GetSectionIndex(Section) : INDEX_NONE;
+	return Index == INDEX_NONE ? 0.f : Montage->GetSectionLength(Index);
+}
+
+void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	bEnding = false;
 	const FAgAbilityData* Definition = FindDefinition(Handle, ActorInfo);
@@ -297,7 +215,7 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	if (ExecutionDefinition.bHasMontage && !Montage)
 	{
 		UE_LOG(LogAg, Error, TEXT("Abilities.%s: montage %s is missing in the character's Montages"), *GetAbilityId().ToString(),
-		       *ExecutionDefinition.Montage.MontageId.ToString());
+			*ExecutionDefinition.Montage.MontageId.ToString());
 		Finish(true);
 		return;
 	}
@@ -305,11 +223,11 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	{
 		// 몽타주 전체 루트 모션이 그 거리가 되도록 이동 배율을 정합니다.
 		const float OriginalDistance = static_cast<float>(
-		    Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D());
+			Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D());
 		if (OriginalDistance <= UE_SMALL_NUMBER)
 		{
 			UE_LOG(LogAg, Error, TEXT("Abilities.%s: %s has no root motion for RootMotionDistance"), *GetAbilityId().ToString(),
-			       *Montage->GetName());
+				*Montage->GetName());
 			Finish(true);
 			return;
 		}
@@ -324,7 +242,7 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 		ActionTarget = const_cast<AActor*>(TriggerEventData->Instigator.Get());
 	}
 	if ((ExecutionDefinition.bHasTargeting && Targeting.bRequired && !bTargetFromTargeting) ||
-	    !CommitAbility(Handle, ActorInfo, ActivationInfo))
+		!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		Finish(true);
 		return;
@@ -350,6 +268,148 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 			Task->ReadyForActivation();
 		}
 	}
+}
+
+void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	if (bEnding || !IsActive())
+	{
+		return;
+	}
+	if (ScopeLockCount > 0)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
+	bEnding = true;
+	const int32 InstanceId = MontageInstanceId;
+	EndTimeline();
+	EndWindows();
+	ClearWarps();
+	MontageInstanceId = INDEX_NONE;
+	TimelineTick.UnRegisterTickFunction();
+
+	// 끝나지 않은 재생은 몽타주의 블렌드 아웃으로 멈춥니다.
+	if (AAgCharacterBase* Character = GetAgCharacter())
+	{
+		Character->SetAnimRootMotionTranslationScale(1.f);
+		UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance();
+		FAnimMontageInstance* Instance = Anim && InstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(InstanceId) : nullptr;
+		if (Instance && Montage && !Instance->IsStopped())
+		{
+			Instance->OnMontageBlendingOutStarted.Unbind();
+			Instance->OnMontageEnded.Unbind();
+			Instance->Stop(FAlphaBlend(Montage->BlendOut));
+		}
+	}
+	ExecutionProjectiles.Reset();
+	ActionTarget.Reset();
+	bTargetFromTargeting = false;
+	Montage = nullptr;
+	ExecutionDefinition = {};
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* RelevantTags) const
+{
+	// 활성 스펙의 재발동 사전 검사도 여기로 들어오므로 새 요청의 현재 정의를 확인합니다.
+	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
+	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
+	if (Data && ASC && (!Data->bHasCost || ASC->GetNumericAttribute(ResourceAttribute(Data->Cost.Resource)) >= Data->Cost.Amount))
+	{
+		return true;
+	}
+	const FGameplayTag& CostTag = UAbilitySystemGlobals::Get().ActivateFailCostTag;
+	if (RelevantTags && CostTag.IsValid())
+	{
+		RelevantTags->AddTag(CostTag);
+	}
+	return false;
+}
+
+void UAgGameplayAbility::ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	if (ExecutionDefinition.bHasCost && ExecutionDefinition.Cost.Amount > 0.f)
+	{
+		// 비용은 자원 효과를 음수로 겁니다.
+		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, UAgAssetManager::Get().GetEffect(EAgEffect::Resource));
+		if (Spec.IsValid())
+		{
+			ExecutionDefinition.Cost.AddToSpec(*Spec.Data);
+			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
+		}
+	}
+}
+
+bool UAgGameplayAbility::CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* RelevantTags) const
+{
+	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+	return Spec && ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).IsEmpty();
+}
+
+void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
+{
+	UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get());
+	if (ExecutionDefinition.Cooldown > 0.f && ASC)
+	{
+		// 출처로 이 어빌리티 인스턴스를 넣어, 행동마다의 쿨다운을 구분합니다.
+		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
+		Context.AddSourceObject(this);
+		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Cooldown, GetAbilityLevel(Handle, ActorInfo), Context);
+		if (Spec.IsValid())
+		{
+			Spec.Data->SetDuration(ExecutionDefinition.Cooldown, /*bLockDuration*/ true);
+			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+		}
+	}
+}
+
+AAgCharacterBase* UAgGameplayAbility::GetAgCharacter() const
+{
+	return Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
+}
+
+const FAgAbilityData* UAgGameplayAbility::FindDefinition(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
+{
+	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
+	return Character ? Character->FindAbility(Handle) : nullptr;
+}
+
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const UGameplayEffect* Effect) const
+{
+	UAgAbilitySystemComponent* ASC = ActorInfo ? Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get()) : nullptr;
+	if (!ASC || !Effect)
+	{
+		return FGameplayEffectSpecHandle();
+	}
+	// 컨텍스트에는 이 어빌리티 인스턴스가 들어갑니다(피격 처리가 극한 회피 구간 효과를 건 행동의 비용을 읽음).
+	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(*Effect, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
+	if (Spec.IsValid())
+	{
+		FGameplayAbilitySpec* AbilitySpec = ASC->FindAbilitySpecFromHandle(Handle);
+		ApplyAbilityTagsToGameplayEffectSpec(*Spec.Data, AbilitySpec);
+		if (AbilitySpec)
+		{
+			Spec.Data->SetByCallerTagMagnitudes = AbilitySpec->SetByCallerTagMagnitudes;
+		}
+	}
+	return Spec;
+}
+
+AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
+{
+	AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
+	return Data.bHasTargeting && Avatar ? AgTargeting::FindTarget(Data.Targeting, *Avatar) : nullptr;
+}
+
+bool UAgGameplayAbility::IsEventTrigger(const FGameplayEventData* TriggerEventData) const
+{
+	// 엔진은 이벤트 트리거를 부모 태그까지 맞춰 발동합니다. 태그 트리거로 발동해도 실행 정보가 오므로 출처를 가립니다.
+	return TriggerEventData && ExecutionDefinition.Activation.Triggers.ContainsByPredicate([TriggerEventData](const FAgAbilityTrigger& Trigger)
+	{
+		return Trigger.Source == EAgTriggerSource::GameplayEvent &&
+		       TriggerEventData->EventTag.MatchesTag(Trigger.Tag);
+	});
 }
 
 void UAgGameplayAbility::Finish(bool bCancelled)
@@ -389,7 +449,7 @@ bool UAgGameplayAbility::PlayMontage(FName Section, float BlendTime)
 	if (!Instance)
 	{
 		UE_LOG(LogAg, Error, TEXT("Abilities.%s: failed to play %s (section %s)"), *GetAbilityId().ToString(), *Montage->GetName(),
-		       *Section.ToString());
+			*Section.ToString());
 		// 이전 재생이 남아 있으면 행동을 끝낼 때 멈추도록 다시 맡습니다.
 		MontageInstanceId = PreviousInstanceId;
 		Finish(true);
@@ -398,7 +458,7 @@ bool UAgGameplayAbility::PlayMontage(FName Section, float BlendTime)
 	const int32 InstanceId = Instance->GetInstanceID();
 	MontageInstanceId = InstanceId;
 	Instance->OnMontageBlendingOutStarted =
-	    FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleMontageBlendingOut, InstanceId);
+		FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleMontageBlendingOut, InstanceId);
 	Instance->OnMontageEnded = FOnMontageEnded::CreateUObject(this, &ThisClass::HandleMontageEnded, InstanceId);
 	Character->SetAnimRootMotionTranslationScale(RootMotionScale);
 
@@ -411,7 +471,7 @@ void UAgGameplayAbility::JumpToSection(FName Section)
 {
 	UAnimInstance* Anim = GetActorInfo().GetAnimInstance();
 	const FAnimMontageInstance* Instance =
-	    Anim && MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
+		Anim && MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 	if (!Instance || !Montage)
 	{
 		return;
@@ -424,39 +484,6 @@ void UAgGameplayAbility::JumpToSection(FName Section)
 	{
 		ResyncTimeline();
 	}
-}
-
-void UAgGameplayAbility::RequestTransition(const FAgTransition& Transition, int32 InstanceId)
-{
-	if (!OwnsMontage(InstanceId) || !Transition.IsSet())
-	{
-		return;
-	}
-	if (!Montage || Montage->GetSectionIndex(Transition.Section) == INDEX_NONE)
-	{
-		UE_LOG(LogAg, Error, TEXT("Abilities.%s: transition section %s is missing in %s"), *GetAbilityId().ToString(),
-		       *Transition.Section.ToString(), *GetNameSafe(Montage));
-		return;
-	}
-	if (Transition.BlendTime < 0.f)
-	{
-		JumpToSection(Transition.Section);
-		return;
-	}
-
-	// 새 재생은 대상을 다시 정합니다(평타의 타마다 대상). 이벤트의 Instigator는 바뀌지 않습니다.
-	if (ExecutionDefinition.bHasTargeting)
-	{
-		ActionTarget = FindTargetingTarget(ExecutionDefinition, CurrentActorInfo);
-		bTargetFromTargeting = ActionTarget.IsValid();
-	}
-	PlayMontage(Transition.Section, Transition.BlendTime);
-}
-
-float UAgGameplayAbility::GetSectionLength(FName Section) const
-{
-	const int32 Index = Montage ? Montage->GetSectionIndex(Section) : INDEX_NONE;
-	return Index == INDEX_NONE ? 0.f : Montage->GetSectionLength(Index);
 }
 
 void UAgGameplayAbility::HandleMontageBlendingOut(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId)
@@ -486,45 +513,4 @@ void UAgGameplayAbility::HandleMontageEnded(UAnimMontage* EndedMontage, bool bIn
 	{
 		Finish(bInterrupted);
 	}
-}
-
-void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                    FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	if (bEnding || !IsActive())
-	{
-		return;
-	}
-	if (ScopeLockCount > 0)
-	{
-		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-		return;
-	}
-	bEnding = true;
-	const int32 InstanceId = MontageInstanceId;
-	EndTimeline();
-	EndWindows();
-	ClearWarps();
-	MontageInstanceId = INDEX_NONE;
-	TimelineTick.UnRegisterTickFunction();
-
-	// 끝나지 않은 재생은 몽타주의 블렌드 아웃으로 멈춥니다.
-	if (AAgCharacterBase* Character = GetAgCharacter())
-	{
-		Character->SetAnimRootMotionTranslationScale(1.f);
-		UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance();
-		FAnimMontageInstance* Instance = Anim && InstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(InstanceId) : nullptr;
-		if (Instance && Montage && !Instance->IsStopped())
-		{
-			Instance->OnMontageBlendingOutStarted.Unbind();
-			Instance->OnMontageEnded.Unbind();
-			Instance->Stop(FAlphaBlend(Montage->BlendOut));
-		}
-	}
-	ExecutionProjectiles.Reset();
-	ActionTarget.Reset();
-	bTargetFromTargeting = false;
-	Montage = nullptr;
-	ExecutionDefinition = {};
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

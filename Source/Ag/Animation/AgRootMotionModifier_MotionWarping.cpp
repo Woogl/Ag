@@ -30,7 +30,7 @@ void FAgTrackParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placemen
 }
 
 UAgRootMotionModifier_MotionWarping::UAgRootMotionModifier_MotionWarping(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	// 엔진 기본값 외에 추적 구간이 모두 함께 쓰는 설정입니다.
 	WarpTargetName = TEXT("AttackTarget");
@@ -68,7 +68,7 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		if (!Owner || !Instance || !Owner->PrepareTrackTarget(Instance->GetInstanceID(), Params, Selected, Gap, bFacingOnly))
 		{
 			UE_LOG(LogAg, Error, TEXT("Track: missing playback owner (animation %s, window %.3f..%.3f)"), *GetNameSafe(Animation.Get()),
-			       StartTime, EndTime);
+				StartTime, EndTime);
 			SetState(ERootMotionModifierState::Disabled);
 			return;
 		}
@@ -85,7 +85,7 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		}
 	}
 	if (!OwnerAbility.IsValid() || !OwnerAbility->OwnsMontage(MontageInstanceId) || !Target.IsValid() ||
-	    (!bFacingOnly && Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(Target.Get()) > Params.TargetingRange))
+		(!bFacingOnly && Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(Target.Get()) > Params.TargetingRange))
 	{
 		SetState(ERootMotionModifierState::Disabled);
 		return;
@@ -106,7 +106,7 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		Goal.Z = Location.Z;
 	}
 	GetOwnerComponent()->AddOrUpdateWarpTargetFromLocationAndRotation(
-	    WarpTargetName, Goal, Direction.IsNearlyZero() ? Character->GetActorRotation() : Direction.Rotation());
+		WarpTargetName, Goal, Direction.IsNearlyZero() ? Character->GetActorRotation() : Direction.Rotation());
 	bOwnsTarget = true;
 	Super::Update(Context);
 }

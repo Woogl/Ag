@@ -58,7 +58,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	FVector End = Start + FlightDirection * Step;
 	FHitResult WallHit;
 	const bool bHitWall =
-	    GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
+		GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
 	if (bHitWall)
 	{
 		End = WallHit.Location;

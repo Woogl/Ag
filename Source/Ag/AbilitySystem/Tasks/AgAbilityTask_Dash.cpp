@@ -39,7 +39,7 @@ void FAgDashParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement
 		Errors.Add(Path + TEXT(".Speed: must be positive"));
 	}
 	if (To != EAgDashTo::Target &&
-	    (Json.HasField(TEXT("HomingTurnRate")) || Json.HasField(TEXT("Overshoot")) || Json.HasField(TEXT("MaxDistance"))))
+		(Json.HasField(TEXT("HomingTurnRate")) || Json.HasField(TEXT("Overshoot")) || Json.HasField(TEXT("MaxDistance"))))
 	{
 		Errors.Add(Path + TEXT(": HomingTurnRate, Overshoot and MaxDistance are only for To Target"));
 	}
@@ -139,6 +139,17 @@ void UAgAbilityTask_Dash::TickTask(float DeltaTime)
 	TickTarget(DeltaTime);
 }
 
+void UAgAbilityTask_Dash::OnDestroy(bool bInOwnerFinished)
+{
+	if (BlockedHandle.IsValid() && AbilitySystemComponent.IsValid())
+	{
+		AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackBlocked).Remove(BlockedHandle);
+	}
+	BlockedHandle.Reset();
+	RemoveSource();
+	Super::OnDestroy(bInOwnerFinished);
+}
+
 void UAgAbilityTask_Dash::TickTarget(float DeltaTime)
 {
 	AActor* Avatar = GetAvatarActor();
@@ -214,15 +225,4 @@ void UAgAbilityTask_Dash::RemoveSource()
 		Movement->Velocity = FVector::ZeroVector;
 	}
 	SourceID = 0;
-}
-
-void UAgAbilityTask_Dash::OnDestroy(bool bInOwnerFinished)
-{
-	if (BlockedHandle.IsValid() && AbilitySystemComponent.IsValid())
-	{
-		AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackBlocked).Remove(BlockedHandle);
-	}
-	BlockedHandle.Reset();
-	RemoveSource();
-	Super::OnDestroy(bInOwnerFinished);
 }

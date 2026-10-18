@@ -93,8 +93,7 @@ namespace AgMontageTimeline
 	TArray<FName> GetProjectileIds(const FAgMontageTimeline& Timeline);
 
 	/** 시간표의 ApplyEffect 항목이 거는 효과가 Effects.json에 있는지, 구간이면 무한 효과인지 검사합니다. */
-	void ValidateEffects(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects,
-	                     TArray<FString>& Errors);
+	void ValidateEffects(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors);
 
 #if WITH_EDITOR
 	/**

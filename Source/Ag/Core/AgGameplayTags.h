@@ -114,4 +114,4 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_DamageNumber);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryTelegraph);
-}
+} // namespace AgGameplayTags

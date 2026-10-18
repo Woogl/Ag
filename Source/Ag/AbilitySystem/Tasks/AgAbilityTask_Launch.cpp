@@ -121,28 +121,12 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 	{
 		bReportedRootMotion = true;
 		UE_LOG(LogAg, Error, TEXT("Launch: %s gives montage root motion at %.3f, so the launch does not move %s"),
-		       *GetNameSafe(Instance->Montage), Instance->GetPosition(), *Character->GetName());
+			*GetNameSafe(Instance->Montage), Instance->GetPosition(), *Character->GetName());
 	}
 	// 떠오르지 못하고 땅에 남았으면(낮은 천장 등) 착지 알림이 오지 않으므로 여기서 끝냅니다.
 	if (Elapsed >= Params.AirTime * MinLandedAirTimeRatio && !Movement->IsFalling())
 	{
 		Finish();
-	}
-}
-
-void UAgAbilityTask_Launch::HandleLanded(const FHitResult& Hit)
-{
-	if (Elapsed >= Params.AirTime * MinLandedAirTimeRatio)
-	{
-		Finish();
-	}
-}
-
-void UAgAbilityTask_Launch::Finish()
-{
-	if (!IsFinished())
-	{
-		EndTask();
 	}
 }
 
@@ -159,4 +143,20 @@ void UAgAbilityTask_Launch::OnDestroy(bool bInOwnerFinished)
 	}
 	SourceID = 0;
 	Super::OnDestroy(bInOwnerFinished);
+}
+
+void UAgAbilityTask_Launch::HandleLanded(const FHitResult& Hit)
+{
+	if (Elapsed >= Params.AirTime * MinLandedAirTimeRatio)
+	{
+		Finish();
+	}
+}
+
+void UAgAbilityTask_Launch::Finish()
+{
+	if (!IsFinished())
+	{
+		EndTask();
+	}
 }

@@ -163,8 +163,7 @@ private:
 	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);
 
 	/** 부여된 어빌리티 중 AbilityTag를 가진 것을 스펙 핸들(OutHandle)과 함께 돌려줍니다. 없으면 null입니다. */
-	static const UGameplayAbility* FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag,
-	                                           FGameplayAbilitySpecHandle& OutHandle);
+	static const UGameplayAbility* FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
 
 	/** 어빌리티 자신의 비용 확인을 통과하면 참입니다(슬롯 흐림: MP·UP 부족). */
 	static bool CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);

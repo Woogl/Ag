@@ -25,8 +25,7 @@
 namespace
 {
 	/** Context는 이벤트를 받는 쪽이 공격의 출처(공격한 캐릭터, 투사체)를 알아야 할 때 넘깁니다(패리 보상). */
-	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator,
-	               const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle())
+	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle())
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = EventTag;
@@ -64,7 +63,7 @@ namespace
 		}
 		// 움찔은 이미 재생 중인 넉업, 넉백을 바꾸지 않습니다.
 		else if ((Event.IsValid() || SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch)) &&
-		         !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
+				 !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
 		{
 			Target->PlayFlinch();
 		}
@@ -97,7 +96,7 @@ namespace
 	{
 		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Dodger.GetAbilitySystemComponent());
 		const FGameplayEffectQuery Query =
-		    FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_PerfectDodgeWindow));
+			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_PerfectDodgeWindow));
 		const TArray<FActiveGameplayEffectHandle> Windows = ASC->GetActiveEffects(Query);
 		if (Windows.IsEmpty())
 		{
@@ -105,7 +104,7 @@ namespace
 		}
 		const FActiveGameplayEffect* Window = ASC->GetActiveGameplayEffect(Windows[0]);
 		const UAgGameplayAbility* Dodge =
-		    Window ? Cast<UAgGameplayAbility>(Window->Spec.GetContext().GetAbilityInstance_NotReplicated()) : nullptr;
+			Window ? Cast<UAgGameplayAbility>(Window->Spec.GetContext().GetAbilityInstance_NotReplicated()) : nullptr;
 		const FAgResourceCostParams Refund = Dodge ? Dodge->GetCost() : FAgResourceCostParams();
 		for (const FActiveGameplayEffectHandle& Handle : Windows)
 		{
@@ -125,7 +124,7 @@ namespace
 		if (const UAgPlayerData* Data = Cast<UAgPlayerData>(Dodger.GetCharacterData()))
 		{
 			Dodger.GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->PerfectDodgeSlowMotionSpeed,
-			                                                                     Data->PerfectDodgeSlowMotionDuration);
+				Data->PerfectDodgeSlowMotionDuration);
 		}
 	}
 
@@ -172,10 +171,9 @@ namespace
 		}
 		return Camera.GuardBreakShake;
 	}
-}
+} // namespace
 
-void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer,
-                                                                   FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
+void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
 {
 	UAbilitySystemComponent* TargetASC = ActiveGEContainer.Owner;
 	AAgCharacterBase* Target = CastChecked<AAgCharacterBase>(TargetASC->GetAvatarActor());
@@ -202,8 +200,8 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	}
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, parry %d, guard %d, guard break %d, HP now %.0f, PP now %.0f, SP now %.0f"),
-	       *Attacker->GetName(), *Target->GetName(), bParry, bGuard, bGuardBreak, TargetStats->GetHP(), TargetStats->GetPP(),
-	       TargetStats->GetSP());
+		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, bGuardBreak, TargetStats->GetHP(), TargetStats->GetPP(),
+		TargetStats->GetSP());
 
 	// 사망·그로기 판정(어트리뷰트 세트)이 피격 반응보다 먼저입니다. 이번 타격으로 죽었거나 그로기가 됐으면 반응하지 않습니다.
 	const bool bBecameGroggy = !GESpec.CapturedTargetTags.GetActorTags().HasTag(AgGameplayTags::State_Groggy) &&
@@ -255,7 +253,7 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		PlayerController->PlayCameraShake(Shake);
 	}
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
-	    HPChange && HPChange->TotalMagnitude < 0.f)
+		HPChange && HPChange->TotalMagnitude < 0.f)
 	{
 		// 숫자는 깎으려던 HP 감소량이라, 남은 HP보다 커도 그대로 띄웁니다. 처형의 타격은 피격 위치(칼이 닿은 곳) 대신 대상의
 		// 캡슐 중심에 띄웁니다(전투 HUD '대미지 숫자').
@@ -285,7 +283,7 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 	{
 		const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Attacker->GetCharacterData());
 		Target->GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->UltimateSlowMotionSpeed,
-		                                                                      Data->UltimateSlowMotionDuration);
+			Data->UltimateSlowMotionDuration);
 	}
 
 	// 일반 피격이면 공격한 쪽이 공격 데이터의 MP·UP를 얻습니다.

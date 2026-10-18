@@ -40,11 +40,10 @@ void FAgTransitionParams::Validate(const FJsonObject& Json, EAgTaskPlacement Pla
 UAbilityTask* FAgTransitionParams::MakeTask(const FAgTaskContext& Context) const
 {
 	return UAgAbilityTask_Transition::Transition(&Context.Runner, *this, Context.Placement == EAgTaskPlacement::Point,
-	                                             Context.MontageInstanceId);
+		Context.MontageInstanceId);
 }
 
-UAgAbilityTask_Transition* UAgAbilityTask_Transition::Transition(UGameplayAbility* Owner, const FAgTransitionParams& InParams,
-                                                                 bool bInPoint, int32 InMontageInstanceId)
+UAgAbilityTask_Transition* UAgAbilityTask_Transition::Transition(UGameplayAbility* Owner, const FAgTransitionParams& InParams, bool bInPoint, int32 InMontageInstanceId)
 {
 	UAgAbilityTask_Transition* Task = NewAbilityTask<UAgAbilityTask_Transition>(Owner);
 	Task->Params = InParams;
@@ -114,20 +113,42 @@ void UAgAbilityTask_Transition::Activate()
 	TryTransition();
 }
 
-void UAgAbilityTask_Transition::WatchTags(UAbilitySystemComponent& ASC, const FGameplayTagContainer& Tags)
+void UAgAbilityTask_Transition::OnDestroy(bool bInOwnerFinished)
 {
-	for (const FGameplayTag& Tag : Tags)
+	if (UAbilitySystemComponent* ASC = AbilitySystemComponent.Get())
 	{
-		const FDelegateHandle Handle =
-		    ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleTagChanged);
-		TagHandles.Emplace(Tag, Handle);
+		if (EventHandle.IsValid())
+		{
+			ASC->GenericGameplayEventCallbacks.FindOrAdd(Params.Event).Remove(EventHandle);
+		}
+		for (const TPair<FGameplayTag, FDelegateHandle>& Pair : TagHandles)
+		{
+			ASC->RegisterGameplayTagEvent(Pair.Key, EGameplayTagEventType::NewOrRemoved).Remove(Pair.Value);
+		}
 	}
+	EventHandle.Reset();
+	TagHandles.Reset();
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(EndingTimer);
+	}
+	Super::OnDestroy(bInOwnerFinished);
 }
 
 bool UAgAbilityTask_Transition::AreConditionsMet() const
 {
 	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
 	return ASC && ASC->HasAllMatchingGameplayTags(Params.RequiredTags) && !ASC->HasAnyMatchingGameplayTags(Params.BlockedTags);
+}
+
+void UAgAbilityTask_Transition::WatchTags(UAbilitySystemComponent& ASC, const FGameplayTagContainer& Tags)
+{
+	for (const FGameplayTag& Tag : Tags)
+	{
+		const FDelegateHandle Handle =
+			ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleTagChanged);
+		TagHandles.Emplace(Tag, Handle);
+	}
 }
 
 void UAgAbilityTask_Transition::TryTransition()
@@ -169,26 +190,4 @@ void UAgAbilityTask_Transition::HandleTagEnding()
 {
 	bTagEnding = true;
 	TryTransition();
-}
-
-void UAgAbilityTask_Transition::OnDestroy(bool bInOwnerFinished)
-{
-	if (UAbilitySystemComponent* ASC = AbilitySystemComponent.Get())
-	{
-		if (EventHandle.IsValid())
-		{
-			ASC->GenericGameplayEventCallbacks.FindOrAdd(Params.Event).Remove(EventHandle);
-		}
-		for (const TPair<FGameplayTag, FDelegateHandle>& Pair : TagHandles)
-		{
-			ASC->RegisterGameplayTagEvent(Pair.Key, EGameplayTagEventType::NewOrRemoved).Remove(Pair.Value);
-		}
-	}
-	EventHandle.Reset();
-	TagHandles.Reset();
-	if (const UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(EndingTimer);
-	}
-	Super::OnDestroy(bInOwnerFinished);
 }

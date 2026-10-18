@@ -25,7 +25,10 @@ public:
 	/** 표시 시간: 투명해지는 애니메이션의 길이입니다. */
 	float GetLifetime() const;
 
-	float GetRiseHeight() const { return RiseHeight; }
+	float GetRiseHeight() const
+	{
+		return RiseHeight;
+	}
 
 protected:
 	/** 숫자. 글자 크기는 자기 글자 스타일이 정합니다. */

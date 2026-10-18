@@ -156,8 +156,7 @@ public:
 	 * @return 상태나 대상이 없거나, Trigger를 모르거나, 조건을 스키마가 허용하지 않으면 false입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
-	static bool AddStateTreeTransition(UStateTree* StateTree, const FString& StatePath, FName Trigger, FGameplayTag EventTag, const FString& TargetPath,
-		EStateTreeTransitionPriority Priority, UScriptStruct* Condition, const FString& ConditionValues);
+	static bool AddStateTreeTransition(UStateTree* StateTree, const FString& StatePath, FName Trigger, FGameplayTag EventTag, const FString& TargetPath, EStateTreeTransitionPriority Priority, UScriptStruct* Condition, const FString& ConditionValues);
 
 	/** 상태의 전환을 모두 지웁니다. */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))

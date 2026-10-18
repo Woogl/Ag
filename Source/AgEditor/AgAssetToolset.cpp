@@ -91,7 +91,7 @@ namespace
 		const UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
 		return NodeStruct && NodeStruct->IsChildOf(Base) && EditorData && EditorData->Schema && EditorData->Schema->IsStructAllowed(NodeStruct);
 	}
-}
+} // namespace
 
 bool UAgAssetToolset::SetComponentParentSocket(UBlueprint* Blueprint, FName ComponentName, FName SocketName)
 {
@@ -127,8 +127,8 @@ bool UAgAssetToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName Gr
 bool UAgAssetToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments)
 {
 	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다. 도중에 실패해 반쯤 바뀐 몽타주가 더티로 남지 않게 합니다.
-	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Segments.IsEmpty()
-		|| Segments.ContainsByPredicate([](const FAgMontageSegment& Segment) { return !Segment.Animation; }))
+	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Segments.IsEmpty() || Segments.ContainsByPredicate([](const FAgMontageSegment& Segment)
+	{ return !Segment.Animation; }))
 	{
 		return false;
 	}
@@ -182,7 +182,8 @@ bool UAgAssetToolset::SetMontageSections(UAnimMontage* Montage, const TArray<FAg
 			return false;
 		}
 	}
-	if (Sections.ContainsByPredicate([&Names](const FAgMontageSection& Section) { return !Section.NextSection.IsNone() && !Names.Contains(Section.NextSection); }))
+	if (Sections.ContainsByPredicate([&Names](const FAgMontageSection& Section)
+	{ return !Section.NextSection.IsNone() && !Names.Contains(Section.NextSection); }))
 	{
 		return false;
 	}
@@ -298,7 +299,8 @@ bool UAgAssetToolset::AddStateTreeState(UStateTree* StateTree, const FString& Pa
 	{
 		return false;
 	}
-	if (Parent->Children.ContainsByPredicate([Name](const UStateTreeState* Child) { return Child && Child->Name == Name; }))
+	if (Parent->Children.ContainsByPredicate([Name](const UStateTreeState* Child)
+	{ return Child && Child->Name == Name; }))
 	{
 		return false;
 	}
@@ -367,8 +369,7 @@ bool UAgAssetToolset::ClearStateTreeTasks(UStateTree* StateTree, const FString& 
 	return true;
 }
 
-bool UAgAssetToolset::AddStateTreeTransition(UStateTree* StateTree, const FString& StatePath, FName Trigger, FGameplayTag EventTag, const FString& TargetPath,
-	EStateTreeTransitionPriority Priority, UScriptStruct* Condition, const FString& ConditionValues)
+bool UAgAssetToolset::AddStateTreeTransition(UStateTree* StateTree, const FString& StatePath, FName Trigger, FGameplayTag EventTag, const FString& TargetPath, EStateTreeTransitionPriority Priority, UScriptStruct* Condition, const FString& ConditionValues)
 {
 	UStateTreeState* State = FindStateTreeState(StateTree, StatePath);
 	const UStateTreeState* Target = FindStateTreeState(StateTree, TargetPath);
@@ -378,16 +379,15 @@ bool UAgAssetToolset::AddStateTreeTransition(UStateTree* StateTree, const FStrin
 		return false;
 	}
 	const EStateTreeTransitionTrigger TriggerType = static_cast<EStateTreeTransitionTrigger>(TriggerValue);
-	if ((TriggerType == EStateTreeTransitionTrigger::OnEvent && !EventTag.IsValid())
-		|| (Condition && !IsStateTreeNodeAllowed(StateTree, Condition, FStateTreeConditionBase::StaticStruct())))
+	if ((TriggerType == EStateTreeTransitionTrigger::OnEvent && !EventTag.IsValid()) || (Condition && !IsStateTreeNodeAllowed(StateTree, Condition, FStateTreeConditionBase::StaticStruct())))
 	{
 		return false;
 	}
 
 	State->Modify();
 	FStateTreeTransition& Transition = TriggerType == EStateTreeTransitionTrigger::OnEvent
-		? State->AddTransition(TriggerType, EventTag, EStateTreeTransitionType::GotoState, Target)
-		: State->AddTransition(TriggerType, EStateTreeTransitionType::GotoState, Target);
+	                                       ? State->AddTransition(TriggerType, EventTag, EStateTreeTransitionType::GotoState, Target)
+	                                       : State->AddTransition(TriggerType, EStateTreeTransitionType::GotoState, Target);
 	Transition.Priority = Priority;
 	if (Condition)
 	{

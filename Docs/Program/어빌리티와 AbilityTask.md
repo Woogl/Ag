@@ -126,7 +126,7 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task, 행동 ID, 몽�
 | 시작 섹션 고르기 | 첫 섹션 0초의 Transition 지점(회피의 Roll·Backstep) |
 | 착지 뒤 시작 | 맨 앞 반복 섹션 Fall의 Transition(공중에서 시작한 그로기) |
 
-- 몽타주 루트 모션과 루트 모션 소스(Launch, Dash)는 같은 순간에 함께 쓰지 않습니다. 그래서 소스가 움직이는 섹션은 엔진 `AnimNotifyState_DisableRootMotion`으로 몽타주 루트 모션을 끄고, 그 섹션의 추적 구간은 워핑 대신 Runner가 캐릭터를 직접 돌립니다. 루트 모션이 있는 시퀀스가 하나라도 든 몽타주는 엔진이 몽타주 전체를 루트 모션 몽타주로 다루므로, 시퀀스 설정만으로는 끌 수 없습니다. Dash 구간은 이 노티파이가 덮는지 검사합니다([몽타주 시간표](<몽타주 시간표.md>) '검증').
+- 몽타주 루트 모션과 루트 모션 소스(Launch, Dash)는 같은 순간에 함께 쓰지 않습니다. 그래서 소스가 움직이는 섹션은 엔진 `AnimNotifyState_DisableRootMotion`으로 몽타주 루트 모션을 끄고, 그 섹션의 추적 구간은 워핑 대신 Runner가 캐릭터를 직접 돌립니다. 루트 모션이 있는 시퀀스가 하나라도 든 몽타주는 엔진이 몽타주 전체를 루트 모션 몽타주로 다루므로, 시퀀스 설정만으로는 끌 수 없습니다. Dash 구간은 이 노티파이가 덮는지 검사합니다([몽타주 시간표](<몽타주 시간표.md>) '검증'). 몽타주 전체가 루트 모션을 쓰지 않는 행동(넉업, 점프 공격, LeapSlam)은 노티파이 대신 시퀀스의 루트 모션을 끄고 루트 뼈를 고정합니다(Force Root Lock). 몽타주 시작(0초)에 둔 노티파이는 엔진이 0.0001초 뒤에 켜므로, 첫 프레임에 그 앞 조각의 몽타주 루트 모션이 행동과 함께 시작한 소스(Launch)나 공중의 수평 속도를 덮어씁니다. 노티파이 구간 안에서 다시 재생하는 몽타주(BlendTime 전환)도 첫 프레임의 루트 모션을 먼저 뽑으므로, 그 구간의 시퀀스는 루트 모션을 끕니다(DashThrust의 두 번째 시퀀스).
 - 재생 배율은 몽타주의 Rate Scale 그대로입니다. 보스 공격 패턴의 0.8은 패턴 몽타주의 Rate Scale에 둡니다.
 - 바로 이어지는 동작은 섹션 링크로 잇습니다. 다른 동작으로 넘어갈 때는 전환에 BlendTime을 적어 그 섹션부터 다시 재생합니다. 같은 재생 안의 섹션 이동에는 블렌드가 없어 자세가 튀기 때문입니다. BlendTime은 섹션으로 합치기 전 각 몽타주의 Blend In 시간입니다.
 - 시작 섹션을 고르는 행동은 후보 하나를 첫 섹션에 두고, 그 0초에 조건이 있는 Transition 지점을 둡니다. 회피는 Backstep이 첫 섹션이고 이동 입력(`Input.Move`)이 있으면 Roll로 옮깁니다. 같은 판정 안에서 옮기므로 Backstep의 0초 구간은 열리지 않고([몽타주 시간표](<몽타주 시간표.md>) '판정 규칙'의 순서와 전환), 첫 화면과 첫 루트 모션은 Roll입니다.
@@ -264,7 +264,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 가드 | 트리거 `Input.Guard`, End TriggerTag, OwnedTags State.Guarding, ApplyEffect(ParryWindow, bRemoveOnEnd). 패리 모션은 Parry 스펙, 패리 후딜 복귀는 입력 계층, 패리 결과와 보상은 피격 처리 |
 | 패리 | 트리거 `Event.Parry`, Face(Target), Parry 몽타주, Busy 구간. CancelTags에 가드가 없어 가드를 끝내지 않습니다. |
 | 궁극기 | `Ultimate` 몽타주(섹션 Start, Hold(반복), Judgment, Draw). 시간표: Start부터 Hold 끝까지의 PlayCutscene(Judgment로 전환), Start에서 Judgment로 넘어가는 HoldTag 구간(State.TimeStop은 Judgment 끝까지, State.Busy는 Judgment의 후딜 시작까지), Draw 시작의 마무리 Attack 지점(Radius 10m, bFinisher). 같은 시각이면 구간 끝이 먼저라 시간 정지가 풀린 뒤 칩니다. 베기 선은 Judgment 섹션의 엔진 상태 노티파이(`UAnimNotify_GameplayCueState`)가 켜고 끕니다. |
-| 처형 | Targeting(범위 3m, 대상 State.Groggy, State.Execution·State.Airborne 제외, 필수, StopDistance 95cm), SendGameplayEvent(`Event.Executed`, Target), 추적 구간(Slerp), 무기 판정의 Attack 구간 둘(찌르기부터 마지막 일격까지, 마지막 일격부터 끝까지, 두 번째 bFinisher) |
+| 처형 | Targeting(범위 3m, 대상 State.Groggy, State.Execution·State.Airborne 제외, 필수, StopDistance 95cm), SendGameplayEvent(`Event.Executed`, Target), 추적 구간(Slerp), 찌르기부터 마지막 일격까지의 무기 판정 Attack 구간, 마지막 일격의 범위 판정 Attack 지점(Radius 1.5m, bFinisher. 발차기로 칼을 뽑는 순간이라 칼날 스윕은 몸에 닿지 않을 수 있어, 처형 간격 95cm를 덮는 범위로 맞힘) |
 | 달리기 | 트리거 `Input.Sprint`, End TriggerTag, ApplyEffect(SprintDrain, bRemoveOnEnd) |
 | 락온 | 트리거 `Input.LockOn`, End TriggerTag, Targeting(TP_LockOn, 범위 20m, 필수). 해제 조건과 카메라는 플레이어 캐릭터 |
 | 넉백, 가드 브레이크 | Face(Target). 넉백은 시간표의 HoldTag 지점(무적) |

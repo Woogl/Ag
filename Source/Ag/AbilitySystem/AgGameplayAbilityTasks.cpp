@@ -19,8 +19,30 @@ namespace
 	constexpr float PointTolerance = 1.e-4f;
 }
 
-void UAgGameplayAbility::FAgTimelineTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
-                                                              const FGraphEventRef& MyCompletionGraphEvent)
+bool UAgGameplayAbility::PrepareTrackTarget(int32 InstanceId, const FAgTrackParams& Params, AActor*& Target, float& Gap, bool& bFacingOnly) const
+{
+	const AAgCharacterBase* Character = GetAgCharacter();
+	if (!OwnsMontage(InstanceId) || !Character)
+	{
+		return false;
+	}
+	Target = ActionTarget.Get();
+	Gap = StopDistance;
+	bFacingOnly = false;
+	if (!Target || (Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(Target) > Params.TargetingRange))
+	{
+		Target = Character->GetFallbackFacingTarget();
+		bFacingOnly = true;
+	}
+	return true;
+}
+
+void UAgGameplayAbility::RegisterWarp(UAgRootMotionModifier_MotionWarping* Modifier)
+{
+	Warps.AddUnique(Modifier);
+}
+
+void UAgGameplayAbility::FAgTimelineTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
 {
 	if (IsValid(Target) && TickType != LEVELTICK_ViewportsOnly)
 	{
@@ -54,7 +76,7 @@ void UAgGameplayAbility::BeginTimeline(const FAnimMontageInstance& Instance)
 			if (!AgMontageTimeline::ResolveTimes(*PlayedMontage, Section.Name, Item, Start, End))
 			{
 				UE_LOG(LogAg, Error, TEXT("%s: section %s of the timeline is missing in the montage"), *GetNameSafe(PlayedMontage),
-				       *Section.Name.ToString());
+					*Section.Name.ToString());
 				continue;
 			}
 			FAgTimelineEntry& Entry = TimelineEntries.AddDefaulted_GetRef();
@@ -160,8 +182,8 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, ETimelineMode Mode)
 		if (!Entry.bWindow)
 		{
 			const bool bReached =
-			    bForward ? (Previous < Entry.Start && Entry.Start <= NewPosition)
-			             : (Mode != ETimelineMode::Advance && Entry.Start <= NewPosition && NewPosition - Entry.Start <= PointTolerance);
+				bForward ? (Previous < Entry.Start && Entry.Start <= NewPosition)
+						 : (Mode != ETimelineMode::Advance && Entry.Start <= NewPosition && NewPosition - Entry.Start <= PointTolerance);
 			if (bReached)
 			{
 				Add(Entry.Start, EPhase::Point, Index);
@@ -190,19 +212,18 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, ETimelineMode Mode)
 		}
 	}
 	TimelinePosition = NewPosition;
-	Pending.StableSort(
-	    [](const FPending& A, const FPending& B)
-	    {
-		    if (A.Time != B.Time)
-		    {
-			    return A.Time < B.Time;
-		    }
-		    if (A.Phase != B.Phase)
-		    {
-			    return A.Phase < B.Phase;
-		    }
-		    return A.Entry < B.Entry;
-	    });
+	Pending.StableSort([](const FPending& A, const FPending& B)
+	{
+		if (A.Time != B.Time)
+		{
+			return A.Time < B.Time;
+		}
+		if (A.Phase != B.Phase)
+		{
+			return A.Phase < B.Phase;
+		}
+		return A.Entry < B.Entry;
+	});
 
 	const int32 InstanceId = TimelineInstanceId;
 	for (const FPending& Item : Pending)
@@ -265,16 +286,15 @@ void UAgGameplayAbility::StopTimeline()
 void UAgGameplayAbility::StartTimelineWindow(int32 Entry)
 {
 	const int32 InstanceId = TimelineInstanceId;
-	if (Windows.ContainsByPredicate(
-	        [=](const FAgAbilityWindowExecution& E)
-	        {
-		        return E.MontageInstanceId == InstanceId && E.Entry == Entry;
-	        }))
+	if (Windows.ContainsByPredicate([=](const FAgAbilityWindowExecution& E)
+	{
+		return E.MontageInstanceId == InstanceId && E.Entry == Entry;
+	}))
 	{
 		return;
 	}
 	UAbilityTask* Task =
-	    TimelineEntries[Entry].Params.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this, EAgTaskPlacement::Window, InstanceId});
+		TimelineEntries[Entry].Params.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this, EAgTaskPlacement::Window, InstanceId});
 	if (!Task)
 	{
 		return;
@@ -288,11 +308,10 @@ void UAgGameplayAbility::StartTimelineWindow(int32 Entry)
 
 void UAgGameplayAbility::EndTimelineWindow(int32 InstanceId, int32 Entry)
 {
-	const int32 Index = Windows.IndexOfByPredicate(
-	    [=](const FAgAbilityWindowExecution& E)
-	    {
-		    return E.MontageInstanceId == InstanceId && E.Entry == Entry;
-	    });
+	const int32 Index = Windows.IndexOfByPredicate([=](const FAgAbilityWindowExecution& E)
+	{
+		return E.MontageInstanceId == InstanceId && E.Entry == Entry;
+	});
 	if (Index == INDEX_NONE)
 	{
 		return;
@@ -309,7 +328,7 @@ void UAgGameplayAbility::RunTimelinePoint(int32 Entry)
 {
 	// 지점 Task는 재생이 바뀌어도 남고, 행동이 끝날 때 엔진이 끝냅니다.
 	if (UAbilityTask* Task =
-	        TimelineEntries[Entry].Params.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this, EAgTaskPlacement::Point, TimelineInstanceId}))
+			TimelineEntries[Entry].Params.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this, EAgTaskPlacement::Point, TimelineInstanceId}))
 	{
 		Task->ReadyForActivation();
 	}
@@ -378,9 +397,9 @@ void UAgGameplayAbility::TurnTracks(const FAnimMontageInstance& Instance, float 
 		// 따라 돌다가 대상이 TargetingRange 밖으로 나가면 그 구간에서는 멈춥니다.
 		const AActor* Target = Entry.TrackTarget.Get();
 		Entry.bTrackStopped |= !Target || (!Entry.bTrackFacingOnly && Track->bHasTargetingRange &&
-		                                   Character->GetHorizontalDistanceTo(Target) > Track->TargetingRange);
+											  Character->GetHorizontalDistanceTo(Target) > Track->TargetingRange);
 		const FVector ToTarget =
-		    Target ? (Target->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal2D() : FVector::ZeroVector;
+			Target ? (Target->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal2D() : FVector::ZeroVector;
 		if (Entry.bTrackStopped || ToTarget.IsNearlyZero())
 		{
 			continue;
@@ -401,7 +420,7 @@ void UAgGameplayAbility::TurnTracks(const FAnimMontageInstance& Instance, float 
 		else
 		{
 			const float MaxTurn =
-			    static_cast<float>(Character->GetCharacterMovement()->RotationRate.Yaw) * DeltaTime * Character->CustomTimeDilation;
+				static_cast<float>(Character->GetCharacterMovement()->RotationRate.Yaw) * DeltaTime * Character->CustomTimeDilation;
 			Yaw = FMath::FixedTurn(CurrentYaw, GoalYaw, MaxTurn);
 		}
 		FRotator Rotation = Character->GetActorRotation();
@@ -435,28 +454,4 @@ void UAgGameplayAbility::HandleWarpingPreUpdate(UMotionWarpingComponent* Warping
 			Warping->AddModifier(Modifier);
 		}
 	}
-}
-
-bool UAgGameplayAbility::PrepareTrackTarget(int32 InstanceId, const FAgTrackParams& Params, AActor*& Target, float& Gap,
-                                            bool& bFacingOnly) const
-{
-	const AAgCharacterBase* Character = GetAgCharacter();
-	if (!OwnsMontage(InstanceId) || !Character)
-	{
-		return false;
-	}
-	Target = ActionTarget.Get();
-	Gap = StopDistance;
-	bFacingOnly = false;
-	if (!Target || (Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(Target) > Params.TargetingRange))
-	{
-		Target = Character->GetFallbackFacingTarget();
-		bFacingOnly = true;
-	}
-	return true;
-}
-
-void UAgGameplayAbility::RegisterWarp(UAgRootMotionModifier_MotionWarping* Modifier)
-{
-	Warps.AddUnique(Modifier);
 }

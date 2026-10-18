@@ -50,8 +50,7 @@ public:
 	UAgTargetingFilterTask_ActionTarget(const FObjectInitializer& ObjectInitializer);
 
 protected:
-	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle,
-	                                const FTargetingDefaultResultData& TargetData) const override;
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
 /** 요청한 플레이어의 화면 안(뷰포트 안에 투영되는) 후보만 남깁니다. */
@@ -64,8 +63,7 @@ public:
 	UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer);
 
 protected:
-	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle,
-	                                const FTargetingDefaultResultData& TargetData) const override;
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
 /** 요청한 쪽과의 캡슐 중심 사이 수평 거리가 가까운 후보부터 둡니다. 거르는 Task 뒤에 둡니다(필터가 순서를 섞음). */
@@ -78,8 +76,7 @@ public:
 	UAgTargetingSortTask_HorizontalDistance(const FObjectInitializer& ObjectInitializer);
 
 protected:
-	virtual float GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle,
-	                                const FTargetingDefaultResultData& TargetData) const override;
+	virtual float GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
 /** 요청한 보스의 AI 대상(보스 AI 컨트롤러가 정한 대상)을 후보로 더합니다. */

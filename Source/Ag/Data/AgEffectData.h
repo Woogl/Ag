@@ -50,6 +50,5 @@ namespace AgEffectData
 	 * 효과 정의를 읽어 Outer 아래에 GE 객체를 만듭니다. 객체 이름에 Version을 붙여 읽을 때마다 새 객체를 만듭니다. 같은 이름으로
 	 * 다시 만들면 엔진이 기존 객체를 그 자리에서 부수고 다시 만들어, 걸려 있는 효과가 망가지기 때문입니다. 실패하면 Out을 바꾸지 않습니다.
 	 */
-	bool Parse(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out,
-	           TArray<FString>& Errors);
+	bool Parse(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out, TArray<FString>& Errors);
 }

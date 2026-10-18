@@ -17,17 +17,20 @@ namespace UE::TargetingSystem
 	// 엔진 데이터(FTargetingSourceContext 등)와 같은 방식의 요청 핸들별 저장소. 핸들을 놓으면 저장소가 그 항목을 지웁니다.
 	extern TTargetingDataStore<FAgTargetingConditions> GAgTargetingConditionsDataStore;
 
-	template <> FAgTargetingConditions& TTargetingDataStore<FAgTargetingConditions>::FindOrAdd(FTargetingRequestHandle Handle)
+	template <>
+	FAgTargetingConditions& TTargetingDataStore<FAgTargetingConditions>::FindOrAdd(FTargetingRequestHandle Handle)
 	{
 		return GAgTargetingConditionsDataStore.Items.FindOrAdd(Handle);
 	}
 
-	template <> FAgTargetingConditions* TTargetingDataStore<FAgTargetingConditions>::Find(FTargetingRequestHandle Handle)
+	template <>
+	FAgTargetingConditions* TTargetingDataStore<FAgTargetingConditions>::Find(FTargetingRequestHandle Handle)
 	{
 		return GAgTargetingConditionsDataStore.Items.Find(Handle);
 	}
 
-	template <> void TTargetingDataStore<FAgTargetingConditions>::OnTargetingRequestHandleReleased(FTargetingRequestHandle Handle)
+	template <>
+	void TTargetingDataStore<FAgTargetingConditions>::OnTargetingRequestHandleReleased(FTargetingRequestHandle Handle)
 	{
 		GAgTargetingConditionsDataStore.Items.Remove(Handle);
 	}
@@ -70,18 +73,17 @@ AActor* AgTargeting::FindTarget(const FAgAbilityTargeting& Targeting, AActor& So
 }
 
 UAgTargetingFilterTask_ActionTarget::UAgTargetingFilterTask_ActionTarget(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 }
 
-bool UAgTargetingFilterTask_ActionTarget::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle,
-                                                             const FTargetingDefaultResultData& TargetData) const
+bool UAgTargetingFilterTask_ActionTarget::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
 	const AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(TargetData.HitResult.GetActor());
 	if (!Owner || !Candidate || Candidate == Owner || Candidate->IsDead() ||
-	    Owner->GetTeamAttitudeTowards(*Candidate) != ETeamAttitude::Hostile)
+		Owner->GetTeamAttitudeTowards(*Candidate) != ETeamAttitude::Hostile)
 	{
 		return true;
 	}
@@ -95,12 +97,12 @@ bool UAgTargetingFilterTask_ActionTarget::ShouldFilterTarget(const FTargetingReq
 	       !ASC->HasAllMatchingGameplayTags(Conditions->RequiredTags) || ASC->HasAnyMatchingGameplayTags(Conditions->BlockedTags);
 }
 
-UAgTargetingFilterTask_OnScreen::UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UAgTargetingFilterTask_OnScreen::UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 }
 
-bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle,
-                                                         const FTargetingDefaultResultData& TargetData) const
+bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const APawn* Pawn = Source ? Cast<APawn>(Source->SourceActor) : nullptr;
@@ -121,12 +123,11 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 }
 
 UAgTargetingSortTask_HorizontalDistance::UAgTargetingSortTask_HorizontalDistance(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 }
 
-float UAgTargetingSortTask_HorizontalDistance::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle,
-                                                                 const FTargetingDefaultResultData& TargetData) const
+float UAgTargetingSortTask_HorizontalDistance::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	// 기획서의 거리는 수평 거리라, 엔진 정렬(3D 거리) 대신 이 정렬을 씁니다. 점수가 작을수록 앞입니다.
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
@@ -136,7 +137,7 @@ float UAgTargetingSortTask_HorizontalDistance::GetScoreForTarget(const FTargetin
 }
 
 UAgTargetingSelectionTask_AITarget::UAgTargetingSelectionTask_AITarget(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 }
 

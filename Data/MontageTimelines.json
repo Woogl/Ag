@@ -152,7 +152,7 @@
     "Default": [
       {"Task": "Track", "Start": 0.0001, "End": 0.3333333, "TargetingRange": null, "MaxWarpDistance": null, "RotationMethod": "Slerp"},
       {"Task": "Attack", "Start": 0.33333334, "End": 0.8, "DamageMultiplier": 1.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
-      {"Task": "Attack", "Start": 0.8, "DamageMultiplier": 4.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0, "bFinisher": true}
+      {"Task": "Attack", "Time": 0.8, "DamageMultiplier": 4.5, "PoiseMultiplier": 0, "HitReaction": "None", "bGuardable": true, "MPCharge": 0, "UPCharge": 0, "bFinisher": true, "Radius": 150}
     ]
   },
   "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack": {

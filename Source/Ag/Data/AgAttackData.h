@@ -49,7 +49,8 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	FAgPlayerAttackHit() = default;
 
 	/** 보스 공격의 타 하나로 만듭니다. 플레이어 공격에만 있는 값은 기본값입니다. */
-	explicit FAgPlayerAttackHit(const FAgAttackHit& Hit) : FAgAttackHit(Hit)
+	explicit FAgPlayerAttackHit(const FAgAttackHit& Hit)
+		: FAgAttackHit(Hit)
 	{
 	}
 

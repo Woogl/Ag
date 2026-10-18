@@ -12,17 +12,17 @@ void FAgPlayerAttackHit::AddToSpec(FGameplayEffectSpec& Spec) const
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UPCharge);
 	switch (HitReaction)
 	{
-	case EAgHitReaction::Flinch:
-		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_Flinch);
-		break;
-	case EAgHitReaction::KnockUp:
-		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_KnockUp);
-		break;
-	case EAgHitReaction::KnockBack:
-		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_KnockBack);
-		break;
-	default:
-		break;
+		case EAgHitReaction::Flinch:
+			Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_Flinch);
+			break;
+		case EAgHitReaction::KnockUp:
+			Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_KnockUp);
+			break;
+		case EAgHitReaction::KnockBack:
+			Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_KnockBack);
+			break;
+		default:
+			break;
 	}
 	if (!bGuardable)
 	{

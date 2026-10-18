@@ -44,14 +44,32 @@ AAgBossCharacter::AAgBossCharacter()
 	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
 }
 
+void AAgBossCharacter::EnterPhase2()
+{
+	Phase = 2;
+}
+
+AAgCharacterBase* AAgBossCharacter::GetTarget() const
+{
+	const AAgBossAIController* AIController = Cast<AAgBossAIController>(GetController());
+	return AIController ? AIController->GetTarget() : nullptr;
+}
+
 void AAgBossCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
 	AttachWorldWidgets();
 	GetAbilitySystemComponent()
-	    ->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
-	    .AddUObject(this, &ThisClass::HandleGroggyChanged);
+		->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleGroggyChanged);
+}
+
+void AAgBossCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	UpdateWorldWidgets();
 }
 
 void AAgBossCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount)
@@ -65,29 +83,19 @@ void AAgBossCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCoun
 	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 }
 
+bool AAgBossCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
+{
+	const UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(Player.GetAbilitySystemComponent());
+	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Execution) : nullptr;
+	const FAgAbilityData* Execution = Spec ? Player.FindAbility(Spec->Handle) : nullptr;
+	return Execution && Execution->bHasTargeting && AgTargeting::FindTarget(Execution->Targeting, Player) == this;
+}
+
 void AAgBossCharacter::AttachWorldWidgets()
 {
 	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
 	LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->LockOnBone);
 	ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->ExecutionPromptBone);
-}
-
-void AAgBossCharacter::EnterPhase2()
-{
-	Phase = 2;
-}
-
-void AAgBossCharacter::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	UpdateWorldWidgets();
-}
-
-AAgCharacterBase* AAgBossCharacter::GetTarget() const
-{
-	const AAgBossAIController* AIController = Cast<AAgBossAIController>(GetController());
-	return AIController ? AIController->GetTarget() : nullptr;
 }
 
 void AAgBossCharacter::UpdateWorldWidgets()
@@ -106,12 +114,4 @@ void AAgBossCharacter::UpdateWorldWidgets()
 	// 표시합니다. 범위 확인은 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
 	const bool bGroggy = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && IsExecutionTargetOf(*Player)));
-}
-
-bool AAgBossCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
-{
-	const UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(Player.GetAbilitySystemComponent());
-	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Execution) : nullptr;
-	const FAgAbilityData* Execution = Spec ? Player.FindAbility(Spec->Handle) : nullptr;
-	return Execution && Execution->bHasTargeting && AgTargeting::FindTarget(Execution->Targeting, Player) == this;
 }

@@ -18,8 +18,7 @@ UAbilityTask* FAgSendGameplayEventParams::MakeTask(const FAgTaskContext& Context
 	return UAgAbilityTask_SendGameplayEvent::SendGameplayEvent(&Context.Runner, *this);
 }
 
-UAgAbilityTask_SendGameplayEvent* UAgAbilityTask_SendGameplayEvent::SendGameplayEvent(UGameplayAbility* Owner,
-                                                                                      const FAgSendGameplayEventParams& Params)
+UAgAbilityTask_SendGameplayEvent* UAgAbilityTask_SendGameplayEvent::SendGameplayEvent(UGameplayAbility* Owner, const FAgSendGameplayEventParams& Params)
 {
 	UAgAbilityTask_SendGameplayEvent* Task = NewAbilityTask<UAgAbilityTask_SendGameplayEvent>(Owner);
 	Task->Event = Params.Event;

@@ -87,20 +87,6 @@ UAgAbilityTask_Attack::UAgAbilityTask_Attack()
 	AttackTick.EndTickGroup = TG_PostPhysics;
 }
 
-void UAgAbilityTask_Attack::FAgAttackTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread,
-                                                               const FGraphEventRef& MyCompletionGraphEvent)
-{
-	if (IsValid(Target) && Target->IsActive() && TickType != LEVELTICK_ViewportsOnly)
-	{
-		Target->TickTask(DeltaTime);
-	}
-}
-
-FString UAgAbilityTask_Attack::FAgAttackTickFunction::DiagnosticMessage()
-{
-	return Target->GetFullName() + TEXT("[AttackTick]");
-}
-
 UAgAbilityTask_Attack* UAgAbilityTask_Attack::Attack(UGameplayAbility* Owner, const FAgAttackParams& InParams, bool bInOnce)
 {
 	UAgAbilityTask_Attack* Task = NewAbilityTask<UAgAbilityTask_Attack>(Owner);
@@ -157,16 +143,26 @@ void UAgAbilityTask_Attack::TickTask(float DeltaTime)
 	Detect();
 }
 
-void UAgAbilityTask_Attack::Detect()
+void UAgAbilityTask_Attack::OnDestroy(bool bInOwnerFinished)
 {
-	if (Params.bHasRadius)
+	AttackTick.SetTickFunctionEnable(false);
+	AttackTick.UnRegisterTickFunction();
+	WeaponCollision.Reset();
+	TouchedActors.Reset();
+	Super::OnDestroy(bInOwnerFinished);
+}
+
+void UAgAbilityTask_Attack::FAgAttackTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, ENamedThreads::Type CurrentThread, const FGraphEventRef& MyCompletionGraphEvent)
+{
+	if (IsValid(Target) && Target->IsActive() && TickType != LEVELTICK_ViewportsOnly)
 	{
-		HitArea();
+		Target->TickTask(DeltaTime);
 	}
-	else
-	{
-		SweepWeapon();
-	}
+}
+
+FString UAgAbilityTask_Attack::FAgAttackTickFunction::DiagnosticMessage()
+{
+	return Target->GetFullName() + TEXT("[AttackTick]");
 }
 
 bool UAgAbilityTask_Attack::GetWeaponCollision(FVector& OutStart, FVector& OutEnd) const
@@ -182,6 +178,18 @@ bool UAgAbilityTask_Attack::GetWeaponCollision(FVector& OutStart, FVector& OutEn
 	OutStart = Center + HalfSegment;
 	OutEnd = Center - HalfSegment;
 	return true;
+}
+
+void UAgAbilityTask_Attack::Detect()
+{
+	if (Params.bHasRadius)
+	{
+		HitArea();
+	}
+	else
+	{
+		SweepWeapon();
+	}
 }
 
 void UAgAbilityTask_Attack::SweepWeapon()
@@ -245,7 +253,7 @@ bool UAgAbilityTask_Attack::Hit(AAgCharacterBase& Target, const FVector& Locatio
 	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	const bool bAirborne = Target.GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Airborne);
 	if (Target.IsDead() || Character->GetTeamAttitudeTowards(Target) != ETeamAttitude::Hostile || TouchedActors.Contains(&Target) ||
-	    (Params.bGroundOnly && bAirborne))
+		(Params.bGroundOnly && bAirborne))
 	{
 		return true;
 	}
@@ -267,13 +275,4 @@ bool UAgAbilityTask_Attack::Hit(AAgCharacterBase& Target, const FVector& Locatio
 		return false;
 	}
 	return true;
-}
-
-void UAgAbilityTask_Attack::OnDestroy(bool bInOwnerFinished)
-{
-	AttackTick.SetTickFunctionEnable(false);
-	AttackTick.UnRegisterTickFunction();
-	WeaponCollision.Reset();
-	TouchedActors.Reset();
-	Super::OnDestroy(bInOwnerFinished);
 }

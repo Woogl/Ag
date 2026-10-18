@@ -17,9 +17,7 @@ class UAgAbilitySystemComponent : public UAbilitySystemComponent
 	GENERATED_BODY()
 
 public:
-	virtual void ApplyAbilityBlockAndCancelTags(const FGameplayTagContainer& AbilityTags, UGameplayAbility* RequestingAbility,
-	                                            bool bEnableBlockTags, const FGameplayTagContainer& BlockTags, bool bExecuteCancelTags,
-	                                            const FGameplayTagContainer& CancelTags) override;
+	virtual void ApplyAbilityBlockAndCancelTags(const FGameplayTagContainer& AbilityTags, UGameplayAbility* RequestingAbility, bool bEnableBlockTags, const FGameplayTagContainer& BlockTags, bool bExecuteCancelTags, const FGameplayTagContainer& CancelTags) override;
 	void CancelAbilitiesWithSpecTags(const FGameplayTagContainer& Tags, UGameplayAbility* Ignore = nullptr);
 
 	/**

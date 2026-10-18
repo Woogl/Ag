@@ -84,7 +84,7 @@ namespace
 		AgTaskParams::Read(Object, Placement, Out.Params, Path, Errors, Out.bWindow ? WindowKeys : PointKeys);
 		return Errors.Num() == Before;
 	}
-}
+} // namespace
 
 const FAgMontageTimeline* UAgMontageTimelineData::Find(const UAnimMontage& Montage) const
 {
@@ -147,8 +147,7 @@ bool AgMontageTimeline::Parse(const FJsonObject& Json, TMap<FName, FAgMontageTim
 	return true;
 }
 
-bool AgMontageTimeline::ResolveTimes(const UAnimMontage& Montage, FName Section, const FAgTimelineItem& Item, float& OutStart,
-                                     float& OutEnd)
+bool AgMontageTimeline::ResolveTimes(const UAnimMontage& Montage, FName Section, const FAgTimelineItem& Item, float& OutStart, float& OutEnd)
 {
 	const int32 SectionIndex = Montage.GetSectionIndex(Section);
 	const int32 EndIndex = Item.EndSection.IsNone() ? SectionIndex : Montage.GetSectionIndex(Item.EndSection);
@@ -183,8 +182,7 @@ TArray<FName> AgMontageTimeline::GetProjectileIds(const FAgMontageTimeline& Time
 	return Ids;
 }
 
-void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& Timelines,
-                                        const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors)
+void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors)
 {
 	for (const TPair<FName, FAgMontageTimeline>& Pair : Timelines)
 	{
@@ -196,8 +194,8 @@ void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& T
 				if (const FAgApplyEffectParams* Apply = Item.Params.GetPtr<FAgApplyEffectParams>())
 				{
 					Apply->ValidateEffect(Effects, Item.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point,
-					                      FString::Printf(TEXT("%s.%s[%d]"), *Pair.Key.ToString(), *Section.Name.ToString(), Index),
-					                      Errors);
+						FString::Printf(TEXT("%s.%s[%d]"), *Pair.Key.ToString(), *Section.Name.ToString(), Index),
+						Errors);
 				}
 			}
 		}
@@ -214,24 +212,23 @@ namespace
 	 */
 	bool GivesRootMotion(const UAnimMontage& Montage, float Start, float End)
 	{
-		return Montage.HasRootMotion() && !Montage.Notifies.ContainsByPredicate(
-		                                      [Start, End](const FAnimNotifyEvent& Event)
-		                                      {
-			                                      return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
-			                                             Event.GetTime() <= Start + TimeTolerance &&
-			                                             Event.GetTime() + Event.GetDuration() >= End - TimeTolerance;
-		                                      });
+		return Montage.HasRootMotion() && !Montage.Notifies.ContainsByPredicate([Start, End](const FAnimNotifyEvent& Event)
+		{
+			return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
+			       Event.GetTime() <= Start + TimeTolerance &&
+			       Event.GetTime() + Event.GetDuration() >= End - TimeTolerance;
+		});
 	}
 
 	/** 공격 예고 Cue(가드 불가 예고, 패리 예고)의 상태 노티파이입니다. 엔진 노티파이의 Cue 태그는 리플렉션으로만 읽을 수 있습니다. */
 	bool IsTelegraphCue(const FAnimNotifyEvent& Event)
 	{
 		static const FStructProperty* CueProperty =
-		    FindFProperty<FStructProperty>(UAnimNotify_GameplayCueState::StaticClass(), TEXT("GameplayCue"));
+			FindFProperty<FStructProperty>(UAnimNotify_GameplayCueState::StaticClass(), TEXT("GameplayCue"));
 		UAnimNotifyState* State = Cast<UAnimNotify_GameplayCueState>(Event.NotifyStateClass);
 		const FGameplayCueTag* Cue = State && CueProperty ? CueProperty->ContainerPtrToValuePtr<FGameplayCueTag>(State) : nullptr;
 		return Cue && (Cue->GameplayCueTag == AgGameplayTags::GameplayCue_UnblockableTelegraph ||
-		               Cue->GameplayCueTag == AgGameplayTags::GameplayCue_ParryTelegraph);
+						  Cue->GameplayCueTag == AgGameplayTags::GameplayCue_ParryTelegraph);
 	}
 }
 
@@ -284,7 +281,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				if (Item.bWindow && Item.Start >= SectionLength)
 				{
 					Errors.Add(
-					    FString::Printf(TEXT("%s: Start %.4f must be before the section end %.4f"), *Name, Item.Start, SectionLength));
+						FString::Printf(TEXT("%s: Start %.4f must be before the section end %.4f"), *Name, Item.Start, SectionLength));
 				}
 				if (Item.bWindow && !Item.bEndAtSectionEnd && Item.End > EndLength + TimeTolerance)
 				{
@@ -300,7 +297,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				if (Transition && !Item.bWindow && Item.Start >= SectionLength - TimeTolerance)
 				{
 					Errors.Add(FString::Printf(TEXT("%s: a transition point at %.4f must be before the section end %.4f"), *Name,
-					                           Item.Start, SectionLength));
+						Item.Start, SectionLength));
 				}
 				FResolved& Resolved = Items.AddDefaulted_GetRef();
 				Resolved.Item = &Item;
@@ -340,7 +337,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				float SectionEnd = 0.f;
 				Montage->GetSectionStartAndEndTime(Index, SectionStart, SectionEnd);
 				if (Section.NextSectionName == Section.SectionName && Start <= SectionStart + TimeTolerance &&
-				    FMath::IsNearlyEqual(End, SectionEnd, TimeTolerance))
+					FMath::IsNearlyEqual(End, SectionEnd, TimeTolerance))
 				{
 					return true;
 				}
@@ -351,7 +348,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 		// 첫 섹션에서 섹션 링크로 이어지는 섹션. 그 밖의 섹션은 전환으로만 들어가 몽타주 시각으로 때를 정할 수 없습니다.
 		TSet<int32> LinkedSections;
 		for (int32 Index = Montage->GetSectionIndexFromPosition(0.f); Index != INDEX_NONE && !LinkedSections.Contains(Index);
-		     Index = Montage->GetSectionIndex(Montage->CompositeSections[Index].NextSectionName))
+			Index = Montage->GetSectionIndex(Montage->CompositeSections[Index].NextSectionName))
 		{
 			LinkedSections.Add(Index);
 		}
@@ -399,7 +396,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				Errors.Add(Window.Name + TEXT(": a dash window needs no montage root motion (a root motion off notify over the window)"));
 			}
 			if (Track && !GivesRootMotion(*Montage, Window.Start, Window.End) &&
-			    !(Track->bHasMaxWarpDistance && Track->MaxWarpDistance <= 0.f))
+				!(Track->bHasMaxWarpDistance && Track->MaxWarpDistance <= 0.f))
 			{
 				Errors.Add(Window.Name + TEXT(": a tracking window without montage root motion only turns, so MaxWarpDistance must be 0"));
 			}
@@ -413,7 +410,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			if (Notify && Notify->GetClass()->GetOutermost() == UAgMontageTimelineData::StaticClass()->GetOutermost())
 			{
 				Errors.Add(Path + TEXT(": a montage with a timeline can't have project notifies (") + Notify->GetClass()->GetName() +
-				           TEXT(")"));
+						   TEXT(")"));
 			}
 			if (bHasTrack && Cast<UAnimNotifyState_MotionWarping>(Event.NotifyStateClass))
 			{
@@ -432,14 +429,13 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 					continue;
 				}
 				const float CueEnd = Event.GetTime() + Event.GetDuration();
-				if (!HitTimes.ContainsByPredicate(
-				        [CueEnd](float Time)
-				        {
-					        return FMath::IsNearlyEqual(Time, CueEnd, TimeTolerance);
-				        }))
+				if (!HitTimes.ContainsByPredicate([CueEnd](float Time)
+				{
+					return FMath::IsNearlyEqual(Time, CueEnd, TimeTolerance);
+				}))
 				{
 					Errors.Add(FString::Printf(
-					    TEXT("%s: the telegraph cue ending at %.4f must end when an attack starts or a projectile spawns"), *Path, CueEnd));
+						TEXT("%s: the telegraph cue ending at %.4f must end when an attack starts or a projectile spawns"), *Path, CueEnd));
 				}
 			}
 		}

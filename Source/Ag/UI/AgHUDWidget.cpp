@@ -29,6 +29,12 @@ namespace
 	const FName RatioParameter(TEXT("Ratio"));
 }
 
+void UAgHUDWidget::HideStatus()
+{
+	bStatusHidden = true;
+	StatusPanel->SetVisibility(ESlateVisibility::Collapsed);
+}
+
 void UAgHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
@@ -69,13 +75,39 @@ void UAgHUDWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UAgHUDWidget::HandlePlayerSPChanged(const FOnAttributeChangeData& Data)
+TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
 {
-	// 대미지 GE가 SP를 줄이는 것은 가드와 가드 브레이크뿐입니다(전투 시스템 '피격 처리 순서').
-	const UGameplayEffect* Effect = Data.GEModData ? Data.GEModData->EffectSpec.Def.Get() : nullptr;
-	if (Data.NewValue < Data.OldValue && Effect && Effect->GetAssetTags().HasTagExact(AgGameplayTags::Effect_Damage))
+	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown,
+		/*bHideCursorDuringViewportCapture*/ true);
+}
+
+void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	// 궁극기 컷신(전투 HUD '상황별 표시 규칙'): 컷신이 플레이어 컨트롤러를 시네마틱 모드로 두는 동안 숨깁니다.
+	const APlayerController* PlayerController = GetOwningPlayer();
+	const bool bCutscene = PlayerController && PlayerController->bCinematicMode;
+	StatusPanel->SetVisibility(bStatusHidden || bCutscene ? ESlateVisibility::Collapsed : StatusPanelVisibility);
+
+	// 잔상은 게임 시간으로 흘러 슬로우모션에 함께 느려집니다.
+	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();
+	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
-		bPlayerSPGuardDrop = true;
+		UpdatePlayer(*Player, GameDeltaTime);
+	}
+
+	if (!Boss.IsValid())
+	{
+		for (TActorIterator<AAgBossCharacter> It(GetWorld()); It; ++It)
+		{
+			Boss = *It;
+			break;
+		}
+	}
+	if (const AAgBossCharacter* BossCharacter = Boss.Get())
+	{
+		UpdateBoss(*BossCharacter, GameDeltaTime);
 	}
 }
 
@@ -117,48 +149,6 @@ void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
 	ControlsGuideActions->SetText(FText::Join(LineBreak, ActionLines));
 }
 
-void UAgHUDWidget::HideStatus()
-{
-	bStatusHidden = true;
-	StatusPanel->SetVisibility(ESlateVisibility::Collapsed);
-}
-
-TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
-{
-	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown,
-	                      /*bHideCursorDuringViewportCapture*/ true);
-}
-
-void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
-{
-	Super::NativeTick(MyGeometry, InDeltaTime);
-
-	// 궁극기 컷신(전투 HUD '상황별 표시 규칙'): 컷신이 플레이어 컨트롤러를 시네마틱 모드로 두는 동안 숨깁니다.
-	const APlayerController* PlayerController = GetOwningPlayer();
-	const bool bCutscene = PlayerController && PlayerController->bCinematicMode;
-	StatusPanel->SetVisibility(bStatusHidden || bCutscene ? ESlateVisibility::Collapsed : StatusPanelVisibility);
-
-	// 잔상은 게임 시간으로 흘러 슬로우모션에 함께 느려집니다.
-	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();
-	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
-	{
-		UpdatePlayer(*Player, GameDeltaTime);
-	}
-
-	if (!Boss.IsValid())
-	{
-		for (TActorIterator<AAgBossCharacter> It(GetWorld()); It; ++It)
-		{
-			Boss = *It;
-			break;
-		}
-	}
-	if (const AAgBossCharacter* BossCharacter = Boss.Get())
-	{
-		UpdateBoss(*BossCharacter, GameDeltaTime);
-	}
-}
-
 void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime)
 {
 	const UAgAttributeSet* Stats = Player.GetAttributeSet();
@@ -169,7 +159,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 	SetValueText(*PlayerMPText, Stats->GetMP(), Stats->GetMaxMP(), ShownMP);
 	UpdateTrail(PlayerHPTrail, *PlayerHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 	UpdateTrail(PlayerSPTrail, *PlayerSPTrailBar, Stats->GetMaxSP() > 0.f ? Stats->GetSP() / Stats->GetMaxSP() : 0.f, GameDeltaTime,
-	            bPlayerSPGuardDrop);
+		bPlayerSPGuardDrop);
 	bPlayerSPGuardDrop = false;
 
 	// 슬롯은 MP·UP가 부족할 때만 흐리게 합니다. 스킬 쿨다운은 쿨다운 표시로 보여 줍니다.
@@ -214,7 +204,7 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
 		const FGameplayEffectQuery Query =
-		    FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_GroggyTime));
+			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_GroggyTime));
 		const TArray<TPair<float, float>> Times = BossASC->GetActiveEffectsTimeRemainingAndDuration(Query);
 		if (!Times.IsEmpty() && Times[0].Value > 0.f)
 		{
@@ -230,8 +220,7 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	UpdateTrail(BossPPTrail, *BossPPTrailBar, PPBarRatio, GameDeltaTime);
 }
 
-const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag,
-                                                  FGameplayAbilitySpecHandle& OutHandle)
+const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
 {
 	// 입력 계층과 같은 행동 태그 검색입니다.
 	const UAgAbilitySystemComponent* AgASC = Cast<UAgAbilitySystemComponent>(&ASC);
@@ -343,4 +332,14 @@ void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float Ba
 		Trail.Ratio = FMath::Lerp(Trail.ShrinkFrom, BarRatio, Alpha);
 	}
 	TrailBar.SetPercent(Trail.Ratio);
+}
+
+void UAgHUDWidget::HandlePlayerSPChanged(const FOnAttributeChangeData& Data)
+{
+	// 대미지 GE가 SP를 줄이는 것은 가드와 가드 브레이크뿐입니다(전투 시스템 '피격 처리 순서').
+	const UGameplayEffect* Effect = Data.GEModData ? Data.GEModData->EffectSpec.Def.Get() : nullptr;
+	if (Data.NewValue < Data.OldValue && Effect && Effect->GetAssetTags().HasTagExact(AgGameplayTags::Effect_Damage))
+	{
+		bPlayerSPGuardDrop = true;
+	}
 }

@@ -253,11 +253,8 @@ namespace AgAbilityData
 	 * 캐릭터의 어빌리티·효과·몽타주 ID, 사망 모션, 그 어빌리티들의 효과 참조와 행동 대상, 입력 계층이 찾는 행동 태그를
 	 * 검사합니다. 오류에는 Path를 앞에 붙입니다.
 	 */
-	void ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities,
-	                       const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const TMap<FName, FAgMontageTimeline>& Timelines,
-	                       const FString& Path, TArray<FString>& Errors);
+	void ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const TMap<FName, FAgMontageTimeline>& Timelines, const FString& Path, TArray<FString>& Errors);
 
 	/** 발동 Task가 거는 효과가 Effects.json에 있는지 검사합니다. */
-	void ValidateEffects(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects,
-	                     TArray<FString>& Errors);
+	void ValidateEffects(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors);
 }

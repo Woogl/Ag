@@ -24,20 +24,13 @@ UAgAbilityTask_PlayCutscene::UAgAbilityTask_PlayCutscene()
 	bTickingTask = true;
 }
 
-UAgAbilityTask_PlayCutscene* UAgAbilityTask_PlayCutscene::PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params,
-                                                                       int32 InMontageInstanceId)
+UAgAbilityTask_PlayCutscene* UAgAbilityTask_PlayCutscene::PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params, int32 InMontageInstanceId)
 {
 	UAgAbilityTask_PlayCutscene* Task = NewAbilityTask<UAgAbilityTask_PlayCutscene>(Owner);
 	Task->Cutscene = Params.Sequence;
 	Task->Next = Params.Next;
 	Task->MontageInstanceId = InMontageInstanceId;
 	return Task;
-}
-
-float UAgAbilityTask_PlayCutscene::GetOwnerTimeDilation() const
-{
-	const AActor* Owner = GetAvatarActor();
-	return Owner ? Owner->CustomTimeDilation : 1.f;
 }
 
 void UAgAbilityTask_PlayCutscene::Activate()
@@ -77,6 +70,24 @@ void UAgAbilityTask_PlayCutscene::TickTask(float DeltaTime)
 	}
 }
 
+void UAgAbilityTask_PlayCutscene::OnDestroy(bool bInOwnerFinished)
+{
+	if (SequenceActor)
+	{
+		if (ULevelSequencePlayer* Player = SequenceActor->GetSequencePlayer())
+		{
+			Player->OnFinished.RemoveAll(this);
+			if (Player->IsPlaying())
+			{
+				Player->Stop();
+			}
+		}
+		SequenceActor->Destroy();
+		SequenceActor = nullptr;
+	}
+	Super::OnDestroy(bInOwnerFinished);
+}
+
 void UAgAbilityTask_PlayCutscene::HandleFinished()
 {
 	if (IsFinished())
@@ -94,20 +105,8 @@ void UAgAbilityTask_PlayCutscene::HandleFinished()
 	}
 }
 
-void UAgAbilityTask_PlayCutscene::OnDestroy(bool bInOwnerFinished)
+float UAgAbilityTask_PlayCutscene::GetOwnerTimeDilation() const
 {
-	if (SequenceActor)
-	{
-		if (ULevelSequencePlayer* Player = SequenceActor->GetSequencePlayer())
-		{
-			Player->OnFinished.RemoveAll(this);
-			if (Player->IsPlaying())
-			{
-				Player->Stop();
-			}
-		}
-		SequenceActor->Destroy();
-		SequenceActor = nullptr;
-	}
-	Super::OnDestroy(bInOwnerFinished);
+	const AActor* Owner = GetAvatarActor();
+	return Owner ? Owner->CustomTimeDilation : 1.f;
 }
