@@ -4,6 +4,8 @@
 
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Data/AgJsonRead.h"
 #include "Engine/World.h"
 #include "GameplayEffect.h"
@@ -97,8 +99,12 @@ void UAgAbilityTask_Transition::Activate()
 		{
 			return;
 		}
-		const UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability);
-		const float Delay = Remaining - (Runner ? Runner->GetSectionLength(Params.Next.Section) : 0.f);
+		// Next 섹션의 길이는 이 재생의 몽타주에서 읽습니다.
+		UAnimInstance* Anim = ASC->AbilityActorInfo.IsValid() ? ASC->AbilityActorInfo->GetAnimInstance() : nullptr;
+		const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
+		const UAnimMontage* Montage = Instance ? Instance->Montage.Get() : nullptr;
+		const int32 NextSection = Montage ? Montage->GetSectionIndex(Params.Next.Section) : INDEX_NONE;
+		const float Delay = Remaining - (NextSection == INDEX_NONE ? 0.f : Montage->GetSectionLength(NextSection));
 		if (Delay <= 0.f)
 		{
 			HandleTagEnding();

@@ -67,10 +67,6 @@ public:
 
 	/** 부여된 스펙(Handle)의 어빌리티 ID. 어빌리티 목록으로 부여한 스펙이 아니면 None입니다. */
 	FName FindAbilityId(const FGameplayAbilitySpecHandle Handle) const;
-	void ForgetAbility(FGameplayAbilitySpecHandle Handle)
-	{
-		AbilityIds.Remove(Handle);
-	}
 
 	/**
 	 * 부여된 스펙(Handle)의 어빌리티 항목(캐릭터 데이터의 어빌리티 목록). 어빌리티 목록으로 부여하지 않았으면 null입니다.

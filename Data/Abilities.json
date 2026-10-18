@@ -25,7 +25,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "BasicAttack"},
     "End": "Montage",
     "Tasks": []
@@ -87,7 +87,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "JumpAttack"},
     "End": "Montage",
     "Tasks": []
@@ -155,7 +155,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "DodgeCounter"},
     "End": "Montage",
     "Tasks": []
@@ -249,7 +249,7 @@
       "Resource": "MP",
       "Amount": 30
     },
-    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "Skill"},
     "End": "Montage",
     "Tasks": []
@@ -317,7 +317,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_Enemy.TP_Enemy", "Range": 300, "TargetRequiredTags": ["State.Groggy"], "TargetBlockedTags": ["State.Execution", "State.Airborne"], "bRequired": true, "StopDistance": 95},
+    "Targeting": {"Preset": "Enemy", "Range": 300, "TargetRequiredTags": ["State.Groggy"], "TargetBlockedTags": ["State.Execution", "State.Airborne"], "bRequired": true, "StopDistance": 95},
     "Montage": {"MontageId": "Execution"},
     "End": "Montage",
     "Tasks": [
@@ -374,7 +374,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_LockOn.TP_LockOn", "Range": 2000, "bRequired": true},
+    "Targeting": {"Preset": "LockOn", "Range": 2000, "bRequired": true},
     "End": "TriggerTag",
     "Tasks": []
   },
@@ -537,7 +537,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Targeting": {"Preset": "AITarget"},
     "Montage": {"MontageId": "DoubleStrike"},
     "End": "Montage",
     "Tasks": [],
@@ -574,7 +574,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Targeting": {"Preset": "AITarget"},
     "Montage": {"MontageId": "Sweep"},
     "End": "Montage",
     "Tasks": [],
@@ -611,7 +611,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Targeting": {"Preset": "AITarget"},
     "Montage": {"MontageId": "DashThrust"},
     "End": "Montage",
     "Tasks": [],
@@ -648,7 +648,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget", "bRequired": true},
+    "Targeting": {"Preset": "AITarget", "bRequired": true},
     "Montage": {"MontageId": "LeapSlam"},
     "End": "Montage",
     "Tasks": [
@@ -686,7 +686,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Targeting": {"Preset": "AITarget"},
     "Montage": {"MontageId": "QuintupleStrike"},
     "End": "Montage",
     "Tasks": [],
@@ -722,7 +722,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Targeting": {"Preset": "AITarget"},
     "Montage": {"MontageId": "SwordWave"},
     "End": "Montage",
     "Tasks": [],
@@ -758,7 +758,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "/Game/Data/TP_AITarget.TP_AITarget"},
+    "Targeting": {"Preset": "AITarget"},
     "Montage": {"MontageId": "JumpSlam"},
     "End": "Montage",
     "Tasks": [],
@@ -795,9 +795,11 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Montage": {"MontageId": "Backstep", "RootMotionDistance": 500},
+    "Montage": {"MontageId": "Backstep"},
     "End": "Montage",
-    "Tasks": [],
+    "Tasks": [
+      {"Task": "ScaleRootMotion", "Distance": 500}
+    ],
     "PatternSelection": {
       "Phases": [
         1,

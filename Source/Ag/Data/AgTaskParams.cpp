@@ -2,7 +2,9 @@
 
 #include "Data/AgTaskParams.h"
 #include "Data/AgJsonRead.h"
+#include "Data/AgProjectileData.h"
 #include "Dom/JsonObject.h"
+#include "GameplayEffect.h"
 
 namespace
 {
@@ -87,4 +89,24 @@ bool AgTaskParams::Read(const FJsonObject& Item, EAgTaskPlacement Placement, FIn
 	}
 	Out = MoveTemp(Params);
 	return true;
+}
+
+void AgTaskParams::ValidateReferences(const FAgTaskParams& Params, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, const TMap<FName, FAgProjectileDefinition>* Projectiles, const FString& Path, TArray<FString>& Errors)
+{
+	FAgTaskReferences References;
+	Params.GetReferences(References);
+	for (FName Id : References.Effects)
+	{
+		if (Effects && !Effects->Contains(Id))
+		{
+			Errors.Add(Path + TEXT(": uses unknown effect ") + Id.ToString());
+		}
+	}
+	for (FName Id : References.Projectiles)
+	{
+		if (Projectiles && !Projectiles->Contains(Id))
+		{
+			Errors.Add(Path + TEXT(": uses unknown projectile ") + Id.ToString());
+		}
+	}
 }

@@ -6,6 +6,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Data/AgJsonRead.h"
+#include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
@@ -50,32 +51,27 @@ UAbilityTask* FAgLaunchParams::MakeTask(const FAgTaskContext& Context) const
 
 const FName UAgAbilityTask_Launch::SourceName(TEXT("AgLaunch"));
 
-UAgAbilityTask_Launch::UAgAbilityTask_Launch()
-{
-	bTickingTask = true;
-}
-
 UAgAbilityTask_Launch* UAgAbilityTask_Launch::Launch(UGameplayAbility* Owner, const FAgLaunchParams& InParams)
 {
-	UAgAbilityTask_Launch* Task = NewAbilityTask<UAgAbilityTask_Launch>(Owner);
+	UAgAbilityTask_Launch* Task = NewAbilityTask<UAgAbilityTask_Launch>(Owner, SourceName);
 	Task->Params = InParams;
 	return Task;
 }
 
 void UAgAbilityTask_Launch::Activate()
 {
-	ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
+	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
 	const UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability);
-	Movement = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!Movement.IsValid() || !Runner)
+	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
+	if (!Movement || !Runner)
 	{
 		EndTask();
 		return;
 	}
 
 	// To Target이면 대상 앞, 그 행동의 간격만큼 떨어진 곳에 내립니다. 대상이 없으면 제자리에서 띄웁니다.
-	FRotator Rotation = Character->GetActorRotation();
-	float Distance = 0.f;
+	Rotation = Character->GetActorRotation();
+	Distance = 0.f;
 	const AActor* Target = Params.bHasTo ? Runner->GetActionTarget() : nullptr;
 	if (Target)
 	{
@@ -87,31 +83,29 @@ void UAgAbilityTask_Launch::Activate()
 			Rotation = Delta.Rotation();
 		}
 	}
-	const float Height = Params.bHasHeight ? Params.Height : -Movement->GetGravityZ() * FMath::Square(Params.AirTime) / 8.f;
+	Height = Params.bHasHeight ? Params.Height : -Movement->GetGravityZ() * FMath::Square(Params.AirTime) / 8.f;
 
-	// 착지할 때까지 다른 속도를 덮어쓰고, 지울 때 속도를 0으로 둡니다.
-	TSharedPtr<FRootMotionSource_JumpForce> JumpForce = MakeShared<FRootMotionSource_JumpForce>();
-	JumpForce->InstanceName = SourceName;
-	JumpForce->AccumulateMode = ERootMotionAccumulateMode::Override;
-	JumpForce->Priority = 500;
-	JumpForce->Duration = Params.AirTime;
-	JumpForce->Rotation = Rotation;
-	JumpForce->Distance = Distance;
-	JumpForce->Height = Height;
-	JumpForce->bDisableTimeout = true;
-	JumpForce->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
-	JumpForce->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
-	SourceID = Movement->ApplyRootMotionSource(JumpForce);
-	Character->LandedDelegate.AddDynamic(this, &ThisClass::HandleLanded);
+	// 엔진 Task의 생성 함수가 하는 설정입니다. 착지할 때까지 다른 속도를 덮어쓰고, 끝나면 속도를 0으로 둡니다.
+	ForceName = SourceName;
+	Duration = Params.AirTime;
+	MinimumLandedTriggerTime = Params.AirTime * MinLandedAirTimeRatio;
+	bFinishOnLanded = true;
+	FinishVelocityMode = ERootMotionFinishVelocityMode::SetVelocity;
+	FinishSetVelocity = FVector::ZeroVector;
+	SharedInitAndApply();
+	Super::Activate();
 }
 
 void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 {
-	Elapsed += DeltaTime;
+	Super::TickTask(DeltaTime);
 	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	if (!Character || !Movement.IsValid())
+	if (IsFinished() || !Character || !MovementComponent.IsValid())
 	{
-		EndTask();
+		if (!IsFinished())
+		{
+			Finish();
+		}
 		return;
 	}
 	// 캐릭터 무브먼트는 몽타주가 루트 모션을 주면(루트 모션이 없는 섹션이라도 몽타주에 루트 모션이 있고 끄기 노티파이 밖이면)
@@ -123,40 +117,10 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 		UE_LOG(LogAg, Error, TEXT("Launch: %s gives montage root motion at %.3f, so the launch does not move %s"),
 			*GetNameSafe(Instance->Montage), Instance->GetPosition(), *Character->GetName());
 	}
-	// 떠오르지 못하고 땅에 남았으면(낮은 천장 등) 착지 알림이 오지 않으므로 여기서 끝냅니다.
-	if (Elapsed >= Params.AirTime * MinLandedAirTimeRatio && !Movement->IsFalling())
+	// 떠오르지 못하고 땅에 남았으면(낮은 천장 등) 착지 알림이 오지 않아 엔진 Task가 끝나지 않으므로, 착지를 보는 때부터 땅에 있으면
+	// 끝냅니다.
+	if (GetWorld()->GetTimeSeconds() >= StartTime + MinimumLandedTriggerTime && !MovementComponent->IsFalling())
 	{
 		Finish();
-	}
-}
-
-void UAgAbilityTask_Launch::OnDestroy(bool bInOwnerFinished)
-{
-	if (ACharacter* Character = Cast<ACharacter>(GetAvatarActor()))
-	{
-		Character->LandedDelegate.RemoveDynamic(this, &ThisClass::HandleLanded);
-	}
-	if (SourceID != 0 && Movement.IsValid())
-	{
-		Movement->RemoveRootMotionSourceByID(SourceID);
-		Movement->Velocity = FVector::ZeroVector;
-	}
-	SourceID = 0;
-	Super::OnDestroy(bInOwnerFinished);
-}
-
-void UAgAbilityTask_Launch::HandleLanded(const FHitResult& Hit)
-{
-	if (Elapsed >= Params.AirTime * MinLandedAirTimeRatio)
-	{
-		Finish();
-	}
-}
-
-void UAgAbilityTask_Launch::Finish()
-{
-	if (!IsFinished())
-	{
-		EndTask();
 	}
 }

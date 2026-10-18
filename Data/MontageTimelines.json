@@ -72,9 +72,9 @@
       {"Task": "Track", "Start": 0, "End": 0.65, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
       {"Task": "Track", "Start": 0.88, "End": 1.13, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
       {"Task": "Track", "Start": 1.51, "End": 1.66, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
-      {"Task": "SpawnProjectile", "Time": 0.75, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward", "Attack": {"DamageMultiplier": 1.2, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}},
-      {"Task": "SpawnProjectile", "Time": 1.38, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward", "Attack": {"DamageMultiplier": 1.2, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}},
-      {"Task": "SpawnProjectile", "Time": 1.79, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward", "Attack": {"DamageMultiplier": 1.2, "PoiseMultiplier": 1, "HitReaction": "KnockBack", "bGuardable": true, "MPCharge": 0, "UPCharge": 0}}
+      {"Task": "SpawnProjectile", "Time": 0.75, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward"},
+      {"Task": "SpawnProjectile", "Time": 1.38, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward"},
+      {"Task": "SpawnProjectile", "Time": 1.79, "ProjectileId": "SwordWave", "Origin": "CharacterFeetForward"}
     ]
   },
   "/Game/Animations/AM_KnockUp.AM_KnockUp": {

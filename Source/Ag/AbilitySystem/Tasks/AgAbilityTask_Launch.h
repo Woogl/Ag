@@ -3,12 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/Tasks/AbilityTask.h"
+#include "Abilities/Tasks/AbilityTask_ApplyRootMotionJumpForce.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_Launch.generated.h"
-
-class UCharacterMovementComponent;
-struct FHitResult;
 
 /** Launch가 수평으로 보내는 곳 */
 UENUM()
@@ -59,21 +56,25 @@ struct FAgLaunchParams : public FAgTaskParams
 		return bHasTo;
 	}
 
+	virtual bool OverridesVelocity() const override
+	{
+		return true;
+	}
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
 /**
- * 엔진 루트 모션 점프(FRootMotionSource_JumpForce)로 띄우고, 착지하면 소스를 지우고 속도를 0으로 둡니다. 캐릭터 무브먼트는 몽타주가
- * 루트 모션을 주면 루트 모션 소스를 쓰지 않으므로, 도는 동안 몽타주가 루트 모션을 주면 오류를 남깁니다.
+ * 엔진 루트 모션 점프 Task. 시작할 때 Params와 행동 대상으로 방향·거리·높이를 정해 엔진 Task에 넘기고, 체공 시간의 앞 절반이 지난 뒤의
+ * 착지에서 끝나며 속도를 0으로 둡니다(엔진의 MinimumLandedTriggerTime, bFinishOnLanded). 엔진 Task에 더하는 것은 땅을 떠나지 못했을
+ * 때 끝내기와, 도는 동안 몽타주가 루트 모션을 주면(캐릭터 무브먼트가 소스를 쓰지 않음) 남기는 오류입니다.
  */
 UCLASS()
-class UAgAbilityTask_Launch : public UAbilityTask
+class UAgAbilityTask_Launch : public UAbilityTask_ApplyRootMotionJumpForce
 {
 	GENERATED_BODY()
 
 public:
-	UAgAbilityTask_Launch();
-
 	/** 이 Task가 거는 루트 모션 소스의 이름. 캐릭터는 이 소스가 남아 있는 동안의 착지(Launch가 착지로 보지 않음)를 알리지 않습니다. */
 	static const FName SourceName;
 
@@ -81,17 +82,8 @@ public:
 
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
-	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	UFUNCTION()
-	void HandleLanded(const FHitResult& Hit);
-
-	void Finish();
-
 	FAgLaunchParams Params;
-	TWeakObjectPtr<UCharacterMovementComponent> Movement;
-	uint16 SourceID = 0;
-	float Elapsed = 0.f;
 	bool bReportedRootMotion = false;
 };

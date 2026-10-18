@@ -1,21 +1,16 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "Data/AgAbilityData.h"
-#include "AbilitySystem/AgTargeting.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_ApplyEffect.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Launch.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgJsonRead.h"
 #include "Data/AgMontageTimeline.h"
+#include "Data/AgTaskParams.h"
 #include "Animation/AnimMontage.h"
 #include "Dom/JsonObject.h"
 #include "GameplayEffect.h"
 #include "JsonObjectConverter.h"
-#include "TargetingSystem/TargetingPreset.h"
-#include "Types/TargetingSystemTypes.h"
 #include "UObject/UnrealType.h"
 
 namespace
@@ -100,18 +95,6 @@ namespace
 		{
 			Errors.Add(Field + TEXT(".StopDistance: must be positive"));
 		}
-
-		// 적대하는 살아 있는 캐릭터만 남기고 Range와 대상 태그로 거르는 일은 프리셋 안의 프로젝트 필터가 합니다. 없으면 그 조건이
-		// 모두 무시되므로 읽을 때 막습니다.
-		const FTargetingTaskSet* TaskSet = Out.Targeting.Preset ? Out.Targeting.Preset->GetTargetingTaskSet() : nullptr;
-		const bool bHasFilter = TaskSet && TaskSet->Tasks.ContainsByPredicate([](const TObjectPtr<UTargetingTask>& Task)
-		{
-			return Task && Task->IsA<UAgTargetingFilterTask_ActionTarget>();
-		});
-		if (!bHasFilter)
-		{
-			Errors.Add(Field + TEXT(".Preset: needs the filter task AgTargetingFilterTask_ActionTarget"));
-		}
 	}
 
 	void ReadMontage(const FJsonObject& Entry, FAgAbilityData& Out, const FString& Path, TArray<FString>& Errors)
@@ -127,20 +110,13 @@ namespace
 		{
 			return;
 		}
-		Keys(*Montage, Field, {TEXT("MontageId")}, {TEXT("RootMotionDistance")}, Errors);
+		Keys(*Montage, Field, {TEXT("MontageId")}, {}, Errors);
 		FString Id;
 		if (!Montage->TryGetStringField(TEXT("MontageId"), Id) || FName(*Id).IsNone())
 		{
 			Errors.Add(Field + TEXT(".MontageId: missing name"));
 		}
 		Out.Montage.MontageId = FName(*Id);
-		Out.Montage.bHasRootMotionDistance = Montage->HasField(TEXT("RootMotionDistance"));
-		if (Out.Montage.bHasRootMotionDistance &&
-			Number(*Montage, TEXT("RootMotionDistance"), Field, Out.Montage.RootMotionDistance, Errors) &&
-			Out.Montage.RootMotionDistance <= 0.f)
-		{
-			Errors.Add(Field + TEXT(".RootMotionDistance: must be positive"));
-		}
 	}
 
 	void ReadEnd(const FJsonObject& Entry, FAgAbilityData& Out, const FString& Path, TArray<FString>& Errors)
@@ -396,63 +372,72 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 		{
 			continue;
 		}
-		const FString AbilityPath = Path + TEXT("Abilities.") + Id.ToString() + TEXT(": ");
+		const FString AbilityPath = Path + TEXT("Abilities.") + Id.ToString();
 		const UAnimMontage* Montage = Ability->bHasMontage ? Data.Montages.FindRef(Ability->Montage.MontageId) : nullptr;
 		if (Ability->bHasMontage && !Montage)
 		{
-			Errors.Add(AbilityPath + TEXT("missing montage ") + Ability->Montage.MontageId.ToString());
-		}
-		if (Montage && Ability->Montage.bHasRootMotionDistance &&
-			Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D() <=
-				UE_SMALL_NUMBER)
-		{
-			Errors.Add(AbilityPath + TEXT("Montage.RootMotionDistance: montage has no horizontal root motion"));
+			Errors.Add(AbilityPath + TEXT(": missing montage ") + Ability->Montage.MontageId.ToString());
 		}
 
-		// 시간표 항목이 행동 대상을 쓰면 그 시간표를 재생하는 행동이 대상을 정해야 합니다. Launch와 Dash는 같은 우선순위로 속도를
-		// 덮어써 함께 쓰면 나중에 건 쪽이 움직이지 못하므로, 한 행동에 함께 두지 않습니다.
-		const FAgMontageTimeline* Timeline = Montage ? Timelines.Find(FName(*Montage->GetPathName())) : nullptr;
-		bool bTimelineNeedsTarget = false;
-		bool bLaunch = Ability->Tasks.ContainsByPredicate([](const FInstancedStruct& Task)
+		// 효과와 몽타주가 필요한 발동 Task만의 규칙은 Task가 검사합니다.
+		FAgTaskLinks Links;
+		Links.Effects = &Effects;
+		Links.Montage = Montage;
+		for (int32 Index = 0; Index < Ability->Tasks.Num(); ++Index)
 		{
-			return Task.GetPtr<FAgLaunchParams>() != nullptr;
-		});
-		bool bDash = false;
-		if (Timeline)
+			Ability->Tasks[Index].Get<FAgTaskParams>().ValidateLinks(Links, FString::Printf(TEXT("%s.Tasks[%d]"), *AbilityPath, Index),
+				Errors);
+		}
+
+		// 시간표 항목이 행동 대상을 쓰면 그 시간표를 재생하는 행동이 대상을 정해야 합니다. 속도를 덮어쓰는 Task가 두 종류면 우선순위가
+		// 높은 쪽(엔진 JumpForce Task)만 움직이므로, 한 행동(발동 Task와 그 몽타주의 시간표)에는 한 종류만 둡니다.
+		TArray<const FInstancedStruct*> Items;
+		for (const FInstancedStruct& Task : Ability->Tasks)
+		{
+			Items.Add(&Task);
+		}
+		bool bTimelineNeedsTarget = false;
+		if (const FAgMontageTimeline* Timeline = Montage ? Timelines.Find(FName(*Montage->GetPathName())) : nullptr)
 		{
 			for (const FAgTimelineSection& Section : Timeline->Sections)
 			{
 				for (const FAgTimelineItem& Item : Section.Items)
 				{
 					bTimelineNeedsTarget |= Item.Params.Get<FAgTaskParams>().NeedsTarget();
-					bLaunch |= Item.Params.GetPtr<FAgLaunchParams>() != nullptr;
-					bDash |= Item.Params.GetPtr<FAgDashParams>() != nullptr;
+					Items.Add(&Item.Params);
 				}
+			}
+		}
+		TArray<FString> VelocityTasks;
+		for (const FInstancedStruct* Item : Items)
+		{
+			if (Item->Get<FAgTaskParams>().OverridesVelocity())
+			{
+				VelocityTasks.AddUnique(AgTaskParams::GetTaskName(*Item->GetScriptStruct()).ToString());
 			}
 		}
 		if (bTimelineNeedsTarget && !Ability->bHasTargeting && !Ability->HasEventTrigger())
 		{
 			Errors.Add(AbilityPath +
-					   TEXT("its montage timeline uses the ability target, so it needs Targeting or a GameplayEvent trigger"));
+					   TEXT(": its montage timeline uses the ability target, so it needs Targeting or a GameplayEvent trigger"));
 		}
-		if (bLaunch && bDash)
+		if (VelocityTasks.Num() > 1)
 		{
-			Errors.Add(AbilityPath + TEXT("Launch and Dash both override the velocity, so one ability can't use both"));
+			VelocityTasks.Sort();
+			Errors.Add(AbilityPath + TEXT(": ") + FString::Join(VelocityTasks, TEXT(" and ")) +
+					   TEXT(" all override the velocity, so one ability can use only one of them"));
 		}
 	}
 }
 
-void AgAbilityData::ValidateEffects(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors)
+void AgAbilityData::ValidateReferences(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, const TMap<FName, FAgProjectileDefinition>* Projectiles, TArray<FString>& Errors)
 {
 	for (const TPair<FName, FAgAbilityData>& Pair : Abilities)
 	{
 		for (int32 Index = 0; Index < Pair.Value.Tasks.Num(); ++Index)
 		{
-			if (const FAgApplyEffectParams* Apply = Pair.Value.Tasks[Index].GetPtr<FAgApplyEffectParams>())
-			{
-				Apply->ValidateEffect(Effects, EAgTaskPlacement::Activation,
-					FString::Printf(TEXT("%s.Tasks[%d]"), *Pair.Key.ToString(), Index), Errors);
-			}
+			AgTaskParams::ValidateReferences(Pair.Value.Tasks[Index].Get<FAgTaskParams>(), Effects, Projectiles,
+				FString::Printf(TEXT("%s.Tasks[%d]"), *Pair.Key.ToString(), Index), Errors);
 		}
 	}
 }

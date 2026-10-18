@@ -26,9 +26,6 @@ struct FAgApplyEffectParams : public FAgTaskParams
 	UPROPERTY()
 	bool bRemoveOnEnd = false;
 
-	/** Effect가 Effects.json에 있는지, 구간이면 무한 효과인지 검사합니다. */
-	void ValidateEffect(const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) const;
-
 	virtual EAgTaskPlacement GetPlacements() const override
 	{
 		return EAgTaskPlacement::Activation | EAgTaskPlacement::Window | EAgTaskPlacement::Point;
@@ -36,6 +33,14 @@ struct FAgApplyEffectParams : public FAgTaskParams
 
 	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
 	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
+
+	virtual void GetReferences(FAgTaskReferences& Out) const override
+	{
+		Out.Effects.Add(Effect);
+	}
+
+	/** 구간이면 무한 효과입니다. */
+	virtual void ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

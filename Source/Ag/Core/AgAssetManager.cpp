@@ -2,7 +2,7 @@
 
 #include "Core/AgAssetManager.h"
 
-#include "AbilitySystem/Tasks/AgAbilityTask_ApplyEffect.h"
+#include "AbilitySystem/AgTargeting.h"
 #include "Ag.h"
 #include "Animation/AnimMontage.h"
 #include "Data/AgAbilityData.h"
@@ -13,8 +13,11 @@
 #include "Data/AgJsonRead.h"
 #include "Data/AgMontageTimeline.h"
 #include "Data/AgProjectileData.h"
+#include "Data/AgTargetingPresetData.h"
+#include "Data/AgTaskParams.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
+#include "Engine/EngineTypes.h"
 #include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "JsonObjectConverter.h"
@@ -24,6 +27,7 @@
 #include "Misc/ScopeExit.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "TargetingSystem/TargetingPreset.h"
 #include "UObject/UnrealType.h"
 #include "UObject/Package.h"
 #if WITH_EDITOR
@@ -41,6 +45,7 @@ namespace
 	const TCHAR* const EffectsFile = TEXT("Effects.json");
 	const TCHAR* const ProjectilesFile = TEXT("Projectiles.json");
 	const TCHAR* const MontageTimelinesFile = TEXT("MontageTimelines.json");
+	const TCHAR* const TargetingPresetsFile = TEXT("TargetingPresets.json");
 	const TCHAR* const AbilitiesFile = TEXT("Abilities.json");
 	const TCHAR* const CharactersFile = TEXT("Characters.json");
 
@@ -104,10 +109,13 @@ namespace
 		}
 	}
 
-	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors);
+	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors, bool bAllowMissing);
 
-	/** 값을 속성에 맞춰 검사합니다: JSON 형식, 그다음 그 형식에 필요한 것(필드, 태그, 열거형 값, 정수, 범위). */
-	void CheckValue(const TSharedPtr<FJsonValue>& Value, const FProperty* Property, const FString& Path, TArray<FString>& Errors)
+	/**
+	 * 값을 속성에 맞춰 검사합니다: JSON 형식, 그다음 그 형식에 필요한 것(필드, 태그, 열거형 값, 정수, 범위). bAllowMissing이면 구조체
+	 * 필드가 빠져도 됩니다.
+	 */
+	void CheckValue(const TSharedPtr<FJsonValue>& Value, const FProperty* Property, const FString& Path, TArray<FString>& Errors, bool bAllowMissing)
 	{
 		const EJson Type = GetJsonType(Property);
 		if (!Value.IsValid() || Value->Type != Type)
@@ -121,7 +129,7 @@ namespace
 			const TArray<TSharedPtr<FJsonValue>>& Items = Value->AsArray();
 			for (int32 Index = 0; Index < Items.Num(); ++Index)
 			{
-				CheckValue(Items[Index], ArrayProperty->Inner, FString::Printf(TEXT("%s[%d]"), *Path, Index), Errors);
+				CheckValue(Items[Index], ArrayProperty->Inner, FString::Printf(TEXT("%s[%d]"), *Path, Index), Errors, bAllowMissing);
 			}
 		}
 		else if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
@@ -145,7 +153,7 @@ namespace
 						Errors.Add(Path + TEXT(".") + Key + TEXT(": must be a canonical integer key"));
 					}
 				}
-				CheckValue(Entry.Value, MapProperty->ValueProp, Path + TEXT(".") + Key, Errors);
+				CheckValue(Entry.Value, MapProperty->ValueProp, Path + TEXT(".") + Key, Errors, bAllowMissing);
 			}
 		}
 		else if (const FObjectPropertyBase* ObjectProperty = CastField<FObjectPropertyBase>(Property))
@@ -160,8 +168,14 @@ namespace
 			UObject* Object = StaticLoadObject(UObject::StaticClass(), nullptr, *ObjectPath, nullptr, LOAD_NoWarn);
 			const FClassProperty* ClassProperty = CastField<FClassProperty>(Property);
 			const UClass* Class = Cast<UClass>(Object);
+			// 추상 클래스는 속성이 허용할 때만 받습니다(엔진 ActorClass 필터). 배열 원소의 메타데이터는 배열 속성에 있습니다.
+			bool bAbstractAllowed = false;
+#if WITH_METADATA
+			bAbstractAllowed = Property->GetOwnerProperty()->HasMetaData(TEXT("AllowAbstract"));
+#endif
 			if (!Object || !Object->IsA(ObjectProperty->PropertyClass) ||
-				(ClassProperty && (!Class || !Class->IsChildOf(ClassProperty->MetaClass) || Class->HasAnyClassFlags(CLASS_Abstract))))
+				(ClassProperty && (!Class || !Class->IsChildOf(ClassProperty->MetaClass) ||
+									  (Class->HasAnyClassFlags(CLASS_Abstract) && !bAbstractAllowed))))
 			{
 				Errors.Add(FString::Printf(TEXT("%s: %s is missing or has an invalid type"), *Path, *ObjectPath));
 			}
@@ -181,7 +195,7 @@ namespace
 					Fields.Add(*It);
 				}
 			}
-			CheckObject(*Value->AsObject(), Fields, Path + TEXT("."), Errors);
+			CheckObject(*Value->AsObject(), Fields, Path + TEXT("."), Errors, bAllowMissing);
 		}
 		else if (IsTagProperty(Property))
 		{
@@ -248,10 +262,10 @@ namespace
 	}
 
 	/**
-	 * Json에 이 속성들이 빠짐없이, 다른 키 없이 있는지 확인하고 값마다 검사합니다. 키는 엔진의 이름(FName)과 JSON 객체처럼
-	 * 대소문자를 구분하지 않습니다. 쿡한 빌드의 속성 이름은 대소문자를 보존하지 않습니다(예: UP → Up).
+	 * Json에 이 속성들이 빠짐없이(bAllowMissing이면 빠져도 됨), 다른 키 없이 있는지 확인하고 값마다 검사합니다. 키는 엔진의
+	 * 이름(FName)과 JSON 객체처럼 대소문자를 구분하지 않습니다. 쿡한 빌드의 속성 이름은 대소문자를 보존하지 않습니다(예: UP → Up).
 	 */
-	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors)
+	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors, bool bAllowMissing)
 	{
 		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Json.Values)
 		{
@@ -262,7 +276,7 @@ namespace
 			});
 			if (Property)
 			{
-				CheckValue(Field.Value, *Property, Path + Key, Errors);
+				CheckValue(Field.Value, *Property, Path + Key, Errors, bAllowMissing);
 			}
 			else
 			{
@@ -271,7 +285,7 @@ namespace
 		}
 		for (const FProperty* Property : Properties)
 		{
-			if (!Json.HasField(Property->GetName()))
+			if (!bAllowMissing && !Json.HasField(Property->GetName()))
 			{
 				Errors.Add(FString::Printf(TEXT("%s%s: missing"), *Path, *Property->GetName()));
 			}
@@ -344,7 +358,7 @@ namespace
 		}
 #if WITH_EDITOR
 		const int32 Before = Errors.Num();
-		CheckObject(Json, Properties, Path, Errors);
+		CheckObject(Json, Properties, Path, Errors, /*bAllowMissing*/ false);
 		if (Errors.Num() != Before)
 		{
 			return;
@@ -360,6 +374,131 @@ namespace
 			{
 				Errors.Add(Path + Property->GetName() + TEXT(": ") + FailReason.ToString());
 			}
+		}
+	}
+
+	/**
+	 * 오브젝트 타입 배열(AOE Task의 CollisionObjectTypes)은 에디터에 보이는 채널 이름(Pawn)으로 적습니다. 엔진 값(ObjectTypeQuery3)은
+	 * 프로젝트 충돌 설정의 순서로 정해지므로, 읽을 때 채널 이름을 그 값으로 바꿉니다.
+	 */
+	void ConvertObjectTypeNames(FJsonObject& Entry, const UClass& Class, const FString& Path, TArray<FString>& Errors)
+	{
+		for (TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Entry.Values)
+		{
+			const FArrayProperty* Array = FindFProperty<FArrayProperty>(&Class, FName(*FString(Field.Key)));
+			const FByteProperty* Inner = Array ? CastField<FByteProperty>(Array->Inner) : nullptr;
+			if (!Inner || Inner->Enum != StaticEnum<EObjectTypeQuery>() || Field.Value->Type != EJson::Array)
+			{
+				continue;
+			}
+			TArray<TSharedPtr<FJsonValue>> Values;
+			for (const TSharedPtr<FJsonValue>& Value : Field.Value->AsArray())
+			{
+				const FString Name = Value->Type == EJson::String ? Value->AsString() : FString();
+				const int64 Channel = Name.IsEmpty() ? INDEX_NONE : StaticEnum<ECollisionChannel>()->GetValueByNameString(TEXT("ECC_") + Name);
+				const EObjectTypeQuery ObjectType =
+					Channel == INDEX_NONE ? ObjectTypeQuery_MAX : UEngineTypes::ConvertToObjectType(static_cast<ECollisionChannel>(Channel));
+				if (ObjectType == ObjectTypeQuery_MAX)
+				{
+					Errors.Add(Path + FString(Field.Key) + TEXT(": ") + Name + TEXT(" is not an object channel"));
+					continue;
+				}
+				Values.Add(MakeShared<FJsonValueString>(StaticEnum<EObjectTypeQuery>()->GetNameStringByValue(ObjectType)));
+			}
+			Field.Value = MakeShared<FJsonValueArray>(Values);
+		}
+	}
+
+	/**
+	 * 대상 프리셋 정의(프리셋 ID마다 Task 목록)를 읽어 Outer 아래에 프리셋을 만듭니다. Task는 클래스 경로(Class)와 바꿀 속성만 적고,
+	 * 적지 않은 속성은 그 클래스의 기본값입니다. 에디터의 프리셋에서 고칠 수 있는 속성만 받습니다. 객체 이름에 Version을 붙여 읽을
+	 * 때마다 새 프리셋을 만듭니다.
+	 */
+	void ReadTargetingPresets(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UTargetingPreset>>& Out, TArray<FString>& Errors)
+	{
+		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Json.Values)
+		{
+			const FString Key(Pair.Key);
+			const FName Id(*Key);
+			const TArray<TSharedPtr<FJsonValue>>* Entries = nullptr;
+			if (Id.IsNone() || Out.Contains(Id))
+			{
+				Errors.Add(Key + TEXT(": empty or duplicate preset ID"));
+				continue;
+			}
+			if (!Pair.Value->TryGetArray(Entries))
+			{
+				Errors.Add(Key + TEXT(": must be an array of targeting tasks"));
+				continue;
+			}
+			UTargetingPreset* Preset = NewObject<UTargetingPreset>(&Outer, FName(*FString::Printf(TEXT("%s_%d"), *Key, Version)));
+			TArray<TObjectPtr<UTargetingTask>>& Tasks = Preset->GetMutableTargetingTaskSet().Tasks;
+			for (int32 Index = 0; Index < Entries->Num(); ++Index)
+			{
+				const FString Path = FString::Printf(TEXT("%s[%d]."), *Key, Index);
+				const TSharedPtr<FJsonObject>* Source = nullptr;
+				FString ClassPath;
+				if (!(*Entries)[Index]->TryGetObject(Source) || !(*Source)->TryGetStringField(TEXT("Class"), ClassPath))
+				{
+					Errors.Add(Path + TEXT("Class: must be an object with the task class path"));
+					continue;
+				}
+				UClass* Class = LoadClass<UTargetingTask>(nullptr, *ClassPath, nullptr, LOAD_NoWarn);
+				if (!Class || Class->HasAnyClassFlags(CLASS_Abstract) || Class->GetPathName() != ClassPath)
+				{
+					Errors.Add(Path + TEXT("Class: missing targeting task class, abstract class or redirected path ") + ClassPath);
+					continue;
+				}
+				FJsonObject Entry = **Source;
+				Entry.RemoveField(TEXT("Class"));
+				ConvertObjectTypeNames(Entry, *Class, Path, Errors);
+				TArray<const FProperty*> Properties;
+				for (TFieldIterator<FProperty> It(Class); It; ++It)
+				{
+					if (It->HasAnyPropertyFlags(CPF_Edit) && !It->HasAnyPropertyFlags(CPF_EditConst | CPF_DisableEditOnInstance | CPF_Deprecated))
+					{
+						Properties.Add(*It);
+					}
+				}
+#if WITH_EDITOR
+				const int32 Before = Errors.Num();
+				CheckObject(Entry, Properties, Path, Errors, /*bAllowMissing*/ true);
+				if (Errors.Num() != Before)
+				{
+					continue;
+				}
+#endif
+				UTargetingTask* Task = NewObject<UTargetingTask>(Preset, Class);
+				for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Entry.Values)
+				{
+					const FString Name(Field.Key);
+					const FProperty* const* Property = Properties.FindByPredicate([&Name](const FProperty* Candidate)
+					{
+						return Candidate->GetName().Equals(Name, ESearchCase::IgnoreCase);
+					});
+					FText FailReason;
+					if (!Property)
+					{
+						Errors.Add(Path + Name + TEXT(": unknown key"));
+					}
+					else if (!FJsonObjectConverter::JsonValueToUProperty(Field.Value, const_cast<FProperty*>(*Property),
+								 (*Property)->ContainerPtrToValuePtr<void>(Task), 0, 0, false, &FailReason))
+					{
+						Errors.Add(Path + Name + TEXT(": ") + FailReason.ToString());
+					}
+				}
+				Tasks.Add(Task);
+			}
+			// 적대·생존·범위·대상 태그 조건은 프로젝트 필터가 거릅니다. 없으면 행동의 Range와 대상 태그가 모두 무시되므로 막습니다.
+			const bool bHasFilter = Tasks.ContainsByPredicate([](const TObjectPtr<UTargetingTask>& Task)
+			{
+				return Task->IsA<UAgTargetingFilterTask_ActionTarget>();
+			});
+			if (!bHasFilter)
+			{
+				Errors.Add(Key + TEXT(": needs the filter task AgTargetingFilterTask_ActionTarget"));
+			}
+			Out.Add(Id, Preset);
 		}
 	}
 
@@ -405,6 +544,7 @@ UAgAssetManager::UAgAssetManager()
 	Effects = CreateDefaultSubobject<UAgEffectSet>(TEXT("Effects"));
 	Projectiles = CreateDefaultSubobject<UAgProjectileSet>(TEXT("Projectiles"));
 	MontageTimelines = CreateDefaultSubobject<UAgMontageTimelineData>(TEXT("MontageTimelines"));
+	TargetingPresets = CreateDefaultSubobject<UAgTargetingPresetSet>(TEXT("TargetingPresets"));
 	Abilities = CreateDefaultSubobject<UAgAbilitySet>(TEXT("Abilities"));
 	Characters.Add(TEXT("Player"), CreateDefaultSubobject<UAgPlayerData>(TEXT("Player")));
 	Characters.Add(TEXT("Boss"), CreateDefaultSubobject<UAgBossData>(TEXT("Boss")));
@@ -435,6 +575,12 @@ const UAgCameraData& UAgAssetManager::GetCameraData() const
 const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const
 {
 	return *MontageTimelines;
+}
+
+const UTargetingPreset* UAgAssetManager::FindTargetingPreset(FName Id) const
+{
+	const TObjectPtr<UTargetingPreset>* Found = TargetingPresets->Presets.Find(Id);
+	return Found ? Found->Get() : nullptr;
 }
 
 const FAgAbilityData* UAgAssetManager::FindAbility(FName Id) const
@@ -498,7 +644,8 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 		return;
 	}
 
-	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE는 실행 중에 만들고 클래스만 가리킵니다.
+	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE와 대상 프리셋은 실행 중에 만들고
+	// 클래스만 가리킵니다.
 	TArray<UObject*> DataObjects = {CombatRules, CameraData, Projectiles, MontageTimelines, Abilities};
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
@@ -523,6 +670,7 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 	TSet<FName> UsedAbilities;
 	TSet<FName> UsedEffects;
 	TSet<FName> UsedProjectiles;
+	TSet<FName> UsedPresets;
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
 		UsedAbilities.Append(Pair.Value->Abilities);
@@ -533,30 +681,31 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 	{
 		UsedEffects.Add(AgEffectData::Id(static_cast<EAgEffect>(CodeEffects->GetValueByIndex(Index))));
 	}
+	// Task가 가리키는 효과와 투사체는 그 Task가 알려 줍니다(GetReferences).
+	FAgTaskReferences TaskReferences;
 	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
 	{
+		if (Pair.Value.bHasTargeting)
+		{
+			UsedPresets.Add(Pair.Value.Targeting.Preset);
+		}
 		for (const FInstancedStruct& Task : Pair.Value.Tasks)
 		{
-			if (const FAgApplyEffectParams* Apply = Task.GetPtr<FAgApplyEffectParams>())
-			{
-				UsedEffects.Add(Apply->Effect);
-			}
+			Task.Get<FAgTaskParams>().GetReferences(TaskReferences);
 		}
 	}
 	for (const TPair<FName, FAgMontageTimeline>& Pair : MontageTimelines->Timelines)
 	{
-		UsedProjectiles.Append(AgMontageTimeline::GetProjectileIds(Pair.Value));
 		for (const FAgTimelineSection& Section : Pair.Value.Sections)
 		{
 			for (const FAgTimelineItem& Item : Section.Items)
 			{
-				if (const FAgApplyEffectParams* Apply = Item.Params.GetPtr<FAgApplyEffectParams>())
-				{
-					UsedEffects.Add(Apply->Effect);
-				}
+				Item.Params.Get<FAgTaskParams>().GetReferences(TaskReferences);
 			}
 		}
 	}
+	UsedEffects.Append(TaskReferences.Effects);
+	UsedProjectiles.Append(TaskReferences.Projectiles);
 	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
 	{
 		if (!UsedAbilities.Contains(Pair.Key))
@@ -568,22 +717,29 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 	{
 		if (!UsedEffects.Contains(Pair.Key))
 		{
-			UE_LOG(LogAg, Error, TEXT("%s: no C++, character or ApplyEffect uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
+			UE_LOG(LogAg, Error, TEXT("%s: no C++, character or task uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
 		}
 	}
 	for (const TPair<FName, FAgProjectileDefinition>& Pair : Projectiles->Projectiles)
 	{
 		if (!UsedProjectiles.Contains(Pair.Key))
 		{
-			UE_LOG(LogAg, Error, TEXT("%s: no montage timeline launches this projectile (%s)"), ProjectilesFile, *Pair.Key.ToString());
+			UE_LOG(LogAg, Error, TEXT("%s: no task uses this projectile (%s)"), ProjectilesFile, *Pair.Key.ToString());
+		}
+	}
+	for (const TPair<FName, TObjectPtr<UTargetingPreset>>& Pair : TargetingPresets->Presets)
+	{
+		if (!UsedPresets.Contains(Pair.Key))
+		{
+			UE_LOG(LogAg, Error, TEXT("%s: no ability uses this targeting preset (%s)"), TargetingPresetsFile, *Pair.Key.ToString());
 		}
 	}
 
 	// UFS에 포함되지만 로더가 읽지 않는 파일도 배포하지 않습니다.
 	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(), FString(CameraDataFile).ToLower(),
 		FString(EffectsFile).ToLower(), FString(ProjectilesFile).ToLower(),
-		FString(MontageTimelinesFile).ToLower(), FString(AbilitiesFile).ToLower(),
-		FString(CharactersFile).ToLower()};
+		FString(MontageTimelinesFile).ToLower(), FString(TargetingPresetsFile).ToLower(),
+		FString(AbilitiesFile).ToLower(), FString(CharactersFile).ToLower()};
 	TArray<FString> Files;
 	IFileManager::Get().FindFiles(Files, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
 	for (const FString& File : Files)
@@ -612,6 +768,7 @@ bool UAgAssetManager::LoadJsonData()
 	UAgEffectSet* NewEffects = NewObject<UAgEffectSet>(this);
 	UAgProjectileSet* NewProjectiles = NewObject<UAgProjectileSet>(this);
 	UAgMontageTimelineData* NewTimelines = NewObject<UAgMontageTimelineData>(this);
+	UAgTargetingPresetSet* NewTargetingPresets = NewObject<UAgTargetingPresetSet>(this);
 	UAgAbilitySet* NewAbilities = NewObject<UAgAbilitySet>(this);
 	JsonLoadTargets.Reset();
 	JsonLoadTargets.Add(NewRules);
@@ -619,6 +776,7 @@ bool UAgAssetManager::LoadJsonData()
 	JsonLoadTargets.Add(NewEffects);
 	JsonLoadTargets.Add(NewProjectiles);
 	JsonLoadTargets.Add(NewTimelines);
+	JsonLoadTargets.Add(NewTargetingPresets);
 	JsonLoadTargets.Add(NewAbilities);
 	TMap<FName, UAgCharacterData*> NewCharacters;
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
@@ -669,9 +827,15 @@ bool UAgAssetManager::LoadJsonData()
 #if WITH_EDITOR
 		if (TimelineErrors.IsEmpty())
 		{
-			AgMontageTimeline::ValidateAssets(NewTimelines->Timelines, TimelineErrors);
+			AgMontageTimeline::ValidateAssets(NewTimelines->Timelines, EffectErrors.IsEmpty() ? &NewEffects->Effects : nullptr,
+				TimelineErrors);
 		}
 #endif
+	}
+	TArray<FString> TargetingPresetErrors;
+	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(TargetingPresetsFile, TargetingPresetErrors))
+	{
+		ReadTargetingPresets(*Json, *this, DataVersion, NewTargetingPresets->Presets, TargetingPresetErrors);
 	}
 	TArray<FString> AbilityErrors;
 	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(AbilitiesFile, AbilityErrors))
@@ -698,27 +862,27 @@ bool UAgAssetManager::LoadJsonData()
 		}
 	}
 
-	// 파일 사이의 참조는 양쪽 파일을 읽었을 때만 검사합니다.
-	if (TimelineErrors.IsEmpty() && ProjectileErrors.IsEmpty())
+	// 파일 사이의 참조는 양쪽 파일을 읽었을 때만 검사합니다. Task가 가리키는 효과와 투사체는 그 Task가 알려 줍니다(GetReferences).
+	const TMap<FName, TObjectPtr<UGameplayEffect>>* ReadEffects = EffectErrors.IsEmpty() ? &NewEffects->Effects : nullptr;
+	const TMap<FName, FAgProjectileDefinition>* ReadProjectiles = ProjectileErrors.IsEmpty() ? &NewProjectiles->Projectiles : nullptr;
+	if (TimelineErrors.IsEmpty())
 	{
-		for (const TPair<FName, FAgMontageTimeline>& Pair : NewTimelines->Timelines)
+		AgMontageTimeline::ValidateReferences(NewTimelines->Timelines, ReadEffects, ReadProjectiles, TimelineErrors);
+	}
+	if (AbilityErrors.IsEmpty() && TargetingPresetErrors.IsEmpty())
+	{
+		for (const TPair<FName, FAgAbilityData>& Pair : NewAbilities->Abilities)
 		{
-			for (FName ProjectileId : AgMontageTimeline::GetProjectileIds(Pair.Value))
+			if (Pair.Value.bHasTargeting && !NewTargetingPresets->Presets.Contains(Pair.Value.Targeting.Preset))
 			{
-				if (!NewProjectiles->Projectiles.Contains(ProjectileId))
-				{
-					TimelineErrors.Add(Pair.Key.ToString() + TEXT(": SpawnProjectile uses unknown projectile ") + ProjectileId.ToString());
-				}
+				AbilityErrors.Add(Pair.Key.ToString() + TEXT(".Targeting.Preset: unknown targeting preset ") +
+								  Pair.Value.Targeting.Preset.ToString());
 			}
 		}
 	}
-	if (AbilityErrors.IsEmpty() && EffectErrors.IsEmpty())
+	if (AbilityErrors.IsEmpty())
 	{
-		AgAbilityData::ValidateEffects(NewAbilities->Abilities, NewEffects->Effects, AbilityErrors);
-	}
-	if (TimelineErrors.IsEmpty() && EffectErrors.IsEmpty())
-	{
-		AgMontageTimeline::ValidateEffects(NewTimelines->Timelines, NewEffects->Effects, TimelineErrors);
+		AgAbilityData::ValidateReferences(NewAbilities->Abilities, ReadEffects, ReadProjectiles, AbilityErrors);
 	}
 	if (CharacterErrors.IsEmpty() && AbilityErrors.IsEmpty() && EffectErrors.IsEmpty() && TimelineErrors.IsEmpty())
 	{
@@ -750,8 +914,8 @@ bool UAgAssetManager::LoadJsonData()
 
 	const TPair<const TCHAR*, const TArray<FString>*> Results[] = {
 		{CombatRulesFile, &RulesErrors}, {CameraDataFile, &CameraErrors}, {EffectsFile, &EffectErrors},
-		{ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors}, {AbilitiesFile, &AbilityErrors},
-		{CharactersFile, &CharacterErrors}};
+		{ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors}, {TargetingPresetsFile, &TargetingPresetErrors},
+		{AbilitiesFile, &AbilityErrors}, {CharactersFile, &CharacterErrors}};
 	bool bFailed = false;
 	for (const TPair<const TCHAR*, const TArray<FString>*>& Result : Results)
 	{
@@ -771,6 +935,7 @@ bool UAgAssetManager::LoadJsonData()
 	CopyJsonProperties(*NewEffects, *Effects);
 	CopyJsonProperties(*NewProjectiles, *Projectiles);
 	CopyJsonProperties(*NewTimelines, *MontageTimelines);
+	CopyJsonProperties(*NewTargetingPresets, *TargetingPresets);
 	CopyJsonProperties(*NewAbilities, *Abilities);
 	for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
 	{

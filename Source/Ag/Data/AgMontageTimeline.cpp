@@ -1,19 +1,14 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "Data/AgMontageTimeline.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_ApplyEffect.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Dash.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_SpawnProjectile.h"
-#include "Animation/AgRootMotionModifier_MotionWarping.h"
 #include "Data/AgJsonRead.h"
 #include "Data/AgTaskParams.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/AnimNotifies/AnimNotifyState_DisableRootMotion.h"
 #include "Dom/JsonObject.h"
 #if WITH_EDITOR
 #include "AnimNotify_GameplayCue.h"
 #include "AnimNotifyState_MotionWarping.h"
-#include "Animation/AnimNotifies/AnimNotifyState_DisableRootMotion.h"
 #include "Core/AgGameplayTags.h"
 #include "GameplayCueInterface.h"
 #endif
@@ -166,23 +161,35 @@ bool AgMontageTimeline::ResolveTimes(const UAnimMontage& Montage, FName Section,
 	return true;
 }
 
-TArray<FName> AgMontageTimeline::GetProjectileIds(const FAgMontageTimeline& Timeline)
+bool AgMontageTimeline::GivesRootMotion(const UAnimMontage& Montage, float Start, float End)
 {
-	TArray<FName> Ids;
-	for (const FAgTimelineSection& Section : Timeline.Sections)
+	// 몽타주의 어느 시퀀스에든 루트 모션이 있으면, 루트 모션이 없는 시퀀스의 구간도 엔진은 몽타주 루트 모션(이동 없음)으로 처리해
+	// 루트 모션 소스를 쓰지 않으므로, 그 구간을 덮는 루트 모션 끄기 노티파이가 있어야 루트 모션이 없습니다.
+	return Montage.HasRootMotion() && !Montage.Notifies.ContainsByPredicate([Start, End](const FAnimNotifyEvent& Event)
 	{
-		for (const FAgTimelineItem& Item : Section.Items)
-		{
-			if (const FAgSpawnProjectileParams* Shot = Item.Params.GetPtr<FAgSpawnProjectileParams>())
-			{
-				Ids.AddUnique(Shot->ProjectileId);
-			}
-		}
-	}
-	return Ids;
+		return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
+		       Event.GetTime() <= Start + TimeTolerance &&
+		       Event.GetTime() + Event.GetDuration() >= End - TimeTolerance;
+	});
 }
 
-void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors)
+bool AgMontageTimeline::OverlapsLoop(const UAnimMontage& Montage, float Start, float End)
+{
+	for (int32 Index = 0; Index < Montage.CompositeSections.Num(); ++Index)
+	{
+		const FCompositeSection& Section = Montage.CompositeSections[Index];
+		float SectionStart = 0.f;
+		float SectionEnd = 0.f;
+		Montage.GetSectionStartAndEndTime(Index, SectionStart, SectionEnd);
+		if (Section.NextSectionName == Section.SectionName && Start < SectionEnd && SectionStart <= End)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void AgMontageTimeline::ValidateReferences(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, const TMap<FName, FAgProjectileDefinition>* Projectiles, TArray<FString>& Errors)
 {
 	for (const TPair<FName, FAgMontageTimeline>& Pair : Timelines)
 	{
@@ -190,13 +197,8 @@ void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& T
 		{
 			for (int32 Index = 0; Index < Section.Items.Num(); ++Index)
 			{
-				const FAgTimelineItem& Item = Section.Items[Index];
-				if (const FAgApplyEffectParams* Apply = Item.Params.GetPtr<FAgApplyEffectParams>())
-				{
-					Apply->ValidateEffect(Effects, Item.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point,
-						FString::Printf(TEXT("%s.%s[%d]"), *Pair.Key.ToString(), *Section.Name.ToString(), Index),
-						Errors);
-				}
+				AgTaskParams::ValidateReferences(Section.Items[Index].Params.Get<FAgTaskParams>(), Effects, Projectiles,
+					FString::Printf(TEXT("%s.%s[%d]"), *Pair.Key.ToString(), *Section.Name.ToString(), Index), Errors);
 			}
 		}
 	}
@@ -205,21 +207,6 @@ void AgMontageTimeline::ValidateEffects(const TMap<FName, FAgMontageTimeline>& T
 #if WITH_EDITOR
 namespace
 {
-	/**
-	 * Start부터 End까지 몽타주가 루트 모션을 주는지. 몽타주의 어느 시퀀스에든 루트 모션이 있으면, 루트 모션이 없는 시퀀스의 구간도
-	 * 엔진은 몽타주 루트 모션(이동 없음)으로 처리해 루트 모션 소스를 쓰지 않으므로, 그 구간을 덮는 루트 모션 끄기 노티파이가 있어야
-	 * 루트 모션이 없습니다.
-	 */
-	bool GivesRootMotion(const UAnimMontage& Montage, float Start, float End)
-	{
-		return Montage.HasRootMotion() && !Montage.Notifies.ContainsByPredicate([Start, End](const FAnimNotifyEvent& Event)
-		{
-			return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
-			       Event.GetTime() <= Start + TimeTolerance &&
-			       Event.GetTime() + Event.GetDuration() >= End - TimeTolerance;
-		});
-	}
-
 	/** 공격 예고 Cue(가드 불가 예고, 패리 예고)의 상태 노티파이입니다. 엔진 노티파이의 Cue 태그는 리플렉션으로만 읽을 수 있습니다. */
 	bool IsTelegraphCue(const FAnimNotifyEvent& Event)
 	{
@@ -232,7 +219,7 @@ namespace
 	}
 }
 
-void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Timelines, TArray<FString>& Errors)
+void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, TArray<FString>& Errors)
 {
 	for (const TPair<FName, FAgMontageTimeline>& Pair : Timelines)
 	{
@@ -308,24 +295,17 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				{
 					Errors.Add(Name + TEXT(": End must be after Start on the montage timeline"));
 				}
+
+				// 효과와 몽타주가 필요한 그 Task만의 규칙은 Task가 검사합니다.
+				FAgTaskLinks Links;
+				Links.Placement = Item.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point;
+				Links.Effects = Effects;
+				Links.Montage = Montage;
+				Links.Start = Resolved.Start;
+				Links.End = Resolved.End;
+				Item.Params.Get<FAgTaskParams>().ValidateLinks(Links, Name, Errors);
 			}
 		}
-
-		const TFunction<bool(float, float)> OverlapsLoop = [Montage](float Start, float End)
-		{
-			for (int32 Index = 0; Index < Montage->CompositeSections.Num(); ++Index)
-			{
-				const FCompositeSection& Section = Montage->CompositeSections[Index];
-				float SectionStart = 0.f;
-				float SectionEnd = 0.f;
-				Montage->GetSectionStartAndEndTime(Index, SectionStart, SectionEnd);
-				if (Section.NextSectionName == Section.SectionName && Start < SectionEnd && SectionStart <= End)
-				{
-					return true;
-				}
-			}
-			return false;
-		};
 
 		// 기다리는 구간은 반복 섹션을 처음부터 끝까지 덮어, 기다리는 동안 몽타주가 끝나거나 구간을 벗어나지 않습니다.
 		const TFunction<bool(float, float)> CoversLoopToEnd = [Montage](float Start, float End)
@@ -353,57 +333,39 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			LinkedSections.Add(Index);
 		}
 
-		bool bHasTrack = false;
 		TArray<float> HitTimes;
 		for (int32 Index = 0; Index < Items.Num(); ++Index)
 		{
 			const FResolved& Window = Items[Index];
-			const FInstancedStruct& Params = Window.Item->Params;
-			const FAgTrackParams* Track = Params.GetPtr<FAgTrackParams>();
-			const bool bDash = Params.GetPtr<FAgDashParams>() != nullptr;
-			bHasTrack |= Track != nullptr;
-			const bool bHit = Params.GetPtr<FAgAttackParams>() || (!Window.Item->bWindow && Params.GetPtr<FAgSpawnProjectileParams>());
-			if (bHit && LinkedSections.Contains(Window.SectionIndex))
+			const FAgTaskParams& Params = Window.Item->Params.Get<FAgTaskParams>();
+			if (Params.StartsHit() && LinkedSections.Contains(Window.SectionIndex))
 			{
 				HitTimes.Add(Window.Start);
 			}
-			if (!Window.Item->bWindow && OverlapsLoop(Window.Start, Window.Start))
+			if (!Window.Item->bWindow && OverlapsLoop(*Montage, Window.Start, Window.Start))
 			{
 				Errors.Add(Window.Name + TEXT(": a point can't be inside a looping section"));
 			}
-			if (Track && OverlapsLoop(Window.Start, Window.End))
-			{
-				Errors.Add(Window.Name + TEXT(": a tracking window can't overlap a looping section"));
-			}
-			if (Window.Item->bWindow && Params.Get<FAgTaskParams>().WaitsForTransition() && !CoversLoopToEnd(Window.Start, Window.End))
+			if (Window.Item->bWindow && Params.WaitsForTransition() && !CoversLoopToEnd(Window.Start, Window.End))
 			{
 				Errors.Add(Window.Name + TEXT(": a window waiting for its transition must cover a looping section to its end"));
 			}
 
-			// 경쟁: 돌진끼리는 겹치지 않습니다.
-			for (int32 Other = Index + 1; Other < Items.Num() && bDash; ++Other)
+			// 경쟁: 속도를 덮어쓰는 구간끼리는 겹치지 않습니다.
+			const bool bOverridesVelocity = Window.Item->bWindow && Params.OverridesVelocity();
+			for (int32 Other = Index + 1; Other < Items.Num() && bOverridesVelocity; ++Other)
 			{
 				const FResolved& OtherWindow = Items[Other];
-				if (OtherWindow.Item->Params.GetPtr<FAgDashParams>() && OtherWindow.Start < Window.End && Window.Start < OtherWindow.End)
+				if (OtherWindow.Item->bWindow && OtherWindow.Item->Params.Get<FAgTaskParams>().OverridesVelocity() &&
+					OtherWindow.Start < Window.End && Window.Start < OtherWindow.End)
 				{
 					Errors.Add(Window.Name + TEXT(": overlaps ") + OtherWindow.Name);
 				}
 			}
-
-			// 루트 모션 소스로 움직이는 돌진 구간에는 몽타주 루트 모션이 없어야 하고, 몽타주 루트 모션이 없는 추적 구간은 돌기만 합니다.
-			if (bDash && GivesRootMotion(*Montage, Window.Start, Window.End))
-			{
-				Errors.Add(Window.Name + TEXT(": a dash window needs no montage root motion (a root motion off notify over the window)"));
-			}
-			if (Track && !GivesRootMotion(*Montage, Window.Start, Window.End) &&
-				!(Track->bHasMaxWarpDistance && Track->MaxWarpDistance <= 0.f))
-			{
-				Errors.Add(Window.Name + TEXT(": a tracking window without montage root motion only turns, so MaxWarpDistance must be 0"));
-			}
 		}
 
-		// 몽타주에는 연출과 루트 모션 노티파이만 남습니다. 프로젝트 노티파이나 엔진 워핑 노티파이가 함께 있으면 같은 일이 두 번
-		// 일어납니다.
+		// 몽타주에는 연출과 루트 모션 노티파이만 남습니다. 프로젝트 노티파이나 엔진 워핑 노티파이(워핑은 시간표의 추적 구간이 함)가
+		// 함께 있으면 같은 일이 두 번 일어납니다.
 		for (const FAnimNotifyEvent& Event : Montage->Notifies)
 		{
 			const UObject* Notify = Event.Notify ? static_cast<const UObject*>(Event.Notify) : Event.NotifyStateClass;
@@ -412,9 +374,9 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				Errors.Add(Path + TEXT(": a montage with a timeline can't have project notifies (") + Notify->GetClass()->GetName() +
 						   TEXT(")"));
 			}
-			if (bHasTrack && Cast<UAnimNotifyState_MotionWarping>(Event.NotifyStateClass))
+			if (Cast<UAnimNotifyState_MotionWarping>(Event.NotifyStateClass))
 			{
-				Errors.Add(Path + TEXT(": tracking windows belong to the timeline, not to engine warping notifies"));
+				Errors.Add(Path + TEXT(": a montage with a timeline can't have engine warping notifies (tracking windows warp)"));
 			}
 		}
 

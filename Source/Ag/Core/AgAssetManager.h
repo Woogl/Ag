@@ -13,7 +13,9 @@ class UAgCombatRules;
 class UAgEffectSet;
 class UAgMontageTimelineData;
 class UAgProjectileSet;
+class UAgTargetingPresetSet;
 class UGameplayEffect;
+class UTargetingPreset;
 enum class EAgEffect : uint8;
 struct FAgAbilityData;
 struct FAgProjectileDefinition;
@@ -21,8 +23,8 @@ struct FAgProjectileDefinition;
 /**
  * 프로젝트의 에셋 매니저(구현 계획서 'JSON 데이터'). DefaultEngine.ini의 AssetManagerClassName으로 지정합니다.
  * 프로젝트 Data 폴더의 JSON 데이터 파일을 모두 한 묶음으로 읽어, 데이터 객체의 Transient 속성을 채우고 들고 있습니다.
- * 리플렉션으로 읽는 객체는 그 속성이 모두 파일에 있어야 하고, 다른 키는 없어야 합니다.
- * 키는 속성 이름이고, 태그·열거형은 이름으로, 에셋·클래스는 전체 객체 경로로 적습니다.
+ * 리플렉션으로 읽는 객체는 그 속성이 모두 파일에 있어야 하고, 다른 키는 없어야 합니다. 대상 프리셋의 Task만 바꿀 속성을 적고
+ * 나머지는 그 클래스의 기본값입니다. 키는 속성 이름이고, 태그·열거형은 이름으로, 에셋·클래스는 전체 객체 경로로 적습니다.
  */
 UCLASS()
 class UAgAssetManager : public UAssetManager
@@ -45,6 +47,9 @@ public:
 
 	/** MontageTimelines.json의 값(몽타주 시간표) */
 	AG_API const UAgMontageTimelineData& GetMontageTimelines() const;
+
+	/** TargetingPresets.json의 대상 프리셋. 없으면 null입니다. */
+	const UTargetingPreset* FindTargetingPreset(FName Id) const;
 
 	/** Abilities.json의 어빌리티 정의. 없으면 null입니다. 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다. */
 	const FAgAbilityData* FindAbility(FName Id) const;
@@ -98,6 +103,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAgMontageTimelineData> MontageTimelines;
+
+	UPROPERTY()
+	TObjectPtr<UAgTargetingPresetSet> TargetingPresets;
 
 	UPROPERTY()
 	TObjectPtr<UAgAbilitySet> Abilities;

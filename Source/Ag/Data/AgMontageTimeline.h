@@ -9,6 +9,7 @@
 class FJsonObject;
 class UAnimMontage;
 class UGameplayEffect;
+struct FAgProjectileDefinition;
 
 /** 시간표 항목 하나: 구간이나 지점과 그 Task의 Params. 시각은 항목을 둔 섹션의 시작 기준(초)입니다. */
 USTRUCT()
@@ -89,17 +90,21 @@ namespace AgMontageTimeline
 	/** 항목의 시각을 몽타주 시각(재생 위치)으로 바꿉니다. 지점은 OutStart만 씁니다. 섹션이 몽타주에 없으면 거짓입니다. */
 	bool ResolveTimes(const UAnimMontage& Montage, FName Section, const FAgTimelineItem& Item, float& OutStart, float& OutEnd);
 
-	/** 시간표의 발사 항목이 쓰는 투사체 ID */
-	TArray<FName> GetProjectileIds(const FAgMontageTimeline& Timeline);
+	/** Start부터 End까지(몽타주 시각) 몽타주가 루트 모션을 줍니다. 루트 모션 끄기 노티파이가 그 구간을 덮으면 주지 않습니다. */
+	bool GivesRootMotion(const UAnimMontage& Montage, float Start, float End);
 
-	/** 시간표의 ApplyEffect 항목이 거는 효과가 Effects.json에 있는지, 구간이면 무한 효과인지 검사합니다. */
-	void ValidateEffects(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors);
+	/** Start부터 End까지(몽타주 시각)가 반복 섹션과 겹칩니다. */
+	bool OverlapsLoop(const UAnimMontage& Montage, float Start, float End);
+
+	/** 항목이 가리키는 효과와 투사체가 있는지 검사합니다. 읽지 못한 파일(null)은 검사하지 않습니다. */
+	void ValidateReferences(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, const TMap<FName, FAgProjectileDefinition>* Projectiles, TArray<FString>& Errors);
 
 #if WITH_EDITOR
 	/**
-	 * 몽타주 에셋과 대조합니다: 섹션과 길이, 전환할 섹션과 전환 지점, 반복 섹션(지점, 추적 구간, 기다리는 구간), 겹치는 돌진,
-	 * 루트 모션 소스와 몽타주 루트 모션, 몽타주에 남긴 노티파이와 공격 예고의 시각
+	 * 몽타주 에셋과 대조합니다: 섹션과 길이, 전환할 섹션과 전환 지점, 반복 섹션(지점, 기다리는 구간), 속도를 덮어쓰는 구간끼리의
+	 * 겹침, 몽타주에 남긴 노티파이와 공격 예고의 시각. 항목마다 그 Task의 규칙(ValidateLinks)도 검사합니다. Effects는 효과
+	 * 파일을 읽지 못했으면 null입니다.
 	 */
-	void ValidateAssets(const TMap<FName, FAgMontageTimeline>& Timelines, TArray<FString>& Errors);
+	void ValidateAssets(const TMap<FName, FAgMontageTimeline>& Timelines, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, TArray<FString>& Errors);
 #endif
 }

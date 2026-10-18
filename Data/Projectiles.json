@@ -4,6 +4,14 @@
     "Params": {
       "Speed": 1500,
       "Range": 2000
+    },
+    "Attack": {
+      "DamageMultiplier": 1.2,
+      "PoiseMultiplier": 1,
+      "HitReaction": "KnockBack",
+      "bGuardable": true,
+      "MPCharge": 0,
+      "UPCharge": 0
     }
   }
 }

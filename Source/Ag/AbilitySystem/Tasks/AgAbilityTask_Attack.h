@@ -62,6 +62,12 @@ struct FAgAttackParams : public FAgTaskParams
 
 	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
 	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
+
+	virtual bool StartsHit() const override
+	{
+		return true;
+	}
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

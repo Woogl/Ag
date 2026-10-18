@@ -1,6 +1,6 @@
 # 캐릭터와 GAS
 
-캐릭터와 GAS를 어떻게 구현할지 정합니다.
+캐릭터와 GAS, 그리고 캐릭터가 레벨에 나타나 싸울 준비를 마치기까지(데이터, 빙의, 어빌리티 시스템, AI, 입력, HUD 연결)를 어떻게 구현할지 정합니다.
 
 ## 기술 결정
 
@@ -15,6 +15,14 @@
 | 자원 변화 | 자원이 바뀌는 일마다 그 규칙을 가진 효과를 적용합니다. 행동 비용은 엔진이 커밋할 때 부르는 `ApplyCost`에서, 공통 Ability가 실행 사본의 Resource·Amount를 자원 효과(`Resource`)의 SetByCaller에 음수로 넣어 치릅니다. 치를 수 있는지(`CheckCost`)는 같은 고정 비용으로 확인합니다. 적중의 MP·UP 충전과 극한 회피의 SP 환급은 같은 자원 효과에 얻는 양을 넣어, 달리기의 지속 소모는 주기 효과(`SprintDrain`)로, PP 회복(그로기가 끝날 때, 페이즈 전환)은 PP를 최대로 덮어쓰는 효과(`PPRefill`)로, 패리로 공격자가 잃는 PP는 계산 클래스가 양을 정하는 효과(`ParryPPLoss`)로 처리합니다. 극한 회피와 패리의 보상은 피격 처리가 보상 효과(`PerfectDodgeReward`, `ParryReward`)로 줍니다. | 자원 변경은 GameplayEffect로 적용하고 고정 기획 값은 JSON을 사용합니다. 비용은 GAS의 CheckCost·ApplyCost 흐름을 따릅니다. 엔진의 비용 GE는 클래스(`CostGameplayEffectClass`)로만 받아 쓰지 않고, 비용과 얻기가 자원 효과 하나를 함께 씁니다. 결과를 정하는 피격 처리가 보상도 주면, 구간 닫기와 보상이 한 곳에서 전투 시스템의 순서대로 일어납니다. |
 | 리젠 | SP·PP 리젠은 효과로 처리합니다. 리젠 대기는 태그를 주는 지속 효과(`SPRegenDelay`, `PPRegenDelay`)로, 자원이 줄 때마다 다시 걸어 처음부터 다시 셉니다. SP가 0이 될 때는 더 긴 대기 효과(`SPRegenDelayEmpty`)를 겁니다. 회복은 주기 효과로 하고, 대기 태그가 있는 동안에는 멈춥니다. SP는 평소용(`SPRegen`)과 가드 중용(`SPRegenGuarding`) 효과를 가드 태그 조건으로 바꿔 씁니다. 회복량은 효과 정의의 초당 값(`PerSecond`)이고, 로더가 주기(`Period`)를 곱해 한 주기 양으로 넣습니다. 회복 효과는 캐릭터 데이터의 시작 효과 목록(`Effects`)에 두어 캐릭터가 시작할 때 겁니다. | 자원 변화를 모두 GameplayEffect로 처리하는 GAS 표준 방식입니다. 초당 회복량과 대기 시간이 그 효과 정의에 있어 한곳에서 고칩니다. GameplayEffect 타이머는 게임 시간으로 흘러, 히트스톱 중에도 리젠이 계속되는 기획서 규칙과 맞습니다. |
 | 그로기 면역 | 그로기 대상이 아닌 캐릭터(플레이어)는 시작 효과 목록(`Effects`)에 그로기 면역 효과(`GroggyImmune`)를 둡니다. 이 효과는 무한 지속으로 `State.GroggyImmune` 태그를 주고, PP가 줄어드는 곳(대미지 계산, 패리로 잃는 PP, 그로기 판정)은 캐릭터가 PP를 잃을 수 있는지(`CanLosePP`: 이 태그나 그로기 태그가 없음)를 봅니다. 그로기 어빌리티의 `ActivationBlockedTags`에도 이 태그를 넣어 직접 이벤트나 활성화 요청을 차단합니다. 플레이어의 PP·MaxPP는 미사용 값으로 0을 둡니다. | 상태를 태그로 나타내는 GAS 방식이라, 그로기 중에 PP를 잃지 않는 규칙과 같은 곳에서 확인합니다. 스탯에는 어트리뷰트 초기값만 둡니다. |
+| 준비하는 곳 | ASC 액터 정보, 스탯, 어빌리티, 시작할 때 거는 GameplayEffect는 캐릭터(`AAgCharacterBase`)의 BeginPlay에서 준비하고('캐릭터 BeginPlay'), 플레이어와 보스는 이 공통 처리 뒤에 각자의 준비를 합니다. 데이터는 엔진 초기화 때 모든 JSON이 읽혀 있고([JSON 데이터](<JSON 데이터.md>) '읽는 방법'), 캐릭터는 그보다 앞서 컴포넌트를 초기화하기 전에 자기 데이터를 연결합니다('데이터 연결'). | 레벨에 놓인 캐릭터와 스폰된 캐릭터 모두 BeginPlay를 한 번 거치고, 그때는 컴포넌트 초기화와 빙의가 끝나 있습니다. |
+| 데이터 연결 | 캐릭터 블루프린트는 쓸 캐릭터 데이터의 ID(`CharacterDataId`: `Player`, `Boss`)를 고릅니다. 캐릭터는 컴포넌트를 초기화하기 전(`PreInitializeComponents`)에 에셋 매니저에서 그 ID의 데이터를 찾아 연결합니다. 데이터가 없거나, 그 캐릭터 클래스의 데이터 클래스(`UAgPlayerData`, `UAgBossData`)가 아니거나, 처음 읽기에 실패했으면 멈춥니다. 그 밖의 코드는 데이터가 있다고 보고 씁니다. | 보스 AI 컨트롤러는 컴포넌트 초기화(`APawn::PostInitializeComponents`) 안에서 빙의하며 보스 데이터의 StateTree를 읽으므로, 그보다 먼저 연결합니다. 확인을 한 곳에서 해, 쓰는 곳마다 데이터가 있는지 묻지 않습니다. |
+| 빙의 | 레벨에 놓인 보스는 컴포넌트를 초기화할 때 엔진이 AI 컨트롤러를 만들어 빙의시키고(`AutoPossessAI`), 플레이어는 플레이어가 참가할 때(`PostLogin`) 게임 모드가 기본 폰(`BP_AgPlayer`)으로 스폰해 빙의시킵니다. 둘 다 월드의 BeginPlay보다 먼저입니다. 캐릭터는 빙의될 때(`PossessedBy`) ASC의 액터 정보를 다시 읽습니다. | ASC는 캐릭터에 있어('ASC 위치') 액터 정보의 주인과 아바타는 바뀌지 않지만, 컨트롤러는 빙의할 때 바뀝니다. |
+| 스탯 초기값 | 캐릭터 데이터의 초기값(`Attributes`)을 ASC의 기본값으로 바로 넣습니다. 최대값을 먼저 넣고 현재 값을 넣은 뒤 MOV를 한 번 이동 속도에 반영합니다. 그로기 면역은 스탯이 아니라 시작할 때 거는 GameplayEffect가 정합니다('그로기 면역'). | 현재 값은 최대값까지로 잘리므로 최대값이 먼저 있어야 합니다. 어트리뷰트 변화 델리게이트는 값이 바뀔 때만 불려, 처음 값은 직접 반영합니다. |
+| 보스 AI 시작 | 보스 AI 컨트롤러(`AAgBossAIController`)는 빙의할 때 보스 데이터의 StateTree(`AIStateTree`)를 StateTree AI 컴포넌트에 넣고 시작합니다. 컴포넌트는 BeginPlay에 스스로 시작하지 않습니다. 대상(플레이어)의 평타 시작 이벤트([보스](<보스.md>) 'Backstep')는 대상이 생긴 뒤 컨트롤러의 틱에서 한 번 구독합니다. | 실행할 StateTree가 보스 데이터에 있어 빙의한 뒤에야 정해집니다. 보스는 플레이어가 스폰되기 전에 빙의되므로, 빙의할 때는 대상이 아직 없습니다. |
+| 입력 연결 | 플레이어 캐릭터(`AAgPlayerCharacter`)는 컨트롤러가 바뀔 때(`NotifyControllerChanged`) 입력 매핑(`IMC_Ag`)을 로컬 플레이어의 Enhanced Input 서브시스템에 넣고, 엔진이 입력 컴포넌트를 만들 때(`SetupPlayerInputComponent`) 입력 액션을 바인딩합니다([입력 처리](<입력 처리.md>) '입력'). 둘 다 빙의할 때 일어납니다. | 입력 매핑은 로컬 플레이어에 넣으므로, 플레이어 컨트롤러가 빙의한 뒤에 넣습니다. |
+| HUD 연결 | 보스전 게임 모드(`AAgBossStageGameMode`)는 플레이어의 폰을 스폰해 빙의시킨 직후(`HandleStartingNewPlayer`) HUD(`UAgHUDWidget`)를 띄웁니다. HUD는 만들어질 때 플레이어 폰에서 SP 변화를 구독하고 입력 매핑으로 조작 안내를 채우며([카메라, HUD, 화면 UI, 게임 플로우](<카메라, HUD, 화면 UI, 게임 플로우.md>) 'HUD'), 보스는 처음 틱할 때 월드에서 찾아 둡니다. 표시하는 값은 매 틱 어트리뷰트에서 읽습니다. | HUD를 띄울 때 플레이어 폰이 이미 있어 바로 구독할 수 있습니다. 보스는 레벨에 놓여 있어 언제 찾아도 있습니다. |
+| 전투 참가자 등록 | 캐릭터는 BeginPlay에서 보스전 게임 모드에 스스로 등록하고(`RegisterCombatant`), 게임 모드는 그 캐릭터의 사망 알림(`OnDied`)을 구독합니다([카메라, HUD, 화면 UI, 게임 플로우](<카메라, HUD, 화면 UI, 게임 플로우.md>) '결과 처리'). | 레벨에 놓인 보스와 게임 모드가 스폰하는 플레이어가 같은 방법으로 등록되고, 게임 모드가 캐릭터를 찾지 않아도 됩니다. |
 
 피격 반응은 Runner가 몽타주를 재생하고 그 재생이 끝날 때 끝납니다. 넉업의 상승·낙하·착지·기상은 넉업 몽타주의 섹션과 Transition이 잇습니다. 넉백·넉업의 무적은 시간표의 HoldTag 지점(쓰러짐 시각)부터 행동이 끝날 때까지입니다.
 
@@ -74,28 +82,51 @@ classDiagram
     AAgBossAIController ..> AAgBossCharacter : GetBoss
 ```
 
-### 어빌리티
+### 레벨 시작에서 BeginPlay까지
 
-Runner와 Task의 상세 규약은 [어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>)를 따릅니다. 시간표 판정은 [몽타주 시간표](<몽타주 시간표.md>)를 따릅니다.
+```mermaid
+sequenceDiagram
+    participant E as 엔진
+    participant B as 보스
+    participant AI as 보스 AI 컨트롤러
+    participant GM as 보스전 게임 모드
+    participant P as 플레이어
+    participant H as HUD
+    E->>B: 데이터 연결,<br>컴포넌트 초기화<br>(레벨에 놓인 보스)
+    B->>AI: SpawnDefaultController<br>(AutoPossessAI)
+    AI->>B: 빙의, PossessedBy:<br>ASC 액터 정보 갱신
+    AI->>AI: OnPossess:<br>보스 데이터의<br>StateTree 시작
+    B->>B: 무기 컴포넌트 찾기
+    E->>GM: 플레이어 참가(PostLogin)
+    GM->>P: 스폰(데이터 연결),<br>빙의
+    P->>P: 무기 컴포넌트 찾기<br>PossessedBy: 입력 매핑,<br>ASC 액터 정보 갱신<br>SetupPlayerInputComponent
+    GM->>H: ShowHUD
+    H->>P: SP 변화 구독, 조작 안내
+    E->>B: BeginPlay
+    E->>P: BeginPlay
+    Note over AI: 첫 틱: 대상(플레이어)의<br>평타 시작 이벤트 구독
+```
 
-| 클래스 | 부모 | 역할 |
-| - | - | - |
-| `UAgGameplayAbility` | `UGameplayAbility` | 모든 행동의 Runner. ID별 정의·실행 사본, 태그 조건·트리거·비용·쿨다운·재발동, 대상(Targeting), 몽타주 재생과 Task가 요청한 전환, 시간표 판정과 추적 구간, 발동·구간·지점 Task의 시작·종료, 효과 스펙(`MakeEffectSpec`) |
-| `UAgAbilitySystemComponent` | `UAbilitySystemComponent` | 스펙 동적 태그에 따른 차단·취소 보완, 행동 태그로 스펙 찾기(`FindSpecByTag`), 애니메이팅 어빌리티를 기록하는 몽타주 재생(`PlayMontageWithBlendIn`), 효과 스펙(`MakeEffectSpec`) |
-| `UAgAbilityTask_Attack` | `UAbilityTask` | 판정 범위(무기 스윕이나 공격 범위)에 닿는 적을 대상마다 한 번 칩니다. 이전 무기 위치·적중 기록·물리 이후 틱을 직접 소유하고 종료 시 정리 |
-| `UAgAbilityTask_HoldTag` | `UAbilityTask` | 자기 태그 횟수 획득·해제 |
-| `UAgAbilityTask_ApplyEffect` | `UAbilityTask` | 효과 데이터의 효과를 걸고, 구간 끝이나 행동 끝(bRemoveOnEnd)에 자기 효과만 지움 |
-| `UAgAbilityTask_Face` | `UAbilityTask` | 행동 대상이나 이동 입력 방향으로 몸을 바로 돌림 |
-| `UAgAbilityTask_Dash` | `UAbilityTask` | 일정 속도 루트 모션 소스 이동(대상 쪽 돌진과 유도, 아래로 떨어짐), 막힘·거리 검사, 멈추면 전환 요청 |
-| `UAgAbilityTask_Launch` | `UAbilityTask` | 루트 모션 점프로 띄우기·도약, 착지하면 끝 |
-| `UAgAbilityTask_SpawnProjectile` | `UAbilityTask_SpawnActor` | 발사 설정 사본과 실행 입력으로 한 발 생성·초기화 |
-| `UAgAbilityTask_SendGameplayEvent` | `UAbilityTask` | 주인이나 행동 대상에게 게임플레이 이벤트 보내기 |
-| `UAgAbilityTask_Transition` | `UAbilityTask` | 조건(태그, 이벤트, 효과가 끝나기 전)이 맞으면 Runner에 전환 요청 |
-| `UAgAbilityTask_PlayCutscene` | `UAbilityTask` | 주인 기준으로 시퀀스 재생, 주인의 시간 배율로 재생 속도, 끝나면 전환 요청 |
-| `UAgAbilityTask_CameraShake` | `UAbilityTask` | 로컬 플레이어가 범위 안이면 카메라 셰이크 |
-| `UAgTargetingFilterTask_ActionTarget`, `UAgTargetingFilterTask_OnScreen`, `UAgTargetingSortTask_HorizontalDistance`, `UAgTargetingSelectionTask_AITarget` | 엔진 타겟팅 Task | TargetingPreset 안의 행동 대상 조건(적대·생존·범위·태그), 화면 안 조건, 수평 거리 정렬, 보스 AI 대상 선택 |
+### 캐릭터 BeginPlay
 
-발사 후 투사체의 수명은 투사체가 맡습니다. 처형은 양쪽에 `State.Execution`을 사용하며 역할은 자기 행동과 전달된 사건으로 구분합니다.
+```mermaid
+sequenceDiagram
+    participant C as AAgCharacterBase
+    participant ASC as 캐릭터 ASC
+    participant D as 캐릭터 데이터
+    participant GM as 보스전 게임 모드
+    C->>ASC: InitAbilityActorInfo
+    C->>ASC: MOV·PP 변화, 히트스톱 태그 구독
+    C->>D: 스탯 초기값
+    C->>ASC: 스탯 기본값(최대값 먼저), MOV 반영
+    C->>D: 어빌리티 ID 목록<br>(정의는 Abilities.json)
+    C->>ASC: 어빌리티 부여
+    C->>D: 시작 효과 ID 목록<br>(정의는 Effects.json)
+    C->>ASC: GameplayEffect 적용<br>(리젠, 그로기 면역)
+    C->>C: 루트 모션 자르기 연결
+    C->>GM: RegisterCombatant
+    Note over C,GM: 플레이어: 어빌리티 시작·끝, 상태 태그, SP 변화, 시간 정지 구독, 락온 회전 방식<br>보스: 락온 마커·처형 안내를 본에 붙임
+```
 
 ### GameplayEffect
 
@@ -122,11 +153,3 @@ classDiagram
     AAgBossAIController ..> UGameplayEffect : PPRefill(페이즈 전환 끝)
     AAgCharacterBase ..> UGameplayEffect : 시작 효과, 리젠 대기, Kill
 ```
-
-## 시간표와 Task 실행
-
-몽타주 안의 구간과 지점은 재생을 시작한 Runner가 재생 위치로 판정해 Task를 시작·종료합니다([몽타주 시간표](<몽타주 시간표.md>)). 실행은 재생(몽타주 인스턴스 ID)과 항목으로 구분하므로 이전 재생의 늦은 구간 끝이나 전환 요청이 새 재생에 붙지 않습니다. 행동이 끝나면 엔진이 남은 Task를 끝내고, Runner가 켜진 구간과 워핑을 정리합니다. HoldTag는 자기 횟수만 제거하고, ApplyEffect는 자기 효과만 지웁니다.
-
-Busy는 시간표의 HoldTag 구간(시작부터 후딜 시작까지)으로, 이동 입력 제한은 행동의 OwnedTags `State.Acting`으로 데이터에 적습니다. 그래서 후딜 동안에도 행동이 끝날 때까지 이동 입력이 막힙니다. 가드 시작의 이동 제한은 `State.ParryWindow`를 함께 봅니다([입력 처리](<입력 처리.md>)).
-
-달리기의 SP 소모는 주기 효과(`SprintDrain`)를 ApplyEffect(bRemoveOnEnd)로 걸어 시작 시 즉시 틱하지 않고 주기 적용합니다. 한 주기 양은 초당 소모량 × 효과의 `Period`입니다. 입력 해제·소진·취소·사망에서 달리기가 끝나면 그 효과만 지웁니다.

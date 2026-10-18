@@ -11,6 +11,7 @@
 #include "Combat/AgProjectile.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Core/AgAssetManager.h"
 #include "Data/AgEffectData.h"
 #include "Data/AgJsonRead.h"
 #include "Ag.h"
@@ -18,9 +19,6 @@
 void FAgSpawnProjectileParams::GetFieldRules(FAgJsonFieldRules& Rules) const
 {
 	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgSpawnProjectileParams, SocketName));
-	Rules.Optional.Add(TEXT("Attack.bFinisher"));
-	Rules.Optional.Add(TEXT("Attack.Radius"));
-	Rules.Optional.Add(TEXT("Attack.bGroundOnly"));
 }
 
 void FAgSpawnProjectileParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
@@ -29,35 +27,27 @@ void FAgSpawnProjectileParams::Validate(const FJsonObject& Json, EAgTaskPlacemen
 	{
 		Errors.Add(Path + TEXT(".SocketName: required only for MeshSocket"));
 	}
-	// 투사체의 판정 범위는 투사체가 정합니다.
-	const TSharedPtr<FJsonObject>* AttackJson = nullptr;
-	if (Json.TryGetObjectField(TEXT("Attack"), AttackJson) &&
-		((*AttackJson)->HasField(TEXT("Radius")) || (*AttackJson)->HasField(TEXT("bGroundOnly"))))
-	{
-		Errors.Add(Path + TEXT(".Attack: a projectile uses no Radius or bGroundOnly"));
-	}
 }
 
 UAbilityTask* FAgSpawnProjectileParams::MakeTask(const FAgTaskContext& Context) const
 {
-	const FAgProjectileDefinition* Projectile = Context.Runner.FindProjectile(ProjectileId);
+	const FAgProjectileDefinition* Projectile = UAgAssetManager::Get().GetProjectiles().Find(ProjectileId);
 	if (!Projectile)
 	{
 		UE_LOG(LogAg, Error, TEXT("Abilities.%s: projectile %s missing in Projectiles (play %d)"),
 			*Context.Runner.GetAbilityId().ToString(), *ProjectileId.ToString(), Context.MontageInstanceId);
 		return nullptr;
 	}
-	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(&Context.Runner, Context.MontageInstanceId, *Projectile, Attack, Origin,
-		SocketName);
+	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(&Context.Runner, Context.MontageInstanceId, *Projectile, Origin, SocketName);
 }
 
-UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId, const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName)
+UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId, const FAgProjectileDefinition& Projectile, EAgProjectileOrigin Origin, FName SocketName)
 {
 	UAgAbilityTask_SpawnProjectile* Task = NewAbilityTask<UAgAbilityTask_SpawnProjectile>(Owner);
 	Task->SourceInstanceId = MontageInstanceId;
 	Task->ProjectileClass = Projectile.ProjectileClass;
 	Task->FlightParams = Projectile.Params;
-	Task->Hit = Attack.MakeHit();
+	Task->Hit = Projectile.Attack;
 	Task->SpawnOrigin = Origin;
 	Task->SpawnSocket = SocketName;
 	return Task;

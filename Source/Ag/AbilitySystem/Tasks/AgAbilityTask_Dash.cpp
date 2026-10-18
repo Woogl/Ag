@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgJsonRead.h"
+#include "Data/AgMontageTimeline.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
@@ -45,19 +46,22 @@ void FAgDashParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement
 	}
 }
 
+void FAgDashParams::ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
+{
+	if (Links.Montage && AgMontageTimeline::GivesRootMotion(*Links.Montage, Links.Start, Links.End))
+	{
+		Errors.Add(Path + TEXT(": a dash window needs no montage root motion (a root motion off notify over the window)"));
+	}
+}
+
 UAbilityTask* FAgDashParams::MakeTask(const FAgTaskContext& Context) const
 {
 	return UAgAbilityTask_Dash::Dash(&Context.Runner, *this, Context.MontageInstanceId);
 }
 
-UAgAbilityTask_Dash::UAgAbilityTask_Dash()
-{
-	bTickingTask = true;
-}
-
 UAgAbilityTask_Dash* UAgAbilityTask_Dash::Dash(UGameplayAbility* Owner, const FAgDashParams& InParams, int32 InMontageInstanceId)
 {
-	UAgAbilityTask_Dash* Task = NewAbilityTask<UAgAbilityTask_Dash>(Owner);
+	UAgAbilityTask_Dash* Task = NewAbilityTask<UAgAbilityTask_Dash>(Owner, TEXT("AgDash"));
 	Task->Params = InParams;
 	Task->MontageInstanceId = InMontageInstanceId;
 	return Task;
@@ -67,8 +71,8 @@ void UAgAbilityTask_Dash::Activate()
 {
 	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
 	const UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability);
-	Movement = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!Movement.IsValid() || !Runner || !AbilitySystemComponent.IsValid())
+	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
+	if (!Movement || !Runner || !AbilitySystemComponent.IsValid())
 	{
 		Stop();
 		return;
@@ -87,50 +91,51 @@ void UAgAbilityTask_Dash::Activate()
 	else
 	{
 		// 거리는 출발할 때 정합니다. 대상이 없으면 MaxDistance를 곧게 갑니다.
-		Direction = Character->GetActorForwardVector().GetSafeNormal2D();
+		const FVector Forward = Character->GetActorForwardVector().GetSafeNormal2D();
 		Target = Runner->GetActionTarget();
 		Distance = Target.IsValid()
 		               ? static_cast<float>(FVector::Dist2D(Character->GetActorLocation(), Target->GetActorLocation())) + Params.Overshoot
 		               : 0.f;
 		Distance = Params.bHasMaxDistance ? (Target.IsValid() ? FMath::Min(Distance, Params.MaxDistance) : Params.MaxDistance) : Distance;
-		if (Distance <= 0.f || Direction.IsNearlyZero())
+		if (Distance <= 0.f || Forward.IsNearlyZero())
 		{
 			Stop();
 			return;
 		}
-		Velocity = Direction * Params.Speed;
+		Velocity = Forward * Params.Speed;
 		LastLocation = Character->GetActorLocation();
 		BlockedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackBlocked)
 		                    .AddUObject(this, &ThisClass::HandleAttackBlocked);
 	}
 
-	// 지울 때까지 다른 속도를 덮어쓰고, 지울 때 속도를 0으로 둡니다. 몽타주 루트 모션이 있으면 소스가 먹지 않으므로 이 구간의
-	// 몽타주 루트 모션은 꺼 둡니다(검증).
-	TSharedPtr<FRootMotionSource_ConstantForce> Source = MakeShared<FRootMotionSource_ConstantForce>();
-	Source->InstanceName = TEXT("AgDash");
-	Source->AccumulateMode = ERootMotionAccumulateMode::Override;
-	Source->Priority = 500;
-	Source->Force = Velocity;
-	Source->Duration = -1.f;
-	Source->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
-	Source->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
-	SourceID = Movement->ApplyRootMotionSource(Source);
+	// 엔진 Task의 생성 함수가 하는 설정입니다. 끝날 때까지 다른 속도를 덮어쓰고, 끝나면 속도를 0으로 둡니다. 몽타주 루트 모션이
+	// 있으면 소스가 먹지 않으므로 이 구간의 몽타주 루트 모션은 꺼 둡니다(검증).
+	ForceName = TEXT("AgDash");
+	WorldDirection = Velocity.GetSafeNormal();
+	Strength = static_cast<float>(Velocity.Size());
+	Duration = -1.f;
+	bIsAdditive = false;
+	bEnableGravity = false;
+	FinishVelocityMode = ERootMotionFinishVelocityMode::SetVelocity;
+	FinishSetVelocity = FVector::ZeroVector;
+	SharedInitAndApply();
 }
 
 void UAgAbilityTask_Dash::TickTask(float DeltaTime)
 {
+	Super::TickTask(DeltaTime);
 	if (IsFinished())
 	{
 		return;
 	}
-	if (!GetAvatarActor() || !Movement.IsValid())
+	if (!GetAvatarActor() || !MovementComponent.IsValid())
 	{
 		Stop();
 		return;
 	}
 	if (Params.To == EAgDashTo::Down)
 	{
-		if (!Movement->IsFalling())
+		if (!MovementComponent->IsFalling())
 		{
 			Stop();
 		}
@@ -146,7 +151,6 @@ void UAgAbilityTask_Dash::OnDestroy(bool bInOwnerFinished)
 		AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackBlocked).Remove(BlockedHandle);
 	}
 	BlockedHandle.Reset();
-	RemoveSource();
 	Super::OnDestroy(bInOwnerFinished);
 }
 
@@ -167,7 +171,7 @@ void UAgAbilityTask_Dash::TickTarget(float DeltaTime)
 	const float Expected = Params.Speed * DeltaTime;
 	if (Expected >= MinJudgedMove)
 	{
-		const float Progress = FVector::DotProduct(Travel, Direction);
+		const float Progress = FVector::DotProduct(Travel, WorldDirection);
 		BlockedTicks = Progress < Expected * BlockedMoveRatio ? BlockedTicks + 1 : 0;
 	}
 	LastLocation = Location;
@@ -181,12 +185,12 @@ void UAgAbilityTask_Dash::TickTarget(float DeltaTime)
 	if (Params.HomingTurnRate > 0.f && Target.IsValid() && DeltaTime > 0.f)
 	{
 		const FVector ToTarget = (Target->GetActorLocation() - Location).GetSafeNormal2D();
-		const TSharedPtr<FRootMotionSource> Source = Movement->GetRootMotionSourceByID(SourceID);
+		const TSharedPtr<FRootMotionSource> Source = MovementComponent->GetRootMotionSourceByID(RootMotionSourceID);
 		if (!ToTarget.IsNearlyZero() && Source.IsValid())
 		{
-			const float Yaw = FMath::FixedTurn(Direction.Rotation().Yaw, ToTarget.Rotation().Yaw, Params.HomingTurnRate * DeltaTime);
-			Direction = FRotator(0.f, Yaw, 0.f).Vector();
-			StaticCastSharedPtr<FRootMotionSource_ConstantForce>(Source)->Force = Direction * Params.Speed;
+			const float Yaw = FMath::FixedTurn(WorldDirection.Rotation().Yaw, ToTarget.Rotation().Yaw, Params.HomingTurnRate * DeltaTime);
+			WorldDirection = FRotator(0.f, Yaw, 0.f).Vector();
+			StaticCastSharedPtr<FRootMotionSource_ConstantForce>(Source)->Force = WorldDirection * Strength;
 			FRotator Rotation = Avatar->GetActorRotation();
 			Rotation.Yaw = Yaw;
 			Avatar->SetActorRotation(Rotation);
@@ -205,8 +209,7 @@ void UAgAbilityTask_Dash::Stop()
 	{
 		return;
 	}
-	RemoveSource();
-	// 전환이 이 구간을 끝냅니다. 전환하지 않으면(Next 없음, 다른 재생) 스스로 끝냅니다.
+	// 전환이 이 구간을 끝냅니다. 전환하지 않으면(Next 없음, 다른 재생) 스스로 끝냅니다. 끝날 때 엔진 Task가 소스를 지웁니다.
 	if (UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability); Runner && Params.Next.IsSet())
 	{
 		Runner->RequestTransition(Params.Next, MontageInstanceId);
@@ -215,14 +218,4 @@ void UAgAbilityTask_Dash::Stop()
 	{
 		EndTask();
 	}
-}
-
-void UAgAbilityTask_Dash::RemoveSource()
-{
-	if (SourceID != 0 && Movement.IsValid())
-	{
-		Movement->RemoveRootMotionSourceByID(SourceID);
-		Movement->Velocity = FVector::ZeroVector;
-	}
-	SourceID = 0;
 }

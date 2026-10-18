@@ -10,8 +10,8 @@
 class FJsonObject;
 class UAgCharacterData;
 class UGameplayEffect;
-class UTargetingPreset;
 struct FAgMontageTimeline;
+struct FAgProjectileDefinition;
 struct FGameplayEffectSpec;
 
 UENUM()
@@ -105,8 +105,9 @@ struct FAgAbilityTargeting
 {
 	GENERATED_BODY()
 
+	/** TargetingPresets.json의 프리셋 ID */
 	UPROPERTY()
-	TObjectPtr<UTargetingPreset> Preset;
+	FName Preset;
 
 	/** 캡슐 중심 사이 수평 거리(cm)의 상한. bHasRange가 거짓이면 제한 없음입니다. */
 	UPROPERTY()
@@ -168,11 +169,6 @@ struct FAgAbilityMontage
 	/** 캐릭터 데이터 Montages의 ID */
 	UPROPERTY()
 	FName MontageId;
-
-	/** 몽타주 전체 루트 모션의 수평 이동 거리(cm). 이 거리가 되도록 이동 배율을 정해 재생합니다. */
-	UPROPERTY()
-	float RootMotionDistance = 0.f;
-	bool bHasRootMotionDistance = false;
 };
 
 /** 행동이 끝나는 때 */
@@ -250,11 +246,11 @@ namespace AgAbilityData
 	bool Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& OutAbilities, TArray<FString>& Errors);
 
 	/**
-	 * 캐릭터의 어빌리티·효과·몽타주 ID, 사망 모션, 그 어빌리티들의 효과 참조와 행동 대상, 입력 계층이 찾는 행동 태그를
-	 * 검사합니다. 오류에는 Path를 앞에 붙입니다.
+	 * 캐릭터의 어빌리티·효과·몽타주 ID, 사망 모션, 입력 계층이 찾는 행동 태그와, 그 어빌리티들의 행동 대상, 속도를 덮어쓰는 Task의
+	 * 종류, 발동 Task의 규칙(ValidateLinks)을 그 캐릭터의 몽타주로 검사합니다. 오류에는 Path를 앞에 붙입니다.
 	 */
 	void ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const TMap<FName, FAgMontageTimeline>& Timelines, const FString& Path, TArray<FString>& Errors);
 
-	/** 발동 Task가 거는 효과가 Effects.json에 있는지 검사합니다. */
-	void ValidateEffects(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, TArray<FString>& Errors);
+	/** 발동 Task가 가리키는 효과와 투사체가 있는지 검사합니다. 읽지 못한 파일(null)은 검사하지 않습니다. */
+	void ValidateReferences(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, const TMap<FName, FAgProjectileDefinition>* Projectiles, TArray<FString>& Errors);
 }

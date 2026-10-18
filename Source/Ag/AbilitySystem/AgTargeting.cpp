@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Character/AgCharacterBase.h"
+#include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
 #include "GameFramework/PlayerController.h"
 #include "TargetingSystem/TargetingPreset.h"
@@ -51,14 +52,15 @@ FAgTargetingConditions* FAgTargetingConditions::Find(FTargetingRequestHandle Han
 AActor* AgTargeting::FindTarget(const FAgAbilityTargeting& Targeting, AActor& Source)
 {
 	UTargetingSubsystem* Subsystem = UTargetingSubsystem::Get(Source.GetWorld());
-	if (!Targeting.Preset || !Subsystem)
+	const UTargetingPreset* Preset = UAgAssetManager::Get().FindTargetingPreset(Targeting.Preset);
+	if (!Preset || !Subsystem)
 	{
 		return nullptr;
 	}
 	FTargetingSourceContext Context;
 	Context.SourceActor = &Source;
 	Context.InstigatorActor = &Source;
-	FTargetingRequestHandle Request = UTargetingSubsystem::MakeTargetRequestHandle(Targeting.Preset, Context);
+	FTargetingRequestHandle Request = UTargetingSubsystem::MakeTargetRequestHandle(Preset, Context);
 	FAgTargetingConditions& Conditions = FAgTargetingConditions::FindOrAdd(Request);
 	Conditions.Range = Targeting.bHasRange ? Targeting.Range : -1.f;
 	Conditions.RequiredTags = Targeting.TargetRequiredTags;

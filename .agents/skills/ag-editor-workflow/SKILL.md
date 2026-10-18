@@ -118,7 +118,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 ### 구조체와 배열
 
 - MCP `set_properties`는 배열 크기와 요소를 한 번에 바꾸지 못한다. 먼저 남길 요소를 `get_properties`가 돌려준 그대로(객체 참조는 `{"refPath": ...}`) 넘겨 줄이고, 같은 크기에서 새 값을 넣는다.
-- 인스턴스 하위 객체 배열(TargetingPreset의 Task 등)에 요소를 더할 때는 남길 요소를 그대로 두고 새 자리에 클래스 경로(`{"refPath": "/Script/Ag.<클래스>"}`)를 넣는다. 그 클래스의 새 하위 객체가 생긴다.
+- 인스턴스 하위 객체 배열에 요소를 더할 때는 남길 요소를 그대로 두고 새 자리에 클래스 경로(`{"refPath": "/Script/Ag.<클래스>"}`)를 넣는다. 그 클래스의 새 하위 객체가 생긴다.
 - 구조체 안의 EditDefaultsOnly 필드는 `set_editor_property`로 쓸 수 없다. `struct.import_text('(...)')`로 채운 뒤 구조체 전체를 CDO에 쓴다.
 - 머티리얼 Custom 노드의 입력은 `set_properties` 한 번에 하나씩, 요소를 통째로(`inputName`과 `input`) 넣어 늘린다.
 
@@ -170,7 +170,7 @@ PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Program/개발 
 | 캐릭터 무브먼트 | `char.get_editor_property("character_movement")` |
 | PIE 월드 | `unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()` |
 | 콘솔 명령 | `unreal.SystemLibrary.execute_console_command(world, cmd, unreal.GameplayStatics.get_player_controller(world, 0))` |
-| JSON 데이터 객체 | 에디터의 에셋 매니저는 `/Engine/Transient.UnrealEdEngine_0:AgAssetManager_0`이다. 하위 객체를 `unreal.find_object(None, <매니저 경로> + '.Effects')`처럼 이름(`CombatRules`, `CameraData`, `Effects`, `Projectiles`, `MontageTimelines`, `Abilities`)으로 찾는다. 파이썬 타입이 없는 클래스(`UAgEffectSet` 등)도 이렇게 찾는다. `ObjectIterator`로 찾으면 매니저 CDO의 같은 이름 하위 객체(`/Script/Ag.Default__AgAssetManager:<이름>`)와 읽을 때 만든 임시 객체도 함께 나온다. |
+| JSON 데이터 객체 | 에디터의 에셋 매니저는 `/Engine/Transient.UnrealEdEngine_0:AgAssetManager_0`이다. 하위 객체를 `unreal.find_object(None, <매니저 경로> + '.Effects')`처럼 이름(`CombatRules`, `CameraData`, `Effects`, `Projectiles`, `MontageTimelines`, `TargetingPresets`, `Abilities`)으로 찾는다. 파이썬 타입이 없는 클래스(`UAgEffectSet` 등)도 이렇게 찾는다. `ObjectIterator`로 찾으면 매니저 CDO의 같은 이름 하위 객체(`/Script/Ag.Default__AgAssetManager:<이름>`)와 읽을 때 만든 임시 객체도 함께 나온다. |
 | 파이썬 타입이 없는 클래스 | CDO를 `unreal.find_object(None, '/Script/<모듈>.Default__<클래스>')`로 찾는다 |
 | 속성 이름 | `get_editor_property`·`set_editor_property`는 네이티브 C++ 이름(`bThrottleCPUWhenNotForeground`, `MaxHP`)도 받는다 |
 

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask_SpawnActor.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Attack.h"
 #include "Data/AgProjectileData.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_SpawnProjectile.generated.h"
@@ -18,7 +17,7 @@ enum class EAgProjectileOrigin : uint8
 	MeshSocket
 };
 
-/** 투사체 한 발(SpawnProjectile Task의 Params). Attack은 그 투사체의 공격 데이터이고, 판정 범위(Radius, bGroundOnly)는 쓰지 않습니다. */
+/** 투사체 한 발(SpawnProjectile Task의 Params). 클래스, 비행 값, 공격 값은 투사체 정의(Projectiles.json)가 갖습니다. */
 USTRUCT()
 struct FAgSpawnProjectileParams : public FAgTaskParams
 {
@@ -35,9 +34,6 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 	UPROPERTY()
 	FName SocketName;
 
-	UPROPERTY()
-	FAgAttackParams Attack;
-
 	virtual EAgTaskPlacement GetPlacements() const override
 	{
 		return EAgTaskPlacement::Point;
@@ -45,6 +41,17 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 
 	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
 	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
+
+	virtual bool StartsHit() const override
+	{
+		return true;
+	}
+
+	virtual void GetReferences(FAgTaskReferences& Out) const override
+	{
+		Out.Projectiles.Add(ProjectileId);
+	}
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
@@ -55,7 +62,7 @@ class UAgAbilityTask_SpawnProjectile : public UAbilityTask_SpawnActor
 	GENERATED_BODY()
 
 public:
-	static UAgAbilityTask_SpawnProjectile* SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId, const FAgProjectileDefinition& Projectile, const FAgAttackParams& Attack, EAgProjectileOrigin Origin, FName SocketName);
+	static UAgAbilityTask_SpawnProjectile* SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId, const FAgProjectileDefinition& Projectile, EAgProjectileOrigin Origin, FName SocketName);
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 

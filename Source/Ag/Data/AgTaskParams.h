@@ -9,7 +9,10 @@
 class FJsonObject;
 class UAbilityTask;
 class UAgGameplayAbility;
+class UAnimMontage;
+class UGameplayEffect;
 struct FAgJsonFieldRules;
+struct FAgProjectileDefinition;
 
 /** Task를 둘 수 있는 곳 */
 enum class EAgTaskPlacement : uint8
@@ -59,6 +62,37 @@ struct FAgTaskContext
 
 	/** 시간표 항목이면 그 재생의 몽타주 인스턴스 ID이고, 발동 Task면 행동이 시작한 재생입니다(없으면 INDEX_NONE). */
 	int32 MontageInstanceId = INDEX_NONE;
+
+	/** 시간표 항목의 시각(몽타주 시각). 구간이면 Start·End이고, 지점이면 Start만 씁니다. */
+	float Start = 0.f;
+	float End = 0.f;
+};
+
+/** 항목이 가리키는 다른 데이터 파일의 ID. 읽을 때 그 ID가 있는지 공통으로 검사하고, 쿡할 때 쓰지 않는 데이터를 찾습니다. */
+struct FAgTaskReferences
+{
+	/** Effects.json의 효과 */
+	TArray<FName> Effects;
+
+	/** Projectiles.json의 투사체 */
+	TArray<FName> Projectiles;
+};
+
+/** 다른 데이터와 몽타주를 읽은 뒤 항목을 검사할 때 넘기는 것 */
+struct FAgTaskLinks
+{
+	/** 항목을 둔 곳 */
+	EAgTaskPlacement Placement = EAgTaskPlacement::Activation;
+
+	/** Effects.json의 효과. 그 파일을 읽지 못했으면 null입니다. */
+	const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects = nullptr;
+
+	/** 발동 Task면 행동의 몽타주, 시간표 항목이면 그 시간표의 몽타주입니다. 행동에 몽타주가 없으면 null입니다. */
+	const UAnimMontage* Montage = nullptr;
+
+	/** 시간표 항목의 시각(몽타주 시각). 구간이면 Start·End이고, 지점이면 Start만 씁니다. 발동 Task는 쓰지 않습니다. */
+	float Start = 0.f;
+	float End = 0.f;
 };
 
 /**
@@ -107,6 +141,28 @@ struct FAgTaskParams
 		return false;
 	}
 
+	/** 루트 모션 소스로 주인의 속도를 덮어씁니다. 한 행동에는 이런 Task를 한 종류만 두고, 그 구간끼리 겹치지 않습니다(검증). */
+	virtual bool OverridesVelocity() const
+	{
+		return false;
+	}
+
+	/** 판정을 시작합니다. 몽타주의 공격 예고는 이런 항목의 시각에 끝나야 합니다(검증). */
+	virtual bool StartsHit() const
+	{
+		return false;
+	}
+
+	/** 이 항목이 가리키는 다른 데이터 파일의 ID를 Out에 더합니다. 그 ID가 있는지는 읽을 때 공통으로 검사합니다. */
+	virtual void GetReferences(FAgTaskReferences& Out) const
+	{
+	}
+
+	/** 다른 데이터와 몽타주를 읽은 뒤 이 항목의 규칙(효과의 지속 방식, 몽타주의 루트 모션 등)을 검사합니다. */
+	virtual void ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
+	{
+	}
+
 	/** 이 Params로 Task를 만듭니다. 시작(ReadyForActivation)과 구간의 끝은 Runner가 정합니다. 만들 수 없으면 null입니다. */
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const
 	{
@@ -127,4 +183,7 @@ namespace AgTaskParams
 	 * Start, End, Time)입니다. 실패하면 Out을 바꾸지 않습니다.
 	 */
 	bool Read(const FJsonObject& Item, EAgTaskPlacement Placement, FInstancedStruct& Out, const FString& Path, TArray<FString>& Errors, const TArray<FString>& Ignored = TArray<FString>());
+
+	/** 항목이 가리키는 ID(GetReferences)가 그 데이터 파일에 있는지 검사합니다. 읽지 못한 파일(null)은 검사하지 않습니다. */
+	void ValidateReferences(const FAgTaskParams& Params, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, const TMap<FName, FAgProjectileDefinition>* Projectiles, const FString& Path, TArray<FString>& Errors);
 }

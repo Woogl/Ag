@@ -9,21 +9,6 @@
 #include "GameplayEffect.h"
 #include "Ag.h"
 
-void FAgApplyEffectParams::ValidateEffect(const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) const
-{
-	const TObjectPtr<UGameplayEffect>* Found = Effects.Find(Effect);
-	if (!Found)
-	{
-		Errors.Add(Path + TEXT(".Effect: unknown effect ") + Effect.ToString());
-		return;
-	}
-	// 구간의 길이는 시간표(모션 시간)가 정하므로 효과는 스스로 끝나지 않아야 합니다.
-	if (Placement == EAgTaskPlacement::Window && (*Found)->DurationPolicy != EGameplayEffectDurationType::Infinite)
-	{
-		Errors.Add(Path + TEXT(".Effect: a window needs an Infinite effect"));
-	}
-}
-
 void FAgApplyEffectParams::GetFieldRules(FAgJsonFieldRules& Rules) const
 {
 	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgApplyEffectParams, bRemoveOnEnd));
@@ -34,6 +19,16 @@ void FAgApplyEffectParams::Validate(const FJsonObject& Json, EAgTaskPlacement Pl
 	if (Placement == EAgTaskPlacement::Window && Json.HasField(TEXT("bRemoveOnEnd")))
 	{
 		Errors.Add(Path + TEXT(".bRemoveOnEnd: a window removes its effect when it ends"));
+	}
+}
+
+void FAgApplyEffectParams::ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
+{
+	// 구간의 길이는 시간표(모션 시간)가 정하므로 효과는 스스로 끝나지 않아야 합니다. 효과가 있는지는 참조 검사가 봅니다.
+	const TObjectPtr<UGameplayEffect>* Found = Links.Effects ? Links.Effects->Find(Effect) : nullptr;
+	if (Links.Placement == EAgTaskPlacement::Window && Found && (*Found)->DurationPolicy != EGameplayEffectDurationType::Infinite)
+	{
+		Errors.Add(Path + TEXT(".Effect: a window needs an Infinite effect"));
 	}
 }
 
