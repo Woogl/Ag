@@ -8,23 +8,18 @@
 #include "GameplayTagContainer.h"
 #include "AgAbilityTask_SendGameplayEvent.generated.h"
 
-/** SendGameplayEvent의 이벤트를 받는 쪽 */
 UENUM()
 enum class EAgEventRecipient : uint8
 {
 	Owner,
-
-	/** 행동 대상 */
 	Target
 };
 
-/** 게임플레이 이벤트 하나(SendGameplayEvent Task의 Params). Instigator는 주인, Target은 행동 대상입니다. */
 USTRUCT()
 struct FAgSendGameplayEventParams : public FAgTaskParams
 {
 	GENERATED_BODY()
 
-	/** Event 아래의 태그 */
 	UPROPERTY()
 	FGameplayTag Event;
 
@@ -46,7 +41,6 @@ struct FAgSendGameplayEventParams : public FAgTaskParams
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
-/** 이벤트 하나를 보내고 끝납니다. 받는 쪽이 없으면(대상 없음) 보내지 않습니다. */
 UCLASS()
 class UAgAbilityTask_SendGameplayEvent : public UAbilityTask
 {

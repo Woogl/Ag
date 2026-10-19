@@ -15,7 +15,7 @@
 
 namespace
 {
-	/** 빠르게 휘둘러도 몸을 건너뛰지 않도록 무기 날을 이 길이(cm) 이하로 나눠 스윕합니다(최대 MaxSweepSteps 단계). */
+	/** 빠르게 휘둘러도 몸을 건너뛰지 않도록 무기 날의 이동을 나눠 스윕합니다. */
 	constexpr float SweepStepLength = 10.f;
 	constexpr int32 MaxSweepSteps = 16;
 
@@ -23,8 +23,8 @@ namespace
 	constexpr float MinArcRadius = 20.f;
 
 	/**
-	 * 나눈 단계의 A와 B 사이 위치. 휘두르기는 몸을 돌아 지나가고 한 프레임에 4분의 1바퀴까지 돌기도 하므로, 직선 대신
-	 * Center를 지나는 캐릭터 수직축 둘레의 호를 따라갑니다.
+	 * 휘두르기는 몸을 돌아 지나가고 한 프레임에 4분의 1바퀴까지 돌기도 하므로, 직선 대신 Center를 지나는 캐릭터 수직축
+	 * 둘레의 호를 따라갑니다.
 	 */
 	FVector ArcLerp(const FVector& Center, const FVector& A, const FVector& B, float Alpha)
 	{
@@ -172,7 +172,6 @@ bool UAgAbilityTask_Attack::GetWeaponCollision(FVector& OutStart, FVector& OutEn
 	{
 		return false;
 	}
-	// 캡슐의 축은 로컬 Z입니다. 크기와 부착 위치는 캐릭터 BP의 무기 제작 정보입니다.
 	const FVector Center = Capsule->GetComponentLocation();
 	const FVector HalfSegment = Capsule->GetUpVector() * Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere();
 	OutStart = Center + HalfSegment;
@@ -229,7 +228,6 @@ void UAgAbilityTask_Attack::SweepWeapon()
 
 void UAgAbilityTask_Attack::HitArea()
 {
-	// 공격 범위는 캡슐 중심 사이 수평 거리이고, 피격 위치는 대상의 캡슐 중심입니다.
 	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	TArray<AAgCharacterBase*> InRange;
 	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
@@ -257,7 +255,6 @@ bool UAgAbilityTask_Attack::Hit(AAgCharacterBase& Target, const FVector& Locatio
 	{
 		return true;
 	}
-	// 무적 등으로 피해가 없어도 한 판정에서는 대상마다 한 번만 처리합니다.
 	TouchedActors.Add(&Target);
 	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
 	if (Spec.IsValid())

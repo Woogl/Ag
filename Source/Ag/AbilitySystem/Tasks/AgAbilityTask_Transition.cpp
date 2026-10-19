@@ -75,7 +75,6 @@ void UAgAbilityTask_Transition::Activate()
 	Watched.AppendTags(Params.BlockedTags);
 	if (Params.BeforeTagEnds.IsValid())
 	{
-		// 태그가 먼저 사라지면(효과가 지워짐) 바로 전환하고, 그때 조건이 맞지 않았으면 조건이 맞게 될 때 전환하도록 함께 지켜봅니다.
 		Watched.AddTag(Params.BeforeTagEnds);
 		WatchTags(*ASC, Watched);
 		if (!ASC->HasMatchingGameplayTag(Params.BeforeTagEnds))
@@ -84,8 +83,7 @@ void UAgAbilityTask_Transition::Activate()
 			return;
 		}
 
-		// 효과의 지속 시간은 월드 시간이라, 남은 시간에서 Next 섹션 길이를 뺀 때를 월드 타이머로 기다립니다. 끝나는 때를 모르는 태그
-		// (무한 효과, 효과가 주지 않은 태그)는 사라질 때를 기다립니다.
+		// 효과의 지속 시간은 월드 시간이므로 월드 타이머로 기다립니다.
 		const FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(Params.BeforeTagEnds));
 		const TArray<float> Times = ASC->GetActiveEffectsTimeRemaining(Query);
 		bool bFinite = !Times.IsEmpty();
@@ -99,7 +97,6 @@ void UAgAbilityTask_Transition::Activate()
 		{
 			return;
 		}
-		// Next 섹션의 길이는 이 재생의 몽타주에서 읽습니다.
 		UAnimInstance* Anim = ASC->AbilityActorInfo.IsValid() ? ASC->AbilityActorInfo->GetAnimInstance() : nullptr;
 		const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 		const UAnimMontage* Montage = Instance ? Instance->Montage.Get() : nullptr;
@@ -114,7 +111,6 @@ void UAgAbilityTask_Transition::Activate()
 		return;
 	}
 
-	// 조건이 맞게 되는 때: 조건 태그가 바뀔 때마다 확인합니다.
 	WatchTags(*ASC, Watched);
 	TryTransition();
 }
@@ -174,7 +170,6 @@ void UAgAbilityTask_Transition::HandleEvent(const FGameplayEventData* Payload)
 
 void UAgAbilityTask_Transition::HandleTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// BeforeTagEnds면 그 태그가 사라질 때와, 전환할 때가 된 뒤 조건 태그가 바뀔 때 확인합니다.
 	if (!Params.BeforeTagEnds.IsValid())
 	{
 		TryTransition();

@@ -14,7 +14,6 @@ void UAgAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	// 모션은 ABP 기본값을 사용하고, 갱신에 필요한 캐릭터만 기억합니다.
 	Character = Cast<AAgCharacterBase>(TryGetPawnOwner());
 }
 

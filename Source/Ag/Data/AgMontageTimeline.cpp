@@ -17,10 +17,8 @@ namespace
 {
 	using namespace AgJsonRead;
 
-	/** 시간표 시각을 몽타주 길이나 몽타주에 남긴 노티파이의 시각과 비교할 때 같은 시각으로 보는 차이 */
 	constexpr float TimeTolerance = 1.e-3f;
 
-	/** 항목 하나: 구간(Start, End)이나 지점(Time)과 그 Task의 Params */
 	bool ReadItem(const FJsonObject& Object, FAgTimelineItem& Out, const FString& Path, TArray<FString>& Errors)
 	{
 		const int32 Before = Errors.Num();
@@ -38,7 +36,6 @@ namespace
 		else
 		{
 			Number(Object, TEXT("Start"), Path, Out.Start, Errors);
-			// End를 적지 않으면 그 섹션 끝까지이고, 섹션을 넘는 구간은 {"Section", "Time"(선택)}으로 적습니다.
 			const TSharedPtr<FJsonValue> End = Object.TryGetField(TEXT("End"));
 			Out.bEndAtSectionEnd = !End.IsValid();
 			if (End && End->Type == EJson::Number)
@@ -163,8 +160,9 @@ bool AgMontageTimeline::ResolveTimes(const UAnimMontage& Montage, FName Section,
 
 bool AgMontageTimeline::GivesRootMotion(const UAnimMontage& Montage, float Start, float End)
 {
-	// 몽타주의 어느 시퀀스에든 루트 모션이 있으면, 루트 모션이 없는 시퀀스의 구간도 엔진은 몽타주 루트 모션(이동 없음)으로 처리해
-	// 루트 모션 소스를 쓰지 않으므로, 그 구간을 덮는 루트 모션 끄기 노티파이가 있어야 루트 모션이 없습니다.
+	// 몽타주의 어느 시퀀스에든 루트 모션이 있으면, 루트 모션이 없는 시퀀스의 구간도 엔진은 몽타주 루트
+	// 모션(이동 없음)으로 처리해 루트 모션 소스를 쓰지 않으므로, 그 구간을 덮는 루트 모션 끄기 노티파이가 있어야
+	// 루트 모션이 없습니다.
 	return Montage.HasRootMotion() && !Montage.Notifies.ContainsByPredicate([Start, End](const FAnimNotifyEvent& Event)
 	{
 		return Cast<UAnimNotifyState_DisableRootMotion>(Event.NotifyStateClass) &&
@@ -207,7 +205,7 @@ void AgMontageTimeline::ValidateReferences(const TMap<FName, FAgMontageTimeline>
 #if WITH_EDITOR
 namespace
 {
-	/** 공격 예고 Cue(가드 불가 예고, 패리 예고)의 상태 노티파이입니다. 엔진 노티파이의 Cue 태그는 리플렉션으로만 읽을 수 있습니다. */
+	/** 엔진 노티파이의 Cue 태그는 리플렉션으로만 읽을 수 있습니다. */
 	bool IsTelegraphCue(const FAnimNotifyEvent& Event)
 	{
 		static const FStructProperty* CueProperty =
@@ -231,7 +229,6 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			continue;
 		}
 
-		// 섹션과 길이를 확인하고, 아래 검사에 쓰도록 항목의 시각을 몽타주 시각으로 바꿉니다.
 		struct FResolved
 		{
 			const FAgTimelineItem* Item = nullptr;
@@ -275,7 +272,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 					Errors.Add(FString::Printf(TEXT("%s: End %.4f is after the section length %.4f"), *Name, Item.End, EndLength));
 				}
 
-				// 전환할 섹션은 이 몽타주에 있고, 전환 지점은 섹션 끝보다 앞입니다(끝에서는 몽타주가 먼저 끝나거나 다음 섹션으로 넘어감).
+				// 섹션 끝에서는 몽타주가 먼저 끝나거나 다음 섹션으로 넘어가므로 전환 지점은 섹션 끝보다 앞입니다.
 				const FAgTransition* Transition = Item.Params.Get<FAgTaskParams>().GetTransition();
 				if (Transition && Montage->GetSectionIndex(Transition->Section) == INDEX_NONE)
 				{
@@ -296,7 +293,6 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 					Errors.Add(Name + TEXT(": End must be after Start on the montage timeline"));
 				}
 
-				// 효과와 몽타주가 필요한 그 Task만의 규칙은 Task가 검사합니다.
 				FAgTaskLinks Links;
 				Links.Placement = Item.bWindow ? EAgTaskPlacement::Window : EAgTaskPlacement::Point;
 				Links.Effects = Effects;
@@ -325,7 +321,7 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			return false;
 		};
 
-		// 첫 섹션에서 섹션 링크로 이어지는 섹션. 그 밖의 섹션은 전환으로만 들어가 몽타주 시각으로 때를 정할 수 없습니다.
+		// 첫 섹션에서 링크로 이어지지 않는 섹션은 전환으로만 들어가므로 몽타주 시각으로 때를 정할 수 없습니다.
 		TSet<int32> LinkedSections;
 		for (int32 Index = Montage->GetSectionIndexFromPosition(0.f); Index != INDEX_NONE && !LinkedSections.Contains(Index);
 			Index = Montage->GetSectionIndex(Montage->CompositeSections[Index].NextSectionName))
@@ -351,8 +347,8 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 				Errors.Add(Entry.Name + TEXT(": a window waiting for its transition must cover a looping section to its end"));
 			}
 
-			// 같은 시각의 항목 사이에는 순서가 없고 전환하면 남은 항목은 실행하지 않으므로, 전환 지점과 같은 시각에 시작하는 항목은
-			// 실행될지 정해지지 않습니다.
+			// 같은 시각의 항목 사이에는 순서가 없고 전환하면 남은 항목은 실행하지 않으므로, 전환 지점과 같은 시각에
+			// 시작하는 항목은 실행될지 정해지지 않습니다.
 			if (!Entry.Item->bWindow && Params.GetTransition())
 			{
 				for (int32 Other = 0; Other < Items.Num(); ++Other)
@@ -365,8 +361,8 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			}
 		}
 
-		// 몽타주에는 연출과 루트 모션 노티파이만 남습니다. 프로젝트 노티파이나 엔진 워핑 노티파이(워핑은 시간표의 추적 구간이 함)가
-		// 함께 있으면 같은 일이 두 번 일어납니다.
+		// 프로젝트 노티파이나 엔진 워핑 노티파이(워핑은 시간표의 추적 구간이 함)가 함께 있으면 같은 일이
+		// 두 번 일어납니다.
 		for (const FAnimNotifyEvent& Event : Montage->Notifies)
 		{
 			const UObject* Notify = Event.Notify ? static_cast<const UObject*>(Event.Notify) : Event.NotifyStateClass;
@@ -381,8 +377,6 @@ void AgMontageTimeline::ValidateAssets(const TMap<FName, FAgMontageTimeline>& Ti
 			}
 		}
 
-		// 공격 예고는 판정 구간이 시작될 때(투사체는 발사할 때) 끝납니다(보스 사양 '공격 예고'). 전환으로만 들어가는 섹션의 판정
-		// (LeapSlam의 착지)은 몽타주 시각으로 때를 정할 수 없어 검사하지 않습니다.
 		if (!HitTimes.IsEmpty())
 		{
 			for (const FAnimNotifyEvent& Event : Montage->Notifies)

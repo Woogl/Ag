@@ -8,7 +8,6 @@
 
 namespace
 {
-	/** Task 이름 X의 Params 구조체 이름은 AgXParams입니다(C++ 이름 FAgXParams). */
 	const TCHAR* const StructPrefix = TEXT("Ag");
 	const TCHAR* const StructSuffix = TEXT("Params");
 

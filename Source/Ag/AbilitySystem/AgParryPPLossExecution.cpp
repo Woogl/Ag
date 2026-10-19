@@ -11,7 +11,7 @@ namespace
 {
 	const FGameplayEffectAttributeCaptureDefinition& GetMaxPPCapture()
 	{
-		static const FGameplayEffectAttributeCaptureDefinition MaxPP(UAgAttributeSet::GetMaxPPAttribute(), EGameplayEffectAttributeCaptureSource::Target, /*bSnapshot*/ false);
+		static const FGameplayEffectAttributeCaptureDefinition MaxPP(UAgAttributeSet::GetMaxPPAttribute(), EGameplayEffectAttributeCaptureSource::Target, false);
 		return MaxPP;
 	}
 }

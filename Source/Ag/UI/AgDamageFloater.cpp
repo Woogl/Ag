@@ -11,7 +11,6 @@ AAgDamageFloater::AAgDamageFloater()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// 스크린 공간: 거리와 관계없이 같은 크기로, 월드 위에 그립니다.
 	Widget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Widget"));
 	Widget->SetWidgetSpace(EWidgetSpace::Screen);
 	Widget->SetDrawAtDesiredSize(true);
@@ -28,7 +27,8 @@ void AAgDamageFloater::Spawn(UObject* WorldContextObject, TSubclassOf<UAgDamageF
 		return;
 	}
 
-	// 위젯 컴포넌트는 BeginPlay에서 위젯을 만들므로, 스폰을 마치기 전에 위젯 클래스를 넣습니다.
+	// 위젯 컴포넌트는 BeginPlay에서 위젯을 만들므로,
+	// 스폰을 마치기 전에 위젯 클래스를 넣습니다.
 	const FTransform Transform(Location);
 	AAgDamageFloater* Floater = World->SpawnActorDeferred<AAgDamageFloater>(StaticClass(), Transform);
 	if (!Floater)
@@ -49,7 +49,7 @@ void AAgDamageFloater::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// 위젯 애니메이션처럼 실제 시간으로 셉니다. 슬로우모션의 영향을 받지 않습니다.
+	// 위젯 애니메이션이 실제 시간으로 흐르므로 함께 실제 시간으로 셉니다.
 	UAgDamageFloaterWidget* FloaterWidget = Cast<UAgDamageFloaterWidget>(Widget->GetWidget());
 	Age += GetWorld()->GetTime().GetDeltaRealTimeSeconds();
 	if (!FloaterWidget || Age >= FloaterWidget->GetLifetime())

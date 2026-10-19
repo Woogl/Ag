@@ -13,13 +13,11 @@
 
 namespace
 {
-	/** 돌진 방향으로 예상 이동의 이 비율보다 덜 나아간 틱은 막힌 것으로 봅니다. */
 	constexpr float BlockedMoveRatio = 0.7f;
 
-	/** 막힌 틱이 이만큼 이어지면 돌진을 멈춥니다. 한 틱만 짧은 것은 턱을 오른 것일 수 있습니다. */
+	/** 한 틱만 짧은 것은 턱을 오른 것일 수 있으므로 막힌 틱이 여러 번 이어질 때만 멈춥니다. */
 	constexpr int32 BlockedTicksToStop = 3;
 
-	/** 예상 이동(cm)이 이보다 짧은 틱은 막혔는지 판단하지 않습니다(히트스톱으로 돌진이 거의 멈춘 틱). */
 	constexpr float MinJudgedMove = 2.f;
 }
 
@@ -90,7 +88,6 @@ void UAgAbilityTask_Dash::Activate()
 	}
 	else
 	{
-		// 거리는 출발할 때 정합니다. 대상이 없으면 MaxDistance를 곧게 갑니다.
 		const FVector Forward = Character->GetActorForwardVector().GetSafeNormal2D();
 		Target = Runner->GetActionTarget();
 		Distance = Target.IsValid()
@@ -108,8 +105,8 @@ void UAgAbilityTask_Dash::Activate()
 		                    .AddUObject(this, &ThisClass::HandleAttackBlocked);
 	}
 
-	// 엔진 Task의 생성 함수가 하는 설정입니다. 끝날 때까지 다른 속도를 덮어쓰고, 끝나면 속도를 0으로 둡니다. 몽타주 루트 모션이
-	// 있으면 소스가 먹지 않으므로 이 구간의 몽타주 루트 모션은 꺼 둡니다(검증).
+	// 엔진 Task의 생성 함수가 하는 설정입니다. 몽타주 루트 모션이 있으면 소스가 먹지 않으므로 검증이 이 구간의
+	// 몽타주 루트 모션을 막습니다.
 	ForceName = TEXT("AgDash");
 	WorldDirection = Velocity.GetSafeNormal();
 	Strength = static_cast<float>(Velocity.Size());
@@ -166,8 +163,8 @@ void UAgAbilityTask_Dash::TickTarget(float DeltaTime)
 		return;
 	}
 
-	// 벽에 막히면 그 자리에서 멈춥니다. 비스듬히 부딪히면 벽을 따라 미끄러지므로 돌진 방향으로 나아간 거리만 봅니다.
-	// 히트스톱은 주인의 시간을 늦추므로 그동안의 틱은 예상 이동이 거의 없습니다.
+	// 비스듬히 부딪히면 벽을 따라 미끄러지므로 돌진 방향으로 나아간 거리만 봅니다. 히트스톱은 주인의 시간을
+	// 늦추므로 그동안의 틱은 예상 이동이 거의 없어 판단하지 않습니다.
 	const float Expected = Params.Speed * DeltaTime;
 	if (Expected >= MinJudgedMove)
 	{
@@ -209,7 +206,7 @@ void UAgAbilityTask_Dash::Stop()
 	{
 		return;
 	}
-	// 전환이 이 구간을 끝냅니다. 전환하지 않으면(Next 없음, 다른 재생) 스스로 끝냅니다. 끝날 때 엔진 Task가 소스를 지웁니다.
+	// 전환이 이 구간을 끝내므로 전환하지 않았을 때만 스스로 끝냅니다. 소스는 끝날 때 엔진 Task가 지웁니다.
 	if (UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability); Runner && Params.Next.IsSet())
 	{
 		Runner->RequestTransition(Params.Next, MontageInstanceId);

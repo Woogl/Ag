@@ -25,7 +25,6 @@
 
 namespace
 {
-	/** UP 게이지·쿨다운 원형 표시 머티리얼의 스칼라 파라미터: 채우거나 덮는 비율 (0~1) */
 	const FName RatioParameter(TEXT("Ratio"));
 }
 
@@ -78,14 +77,14 @@ void UAgHUDWidget::NativeDestruct()
 TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
 {
 	return FUIInputConfig(ECommonInputMode::Game, EMouseCaptureMode::CapturePermanently_IncludingInitialMouseDown,
-		/*bHideCursorDuringViewportCapture*/ true);
+		true);
 }
 
 void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	// 궁극기 컷신(전투 HUD '상황별 표시 규칙'): 컷신이 플레이어 컨트롤러를 시네마틱 모드로 두는 동안 숨깁니다.
+	// 궁극기 컷신은 플레이어 컨트롤러를 시네마틱 모드로 둡니다.
 	const APlayerController* PlayerController = GetOwningPlayer();
 	const bool bCutscene = PlayerController && PlayerController->bCinematicMode;
 	StatusPanel->SetVisibility(bStatusHidden || bCutscene ? ESlateVisibility::Collapsed : StatusPanelVisibility);
@@ -119,7 +118,6 @@ void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
 		return;
 	}
 
-	// 한 행동에 매핑이 여럿이면(이동의 W, A, S, D) 그 행동의 줄에 키를 모읍니다.
 	TArray<const UInputAction*> Actions;
 	TMap<const UInputAction*, TArray<FText>> KeysByAction;
 	for (const FEnhancedActionKeyMapping& KeyMapping : Mapping->GetMappings())
@@ -134,7 +132,7 @@ void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
 			Actions.Add(KeyMapping.Action);
 		}
 		const FText* DisplayName = KeyDisplayNames.Find(KeyMapping.Key);
-		Keys.Add(DisplayName ? *DisplayName : KeyMapping.Key.GetDisplayName(/*bLongDisplayName*/ false));
+		Keys.Add(DisplayName ? *DisplayName : KeyMapping.Key.GetDisplayName(false));
 	}
 
 	TArray<FText> KeyLines;
@@ -162,13 +160,11 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 		bPlayerSPGuardDrop);
 	bPlayerSPGuardDrop = false;
 
-	// 슬롯은 MP·UP가 부족할 때만 흐리게 합니다. 스킬 쿨다운은 쿨다운 표시로 보여 줍니다.
 	const UAbilitySystemComponent* ASC = Player.GetAbilitySystemComponent();
 	SetSlotUsable(*SkillSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Skill));
 	SetSlotUsable(*UltimateSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Ultimate));
 	UpdateCooldown(*ASC, AgGameplayTags::Ability_Action_Skill, *SkillCooldownSweep, *SkillCooldownText);
 
-	// 머티리얼이 이 비율만큼 테두리를 위쪽 가운데부터 시계 방향으로 채웁니다.
 	if (UMaterialInstanceDynamic* Gauge = UPGauge->GetDynamicMaterial())
 	{
 		Gauge->SetScalarParameterValue(RatioParameter, Stats->GetMaxUP() > 0.f ? Stats->GetUP() / Stats->GetMaxUP() : 0.f);
@@ -186,7 +182,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 
 void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime)
 {
-	// 이름은 매 프레임 데이터에서 읽어 바뀌었을 때만 넣습니다. 에디터에서 데이터 파일을 다시 읽으면 바뀝니다.
+	// 에디터에서 데이터 파일을 다시 읽으면 이름이 바뀌므로 매 프레임 확인합니다.
 	const FText& BossName = BossCharacter.GetCharacterData()->DisplayName;
 	if (!BossNameText->GetText().IdenticalTo(BossName))
 	{
@@ -197,8 +193,8 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	SetBarRatio(*BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
 	UpdateTrail(BossHPTrail, *BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
-	// 그로기: 빈 바를 그로기 시간(착지한 순간부터 세는 GroggyTime 효과) 동안 다시 채웁니다. 착지 전은 빈 바이고, 처형이나
-	// 히트스톱으로 그로기가 길어져 효과가 끝난 뒤에는 끝날 때까지 가득 찬 채로 둡니다.
+	// GroggyTime 효과는 착지한 순간부터 셉니다.
+	// 처형이나 히트스톱으로 그로기가 효과보다 길어질 수 있습니다.
 	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
 	const UAbilitySystemComponent* BossASC = BossCharacter.GetAbilitySystemComponent();
 	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
@@ -216,13 +212,11 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 		}
 	}
 	BossPPBar->SetPercent(PPBarRatio);
-	// 잔상은 바에 표시한 값을 따라갑니다. 그로기 중에는 다시 채우는 값입니다.
 	UpdateTrail(BossPPTrail, *BossPPTrailBar, PPBarRatio, GameDeltaTime);
 }
 
 const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
 {
-	// 입력 계층과 같은 행동 태그 검색입니다.
 	const UAgAbilitySystemComponent* AgASC = Cast<UAgAbilitySystemComponent>(&ASC);
 	const FGameplayAbilitySpec* Spec = AgASC ? AgASC->FindSpecByTag(AbilityTag) : nullptr;
 	if (!Spec || !Spec->GetPrimaryInstance())
@@ -260,7 +254,6 @@ void UAgHUDWidget::UpdateCooldown(const UAbilitySystemComponent& ASC, const FGam
 	}
 
 	Text.SetVisibility(CooldownVisibility);
-	// 1초 이상은 정수, 1초 미만은 소수 한 자리, 둘 다 올림 (전투 HUD '스킬·궁극기 슬롯').
 	const int32 Tenths = FMath::CeilToInt(Remaining * 10.f);
 	const int32 Key = Remaining >= 1.f ? 1000 + FMath::CeilToInt(Remaining) : Tenths;
 	if (bCoolingDown && Key != ShownCooldownKey)
@@ -336,7 +329,7 @@ void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float Ba
 
 void UAgHUDWidget::HandlePlayerSPChanged(const FOnAttributeChangeData& Data)
 {
-	// 대미지 GE가 SP를 줄이는 것은 가드와 가드 브레이크뿐입니다(전투 시스템 '피격 처리 순서').
+	// 대미지 GE가 SP를 줄이는 것은 가드와 가드 브레이크뿐입니다.
 	const UGameplayEffect* Effect = Data.GEModData ? Data.GEModData->EffectSpec.Def.Get() : nullptr;
 	if (Data.NewValue < Data.OldValue && Effect && Effect->GetAssetTags().HasTagExact(AgGameplayTags::Effect_Damage))
 	{

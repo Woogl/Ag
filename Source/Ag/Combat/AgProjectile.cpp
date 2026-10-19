@@ -42,7 +42,6 @@ void AAgProjectile::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// 사망 처리: 쏜 캐릭터가 죽으면 투사체도 사라집니다.
 	AAgCharacterBase* ShooterCharacter = GetInstigator<AAgCharacterBase>();
 	if (!ShooterCharacter || ShooterCharacter->IsDead() || !DamageSpec.IsValid())
 	{
@@ -50,7 +49,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		return;
 	}
 
-	// 벽(보이지 않는 벽 포함)에 닿으면 벽까지만 날고 사라집니다. 선은 상자 가운데 높이로 지나가 바닥은 벽으로 치지 않습니다.
+	// 상자 바닥은 지면에 닿아 있으므로, 벽은 상자 가운데 높이의 선으로 찾아 바닥을 벽으로 치지 않습니다.
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgProjectile), false, this);
 	QueryParams.AddIgnoredActor(ShooterCharacter);
 	const FVector Start = GetActorLocation();
@@ -64,8 +63,6 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		End = WallHit.Location;
 	}
 
-	// 상자가 닿은 캐릭터는 처음 닿을 때 한 번 맞고, 결과(피격, 가드, 패리, 무적)와 관계없이 투사체는 계속 날아갑니다.
-	// 상자는 이번 틱에 움직인 거리 전체를 쓸어, 긴 프레임에도 캐릭터를 건너뛰지 않습니다.
 	TArray<FHitResult> Reached;
 	const FCollisionShape Box = FCollisionShape::MakeBox(HitBox->GetScaledBoxExtent());
 	GetWorld()->SweepMultiByObjectType(Reached, Start, End, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Box, QueryParams);
@@ -100,7 +97,7 @@ void AAgProjectile::ApplyHit(AAgCharacterBase& Target, const FVector& HitLocatio
 	FGameplayEffectContextHandle Context = Spec.GetContext().Duplicate();
 	Context.AddInstigator(GetInstigator(), this);
 	Context.AddOrigin(HitLocation);
-	// SetContext는 출처 태그와 어트리뷰트를 다시 캡처하므로, 기존처럼 적중 시점의 ATK를 사용합니다.
+	// SetContext는 출처 태그와 어트리뷰트를 다시 캡처하므로 적중 시점의 ATK를 씁니다.
 	Spec.SetContext(Context);
 	Context.GetInstigatorAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(Spec, Target.GetAbilitySystemComponent());
 }

@@ -37,7 +37,7 @@ public class Ag : ModuleRules
 			PrivateDependencyModuleNames.AddRange(new string[] { "AssetRegistry", "TargetPlatform" });
 		}
 
-		// 게임이 실행 중에 읽는 JSON 데이터 파일(구현 계획서 'JSON 데이터'). Content 밖에 있어 쿡이 알지 못하므로 따로 넣습니다.
+		// JSON 데이터 파일은 Content 밖에 있어 쿡이 알지 못하므로 따로 넣습니다.
 		RuntimeDependencies.Add("$(ProjectDir)/Data/*.json", StagedFileType.UFS);
 
 		PublicIncludePaths.AddRange(new string[] {

@@ -202,7 +202,6 @@ namespace
 		}
 	}
 
-	/** 정의 안에서 정할 수 있는 규칙: 종료 방식에 필요한 것, 발동 Task의 행동 대상과 전환 */
 	void ValidateDefinition(const FAgAbilityData& Data, const FString& Path, TArray<FString>& Errors)
 	{
 		int32 TagTriggers = 0;
@@ -227,7 +226,6 @@ namespace
 			Errors.Add(Path + TEXT(".Tasks: a task uses the ability target, so the ability needs Targeting or a GameplayEvent trigger"));
 		}
 
-		// 발동 Task의 전환은 첫 재생의 시작 섹션입니다.
 		const bool bTransition = Data.Tasks.ContainsByPredicate([](const FInstancedStruct& Task)
 		{
 			return Task.Get<FAgTaskParams>().GetTransition() != nullptr;
@@ -352,7 +350,6 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 	}
 	if (Data.IsA<UAgPlayerData>())
 	{
-		// 플레이어는 점프할 때와 착지할 때 점프 몽타주의 두 섹션을 재생합니다.
 		const UAnimMontage* Jump = Data.Montages.FindRef(AAgPlayerCharacter::JumpMontageId);
 		if (!Jump || Jump->GetSectionIndex(AAgPlayerCharacter::JumpStartSection) == INDEX_NONE ||
 			Jump->GetSectionIndex(AAgPlayerCharacter::JumpLandSection) == INDEX_NONE)
@@ -389,8 +386,6 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 			Errors.Add(AbilityPath + TEXT(": missing montage ") + Ability->Montage.MontageId.ToString());
 		}
 
-		// 효과와 몽타주가 필요한 발동 Task만의 규칙은 Task가 검사합니다. 발동 Task가 요청하는 전환의 섹션은 이 캐릭터의 몽타주에
-		// 있어야 합니다(시작 섹션).
 		FAgTaskLinks Links;
 		Links.Effects = &Effects;
 		Links.Montage = Montage;
@@ -407,7 +402,6 @@ void AgAbilityData::ValidateCharacter(const UAgCharacterData& Data, const TMap<F
 			}
 		}
 
-		// 시간표 항목이 행동 대상을 쓰면 그 시간표를 재생하는 행동이 대상을 정해야 합니다.
 		bool bTimelineNeedsTarget = false;
 		if (const FAgMontageTimeline* Timeline = Montage ? Timelines.Find(FName(*Montage->GetPathName())) : nullptr)
 		{

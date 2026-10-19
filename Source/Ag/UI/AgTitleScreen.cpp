@@ -18,7 +18,6 @@ void UAgTitleScreen::NativeOnInitialized()
 
 UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
 {
-	// 처음 선택된 버튼은 Start입니다.
 	return StartButton;
 }
 

@@ -57,7 +57,6 @@ bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext&
 		return false;
 	}
 
-	// 쿨다운이 끝났을 때만, 그리고 확률로
 	const FGameplayAbilitySpec* Spec = Boss->FindAbilitySpec(InstanceData.Pattern);
 	const FGameplayAbilityActorInfo* ActorInfo = Boss->GetAbilitySystemComponent()->AbilityActorInfo.Get();
 	return Spec && Spec->Ability && Spec->GetPrimaryInstance()->CanActivateAbility(Spec->Handle, ActorInfo) &&

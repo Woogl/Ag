@@ -53,7 +53,7 @@ EStateTreeRunStatus FAgBossAITask_Wait::Tick(FStateTreeExecutionContext& Context
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
 
-	// 보스는 스스로 플레이어를 향해 돌므로, 옆으로 걸으면 플레이어 주위를 돕니다. 길찾기 없이 이동 입력을 직접 줍니다.
+	// 보스는 스스로 플레이어를 향해 돌므로, 옆으로 걸으면 플레이어 주위를 돕니다.
 	Boss->AddMovementInput(Boss->GetActorRightVector(), InstanceData.StrafeDirection);
 	InstanceData.Elapsed += DeltaTime;
 	return InstanceData.Elapsed >= InstanceData.Duration ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
@@ -92,7 +92,6 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 	FName Pattern = InstanceData.Pattern;
 	if (Pattern.IsNone())
 	{
-		// 1. 후보: 지금 거리 구간과 페이즈에서 쓸 수 있고 쿨다운이 끝난 패턴. 대상이 없으면 고르지 않습니다.
 		const AAgCharacterBase* Target = InstanceData.Controller->GetTarget();
 		if (!Target)
 		{
@@ -109,7 +108,6 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		TArray<float> Weights;
 		GatherCandidates(Data->Abilities, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), IsReady, Candidates, Weights);
 
-		// 2. 가중치로 하나를 고릅니다. 3. 후보가 없으면 실패해 다가가기로 넘어갑니다.
 		const int32 Picked = PickWeighted(Weights, FMath::FRand());
 		if (Picked == INDEX_NONE)
 		{
@@ -131,7 +129,8 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 
 EStateTreeRunStatus FAgBossAITask_RunPattern::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	// 패턴이 넉백이나 그로기로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이 먼저 적용됩니다.
+	// 패턴이 넉백이나 그로기로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이
+	// 먼저 적용됩니다.
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	const UAbilitySystemComponent* ASC = InstanceData.Controller->GetBoss()->GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(InstanceData.Handle);
@@ -150,7 +149,6 @@ int32 FAgBossAITask_RunPattern::PickWeighted(TConstArrayView<float> Weights, flo
 		return INDEX_NONE;
 	}
 
-	// 뽑힐 확률 = 그 패턴의 가중치 ÷ 후보 가중치의 합
 	float Threshold = FMath::Clamp(Random01, 0.f, 1.f) * Total;
 	int32 LastPositive = INDEX_NONE;
 	for (int32 Index = 0; Index < Weights.Num(); ++Index)
@@ -177,7 +175,6 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityId
 	for (FName Id : AbilityIds)
 	{
 		const FAgAbilityData* Ability = UAgAssetManager::Get().FindAbility(Id);
-		// 패턴이 아닌 어빌리티(피격 반응, 사망 등)는 전용 값이 패턴 공통 값이 아닙니다.
 		const FAgPatternSelection* Pattern = Ability && Ability->bHasPatternSelection && Ability->Tags.HasTag(AgGameplayTags::Ability_Boss_Pattern)
 		                                         ? &Ability->PatternSelection
 		                                         : nullptr;
@@ -186,7 +183,6 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityId
 			continue;
 		}
 
-		// 거리 구간: NearDistance까지 근거리, FarDistance까지 중거리, 그보다 멀면 원거리
 		const float Weight =
 			Distance <= NearDistance ? Pattern->WeightNear : (Distance <= FarDistance ? Pattern->WeightMid : Pattern->WeightFar);
 		if (Weight > 0.f && Pattern->Phases.Contains(Phase) && IsReady(Id))
@@ -203,7 +199,6 @@ EStateTreeRunStatus FAgBossAITask_PhaseTransition::EnterState(FStateTreeExecutio
 	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
 	const UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
 
-	// 시작하지 못해도 다시 시도하지 않습니다. 보스전에서 한 번만 시작합니다.
 	InstanceData.Controller->MarkPhaseTransitionStarted();
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_PhaseTransition;
@@ -227,7 +222,6 @@ EStateTreeRunStatus FAgBossAITask_WaitReaction::EnterState(FStateTreeExecutionCo
 
 EStateTreeRunStatus FAgBossAITask_WaitReaction::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	// 넉백 중에 그로기가 되면 그로기가 이어받으므로, 둘 다 끝날 때까지 기다립니다.
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	return InstanceData.Controller->IsBossReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }

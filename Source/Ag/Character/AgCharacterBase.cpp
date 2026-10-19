@@ -28,16 +28,12 @@
 
 namespace
 {
-	/** 래그돌용 엔진 충돌 프로필 (BaseEngine.ini) */
 	const FName RagdollProfileName(TEXT("Ragdoll"));
 
-	/** 히트스톱 중의 시간 배율: 모션, 몽타주, 이동이 거의 멈춥니다. */
 	constexpr float HitstopTimeDilation = 1.e-4f;
 
-	/** 사망할 때 공격 쪽에서 밀려나는 속도(cm/s) */
 	constexpr float DeathPushSpeed = 300.f;
 
-	/** 움찔·가드 움찔 몽타주의 ID (캐릭터 데이터의 Montages) */
 	const FName FlinchMontageId(TEXT("Flinch"));
 	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
 
@@ -57,11 +53,9 @@ AAgCharacterBase::AAgCharacterBase()
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 	CharacterDataClass = UAgCharacterData::StaticClass();
 
-	// 캐릭터는 카메라를 가리지 않습니다(카메라 '카메라 충돌').
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
-	// 무기 스윕은 메시의 피직스 바디에 맞습니다.
 	GetMesh()->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
 
 	// 공격은 메시의 피직스 바디에 맞고 무기는 손을 따라가므로, 화면 밖에서도 포즈를 갱신합니다.
@@ -103,7 +97,6 @@ bool AAgCharacterBase::CanLosePP() const
 
 bool AAgCharacterBase::IsFacingFixed() const
 {
-	// 행동 중의 몸 돌리기는 그 행동의 Face와 추적 구간(Track)이 맡습니다.
 	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
 	return (Animating && Animating->IsActive()) || AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
 }
@@ -135,7 +128,6 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
 		return;
 	}
 
-	// 1-2. 모든 행동을 멈추고, 이후의 피격은 무시합니다(IsDead). 몽타주의 워핑과 열린 판정도 함께 정리합니다.
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
 	AbilitySystemComponent->CancelAllAbilities();
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -144,18 +136,16 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
 		AnimInstance->StopAllMontages(0.f);
 	}
 
-	// 3. 입력(플레이어)과 이동을 멈춥니다. 보스의 AI는 사망 상태로 넘어가 이동 입력을 더 주지 않습니다. 사망 모션은
-	// 루트 모션으로 계속 움직입니다.
+	// 사망 모션은 루트 모션으로 계속 움직이므로 이동은 끄지 않고 멈추기만 합니다. 보스 AI는 사망 상태로 넘어가
+	// 이동 입력을 더 주지 않습니다.
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PlayerController);
 	}
 	GetCharacterMovement()->StopMovementImmediately();
 
-	// 4. 어빌리티 취소가 각 판정 Task를 끝냈으므로 더는 상대 캐릭터를 막지 않습니다.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
-	// 5. 마지막 공격의 피격 방향으로 밀리며 래그돌이 됩니다.
 	if (bRagdoll)
 	{
 		StartRagdoll(PushVelocity);
@@ -174,7 +164,7 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 	MeshComponent->SetSimulatePhysics(true);
 	if (!PushVelocity.IsNearlyZero())
 	{
-		MeshComponent->AddImpulse(PushVelocity, NAME_None, /*bVelChange*/ true);
+		MeshComponent->AddImpulse(PushVelocity, NAME_None, true);
 	}
 }
 
@@ -199,9 +189,10 @@ void AAgCharacterBase::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
 
-	// 보스 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 보스 데이터를 읽으므로, 그 전에 연결합니다.
+	// 보스 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 보스 데이터를 읽으므로,
+	// 그 전에 연결합니다.
 	CharacterData = UAgAssetManager::Get().FindCharacterData(CharacterDataId);
-	// 처음 읽기에 실패한 데이터로는 전투를 시작하지 않습니다. 다시 읽기 실패는 기존 정상 값을 유지합니다.
+	// 다시 읽기에 실패해도 기존 정상 값을 유지하므로, 여기서 멈추는 것은 처음 읽기에 실패한 경우뿐입니다.
 	if (!CharacterData || !CharacterData->IsA(CharacterDataClass) || !CharacterData->HasValidJsonData())
 	{
 		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing, has the wrong type or is not valid."), *GetName(),
@@ -283,9 +274,9 @@ void AAgCharacterBase::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
-	// 띄우는 동안의 착지 가운데 Launch가 착지로 보지 않은 것(체공 시간의 앞부분)은 다시 떠오르므로 알리지 않습니다. 착지로 본
-	// Launch는 엔진 착지 알림(Super::Landed) 안에서 소스를 지우는데, 엔진은 제거 표시만 하고 다음 이동 갱신에서 빼므로 표시된
-	// 소스는 없는 것으로 봅니다.
+	// 띄우는 동안의 착지 가운데 Launch가 착지로 보지 않은 것(체공 시간의 앞부분)은 다시 떠오르므로 알리지 않습니다.
+	// 착지로 본 Launch는 엔진 착지 알림(Super::Landed) 안에서 소스를 지우는데, 엔진은 제거 표시만 하고 다음 이동
+	// 갱신에서 빼므로 표시된 소스는 없는 것으로 봅니다.
 	const TSharedPtr<FRootMotionSource> LaunchSource = GetCharacterMovement()->GetRootMotionSource(UAgAbilityTask_Launch::SourceName);
 	const bool bLaunching = LaunchSource.IsValid() && !LaunchSource->Status.HasFlag(ERootMotionSourceStatusFlags::MarkedForRemoval);
 	if (!IsDead() && !bLaunching)
@@ -313,9 +304,11 @@ void AAgCharacterBase::GrantAbilities()
 {
 	for (FName AbilityId : CharacterData->Abilities)
 	{
-		// 어빌리티 정의는 데이터를 읽을 때 캐릭터의 목록과 함께 검사했습니다. 엔진은 부여할 때 스펙의 트리거를 등록합니다.
+		// 어빌리티 정의는 데이터를 읽을 때 캐릭터의 목록과 함께 검사했습니다. 엔진은 부여할 때 스펙의 트리거를
+		// 등록합니다.
 		const FAgAbilityData& Ability = *UAgAssetManager::Get().FindAbility(AbilityId);
 		FGameplayAbilitySpec Spec(UAgGameplayAbility::StaticClass());
+		// GiveAbility 안의 OnGiveAbility가 이 ID로 정의를 찾으므로 먼저 연결합니다.
 		AbilityIds.Add(Spec.Handle, Ability.Id);
 		Spec.GetDynamicSpecSourceTags() = Ability.Tags;
 		for (const FAgAbilityTrigger& Trigger : Ability.Activation.Triggers)
@@ -415,13 +408,11 @@ void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
 
 void AAgCharacterBase::HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// 멈춘 동안 다시 맞으면 태그가 하나 더 붙고, 마지막 것이 끝날 때 풀립니다.
 	UpdateTimeDilation();
 }
 
 void AAgCharacterBase::HandlePassThroughChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// 태그는 겹쳐도 개수로 세므로 마지막 것이 빠질 때 되돌립니다. 죽은 캐릭터는 캐릭터 간 충돌을 끈 채로 둡니다.
 	if (!IsDead())
 	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, NewCount > 0 ? ECR_Ignore : PawnResponse.GetValue());
@@ -448,7 +439,7 @@ void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
 		return;
 	}
 
-	// 사망 모션: 다른 행동을 취소하기 전에 재생 위치를 보관하고, 그 위치에서 사망 모션을 이어 재생합니다(처형 사망).
+	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 Die 전에 읽습니다.
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	for (const FAgDeathMotion& Motion : CharacterData->DeathMotions)
 	{
@@ -474,7 +465,6 @@ void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
 		return;
 	}
 
-	// 마지막 공격의 피격 방향으로 밀립니다.
 	const AActor* Attacker = Payload ? Payload->Instigator.Get() : nullptr;
 	const FVector Push =
 		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * DeathPushSpeed : FVector::ZeroVector;
@@ -505,7 +495,6 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 		return WorldRootMotion;
 	}
 
-	// 이번 프레임의 루트 모션에서 그 행동의 간격 안으로 들어가는 만큼을 잘라냅니다.
 	FVector Delta = WorldRootMotion.GetTranslation();
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	const float Toward = FVector::DotProduct(FVector(Delta.X, Delta.Y, 0.f), ToTarget);
@@ -529,7 +518,6 @@ void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
 		return;
 	}
 
-	// 회전 속도는 캐릭터 무브먼트의 회전 속도(엔진 기본값)입니다.
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	if (!ToTarget.IsNearlyZero())
 	{

@@ -19,13 +19,11 @@ namespace
 {
 	using namespace AgJsonRead;
 
-	/** 코드가 거는 효과가 받아야 하는 모양 */
 	struct FRequiredShape
 	{
 		EAgEffect Effect;
 		EGameplayEffectDurationType DurationPolicy;
 
-		/** HasDuration에서 거는 코드가 지속 시간을 정하면 true(정의에 Duration 없음), 정의의 Duration을 쓰면 false */
 		bool bDurationFromCode;
 
 		bool bPeriodic;
@@ -145,7 +143,6 @@ namespace
 		}
 		else if (Object.HasField(TEXT("PerSecond")))
 		{
-			// 기획서의 초당 값을 그대로 적고, 주기마다 더할 값으로 바꿉니다.
 			if (Period <= 0.f)
 			{
 				Errors.Add(Path + TEXT(".PerSecond: needs Period"));
@@ -172,7 +169,6 @@ namespace
 			FGameplayAttribute Backing;
 			if (Attribute(Object, TEXT("FromAttribute"), Path, Backing, Errors))
 			{
-				// 대상의 현재 값을 적용하는 때에 읽습니다.
 				FAttributeBasedFloat AttributeBased;
 				AttributeBased.BackingAttribute =
 					FGameplayEffectAttributeCaptureDefinition(Backing, EGameplayEffectAttributeCaptureSource::Target, false);

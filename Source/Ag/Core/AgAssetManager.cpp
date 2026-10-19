@@ -39,7 +39,6 @@ namespace
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
 	const TCHAR* const JsonFolderName = TEXT("Data");
 
-	/** 데이터 파일. 파일마다 그 파일을 읽는 클래스가 정해져 있어 이름을 바꿀 일이 없습니다. */
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
 	const TCHAR* const CameraDataFile = TEXT("Camera.json");
 	const TCHAR* const EffectsFile = TEXT("Effects.json");
@@ -49,7 +48,6 @@ namespace
 	const TCHAR* const AbilitiesFile = TEXT("Abilities.json");
 	const TCHAR* const CharactersFile = TEXT("Characters.json");
 
-	/** 파일마다 화면에 띄우는 오류 수. 로그에는 모두 남깁니다. */
 	constexpr int32 MaxErrorsOnScreen = 5;
 
 #if WITH_EDITOR
@@ -69,7 +67,6 @@ namespace
 		return NumericProperty ? NumericProperty->GetIntPropertyEnum() : nullptr;
 	}
 
-	/** 속성 값을 JSON에 적는 형식 */
 	EJson GetJsonType(const FProperty* Property)
 	{
 		if (Property->IsA<FArrayProperty>())
@@ -88,7 +85,6 @@ namespace
 		{
 			return EJson::Object;
 		}
-		// 열거형, 텍스트, 태그
 		return EJson::String;
 	}
 
@@ -111,10 +107,6 @@ namespace
 
 	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors, bool bAllowMissing);
 
-	/**
-	 * 값을 속성에 맞춰 검사합니다: JSON 형식, 그다음 그 형식에 필요한 것(필드, 태그, 열거형 값, 정수, 범위). bAllowMissing이면 구조체
-	 * 필드가 빠져도 됩니다.
-	 */
 	void CheckValue(const TSharedPtr<FJsonValue>& Value, const FProperty* Property, const FString& Path, TArray<FString>& Errors, bool bAllowMissing)
 	{
 		const EJson Type = GetJsonType(Property);
@@ -159,7 +151,6 @@ namespace
 		else if (const FObjectPropertyBase* ObjectProperty = CastField<FObjectPropertyBase>(Property))
 		{
 			const FString ObjectPath = Value->AsString();
-			// JSON은 전체 객체 경로만 받습니다. null이나 리다이렉터에 기대는 오래된 경로는 허용하지 않습니다.
 			if (!FPackageName::IsValidObjectPath(ObjectPath))
 			{
 				Errors.Add(FString::Printf(TEXT("%s: invalid object path %s"), *Path, *ObjectPath));
@@ -168,7 +159,7 @@ namespace
 			UObject* Object = StaticLoadObject(UObject::StaticClass(), nullptr, *ObjectPath, nullptr, LOAD_NoWarn);
 			const FClassProperty* ClassProperty = CastField<FClassProperty>(Property);
 			const UClass* Class = Cast<UClass>(Object);
-			// 추상 클래스는 속성이 허용할 때만 받습니다(엔진 ActorClass 필터). 배열 원소의 메타데이터는 배열 속성에 있습니다.
+			// 배열 원소의 메타데이터는 배열 속성에 있습니다.
 			bool bAbstractAllowed = false;
 #if WITH_METADATA
 			bAbstractAllowed = Property->GetOwnerProperty()->HasMetaData(TEXT("AllowAbstract"));
@@ -200,7 +191,7 @@ namespace
 		else if (IsTagProperty(Property))
 		{
 			const FString TagName = Value->AsString();
-			if (!TagName.IsEmpty() && !FGameplayTag::RequestGameplayTag(FName(*TagName), /*ErrorIfNotFound*/ false).IsValid())
+			if (!TagName.IsEmpty() && !FGameplayTag::RequestGameplayTag(FName(*TagName), false).IsValid())
 			{
 				Errors.Add(FString::Printf(TEXT("%s: %s is not a gameplay tag"), *Path, *TagName));
 			}
@@ -262,8 +253,8 @@ namespace
 	}
 
 	/**
-	 * Json에 이 속성들이 빠짐없이(bAllowMissing이면 빠져도 됨), 다른 키 없이 있는지 확인하고 값마다 검사합니다. 키는 엔진의
-	 * 이름(FName)과 JSON 객체처럼 대소문자를 구분하지 않습니다. 쿡한 빌드의 속성 이름은 대소문자를 보존하지 않습니다(예: UP → Up).
+	 * 키는 엔진의 이름(FName)과 JSON 객체처럼 대소문자를 구분하지 않습니다. 쿡한 빌드의 속성 이름은 대소문자를
+	 * 보존하지 않습니다(예: UP → Up).
 	 */
 	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors, bool bAllowMissing)
 	{
@@ -292,9 +283,8 @@ namespace
 		}
 	}
 
-#endif // WITH_EDITOR
+#endif
 
-	/** 파일을 읽어 JSON 객체로 바꿉니다. 오류가 있으면 null입니다. */
 	TSharedPtr<FJsonObject> ReadJsonFile(const TCHAR* FileName, TArray<FString>& Errors)
 	{
 		FString Text;
@@ -345,7 +335,6 @@ namespace
 		return Errors.IsEmpty() ? Json : nullptr;
 	}
 
-	/** Json으로 Target의 Transient 속성을 모두 채웁니다. 에디터에서는 키와 값을 속성에 맞춰 먼저 검사합니다. 오류 경로 앞에 Path를 붙입니다. */
 	void ReadProperties(const FJsonObject& Json, UObject& Target, const FString& Path, TArray<FString>& Errors)
 	{
 		TArray<const FProperty*> Properties;
@@ -358,7 +347,7 @@ namespace
 		}
 #if WITH_EDITOR
 		const int32 Before = Errors.Num();
-		CheckObject(Json, Properties, Path, Errors, /*bAllowMissing*/ false);
+		CheckObject(Json, Properties, Path, Errors, false);
 		if (Errors.Num() != Before)
 		{
 			return;
@@ -377,10 +366,7 @@ namespace
 		}
 	}
 
-	/**
-	 * 오브젝트 타입 배열(AOE Task의 CollisionObjectTypes)은 에디터에 보이는 채널 이름(Pawn)으로 적습니다. 엔진 값(ObjectTypeQuery3)은
-	 * 프로젝트 충돌 설정의 순서로 정해지므로, 읽을 때 채널 이름을 그 값으로 바꿉니다.
-	 */
+	/** 엔진 값(ObjectTypeQuery3)은 프로젝트 충돌 설정의 순서로 정해지므로, 읽을 때 채널 이름을 그 값으로 바꿉니다. */
 	void ConvertObjectTypeNames(FJsonObject& Entry, const UClass& Class, const FString& Path, TArray<FString>& Errors)
 	{
 		for (TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Entry.Values)
@@ -409,11 +395,6 @@ namespace
 		}
 	}
 
-	/**
-	 * 대상 프리셋 정의(프리셋 ID마다 Task 목록)를 읽어 Outer 아래에 프리셋을 만듭니다. Task는 클래스 경로(Class)와 바꿀 속성만 적고,
-	 * 적지 않은 속성은 그 클래스의 기본값입니다. 에디터의 프리셋에서 고칠 수 있는 속성만 받습니다. 객체 이름에 Version을 붙여 읽을
-	 * 때마다 새 프리셋을 만듭니다.
-	 */
 	void ReadTargetingPresets(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UTargetingPreset>>& Out, TArray<FString>& Errors)
 	{
 		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Json.Values)
@@ -462,7 +443,7 @@ namespace
 				}
 #if WITH_EDITOR
 				const int32 Before = Errors.Num();
-				CheckObject(Entry, Properties, Path, Errors, /*bAllowMissing*/ true);
+				CheckObject(Entry, Properties, Path, Errors, true);
 				if (Errors.Num() != Before)
 				{
 					continue;
@@ -489,7 +470,7 @@ namespace
 				}
 				Tasks.Add(Task);
 			}
-			// 적대·생존·범위·대상 태그 조건은 프로젝트 필터가 거릅니다. 없으면 행동의 Range와 대상 태그가 모두 무시되므로 막습니다.
+			// 적대·생존·범위·대상 태그 조건은 이 필터가 거르므로, 없으면 행동의 Range와 대상 태그가 모두 무시됩니다.
 			const bool bHasFilter = Tasks.ContainsByPredicate([](const TObjectPtr<UTargetingTask>& Task)
 			{
 				return Task->IsA<UAgTargetingFilterTask_ActionTarget>();
@@ -502,7 +483,7 @@ namespace
 		}
 	}
 
-	/** 검사를 마친 새 객체의 값(Transient 속성)을 지금 객체에 복사합니다. 지금 객체를 가리키는 쪽은 그대로 새 값을 봅니다. */
+	/** 지금 객체를 가리키는 쪽이 그대로 새 값을 보도록 객체를 바꾸지 않고 값만 복사합니다. */
 	void CopyJsonProperties(const UObject& From, UObject& To)
 	{
 		for (TFieldIterator<FProperty> It(To.GetClass()); It; ++It)
@@ -628,7 +609,6 @@ void UAgAssetManager::ReloadJsonData()
 {
 	if (LoadJsonData() && GEngine)
 	{
-		// 스탯처럼 스폰할 때 한 번 넣는 값은 다음 PIE부터 바뀝니다(구현 계획서 'JSON 데이터' 다시 읽기).
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
 			TEXT("Data reloaded. Spawn settings apply on the next play start."));
 	}
@@ -644,8 +624,8 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 		return;
 	}
 
-	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE와 대상 프리셋은 실행 중에 만들고
-	// 클래스만 가리킵니다.
+	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE와 대상 프리셋은
+	// 실행 중에 만들고 클래스만 가리킵니다.
 	TArray<UObject*> DataObjects = {CombatRules, CameraData, Projectiles, MontageTimelines, Abilities};
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
@@ -666,7 +646,6 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 		}
 	}
 
-	// 쓰는 곳이 없는 정의는 배포하지 않습니다.
 	TSet<FName> UsedAbilities;
 	TSet<FName> UsedEffects;
 	TSet<FName> UsedProjectiles;
@@ -681,7 +660,6 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 	{
 		UsedEffects.Add(AgEffectData::Id(static_cast<EAgEffect>(CodeEffects->GetValueByIndex(Index))));
 	}
-	// Task가 가리키는 효과와 투사체는 그 Task가 알려 줍니다(GetReferences).
 	FAgTaskReferences TaskReferences;
 	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
 	{
@@ -735,7 +713,6 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 		}
 	}
 
-	// UFS에 포함되지만 로더가 읽지 않는 파일도 배포하지 않습니다.
 	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(), FString(CameraDataFile).ToLower(),
 		FString(EffectsFile).ToLower(), FString(ProjectilesFile).ToLower(),
 		FString(MontageTimelinesFile).ToLower(), FString(TargetingPresetsFile).ToLower(),
@@ -762,7 +739,6 @@ void UAgAssetManager::StartInitialLoading()
 bool UAgAssetManager::LoadJsonData()
 {
 	++DataVersion;
-	// 새 객체에 모두 읽고, 모두 통과해야 지금 객체에 복사합니다. 실패하면 기존 값이 그대로 남습니다.
 	UAgCombatRules* NewRules = NewObject<UAgCombatRules>(this);
 	UAgCameraData* NewCamera = NewObject<UAgCameraData>(this);
 	UAgEffectSet* NewEffects = NewObject<UAgEffectSet>(this);
@@ -808,7 +784,6 @@ bool UAgAssetManager::LoadJsonData()
 	TArray<FString> ProjectileErrors;
 	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(ProjectilesFile, ProjectileErrors))
 	{
-		// 파일 전체가 투사체 ID의 맵이라, 그 맵 속성 하나를 가진 객체로 읽습니다.
 		FJsonObject File;
 		File.SetObjectField(TEXT("Projectiles"), Json);
 		ReadProperties(File, *NewProjectiles, FString(), ProjectileErrors);
@@ -862,7 +837,6 @@ bool UAgAssetManager::LoadJsonData()
 		}
 	}
 
-	// 파일 사이의 참조는 양쪽 파일을 읽었을 때만 검사합니다. Task가 가리키는 효과와 투사체는 그 Task가 알려 줍니다(GetReferences).
 	const TMap<FName, TObjectPtr<UGameplayEffect>>* ReadEffects = EffectErrors.IsEmpty() ? &NewEffects->Effects : nullptr;
 	const TMap<FName, FAgProjectileDefinition>* ReadProjectiles = ProjectileErrors.IsEmpty() ? &NewProjectiles->Projectiles : nullptr;
 	if (TimelineErrors.IsEmpty())
@@ -886,7 +860,7 @@ bool UAgAssetManager::LoadJsonData()
 	}
 	if (CharacterErrors.IsEmpty() && AbilityErrors.IsEmpty() && EffectErrors.IsEmpty() && TimelineErrors.IsEmpty())
 	{
-		// 시간표는 행동이 재생하는 몽타주에만 둡니다. 캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)에는 판정할 Runner가 없습니다.
+		// 캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)에는 판정할 Runner가 없습니다.
 		TSet<FName> AbilityMontages;
 		for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
 		{

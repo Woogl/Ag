@@ -15,7 +15,6 @@
 
 namespace UE::TargetingSystem
 {
-	// 엔진 데이터(FTargetingSourceContext 등)와 같은 방식의 요청 핸들별 저장소. 핸들을 놓으면 저장소가 그 항목을 지웁니다.
 	extern TTargetingDataStore<FAgTargetingConditions> GAgTargetingConditionsDataStore;
 
 	template <>
@@ -131,7 +130,7 @@ UAgTargetingSortTask_HorizontalDistance::UAgTargetingSortTask_HorizontalDistance
 
 float UAgTargetingSortTask_HorizontalDistance::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
-	// 기획서의 거리는 수평 거리라, 엔진 정렬(3D 거리) 대신 이 정렬을 씁니다. 점수가 작을수록 앞입니다.
+	// 기획서의 거리는 수평 거리라 엔진 정렬(3D 거리) 대신 이 정렬을 씁니다.
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
 	const AActor* Candidate = TargetData.HitResult.GetActor();

@@ -86,13 +86,11 @@ void UAgAbilityTask_Track::Activate()
 	LastPosition = Instance->GetPosition();
 	if (!Target.IsValid())
 	{
-		// 향할 대상이 없으면 모션 그대로 둡니다.
 		EndTask();
 		return;
 	}
 
-	// 몽타주 루트 모션이 있으면 이 구간의 Modifier를 엔진 Motion Warping에 더합니다. 켜고(앞 재생 위치가 구간 안) 지우는 것(구간을
-	// 지남)과 루트 모션 보정은 엔진이 재생 위치로 합니다.
+	// Modifier를 켜고 지우는 것과 루트 모션 보정은 엔진 Motion Warping이 재생 위치로 합니다.
 	UMotionWarpingComponent* Warping = Character->GetMotionWarping();
 	if (Warping && Instance->Montage->HasRootMotion())
 	{
@@ -125,7 +123,6 @@ void UAgAbilityTask_Track::TickTask(float DeltaTime)
 		return;
 	}
 
-	// 따라 돌다가 대상이 TargetingRange 밖으로 나가면 이 구간에서는 멈춥니다.
 	const AActor* Goal = Target.Get();
 	bStopped = !Goal ||
 	           (!bFacingOnly && Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(Goal) > Params.TargetingRange);
@@ -135,8 +132,7 @@ void UAgAbilityTask_Track::TickTask(float DeltaTime)
 		return;
 	}
 
-	// ConstantRate는 초당 캐릭터 회전 속도만큼(틱 시간에 주인의 시간 배율이 들어 있음), Slerp는 구간 끝에 다 돌도록 남은 각도를
-	// 나눠 돕니다.
+	// ConstantRate의 틱 시간에는 주인의 시간 배율이 이미 들어 있습니다.
 	const float CurrentYaw = static_cast<float>(Character->GetActorRotation().Yaw);
 	const float GoalYaw = static_cast<float>(ToTarget.Rotation().Yaw);
 	float Yaw = CurrentYaw;
@@ -158,7 +154,7 @@ void UAgAbilityTask_Track::TickTask(float DeltaTime)
 
 void UAgAbilityTask_Track::OnDestroy(bool bInOwnerFinished)
 {
-	// 구간이 끝나거나 재생이 바뀌면 Modifier를 지우도록 표시합니다. 엔진이 다음 갱신에서 지웁니다.
+	// 엔진 Motion Warping이 다음 갱신에서 지우도록 표시만 합니다.
 	if (UAgRootMotionModifier_MotionWarping* Warp = Modifier.Get())
 	{
 		Warp->SetState(ERootMotionModifierState::MarkedForRemoval);

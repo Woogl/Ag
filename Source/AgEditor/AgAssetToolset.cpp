@@ -39,7 +39,6 @@ namespace
 		return StateTree ? Cast<UStateTreeEditorData>(StateTree->EditorData) : nullptr;
 	}
 
-	/** 이름을 '/'로 이은 경로(예: Root/전투)의 상태 */
 	UStateTreeState* FindStateTreeState(UStateTree* StateTree, const FString& Path)
 	{
 		UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
@@ -68,7 +67,6 @@ namespace
 		return Found;
 	}
 
-	/** 노드의 인스턴스 데이터에 언리얼 텍스트 형식의 값을 넣습니다. 값이 비어 있으면 기본값 그대로 둡니다. */
 	bool ImportStateTreeNodeValues(FStateTreeEditorNode& Node, const FString& Values)
 	{
 		if (Values.IsEmpty())
@@ -85,7 +83,6 @@ namespace
 		return End && Errors.IsEmpty();
 	}
 
-	/** 스키마가 이 노드 구조체를 허용하고, 구조체가 Base의 자식인지 */
 	bool IsStateTreeNodeAllowed(UStateTree* StateTree, const UScriptStruct* NodeStruct, const UScriptStruct* Base)
 	{
 		const UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
@@ -101,7 +98,6 @@ bool UAgAssetToolset::SetComponentParentSocket(UBlueprint* Blueprint, FName Comp
 		return false;
 	}
 
-	// 에디터의 Parent Socket 선택과 같은 처리입니다.
 	Node->Modify();
 	Node->AttachToName = SocketName;
 	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(Blueprint);
@@ -126,7 +122,8 @@ bool UAgAssetToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName Gr
 
 bool UAgAssetToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments)
 {
-	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다. 도중에 실패해 반쯤 바뀐 몽타주가 더티로 남지 않게 합니다.
+	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다.
+	// 도중에 실패해 반쯤 바뀐 몽타주가 더티로 남지 않게 합니다.
 	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Segments.IsEmpty() || Segments.ContainsByPredicate([](const FAgMontageSegment& Segment)
 	{ return !Segment.Animation; }))
 	{
@@ -142,7 +139,7 @@ bool UAgAssetToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotName, 
 	for (const FAgMontageSegment& Segment : Segments)
 	{
 		FAnimSegment& AnimSegment = SlotTrack.AnimTrack.AnimSegments.AddDefaulted_GetRef();
-		AnimSegment.SetAnimReference(Segment.Animation, /*bInitialize*/ true);
+		AnimSegment.SetAnimReference(Segment.Animation, true);
 		AnimSegment.AnimStartTime = Segment.StartTime;
 		AnimSegment.AnimEndTime = Segment.EndTime > 0.f ? Segment.EndTime : Segment.Animation->GetPlayLength();
 		AnimSegment.AnimPlayRate = FMath::Max(Segment.PlayRate, UE_KINDA_SMALL_NUMBER);
@@ -171,7 +168,8 @@ bool UAgAssetToolset::SetMontageSections(UAnimMontage* Montage, const TArray<FAg
 		return false;
 	}
 
-	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다. 이름이 None이면 엔진이 이름을 지어 붙이므로 실패로 봅니다.
+	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다.
+	// 이름이 None이면 엔진이 이름을 지어 붙이므로 실패로 봅니다.
 	TSet<FName> Names;
 	for (const FAgMontageSection& Section : Sections)
 	{
@@ -218,7 +216,6 @@ bool UAgAssetToolset::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName 
 	WidgetBlueprint->Modify();
 	RemoveWidgetAnimation(WidgetBlueprint, AnimationName);
 
-	// 위젯 디자이너에서 새로 만든 애니메이션과 같이 설정합니다.
 	UWidgetAnimation* Animation = NewObject<UWidgetAnimation>(WidgetBlueprint, AnimationName, RF_Transactional);
 	Animation->SetDisplayLabel(AnimationName.ToString());
 	UMovieScene* MovieScene = NewObject<UMovieScene>(Animation, AnimationName, RF_Transactional);
@@ -229,7 +226,6 @@ bool UAgAssetToolset::SetFadeAnimation(UWidgetBlueprint* WidgetBlueprint, FName 
 	MovieScene->GetEditorData().WorkStart = 0.f;
 	MovieScene->GetEditorData().WorkEnd = Duration;
 
-	// 애니메이션할 위젯. 재생할 때 이름으로 찾습니다.
 	const FGuid Binding = MovieScene->AddPossessable(Widget->GetName(), Widget->GetClass());
 	FWidgetAnimationBinding& WidgetBinding = Animation->AnimationBindings.AddDefaulted_GetRef();
 	WidgetBinding.WidgetName = Widget->GetFName();
@@ -284,7 +280,6 @@ UStateTree* UAgAssetToolset::CreateStateTree(const FString& AssetPath, TSubclass
 		return nullptr;
 	}
 
-	// 에디터의 새 StateTree 만들기와 같은 팩토리: 에디터 데이터, 스키마, Root 상태를 만들고 컴파일합니다.
 	UStateTreeFactory* Factory = NewObject<UStateTreeFactory>();
 	Factory->SetSchemaClass(TObjectPtr<UClass>(Schema.Get()));
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();

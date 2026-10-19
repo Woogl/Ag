@@ -69,7 +69,6 @@ void UAgAbilityTask_Launch::Activate()
 		return;
 	}
 
-	// To Target이면 대상 앞, 그 행동의 간격만큼 떨어진 곳에 내립니다. 대상이 없으면 제자리에서 띄웁니다.
 	Rotation = Character->GetActorRotation();
 	Distance = 0.f;
 	const AActor* Target = Params.bHasTo ? Runner->GetActionTarget() : nullptr;
@@ -85,7 +84,7 @@ void UAgAbilityTask_Launch::Activate()
 	}
 	Height = Params.bHasHeight ? Params.Height : -Movement->GetGravityZ() * FMath::Square(Params.AirTime) / 8.f;
 
-	// 엔진 Task의 생성 함수가 하는 설정입니다. 착지할 때까지 다른 속도를 덮어쓰고, 끝나면 속도를 0으로 둡니다.
+	// 엔진 Task의 생성 함수가 하는 설정입니다.
 	ForceName = SourceName;
 	Duration = Params.AirTime;
 	MinimumLandedTriggerTime = Params.AirTime * MinLandedAirTimeRatio;
@@ -108,8 +107,8 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 		}
 		return;
 	}
-	// 캐릭터 무브먼트는 몽타주가 루트 모션을 주면(루트 모션이 없는 섹션이라도 몽타주에 루트 모션이 있고 끄기 노티파이 밖이면)
-	// 루트 모션 소스를 쓰지 않습니다.
+	// 캐릭터 무브먼트는 몽타주가 루트 모션을 주면(루트 모션이 없는 섹션이라도 몽타주에 루트 모션이 있고 끄기
+	// 노티파이 밖이면) 루트 모션 소스를 쓰지 않습니다.
 	const FAnimMontageInstance* Instance = Character->GetRootMotionAnimMontageInstance();
 	if (!bReportedRootMotion && Instance && Instance->Montage && Instance->Montage->HasRootMotion() && !Instance->IsRootMotionDisabled())
 	{
@@ -117,8 +116,8 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 		UE_LOG(LogAg, Error, TEXT("Launch: %s gives montage root motion at %.3f, so the launch does not move %s"),
 			*GetNameSafe(Instance->Montage), Instance->GetPosition(), *Character->GetName());
 	}
-	// 떠오르지 못하고 땅에 남았으면(낮은 천장 등) 착지 알림이 오지 않아 엔진 Task가 끝나지 않으므로, 착지를 보는 때부터 땅에 있으면
-	// 끝냅니다.
+	// 떠오르지 못하고 땅에 남았으면(낮은 천장 등) 착지 알림이 오지 않아 엔진 Task가 끝나지 않으므로, 착지를 보는
+	// 때부터 땅에 있으면 끝냅니다.
 	if (GetWorld()->GetTimeSeconds() >= StartTime + MinimumLandedTriggerTime && !MovementComponent->IsFalling())
 	{
 		Finish();

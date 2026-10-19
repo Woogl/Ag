@@ -47,7 +47,6 @@ bool AAgBossAIController::IsBossReacting() const
 		return false;
 	}
 
-	// 넉백(상태 우선순위 4)과 그로기(3)
 	FGameplayTagContainer ReactionTags;
 	ReactionTags.AddTag(AgGameplayTags::State_HitReaction);
 	ReactionTags.AddTag(AgGameplayTags::State_Groggy);
@@ -101,6 +100,7 @@ void AAgBossAIController::Tick(float DeltaSeconds)
 
 void AAgBossAIController::BindTargetEvents()
 {
+	// 보스는 플레이어가 스폰되기 전에 빙의하므로, 빙의할 때가 아니라 대상이 생긴 뒤의 틱에서 한 번 구독합니다.
 	if (TargetASC.IsValid())
 	{
 		return;
@@ -115,7 +115,6 @@ void AAgBossAIController::BindTargetEvents()
 
 void AAgBossAIController::HandleTargetBasicAttack(const FGameplayEventData* Payload)
 {
-	// 다른 적을 노린 평타·점프 공격은 넘기지 않습니다. Backstep의 발동 조건과 확률은 StateTree의 패턴 후딜레이 전환이 검사합니다.
 	const AAgBossCharacter* Boss = GetBoss();
 	if (Payload && Boss && Payload->Target.Get() == Boss)
 	{

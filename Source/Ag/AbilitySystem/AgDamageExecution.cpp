@@ -12,7 +12,6 @@
 
 namespace
 {
-	/** 공격자의 ATK는 스펙을 만들 때 값으로, 대상의 DEF와 SP는 적용할 때 값으로 읽습니다. */
 	struct FAgDamageCaptures
 	{
 		FGameplayEffectAttributeCaptureDefinition ATK;
@@ -20,9 +19,9 @@ namespace
 		FGameplayEffectAttributeCaptureDefinition SP;
 
 		FAgDamageCaptures()
-			: ATK(UAgAttributeSet::GetATKAttribute(), EGameplayEffectAttributeCaptureSource::Source, /*bSnapshot*/ true)
-			, DEF(UAgAttributeSet::GetDEFAttribute(), EGameplayEffectAttributeCaptureSource::Target, /*bSnapshot*/ false)
-			, SP(UAgAttributeSet::GetSPAttribute(), EGameplayEffectAttributeCaptureSource::Target, /*bSnapshot*/ false)
+			: ATK(UAgAttributeSet::GetATKAttribute(), EGameplayEffectAttributeCaptureSource::Source, true)
+			, DEF(UAgAttributeSet::GetDEFAttribute(), EGameplayEffectAttributeCaptureSource::Target, false)
+			, SP(UAgAttributeSet::GetSPAttribute(), EGameplayEffectAttributeCaptureSource::Target, false)
 		{
 		}
 	};
@@ -65,7 +64,6 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	const FGameplayTagContainer& TargetTags = Spec.CapturedTargetTags.GetActorTags();
 	const FGameplayTagContainer& AttackTags = Spec.GetDynamicAssetTags();
 
-	// 극한 회피와 무적에는 아무것도 바뀌지 않습니다. 극한 회피의 보상은 회피 어빌리티가 줍니다.
 	if (TargetTags.HasTag(AgGameplayTags::State_PerfectDodgeWindow))
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_PerfectDodge);
@@ -93,15 +91,12 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	const float DamageMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_DamageMultiplier);
 	const int32 HPDamage = CalculateHPDamage(SourceATK, DamageMultiplier, TargetDEF, Rules.DefenseConstant);
 
-	// 패리: 막는 쪽은 아무것도 잃지 않습니다. 공격한 쪽의 PP는 패리 이벤트를 받은 가드 어빌리티가 줄입니다.
 	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable && DefenderData)
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Parry);
 		return;
 	}
 
-	// 가드 또는 가드 브레이크: HP 감소량에 가드 경감 배율을 곱하고 PP는 줄지 않으며, 줄기 전 HP 감소량에 비례한 SP로 치릅니다.
-	// SP가 모자라면 가드 브레이크가 되어 SP가 0이 됩니다.
 	if (TargetTags.HasTag(AgGameplayTags::State_Guarding) && bGuardable && DefenderData)
 	{
 		const float GuardSPCost = HPDamage * DefenderData->GuardSPCostRatio;
@@ -112,7 +107,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 		return;
 	}
 
-	// 일반 피격: HP를 먼저 낮춥니다. 사망 판정이 그로기 판정보다 먼저입니다(상태 우선순위).
+	// 사망 판정이 그로기 판정보다 먼저이도록 HP를 먼저 낮춥니다.
 	Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Hit);
 	const int32 PPDamage = Target->CanLosePP() ? CalculatePPDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PoiseMultiplier), TargetDEF, Rules.DefenseConstant) : 0;
 	AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -HPDamage);

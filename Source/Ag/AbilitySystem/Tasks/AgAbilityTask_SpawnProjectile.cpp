@@ -130,7 +130,6 @@ void UAgAbilityTask_SpawnProjectile::HandleSpawned(AActor* Actor)
 	{
 		return;
 	}
-	// 바닥 기준 검기만 판정 상자 반높이만큼 올립니다. 소켓 발사는 소켓 변환을 보존합니다.
 	if (SpawnOrigin == EAgProjectileOrigin::CharacterFeetForward)
 	{
 		PendingProjectile->AddActorWorldOffset(FVector(0.f, 0.f, PendingProjectile->GetCollisionHalfHeight()));

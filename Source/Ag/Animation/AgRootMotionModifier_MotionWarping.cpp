@@ -7,7 +7,6 @@
 UAgRootMotionModifier_MotionWarping::UAgRootMotionModifier_MotionWarping(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	// 엔진 기본값 외에 추적 구간이 모두 함께 쓰는 설정입니다.
 	WarpTargetName = TEXT("AttackTarget");
 }
 
@@ -47,8 +46,8 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		SetState(ERootMotionModifierState::Disabled);
 		return;
 	}
-	// 엔진 ConstantRate의 프레임당 회전 한도는 이동 틱의 시간 × 재생 배율(Rate Scale × 재생 속도) × 회전 한도라, 재생 배율로 나눠
-	// 재생 배율과 관계없이 캐릭터 회전 속도로 돕니다.
+	// 엔진 ConstantRate의 프레임당 회전 한도는 이동 틱의 시간 × 재생 배율(Rate Scale × 재생 속도) × 회전 한도라,
+	// 재생 배율로 나눠 재생 배율과 관계없이 캐릭터 회전 속도로 돕니다.
 	WarpMaxRotationRate = static_cast<float>(Character->GetCharacterMovement()->RotationRate.Yaw);
 	if (FMath::Abs(Context.PlayRate) > UE_SMALL_NUMBER)
 	{

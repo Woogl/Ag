@@ -27,7 +27,7 @@ AAgBossCharacter::AAgBossCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
-	// 화면 공간이라 거리와 관계없이 크기가 같습니다. 데이터의 본에는 BeginPlay에서 붙입니다.
+	// 붙일 본은 캐릭터 데이터에 있어 생성자에서 알 수 없으므로 BeginPlay에서 붙입니다.
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
 	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get()})
@@ -40,7 +40,6 @@ AAgBossCharacter::AAgBossCharacter()
 		WorldWidget->SetHiddenInGame(true);
 	}
 
-	// 처형 안내는 본 바로 위(보스 머리 위)에 섭니다.
 	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
 }
 
@@ -100,8 +99,7 @@ void AAgBossCharacter::AttachWorldWidgets()
 
 void AAgBossCharacter::UpdateWorldWidgets()
 {
-	// 둘 다 플레이어나 보스의 사망 연출이 시작되는 순간부터, 처형 중, 궁극기 컷신(플레이어 컨트롤러의 시네마틱 모드) 동안
-	// 숨깁니다. 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
+	// 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
 	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	const bool bInCombat = Player && !Player->IsDead() && !IsDead() &&
@@ -110,8 +108,8 @@ void AAgBossCharacter::UpdateWorldWidgets()
 
 	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOnTarget() == this));
 
-	// 처형 발동 조건 1, 2(그로기, 범위 안)를 만족하는 처형 대상이면 표시합니다. 지금 하는 행동 때문에 처형 키를 받지 않는 동안에도
-	// 표시합니다. 범위 확인은 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
+	// 지금 하는 행동 때문에 처형 키를 받지 않는 동안에도 표시하므로 발동 가능 여부는 보지 않습니다. 범위 확인은
+	// 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
 	const bool bGroggy = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && IsExecutionTargetOf(*Player)));
 }

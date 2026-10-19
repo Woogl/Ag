@@ -18,7 +18,6 @@ class UStateTree;
 class UStateTreeSchema;
 class UWidgetBlueprint;
 
-/** 몽타주의 조각 하나: 애니메이션의 한 구간 */
 USTRUCT(BlueprintType)
 struct FAgMontageSegment
 {
@@ -39,7 +38,6 @@ struct FAgMontageSegment
 	float PlayRate = 1.f;
 };
 
-/** 몽타주 섹션 하나: 시작 시각과 다음에 재생할 섹션 */
 USTRUCT(BlueprintType)
 struct FAgMontageSection
 {

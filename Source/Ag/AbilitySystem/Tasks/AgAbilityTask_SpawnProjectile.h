@@ -9,7 +9,6 @@
 #include "AgAbilityTask_SpawnProjectile.generated.h"
 class AAgProjectile;
 
-/** 투사체를 쏘는 위치 */
 UENUM()
 enum class EAgProjectileOrigin : uint8
 {
@@ -17,20 +16,17 @@ enum class EAgProjectileOrigin : uint8
 	MeshSocket
 };
 
-/** 투사체 한 발(SpawnProjectile Task의 Params). 클래스, 비행 값, 공격 값은 투사체 정의(Projectiles.json)가 갖습니다. */
 USTRUCT()
 struct FAgSpawnProjectileParams : public FAgTaskParams
 {
 	GENERATED_BODY()
 
-	/** Projectiles.json의 투사체 ID */
 	UPROPERTY()
 	FName ProjectileId;
 
 	UPROPERTY()
 	EAgProjectileOrigin Origin = EAgProjectileOrigin::CharacterFeetForward;
 
-	/** Origin이 MeshSocket일 때만 적습니다. */
 	UPROPERTY()
 	FName SocketName;
 
@@ -55,7 +51,6 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
-/** 시간표의 발사 항목마다 한 발. 권한 검사와 지연 생성은 엔진 SpawnActor를 사용합니다. */
 UCLASS()
 class UAgAbilityTask_SpawnProjectile : public UAbilityTask_SpawnActor
 {

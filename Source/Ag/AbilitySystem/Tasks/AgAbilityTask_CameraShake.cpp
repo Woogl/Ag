@@ -22,7 +22,6 @@ UAgAbilityTask_CameraShake* UAgAbilityTask_CameraShake::CameraShake(UGameplayAbi
 
 void UAgAbilityTask_CameraShake::Activate()
 {
-	// 전투 대상과 관계없이 로컬 플레이어 화면을 흔듭니다.
 	const AActor* Owner = GetAvatarActor();
 	AAgPlayerController* Controller = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 	const APawn* Pawn = Controller ? Controller->GetPawn() : nullptr;

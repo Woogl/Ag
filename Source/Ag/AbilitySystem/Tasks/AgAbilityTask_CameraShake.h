@@ -8,7 +8,6 @@
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_CameraShake.generated.h"
 
-/** 카메라 셰이크(CameraShake Task의 Params). 로컬 플레이어와 주인의 수평 거리가 Range 이내면 Shake 단계로 흔듭니다. */
 USTRUCT()
 struct FAgCameraShakeParams : public FAgTaskParams
 {
@@ -17,7 +16,6 @@ struct FAgCameraShakeParams : public FAgTaskParams
 	UPROPERTY()
 	EAgCameraShake Shake = EAgCameraShake::None;
 
-	/** 캡슐 중심 사이 수평 거리(cm) */
 	UPROPERTY()
 	float Range = 0.f;
 
@@ -29,7 +27,6 @@ struct FAgCameraShakeParams : public FAgTaskParams
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
-/** 셰이크를 한 번 재생하고 끝납니다. */
 UCLASS()
 class UAgAbilityTask_CameraShake : public UAbilityTask
 {

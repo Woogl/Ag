@@ -24,7 +24,6 @@ void FAgApplyEffectParams::Validate(const FJsonObject& Json, EAgTaskPlacement Pl
 
 void FAgApplyEffectParams::ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
 {
-	// 구간의 길이는 시간표(모션 시간)가 정하므로 효과는 스스로 끝나지 않아야 합니다. 효과가 있는지는 참조 검사가 봅니다.
 	const TObjectPtr<UGameplayEffect>* Found = Links.Effects ? Links.Effects->Find(Effect) : nullptr;
 	if (Links.Placement == EAgTaskPlacement::Window && Found && (*Found)->DurationPolicy != EGameplayEffectDurationType::Infinite)
 	{
@@ -61,8 +60,8 @@ void UAgAbilityTask_ApplyEffect::Activate()
 		EndTask();
 		return;
 	}
-	// 효과가 주는 태그의 알림이 행동이나 이 구간을 끝낼 수 있습니다. 시작 중인 Task는 아직 행동의 Task 목록에 없어 행동이 끝내지
-	// 못하므로 스스로 끝내고, 거는 동안 이미 끝났으면(구간이 닫힘) 걸린 효과를 여기서 지웁니다.
+	// 효과가 주는 태그의 알림이 행동이나 이 구간을 끝낼 수 있습니다. 시작 중인 Task는 아직 행동의 Task 목록에 없어
+	// 행동이 끝내지 못하므로 스스로 끝내고, 거는 동안 이미 끝났으면(구간이 닫힘) 걸린 효과를 여기서 지웁니다.
 	const bool bOwnerWasActive = Ability->IsActive();
 	const FActiveGameplayEffectHandle Handle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	if (IsFinished())

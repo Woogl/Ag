@@ -9,10 +9,7 @@
 
 namespace
 {
-	/**
-	 * 사망·그로기 이벤트를 보냅니다. 밀려나는 기준(공격자 또는 투사체)을 Instigator로, 공격 쪽 태그(공격자의 태그,
-	 * 처형 같은 어빌리티의 태그)를 InstigatorTags로 넘깁니다.
-	 */
+	/** 받는 쪽이 Instigator를 밀려나는 기준으로 쓰므로 공격자 대신 EffectCauser(공격자 또는 투사체)를 넘깁니다. */
 	void SendJudgmentEvent(AActor* Character, const FGameplayTag& EventTag, const FGameplayEffectSpec& Spec)
 	{
 		FGameplayEventData Payload;

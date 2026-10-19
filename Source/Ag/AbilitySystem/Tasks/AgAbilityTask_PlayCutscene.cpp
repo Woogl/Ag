@@ -94,7 +94,7 @@ void UAgAbilityTask_PlayCutscene::HandleFinished()
 	{
 		return;
 	}
-	// 전환이 이 구간을 끝냅니다. 전환하지 않으면(다른 재생) 스스로 끝냅니다.
+	// 전환이 이 구간을 끝내므로 전환하지 않았을 때만 스스로 끝냅니다.
 	if (UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability))
 	{
 		Runner->RequestTransition(Next, MontageInstanceId);

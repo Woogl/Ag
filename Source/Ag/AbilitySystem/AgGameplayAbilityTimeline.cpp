@@ -30,7 +30,7 @@ void UAgGameplayAbility::BeginTimeline(const FAnimMontageInstance& Instance)
 		return;
 	}
 
-	// 데이터를 다시 읽어도 이 재생이 끝날 때까지 같은 항목을 쓰도록 복사하고, 섹션 기준 시각을 몽타주 시각으로 바꿉니다.
+	// 데이터를 다시 읽어도 이 재생이 끝날 때까지 같은 항목을 쓰도록 복사합니다.
 	for (const FAgTimelineSection& Section : Timeline->Sections)
 	{
 		for (const FAgTimelineItem& Item : Section.Items)
@@ -73,7 +73,6 @@ void UAgGameplayAbility::TickTimeline()
 
 void UAgGameplayAbility::EvaluateTimeline(float NewPosition, EAgTimelineMode Mode)
 {
-	// 시각 순서로만 실행합니다. 같은 시각의 항목 사이에는 순서가 없습니다.
 	enum class EPhase : uint8
 	{
 		Begin,
@@ -88,9 +87,7 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, EAgTimelineMode Mod
 	};
 	TArray<FPending> Pending;
 
-	// 앞으로 진행하면 지나간 구간 경계와 지점을 모두 실행합니다. 재생 시작, 섹션 이동, 반복으로 위치가 뒤로 간 경우는
-	// 위치로만 구간을 맞추고, 재생 시작과 섹션 이동에서는 그 위치의 지점만 실행합니다. 그 위치는 섹션 시작 시각 그대로라
-	// 섹션 0초의 지점과 같은 값입니다.
+	// 재생 시작과 섹션 이동의 위치는 섹션 시작 시각 그대로라 섹션 0초 지점의 시각과 정확히 같습니다.
 	const float Previous = TimelinePosition;
 	const bool bForward = Mode == EAgTimelineMode::Advance && NewPosition >= Previous;
 	for (int32 Index = 0; Index < TimelineEntries.Num(); ++Index)
@@ -108,7 +105,6 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, EAgTimelineMode Mod
 		}
 		if (bForward && !Entry.bActive && Previous < Entry.Start && Entry.Start <= NewPosition)
 		{
-			// 한 번의 판정에서 구간 전체를 지나면 열고 바로 닫습니다.
 			Pending.Add(FPending{Entry.Start, EPhase::Begin, Index});
 			if (Entry.End <= NewPosition)
 			{
@@ -136,9 +132,9 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, EAgTimelineMode Mod
 	const int32 InstanceId = MontageInstanceId;
 	for (const FPending& Item : Pending)
 	{
-		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로(재생 ID를 비우거나 바꿈) 매번 확인합니다. 항목 실행 안에서 전환해 위치가
-		// 바뀌었으면 옮긴 위치의 판정이 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환 지점과 같은 시각에는 다른 항목을
-		// 두지 않습니다(시간표 검증).
+		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로 매번 확인합니다. 항목 실행 안에서 전환해 위치가 바뀌었으면
+		// 옮긴 위치의 판정이 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환 지점과 같은 시각에는 다른
+		// 항목을 두지 않습니다.
 		if (!IsActive() || MontageInstanceId != InstanceId || TimelinePosition != NewPosition)
 		{
 			return;
@@ -163,7 +159,7 @@ void UAgGameplayAbility::EvaluateTimeline(float NewPosition, EAgTimelineMode Mod
 
 void UAgGameplayAbility::EndTimeline()
 {
-	// 켜진 구간의 Task를 모은 뒤 시간표를 버리고 끝냅니다. Task가 끝나며 다시 재생해도 버린 시간표에는 닿지 않습니다.
+	// Task가 끝나며 다시 재생해도 버린 시간표에 닿지 않도록, 켜진 구간의 Task를 모아 시간표를 버린 뒤 끝냅니다.
 	TArray<UAbilityTask*> Active;
 	for (const FAgTimelineEntry& Entry : TimelineEntries)
 	{

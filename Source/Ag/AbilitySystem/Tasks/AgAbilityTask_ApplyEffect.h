@@ -10,10 +10,6 @@
 
 class UGameplayEffect;
 
-/**
- * 주인에게 거는 효과(ApplyEffect Task의 Params). Effect는 Effects.json의 효과 ID입니다. 구간이면 구간 시작에 걸고 끝에 지우고(모션
- * 시간), 발동·지점이면 효과의 지속 시간(월드 시간)을 따르되 bRemoveOnEnd면 행동이 끝날 때 지웁니다.
- */
 USTRUCT()
 struct FAgApplyEffectParams : public FAgTaskParams
 {
@@ -22,7 +18,6 @@ struct FAgApplyEffectParams : public FAgTaskParams
 	UPROPERTY()
 	FName Effect;
 
-	/** 선택. 발동·지점만 씁니다. */
 	UPROPERTY()
 	bool bRemoveOnEnd = false;
 
@@ -39,12 +34,10 @@ struct FAgApplyEffectParams : public FAgTaskParams
 		Out.Effects.Add(Effect);
 	}
 
-	/** 구간이면 무한 효과입니다. */
 	virtual void ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
-/** 효과 하나를 행동의 효과 컨텍스트로 주인에게 겁니다. bRemoveOnEnd면 이 Task가 끝날 때 지우고, 아니면 걸고 바로 끝납니다. */
 UCLASS()
 class UAgAbilityTask_ApplyEffect : public UAbilityTask
 {
