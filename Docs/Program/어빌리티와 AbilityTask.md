@@ -9,7 +9,7 @@
 | 둔 곳 | 담는 것 |
 | - | - |
 | Runner(`UAgGameplayAbility`) | 엔진 어빌리티 기능(태그 조건, 트리거, 비용·쿨다운, 재발동, 취소), 대상 선정, 발동 Task 시작, 몽타주 재생(재생 전에 온 전환 요청은 시작 섹션)과 Task가 요청한 전환, 시간표의 시각에 맞춘 Task 시작·종료, 정한 방식의 종료 |
-| Task | 범용 기능 하나와 그 Params의 스키마·검증, 도는 동안의 처리와 끝날 때의 정리. 다른 Task의 결과나 실행 순서에 기대지 않습니다. |
+| Task | 범용 기능 하나와 그 Params의 스키마, 도는 동안의 처리와 끝날 때의 정리. 다른 Task의 결과나 실행 순서에 기대지 않습니다. |
 | 행동 정의(`Abilities.json`) | 발동 조건과 트리거, 대상 선정, 재생할 몽타주, 종료 방식, 발동 동안 실행하는 Task |
 | 몽타주 시간표(`MontageTimelines.json`) | 섹션 안의 시각에 실행하는 Task(구간·지점) |
 | 효과 데이터(`Effects.json`) | 계속 흐르는 시간(패리 구간, 회피 반격 기회, 그로기 시간), 보상(패리, 극한 회피), 지속 소모(달리기)의 값. 모션을 따르는 시간은 시간표에 둡니다(아래 '시간 기준'). |
@@ -18,7 +18,7 @@
 - 있는 Task를 조합한 새 행동·패턴은 JSON과 몽타주만으로 더합니다. 새로운 종류의 기능만 Task 파일 하나(Task와 그 Params)로 더하고 Runner는 고치지 않습니다.
 - Task는 자기 일만 하고 다른 Task를 모릅니다. Runner는 Task 종류, 행동 ID, 몽타주 ID로 분기하지 않습니다. 행동 전체를 맡는 흐름 Task와 자식 Ability는 만들지 않습니다.
 - Runner가 정하는 것은 Task가 언제 시작하고 끝나는지뿐입니다. 같은 때에 시작하는 Task(발동 Task끼리, 같은 시각의 구간·지점) 사이의 순서와, Task끼리 함께 둘 수 있는지는 정하지 않습니다. 그래서 같은 때에 시작한 Task는 어떤 순서로 돌아도 결과가 같아야 하고, 주인의 상태를 함께 쓸 때의 처리는 각 Task와 엔진 규칙이 맡습니다(태그는 개수로 세고, 효과는 적용마다 따로이며, 루트 모션 소스는 우선순위가 높은 하나가 움직임). 여러 Task의 결과가 한 주인 상태에 모일 때 같은 프레임의 처리 순서에 따라 결과가 달라지면 그 상태의 주인이 합칩니다(게임 전체 시간 배율: [전투 규칙](<전투 규칙.md>) '시간 정지').
-- 회전처럼 엔진이 합치지 않는 주인 상태를 여러 Task가 같은 때에 쓰면 결과가 그 프레임의 실행 순서에 따라 달라집니다. 회전을 직접 쓰는 Task(Face, 몽타주 루트 모션이 없는 추적 구간, Dash의 유도)는 같은 때에 겹치지 않게 두며, Runner와 검증은 이를 검사하지 않습니다. 회전을 루트 모션 소스로 돌리지 않는 것은, 엔진이 우선순위가 가장 높은 Override 소스 하나의 회전만 그 속도와 함께 적용해 Launch·Dash의 이동과 부딪히기 때문입니다.
+- 회전처럼 엔진이 합치지 않는 주인 상태를 여러 Task가 같은 때에 쓰면 결과가 그 프레임의 실행 순서에 따라 달라집니다. 회전을 직접 쓰는 Task(Face, 몽타주 루트 모션이 없는 추적 구간, Dash의 유도)는 같은 때에 겹치지 않게 두며, Runner는 이를 검사하지 않습니다. 회전을 루트 모션 소스로 돌리지 않는 것은, 엔진이 우선순위가 가장 높은 Override 소스 하나의 회전만 그 속도와 함께 적용해 Launch·Dash의 이동과 부딪히기 때문입니다.
 - 한 행동만 쓰는 규칙은 Task로 만들지 않습니다. 값은 효과 데이터에, 규칙은 그 규칙의 주인 객체에 둡니다. 새 Task는 둘 이상의 행동이 쓰거나 쓸 수 있는 기능일 때만 더합니다.
 - 애니메이션이 만든 이동은 몽타주 루트 모션과 Motion Warping이, 그 밖의 이동(띄우기, 도약, 돌진, 내리꽂기)은 엔진 루트 모션 소스(Launch, Dash)가 맡습니다. 캐릭터 무브먼트는 몽타주가 루트 모션을 주면 루트 모션 소스를 쓰지 않으므로, 소스로 움직이는 동안은 몽타주 루트 모션을 끄고, 그동안의 추적 구간(Track)은 캐릭터를 직접 돌립니다.
 - 행동 정의와 시간표의 항목은 네 가지입니다. 값 없는 상태는 태그(Activation의 OwnedTags, 시간표의 HoldTag)로, 값이나 월드 시간이 있거나 다른 주인이 지워야 하는 상태는 효과(ApplyEffect)로, 다른 액터·시스템에 알릴 것은 이벤트(SendGameplayEvent)로 적고 받는 주인이 처리합니다. 값·대상·어빌리티 문맥이 필요하거나 결과를 돌려주는 것만 기능 Task입니다.
@@ -95,8 +95,8 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task와 몽타주 ID�
 | bRequired | 대상이 없으면 발동하지 않습니다. |
 | StopDistance | 선택. 대상과 맞출 간격(cm)이고, 생략하면 캐릭터의 `StopDistance`입니다. 추적 구간은 대상 앞 이 간격까지 다가가고, Launch의 To Target은 이 간격만큼 떨어져 내립니다. 행동 내내 몽타주 이동은 이 간격 안으로 들어가지 않습니다(최소 간격, 캐릭터가 자름). |
 
-- 범위와 태그 조건은 행동 JSON의 값을 타겟팅 요청 핸들의 데이터(`FAgTargetingConditions`)로 실어 보내고, 프리셋 안의 프로젝트 필터 Task(`UAgTargetingFilterTask_ActionTarget`)가 적대하는 살아 있는 캐릭터만 남긴 뒤 그 조건으로 거릅니다. 정렬은 캡슐 중심 사이 수평 거리(`UAgTargetingSortTask_HorizontalDistance`)입니다. 요청은 즉시 실행하고 결과를 읽은 뒤 놓습니다(`AgTargeting::FindTarget`).
-- 프리셋은 `Enemy`(살아 있는 적: 반경 50m 구 안의 캐릭터를 모아 ActionTarget 필터로 거르고 수평 거리로 정렬), `LockOn`(Enemy에 화면 안 조건 `UAgTargetingFilterTask_OnScreen`), `AITarget`(보스 AI의 대상, `UAgTargetingSelectionTask_AITarget`)입니다. 필터가 없으면 Range와 대상 태그가 모두 무시되므로, 모든 프리셋이 ActionTarget 필터를 가져야 합니다(검증).
+- 범위와 태그 조건은 행동 JSON의 값을 타겟팅 요청 핸들의 데이터(`FAgTargetingConditions`)로 실어 보냅니다. 프리셋의 프로젝트 필터 Task는 기준 하나씩을 맡습니다. 적대 필터(`UAgTargetingFilterTask_Hostile`)는 엔진 팀 태도가 적대인 대상만, 거리 필터(`UAgTargetingFilterTask_Distance`)는 행동의 Range 안(수평 거리)만, 태그 조건 필터(`UAgTargetingFilterTask_TagRequirements`)는 프리셋에 적은 태그 조건과 행동의 대상 태그를 모두 만족하는 대상만 남깁니다. 정렬은 엔진의 거리 정렬(`UTargetingFilterTask_SortByDistance`)입니다. 요청은 즉시 실행하고 결과를 읽은 뒤 놓습니다(`AgTargeting::FindTarget`).
+- 프리셋은 `Enemy`(살아 있는 적: 반경 50m 구 안의 캐릭터를 모아 적대·거리·태그 조건 필터로 거르고 거리로 정렬. 사망은 태그 조건 필터가 `State.Dead`로 거름), `LockOn`(Enemy에 화면 안 조건 `UAgTargetingFilterTask_OnScreen`)입니다. 플레이어 행동과 보스 공격 패턴, 보스 AI의 대상이 모두 `Enemy`를 씁니다.
 - CanActivateAbility에서 읽기 전용으로, 커밋 직전에 한 번 더 평가합니다. Task가 다시 재생을 요청하면 다시 평가합니다(평타의 타마다 대상). 이벤트 Instigator는 바뀌지 않습니다.
 - 추적 구간은 그 재생의 대상을 씁니다. 보스의 대상은 늘 플레이어이고 플레이어 공격은 재생마다 추적 구간이 하나입니다.
 - 처형 안내 HUD는 처형 스펙의 Targeting을 읽기 전용으로 평가하고, 락온 대상은 실행 중인 락온 행동의 대상입니다.
@@ -119,19 +119,20 @@ Runner가 Task에 여는 것은 아래뿐입니다. 다른 Task와 몽타주 ID�
 | 착지 뒤 시작 | 맨 앞 반복 섹션 Fall의 Transition(공중에서 시작한 그로기) |
 | 루트 이동 거리 | ScaleRootMotion(발동 Task). 보스 Backstep의 '후방으로 5m' |
 
-- 몽타주 루트 모션과 루트 모션 소스(Launch, Dash)는 같은 순간에 함께 쓰지 않습니다. 그래서 소스가 움직이는 섹션은 엔진 `AnimNotifyState_DisableRootMotion`으로 몽타주 루트 모션을 끄고, 그 섹션의 추적 구간은 워핑 대신 캐릭터를 직접 돌립니다. 루트 모션이 있는 시퀀스가 하나라도 든 몽타주는 엔진이 몽타주 전체를 루트 모션 몽타주로 다루므로, 시퀀스 설정만으로는 끌 수 없습니다. Dash 구간은 이 노티파이가 덮는지 검사합니다([몽타주 시간표](<몽타주 시간표.md>) '검증'). 몽타주 전체가 루트 모션을 쓰지 않는 행동(넉업, 점프 공격, LeapSlam)은 노티파이 대신 시퀀스의 루트 모션을 끄고 루트 뼈를 고정합니다(Force Root Lock). 몽타주 시작(0초)에 둔 노티파이는 엔진이 0.0001초 뒤에 켜므로, 첫 프레임에 그 앞 조각의 몽타주 루트 모션이 행동과 함께 시작한 소스(Launch)나 공중의 수평 속도를 덮어씁니다. 노티파이 구간 안에서 다시 재생하는 몽타주(BlendTime 전환)도 첫 프레임의 루트 모션을 먼저 뽑으므로, 그 구간의 시퀀스는 루트 모션을 끕니다(DashThrust의 두 번째 시퀀스).
+- 몽타주 루트 모션과 루트 모션 소스(Launch, Dash)는 같은 순간에 함께 쓰지 않습니다. 그래서 소스가 움직이는 섹션은 엔진 `AnimNotifyState_DisableRootMotion`으로 몽타주 루트 모션을 끄고, 그 섹션의 추적 구간은 워핑 대신 캐릭터를 직접 돌립니다. 루트 모션이 있는 시퀀스가 하나라도 든 몽타주는 엔진이 몽타주 전체를 루트 모션 몽타주로 다루므로, 시퀀스 설정만으로는 끌 수 없습니다. Dash 구간은 이 노티파이가 덮어야 합니다. 몽타주 전체가 루트 모션을 쓰지 않는 행동(넉업, 점프 공격, LeapSlam)은 노티파이 대신 시퀀스의 루트 모션을 끄고 루트 뼈를 고정합니다(Force Root Lock). 몽타주 시작(0초)에 둔 노티파이는 엔진이 0.0001초 뒤에 켜므로, 첫 프레임에 그 앞 조각의 몽타주 루트 모션이 행동과 함께 시작한 소스(Launch)나 공중의 수평 속도를 덮어씁니다. 노티파이 구간 안에서 다시 재생하는 몽타주(BlendTime 전환)도 첫 프레임의 루트 모션을 먼저 뽑으므로, 그 구간의 시퀀스는 루트 모션을 끕니다(DashThrust의 두 번째 시퀀스).
 - 재생 배율은 몽타주의 Rate Scale 그대로입니다. 보스 공격 패턴의 재생 속도(보스 사양 '모션 재생 속도')는 패턴 몽타주의 Rate Scale에 둡니다.
 - 바로 이어지는 동작은 섹션 링크로 잇습니다. 다른 동작으로 넘어갈 때는 전환에 BlendTime을 적어 그 섹션부터 다시 재생합니다. 같은 재생 안의 섹션 이동에는 블렌드가 없어 자세가 튀기 때문입니다. BlendTime은 섹션으로 합치기 전 각 몽타주의 Blend In 시간입니다.
 - 시작 섹션을 고르는 행동은 후보 하나를 첫 섹션에 두고, 행동 정의의 `Tasks`에 조건이 있는 Transition을 둡니다. 회피는 Backstep이 첫 섹션이고 이동 입력(`Input.Move`)이 있으면 Roll부터 재생합니다. 재생 전에 고르므로 Backstep의 구간은 열리지 않고, 첫 화면과 첫 루트 모션은 Roll입니다. 첫 섹션 0초의 Transition 지점으로 고르지 않는 것은, 같은 시각의 항목 사이에 순서가 없어 Backstep 0초의 구간(Busy, 극한 회피 구간, 무적)이 한 프레임 안에 열렸다 닫힐 수 있기 때문입니다.
 - 그로기는 맨 앞에 낙하 자세의 반복 섹션 Fall을 두고, 공중이 아니게 되면 Start로 전환합니다. 땅에서 발동하면 첫 판정에서 바로 넘어갑니다. 그로기 시간(GroggyTime)은 Start의 첫 지점에서 걸어 착지한 순간부터 셉니다(보스 사양 '그로기').
-- 기다리는 구간(bOptional이 아닌 구간 Transition, PlayCutscene, Next가 있는 Dash)이 있는 동안 몽타주가 끝나지 않도록, 그 구간은 반복 섹션을 끝까지 덮습니다(검증). 평타의 다음 타 입력처럼 이벤트가 오지 않으면 그대로 끝나는 것이 규칙인 전환은 `bOptional`로 표시해 이 검사에서 뺍니다.
+- 기다리는 구간(bOptional이 아닌 구간 Transition, PlayCutscene, Next가 있는 Dash)이 있는 동안 몽타주가 끝나지 않도록, 그 구간은 반복 섹션을 끝까지 덮습니다. 평타의 다음 타 입력처럼 이벤트가 오지 않으면 그대로 끝나는 것이 규칙인 전환은 `bOptional`로 표시합니다.
 
 ## Task
 
 ### 스키마와 등록
 
 - Task의 Params는 공통 부모 `FAgTaskParams`(USTRUCT)를 상속하고 그 Task의 헤더에 둡니다. Task 이름 `X`의 Params는 `FAgXParams`이며, 읽을 때 JSON의 `Task` 값으로 이 구조체를 찾아 `FInstancedStruct`에 담습니다. 구조체 메타데이터는 에디터 전용이라 이름 규칙으로 찾습니다.
-- 선택 필드는 적었는지로 쓰는지가 정해지고, null은 null을 쓸 수 있다고 정한 필드(추적 구간의 TargetingRange·MaxWarpDistance)에만 씁니다. Task마다 다른 규칙(둘 수 있는 곳, 검증, 참조, 전환, Task 만들기)은 Params의 가상 함수가 맡습니다. 데이터를 읽는 쪽은 이 함수만 부르고 Task 종류로 분기하지 않으므로, 새 Task는 Task 파일 하나로 더합니다.
+- 선택 필드는 엔진 `TOptional` 속성이라 적었는지로 쓰는지가 정해집니다(null은 적지 않은 것과 같습니다). Params는 Task를 만드는 가상 함수(`MakeTask`) 하나만 갖고, 읽기와 검사는 에셋 매니저가 리플렉션으로 하므로([JSON 데이터](<JSON 데이터.md>) '오류 검사'), 새 Task는 Task 파일 하나로 더합니다.
+- 시간표 항목의 시각 필드(`Start`, `End`, `EndSection`, `Time`)는 공통 부모에 있습니다. 시간표는 시각과 Params를 한 JSON 객체에 적기 때문입니다([몽타주 시간표](<몽타주 시간표.md>) '형식'). 발동 Task는 이 필드를 쓰지 않습니다.
 
 ### 둘 수 있는 곳
 
@@ -222,7 +223,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 보스 AI | 평타 시작 알림(`Event.BasicAttackStarted`, 평타·점프 공격 시간표의 SendGameplayEvent 지점)을 받습니다. 페이즈 전환이 정상 종료로 끝나면(`OnAbilityEnded`) PP를 채우고 2페이즈로 넘어갑니다([보스](<보스.md>)). |
 | HUD | 그로기 중 PP 바([카메라, HUD, 화면 UI, 게임 플로우](<카메라, HUD, 화면 UI, 게임 플로우.md>)) |
 
-캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)에는 판정할 Runner가 없으므로 시간표를 두지 않습니다(검증).
+캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)에는 판정할 Runner가 없으므로 시간표를 두지 않습니다.
 
 ### 입력 계층의 행동 찾기
 
@@ -240,20 +241,9 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 처형 안내 HUD(Targeting 평가) | `Ability.Action.Execution` |
 
 - 스펙 태그(`GetDynamicSpecSourceTags`)가 그 태그와 정확히 같은 스펙을 `UAgAbilitySystemComponent::FindSpecByTag`로 찾습니다. 엔진 `TryActivateAbilitiesByTag`는 클래스 태그를 보므로 쓰지 않습니다. HUD도 같은 함수를 씁니다.
-- 한 캐릭터에서 위 태그를 정확히 가진 행동은 태그마다 하나 이하입니다(검증). 없으면 그 키는 아무것도 하지 않습니다.
+- 한 캐릭터에서 위 태그를 정확히 가진 행동은 태그마다 하나 이하입니다. 없으면 그 키는 아무것도 하지 않습니다.
 - 새 키를 더할 때(입력 태그, Enhanced Input 에셋)만 이 표와 C++가 바뀝니다.
 - 보스 AI는 캐릭터의 행동 목록과 StateTree 에셋에 적힌 ID를 씁니다. ID가 데이터에서 오므로 코드에는 행동 ID가 없습니다.
-
-## 검증
-
-`UAgAssetManager`가 읽을 때 검사하고, 오류에는 파일, 행동 ID나 몽타주 경로·섹션, 항목 번호, 필드 경로를 붙입니다. 시간표 항목의 검사는 [몽타주 시간표](<몽타주 시간표.md>) '검증'을 따릅니다.
-
-- 행동 정의: Task 이름은 등록된 Task이고, 각 Params가 읽기·검증·둘 수 있는 곳을 검사합니다. End가 Montage면 Montage가, TriggerTag면 OwnedTagPresent 트리거가 정확히 하나 있습니다. Triggers의 Source는 GameplayEvent나 OwnedTagPresent입니다. Targeting의 Preset은 `TargetingPresets.json`에 있는 ID이고(프리셋의 필터 검사는 [JSON 데이터](<JSON 데이터.md>) '대상 프리셋'), Range는 0 이상, StopDistance는 0보다 큰 유한한 수입니다. 전환을 요청할 수 있는 발동 Task(`GetTransition`)는 Montage가 있는 행동에만 둡니다.
-- Task 값: Task가 가리키는 효과와 투사체(`GetReferences`)는 `Effects.json`과 `Projectiles.json`에 있습니다. ApplyEffect를 구간에 두면 무한 효과입니다. Attack의 Radius는 0보다 큰 유한한 수입니다. Launch의 MaxDistance는 To와 함께 씁니다. Dash의 HomingTurnRate·Overshoot·MaxDistance는 To Target에만 씁니다. Transition은 지점·발동이면 Event·BeforeTagEnds·bOptional이 없고, 구간이면 Event와 BeforeTagEnds 중 하나 이하이며 둘 다 없으면 RequiredTags나 BlockedTags가 있습니다. SendGameplayEvent의 Event는 `Event.` 아래의 태그입니다. ScaleRootMotion의 Distance는 0보다 크고, 그 행동의 몽타주에 수평 루트 이동이 있어야 합니다.
-- 행동 대상: 행동 대상이 필요한 것(Face의 To Target, Launch와 Dash의 To Target, Recipient가 Target인 SendGameplayEvent)이 행동 정의나 그 몽타주의 시간표에 있으면, 그 행동은 Targeting이나 GameplayEvent 트리거를 가집니다.
-- Task끼리 함께 둘 수 있는지는 검사하지 않습니다(위 '결정과 목표'). 한 행동에 Launch와 Dash를 함께 두거나 Dash 구간이 겹치면 엔진 루트 모션 소스의 우선순위대로 높은 쪽 하나(엔진 JumpForce Task)만 움직입니다.
-- 캐릭터 데이터: 행동 ID와 그 Montage의 몽타주 ID, DeathMotions의 몽타주 ID, 발동 Task가 요청하는 전환의 섹션(그 캐릭터의 그 행동 몽타주에 있음). 플레이어는 '입력 계층의 행동 찾기' 표의 태그를 정확히 가진 행동이 태그마다 하나 이하이고, 플레이어가 직접 재생하는 점프 몽타주에 Start·Land 섹션이 있습니다. 두 검사는 플레이어 캐릭터와 같은 C++ 표·상수(`GetInputAbilityTags`, `JumpMontageId`·`JumpStartSection`·`JumpLandSection`)를 읽습니다.
-- 행동 ID별 필수 항목이나 행동 ID로 고른 검사는 두지 않습니다. 몽타주 ID와 섹션 이름을 쓰는 검사는 캐릭터가 직접 재생하는 몽타주(점프)의 것뿐입니다.
 
 ## 클래스 구조
 
@@ -274,6 +264,6 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | `UAgAbilityTask_PlayCutscene` | `UAbilityTask` | 주인 기준으로 시퀀스 재생, 주인의 시간 배율로 재생 속도, 끝나면 전환 요청 |
 | `UAgAbilityTask_CameraShake` | `UAbilityTask` | 로컬 플레이어가 범위 안이면 카메라 셰이크 |
 | `UAgAbilityTask_Track` | `UAbilityTask` | 추적 구간 하나. 시작할 때 대상을 정하고 워핑 Modifier를 등록하거나, 몽타주 루트 모션이 없으면 캐릭터를 직접 돌림 |
-| `UAgTargetingFilterTask_ActionTarget`, `UAgTargetingFilterTask_OnScreen`, `UAgTargetingSortTask_HorizontalDistance`, `UAgTargetingSelectionTask_AITarget` | 엔진 타겟팅 Task | TargetingPreset 안의 행동 대상 조건(적대·생존·범위·태그), 화면 안 조건, 수평 거리 정렬, 보스 AI 대상 선택 |
+| `UAgTargetingFilterTask_Hostile`, `UAgTargetingFilterTask_Distance`, `UAgTargetingFilterTask_TagRequirements`, `UAgTargetingFilterTask_OnScreen` | 엔진 타겟팅 Task | TargetingPreset 안의 필터. 적대, 행동의 Range, 태그 조건(프리셋과 행동), 화면 안 |
 
 발사 후 투사체의 수명은 투사체가 맡습니다. 처형은 양쪽에 `State.Execution`을 사용하며 역할은 자기 행동과 전달된 사건으로 구분합니다.

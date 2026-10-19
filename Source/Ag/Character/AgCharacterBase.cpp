@@ -304,12 +304,11 @@ void AAgCharacterBase::GrantAbilities()
 {
 	for (FName AbilityId : CharacterData->Abilities)
 	{
-		// 어빌리티 정의는 데이터를 읽을 때 캐릭터의 목록과 함께 검사했습니다. 엔진은 부여할 때 스펙의 트리거를
-		// 등록합니다.
+		// 캐릭터의 어빌리티 ID는 데이터를 읽을 때 검사했습니다. 엔진은 부여할 때 스펙의 트리거를 등록합니다.
 		const FAgAbilityData& Ability = *UAgAssetManager::Get().FindAbility(AbilityId);
 		FGameplayAbilitySpec Spec(UAgGameplayAbility::StaticClass());
 		// GiveAbility 안의 OnGiveAbility가 이 ID로 정의를 찾으므로 먼저 연결합니다.
-		AbilityIds.Add(Spec.Handle, Ability.Id);
+		AbilityIds.Add(Spec.Handle, AbilityId);
 		Spec.GetDynamicSpecSourceTags() = Ability.Tags;
 		for (const FAgAbilityTrigger& Trigger : Ability.Activation.Triggers)
 		{

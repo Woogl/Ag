@@ -44,6 +44,8 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
+	void UpdateTarget();
+
 	void BindTargetEvents();
 
 	void HandleTargetBasicAttack(const FGameplayEventData* Payload);
@@ -53,6 +55,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
 
+	TWeakObjectPtr<AAgCharacterBase> Target;
 	TWeakObjectPtr<UAbilitySystemComponent> TargetASC;
 	FDelegateHandle BasicAttackHandle;
 	TWeakObjectPtr<UAbilitySystemComponent> BossASC;

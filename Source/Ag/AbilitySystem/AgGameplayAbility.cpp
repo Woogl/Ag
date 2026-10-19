@@ -62,6 +62,7 @@ void UAgGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInf
 	AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
 	if (Character && !HasAnyFlags(RF_ClassDefaultObject))
 	{
+		AbilityId = Character->FindAbilityId(Spec.Handle);
 		if (const FAgAbilityData* Data = FindDefinition(Spec.Handle, ActorInfo))
 		{
 			GrantedDefinition = *Data;
@@ -100,7 +101,7 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 	{
 		UE_LOG(LogAg, Warning,
 			TEXT("Ability %s: grant settings changed or unavailable; recreate the character before activation"),
-			Data ? *Data->Id.ToString() : TEXT("None"));
+			Instance ? *Instance->GetAbilityId().ToString() : TEXT("None"));
 		return false;
 	}
 	if (Spec->IsActive() && !Data->Activation.bAllowRetrigger)
@@ -112,7 +113,7 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 		return false;
 	}
 
-	return !Data->bHasTargeting || !Data->Targeting.bRequired || FindTargetingTarget(*Data, ActorInfo);
+	return !Data->Targeting || !Data->Targeting->bRequired || FindTargetingTarget(*Data, ActorInfo);
 }
 
 bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
@@ -144,7 +145,7 @@ void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpe
 FAgResourceCostParams UAgGameplayAbility::GetCost() const
 {
 	const FAgAbilityData* Definition = IsActive() ? &ExecutionDefinition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
-	return Definition && Definition->bHasCost ? Definition->Cost : FAgResourceCostParams();
+	return Definition && Definition->Cost ? *Definition->Cost : FAgResourceCostParams();
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
@@ -177,7 +178,7 @@ void UAgGameplayAbility::RequestTransition(const FAgTransition& Transition, int3
 		return;
 	}
 
-	if (ExecutionDefinition.bHasTargeting)
+	if (ExecutionDefinition.Targeting)
 	{
 		ActionTarget = FindTargetingTarget(ExecutionDefinition, CurrentActorInfo);
 	}
@@ -195,23 +196,23 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	}
 	ExecutionDefinition = *Definition;
 	const UAgCharacterData* Data = Character->GetCharacterData();
-	const FAgAbilityTargeting& Targeting = ExecutionDefinition.Targeting;
-	StopDistance = ExecutionDefinition.bHasTargeting && Targeting.bHasStopDistance ? Targeting.StopDistance : Data->StopDistance;
-	UAnimMontage* Montage = ExecutionDefinition.bHasMontage ? Data->FindMontage(ExecutionDefinition.Montage.MontageId) : nullptr;
-	if (ExecutionDefinition.bHasMontage && !Montage)
+	const TOptional<FAgAbilityTargeting>& Targeting = ExecutionDefinition.Targeting;
+	StopDistance = Targeting && Targeting->StopDistance ? *Targeting->StopDistance : Data->StopDistance;
+	UAnimMontage* Montage = ExecutionDefinition.Montage ? Data->FindMontage(ExecutionDefinition.Montage->MontageId) : nullptr;
+	if (ExecutionDefinition.Montage && !Montage)
 	{
 		UE_LOG(LogAg, Error, TEXT("Abilities.%s: montage %s is missing in the character's Montages"), *GetAbilityId().ToString(),
-			*ExecutionDefinition.Montage.MontageId.ToString());
+			*ExecutionDefinition.Montage->MontageId.ToString());
 		Finish(true);
 		return;
 	}
 
 	ActionTarget = FindTargetingTarget(ExecutionDefinition, ActorInfo);
-	if (!ExecutionDefinition.bHasTargeting && IsEventTrigger(TriggerEventData))
+	if (!Targeting && IsEventTrigger(TriggerEventData))
 	{
 		ActionTarget = const_cast<AActor*>(TriggerEventData->Instigator.Get());
 	}
-	if ((ExecutionDefinition.bHasTargeting && Targeting.bRequired && !ActionTarget.IsValid()) ||
+	if ((Targeting && Targeting->bRequired && !ActionTarget.IsValid()) ||
 		!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		Finish(true);
@@ -273,7 +274,7 @@ bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGam
 	// 활성 스펙의 재발동 사전 검사도 여기로 들어오므로 새 요청의 현재 정의를 확인합니다.
 	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
 	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
-	if (Data && ASC && (!Data->bHasCost || ASC->GetNumericAttribute(ResourceAttribute(Data->Cost.Resource)) >= Data->Cost.Amount))
+	if (Data && ASC && (!Data->Cost || ASC->GetNumericAttribute(ResourceAttribute(Data->Cost->Resource)) >= Data->Cost->Amount))
 	{
 		return true;
 	}
@@ -287,12 +288,12 @@ bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGam
 
 void UAgGameplayAbility::ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	if (ExecutionDefinition.bHasCost && ExecutionDefinition.Cost.Amount > 0.f)
+	if (ExecutionDefinition.Cost && ExecutionDefinition.Cost->Amount > 0.f)
 	{
 		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, UAgAssetManager::Get().GetEffect(EAgEffect::Resource));
 		if (Spec.IsValid())
 		{
-			ExecutionDefinition.Cost.AddToSpec(*Spec.Data);
+			ExecutionDefinition.Cost->AddToSpec(*Spec.Data);
 			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 		}
 	}
@@ -351,7 +352,7 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(FGameplayAbilitySpe
 AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const
 {
 	AActor* Avatar = ActorInfo ? ActorInfo->AvatarActor.Get() : nullptr;
-	return Data.bHasTargeting && Avatar ? AgTargeting::FindTarget(Data.Targeting, *Avatar) : nullptr;
+	return Data.Targeting && Avatar ? AgTargeting::FindTarget(*Data.Targeting, *Avatar) : nullptr;
 }
 
 bool UAgGameplayAbility::IsEventTrigger(const FGameplayEventData* TriggerEventData) const

@@ -87,7 +87,7 @@ bool AAgBossCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
 	const UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(Player.GetAbilitySystemComponent());
 	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Execution) : nullptr;
 	const FAgAbilityData* Execution = Spec ? Player.FindAbility(Spec->Handle) : nullptr;
-	return Execution && Execution->bHasTargeting && AgTargeting::FindTarget(Execution->Targeting, Player) == this;
+	return Execution && Execution->Targeting && AgTargeting::FindTarget(*Execution->Targeting, Player) == this;
 }
 
 void AAgBossCharacter::AttachWorldWidgets()

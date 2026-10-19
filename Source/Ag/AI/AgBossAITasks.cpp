@@ -175,9 +175,8 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityId
 	for (FName Id : AbilityIds)
 	{
 		const FAgAbilityData* Ability = UAgAssetManager::Get().FindAbility(Id);
-		const FAgPatternSelection* Pattern = Ability && Ability->bHasPatternSelection && Ability->Tags.HasTag(AgGameplayTags::Ability_Boss_Pattern)
-		                                         ? &Ability->PatternSelection
-		                                         : nullptr;
+		const FAgPatternSelection* Pattern =
+			Ability && Ability->Tags.HasTag(AgGameplayTags::Ability_Boss_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
 		if (!Pattern)
 		{
 			continue;

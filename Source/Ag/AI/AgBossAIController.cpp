@@ -3,6 +3,7 @@
 #include "AI/AgBossAIController.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Components/StateTreeAIComponent.h"
@@ -10,7 +11,6 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
-#include "Kismet/GameplayStatics.h"
 
 AAgBossAIController::AAgBossAIController()
 {
@@ -34,8 +34,7 @@ const UAgBossData* AAgBossAIController::GetBossData() const
 
 AAgCharacterBase* AAgBossAIController::GetTarget() const
 {
-	// 지금은 플레이어 한 명과만 싸우므로 대상은 플레이어입니다.
-	return Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerPawn(this, 0));
+	return Target.Get();
 }
 
 bool AAgBossAIController::IsBossReacting() const
@@ -79,6 +78,7 @@ void AAgBossAIController::OnUnPossess()
 	{
 		TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).Remove(BasicAttackHandle);
 	}
+	Target.Reset();
 	TargetASC.Reset();
 	BasicAttackHandle.Reset();
 	if (BossASC.IsValid())
@@ -95,7 +95,25 @@ void AAgBossAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	UpdateTarget();
 	BindTargetEvents();
+}
+
+void AAgBossAIController::UpdateTarget()
+{
+	AAgBossCharacter* Boss = GetBoss();
+	const UAgBossData* Data = GetBossData();
+	if (!Boss || !Data)
+	{
+		return;
+	}
+	FAgAbilityTargeting Targeting;
+	Targeting.Preset = Data->AITargetingPreset;
+	// 프리셋은 사망한 적을 빼므로, 찾지 못하면 이전 대상을 둬야 비전투 조건이 대상의 사망을 봅니다.
+	if (AAgCharacterBase* Found = Cast<AAgCharacterBase>(AgTargeting::FindTarget(Targeting, *Boss)))
+	{
+		Target = Found;
+	}
 }
 
 void AAgBossAIController::BindTargetEvents()
@@ -105,7 +123,7 @@ void AAgBossAIController::BindTargetEvents()
 	{
 		return;
 	}
-	if (const AAgCharacterBase* Target = GetTarget())
+	if (Target.IsValid())
 	{
 		TargetASC = Target->GetAbilitySystemComponent();
 		BasicAttackHandle = TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted)

@@ -20,13 +20,13 @@ struct FAgCameraShakeSettings
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = 0.001, Units = "s"))
+	UPROPERTY(VisibleAnywhere, meta = (Units = "s"))
 	float Duration = 0.f;
 
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = 0, Units = "deg"))
+	UPROPERTY(VisibleAnywhere, meta = (Units = "deg"))
 	float RotationAmplitude = 0.f;
 
-	UPROPERTY(VisibleAnywhere, meta = (ClampMin = 0, Units = "cm"))
+	UPROPERTY(VisibleAnywhere, meta = (Units = "cm"))
 	float LocationAmplitude = 0.f;
 };
 
@@ -47,16 +47,16 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	FAgCameraShakeSettings LargeShake;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	float ShakePitchFrequency = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	float ShakeYawFrequency = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	float ShakeYFrequency = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	float ShakeZFrequency = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "deg"))
@@ -68,10 +68,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "deg"))
 	float LockOnLookDown = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "deg/s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "deg/s"))
 	float LockOnRotationSpeed = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "s"))
 	float LockOnSmoothingTime = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")

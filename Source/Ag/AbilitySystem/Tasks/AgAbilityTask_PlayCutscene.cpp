@@ -3,16 +3,10 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_PlayCutscene.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
-#include "Data/AgJsonRead.h"
 #include "DefaultLevelSequenceInstanceData.h"
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
-
-void FAgPlayCutsceneParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(TEXT("Next.BlendTime"));
-}
 
 UAbilityTask* FAgPlayCutsceneParams::MakeTask(const FAgTaskContext& Context) const
 {

@@ -15,26 +15,12 @@ struct FAgApplyEffectParams : public FAgTaskParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(meta = (DataId = "Effects"))
 	FName Effect;
 
 	UPROPERTY()
 	bool bRemoveOnEnd = false;
 
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Activation | EAgTaskPlacement::Window | EAgTaskPlacement::Point;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual void GetReferences(FAgTaskReferences& Out) const override
-	{
-		Out.Effects.Add(Effect);
-	}
-
-	virtual void ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

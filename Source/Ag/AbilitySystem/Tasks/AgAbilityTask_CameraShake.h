@@ -19,11 +19,6 @@ struct FAgCameraShakeParams : public FAgTaskParams
 	UPROPERTY()
 	float Range = 0.f;
 
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Point;
-	}
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

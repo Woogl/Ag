@@ -16,11 +16,6 @@ struct FAgHoldTagParams : public FAgTaskParams
 	UPROPERTY()
 	FGameplayTag Tag;
 
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Window | EAgTaskPlacement::Point;
-	}
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

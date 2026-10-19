@@ -16,26 +16,14 @@ struct FAgTrackParams : public FAgTaskParams
 	GENERATED_BODY()
 
 	UPROPERTY()
-	float TargetingRange = 0.f;
+	TOptional<float> TargetingRange;
 
 	UPROPERTY()
-	float MaxWarpDistance = 0.f;
+	TOptional<float> MaxWarpDistance;
 
 	UPROPERTY()
 	EMotionWarpRotationMethod RotationMethod = EMotionWarpRotationMethod::ConstantRate;
 
-	bool bHasTargetingRange = false;
-	bool bHasMaxWarpDistance = false;
-
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Window;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual void ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

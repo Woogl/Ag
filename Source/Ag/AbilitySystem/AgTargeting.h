@@ -3,10 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
+#include "GameplayEffectTypes.h"
 #include "Tasks/TargetingFilterTask_BasicFilterTemplate.h"
-#include "Tasks/TargetingSortTask_Base.h"
-#include "Tasks/TargetingTask.h"
 #include "AgTargeting.generated.h"
 
 struct FAgAbilityTargeting;
@@ -16,9 +14,7 @@ struct FAgTargetingConditions
 {
 	float Range = -1.f;
 
-	FGameplayTagContainer RequiredTags;
-
-	FGameplayTagContainer BlockedTags;
+	FGameplayTagRequirements TagRequirements;
 
 	static FAgTargetingConditions& FindOrAdd(FTargetingRequestHandle Handle);
 	static FAgTargetingConditions* Find(FTargetingRequestHandle Handle);
@@ -29,13 +25,40 @@ namespace AgTargeting
 	AActor* FindTarget(const FAgAbilityTargeting& Targeting, AActor& Source);
 }
 
-UCLASS(meta = (DisplayName = "Ag Filter Action Target"))
-class UAgTargetingFilterTask_ActionTarget : public UTargetingFilterTask_BasicFilterTemplate
+UCLASS(meta = (DisplayName = "Ag Filter Hostile"))
+class UAgTargetingFilterTask_Hostile : public UTargetingFilterTask_BasicFilterTemplate
 {
 	GENERATED_BODY()
 
 public:
-	UAgTargetingFilterTask_ActionTarget(const FObjectInitializer& ObjectInitializer);
+	UAgTargetingFilterTask_Hostile(const FObjectInitializer& ObjectInitializer);
+
+protected:
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
+};
+
+UCLASS(meta = (DisplayName = "Ag Filter Tag Requirements"))
+class UAgTargetingFilterTask_TagRequirements : public UTargetingFilterTask_BasicFilterTemplate
+{
+	GENERATED_BODY()
+
+public:
+	UAgTargetingFilterTask_TagRequirements(const FObjectInitializer& ObjectInitializer);
+
+protected:
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
+
+	UPROPERTY(EditAnywhere, Category = "Target Filter")
+	FGameplayTagRequirements Requirements;
+};
+
+UCLASS(meta = (DisplayName = "Ag Filter Distance"))
+class UAgTargetingFilterTask_Distance : public UTargetingFilterTask_BasicFilterTemplate
+{
+	GENERATED_BODY()
+
+public:
+	UAgTargetingFilterTask_Distance(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
@@ -51,28 +74,4 @@ public:
 
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
-};
-
-/** 거르는 Task가 후보의 순서를 섞으므로 프리셋에서 거르는 Task 뒤에 둡니다. */
-UCLASS(meta = (DisplayName = "Ag Sort Horizontal Distance"))
-class UAgTargetingSortTask_HorizontalDistance : public UTargetingSortTask_Base
-{
-	GENERATED_BODY()
-
-public:
-	UAgTargetingSortTask_HorizontalDistance(const FObjectInitializer& ObjectInitializer);
-
-protected:
-	virtual float GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
-};
-
-UCLASS(meta = (DisplayName = "Ag Select AI Target"))
-class UAgTargetingSelectionTask_AITarget : public UTargetingTask
-{
-	GENERATED_BODY()
-
-public:
-	UAgTargetingSelectionTask_AITarget(const FObjectInitializer& ObjectInitializer);
-
-	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
 };

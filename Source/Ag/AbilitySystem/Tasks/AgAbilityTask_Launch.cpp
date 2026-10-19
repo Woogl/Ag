@@ -5,7 +5,6 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Data/AgJsonRead.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -16,32 +15,6 @@ namespace
 {
 	/** 띄운 직후 아직 땅에 있는 것을 착지로 보지 않도록, 체공 시간의 이 비율이 지난 뒤의 착지만 봅니다. */
 	constexpr float MinLandedAirTimeRatio = 0.5f;
-}
-
-void FAgLaunchParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgLaunchParams, Height));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgLaunchParams, To));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgLaunchParams, MaxDistance));
-}
-
-void FAgLaunchParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	bHasHeight = Json.HasField(TEXT("Height"));
-	bHasTo = Json.HasField(TEXT("To"));
-	bHasMaxDistance = Json.HasField(TEXT("MaxDistance"));
-	if (AirTime <= 0.f)
-	{
-		Errors.Add(Path + TEXT(".AirTime: must be positive"));
-	}
-	if (bHasHeight && Height <= 0.f)
-	{
-		Errors.Add(Path + TEXT(".Height: must be positive"));
-	}
-	if (bHasMaxDistance && !bHasTo)
-	{
-		Errors.Add(Path + TEXT(".MaxDistance: only with To"));
-	}
 }
 
 UAbilityTask* FAgLaunchParams::MakeTask(const FAgTaskContext& Context) const
@@ -71,18 +44,18 @@ void UAgAbilityTask_Launch::Activate()
 
 	Rotation = Character->GetActorRotation();
 	Distance = 0.f;
-	const AActor* Target = Params.bHasTo ? Runner->GetActionTarget() : nullptr;
+	const AActor* Target = Params.To ? Runner->GetActionTarget() : nullptr;
 	if (Target)
 	{
 		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
 		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - Runner->GetStopDistance());
-		Distance = Params.bHasMaxDistance ? FMath::Min(Distance, Params.MaxDistance) : Distance;
+		Distance = Params.MaxDistance ? FMath::Min(Distance, *Params.MaxDistance) : Distance;
 		if (!Delta.IsNearlyZero())
 		{
 			Rotation = Delta.Rotation();
 		}
 	}
-	Height = Params.bHasHeight ? Params.Height : -Movement->GetGravityZ() * FMath::Square(Params.AirTime) / 8.f;
+	Height = Params.Height ? *Params.Height : -Movement->GetGravityZ() * FMath::Square(Params.AirTime) / 8.f;
 
 	// 엔진 Task의 생성 함수가 하는 설정입니다.
 	ForceName = SourceName;

@@ -22,30 +22,13 @@ struct FAgLaunchParams : public FAgTaskParams
 	float AirTime = 0.f;
 
 	UPROPERTY()
-	float Height = 0.f;
+	TOptional<float> Height;
 
 	UPROPERTY()
-	EAgLaunchTo To = EAgLaunchTo::Target;
+	TOptional<EAgLaunchTo> To;
 
 	UPROPERTY()
-	float MaxDistance = 0.f;
-
-	bool bHasHeight = false;
-	bool bHasTo = false;
-	bool bHasMaxDistance = false;
-
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Activation | EAgTaskPlacement::Point;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual bool NeedsTarget() const override
-	{
-		return bHasTo;
-	}
+	TOptional<float> MaxDistance;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

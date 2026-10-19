@@ -2,15 +2,12 @@
 
 #include "Core/AgAssetManager.h"
 
-#include "AbilitySystem/AgTargeting.h"
 #include "Ag.h"
-#include "Animation/AnimMontage.h"
 #include "Data/AgAbilityData.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
-#include "Data/AgJsonRead.h"
 #include "Data/AgMontageTimeline.h"
 #include "Data/AgProjectileData.h"
 #include "Data/AgTargetingPresetData.h"
@@ -18,21 +15,19 @@
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineTypes.h"
-#include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "JsonObjectConverter.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
-#include "Misc/PackageName.h"
 #include "Misc/ScopeExit.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "StructUtils/InstancedStruct.h"
 #include "TargetingSystem/TargetingPreset.h"
-#include "UObject/UnrealType.h"
+#include "UObject/FieldPathProperty.h"
 #include "UObject/Package.h"
-#if WITH_EDITOR
-#include "HAL/FileManager.h"
-#endif
+#include "UObject/PropertyOptional.h"
+#include "UObject/UnrealType.h"
 
 namespace
 {
@@ -48,441 +43,6 @@ namespace
 	const TCHAR* const AbilitiesFile = TEXT("Abilities.json");
 	const TCHAR* const CharactersFile = TEXT("Characters.json");
 
-	constexpr int32 MaxErrorsOnScreen = 5;
-
-#if WITH_EDITOR
-	bool IsTagProperty(const FProperty* Property)
-	{
-		const FStructProperty* StructProperty = CastField<FStructProperty>(Property);
-		return StructProperty && StructProperty->Struct == FGameplayTag::StaticStruct();
-	}
-
-	const UEnum* GetEnum(const FProperty* Property)
-	{
-		if (const FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property))
-		{
-			return EnumProperty->GetEnum();
-		}
-		const FNumericProperty* NumericProperty = CastField<FNumericProperty>(Property);
-		return NumericProperty ? NumericProperty->GetIntPropertyEnum() : nullptr;
-	}
-
-	EJson GetJsonType(const FProperty* Property)
-	{
-		if (Property->IsA<FArrayProperty>())
-		{
-			return EJson::Array;
-		}
-		if (Property->IsA<FBoolProperty>())
-		{
-			return EJson::Boolean;
-		}
-		if (Property->IsA<FNumericProperty>() && !GetEnum(Property))
-		{
-			return EJson::Number;
-		}
-		if (Property->IsA<FMapProperty>() || (Property->IsA<FStructProperty>() && !IsTagProperty(Property)))
-		{
-			return EJson::Object;
-		}
-		return EJson::String;
-	}
-
-	const TCHAR* GetJsonTypeName(EJson Type)
-	{
-		switch (Type)
-		{
-			case EJson::Array:
-				return TEXT("an array");
-			case EJson::Boolean:
-				return TEXT("true or false");
-			case EJson::Number:
-				return TEXT("a number");
-			case EJson::Object:
-				return TEXT("an object");
-			default:
-				return TEXT("a string");
-		}
-	}
-
-	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors, bool bAllowMissing);
-
-	void CheckValue(const TSharedPtr<FJsonValue>& Value, const FProperty* Property, const FString& Path, TArray<FString>& Errors, bool bAllowMissing)
-	{
-		const EJson Type = GetJsonType(Property);
-		if (!Value.IsValid() || Value->Type != Type)
-		{
-			Errors.Add(FString::Printf(TEXT("%s: must be %s"), *Path, GetJsonTypeName(Type)));
-			return;
-		}
-
-		if (const FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
-		{
-			const TArray<TSharedPtr<FJsonValue>>& Items = Value->AsArray();
-			for (int32 Index = 0; Index < Items.Num(); ++Index)
-			{
-				CheckValue(Items[Index], ArrayProperty->Inner, FString::Printf(TEXT("%s[%d]"), *Path, Index), Errors, bAllowMissing);
-			}
-		}
-		else if (const FMapProperty* MapProperty = CastField<FMapProperty>(Property))
-		{
-			TSet<FName> Keys;
-			for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Entry : Value->AsObject()->Values)
-			{
-				const FString Key(Entry.Key);
-				const FName Name(*Key);
-				if (Name.IsNone() || Keys.Contains(Name))
-				{
-					Errors.Add(FString::Printf(TEXT("%s.%s: empty or duplicate name"), *Path, *Key));
-				}
-				Keys.Add(Name);
-				if (const FNumericProperty* KeyNumber = CastField<FNumericProperty>(MapProperty->KeyProp);
-					KeyNumber && KeyNumber->IsInteger())
-				{
-					int32 Index = 0;
-					if (!LexTryParseString(Index, *Key) || FString::FromInt(Index) != Key)
-					{
-						Errors.Add(Path + TEXT(".") + Key + TEXT(": must be a canonical integer key"));
-					}
-				}
-				CheckValue(Entry.Value, MapProperty->ValueProp, Path + TEXT(".") + Key, Errors, bAllowMissing);
-			}
-		}
-		else if (const FObjectPropertyBase* ObjectProperty = CastField<FObjectPropertyBase>(Property))
-		{
-			const FString ObjectPath = Value->AsString();
-			if (!FPackageName::IsValidObjectPath(ObjectPath))
-			{
-				Errors.Add(FString::Printf(TEXT("%s: invalid object path %s"), *Path, *ObjectPath));
-				return;
-			}
-			UObject* Object = StaticLoadObject(UObject::StaticClass(), nullptr, *ObjectPath, nullptr, LOAD_NoWarn);
-			const FClassProperty* ClassProperty = CastField<FClassProperty>(Property);
-			const UClass* Class = Cast<UClass>(Object);
-			// 배열 원소의 메타데이터는 배열 속성에 있습니다.
-			bool bAbstractAllowed = false;
-#if WITH_METADATA
-			bAbstractAllowed = Property->GetOwnerProperty()->HasMetaData(TEXT("AllowAbstract"));
-#endif
-			if (!Object || !Object->IsA(ObjectProperty->PropertyClass) ||
-				(ClassProperty && (!Class || !Class->IsChildOf(ClassProperty->MetaClass) ||
-									  (Class->HasAnyClassFlags(CLASS_Abstract) && !bAbstractAllowed))))
-			{
-				Errors.Add(FString::Printf(TEXT("%s: %s is missing or has an invalid type"), *Path, *ObjectPath));
-			}
-			else if (!Object->GetPathName().Equals(ObjectPath, ESearchCase::IgnoreCase))
-			{
-				Errors.Add(FString::Printf(TEXT("%s: use the current path %s"), *Path, *Object->GetPathName()));
-			}
-		}
-		else if (Type == EJson::Object)
-		{
-			const UScriptStruct* Struct = CastFieldChecked<FStructProperty>(Property)->Struct;
-			TArray<const FProperty*> Fields;
-			for (TFieldIterator<FProperty> It(Struct); It; ++It)
-			{
-				if (!It->HasAnyPropertyFlags(CPF_Deprecated))
-				{
-					Fields.Add(*It);
-				}
-			}
-			CheckObject(*Value->AsObject(), Fields, Path + TEXT("."), Errors, bAllowMissing);
-		}
-		else if (IsTagProperty(Property))
-		{
-			const FString TagName = Value->AsString();
-			if (!TagName.IsEmpty() && !FGameplayTag::RequestGameplayTag(FName(*TagName), false).IsValid())
-			{
-				Errors.Add(FString::Printf(TEXT("%s: %s is not a gameplay tag"), *Path, *TagName));
-			}
-		}
-		else if (const UEnum* Enum = GetEnum(Property))
-		{
-			// FJsonObjectConverter와 같은 방법으로 찾습니다.
-			if (Enum->GetValueByName(FName(*Value->AsString()), EGetByNameFlags::CheckAuthoredName) == INDEX_NONE)
-			{
-				Errors.Add(FString::Printf(TEXT("%s: %s is not a value of %s"), *Path, *Value->AsString(), *Enum->GetName()));
-			}
-		}
-		else if (Type == EJson::Number)
-		{
-			// 정수 속성에 소수를 쓰면 변환이 조용히 잘라 버리므로 오류로 알립니다.
-			const double Number = Value->AsNumber();
-			const FNumericProperty* NumericProperty = CastField<FNumericProperty>(Property);
-			if (!FMath::IsFinite(Number))
-			{
-				Errors.Add(Path + TEXT(": must be a finite number"));
-				return;
-			}
-			if (NumericProperty->IsInteger())
-			{
-				const bool bUnsigned = Property->IsA<FByteProperty>() || Property->IsA<FUInt16Property>() ||
-				                       Property->IsA<FUInt32Property>() || Property->IsA<FUInt64Property>();
-				// 상한을 배타적인 2의 거듭제곱으로 비교해 int64 최댓값의 double 반올림도 피합니다.
-				const double UpperBound = FMath::Pow(2.0, NumericProperty->GetSize() * 8 - (bUnsigned ? 0 : 1));
-				if (Number < (bUnsigned ? 0.0 : -UpperBound) || Number >= UpperBound)
-				{
-					Errors.Add(Path + TEXT(": outside numeric storage range"));
-					return;
-				}
-			}
-			else if (Property->IsA<FFloatProperty>() && FMath::Abs(Number) > static_cast<double>(MAX_flt))
-			{
-				Errors.Add(Path + TEXT(": outside numeric storage range"));
-				return;
-			}
-			if (NumericProperty && NumericProperty->IsInteger() && Number != FMath::TruncToDouble(Number))
-			{
-				Errors.Add(FString::Printf(TEXT("%s: %g is not a whole number"), *Path, Number));
-			}
-#if WITH_METADATA
-			// 배열 원소의 허용 범위는 배열 속성에 적혀 있습니다. UHT가 원소 속성에는 메타데이터를 두지 않기 때문입니다.
-			const FProperty* RangeProperty = Property->GetOwnerProperty();
-			if (RangeProperty->HasMetaData(TEXT("ClampMin")) && Number < FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMin"))))
-			{
-				Errors.Add(
-					FString::Printf(TEXT("%s: %g is below the minimum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMin"))));
-			}
-			if (RangeProperty->HasMetaData(TEXT("ClampMax")) && Number > FCString::Atod(*RangeProperty->GetMetaData(TEXT("ClampMax"))))
-			{
-				Errors.Add(
-					FString::Printf(TEXT("%s: %g is above the maximum %s"), *Path, Number, *RangeProperty->GetMetaData(TEXT("ClampMax"))));
-			}
-#endif
-		}
-	}
-
-	/**
-	 * 키는 엔진의 이름(FName)과 JSON 객체처럼 대소문자를 구분하지 않습니다. 쿡한 빌드의 속성 이름은 대소문자를
-	 * 보존하지 않습니다(예: UP → Up).
-	 */
-	void CheckObject(const FJsonObject& Json, const TArray<const FProperty*>& Properties, const FString& Path, TArray<FString>& Errors, bool bAllowMissing)
-	{
-		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Json.Values)
-		{
-			const FString Key(*Field.Key);
-			const FProperty* const* Property = Properties.FindByPredicate([&Key](const FProperty* Candidate)
-			{
-				return Candidate->GetName().Equals(Key, ESearchCase::IgnoreCase);
-			});
-			if (Property)
-			{
-				CheckValue(Field.Value, *Property, Path + Key, Errors, bAllowMissing);
-			}
-			else
-			{
-				Errors.Add(FString::Printf(TEXT("%s%s: unknown key"), *Path, *Key));
-			}
-		}
-		for (const FProperty* Property : Properties)
-		{
-			if (!bAllowMissing && !Json.HasField(Property->GetName()))
-			{
-				Errors.Add(FString::Printf(TEXT("%s%s: missing"), *Path, *Property->GetName()));
-			}
-		}
-	}
-
-#endif
-
-	TSharedPtr<FJsonObject> ReadJsonFile(const TCHAR* FileName, TArray<FString>& Errors)
-	{
-		FString Text;
-		const FString Path = FPaths::Combine(UAgAssetManager::GetJsonFolder(), FileName);
-		if (!FFileHelper::LoadFileToString(Text, *Path))
-		{
-			Errors.Add(FString::Printf(TEXT("can't read %s"), *Path));
-			return nullptr;
-		}
-#if WITH_EDITOR
-		// JSON DOM은 중복 키를 덮어쓸 수 있으므로 원문에서 FName 기준으로 먼저 검사합니다.
-		const TSharedRef<TJsonReader<>> KeyReader = TJsonReaderFactory<>::Create(Text);
-		TArray<TSet<FName>> Containers;
-		EJsonNotation Notation;
-		while (KeyReader->ReadNext(Notation))
-		{
-			if (Notation == EJsonNotation::ObjectEnd || Notation == EJsonNotation::ArrayEnd)
-			{
-				if (!Containers.IsEmpty())
-				{
-					Containers.Pop();
-				}
-				continue;
-			}
-			const FString Key = KeyReader->GetIdentifier();
-			if (!Key.IsEmpty() && !Containers.IsEmpty())
-			{
-				const FName Name(*Key);
-				if (Containers.Last().Contains(Name))
-				{
-					Errors.Add(FString::Printf(TEXT("duplicate JSON name: %s (line %d)"), *Key, KeyReader->GetLineNumber()));
-				}
-				Containers.Last().Add(Name);
-			}
-			if (Notation == EJsonNotation::ObjectStart || Notation == EJsonNotation::ArrayStart)
-			{
-				Containers.AddDefaulted();
-			}
-		}
-#endif
-		TSharedPtr<FJsonObject> Json;
-		const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
-		if (!FJsonSerializer::Deserialize(Reader, Json) || !Json.IsValid())
-		{
-			Errors.Add(FString::Printf(TEXT("syntax error: %s"), *Reader->GetErrorMessage()));
-			return nullptr;
-		}
-		return Errors.IsEmpty() ? Json : nullptr;
-	}
-
-	void ReadProperties(const FJsonObject& Json, UObject& Target, const FString& Path, TArray<FString>& Errors)
-	{
-		TArray<const FProperty*> Properties;
-		for (TFieldIterator<FProperty> It(Target.GetClass()); It; ++It)
-		{
-			if (It->HasAnyPropertyFlags(CPF_Transient))
-			{
-				Properties.Add(*It);
-			}
-		}
-#if WITH_EDITOR
-		const int32 Before = Errors.Num();
-		CheckObject(Json, Properties, Path, Errors, false);
-		if (Errors.Num() != Before)
-		{
-			return;
-		}
-#endif
-		for (const FProperty* Property : Properties)
-		{
-			FText FailReason;
-			const TSharedPtr<FJsonValue> Value = Json.TryGetField(Property->GetName());
-			if (!Value.IsValid() ||
-				!FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(Property),
-					Property->ContainerPtrToValuePtr<void>(&Target), 0, 0, false, &FailReason))
-			{
-				Errors.Add(Path + Property->GetName() + TEXT(": ") + FailReason.ToString());
-			}
-		}
-	}
-
-	/** 엔진 값(ObjectTypeQuery3)은 프로젝트 충돌 설정의 순서로 정해지므로, 읽을 때 채널 이름을 그 값으로 바꿉니다. */
-	void ConvertObjectTypeNames(FJsonObject& Entry, const UClass& Class, const FString& Path, TArray<FString>& Errors)
-	{
-		for (TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Entry.Values)
-		{
-			const FArrayProperty* Array = FindFProperty<FArrayProperty>(&Class, FName(*FString(Field.Key)));
-			const FByteProperty* Inner = Array ? CastField<FByteProperty>(Array->Inner) : nullptr;
-			if (!Inner || Inner->Enum != StaticEnum<EObjectTypeQuery>() || Field.Value->Type != EJson::Array)
-			{
-				continue;
-			}
-			TArray<TSharedPtr<FJsonValue>> Values;
-			for (const TSharedPtr<FJsonValue>& Value : Field.Value->AsArray())
-			{
-				const FString Name = Value->Type == EJson::String ? Value->AsString() : FString();
-				const int64 Channel = Name.IsEmpty() ? INDEX_NONE : StaticEnum<ECollisionChannel>()->GetValueByNameString(TEXT("ECC_") + Name);
-				const EObjectTypeQuery ObjectType =
-					Channel == INDEX_NONE ? ObjectTypeQuery_MAX : UEngineTypes::ConvertToObjectType(static_cast<ECollisionChannel>(Channel));
-				if (ObjectType == ObjectTypeQuery_MAX)
-				{
-					Errors.Add(Path + FString(Field.Key) + TEXT(": ") + Name + TEXT(" is not an object channel"));
-					continue;
-				}
-				Values.Add(MakeShared<FJsonValueString>(StaticEnum<EObjectTypeQuery>()->GetNameStringByValue(ObjectType)));
-			}
-			Field.Value = MakeShared<FJsonValueArray>(Values);
-		}
-	}
-
-	void ReadTargetingPresets(const FJsonObject& Json, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UTargetingPreset>>& Out, TArray<FString>& Errors)
-	{
-		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Json.Values)
-		{
-			const FString Key(Pair.Key);
-			const FName Id(*Key);
-			const TArray<TSharedPtr<FJsonValue>>* Entries = nullptr;
-			if (Id.IsNone() || Out.Contains(Id))
-			{
-				Errors.Add(Key + TEXT(": empty or duplicate preset ID"));
-				continue;
-			}
-			if (!Pair.Value->TryGetArray(Entries))
-			{
-				Errors.Add(Key + TEXT(": must be an array of targeting tasks"));
-				continue;
-			}
-			UTargetingPreset* Preset = NewObject<UTargetingPreset>(&Outer, FName(*FString::Printf(TEXT("%s_%d"), *Key, Version)));
-			TArray<TObjectPtr<UTargetingTask>>& Tasks = Preset->GetMutableTargetingTaskSet().Tasks;
-			for (int32 Index = 0; Index < Entries->Num(); ++Index)
-			{
-				const FString Path = FString::Printf(TEXT("%s[%d]."), *Key, Index);
-				const TSharedPtr<FJsonObject>* Source = nullptr;
-				FString ClassPath;
-				if (!(*Entries)[Index]->TryGetObject(Source) || !(*Source)->TryGetStringField(TEXT("Class"), ClassPath))
-				{
-					Errors.Add(Path + TEXT("Class: must be an object with the task class path"));
-					continue;
-				}
-				UClass* Class = LoadClass<UTargetingTask>(nullptr, *ClassPath, nullptr, LOAD_NoWarn);
-				if (!Class || Class->HasAnyClassFlags(CLASS_Abstract) || Class->GetPathName() != ClassPath)
-				{
-					Errors.Add(Path + TEXT("Class: missing targeting task class, abstract class or redirected path ") + ClassPath);
-					continue;
-				}
-				FJsonObject Entry = **Source;
-				Entry.RemoveField(TEXT("Class"));
-				ConvertObjectTypeNames(Entry, *Class, Path, Errors);
-				TArray<const FProperty*> Properties;
-				for (TFieldIterator<FProperty> It(Class); It; ++It)
-				{
-					if (It->HasAnyPropertyFlags(CPF_Edit) && !It->HasAnyPropertyFlags(CPF_EditConst | CPF_DisableEditOnInstance | CPF_Deprecated))
-					{
-						Properties.Add(*It);
-					}
-				}
-#if WITH_EDITOR
-				const int32 Before = Errors.Num();
-				CheckObject(Entry, Properties, Path, Errors, true);
-				if (Errors.Num() != Before)
-				{
-					continue;
-				}
-#endif
-				UTargetingTask* Task = NewObject<UTargetingTask>(Preset, Class);
-				for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Entry.Values)
-				{
-					const FString Name(Field.Key);
-					const FProperty* const* Property = Properties.FindByPredicate([&Name](const FProperty* Candidate)
-					{
-						return Candidate->GetName().Equals(Name, ESearchCase::IgnoreCase);
-					});
-					FText FailReason;
-					if (!Property)
-					{
-						Errors.Add(Path + Name + TEXT(": unknown key"));
-					}
-					else if (!FJsonObjectConverter::JsonValueToUProperty(Field.Value, const_cast<FProperty*>(*Property),
-								 (*Property)->ContainerPtrToValuePtr<void>(Task), 0, 0, false, &FailReason))
-					{
-						Errors.Add(Path + Name + TEXT(": ") + FailReason.ToString());
-					}
-				}
-				Tasks.Add(Task);
-			}
-			// 적대·생존·범위·대상 태그 조건은 이 필터가 거르므로, 없으면 행동의 Range와 대상 태그가 모두 무시됩니다.
-			const bool bHasFilter = Tasks.ContainsByPredicate([](const TObjectPtr<UTargetingTask>& Task)
-			{
-				return Task->IsA<UAgTargetingFilterTask_ActionTarget>();
-			});
-			if (!bHasFilter)
-			{
-				Errors.Add(Key + TEXT(": needs the filter task AgTargetingFilterTask_ActionTarget"));
-			}
-			Out.Add(Id, Preset);
-		}
-	}
-
 	/** 지금 객체를 가리키는 쪽이 그대로 새 값을 보도록 객체를 바꾸지 않고 값만 복사합니다. */
 	void CopyJsonProperties(const UObject& From, UObject& To)
 	{
@@ -494,28 +54,6 @@ namespace
 			}
 		}
 	}
-
-	void Report(const TCHAR* FileName, const TArray<FString>& Errors)
-	{
-		const FString File = FString::Printf(TEXT("Data/%s"), FileName);
-		for (const FString& Error : Errors)
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: %s"), *File, *Error);
-		}
-		if (!GEngine)
-		{
-			return;
-		}
-		// 새 메시지가 위에 쌓이므로, 오류를 뒤에서부터 넣고 요약을 마지막에 넣습니다.
-		for (int32 Index = FMath::Min(Errors.Num(), MaxErrorsOnScreen) - 1; Index >= 0; --Index)
-		{
-			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, FString::Printf(TEXT("    %s"), *Errors[Index]));
-		}
-		GEngine->AddOnScreenDebugMessage(
-			INDEX_NONE, 15.f, FColor::Red,
-			FString::Printf(TEXT("%s has %d error(s), so no data file was applied (all in the log):"), *File, Errors.Num()));
-	}
-
 } // namespace
 
 UAgAssetManager::UAgAssetManager()
@@ -617,10 +155,9 @@ void UAgAssetManager::ReloadJsonData()
 void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook)
 {
 	Super::ModifyCook(TargetPlatforms, PackagesToCook, PackagesToNeverCook);
-	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 JSON 전체를 검사합니다.
+	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 JSON 전체를 검사합니다. 읽기 오류의 Error 로그가 쿡을 실패시킵니다.
 	if (!LoadJsonData())
 	{
-		UE_LOG(LogAg, Error, TEXT("Cannot cook invalid JSON data"));
 		return;
 	}
 
@@ -645,87 +182,6 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 			}
 		}
 	}
-
-	TSet<FName> UsedAbilities;
-	TSet<FName> UsedEffects;
-	TSet<FName> UsedProjectiles;
-	TSet<FName> UsedPresets;
-	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
-	{
-		UsedAbilities.Append(Pair.Value->Abilities);
-		UsedEffects.Append(Pair.Value->Effects);
-	}
-	const UEnum* CodeEffects = StaticEnum<EAgEffect>();
-	for (int32 Index = 0; Index < CodeEffects->NumEnums() - 1; ++Index)
-	{
-		UsedEffects.Add(AgEffectData::Id(static_cast<EAgEffect>(CodeEffects->GetValueByIndex(Index))));
-	}
-	FAgTaskReferences TaskReferences;
-	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
-	{
-		if (Pair.Value.bHasTargeting)
-		{
-			UsedPresets.Add(Pair.Value.Targeting.Preset);
-		}
-		for (const FInstancedStruct& Task : Pair.Value.Tasks)
-		{
-			Task.Get<FAgTaskParams>().GetReferences(TaskReferences);
-		}
-	}
-	for (const TPair<FName, FAgMontageTimeline>& Pair : MontageTimelines->Timelines)
-	{
-		for (const FAgTimelineSection& Section : Pair.Value.Sections)
-		{
-			for (const FAgTimelineItem& Item : Section.Items)
-			{
-				Item.Params.Get<FAgTaskParams>().GetReferences(TaskReferences);
-			}
-		}
-	}
-	UsedEffects.Append(TaskReferences.Effects);
-	UsedProjectiles.Append(TaskReferences.Projectiles);
-	for (const TPair<FName, FAgAbilityData>& Pair : Abilities->Abilities)
-	{
-		if (!UsedAbilities.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no character uses this ability (%s)"), AbilitiesFile, *Pair.Key.ToString());
-		}
-	}
-	for (const TPair<FName, TObjectPtr<UGameplayEffect>>& Pair : Effects->Effects)
-	{
-		if (!UsedEffects.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no C++, character or task uses this effect (%s)"), EffectsFile, *Pair.Key.ToString());
-		}
-	}
-	for (const TPair<FName, FAgProjectileDefinition>& Pair : Projectiles->Projectiles)
-	{
-		if (!UsedProjectiles.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no task uses this projectile (%s)"), ProjectilesFile, *Pair.Key.ToString());
-		}
-	}
-	for (const TPair<FName, TObjectPtr<UTargetingPreset>>& Pair : TargetingPresets->Presets)
-	{
-		if (!UsedPresets.Contains(Pair.Key))
-		{
-			UE_LOG(LogAg, Error, TEXT("%s: no ability uses this targeting preset (%s)"), TargetingPresetsFile, *Pair.Key.ToString());
-		}
-	}
-
-	const TSet<FString> DataFiles = {FString(CombatRulesFile).ToLower(), FString(CameraDataFile).ToLower(),
-		FString(EffectsFile).ToLower(), FString(ProjectilesFile).ToLower(),
-		FString(MontageTimelinesFile).ToLower(), FString(TargetingPresetsFile).ToLower(),
-		FString(AbilitiesFile).ToLower(), FString(CharactersFile).ToLower()};
-	TArray<FString> Files;
-	IFileManager::Get().FindFiles(Files, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
-	for (const FString& File : Files)
-	{
-		if (!DataFiles.Contains(File.ToLower()))
-		{
-			UE_LOG(LogAg, Error, TEXT("Cannot stage unvalidated JSON: %s"), *File);
-		}
-	}
 }
 #endif
 
@@ -739,8 +195,8 @@ void UAgAssetManager::StartInitialLoading()
 bool UAgAssetManager::LoadJsonData()
 {
 	++DataVersion;
-	UAgCombatRules* NewRules = NewObject<UAgCombatRules>(this);
-	UAgCameraData* NewCamera = NewObject<UAgCameraData>(this);
+	TObjectPtr<UAgCombatRules> NewRules = NewObject<UAgCombatRules>(this);
+	TObjectPtr<UAgCameraData> NewCamera = NewObject<UAgCameraData>(this);
 	UAgEffectSet* NewEffects = NewObject<UAgEffectSet>(this);
 	UAgProjectileSet* NewProjectiles = NewObject<UAgProjectileSet>(this);
 	UAgMontageTimelineData* NewTimelines = NewObject<UAgMontageTimelineData>(this);
@@ -754,154 +210,43 @@ bool UAgAssetManager::LoadJsonData()
 	JsonLoadTargets.Add(NewTimelines);
 	JsonLoadTargets.Add(NewTargetingPresets);
 	JsonLoadTargets.Add(NewAbilities);
-	TMap<FName, UAgCharacterData*> NewCharacters;
+	TMap<FName, TObjectPtr<UAgCharacterData>> NewCharacters;
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
 		UAgCharacterData* Candidate = NewObject<UAgCharacterData>(this, Pair.Value->GetClass());
 		NewCharacters.Add(Pair.Key, Candidate);
 		JsonLoadTargets.Add(Candidate);
 	}
+	JsonIds.Reset();
 	ON_SCOPE_EXIT
 	{
 		JsonLoadTargets.Reset();
 	};
 
-	TArray<FString> RulesErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(CombatRulesFile, RulesErrors))
+	const auto Read = [this](const TCHAR* FileName, const UStruct* Owner, FName PropertyName, void* Out)
 	{
-		ReadProperties(*Json, *NewRules, FString(), RulesErrors);
-	}
-	TArray<FString> CameraErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(CameraDataFile, CameraErrors))
-	{
-		ReadProperties(*Json, *NewCamera, FString(), CameraErrors);
-	}
-	TArray<FString> EffectErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(EffectsFile, EffectErrors))
-	{
-		AgEffectData::Parse(*Json, *this, DataVersion, NewEffects->Effects, EffectErrors);
-	}
-	TArray<FString> ProjectileErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(ProjectilesFile, ProjectileErrors))
-	{
-		FJsonObject File;
-		File.SetObjectField(TEXT("Projectiles"), Json);
-		ReadProperties(File, *NewProjectiles, FString(), ProjectileErrors);
-		for (const TPair<FName, FAgProjectileDefinition>& Pair : NewProjectiles->Projectiles)
-		{
-			if (Pair.Value.Params.Speed <= 0.f || Pair.Value.Params.Range <= 0.f)
-			{
-				ProjectileErrors.Add(Pair.Key.ToString() + TEXT(".Params: Speed and Range must be positive"));
-			}
-		}
-	}
-	TArray<FString> TimelineErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(MontageTimelinesFile, TimelineErrors))
-	{
-		AgMontageTimeline::Parse(*Json, NewTimelines->Timelines, TimelineErrors);
-#if WITH_EDITOR
-		if (TimelineErrors.IsEmpty())
-		{
-			AgMontageTimeline::ValidateAssets(NewTimelines->Timelines, EffectErrors.IsEmpty() ? &NewEffects->Effects : nullptr,
-				TimelineErrors);
-		}
-#endif
-	}
-	TArray<FString> TargetingPresetErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(TargetingPresetsFile, TargetingPresetErrors))
-	{
-		ReadTargetingPresets(*Json, *this, DataVersion, NewTargetingPresets->Presets, TargetingPresetErrors);
-	}
-	TArray<FString> AbilityErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(AbilitiesFile, AbilityErrors))
-	{
-		AgAbilityData::Parse(*Json, NewAbilities->Abilities, AbilityErrors);
-	}
-	TArray<FString> CharacterErrors;
-	if (const TSharedPtr<FJsonObject> Json = ReadJsonFile(CharactersFile, CharacterErrors))
-	{
-		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Json->Values)
-		{
-			if (!NewCharacters.Contains(FName(*FString(Pair.Key))))
-			{
-				CharacterErrors.Add(FString(Pair.Key) + TEXT(": unknown character ID"));
-			}
-		}
-		for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
-		{
-			const FString Path = Pair.Key.ToString();
-			if (const AgJsonRead::FObject Entry = AgJsonRead::ObjectAt(*Json, Path, Path, CharacterErrors))
-			{
-				ReadProperties(*Entry, *Pair.Value, Path + TEXT("."), CharacterErrors);
-			}
-		}
-	}
-
-	const TMap<FName, TObjectPtr<UGameplayEffect>>* ReadEffects = EffectErrors.IsEmpty() ? &NewEffects->Effects : nullptr;
-	const TMap<FName, FAgProjectileDefinition>* ReadProjectiles = ProjectileErrors.IsEmpty() ? &NewProjectiles->Projectiles : nullptr;
-	if (TimelineErrors.IsEmpty())
-	{
-		AgMontageTimeline::ValidateReferences(NewTimelines->Timelines, ReadEffects, ReadProjectiles, TimelineErrors);
-	}
-	if (AbilityErrors.IsEmpty() && TargetingPresetErrors.IsEmpty())
-	{
-		for (const TPair<FName, FAgAbilityData>& Pair : NewAbilities->Abilities)
-		{
-			if (Pair.Value.bHasTargeting && !NewTargetingPresets->Presets.Contains(Pair.Value.Targeting.Preset))
-			{
-				AbilityErrors.Add(Pair.Key.ToString() + TEXT(".Targeting.Preset: unknown targeting preset ") +
-								  Pair.Value.Targeting.Preset.ToString());
-			}
-		}
-	}
-	if (AbilityErrors.IsEmpty())
-	{
-		AgAbilityData::ValidateReferences(NewAbilities->Abilities, ReadEffects, ReadProjectiles, AbilityErrors);
-	}
-	if (CharacterErrors.IsEmpty() && AbilityErrors.IsEmpty() && EffectErrors.IsEmpty() && TimelineErrors.IsEmpty())
-	{
-		// 캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)에는 판정할 Runner가 없습니다.
-		TSet<FName> AbilityMontages;
-		for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
-		{
-			AgAbilityData::ValidateCharacter(*Pair.Value, NewAbilities->Abilities, NewEffects->Effects, NewTimelines->Timelines,
-				Pair.Key.ToString() + TEXT("."), CharacterErrors);
-			for (FName AbilityId : Pair.Value->Abilities)
-			{
-				const FAgAbilityData* Ability = NewAbilities->Abilities.Find(AbilityId);
-				const UAnimMontage* Montage =
-					Ability && Ability->bHasMontage ? Pair.Value->FindMontage(Ability->Montage.MontageId) : nullptr;
-				if (Montage)
-				{
-					AbilityMontages.Add(FName(*Montage->GetPathName()));
-				}
-			}
-		}
-		for (const TPair<FName, FAgMontageTimeline>& Pair : NewTimelines->Timelines)
-		{
-			if (!AbilityMontages.Contains(Pair.Key))
-			{
-				TimelineErrors.Add(Pair.Key.ToString() + TEXT(": no ability plays this montage, so it can't have a timeline"));
-			}
-		}
-	}
-
-	const TPair<const TCHAR*, const TArray<FString>*> Results[] = {
-		{CombatRulesFile, &RulesErrors}, {CameraDataFile, &CameraErrors}, {EffectsFile, &EffectErrors},
-		{ProjectilesFile, &ProjectileErrors}, {MontageTimelinesFile, &TimelineErrors}, {TargetingPresetsFile, &TargetingPresetErrors},
-		{AbilitiesFile, &AbilityErrors}, {CharactersFile, &CharacterErrors}};
-	bool bFailed = false;
-	for (const TPair<const TCHAR*, const TArray<FString>*>& Result : Results)
-	{
-		if (!Result.Value->IsEmpty())
-		{
-			Report(Result.Key, *Result.Value);
-			bFailed = true;
-		}
-	}
-	if (bFailed)
+		return ReadJson(FString(JsonFolderName) / FileName, nullptr, *FindFProperty<FProperty>(Owner, PropertyName), Out);
+	};
+	// 다른 파일이 ID로 가리키는 정의 파일을 먼저 읽습니다. 오류를 모두 알리도록 실패해도 다음 파일을 읽습니다.
+	bool bRead = Read(CombatRulesFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CombatRules), &NewRules);
+	bRead = Read(CameraDataFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CameraData), &NewCamera) && bRead;
+	bRead = Read(EffectsFile, UAgEffectSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgEffectSet, Definitions), &NewEffects->Definitions) && bRead;
+	bRead = Read(ProjectilesFile, UAgProjectileSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgProjectileSet, Projectiles), &NewProjectiles->Projectiles) && bRead;
+	bRead = Read(TargetingPresetsFile, UAgTargetingPresetSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgTargetingPresetSet, Definitions), &NewTargetingPresets->Definitions) && bRead;
+	bRead = Read(AbilitiesFile, UAgAbilitySet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAbilitySet, Abilities), &NewAbilities->Abilities) && bRead;
+	bRead = Read(MontageTimelinesFile, UAgMontageTimelineData::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgMontageTimelineData, Timelines), &NewTimelines->Timelines) && bRead;
+	bRead = Read(CharactersFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, Characters), &NewCharacters) && bRead;
+	if (!bRead)
 	{
 		return false;
+	}
+
+	AgEffectData::Build(NewEffects->Definitions, *this, DataVersion, NewEffects->Effects);
+	for (const TPair<FName, FAgTargetingPresetDefinition>& Pair : NewTargetingPresets->Definitions)
+	{
+		UTargetingPreset* Preset = NewObject<UTargetingPreset>(this, FName(*FString::Printf(TEXT("%s_%d"), *Pair.Key.ToString(), DataVersion)));
+		Preset->GetMutableTargetingTaskSet().Tasks = Pair.Value.Tasks;
+		NewTargetingPresets->Presets.Add(Pair.Key, Preset);
 	}
 
 	CopyJsonProperties(*NewRules, *CombatRules);
@@ -911,11 +256,278 @@ bool UAgAssetManager::LoadJsonData()
 	CopyJsonProperties(*NewTimelines, *MontageTimelines);
 	CopyJsonProperties(*NewTargetingPresets, *TargetingPresets);
 	CopyJsonProperties(*NewAbilities, *Abilities);
-	for (const TPair<FName, UAgCharacterData*>& Pair : NewCharacters)
+	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : NewCharacters)
 	{
 		UAgCharacterData& Target = *Characters.FindChecked(Pair.Key);
 		CopyJsonProperties(*Pair.Value, Target);
 		Target.MarkJsonDataLoaded();
 	}
+	return true;
+}
+
+bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value, const FProperty& Property, void* Out)
+{
+	const auto Fail = [](const FString& At, const FString& Reason)
+	{
+		UE_LOG(LogAg, Error, TEXT("%s: %s"), *At, *Reason);
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Red, At + TEXT(": ") + Reason);
+		}
+		return false;
+	};
+	const auto Child = [&Path](const FString& Key)
+	{
+		return Path.EndsWith(TEXT(".json")) ? Path + TEXT(": ") + Key : Path + TEXT(".") + Key;
+	};
+
+	if (!Value)
+	{
+		FString Text;
+		if (!FFileHelper::LoadFileToString(Text, *FPaths::Combine(FPaths::ProjectDir(), Path)))
+		{
+			return Fail(Path, TEXT("can't read the file"));
+		}
+		const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
+		if (!FJsonSerializer::Deserialize(Reader, Value) || !Value.IsValid())
+		{
+			return Fail(Path, Reader->GetErrorMessage());
+		}
+		const TSharedPtr<FJsonObject>* Root = nullptr;
+		if (Value->TryGetObject(Root))
+		{
+			TSet<FName>& Ids = JsonIds.Add(FName(FPaths::GetBaseFilename(Path)));
+			for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : (*Root)->Values)
+			{
+				Ids.Add(FName(*FString(Pair.Key)));
+			}
+		}
+	}
+	if (Value->IsNull())
+	{
+		return true;
+	}
+
+	if (const FOptionalProperty* Optional = CastField<FOptionalProperty>(&Property))
+	{
+		return ReadJson(Path, Value, *Optional->GetValueProperty(), Optional->MarkSetAndGetInitializedValuePointerToReplace(Out));
+	}
+	if (const FArrayProperty* Array = CastField<FArrayProperty>(&Property))
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+		if (!Value->TryGetArray(Items))
+		{
+			return Fail(Path, TEXT("must be an array"));
+		}
+		FScriptArrayHelper Helper(Array, Out);
+		Helper.Resize(Items->Num());
+		bool bRead = true;
+		for (int32 Index = 0; Index < Items->Num(); ++Index)
+		{
+			bRead = ReadJson(FString::Printf(TEXT("%s[%d]"), *Path, Index), (*Items)[Index], *Array->Inner, Helper.GetRawPtr(Index)) && bRead;
+		}
+		return bRead;
+	}
+	if (const FMapProperty* Map = CastField<FMapProperty>(&Property))
+	{
+		const TSharedPtr<FJsonObject>* Object = nullptr;
+		if (!Value->TryGetObject(Object))
+		{
+			return Fail(Path, TEXT("must be an object"));
+		}
+		FScriptMapHelper Helper(Map, Out);
+		bool bRead = true;
+		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Entry : (*Object)->Values)
+		{
+			const FString Key(Entry.Key);
+			FDefaultConstructedPropertyElement KeyValue(Map->KeyProp);
+			if (!ReadJson(Child(Key), MakeShared<FJsonValueString>(Key), *Map->KeyProp, KeyValue.GetObjAddress()))
+			{
+				bRead = false;
+				continue;
+			}
+			// 이미 있는 항목(캐릭터 데이터)에는 그 객체에 읽습니다.
+			bRead = ReadJson(Child(Key), Entry.Value, *Map->ValueProp, Helper.FindOrAdd(KeyValue.GetObjAddress())) && bRead;
+		}
+		return bRead;
+	}
+
+	const FStructProperty* StructProperty = CastField<FStructProperty>(&Property);
+	const FObjectProperty* ObjectProperty = CastField<FObjectProperty>(&Property);
+	const UStruct* Type = nullptr;
+	void* Container = nullptr;
+	const TCHAR* TypeKey = nullptr;
+	if (StructProperty && StructProperty->Struct == FGameplayTagContainer::StaticStruct())
+	{
+		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
+		if (!Value->TryGetArray(Items))
+		{
+			return Fail(Path, TEXT("must be an array of gameplay tags"));
+		}
+		FGameplayTagContainer& Tags = *static_cast<FGameplayTagContainer*>(Out);
+		Tags.Reset();
+		bool bRead = true;
+		for (int32 Index = 0; Index < Items->Num(); ++Index)
+		{
+			const FString Name = (*Items)[Index]->Type == EJson::String ? (*Items)[Index]->AsString() : FString();
+			const FGameplayTag Tag = FGameplayTag::RequestGameplayTag(FName(*Name), false);
+			if (Tag.IsValid())
+			{
+				Tags.AddTag(Tag);
+			}
+			else
+			{
+				bRead = Fail(FString::Printf(TEXT("%s[%d]"), *Path, Index), Name + TEXT(" is not a gameplay tag"));
+			}
+		}
+		return bRead;
+	}
+	if (StructProperty && StructProperty->Struct == FGameplayTag::StaticStruct())
+	{
+		// 엔진 변환은 등록되지 않은 태그 이름도 그대로 받으므로 직접 찾습니다.
+		const FString Name = Value->Type == EJson::String ? Value->AsString() : FString();
+		const FGameplayTag Tag = Name.IsEmpty() ? FGameplayTag() : FGameplayTag::RequestGameplayTag(FName(*Name), false);
+		if (!Name.IsEmpty() && !Tag.IsValid())
+		{
+			return Fail(Path, Name + TEXT(" is not a gameplay tag"));
+		}
+		*static_cast<FGameplayTag*>(Out) = Tag;
+		return true;
+	}
+	if (StructProperty && StructProperty->Struct == FInstancedStruct::StaticStruct())
+	{
+		const TSharedPtr<FJsonObject>* Object = nullptr;
+		FString TaskName;
+		const UScriptStruct* Task =
+			Value->TryGetObject(Object) && (*Object)->TryGetStringField(TEXT("Task"), TaskName) ? AgTaskParams::FindStruct(TaskName) : nullptr;
+		if (!Task)
+		{
+			return Fail(Path, TEXT("Task must name a task: ") + TaskName);
+		}
+		FInstancedStruct& Instance = *static_cast<FInstancedStruct*>(Out);
+		Instance.InitializeAs(Task);
+		Type = Task;
+		Container = Instance.GetMutableMemory();
+		TypeKey = TEXT("Task");
+	}
+	else if (ObjectProperty && Value->Type == EJson::Object)
+	{
+		UObject* Object = ObjectProperty->GetObjectPropertyValue(Out);
+		FString ClassPath;
+		if (!Object && Value->AsObject()->TryGetStringField(TEXT("Class"), ClassPath))
+		{
+			UClass* Class = LoadClass<UObject>(nullptr, *ClassPath, nullptr, LOAD_NoWarn);
+			if (!Class || !Class->IsChildOf(ObjectProperty->PropertyClass) || Class->HasAnyClassFlags(CLASS_Abstract))
+			{
+				return Fail(Path, ClassPath + TEXT(" is not a class of ") + ObjectProperty->PropertyClass->GetName());
+			}
+			Object = NewObject<UObject>(this, Class);
+			ObjectProperty->SetObjectPropertyValue(Out, Object);
+			TypeKey = TEXT("Class");
+		}
+		if (!Object)
+		{
+			return Fail(Path, TEXT("unknown entry"));
+		}
+		Type = Object->GetClass();
+		Container = Object;
+	}
+	else if (StructProperty)
+	{
+		// UPROPERTY는 맵 값으로 배열을 담지 못해 배열·맵을 구조체로 감싸므로, 감싸는 키 없이 그 값을 바로 적습니다.
+		TArray<const FProperty*> Fields;
+		for (TFieldIterator<FProperty> It(StructProperty->Struct); It; ++It)
+		{
+			Fields.Add(*It);
+		}
+		if (Fields.Num() == 1 && (Fields[0]->IsA<FArrayProperty>() || Fields[0]->IsA<FMapProperty>()))
+		{
+			return ReadJson(Path, Value, *Fields[0], Fields[0]->ContainerPtrToValuePtr<void>(Out));
+		}
+		if (Value->Type == EJson::Object)
+		{
+			Type = StructProperty->Struct;
+			Container = Out;
+		}
+	}
+
+	if (Type)
+	{
+		const TSharedPtr<FJsonObject>* Object = nullptr;
+		if (!Value->TryGetObject(Object))
+		{
+			return Fail(Path, TEXT("must be an object"));
+		}
+		const bool bObject = Type->IsChildOf(UObject::StaticClass());
+		bool bRead = true;
+		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : (*Object)->Values)
+		{
+			const FString Key(Field.Key);
+			if (TypeKey && Key == TypeKey)
+			{
+				continue;
+			}
+			// 쿡한 빌드는 속성 이름의 대소문자를 보존하지 않으므로(예: UP → Up) 키는 대소문자를 구분하지 않습니다.
+			const FProperty* Found = nullptr;
+			for (TFieldIterator<FProperty> It(Type); It && !Found; ++It)
+			{
+				const bool bReadable = !bObject || It->HasAnyPropertyFlags(CPF_Transient) ||
+				                       (It->HasAnyPropertyFlags(CPF_Edit) && !It->HasAnyPropertyFlags(CPF_EditConst | CPF_DisableEditOnInstance));
+				if (bReadable && !It->HasAnyPropertyFlags(CPF_Deprecated) && It->GetName().Equals(Key, ESearchCase::IgnoreCase))
+				{
+					Found = *It;
+				}
+			}
+			if (!Found)
+			{
+				bRead = Fail(Child(Key), TEXT("unknown key"));
+				continue;
+			}
+			bRead = ReadJson(Child(Key), Field.Value, *Found, Found->ContainerPtrToValuePtr<void>(Container)) && bRead;
+		}
+		return bRead;
+	}
+
+	const FByteProperty* Byte = CastField<FByteProperty>(&Property);
+	if (Byte && Byte->Enum == StaticEnum<EObjectTypeQuery>())
+	{
+		// 엔진 값(ObjectTypeQuery3)은 프로젝트 충돌 설정의 순서로 정해지므로, 에디터에 보이는 채널 이름을 그 값으로 바꿉니다.
+		const FString Name = Value->Type == EJson::String ? Value->AsString() : FString();
+		const int64 Channel = StaticEnum<ECollisionChannel>()->GetValueByNameString(TEXT("ECC_") + Name);
+		const EObjectTypeQuery ObjectType =
+			Channel == INDEX_NONE ? ObjectTypeQuery_MAX : UEngineTypes::ConvertToObjectType(static_cast<ECollisionChannel>(Channel));
+		if (ObjectType == ObjectTypeQuery_MAX)
+		{
+			return Fail(Path, Name + TEXT(" is not an object channel"));
+		}
+		Byte->SetPropertyValue(Out, static_cast<uint8>(ObjectType));
+		return true;
+	}
+
+	FText Reason;
+	if (!FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(&Property), Out, 0, 0, false, &Reason))
+	{
+		return Fail(Path, Reason.ToString());
+	}
+	// 엔진 변환은 찾지 못한 에셋·클래스를 null로 두고 성공으로 돌려주므로 직접 확인합니다.
+	const FObjectProperty* Reference = CastField<FObjectProperty>(&Property);
+	if (Reference && !Reference->GetObjectPropertyValue(Out) && !Value->AsString().IsEmpty() && Value->AsString() != TEXT("None"))
+	{
+		return Fail(Path, Value->AsString() + TEXT(" is not an asset or class of ") + Reference->PropertyClass->GetName());
+	}
+	const FFieldPathProperty* FieldPath = CastField<FFieldPathProperty>(&Property);
+	if (FieldPath && !static_cast<const FFieldPath*>(Out)->GetTyped(FieldPath->PropertyClass))
+	{
+		return Fail(Path, Value->AsString() + TEXT(" is not a property"));
+	}
+#if WITH_METADATA
+	// 배열 원소의 메타데이터는 배열 속성에 있습니다.
+	const FString* DataId = CastField<FNameProperty>(&Property) ? Property.GetOwnerProperty()->FindMetaData(TEXT("DataId")) : nullptr;
+	const TSet<FName>* Ids = DataId ? JsonIds.Find(FName(**DataId)) : nullptr;
+	if (DataId && (!Ids || !Ids->Contains(*static_cast<const FName*>(Out))))
+	{
+		return Fail(Path, Value->AsString() + TEXT(" is not an ID in ") + *DataId + TEXT(".json"));
+	}
+#endif
 	return true;
 }

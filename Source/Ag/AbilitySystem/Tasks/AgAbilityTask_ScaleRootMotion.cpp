@@ -7,25 +7,6 @@
 #include "GameFramework/Character.h"
 #include "Ag.h"
 
-void FAgScaleRootMotionParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	if (Distance <= 0.f)
-	{
-		Errors.Add(Path + TEXT(".Distance: must be positive"));
-	}
-}
-
-void FAgScaleRootMotionParams::ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
-{
-	const UAnimMontage* Montage = Links.Montage;
-	if (!Montage ||
-		Montage->ExtractRootMotionFromTrackRange(0.f, Montage->GetPlayLength(), FAnimExtractContext()).GetTranslation().Size2D() <=
-			UE_SMALL_NUMBER)
-	{
-		Errors.Add(Path + TEXT(": ScaleRootMotion needs a montage with horizontal root motion"));
-	}
-}
-
 UAbilityTask* FAgScaleRootMotionParams::MakeTask(const FAgTaskContext& Context) const
 {
 	return UAgAbilityTask_ScaleRootMotion::ScaleRootMotion(&Context.Runner, Distance);

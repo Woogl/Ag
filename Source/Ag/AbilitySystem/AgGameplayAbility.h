@@ -55,7 +55,7 @@ public:
 
 	FName GetAbilityId() const
 	{
-		return GrantedDefinition.Id;
+		return AbilityId;
 	}
 
 	const FGameplayTagContainer& GetDefinitionTags() const
@@ -70,7 +70,7 @@ public:
 
 	AActor* GetTargetingTarget() const
 	{
-		return ExecutionDefinition.bHasTargeting ? ActionTarget.Get() : nullptr;
+		return ExecutionDefinition.Targeting ? ActionTarget.Get() : nullptr;
 	}
 
 	float GetStopDistance() const
@@ -136,6 +136,8 @@ private:
 	void StartTimelineWindow(int32 Entry);
 	void EndTimelineWindow(int32 Entry);
 	void RunTimelinePoint(int32 Entry);
+
+	FName AbilityId;
 
 	UPROPERTY()
 	FAgAbilityData GrantedDefinition;

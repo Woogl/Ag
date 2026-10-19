@@ -21,23 +21,6 @@ struct FAgPlayCutsceneParams : public FAgTaskParams
 	UPROPERTY()
 	FAgTransition Next;
 
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Window;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-
-	virtual const FAgTransition* GetTransition() const override
-	{
-		return &Next;
-	}
-
-	virtual bool WaitsForTransition() const override
-	{
-		return true;
-	}
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

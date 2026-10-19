@@ -2,9 +2,9 @@
   "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust": {
     "Start": [
       {"Task": "Track", "Start": 0, "End": 0.9, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
-      {"Task": "Dash", "Start": 0.9166667, "End": {"Section": "Hold"}, "To": "Target", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000, "Next": {"Section": "Recover", "BlendTime": 0.1}},
-      {"Task": "Attack", "Start": 0.9166667, "End": {"Section": "Hold"}, "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
-      {"Task": "HoldTag", "Start": 0.9166667, "End": {"Section": "Hold"}, "Tag": "State.PassThrough"}
+      {"Task": "Dash", "Start": 0.9166667, "EndSection": "Hold", "To": "Target", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000, "Next": {"Section": "Recover", "BlendTime": 0.1}},
+      {"Task": "Attack", "Start": 0.9166667, "EndSection": "Hold", "DamageMultiplier": 2, "PoiseMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0},
+      {"Task": "HoldTag", "Start": 0.9166667, "EndSection": "Hold", "Tag": "State.PassThrough"}
     ]
   },
   "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike": {
@@ -40,7 +40,7 @@
   "/Game/Animations/AM_Boss_LeapSlam.AM_Boss_LeapSlam": {
     "Start": [
       {"Task": "Track", "Start": 0, "End": 0.15, "TargetingRange": null, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
-      {"Task": "Transition", "Start": 0, "End": {"Section": "Loop"}, "Event": "Event.Landed", "Next": {"Section": "End"}}
+      {"Task": "Transition", "Start": 0, "EndSection": "Loop", "Event": "Event.Landed", "Next": {"Section": "End"}}
     ],
     "End": [
       {"Task": "CameraShake", "Time": 0, "Shake": "Medium", "Range": 1500},
@@ -158,10 +158,10 @@
     "Start": [
       {"Task": "SendGameplayEvent", "Time": 0, "Event": "Event.BasicAttackStarted", "Recipient": "Owner"},
       {"Task": "Track", "Start": 0, "End": 0.18, "TargetingRange": 300, "MaxWarpDistance": 0, "RotationMethod": "ConstantRate"},
-      {"Task": "HoldTag", "Start": 0, "End": {"Section": "Land", "Time": 0.35}, "Tag": "State.Busy"},
-      {"Task": "Attack", "Start": 0.23, "End": {"Section": "Land", "Time": 0.05}, "DamageMultiplier": 1.5, "PoiseMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
-      {"Task": "Transition", "Start": 0, "End": {"Section": "Fall"}, "Event": "Event.Landed", "Next": {"Section": "Land"}},
-      {"Task": "Dash", "Start": 0.3, "End": {"Section": "Fall"}, "To": "Down", "Speed": 1000}
+      {"Task": "HoldTag", "Start": 0, "EndSection": "Land", "End": 0.35, "Tag": "State.Busy"},
+      {"Task": "Attack", "Start": 0.23, "EndSection": "Land", "End": 0.05, "DamageMultiplier": 1.5, "PoiseMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true, "MPCharge": 4, "UPCharge": 0},
+      {"Task": "Transition", "Start": 0, "EndSection": "Fall", "Event": "Event.Landed", "Next": {"Section": "Land"}},
+      {"Task": "Dash", "Start": 0.3, "EndSection": "Fall", "To": "Down", "Speed": 1000}
     ]
   },
   "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack": {
@@ -183,9 +183,9 @@
   },
   "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate": {
     "Start": [
-      {"Task": "HoldTag", "Start": 0, "End": {"Section": "Judgment"}, "Tag": "State.TimeStop"},
-      {"Task": "HoldTag", "Start": 0, "End": {"Section": "Judgment", "Time": 2.0665667}, "Tag": "State.Busy"},
-      {"Task": "PlayCutscene", "Start": 0, "End": {"Section": "Hold"}, "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene", "Next": {"Section": "Judgment"}}
+      {"Task": "HoldTag", "Start": 0, "EndSection": "Judgment", "Tag": "State.TimeStop"},
+      {"Task": "HoldTag", "Start": 0, "EndSection": "Judgment", "End": 2.0665667, "Tag": "State.Busy"},
+      {"Task": "PlayCutscene", "Start": 0, "EndSection": "Hold", "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene", "Next": {"Section": "Judgment"}}
     ],
     "Draw": [
       {"Task": "Attack", "Time": 0, "DamageMultiplier": 5, "PoiseMultiplier": 5, "HitReaction": "KnockUp", "bGuardable": true, "MPCharge": 0, "UPCharge": 0, "bFinisher": true, "Radius": 1000}

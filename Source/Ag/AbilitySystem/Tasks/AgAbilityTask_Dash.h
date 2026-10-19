@@ -37,34 +37,8 @@ struct FAgDashParams : public FAgTaskParams
 	float Overshoot = 0.f;
 
 	UPROPERTY()
-	float MaxDistance = 0.f;
+	TOptional<float> MaxDistance;
 
-	bool bHasMaxDistance = false;
-
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Window;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual bool NeedsTarget() const override
-	{
-		return To == EAgDashTo::Target;
-	}
-
-	virtual const FAgTransition* GetTransition() const override
-	{
-		return Next.IsSet() ? &Next : nullptr;
-	}
-
-	virtual bool WaitsForTransition() const override
-	{
-		return Next.IsSet();
-	}
-
-	virtual void ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const override;
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

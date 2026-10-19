@@ -21,7 +21,7 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(meta = (DataId = "Projectiles"))
 	FName ProjectileId;
 
 	UPROPERTY()
@@ -29,24 +29,6 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 
 	UPROPERTY()
 	FName SocketName;
-
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Point;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual bool StartsHit() const override
-	{
-		return true;
-	}
-
-	virtual void GetReferences(FAgTaskReferences& Out) const override
-	{
-		Out.Projectiles.Add(ProjectileId);
-	}
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

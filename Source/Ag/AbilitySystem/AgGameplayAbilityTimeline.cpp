@@ -23,29 +23,30 @@ FString UAgGameplayAbility::FAgTimelineTickFunction::DiagnosticMessage()
 
 void UAgGameplayAbility::BeginTimeline(const FAnimMontageInstance& Instance)
 {
-	const UAnimMontage* PlayedMontage = Instance.Montage;
-	const FAgMontageTimeline* Timeline = PlayedMontage ? UAgAssetManager::Get().GetMontageTimelines().Find(*PlayedMontage) : nullptr;
+	UAnimMontage* PlayedMontage = Instance.Montage;
+	const FAgMontageTimeline* Timeline = UAgAssetManager::Get().GetMontageTimelines().Find(PlayedMontage);
 	if (!Timeline)
 	{
 		return;
 	}
 
 	// 데이터를 다시 읽어도 이 재생이 끝날 때까지 같은 항목을 쓰도록 복사합니다.
-	for (const FAgTimelineSection& Section : Timeline->Sections)
+	for (const TPair<FName, FAgTimelineSection>& Section : Timeline->Sections)
 	{
-		for (const FAgTimelineItem& Item : Section.Items)
+		for (const FInstancedStruct& Item : Section.Value.Tasks)
 		{
+			const FAgTaskParams& Params = Item.Get<FAgTaskParams>();
 			float Start = 0.f;
 			float End = 0.f;
-			if (!AgMontageTimeline::ResolveTimes(*PlayedMontage, Section.Name, Item, Start, End))
+			if (!AgMontageTimeline::ResolveTimes(*PlayedMontage, Section.Key, Params, Start, End))
 			{
-				UE_LOG(LogAg, Error, TEXT("%s: section %s of the timeline is missing in the montage"), *GetNameSafe(PlayedMontage),
-					*Section.Name.ToString());
+				UE_LOG(LogAg, Error, TEXT("%s: section %s or %s of the timeline is missing in the montage"), *GetNameSafe(PlayedMontage),
+					*Section.Key.ToString(), *Params.EndSection.ToString());
 				continue;
 			}
 			FAgTimelineEntry& Entry = TimelineEntries.AddDefaulted_GetRef();
-			Entry.Params = Item.Params;
-			Entry.bWindow = Item.bWindow;
+			Entry.Params = Item;
+			Entry.bWindow = Params.Start.IsSet();
 			Entry.Start = Start;
 			Entry.End = End;
 		}

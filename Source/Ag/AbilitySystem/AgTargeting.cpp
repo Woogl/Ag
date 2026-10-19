@@ -3,11 +3,11 @@
 #include "AbilitySystem/AgTargeting.h"
 
 #include "AbilitySystemComponent.h"
-#include "AI/AgBossAIController.h"
-#include "Character/AgCharacterBase.h"
+#include "AbilitySystemGlobals.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
 #include "GameFramework/PlayerController.h"
+#include "GenericTeamAgentInterface.h"
 #include "TargetingSystem/TargetingPreset.h"
 #include "TargetingSystem/TargetingSubsystem.h"
 #include "Types/TargetingSystemDataStores.h"
@@ -61,9 +61,9 @@ AActor* AgTargeting::FindTarget(const FAgAbilityTargeting& Targeting, AActor& So
 	Context.InstigatorActor = &Source;
 	FTargetingRequestHandle Request = UTargetingSubsystem::MakeTargetRequestHandle(Preset, Context);
 	FAgTargetingConditions& Conditions = FAgTargetingConditions::FindOrAdd(Request);
-	Conditions.Range = Targeting.bHasRange ? Targeting.Range : -1.f;
-	Conditions.RequiredTags = Targeting.TargetRequiredTags;
-	Conditions.BlockedTags = Targeting.TargetBlockedTags;
+	Conditions.Range = Targeting.Range.Get(-1.f);
+	Conditions.TagRequirements.RequireTags = Targeting.TargetRequiredTags;
+	Conditions.TagRequirements.IgnoreTags = Targeting.TargetBlockedTags;
 
 	// 프리셋의 Task는 즉시 실행되므로 결과를 바로 읽고 핸들을 놓습니다.
 	Subsystem->ExecuteTargetingRequestWithHandle(Request);
@@ -73,29 +73,47 @@ AActor* AgTargeting::FindTarget(const FAgAbilityTargeting& Targeting, AActor& So
 	return Targets.IsEmpty() ? nullptr : Targets[0];
 }
 
-UAgTargetingFilterTask_ActionTarget::UAgTargetingFilterTask_ActionTarget(const FObjectInitializer& ObjectInitializer)
+UAgTargetingFilterTask_Hostile::UAgTargetingFilterTask_Hostile(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-bool UAgTargetingFilterTask_ActionTarget::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+bool UAgTargetingFilterTask_Hostile::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
-	const AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(TargetData.HitResult.GetActor());
-	if (!Owner || !Candidate || Candidate == Owner || Candidate->IsDead() ||
-		Owner->GetTeamAttitudeTowards(*Candidate) != ETeamAttitude::Hostile)
+	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
+	return !Owner || FGenericTeamId::GetAttitude(Owner, TargetData.HitResult.GetActor()) != ETeamAttitude::Hostile;
+}
+
+UAgTargetingFilterTask_TagRequirements::UAgTargetingFilterTask_TagRequirements(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
+bool UAgTargetingFilterTask_TagRequirements::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+{
+	const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(TargetData.HitResult.GetActor());
+	if (!ASC)
 	{
 		return true;
 	}
+	const FGameplayTagContainer& Tags = ASC->GetOwnedGameplayTags();
 	const FAgTargetingConditions* Conditions = FAgTargetingConditions::Find(TargetingHandle);
-	if (!Conditions)
-	{
-		return false;
-	}
-	const UAbilitySystemComponent* ASC = Candidate->GetAbilitySystemComponent();
-	return (Conditions->Range >= 0.f && Owner->GetHorizontalDistanceTo(Candidate) > Conditions->Range) ||
-	       !ASC->HasAllMatchingGameplayTags(Conditions->RequiredTags) || ASC->HasAnyMatchingGameplayTags(Conditions->BlockedTags);
+	return !Requirements.RequirementsMet(Tags) || (Conditions && !Conditions->TagRequirements.RequirementsMet(Tags));
+}
+
+UAgTargetingFilterTask_Distance::UAgTargetingFilterTask_Distance(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
+bool UAgTargetingFilterTask_Distance::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+{
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
+	const AActor* Candidate = TargetData.HitResult.GetActor();
+	const FAgTargetingConditions* Conditions = FAgTargetingConditions::Find(TargetingHandle);
+	return !Owner || !Candidate || (Conditions && Conditions->Range >= 0.f && Owner->GetHorizontalDistanceTo(Candidate) > Conditions->Range);
 }
 
 UAgTargetingFilterTask_OnScreen::UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer)
@@ -121,42 +139,4 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 	                       ScreenPosition.X >= 0.f && ScreenPosition.Y >= 0.f && ScreenPosition.X <= ViewportWidth &&
 	                       ScreenPosition.Y <= ViewportHeight;
 	return !bOnScreen;
-}
-
-UAgTargetingSortTask_HorizontalDistance::UAgTargetingSortTask_HorizontalDistance(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
-float UAgTargetingSortTask_HorizontalDistance::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
-{
-	// 기획서의 거리는 수평 거리라 엔진 정렬(3D 거리) 대신 이 정렬을 씁니다.
-	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
-	const AActor* Candidate = TargetData.HitResult.GetActor();
-	return Owner && Candidate ? Owner->GetHorizontalDistanceTo(Candidate) : 0.f;
-}
-
-UAgTargetingSelectionTask_AITarget::UAgTargetingSelectionTask_AITarget(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
-void UAgTargetingSelectionTask_AITarget::Execute(const FTargetingRequestHandle& TargetingHandle) const
-{
-	Super::Execute(TargetingHandle);
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
-
-	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const APawn* Pawn = Source ? Cast<APawn>(Source->SourceActor) : nullptr;
-	const AAgBossAIController* Controller = Pawn ? Cast<AAgBossAIController>(Pawn->GetController()) : nullptr;
-	if (AActor* Target = Controller ? Controller->GetTarget() : nullptr)
-	{
-		FTargetingDefaultResultData& Result = FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle).TargetResults.AddDefaulted_GetRef();
-		Result.HitResult.HitObjectHandle = FActorInstanceHandle(Target);
-		Result.HitResult.Location = Target->GetActorLocation();
-		Result.HitResult.ImpactPoint = Result.HitResult.Location;
-	}
-
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
 }

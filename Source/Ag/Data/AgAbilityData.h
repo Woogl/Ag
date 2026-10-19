@@ -7,11 +7,6 @@
 #include "StructUtils/InstancedStruct.h"
 #include "AgAbilityData.generated.h"
 
-class FJsonObject;
-class UAgCharacterData;
-class UGameplayEffect;
-struct FAgMontageTimeline;
-struct FAgProjectileDefinition;
 struct FGameplayEffectSpec;
 
 UENUM()
@@ -95,11 +90,11 @@ struct FAgAbilityTargeting
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY(meta = (DataId = "TargetingPresets"))
 	FName Preset;
 
 	UPROPERTY()
-	float Range = 0.f;
+	TOptional<float> Range;
 
 	UPROPERTY()
 	FGameplayTagContainer TargetRequiredTags;
@@ -111,10 +106,7 @@ struct FAgAbilityTargeting
 	bool bRequired = false;
 
 	UPROPERTY()
-	float StopDistance = 0.f;
-
-	bool bHasRange = false;
-	bool bHasStopDistance = false;
+	TOptional<float> StopDistance;
 };
 
 USTRUCT()
@@ -163,9 +155,6 @@ struct FAgAbilityData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FName Id;
-
-	UPROPERTY()
 	FGameplayTagContainer Tags;
 
 	UPROPERTY()
@@ -175,13 +164,13 @@ struct FAgAbilityData
 	FAgAbilityActivation Activation;
 
 	UPROPERTY()
-	FAgResourceCostParams Cost;
+	TOptional<FAgResourceCostParams> Cost;
 
 	UPROPERTY()
-	FAgAbilityTargeting Targeting;
+	TOptional<FAgAbilityTargeting> Targeting;
 
 	UPROPERTY()
-	FAgAbilityMontage Montage;
+	TOptional<FAgAbilityMontage> Montage;
 
 	UPROPERTY()
 	EAgAbilityEnd End = EAgAbilityEnd::Montage;
@@ -190,15 +179,9 @@ struct FAgAbilityData
 	TArray<FInstancedStruct> Tasks;
 
 	UPROPERTY()
-	FAgPatternSelection PatternSelection;
-	bool bHasCost = false;
-	bool bHasTargeting = false;
-	bool bHasMontage = false;
-	bool bHasPatternSelection = false;
+	TOptional<FAgPatternSelection> PatternSelection;
 
 	bool HasSameGrantSettings(const FAgAbilityData& Other) const;
-
-	bool HasEventTrigger() const;
 };
 
 UCLASS()
@@ -210,12 +193,3 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
 	TMap<FName, FAgAbilityData> Abilities;
 };
-
-namespace AgAbilityData
-{
-	bool Parse(const FJsonObject& Json, TMap<FName, FAgAbilityData>& OutAbilities, TArray<FString>& Errors);
-
-	void ValidateCharacter(const UAgCharacterData& Data, const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>& Effects, const TMap<FName, FAgMontageTimeline>& Timelines, const FString& Path, TArray<FString>& Errors);
-
-	void ValidateReferences(const TMap<FName, FAgAbilityData>& Abilities, const TMap<FName, TObjectPtr<UGameplayEffect>>* Effects, const TMap<FName, FAgProjectileDefinition>* Projectiles, TArray<FString>& Errors);
-}

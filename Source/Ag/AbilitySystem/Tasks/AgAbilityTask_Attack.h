@@ -39,27 +39,12 @@ struct FAgAttackParams : public FAgTaskParams
 	bool bFinisher = false;
 
 	UPROPERTY()
-	float Radius = 0.f;
+	TOptional<float> Radius;
 
 	UPROPERTY()
 	bool bGroundOnly = false;
 
-	bool bHasRadius = false;
-
 	FAgPlayerAttackHit MakeHit() const;
-
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Window | EAgTaskPlacement::Point;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual bool StartsHit() const override
-	{
-		return true;
-	}
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

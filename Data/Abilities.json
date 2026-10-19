@@ -538,7 +538,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "AITarget"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "DoubleStrike"},
     "End": "Montage",
     "Tasks": [],
@@ -575,7 +575,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "AITarget"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "Sweep"},
     "End": "Montage",
     "Tasks": [],
@@ -612,7 +612,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "AITarget"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "DashThrust"},
     "End": "Montage",
     "Tasks": [],
@@ -649,7 +649,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "AITarget", "bRequired": true},
+    "Targeting": {"Preset": "Enemy", "bRequired": true},
     "Montage": {"MontageId": "LeapSlam"},
     "End": "Montage",
     "Tasks": [
@@ -687,7 +687,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "AITarget"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "QuintupleStrike"},
     "End": "Montage",
     "Tasks": [],
@@ -723,7 +723,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "AITarget"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "SwordWave"},
     "End": "Montage",
     "Tasks": [],
@@ -759,7 +759,7 @@
       "bAllowRetrigger": false
     },
     "Cost": null,
-    "Targeting": {"Preset": "AITarget"},
+    "Targeting": {"Preset": "Enemy"},
     "Montage": {"MontageId": "JumpSlam"},
     "End": "Montage",
     "Tasks": [],

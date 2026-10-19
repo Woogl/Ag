@@ -9,7 +9,6 @@
 #include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgEffectData.h"
-#include "Data/AgJsonRead.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 
@@ -58,22 +57,6 @@ FAgPlayerAttackHit FAgAttackParams::MakeHit() const
 	return Hit;
 }
 
-void FAgAttackParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgAttackParams, bFinisher));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgAttackParams, Radius));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgAttackParams, bGroundOnly));
-}
-
-void FAgAttackParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	bHasRadius = Json.HasField(TEXT("Radius"));
-	if (bHasRadius && Radius <= 0.f)
-	{
-		Errors.Add(Path + TEXT(".Radius: must be positive"));
-	}
-}
-
 UAbilityTask* FAgAttackParams::MakeTask(const FAgTaskContext& Context) const
 {
 	return UAgAbilityTask_Attack::Attack(&Context.Runner, *this, Context.Placement == EAgTaskPlacement::Point);
@@ -104,7 +87,7 @@ void UAgAbilityTask_Attack::Activate()
 		EndTask();
 		return;
 	}
-	if (!Params.bHasRadius)
+	if (!Params.Radius)
 	{
 		WeaponCollision = Character->FindComponentByTag<UCapsuleComponent>(AAgCharacterBase::WeaponCollisionTag);
 		if (!GetWeaponCollision(LastEdgeStart, LastEdgeEnd))
@@ -135,7 +118,7 @@ void UAgAbilityTask_Attack::TickTask(float DeltaTime)
 		return;
 	}
 	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!Character || Character->IsDead() || !Ability || !Ability->IsActive() || (!Params.bHasRadius && !WeaponCollision.IsValid()))
+	if (!Character || Character->IsDead() || !Ability || !Ability->IsActive() || (!Params.Radius && !WeaponCollision.IsValid()))
 	{
 		EndTask();
 		return;
@@ -181,7 +164,7 @@ bool UAgAbilityTask_Attack::GetWeaponCollision(FVector& OutStart, FVector& OutEn
 
 void UAgAbilityTask_Attack::Detect()
 {
-	if (Params.bHasRadius)
+	if (Params.Radius)
 	{
 		HitArea();
 	}
@@ -232,7 +215,7 @@ void UAgAbilityTask_Attack::HitArea()
 	TArray<AAgCharacterBase*> InRange;
 	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
 	{
-		if (*It != Character && Character->GetHorizontalDistanceTo(*It) <= Params.Radius)
+		if (*It != Character && Character->GetHorizontalDistanceTo(*It) <= *Params.Radius)
 		{
 			InRange.Add(*It);
 		}

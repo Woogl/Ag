@@ -1,19 +1,17 @@
 {
   "Enemy": [
-    {"Class": "/Script/TargetingSystem.TargetingSelectionTask_AOE", "ShapeType": "Sphere", "Radius": {"Value": 5000}, "CollisionObjectTypes": ["Pawn"], "bIgnoreSourceActor": true, "bIgnoreInstigatorActor": true},
-    {"Class": "/Script/TargetingSystem.TargetingFilterTask_ActorClass", "RequiredActorClassFilters": ["/Script/Ag.AgCharacterBase"]},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_ActionTarget"},
-    {"Class": "/Script/Ag.AgTargetingSortTask_HorizontalDistance"}
+    {"Class": "/Script/TargetingSystem.TargetingSelectionTask_AOE", "ShapeType": "Sphere", "Radius": {"Value": 5000}, "CollisionObjectTypes": ["Pawn"]},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_Distance"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
+    {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ],
   "LockOn": [
-    {"Class": "/Script/TargetingSystem.TargetingSelectionTask_AOE", "ShapeType": "Sphere", "Radius": {"Value": 5000}, "CollisionObjectTypes": ["Pawn"], "bIgnoreSourceActor": true, "bIgnoreInstigatorActor": true},
-    {"Class": "/Script/TargetingSystem.TargetingFilterTask_ActorClass", "RequiredActorClassFilters": ["/Script/Ag.AgCharacterBase"]},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_ActionTarget"},
+    {"Class": "/Script/TargetingSystem.TargetingSelectionTask_AOE", "ShapeType": "Sphere", "Radius": {"Value": 5000}, "CollisionObjectTypes": ["Pawn"]},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_Distance"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/Ag.AgTargetingFilterTask_OnScreen"},
-    {"Class": "/Script/Ag.AgTargetingSortTask_HorizontalDistance"}
-  ],
-  "AITarget": [
-    {"Class": "/Script/Ag.AgTargetingSelectionTask_AITarget"},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_ActionTarget"}
+    {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ]
 }

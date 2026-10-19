@@ -5,14 +5,6 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
-void FAgSendGameplayEventParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	if (!Event.ToString().StartsWith(TEXT("Event.")))
-	{
-		Errors.Add(Path + TEXT(".Event: expected a tag under Event"));
-	}
-}
-
 UAbilityTask* FAgSendGameplayEventParams::MakeTask(const FAgTaskContext& Context) const
 {
 	return UAgAbilityTask_SendGameplayEvent::SendGameplayEvent(&Context.Runner, *this);

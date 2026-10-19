@@ -22,10 +22,10 @@ struct FAgAttackHit
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	float DamageMultiplier = 1.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	float PoiseMultiplier = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
@@ -47,10 +47,10 @@ struct FAgPlayerAttackHit : public FAgAttackHit
 	{
 	}
 
-	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	float MPCharge = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attack", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	float UPCharge = 0.f;
 
 	bool bFinisher = false;
@@ -63,9 +63,9 @@ struct FAgProjectileParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm/s", ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm/s"))
 	float Speed = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm"))
 	float Range = 0.f;
 };

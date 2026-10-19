@@ -6,6 +6,7 @@
 #include "Engine/AssetManager.h"
 #include "AgAssetManager.generated.h"
 
+class FJsonValue;
 class UAgAbilitySet;
 class UAgCameraData;
 class UAgCharacterData;
@@ -63,6 +64,10 @@ protected:
 
 private:
 	bool LoadJsonData();
+
+	bool ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value, const FProperty& Property, void* Out);
+
+	TMap<FName, TSet<FName>> JsonIds;
 
 	/** 검증 중인 객체도 로딩 도중 GC가 따라갈 수 있게 보관합니다. */
 	UPROPERTY()

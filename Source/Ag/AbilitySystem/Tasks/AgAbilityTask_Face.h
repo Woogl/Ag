@@ -22,16 +22,6 @@ struct FAgFaceParams : public FAgTaskParams
 	UPROPERTY()
 	EAgFaceTo To = EAgFaceTo::Target;
 
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Activation | EAgTaskPlacement::Point;
-	}
-
-	virtual bool NeedsTarget() const override
-	{
-		return To == EAgFaceTo::Target;
-	}
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

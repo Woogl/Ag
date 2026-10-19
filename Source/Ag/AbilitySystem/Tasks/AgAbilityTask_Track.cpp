@@ -8,46 +8,8 @@
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Data/AgJsonRead.h"
-#include "Data/AgMontageTimeline.h"
-#include "Dom/JsonObject.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
-
-void FAgTrackParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Nullable.Add(GET_MEMBER_NAME_CHECKED(FAgTrackParams, TargetingRange));
-	Rules.Nullable.Add(GET_MEMBER_NAME_CHECKED(FAgTrackParams, MaxWarpDistance));
-}
-
-void FAgTrackParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	const TSharedPtr<FJsonValue> Range = Json.TryGetField(TEXT("TargetingRange"));
-	const TSharedPtr<FJsonValue> Distance = Json.TryGetField(TEXT("MaxWarpDistance"));
-	bHasTargetingRange = Range && Range->Type != EJson::Null;
-	bHasMaxWarpDistance = Distance && Distance->Type != EJson::Null;
-	if (RotationMethod != EMotionWarpRotationMethod::ConstantRate && RotationMethod != EMotionWarpRotationMethod::Slerp)
-	{
-		Errors.Add(Path + TEXT(".RotationMethod: expected ConstantRate or Slerp"));
-	}
-}
-
-void FAgTrackParams::ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
-{
-	if (!Links.Montage)
-	{
-		return;
-	}
-	if (AgMontageTimeline::OverlapsLoop(*Links.Montage, Links.Start, Links.End))
-	{
-		Errors.Add(Path + TEXT(": a tracking window can't overlap a looping section"));
-	}
-	// 몽타주 루트 모션이 없는 구간(루트 모션 소스로 움직임)은 워핑할 이동이 없어 돌기만 합니다.
-	if (!AgMontageTimeline::GivesRootMotion(*Links.Montage, Links.Start, Links.End) && !(bHasMaxWarpDistance && MaxWarpDistance <= 0.f))
-	{
-		Errors.Add(Path + TEXT(": a tracking window without montage root motion only turns, so MaxWarpDistance must be 0"));
-	}
-}
 
 UAbilityTask* FAgTrackParams::MakeTask(const FAgTaskContext& Context) const
 {
@@ -81,7 +43,7 @@ void UAgAbilityTask_Track::Activate()
 		return;
 	}
 	AActor* ActionTarget = Runner->GetActionTarget();
-	bFacingOnly = !ActionTarget || (Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(ActionTarget) > Params.TargetingRange);
+	bFacingOnly = !ActionTarget || (Params.TargetingRange && Character->GetHorizontalDistanceTo(ActionTarget) > *Params.TargetingRange);
 	Target = bFacingOnly ? Character->GetFallbackFacingTarget() : ActionTarget;
 	LastPosition = Instance->GetPosition();
 	if (!Target.IsValid())
@@ -125,7 +87,7 @@ void UAgAbilityTask_Track::TickTask(float DeltaTime)
 
 	const AActor* Goal = Target.Get();
 	bStopped = !Goal ||
-	           (!bFacingOnly && Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(Goal) > Params.TargetingRange);
+	           (!bFacingOnly && Params.TargetingRange && Character->GetHorizontalDistanceTo(Goal) > *Params.TargetingRange);
 	const FVector ToTarget = Goal ? (Goal->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal2D() : FVector::ZeroVector;
 	if (bStopped || ToTarget.IsNearlyZero())
 	{

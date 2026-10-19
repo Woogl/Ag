@@ -50,7 +50,7 @@ bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext&
 	const AAgBossAIController* Controller = InstanceData.Controller;
 	const AAgBossCharacter* Boss = Controller->GetBoss();
 	const FAgAbilityData* Pattern = Controller->GetBossData()->FindAbility(InstanceData.Pattern);
-	const FAgPatternSelection* Params = Pattern && Pattern->bHasPatternSelection ? &Pattern->PatternSelection : nullptr;
+	const FAgPatternSelection* Params = Pattern ? Pattern->PatternSelection.GetPtrOrNull() : nullptr;
 	const AAgCharacterBase* Target = Controller->GetTarget();
 	if (!Params || !Target || Boss->GetHorizontalDistanceTo(Target) > Params->ResponseRange)
 	{

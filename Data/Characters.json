@@ -146,6 +146,7 @@
     },
     "LockOnBone": "spine_05",
     "ExecutionPromptBone": "head",
-    "AIStateTree": "/Game/AI/ST_Boss.ST_Boss"
+    "AIStateTree": "/Game/AI/ST_Boss.ST_Boss",
+    "AITargetingPreset": "Enemy"
   }
 }

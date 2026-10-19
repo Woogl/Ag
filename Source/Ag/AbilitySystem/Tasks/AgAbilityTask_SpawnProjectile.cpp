@@ -13,21 +13,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgEffectData.h"
-#include "Data/AgJsonRead.h"
 #include "Ag.h"
-
-void FAgSpawnProjectileParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgSpawnProjectileParams, SocketName));
-}
-
-void FAgSpawnProjectileParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	if (Json.HasField(TEXT("SocketName")) != (Origin == EAgProjectileOrigin::MeshSocket))
-	{
-		Errors.Add(Path + TEXT(".SocketName: required only for MeshSocket"));
-	}
-}
 
 UAbilityTask* FAgSpawnProjectileParams::MakeTask(const FAgTaskContext& Context) const
 {

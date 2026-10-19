@@ -26,18 +26,6 @@ struct FAgSendGameplayEventParams : public FAgTaskParams
 	UPROPERTY()
 	EAgEventRecipient Recipient = EAgEventRecipient::Owner;
 
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Activation | EAgTaskPlacement::Point;
-	}
-
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual bool NeedsTarget() const override
-	{
-		return Recipient == EAgEventRecipient::Target;
-	}
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

@@ -5,31 +5,8 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Core/AgAssetManager.h"
-#include "Data/AgJsonRead.h"
 #include "GameplayEffect.h"
 #include "Ag.h"
-
-void FAgApplyEffectParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgApplyEffectParams, bRemoveOnEnd));
-}
-
-void FAgApplyEffectParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	if (Placement == EAgTaskPlacement::Window && Json.HasField(TEXT("bRemoveOnEnd")))
-	{
-		Errors.Add(Path + TEXT(".bRemoveOnEnd: a window removes its effect when it ends"));
-	}
-}
-
-void FAgApplyEffectParams::ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
-{
-	const TObjectPtr<UGameplayEffect>* Found = Links.Effects ? Links.Effects->Find(Effect) : nullptr;
-	if (Links.Placement == EAgTaskPlacement::Window && Found && (*Found)->DurationPolicy != EGameplayEffectDurationType::Infinite)
-	{
-		Errors.Add(Path + TEXT(".Effect: a window needs an Infinite effect"));
-	}
-}
 
 UAbilityTask* FAgApplyEffectParams::MakeTask(const FAgTaskContext& Context) const
 {

@@ -15,43 +15,43 @@ struct FAgAttributes
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float HP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float MaxHP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float SP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float MaxSP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float MP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float MaxMP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float UP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float MaxUP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float PP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float MaxPP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float ATK = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float DEF = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (ClampMin = 0, Units = "cm/s"))
+	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (Units = "cm/s"))
 	float MOV = 0.f;
 };
 
@@ -96,19 +96,19 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Attributes", meta = (ShowOnlyInnerProperties))
 	FAgAttributes Attributes;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Abilities"))
 	TArray<FName> Abilities;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Death", meta = (Units = "s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Death", meta = (Units = "s"))
 	float DeathPresentationTime = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "cm"))
 	float StopDistance = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Death")
 	TArray<FAgDeathMotion> DeathMotions;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Effects"))
 	TArray<FName> Effects;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Assets")
@@ -124,34 +124,34 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Input", meta = (Units = "s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Input", meta = (Units = "s"))
 	float InputBufferTime = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
 	float GuardSPCostRatio = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
 	float GuardMoveSpeedRatio = 1.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (ClampMin = 0, ClampMax = 1))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
 	float ParryPPRatio = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (ClampMin = 0.01, ClampMax = 1))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
 	float UltimateSlowMotionSpeed = 1.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s"))
 	float UltimateSlowMotionDuration = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (ClampMin = 0.01, ClampMax = 1))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
 	float PerfectDodgeSlowMotionSpeed = 1.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s"))
 	float PerfectDodgeSlowMotionDuration = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "cm"))
 	float LockOnReleaseRange = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint", meta = (ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint")
 	float SprintSpeedRatio = 1.f;
 };
 
@@ -161,13 +161,13 @@ class UAgBossData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm"))
 	float NearDistance = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm"))
 	float FarDistance = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s", ClampMin = 0.01))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s"))
 	float RetryInterval = 0.5f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
@@ -176,10 +176,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PatternRecoveryWaitPhase2 = FFloatInterval(0.f, 0.f);
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s", ClampMin = 0))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s"))
 	float FixedRecoveryWait = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase", meta = (ClampMin = 0, ClampMax = 1))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")
 	float Phase2HPRatio = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On")
@@ -190,4 +190,7 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	TObjectPtr<UStateTree> AIStateTree;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (DataId = "TargetingPresets"))
+	FName AITargetingPreset;
 };

@@ -5,8 +5,6 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Core/AgGameplayTags.h"
-#include "Data/AgJsonRead.h"
-#include "Data/AgMontageTimeline.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
@@ -19,37 +17,6 @@ namespace
 	constexpr int32 BlockedTicksToStop = 3;
 
 	constexpr float MinJudgedMove = 2.f;
-}
-
-void FAgDashParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgDashParams, Next));
-	Rules.Optional.Add(TEXT("Next.BlendTime"));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgDashParams, HomingTurnRate));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgDashParams, Overshoot));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgDashParams, MaxDistance));
-}
-
-void FAgDashParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	bHasMaxDistance = Json.HasField(TEXT("MaxDistance"));
-	if (Speed <= 0.f)
-	{
-		Errors.Add(Path + TEXT(".Speed: must be positive"));
-	}
-	if (To != EAgDashTo::Target &&
-		(Json.HasField(TEXT("HomingTurnRate")) || Json.HasField(TEXT("Overshoot")) || Json.HasField(TEXT("MaxDistance"))))
-	{
-		Errors.Add(Path + TEXT(": HomingTurnRate, Overshoot and MaxDistance are only for To Target"));
-	}
-}
-
-void FAgDashParams::ValidateLinks(const FAgTaskLinks& Links, const FString& Path, TArray<FString>& Errors) const
-{
-	if (Links.Montage && AgMontageTimeline::GivesRootMotion(*Links.Montage, Links.Start, Links.End))
-	{
-		Errors.Add(Path + TEXT(": a dash window needs no montage root motion (a root motion off notify over the window)"));
-	}
 }
 
 UAbilityTask* FAgDashParams::MakeTask(const FAgTaskContext& Context) const
@@ -93,7 +60,7 @@ void UAgAbilityTask_Dash::Activate()
 		Distance = Target.IsValid()
 		               ? static_cast<float>(FVector::Dist2D(Character->GetActorLocation(), Target->GetActorLocation())) + Params.Overshoot
 		               : 0.f;
-		Distance = Params.bHasMaxDistance ? (Target.IsValid() ? FMath::Min(Distance, Params.MaxDistance) : Params.MaxDistance) : Distance;
+		Distance = Params.MaxDistance ? (Target.IsValid() ? FMath::Min(Distance, *Params.MaxDistance) : *Params.MaxDistance) : Distance;
 		if (Distance <= 0.f || Forward.IsNearlyZero())
 		{
 			Stop();

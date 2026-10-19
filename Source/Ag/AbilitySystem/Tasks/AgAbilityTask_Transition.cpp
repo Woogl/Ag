@@ -6,38 +6,9 @@
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Data/AgJsonRead.h"
 #include "Engine/World.h"
 #include "GameplayEffect.h"
 #include "TimerManager.h"
-
-void FAgTransitionParams::GetFieldRules(FAgJsonFieldRules& Rules) const
-{
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgTransitionParams, RequiredTags));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgTransitionParams, BlockedTags));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgTransitionParams, Event));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgTransitionParams, BeforeTagEnds));
-	Rules.Optional.Add(GET_MEMBER_NAME_CHECKED(FAgTransitionParams, bOptional));
-	Rules.Optional.Add(TEXT("Next.BlendTime"));
-}
-
-void FAgTransitionParams::Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors)
-{
-	const bool bEvent = Json.HasField(TEXT("Event"));
-	const bool bTagEnds = Json.HasField(TEXT("BeforeTagEnds"));
-	if (Placement != EAgTaskPlacement::Window && (bEvent || bTagEnds || Json.HasField(TEXT("bOptional"))))
-	{
-		Errors.Add(Path + TEXT(": a point or an activation task uses no Event, BeforeTagEnds or bOptional"));
-	}
-	if (Placement == EAgTaskPlacement::Window && bEvent && bTagEnds)
-	{
-		Errors.Add(Path + TEXT(": use Event or BeforeTagEnds, not both"));
-	}
-	if (Placement == EAgTaskPlacement::Window && !bEvent && !bTagEnds && RequiredTags.IsEmpty() && BlockedTags.IsEmpty())
-	{
-		Errors.Add(Path + TEXT(": a window without Event or BeforeTagEnds needs RequiredTags or BlockedTags"));
-	}
-}
 
 UAbilityTask* FAgTransitionParams::MakeTask(const FAgTaskContext& Context) const
 {

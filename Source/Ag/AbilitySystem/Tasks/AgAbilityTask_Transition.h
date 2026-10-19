@@ -34,24 +34,6 @@ struct FAgTransitionParams : public FAgTaskParams
 	UPROPERTY()
 	bool bOptional = false;
 
-	virtual EAgTaskPlacement GetPlacements() const override
-	{
-		return EAgTaskPlacement::Activation | EAgTaskPlacement::Window | EAgTaskPlacement::Point;
-	}
-
-	virtual void GetFieldRules(FAgJsonFieldRules& Rules) const override;
-	virtual void Validate(const FJsonObject& Json, EAgTaskPlacement Placement, const FString& Path, TArray<FString>& Errors) override;
-
-	virtual const FAgTransition* GetTransition() const override
-	{
-		return &Next;
-	}
-
-	virtual bool WaitsForTransition() const override
-	{
-		return !bOptional;
-	}
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

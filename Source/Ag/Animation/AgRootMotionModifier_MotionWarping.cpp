@@ -17,7 +17,7 @@ void UAgRootMotionModifier_MotionWarping::SetTrack(const FAgTrackParams& InParam
 	Gap = InGap;
 	bFacingOnly = bInFacingOnly;
 	RotationMethod = Params.RotationMethod;
-	bWarpTranslation = !bFacingOnly && !(Params.bHasMaxWarpDistance && Params.MaxWarpDistance <= 0.f);
+	bWarpTranslation = !bFacingOnly && !(Params.MaxWarpDistance && *Params.MaxWarpDistance <= 0.f);
 	// 실행마다 자기 엔진 목표 이름을 사용하여 다른 구간의 목표를 덮거나 제거하지 않습니다.
 	WarpTargetName = FName(*FString::Printf(TEXT("%s_%u"), *WarpTargetName.ToString(), GetUniqueID()));
 }
@@ -41,7 +41,7 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		Origin = Character->GetActorLocation();
 	}
 	if (!Target.IsValid() ||
-		(!bFacingOnly && Params.bHasTargetingRange && Character->GetHorizontalDistanceTo(Target.Get()) > Params.TargetingRange))
+		(!bFacingOnly && Params.TargetingRange && Character->GetHorizontalDistanceTo(Target.Get()) > *Params.TargetingRange))
 	{
 		SetState(ERootMotionModifierState::Disabled);
 		return;
@@ -61,9 +61,9 @@ void UAgRootMotionModifier_MotionWarping::Update(const FMotionWarpingUpdateConte
 		Goal = Target->GetActorLocation() - Direction * Gap;
 	}
 	Goal.Z = Location.Z;
-	if (!bFacingOnly && Params.bHasMaxWarpDistance)
+	if (!bFacingOnly && Params.MaxWarpDistance)
 	{
-		Goal = Origin + (Goal - Origin).GetClampedToMaxSize2D(Params.MaxWarpDistance);
+		Goal = Origin + (Goal - Origin).GetClampedToMaxSize2D(*Params.MaxWarpDistance);
 		Goal.Z = Location.Z;
 	}
 	GetOwnerComponent()->AddOrUpdateWarpTargetFromLocationAndRotation(

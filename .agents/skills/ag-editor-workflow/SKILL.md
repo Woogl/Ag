@@ -94,7 +94,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 - 몽타주 섹션과 트랙 길이는 엔진 MCP와 파이썬으로 바꿀 수 없다. `AgAssetToolset.SetMontageSegments`·`SetMontageSections`를 쓴다. 섹션은 시작 시간 순서로 넘긴다(툴셋이 정렬하지 않는다).
 - 복제한 몽타주는 `SetMontageSegments` 뒤에도 옛 섹션의 시퀀스 참조가 남는다. `SetMontageSections`를 다시 부르고 저장한다.
 - `SetMontageSegments`로 몽타주가 길어지면 옛 끝에서 끝나던 노티파이 상태를 엔진이 새 끝까지 늘리지만, 끝 링크는 옛 구간에 남는다. 그 노티파이는 지우고(`remove_animation_notify_events_by_track`) 다시 넣는다.
-- 몽타주 안의 게임 규칙 시각(판정·보호·워핑·후딜 같은 사건)은 노티파이가 아니라 `Data/MontageTimelines.json`에서 고친다([몽타주 시간표](<../../../Docs/Program/몽타주 시간표.md>)). 몽타주에는 연출과 루트 모션 노티파이만 두며, 프로젝트 노티파이나 엔진 워핑 노티파이를 넣으면 시간표 검증이 오류를 낸다.
+- 몽타주 안의 게임 규칙 시각(판정·보호·워핑·후딜 같은 사건)은 노티파이가 아니라 `Data/MontageTimelines.json`에서 고친다([몽타주 시간표](<../../../Docs/Program/몽타주 시간표.md>)). 몽타주에는 연출과 루트 모션 노티파이만 두며, 프로젝트 노티파이나 엔진 워핑 노티파이를 넣으면 시간표와 같은 일이 두 번 일어난다. 데이터를 읽을 때 몽타주와 대조하지 않으므로 섹션 이름이나 시각이 틀려도 재생할 때야 드러난다.
 - 몽타주 노티파이는 `get_properties`로 읽을 수 없다. `unreal.AnimationLibrary.get_animation_notify_events(montage)`로 읽고, 트랙별로는 `get_animation_notify_events_for_track`으로 읽는다.
 - 노티파이 시각을 float 값 그대로 읽으려면 `unreal.AnimationLibrary.get_anim_notify_event_trigger_time`(트리거 오프셋 포함)과 `get_anim_notify_event_duration`을 쓴다. 이벤트의 `trigger_time_offset`과 `Duration`은 파이썬에서 읽을 수 없고, `export_text()`의 값은 소수 6자리다.
 - 노티파이는 `unreal.AnimationLibrary.add_animation_notify_event(montage, 트랙 이름, 시각, 노티파이 클래스)`로 더하고, 돌려받은 노티파이에 속성(`gameplay_cue` 등)을 쓴 뒤 저장한다.

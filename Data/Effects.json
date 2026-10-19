@@ -18,17 +18,17 @@
     "DurationPolicy": "Instant",
     "Modifiers": [
       {
-        "Attribute": "SP",
+        "Attribute": "/Script/Ag.AgAttributeSet:SP",
         "Op": "Add",
         "SetByCaller": "SetByCaller.SP"
       },
       {
-        "Attribute": "MP",
+        "Attribute": "/Script/Ag.AgAttributeSet:MP",
         "Op": "Add",
         "SetByCaller": "SetByCaller.MP"
       },
       {
-        "Attribute": "UP",
+        "Attribute": "/Script/Ag.AgAttributeSet:UP",
         "Op": "Add",
         "SetByCaller": "SetByCaller.UP"
       }
@@ -72,7 +72,7 @@
     "DurationPolicy": "Instant",
     "Modifiers": [
       {
-        "Attribute": "HP",
+        "Attribute": "/Script/Ag.AgAttributeSet:HP",
         "Op": "Override",
         "Value": 0
       }
@@ -82,9 +82,9 @@
     "DurationPolicy": "Instant",
     "Modifiers": [
       {
-        "Attribute": "PP",
+        "Attribute": "/Script/Ag.AgAttributeSet:PP",
         "Op": "Override",
-        "FromAttribute": "MaxPP"
+        "FromAttribute": "/Script/Ag.AgAttributeSet:MaxPP"
       }
     ]
   },
@@ -107,7 +107,7 @@
     "PeriodicInhibitionPolicy": "ResetPeriod",
     "Modifiers": [
       {
-        "Attribute": "SP",
+        "Attribute": "/Script/Ag.AgAttributeSet:SP",
         "Op": "Add",
         "PerSecond": 40
       }
@@ -124,7 +124,7 @@
     "PeriodicInhibitionPolicy": "ResetPeriod",
     "Modifiers": [
       {
-        "Attribute": "SP",
+        "Attribute": "/Script/Ag.AgAttributeSet:SP",
         "Op": "Add",
         "PerSecond": 20
       }
@@ -143,7 +143,7 @@
     "PeriodicInhibitionPolicy": "ResetPeriod",
     "Modifiers": [
       {
-        "Attribute": "PP",
+        "Attribute": "/Script/Ag.AgAttributeSet:PP",
         "Op": "Add",
         "PerSecond": 50
       }
@@ -185,7 +185,7 @@
     "ExecutePeriodicOnApplication": false,
     "Modifiers": [
       {
-        "Attribute": "SP",
+        "Attribute": "/Script/Ag.AgAttributeSet:SP",
         "Op": "Add",
         "PerSecond": -12
       }
@@ -195,12 +195,12 @@
     "DurationPolicy": "Instant",
     "Modifiers": [
       {
-        "Attribute": "MP",
+        "Attribute": "/Script/Ag.AgAttributeSet:MP",
         "Op": "Add",
         "Value": 15
       },
       {
-        "Attribute": "UP",
+        "Attribute": "/Script/Ag.AgAttributeSet:UP",
         "Op": "Add",
         "Value": 10
       }
@@ -210,12 +210,12 @@
     "DurationPolicy": "Instant",
     "Modifiers": [
       {
-        "Attribute": "MP",
+        "Attribute": "/Script/Ag.AgAttributeSet:MP",
         "Op": "Add",
         "Value": 10
       },
       {
-        "Attribute": "UP",
+        "Attribute": "/Script/Ag.AgAttributeSet:UP",
         "Op": "Add",
         "Value": 10
       }
