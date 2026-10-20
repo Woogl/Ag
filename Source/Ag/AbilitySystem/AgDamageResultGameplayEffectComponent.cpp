@@ -9,6 +9,7 @@
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Character/AgCharacterBase.h"
+#include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
@@ -24,6 +25,8 @@
 
 namespace
 {
+	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
+
 	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle())
 	{
 		FGameplayEventData Payload;
@@ -47,32 +50,51 @@ namespace
 		return FGameplayTag();
 	}
 
-	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags)
+	FAgPhysicsHit MakePhysicsHit(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context)
+	{
+		FAgPhysicsHit Hit;
+		Hit.Location = Context.GetOrigin();
+		// WeaponHit은 HitResult의 TraceStart·TraceEnd에 날의 맞은 지점이 지나온 선을 담습니다.
+		const FHitResult* Contact = Context.GetHitResult();
+		const FVector BladeMotion = Contact ? Contact->TraceEnd - Contact->TraceStart : FVector::ZeroVector;
+		Hit.Direction = BladeMotion.IsNearlyZero() ? (Target.GetActorLocation() - Causer.GetActorLocation()).GetSafeNormal2D() : BladeMotion.GetSafeNormal();
+		Hit.Bone = Contact ? Contact->BoneName : NAME_None;
+		return Hit;
+	}
+
+	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 		const FGameplayTag Event = GetReactionEvent(SpecTags);
-		if (Event.IsValid() && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
-			!TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+		// 처형은 두 캐릭터의 모션을 프레임 단위로 맞물리므로 흔들지도 않습니다.
+		if ((!Event.IsValid() && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch)) ||
+			TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+		{
+			return;
+		}
+		if (Event.IsValid() && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 		{
 			SendEvent(Target, Event, Instigator);
 		}
-		else if ((Event.IsValid() || SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch)) &&
-				 !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
-		{
-			Target->PlayFlinch();
-		}
+		Target->GetHitPhysics()->Play(MakePhysicsHit(*Instigator, *Target, Context));
 	}
 
-	void StartGuardReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags)
+	void StartGuardReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
-		if (GetReactionEvent(SpecTags).IsValid())
+		const bool bPushback = GetReactionEvent(SpecTags).IsValid();
+		if (!bPushback && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
+		{
+			return;
+		}
+		if (bPushback)
 		{
 			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Instigator);
 		}
-		else if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
+		else
 		{
-			Target->PlayGuardFlinch();
+			Target->PlayAnimMontage(Target->GetCharacterData()->FindMontage(GuardFlinchMontageId));
 		}
+		Target->GetHitPhysics()->PlayGuard(MakePhysicsHit(*Instigator, *Target, Context));
 	}
 
 	void ApplyToSelf(UAbilitySystemComponent& ASC, const UGameplayEffect* Effect)
@@ -198,11 +220,9 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, bGuardBreak, TargetStats->GetHP(), TargetStats->GetPP(),
 		TargetStats->GetSP());
 
-	// 사망·그로기 판정(어트리뷰트 세트)이 피격 반응보다 먼저이므로, 이번 타격으로 죽었거나 그로기가 됐으면
-	// 반응하지 않습니다.
-	const bool bBecameGroggy = !GESpec.CapturedTargetTags.GetActorTags().HasTag(AgGameplayTags::State_Groggy) &&
-	                           TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
-	if (!Target->IsDead() && !bBecameGroggy)
+	// 사망·그로기 판정(어트리뷰트 세트)이 피격 반응보다 먼저입니다. 이번 타격으로 죽었으면 반응하지 않고, 그로기가
+	// 됐으면 그로기 태그가 이미 붙어 흔들기만 합니다.
+	if (!Target->IsDead())
 	{
 		if (bParry)
 		{
@@ -211,7 +231,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		}
 		else if (bGuard)
 		{
-			StartGuardReaction(Causer, Target, SpecTags);
+			StartGuardReaction(Causer, Target, SpecTags, Context);
 		}
 		else if (bGuardBreak)
 		{
@@ -219,7 +239,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		}
 		else
 		{
-			StartHitReaction(Causer, Target, SpecTags);
+			StartHitReaction(Causer, Target, SpecTags, Context);
 		}
 	}
 

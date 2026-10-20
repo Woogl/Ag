@@ -186,7 +186,7 @@ Task가 시작하고 끝나는 때는 둔 곳이 정하고, 도는 동안의 시
 | Task | 둘 수 있는 곳 | Params | 하는 일 |
 | - | - | - | - |
 | PlayMontage | 발동 | Montage. 선택: Section, RequiredTags, BlockedTags | 몽타주를 재생하고 그 시간표를 판정합니다(위 '몽타주 재생'). |
-| WeaponHit | 구간 | Damage(HPMultiplier, PPMultiplier, HitReaction, bGuardable, MPCharge, UPCharge, bFinisher). 선택: ComponentTag(기본 `WeaponCollision`) | 무기로 치는 1타입니다. 주인에게서 ComponentTag가 붙은 캡슐을 모두 찾아, 켜진 동안 매 프레임 각 캡슐의 날을 스윕하고([대미지와 피격 처리](<대미지와 피격 처리.md>) '공격 판정') 닿은 적을 대상마다 한 번 칩니다. 캡슐이 여럿이어도 1타라 같은 대상은 한 번만 맞습니다. 그 태그의 캡슐이 없으면 오류를 남기고 끝납니다. 피격 위치는 무기가 닿은 곳입니다. bFinisher면 마지막 일격(`Effect.Damage.Finisher`)입니다. |
+| WeaponHit | 구간 | Damage(HPMultiplier, PPMultiplier, HitReaction, bGuardable, MPCharge, UPCharge, bFinisher). 선택: ComponentTag(기본 `WeaponCollision`) | 무기로 치는 1타입니다. 주인에게서 ComponentTag가 붙은 캡슐을 모두 찾아, 켜진 동안 매 프레임 각 캡슐의 날을 스윕하고([대미지와 피격 처리](<대미지와 피격 처리.md>) '공격 판정') 닿은 적을 대상마다 한 번 칩니다. 캡슐이 여럿이어도 1타라 같은 대상은 한 번만 맞습니다. 그 태그의 캡슐이 없으면 오류를 남기고 끝납니다. 피격 위치는 무기가 닿은 곳이고, 스윕 결과는 HitResult로 넘깁니다(피격 흔들림이 미는 방향, [대미지와 피격 처리](<대미지와 피격 처리.md>) '피격 결과'). bFinisher면 마지막 일격(`Effect.Damage.Finisher`)입니다. |
 | AreaHit | 지점 | Damage(WeaponHit과 같음), Area(Preset, Range. 선택: TargetRequiredTags, TargetBlockedTags) | 범위로 치는 1타입니다. 시작할 때 Area로 Targeting System 프리셋을 실행해(위 '대상') 나온 대상을 모두 한 번 치고 끝납니다. 피격 위치는 대상의 캡슐 중심입니다. 공중의 대상을 빼려면 TargetBlockedTags에 `State.Airborne`을 적습니다(LeapSlam). |
 | ApplyEffect | 발동, 구간, 지점 | Effect. 선택: bRemoveOnEnd(기본 true) | `Effects.json`의 효과를 주인에게 걸고, Task가 끝날 때(구간이면 구간 끝, 지점이면 재생 끝, 발동이면 행동 끝) 지웁니다. bRemoveOnEnd가 false면 지우지 않고 효과의 지속 시간(월드 시간)을 따릅니다. 효과는 걸 때마다 따로 지워지므로 같은 태그를 주는 구간이 겹쳐도 됩니다. |
 | RootMotion | 발동, 구간, 지점 | To(Target, MoveInput, Direction). 선택: bWarpTranslation(기본 true), RotationMethod(기본 ConstantRate). Target의 구간만(선택): TargetingRange, MaxDistance. Direction만: Angle(기본 0), Distance | 구간 길이가 0이면 Target·MoveInput 쪽으로 즉시 한 번 회전하고 끝납니다. 몽타주 없이도 동작하며 이동은 하지 않습니다. 즉시 회전의 Target은 행동 대상(없으면 캐릭터의 대체 대상)이고 추적 거리로 제한하지 않습니다. 길이가 있으면 몽타주 루트 모션을 엔진 Motion Warping과 SkewWarp Modifier로 보정하고, 몽타주가 루트 모션을 주지 않으면 캐릭터를 직접 돌리며 다가가지 않습니다([애니메이션과 이동](<애니메이션과 이동.md>) '추적 구간'). Target은 행동 대상 쪽으로 돌고, 구간을 시작할 때 정한 대상 앞 그 행동의 간격(Targeting의 StopDistance) 위치로 MaxDistance 안에서 다가갑니다. bWarpTranslation이 false면 이동은 모션 그대로 두고 회전만 맞춥니다. 대상이 없거나 TargetingRange 밖이면 캐릭터의 대체 대상(플레이어는 락온 대상) 쪽으로 돌기만 하고, 따라 돌다가 대상이 TargetingRange 밖으로 나가면 멈춥니다. MoveInput은 시작 시 이동 입력 방향으로 회전만 하며, 시작 시 입력이 없으면 돌지 않습니다. 구간의 회전은 ConstantRate면 재생 배율과 관계없이 초당 캐릭터 회전 속도로 돌고, Slerp면 구간 끝까지 다 돕니다. Direction은 시작 시 전방에서 Angle(도, 오른쪽이 양수)만큼 돌린 수평 방향으로 Distance(cm) 떨어진 고정 위치에 이동만 맞춥니다. 몸 방향은 유지하며, Angle 0은 전방, 180은 후방입니다. |
@@ -264,7 +264,7 @@ OwnedTagPresent는 태그가 붙는 순간에만 발동을 시도하고, 막혀�
 | 보스 AI | 락온 행동을 발동하고 그 대상을 AI 대상으로 씁니다([보스](<보스.md>) 'AI 대상'). 평타 시작 알림(`Event.BasicAttackStarted`, 평타·점프 공격 시간표의 SendGameplayEvent 지점)을 받습니다. |
 | HUD | 그로기 중 PP 바([카메라, HUD, 화면 UI, 게임 플로우](<카메라, HUD, 화면 UI, 게임 플로우.md>)) |
 
-캐릭터가 직접 재생하는 몽타주(점프, 사망, 움찔)에는 시간표를 판정할 재생 Task가 없으므로 시간표를 두지 않습니다.
+캐릭터가 직접 재생하는 몽타주(점프, 사망)에는 시간표를 판정할 재생 Task가 없으므로 시간표를 두지 않습니다.
 
 ### 입력 계층의 행동 찾기
 

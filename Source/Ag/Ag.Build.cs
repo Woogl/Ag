@@ -31,7 +31,7 @@ public class Ag : ModuleRules
 			"GameplayStateTreeModule"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "EngineCameras", "Json", "JsonUtilities", "LevelSequence", "MovieScene" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "EngineCameras", "Json", "JsonUtilities", "LevelSequence", "MovieScene", "PhysicsCore" });
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] { "AssetRegistry", "TargetPlatform" });

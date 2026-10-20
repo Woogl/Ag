@@ -11,6 +11,7 @@
 
 class AAgCharacterBase;
 class UCapsuleComponent;
+struct FHitResult;
 
 USTRUCT()
 struct FAgWeaponHitParams : public FAgTaskParams
@@ -51,6 +52,7 @@ private:
 	struct FAgWeaponEdge
 	{
 		TWeakObjectPtr<UCapsuleComponent> Capsule;
+		FName HandBone;
 		FVector LastStart = FVector::ZeroVector;
 		FVector LastEnd = FVector::ZeroVector;
 	};
@@ -59,7 +61,7 @@ private:
 
 	void SweepEdges();
 	bool Sweep(FAgWeaponEdge& Edge);
-	bool Hit(AAgCharacterBase& Target, const FVector& Location);
+	bool Hit(AAgCharacterBase& Target, const FVector& Location, const FHitResult& Contact);
 
 	FAgWeaponHitParams Params;
 	TArray<FAgWeaponEdge> Edges;

@@ -11,6 +11,7 @@
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgCharacterMovementComponent.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
@@ -33,10 +34,6 @@ namespace
 	constexpr float HitstopTimeDilation = 1.e-4f;
 
 	constexpr float DeathPushSpeed = 300.f;
-
-	const FName FlinchMontageId(TEXT("Flinch"));
-	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
-
 }
 
 const FName AAgCharacterBase::WeaponTag(TEXT("Weapon"));
@@ -51,12 +48,16 @@ AAgCharacterBase::AAgCharacterBase(const FObjectInitializer& ObjectInitializer)
 	AbilitySystemComponent = CreateDefaultSubobject<UAgAbilitySystemComponent>(TEXT("AbilitySystem"));
 	AttributeSet = CreateDefaultSubobject<UAgAttributeSet>(TEXT("AttributeSet"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
+	HitPhysics = CreateDefaultSubobject<UAgHitPhysicsComponent>(TEXT("HitPhysics"));
 	CharacterDataClass = UAgCharacterData::StaticClass();
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
 	GetMesh()->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
+
+	// 엔진은 메시 충돌에 물리가 켜져 있을 때만 피격 흔들림의 물리 자세를 섞습니다.
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	// 공격은 메시의 피직스 바디에 맞고 무기는 손을 따라가므로, 화면 밖에서도 포즈를 갱신합니다.
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
@@ -109,26 +110,6 @@ bool AAgCharacterBase::IsFacingFixed() const
 {
 	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
 	return (Animating && Animating->IsActive()) || AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
-}
-
-void AAgCharacterBase::PlayFlinch()
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	UAnimMontage* Montage = CharacterData->FindMontage(FlinchMontageId);
-	if (AnimInstance && Montage)
-	{
-		AnimInstance->Montage_Play(Montage);
-	}
-}
-
-void AAgCharacterBase::PlayGuardFlinch()
-{
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	UAnimMontage* Montage = CharacterData->FindMontage(GuardFlinchMontageId);
-	if (AnimInstance && Montage)
-	{
-		AnimInstance->Montage_Play(Montage);
-	}
 }
 
 void AAgCharacterBase::Kill()
@@ -314,6 +295,8 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
 void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 {
 	GetCharacterMovement()->DisableMovement();
+	// 피격 흔들림이 바디의 물리 비율을 다시 쓰면 래그돌이 켠 물리 블렌드가 꺼지므로, 래그돌 전에 멈춥니다.
+	HitPhysics->Stop();
 
 	USkeletalMeshComponent* MeshComponent = GetMesh();
 	MeshComponent->SetCollisionProfileName(RagdollProfileName);

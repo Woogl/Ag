@@ -40,6 +40,18 @@ namespace
 		const float Radius = FMath::Lerp(RadiusA, RadiusB, Alpha);
 		return FVector(Center.X + Radius * FMath::Cos(Angle), Center.Y + Radius * FMath::Sin(Angle), FMath::Lerp(A.Z, B.Z, Alpha));
 	}
+
+	FName FindAttachBone(const USceneComponent& Component, const USkeletalMeshComponent& Mesh)
+	{
+		for (const USceneComponent* Child = &Component; Child; Child = Child->GetAttachParent())
+		{
+			if (Child->GetAttachParent() == &Mesh)
+			{
+				return Mesh.GetSocketBoneName(Child->GetAttachSocketName());
+			}
+		}
+		return NAME_None;
+	}
 }
 
 UAbilityTask* FAgWeaponHitParams::MakeTask(const FAgTaskContext& Context) const
@@ -79,6 +91,7 @@ void UAgAbilityTask_WeaponHit::Activate()
 		if (Capsule->ComponentHasTag(Params.ComponentTag) && GetEdge(Capsule, Edge.LastStart, Edge.LastEnd))
 		{
 			Edge.Capsule = Capsule;
+			Edge.HandBone = FindAttachBone(*Capsule, *Character->GetMesh());
 			Edges.Add(Edge);
 		}
 	}
@@ -170,6 +183,8 @@ bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge)
 	const FVector Center = Character->GetActorLocation();
 
 	TArray<FHitResult> Touches;
+	FVector LastFrom = Edge.LastStart;
+	FVector LastTo = Edge.LastEnd;
 	for (int32 Step = 1; Step <= Steps; ++Step)
 	{
 		const float Alpha = static_cast<float>(Step) / Steps;
@@ -180,18 +195,43 @@ bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge)
 		for (const FHitResult& Touch : Touches)
 		{
 			AAgCharacterBase* Target = Cast<AAgCharacterBase>(Touch.GetActor());
-			if (Target && !Hit(*Target, Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint))
+			if (!Target)
+			{
+				continue;
+			}
+			const FVector Location = Touch.bStartPenetrating ? Touch.Location : Touch.ImpactPoint;
+			// 피격 흔들림이 날이 움직인 방향으로 밀도록, 날의 맞은 지점이 앞 단계부터 지나온 선을
+			// TraceStart·End에 담습니다.
+			const FVector Blade = To - From;
+			const float BladeAlpha = Blade.IsNearlyZero() ? 0.f : FMath::Clamp(((Location - From) | Blade) / Blade.SizeSquared(), 0.f, 1.f);
+			FHitResult Contact = Touch;
+			Contact.TraceStart = FMath::Lerp(LastFrom, LastTo, BladeAlpha);
+			Contact.TraceEnd = FMath::Lerp(From, To, BladeAlpha);
+			// 판정 구간 첫 프레임처럼 날이 아직 움직이지 않았으면, 엔진이 애니메이션으로 움직인 키네마틱 손 바디에
+			// 계산해 둔 속도로 그 지점의 방향을 구합니다. 공격자도 맞아 흔들리는 중이면 손 바디가 물리로 돌아 보이는
+			// 무기와 다르므로 쓰지 않습니다.
+			if (Contact.TraceStart.Equals(Contact.TraceEnd))
+			{
+				const FBodyInstance* Hand = Edge.HandBone.IsNone() ? nullptr : Character->GetMesh()->GetBodyInstance(Edge.HandBone);
+				if (Hand && !Hand->IsInstanceSimulatingPhysics())
+				{
+					Contact.TraceStart = Contact.TraceEnd - Hand->GetUnrealWorldVelocityAtPoint(Contact.TraceEnd) * GetWorld()->GetDeltaSeconds();
+				}
+			}
+			if (!Hit(*Target, Location, Contact))
 			{
 				return false;
 			}
 		}
+		LastFrom = From;
+		LastTo = To;
 	}
 	Edge.LastStart = EdgeStart;
 	Edge.LastEnd = EdgeEnd;
 	return true;
 }
 
-bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Location)
+bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Location, const FHitResult& Contact)
 {
 	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	if (Target.IsDead() || Character->GetTeamAttitudeTowards(Target) != ETeamAttitude::Hostile || TouchedActors.Contains(&Target))
@@ -202,7 +242,9 @@ bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Loca
 	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
 	if (Spec.IsValid())
 	{
+		// 엔진은 Origin이 없으면 HitResult의 TraceStart를 Origin으로 넣으므로, 맞은 위치를 먼저 넣습니다.
 		Spec.Data->GetContext().AddOrigin(Location);
+		Spec.Data->GetContext().AddHitResult(Contact);
 		Params.Damage.AddToSpec(*Spec.Data);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target.GetAbilitySystemComponent());
 	}

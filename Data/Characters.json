@@ -58,7 +58,6 @@
       "JumpAttack": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
       "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
       "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
       "KnockBack": "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack",
       "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp"
     }
@@ -115,7 +114,6 @@
       "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
       "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath",
       "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
       "KnockBack": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
       "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp"
     }

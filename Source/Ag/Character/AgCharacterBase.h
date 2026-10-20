@@ -15,6 +15,7 @@ class UAgAttributeSet;
 class UAgCharacterData;
 struct FAgAbilityData;
 class UMotionWarpingComponent;
+class UAgHitPhysicsComponent;
 class UAnimMontage;
 class AAgCharacterBase;
 struct FGameplayAbilitySpec;
@@ -63,6 +64,11 @@ public:
 		return MotionWarping;
 	}
 
+	UAgHitPhysicsComponent* GetHitPhysics() const
+	{
+		return HitPhysics;
+	}
+
 	USceneComponent* GetWeaponComponent() const
 	{
 		return WeaponComponent;
@@ -80,10 +86,6 @@ public:
 	AAgCharacterBase* GetLockOnTarget() const;
 
 	bool IsFacingFixed() const;
-
-	void PlayFlinch();
-
-	void PlayGuardFlinch();
 
 	void Kill();
 
@@ -173,6 +175,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
+
+	UPROPERTY(VisibleAnywhere, Category = "Animation")
+	TObjectPtr<UAgHitPhysicsComponent> HitPhysics;
 
 	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 
