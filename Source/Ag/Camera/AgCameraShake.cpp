@@ -15,7 +15,7 @@ namespace
 UAgCameraShake::UAgCameraShake(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	bSingleInstance = false;
+	bSingleInstance = true;
 	SetRootShakePattern(CreateDefaultSubobject<UWaveOscillatorCameraShakePattern>(TEXT("WavePattern")));
 }
 

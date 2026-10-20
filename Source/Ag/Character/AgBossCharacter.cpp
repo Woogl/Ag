@@ -31,9 +31,9 @@ AAgBossCharacter::AAgBossCharacter()
 	AIControllerClass = AAgBossAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	// 보스는 걷는 방향이 아니라 AI의 대상을 향해 스스로 돕니다.
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
@@ -86,21 +86,33 @@ void AAgBossCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCoun
 		return;
 	}
 	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
-	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+	// 엔진은 처형 상태 태그를 먼저 붙인 뒤 그로기 행동을 취소합니다.
+	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+	{
+		ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+	}
 	ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_Groggy));
 }
 
 void AAgBossCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 {
 	const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(Data.AbilityThatEnded);
-	if (Data.bWasCancelled || !Ability || IsDead() ||
-		!Ability->GetDefinitionTags().HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition))
+	if (!Ability || IsDead())
+	{
+		return;
+	}
+	const FGameplayTagContainer& DefinitionTags = Ability->GetDefinitionTags();
+	const bool bPhaseTransitionCompleted = !Data.bWasCancelled && DefinitionTags.HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition);
+	if (!DefinitionTags.HasTagExact(AgGameplayTags::Ability_Reaction_Executed) && !bPhaseTransitionCompleted)
 	{
 		return;
 	}
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
-	Phase = 2;
+	if (bPhaseTransitionCompleted)
+	{
+		Phase = 2;
+	}
 }
 
 bool AAgBossCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const

@@ -66,6 +66,7 @@ void AAgBossAIController::OnPossess(APawn* InPawn)
 
 void AAgBossAIController::OnUnPossess()
 {
+	ClearFocus(EAIFocusPriority::Gameplay);
 	StateTreeComponent->StopLogic(TEXT("UnPossess"));
 	if (TargetASC.IsValid())
 	{
@@ -79,9 +80,10 @@ void AAgBossAIController::OnUnPossess()
 
 void AAgBossAIController::Tick(float DeltaSeconds)
 {
+	UpdateTarget();
+
 	Super::Tick(DeltaSeconds);
 
-	UpdateTarget();
 	BindTargetEvents();
 }
 
@@ -93,6 +95,14 @@ void AAgBossAIController::UpdateTarget()
 	if (LockOn && !LockOn->IsActive())
 	{
 		ASC->TryActivateAbility(LockOn->Handle);
+	}
+	if (AAgCharacterBase* Target = GetTarget())
+	{
+		SetFocus(Target);
+	}
+	else
+	{
+		ClearFocus(EAIFocusPriority::Gameplay);
 	}
 }
 

@@ -93,20 +93,14 @@ TConstArrayView<FGameplayTag> AAgPlayerCharacter::GetInputAbilityTags()
 	return Tags;
 }
 
-AActor* AAgPlayerCharacter::GetFallbackFacingTarget() const
-{
-	return GetLockOnTarget();
-}
-
 void AAgPlayerCharacter::UpdateRotationMode()
 {
 	// 락온 카메라는 대상을 보므로, 카메라 정면을 바라보면 대상을 바라봅니다.
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const bool bReacting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction);
 	const bool bSprinting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting);
 	const bool bFaceCamera = (GetLockOnTarget() && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
-	GetCharacterMovement()->bOrientRotationToMovement = !bReacting && !bFaceCamera;
-	GetCharacterMovement()->bUseControllerDesiredRotation = !bReacting && bFaceCamera;
+	GetCharacterMovement()->bOrientRotationToMovement = !bFaceCamera;
+	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
 
 void AAgPlayerCharacter::BeginPlay()
@@ -119,8 +113,6 @@ void AAgPlayerCharacter::BeginPlay()
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
@@ -359,7 +351,7 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 		return;
 	}
 
-	BufferedInput = IsActionInputBlocked(InputTag) ? InputTag : FGameplayTag();
+	BufferedInput = InputTag != AgGameplayTags::Input_Execute && IsActionInputBlocked(InputTag) ? InputTag : FGameplayTag();
 	BufferedInputTime = GetWorld()->GetTimeSeconds();
 
 	// 막힌 동안에도 실행 중인 행동은 입력 이벤트를 받으므로(평타의 다음 타) 키는 지금도 넣습니다.

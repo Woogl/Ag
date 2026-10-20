@@ -36,8 +36,6 @@ public:
 	static const FName JumpStartSection;
 	static const FName JumpLandSection;
 
-	virtual AActor* GetFallbackFacingTarget() const override;
-
 	void UpdateRotationMode();
 
 	const UInputMappingContext* GetInputMapping() const

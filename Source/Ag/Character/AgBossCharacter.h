@@ -36,16 +36,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 
-	virtual AActor* GetFacingTarget() const override
-	{
-		return GetTarget();
-	}
-
 private:
-	/**
-	 * 처형 피격이 State.Groggy를 이어받으므로 PP는 처형 피격이 끝날 때 한 번 채웁니다. 남은 그로기 시간 효과는 다음
-	 * 그로기와 섞이지 않게 지웁니다.
-	 */
+	/** 처형 시작으로 그로기가 끝나면 PP 회복은 처형 피격 종료까지 미룹니다. */
 	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void HandleAbilityEnded(const FAbilityEndedData& Data);

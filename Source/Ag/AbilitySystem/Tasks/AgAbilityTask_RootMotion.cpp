@@ -60,7 +60,7 @@ void UAgAbilityTask_RootMotion::Activate()
 		}
 		AActor* ActionTarget = AgAbility->GetActionTarget();
 		bFacingOnly = !ActionTarget || (bHasDuration && Params.TargetingRange && Character->GetHorizontalDistanceTo(ActionTarget) > *Params.TargetingRange);
-		Target = bFacingOnly ? Character->GetFallbackFacingTarget() : ActionTarget;
+		Target = bFacingOnly ? Character->GetLockOnTarget() : ActionTarget;
 	}
 	else if (Params.To == EAgRootMotionTo::MoveInput)
 	{

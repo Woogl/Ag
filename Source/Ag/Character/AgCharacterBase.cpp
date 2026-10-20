@@ -11,6 +11,7 @@
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Character/AgCharacterMovementComponent.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -40,9 +41,10 @@ namespace
 
 const FName AAgCharacterBase::WeaponTag(TEXT("Weapon"));
 
-AAgCharacterBase::AAgCharacterBase()
+AAgCharacterBase::AAgCharacterBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UAgCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
-	// 이동과 물리 갱신 뒤 자동 회전과 이동 사건을 처리합니다.
+	// 이동과 물리 갱신 뒤 이동 사건을 처리합니다.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickGroup = TG_PostPhysics;
 
@@ -126,53 +128,6 @@ void AAgCharacterBase::PlayGuardFlinch()
 	if (AnimInstance && Montage)
 	{
 		AnimInstance->Montage_Play(Montage);
-	}
-}
-
-void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
-{
-	if (IsDead())
-	{
-		return;
-	}
-
-	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
-	AbilitySystemComponent->CancelAllAbilities();
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && bRagdoll)
-	{
-		AnimInstance->StopAllMontages(0.f);
-	}
-
-	// 사망 모션은 루트 모션으로 계속 움직이므로 이동은 끄지 않고 멈추기만 합니다. 보스 AI는 사망 상태로 넘어가
-	// 이동 입력을 더 주지 않습니다.
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-	{
-		DisableInput(PlayerController);
-	}
-	GetCharacterMovement()->StopMovementImmediately();
-
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-
-	if (bRagdoll)
-	{
-		StartRagdoll(PushVelocity);
-	}
-
-	OnDied.Broadcast(this);
-}
-
-void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
-{
-	GetCharacterMovement()->DisableMovement();
-
-	USkeletalMeshComponent* MeshComponent = GetMesh();
-	MeshComponent->SetCollisionProfileName(RagdollProfileName);
-	MeshComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	MeshComponent->SetSimulatePhysics(true);
-	if (!PushVelocity.IsNearlyZero())
-	{
-		MeshComponent->AddImpulse(PushVelocity, NAME_None, true);
 	}
 }
 
@@ -276,7 +231,6 @@ void AAgCharacterBase::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	UpdateApex();
-	UpdateFacing(DeltaSeconds);
 }
 
 void AAgCharacterBase::PossessedBy(AController* NewController)
@@ -319,6 +273,58 @@ void AAgCharacterBase::FellOutOfWorld(const UDamageType& DamageType)
 	Kill();
 }
 
+void AAgCharacterBase::UpdateMoveSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV() * GetMoveSpeedMultiplier();
+}
+
+void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
+{
+	if (IsDead())
+	{
+		return;
+	}
+
+	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
+	AbilitySystemComponent->CancelAllAbilities();
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && bRagdoll)
+	{
+		AnimInstance->StopAllMontages(0.f);
+	}
+
+	// 사망 모션은 루트 모션으로 계속 움직이므로 이동은 끄지 않고 멈추기만 합니다. 보스 AI는 사망 상태로 넘어가
+	// 이동 입력을 더 주지 않습니다.
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PlayerController);
+	}
+	GetCharacterMovement()->StopMovementImmediately();
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+
+	if (bRagdoll)
+	{
+		StartRagdoll(PushVelocity);
+	}
+
+	OnDied.Broadcast(this);
+}
+
+void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
+{
+	GetCharacterMovement()->DisableMovement();
+
+	USkeletalMeshComponent* MeshComponent = GetMesh();
+	MeshComponent->SetCollisionProfileName(RagdollProfileName);
+	MeshComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	MeshComponent->SetSimulatePhysics(true);
+	if (!PushVelocity.IsNearlyZero())
+	{
+		MeshComponent->AddImpulse(PushVelocity, NAME_None, true);
+	}
+}
+
 void AAgCharacterBase::GrantAbilities()
 {
 	for (FName AbilityId : CharacterData->Abilities)
@@ -359,11 +365,6 @@ void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
 	Payload.Instigator = this;
 	Payload.Target = this;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
-}
-
-void AAgCharacterBase::UpdateMoveSpeed()
-{
-	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV() * GetMoveSpeedMultiplier();
 }
 
 TArray<FString> AAgCharacterBase::GetCharacterDataIds() const
@@ -508,22 +509,6 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	FTransform Clamped = WorldRootMotion;
 	Clamped.SetTranslation(Delta);
 	return Clamped;
-}
-
-void AAgCharacterBase::UpdateFacing(float DeltaSeconds)
-{
-	const AActor* Target = GetFacingTarget();
-	if (IsDead() || !Target || IsFacingFixed())
-	{
-		return;
-	}
-
-	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-	if (!ToTarget.IsNearlyZero())
-	{
-		const FRotator Goal(0.f, ToTarget.Rotation().Yaw, 0.f);
-		SetActorRotation(FMath::RInterpConstantTo(GetActorRotation(), Goal, DeltaSeconds, GetCharacterMovement()->RotationRate.Yaw));
-	}
 }
 
 void AAgCharacterBase::UpdateApex()

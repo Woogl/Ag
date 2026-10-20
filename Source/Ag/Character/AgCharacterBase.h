@@ -30,7 +30,7 @@ class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, publ
 	GENERATED_BODY()
 
 public:
-	AAgCharacterBase();
+	AAgCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	static const FName WeaponTag;
 
@@ -72,11 +72,6 @@ public:
 
 	bool CanLosePP() const;
 
-	virtual AActor* GetFallbackFacingTarget() const
-	{
-		return nullptr;
-	}
-
 	virtual FVector GetMoveInputDirection() const
 	{
 		return FVector::ZeroVector;
@@ -89,10 +84,6 @@ public:
 	void PlayFlinch();
 
 	void PlayGuardFlinch();
-
-	virtual void Die(const FVector& PushVelocity, bool bRagdoll = true);
-
-	void StartRagdoll(const FVector& PushVelocity);
 
 	void Kill();
 
@@ -119,20 +110,9 @@ protected:
 
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
-	virtual void GrantAbilities();
-
-	void ApplyEffects();
-
-	void SendEventToSelf(const FGameplayTag& EventTag);
-
 	virtual float GetMoveSpeedMultiplier() const
 	{
 		return 1.f;
-	}
-
-	virtual AActor* GetFacingTarget() const
-	{
-		return nullptr;
 	}
 
 	void UpdateMoveSpeed();
@@ -148,6 +128,16 @@ protected:
 	bool bEndingPlay = false;
 
 private:
+	void Die(const FVector& PushVelocity, bool bRagdoll = true);
+
+	void StartRagdoll(const FVector& PushVelocity);
+
+	void GrantAbilities();
+
+	void ApplyEffects();
+
+	void SendEventToSelf(const FGameplayTag& EventTag);
+
 	UFUNCTION()
 	TArray<FString> GetCharacterDataIds() const;
 
@@ -169,8 +159,6 @@ private:
 	float TimeCompensation = 1.f;
 
 	FTransform ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds);
-
-	void UpdateFacing(float DeltaSeconds);
 
 	void UpdateApex();
 
