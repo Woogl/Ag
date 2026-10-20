@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectComponent.h"
-#include "AgHitResultGameplayEffectComponent.generated.h"
+#include "AgDamageResultGameplayEffectComponent.generated.h"
 
-UCLASS(DisplayName = "Ag Hit Result")
-class UAgHitResultGameplayEffectComponent : public UGameplayEffectComponent
+UCLASS(DisplayName = "Ag Damage Result")
+class UAgDamageResultGameplayEffectComponent : public UGameplayEffectComponent
 {
 	GENERATED_BODY()
 

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
-#include "ActiveGameplayEffectHandle.h"
 #include "Engine/EngineTypes.h"
 #include "GameFramework/Character.h"
 #include "GameplayAbilitySpecHandle.h"
@@ -14,7 +13,6 @@
 class UAbilitySystemComponent;
 class UAgAttributeSet;
 class UAgCharacterData;
-enum class EAgEffect : uint8;
 struct FAgAbilityData;
 class UMotionWarpingComponent;
 class UAnimMontage;
@@ -35,7 +33,6 @@ public:
 	AAgCharacterBase();
 
 	static const FName WeaponTag;
-	static const FName WeaponCollisionTag;
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
@@ -66,7 +63,6 @@ public:
 		return MotionWarping;
 	}
 
-	UFUNCTION(BlueprintPure, Category = "Weapon")
 	USceneComponent* GetWeaponComponent() const
 	{
 		return WeaponComponent;
@@ -86,6 +82,8 @@ public:
 		return FVector::ZeroVector;
 	}
 
+	AAgCharacterBase* GetLockOnTarget() const;
+
 	bool IsFacingFixed() const;
 
 	void PlayFlinch();
@@ -99,6 +97,8 @@ public:
 	void Kill();
 
 	void SetTimeCompensation(float Compensation);
+
+	void NotifyLanded();
 
 	FAgCharacterDiedSignature OnDied;
 
@@ -115,6 +115,7 @@ protected:
 	virtual void Landed(const FHitResult& Hit) override;
 
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
+	virtual void MoveBlockedBy(const FHitResult& Impact) override;
 
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
@@ -136,8 +137,6 @@ protected:
 
 	void UpdateMoveSpeed();
 
-	void RestartRegenDelay(FActiveGameplayEffectHandle& Handle, EAgEffect DelayEffect);
-
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))
 	FName CharacterDataId;
 
@@ -155,8 +154,6 @@ private:
 	void InitializeAttributes();
 
 	void HandleMOVChanged(const FOnAttributeChangeData& Data);
-
-	void HandlePPChanged(const FOnAttributeChangeData& Data);
 
 	void HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount);
 
@@ -188,8 +185,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
-
-	FActiveGameplayEffectHandle PPRegenDelay;
 
 	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 

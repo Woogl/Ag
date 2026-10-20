@@ -21,7 +21,6 @@ public:
 	AAgProjectile();
 
 	void Launch(const FGameplayEffectSpecHandle& InDamageSpec, const FVector& Direction, const FAgProjectileParams& InParams);
-	float GetCollisionHalfHeight() const;
 
 protected:
 	virtual void Tick(float DeltaSeconds) override;

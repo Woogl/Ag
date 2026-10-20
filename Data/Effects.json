@@ -1,224 +1,96 @@
 {
-  "Damage": {
-    "DurationPolicy": "Instant",
-    "AssetTags": [
-      "Effect.Damage"
-    ],
-    "Executions": [
-      "/Script/Ag.AgDamageExecution"
-    ],
-    "ApplicationIgnoredTags": [
-      "State.Dead"
-    ],
-    "Components": [
-      "/Script/Ag.AgHitResultGameplayEffectComponent"
-    ]
-  },
-  "Resource": {
-    "DurationPolicy": "Instant",
+  "SPRegen": {
+    "DurationPolicy": "Infinite",
     "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:SP",
-        "Op": "Add",
-        "SetByCaller": "SetByCaller.SP"
-      },
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:MP",
-        "Op": "Add",
-        "SetByCaller": "SetByCaller.MP"
-      },
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:UP",
-        "Op": "Add",
-        "SetByCaller": "SetByCaller.UP"
-      }
-    ]
-  },
-  "Cooldown": {
-    "DurationPolicy": "HasDuration",
-    "AssetTags": [
-      "Effect.Cooldown"
-    ]
-  },
-  "Hitstop": {
-    "DurationPolicy": "HasDuration",
-    "Duration": 0.12,
-    "GrantedTags": [
-      "State.Hitstop"
-    ]
+      {"Attribute": "SP", "PerSecond": 40, "IgnoredTags": ["State.Guarding"]},
+      {"Attribute": "SP", "PerSecond": 20, "RequiredTags": ["State.Guarding"]}
+    ],
+    "OngoingIgnoredTags": ["State.Regen.SPDelay"],
+    "RegenDelay": {"Effect": "SPRegenDelay", "EffectAtZero": "SPRegenDelayAtZero"}
   },
   "SPRegenDelay": {
     "DurationPolicy": "HasDuration",
     "Duration": 1,
-    "GrantedTags": [
-      "State.Regen.SPDelay"
-    ]
+    "GrantedTags": ["State.Regen.SPDelay"]
   },
-  "SPRegenDelayEmpty": {
+  "SPRegenDelayAtZero": {
     "DurationPolicy": "HasDuration",
     "Duration": 1.5,
-    "GrantedTags": [
-      "State.Regen.SPDelay"
-    ]
+    "GrantedTags": ["State.Regen.SPDelay"]
+  },
+  "PPRegen": {
+    "DurationPolicy": "Infinite",
+    "Modifiers": [
+      {"Attribute": "PP", "PerSecond": 50}
+    ],
+    "OngoingIgnoredTags": ["State.Regen.PPDelay"],
+    "RegenDelay": {"Effect": "PPRegenDelay"}
   },
   "PPRegenDelay": {
     "DurationPolicy": "HasDuration",
     "Duration": 6,
-    "GrantedTags": [
-      "State.Regen.PPDelay"
-    ]
-  },
-  "Kill": {
-    "DurationPolicy": "Instant",
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:HP",
-        "Op": "Override",
-        "Value": 0
-      }
-    ]
-  },
-  "PPRefill": {
-    "DurationPolicy": "Instant",
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:PP",
-        "Op": "Override",
-        "FromAttribute": "/Script/Ag.AgAttributeSet:MaxPP"
-      }
-    ]
-  },
-  "ParryPPLoss": {
-    "DurationPolicy": "Instant",
-    "Executions": [
-      "/Script/Ag.AgParryPPLossExecution"
-    ]
+    "GrantedTags": ["State.Regen.PPDelay"]
   },
   "GroggyImmune": {
     "DurationPolicy": "Infinite",
-    "GrantedTags": [
-      "State.GroggyImmune"
-    ]
+    "GrantedTags": ["State.GroggyImmune"]
   },
-  "SPRegen": {
+  "Busy": {
     "DurationPolicy": "Infinite",
-    "Period": 0.1,
-    "ExecutePeriodicOnApplication": false,
-    "PeriodicInhibitionPolicy": "ResetPeriod",
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:SP",
-        "Op": "Add",
-        "PerSecond": 40
-      }
-    ],
-    "OngoingIgnoredTags": [
-      "State.Regen.SPDelay",
-      "State.Guarding"
-    ]
+    "GrantedTags": ["State.Busy"]
   },
-  "SPRegenGuarding": {
+  "Invincible": {
     "DurationPolicy": "Infinite",
-    "Period": 0.1,
-    "ExecutePeriodicOnApplication": false,
-    "PeriodicInhibitionPolicy": "ResetPeriod",
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:SP",
-        "Op": "Add",
-        "PerSecond": 20
-      }
-    ],
-    "OngoingRequiredTags": [
-      "State.Guarding"
-    ],
-    "OngoingIgnoredTags": [
-      "State.Regen.SPDelay"
-    ]
+    "GrantedTags": ["State.Invincible"]
   },
-  "PPRegen": {
+  "PassThrough": {
     "DurationPolicy": "Infinite",
-    "Period": 0.1,
-    "ExecutePeriodicOnApplication": false,
-    "PeriodicInhibitionPolicy": "ResetPeriod",
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:PP",
-        "Op": "Add",
-        "PerSecond": 50
-      }
-    ],
-    "OngoingIgnoredTags": [
-      "State.Regen.PPDelay"
-    ]
+    "GrantedTags": ["State.PassThrough"]
+  },
+  "TimeStop": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": ["State.TimeStop"]
   },
   "ParryWindow": {
     "DurationPolicy": "HasDuration",
     "Duration": 0.3,
-    "GrantedTags": [
-      "State.ParryWindow"
-    ]
+    "GrantedTags": ["State.ParryWindow"]
   },
   "PerfectDodgeWindow": {
     "DurationPolicy": "Infinite",
-    "GrantedTags": [
-      "State.PerfectDodgeWindow"
+    "GrantedTags": ["State.PerfectDodgeWindow"]
+  },
+  "Groggy": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 5,
+    "GrantedTags": ["State.Groggy"]
+  },
+  "SprintDrain": {
+    "DurationPolicy": "Infinite",
+    "Modifiers": [
+      {"Attribute": "SP", "PerSecond": -12}
+    ]
+  },
+  "ParryReward": {
+    "Modifiers": [
+      {"Attribute": "MP", "Value": 15},
+      {"Attribute": "UP", "Value": 10}
+    ]
+  },
+  "ParryPPLoss": {
+    "Modifiers": [
+      {"Attribute": "PP", "FromAttribute": "MaxPP", "Coefficient": -0.08}
+    ]
+  },
+  "PerfectDodgeReward": {
+    "Modifiers": [
+      {"Attribute": "MP", "Value": 10},
+      {"Attribute": "UP", "Value": 10}
     ]
   },
   "DodgeCounterChance": {
     "DurationPolicy": "HasDuration",
     "Duration": 1,
-    "GrantedTags": [
-      "State.DodgeCounterChance"
-    ]
-  },
-  "GroggyTime": {
-    "DurationPolicy": "HasDuration",
-    "Duration": 5,
-    "GrantedTags": [
-      "State.GroggyTime"
-    ]
-  },
-  "SprintDrain": {
-    "DurationPolicy": "Infinite",
-    "Period": 0.1,
-    "ExecutePeriodicOnApplication": false,
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:SP",
-        "Op": "Add",
-        "PerSecond": -12
-      }
-    ]
-  },
-  "ParryReward": {
-    "DurationPolicy": "Instant",
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:MP",
-        "Op": "Add",
-        "Value": 15
-      },
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:UP",
-        "Op": "Add",
-        "Value": 10
-      }
-    ]
-  },
-  "PerfectDodgeReward": {
-    "DurationPolicy": "Instant",
-    "Modifiers": [
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:MP",
-        "Op": "Add",
-        "Value": 10
-      },
-      {
-        "Attribute": "/Script/Ag.AgAttributeSet:UP",
-        "Op": "Add",
-        "Value": 10
-      }
-    ]
+    "GrantedTags": ["State.DodgeCounterChance"]
   }
 }

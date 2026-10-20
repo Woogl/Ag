@@ -1,6 +1,5 @@
 {
   "Player": {
-    "DisplayName": "",
     "Attributes": {
       "HP": 1000,
       "MaxHP": 1000,
@@ -10,8 +9,6 @@
       "MaxMP": 100,
       "UP": 0,
       "MaxUP": 100,
-      "PP": 0,
-      "MaxPP": 0,
       "ATK": 100,
       "DEF": 50,
       "MOV": 400
@@ -36,22 +33,18 @@
     ],
     "DeathPresentationTime": 3,
     "StopDistance": 100,
-    "DeathMotions": [],
     "InputBufferTime": 0.3,
     "GuardSPCostRatio": 0.25,
     "GuardMoveSpeedRatio": 0.65,
-    "ParryPPRatio": 0.08,
+    "ParryEffects": ["ParryReward"],
+    "ParryAttackerEffects": ["ParryPPLoss"],
     "UltimateSlowMotionSpeed": 0.3,
     "UltimateSlowMotionDuration": 0.8,
     "PerfectDodgeSlowMotionSpeed": 0.3,
     "PerfectDodgeSlowMotionDuration": 0.3,
-    "LockOnReleaseRange": 3000,
+    "PerfectDodgeEffects": ["PerfectDodgeReward", "DodgeCounterChance"],
     "SprintSpeedRatio": 1.5,
-    "Effects": [
-      "SPRegen",
-      "SPRegenGuarding",
-      "GroggyImmune"
-    ],
+    "Effects": ["SPRegen", "GroggyImmune"],
     "Montages": {
       "BasicAttack": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
       "Dodge": "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge",
@@ -75,12 +68,6 @@
     "Attributes": {
       "HP": 3000,
       "MaxHP": 3000,
-      "SP": 0,
-      "MaxSP": 0,
-      "MP": 0,
-      "MaxMP": 0,
-      "UP": 0,
-      "MaxUP": 0,
       "PP": 1500,
       "MaxPP": 1500,
       "ATK": 150,
@@ -100,33 +87,21 @@
       "KnockUp",
       "Groggy",
       "Executed",
-      "PhaseTransition"
+      "PhaseTransition",
+      "EnemyLockOn"
     ],
     "DeathPresentationTime": 4,
     "StopDistance": 150,
     "DeathMotions": [
-      {
-        "Montage": "Executed",
-        "KilledBy": "Ability.Action.Execution",
-        "Death": "ExecutedDeath"
-      }
+      {"Montage": "Executed", "KilledBy": "Ability.Action.Execution", "Death": "ExecutedDeath"}
     ],
     "NearDistance": 300,
     "FarDistance": 1000,
-    "RetryInterval": 0.5,
-    "PatternRecoveryWaitPhase1": {
-      "Min": 1,
-      "Max": 2
-    },
-    "PatternRecoveryWaitPhase2": {
-      "Min": 0.5,
-      "Max": 1.2
-    },
+    "PatternRecoveryWaitPhase1": {"Min": 1, "Max": 2},
+    "PatternRecoveryWaitPhase2": {"Min": 0.5, "Max": 1.2},
     "FixedRecoveryWait": 1,
     "Phase2HPRatio": 0.5,
-    "Effects": [
-      "PPRegen"
-    ],
+    "Effects": ["PPRegen"],
     "Montages": {
       "DoubleStrike": "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike",
       "Sweep": "/Game/Animations/AM_Boss_Sweep.AM_Boss_Sweep",
@@ -143,10 +118,6 @@
       "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
       "KnockBack": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
       "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp"
-    },
-    "LockOnBone": "spine_05",
-    "ExecutionPromptBone": "head",
-    "AIStateTree": "/Game/AI/ST_Boss.ST_Boss",
-    "AITargetingPreset": "Enemy"
+    }
   }
 }

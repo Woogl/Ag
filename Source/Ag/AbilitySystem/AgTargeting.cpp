@@ -4,8 +4,10 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "Character/AgCharacterBase.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
+#include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "GenericTeamAgentInterface.h"
 #include "TargetingSystem/TargetingPreset.h"
@@ -48,29 +50,73 @@ FAgTargetingConditions* FAgTargetingConditions::Find(FTargetingRequestHandle Han
 	return UE::TargetingSystem::GAgTargetingConditionsDataStore.Find(Handle);
 }
 
-AActor* AgTargeting::FindTarget(const FAgAbilityTargeting& Targeting, AActor& Source)
+TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AActor& Source)
 {
+	TArray<AActor*> Targets;
+	if (Request.Range <= 0.f)
+	{
+		return Targets;
+	}
 	UTargetingSubsystem* Subsystem = UTargetingSubsystem::Get(Source.GetWorld());
-	const UTargetingPreset* Preset = UAgAssetManager::Get().FindTargetingPreset(Targeting.Preset);
+	const UTargetingPreset* Preset = UAgAssetManager::Get().FindTargetingPreset(Request.Preset);
 	if (!Preset || !Subsystem)
 	{
-		return nullptr;
+		return Targets;
 	}
 	FTargetingSourceContext Context;
 	Context.SourceActor = &Source;
 	Context.InstigatorActor = &Source;
-	FTargetingRequestHandle Request = UTargetingSubsystem::MakeTargetRequestHandle(Preset, Context);
-	FAgTargetingConditions& Conditions = FAgTargetingConditions::FindOrAdd(Request);
-	Conditions.Range = Targeting.Range.Get(-1.f);
-	Conditions.TagRequirements.RequireTags = Targeting.TargetRequiredTags;
-	Conditions.TagRequirements.IgnoreTags = Targeting.TargetBlockedTags;
+	FTargetingRequestHandle Handle = UTargetingSubsystem::MakeTargetRequestHandle(Preset, Context);
+	FAgTargetingConditions& Conditions = FAgTargetingConditions::FindOrAdd(Handle);
+	Conditions.Range = Request.Range;
+	Conditions.TagRequirements.RequireTags = Request.TargetRequiredTags;
+	Conditions.TagRequirements.IgnoreTags = Request.TargetBlockedTags;
 
 	// 프리셋의 Task는 즉시 실행되므로 결과를 바로 읽고 핸들을 놓습니다.
-	Subsystem->ExecuteTargetingRequestWithHandle(Request);
-	TArray<AActor*> Targets;
-	Subsystem->GetTargetingResultsActors(Request, Targets);
-	UTargetingSubsystem::ReleaseTargetRequestHandle(Request);
+	Subsystem->ExecuteTargetingRequestWithHandle(Handle);
+	Subsystem->GetTargetingResultsActors(Handle, Targets);
+	UTargetingSubsystem::ReleaseTargetRequestHandle(Handle);
+	return Targets;
+}
+
+AActor* AgTargeting::FindTarget(const FAgTargetingRequest& Request, AActor& Source)
+{
+	const TArray<AActor*> Targets = FindTargets(Request, Source);
 	return Targets.IsEmpty() ? nullptr : Targets[0];
+}
+
+UAgTargetingSelectionTask_Range::UAgTargetingSelectionTask_Range(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
+void UAgTargetingSelectionTask_Range::Execute(const FTargetingRequestHandle& TargetingHandle) const
+{
+	Super::Execute(TargetingHandle);
+	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
+
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
+	const FAgTargetingConditions* Conditions = FAgTargetingConditions::Find(TargetingHandle);
+	if (Owner && Owner->GetWorld() && Conditions && Conditions->Range > 0.f)
+	{
+		FTargetingDefaultResultsSet& Results = FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle);
+		// 엔진 AOE의 구체 반경은 높이 차이까지 제한하므로 캐릭터 중심의 수평 거리로 후보를 모읍니다.
+		for (TActorIterator<AAgCharacterBase> It(Owner->GetWorld()); It; ++It)
+		{
+			AAgCharacterBase* Candidate = *It;
+			if (Candidate == Owner || Owner->GetHorizontalDistanceTo(Candidate) > Conditions->Range)
+			{
+				continue;
+			}
+			FTargetingDefaultResultData& Result = Results.TargetResults.AddDefaulted_GetRef();
+			Result.HitResult.HitObjectHandle = FActorInstanceHandle(Candidate);
+			Result.HitResult.Location = Candidate->GetActorLocation();
+			Result.HitResult.Distance = FVector::Distance(Owner->GetActorLocation(), Candidate->GetActorLocation());
+		}
+	}
+
+	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
 }
 
 UAgTargetingFilterTask_Hostile::UAgTargetingFilterTask_Hostile(const FObjectInitializer& ObjectInitializer)
@@ -100,20 +146,6 @@ bool UAgTargetingFilterTask_TagRequirements::ShouldFilterTarget(const FTargeting
 	const FGameplayTagContainer& Tags = ASC->GetOwnedGameplayTags();
 	const FAgTargetingConditions* Conditions = FAgTargetingConditions::Find(TargetingHandle);
 	return !Requirements.RequirementsMet(Tags) || (Conditions && !Conditions->TagRequirements.RequirementsMet(Tags));
-}
-
-UAgTargetingFilterTask_Distance::UAgTargetingFilterTask_Distance(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
-bool UAgTargetingFilterTask_Distance::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
-{
-	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
-	const AActor* Candidate = TargetData.HitResult.GetActor();
-	const FAgTargetingConditions* Conditions = FAgTargetingConditions::Find(TargetingHandle);
-	return !Owner || !Candidate || (Conditions && Conditions->Range >= 0.f && Owner->GetHorizontalDistanceTo(Candidate) > Conditions->Range);
 }
 
 UAgTargetingFilterTask_OnScreen::UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer)

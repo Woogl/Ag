@@ -11,6 +11,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Camera/CameraComponent.h"
+#include "Character/AgBossCharacter.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgCameraData.h"
 #include "Combat/AgTimeSubsystem.h"
@@ -18,7 +19,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
-#include "Data/AgEffectData.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -98,14 +98,6 @@ AActor* AAgPlayerCharacter::GetFallbackFacingTarget() const
 	return GetLockOnTarget();
 }
 
-AAgCharacterBase* AAgPlayerCharacter::GetLockOnTarget() const
-{
-	const UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
-	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn) : nullptr;
-	const UAgGameplayAbility* Instance = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
-	return Instance ? Cast<AAgCharacterBase>(Instance->GetActionTarget()) : nullptr;
-}
-
 void AAgPlayerCharacter::UpdateRotationMode()
 {
 	// 락온 카메라는 대상을 보므로, 카메라 정면을 바라보면 대상을 바라봅니다.
@@ -134,7 +126,6 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
-	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute()).AddUObject(this, &ThisClass::HandleSPChanged);
 	UpdateRotationMode();
 	GetWorld()->GetSubsystem<UAgTimeSubsystem>()->OnTimeStopChanged.AddUObject(this, &ThisClass::UpdateTimeStopScreen);
 }
@@ -645,15 +636,6 @@ void AAgPlayerCharacter::UpdateSprint()
 
 void AAgPlayerCharacter::UpdateLockOn()
 {
-	// 락온의 대상 상실은 트리거 태그의 주인이 판단해야 행동이 끝나므로 여기서 봅니다.
-	if (GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::Input_LockOn))
-	{
-		const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
-		const AAgCharacterBase* Target = GetLockOnTarget();
-		const bool bKeep = Target && !Target->IsDead() && GetHorizontalDistanceTo(Target) <= Data->LockOnReleaseRange;
-		SetTriggerTag(AgGameplayTags::Input_LockOn, AgGameplayTags::Ability_LockOn, bKeep);
-	}
-
 	AAgCharacterBase* Target = GetLockOnTarget();
 	if (Target != LockOnCameraTarget.Get())
 	{
@@ -685,10 +667,8 @@ void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, floa
 	}
 	const UAgCameraData& CameraData = UAgAssetManager::Get().GetCameraData();
 
-	const UAgBossData* TargetData = Cast<UAgBossData>(Target.GetCharacterData());
-	const bool bHasBone =
-		TargetData && !TargetData->LockOnBone.IsNone() && Target.GetMesh()->GetBoneIndex(TargetData->LockOnBone) != INDEX_NONE;
-	const FVector LockOnPoint = bHasBone ? Target.GetMesh()->GetBoneLocation(TargetData->LockOnBone) : Target.GetActorLocation();
+	const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(&Target);
+	const FVector LockOnPoint = Boss ? Boss->GetLockOnLocation() : Target.GetActorLocation();
 
 	const FVector Pivot = CameraBoom->GetComponentLocation();
 	FRotator Goal = (LockOnPoint - Pivot).Rotation();
@@ -711,14 +691,6 @@ void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 Ne
 {
 	UpdateRotationMode();
 	UpdateMoveSpeed();
-}
-
-void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
-{
-	if (Data.NewValue < Data.OldValue)
-	{
-		RestartRegenDelay(SPRegenDelay, Data.NewValue <= 0.f ? EAgEffect::SPRegenDelayEmpty : EAgEffect::SPRegenDelay);
-	}
 }
 
 void AAgPlayerCharacter::UpdateTimeStopScreen(bool bStopped)

@@ -6,42 +6,16 @@
 #include "AgTaskParams.generated.h"
 
 class UAbilityTask;
+class UAgAbilityTask_PlayMontage;
 class UAgGameplayAbility;
-
-enum class EAgTaskPlacement : uint8
-{
-	Activation,
-	Window,
-	Point
-};
-
-USTRUCT()
-struct FAgTransition
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName Section;
-
-	UPROPERTY()
-	float BlendTime = -1.f;
-
-	bool IsSet() const
-	{
-		return !Section.IsNone();
-	}
-};
 
 struct FAgTaskContext
 {
-	UAgGameplayAbility& Runner;
-
-	EAgTaskPlacement Placement = EAgTaskPlacement::Activation;
-
-	int32 MontageInstanceId = INDEX_NONE;
+	UAgGameplayAbility& Ability;
 
 	float Start = 0.f;
 	float End = 0.f;
+	UAgAbilityTask_PlayMontage* Playback = nullptr;
 };
 
 /**

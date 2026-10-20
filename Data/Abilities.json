@@ -1,911 +1,377 @@
 {
   "BasicAttack": {
-    "Tags": [
-      "Ability.Action.BasicAttack"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.BasicAttack"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "BasicAttack"},
-    "End": "Montage",
-    "Tasks": []
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "BasicAttack"}
+    ]
   },
   "Jump": {
-    "Tags": [
-      "Ability.Action.Jump"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.Jump"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Busy"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action"
-      ],
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Busy"],
+      "CancelTags": ["Ability.Action"],
       "Triggers": [
         {"Tag": "State.Jumping", "Source": "OwnedTagPresent"}
-      ],
-      "bAllowRetrigger": false
+      ]
     },
-    "Cost": null,
-    "End": "TriggerTag",
-    "Tasks": []
+    "End": "TriggerTag"
   },
   "JumpAttack": {
-    "Tags": [
-      "Ability.Action.JumpAttack"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.JumpAttack"],
     "Activation": {
-      "RequiredTags": [
-        "State.Jumping"
-      ],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "RequiredTags": ["State.Jumping"],
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "JumpAttack"},
-    "End": "Montage",
-    "Tasks": []
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "JumpAttack"}
+    ]
   },
   "Dodge": {
-    "Tags": [
-      "Ability.Action.Dodge"
-    ],
+    "Tags": ["Ability.Action.Dodge"],
     "Cooldown": 0.4,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
-      "Triggers": [],
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"],
       "bAllowRetrigger": true
     },
-    "Cost": {
-      "Resource": "SP",
-      "Amount": 20
-    },
-    "Montage": {"MontageId": "Dodge"},
-    "End": "Montage",
+    "Cost": {"SP": 20},
     "Tasks": [
-      {"Task": "Face", "To": "MoveInput"},
-      {"Task": "Transition", "RequiredTags": ["Input.Move"], "Next": {"Section": "Roll"}}
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Roll", "RequiredTags": ["Input.Move"]},
+      {"Task": "PlayMontage", "Montage": "Dodge", "BlockedTags": ["Input.Move"]}
     ]
   },
   "DodgeCounter": {
-    "Tags": [
-      "Ability.Action.DodgeCounter"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.DodgeCounter"],
     "Activation": {
-      "RequiredTags": [
-        "State.DodgeCounterChance"
-      ],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "RequiredTags": ["State.DodgeCounterChance"],
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "DodgeCounter"},
-    "End": "Montage",
-    "Tasks": []
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "DodgeCounter"}
+    ]
   },
   "Guard": {
-    "Tags": [
-      "Ability.Action.Guard"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.Guard"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Guarding"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Guarding"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"],
       "Triggers": [
         {"Tag": "Input.Guard", "Source": "OwnedTagPresent"}
-      ],
-      "bAllowRetrigger": false
+      ]
     },
-    "Cost": null,
     "End": "TriggerTag",
     "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "ParryWindow", "bRemoveOnEnd": true}
+      {"Task": "ApplyEffect", "Effect": "ParryWindow"}
     ]
   },
   "Parry": {
-    "Tags": [
-      "Ability.Action.Parry"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.Parry"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [],
+      "BlockedTags": ["State.Dead"],
+      "OwnedTags": ["State.Acting"],
       "Triggers": [
-        {"Tag": "Event.Parry", "Source": "GameplayEvent"}
-      ],
-      "bAllowRetrigger": false
+        {"Tag": "Event.Parry"}
+      ]
     },
-    "Cost": null,
-    "Montage": {"MontageId": "Parry"},
-    "End": "Montage",
     "Tasks": [
-      {"Task": "Face", "To": "Target"}
+      {"Task": "PlayMontage", "Montage": "Parry"}
     ]
   },
   "Skill": {
-    "Tags": [
-      "Ability.Action.Skill"
-    ],
+    "Tags": ["Ability.Action.Skill"],
     "Cooldown": 3,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Cost": {
-      "Resource": "MP",
-      "Amount": 30
-    },
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "Skill"},
-    "End": "Montage",
-    "Tasks": []
+    "Cost": {"MP": 30},
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "Skill"}
+    ]
   },
   "Ultimate": {
-    "Tags": [
-      "Ability.Action.Ultimate"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.Ultimate"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Invincible",
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Invincible", "State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Cost": {
-      "Resource": "UP",
-      "Amount": 100
-    },
-    "Montage": {"MontageId": "Ultimate"},
-    "End": "Montage",
-    "Tasks": []
+    "Cost": {"UP": 100},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "Ultimate"}
+    ]
   },
   "Execution": {
-    "Tags": [
-      "Ability.Action.Execution"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Action.Execution"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Execution",
-        "State.Invincible",
-        "State.Busy",
-        "State.Acting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Execution", "State.Invincible", "State.Busy", "State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy", "Range": 300, "TargetRequiredTags": ["State.Groggy"], "TargetBlockedTags": ["State.Execution", "State.Airborne"], "bRequired": true, "StopDistance": 95},
-    "Montage": {"MontageId": "Execution"},
-    "End": "Montage",
+    "Targeting": {
+      "Preset": "Enemy",
+      "Range": 300,
+      "TargetRequiredTags": ["State.Groggy"],
+      "TargetBlockedTags": ["State.Execution", "State.Airborne"],
+      "bRequired": true,
+      "StopDistance": 95
+    },
     "Tasks": [
+      {"Task": "PlayMontage", "Montage": "Execution"},
       {"Task": "SendGameplayEvent", "Event": "Event.Executed", "Recipient": "Target"}
     ]
   },
   "Sprint": {
-    "Tags": [
-      "Ability.Sprint"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Sprint"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Busy",
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Sprinting"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint"
-      ],
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Sprinting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"],
       "Triggers": [
         {"Tag": "Input.Sprint", "Source": "OwnedTagPresent"}
-      ],
-      "bAllowRetrigger": false
+      ]
     },
-    "Cost": null,
     "End": "TriggerTag",
     "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "SprintDrain", "bRemoveOnEnd": true}
+      {"Task": "ApplyEffect", "Effect": "SprintDrain"}
     ]
   },
   "LockOn": {
-    "Tags": [
-      "Ability.LockOn"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.LockOn"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
       "Triggers": [
         {"Tag": "Input.LockOn", "Source": "OwnedTagPresent"}
-      ],
-      "bAllowRetrigger": false
+      ]
     },
-    "Cost": null,
     "Targeting": {"Preset": "LockOn", "Range": 2000, "bRequired": true},
-    "End": "TriggerTag",
-    "Tasks": []
+    "Tasks": [
+      {"Task": "WaitTargetLost", "ReleaseRange": 3000}
+    ]
+  },
+  "EnemyLockOn": {
+    "Tags": ["Ability.LockOn"],
+    "Activation": {
+      "BlockedTags": ["State.Dead"]
+    },
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
+    "Tasks": [
+      {"Task": "WaitTargetLost"}
+    ]
   },
   "KnockBack": {
-    "Tags": [
-      "Ability.Reaction.HitReaction.KnockBack"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Reaction.HitReaction.KnockBack"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.HitReaction"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint",
-        "Ability.Boss.Pattern",
-        "Ability.Reaction.HitReaction"
-      ],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
-        {"Tag": "Event.Hit.KnockBack", "Source": "GameplayEvent"}
+        {"Tag": "Event.Hit.KnockBack"}
       ],
       "bAllowRetrigger": true
     },
-    "Cost": null,
-    "Montage": {"MontageId": "KnockBack"},
-    "End": "Montage",
     "Tasks": [
-      {"Task": "Face", "To": "Target"}
+      {"Task": "PlayMontage", "Montage": "KnockBack"}
     ]
   },
   "KnockUp": {
-    "Tags": [
-      "Ability.Reaction.HitReaction.KnockUp"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Reaction.HitReaction.KnockUp"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.HitReaction"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint",
-        "Ability.Boss.Pattern",
-        "Ability.Reaction.HitReaction"
-      ],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
-        {"Tag": "Event.Hit.KnockUp", "Source": "GameplayEvent"}
+        {"Tag": "Event.Hit.KnockUp"}
       ],
       "bAllowRetrigger": true
     },
-    "Cost": null,
-    "Montage": {"MontageId": "KnockUp"},
-    "End": "Montage",
     "Tasks": [
-      {"Task": "Face", "To": "Target"},
+      {"Task": "PlayMontage", "Montage": "KnockUp"},
       {"Task": "Launch", "AirTime": 0.6, "Height": 120}
     ]
   },
   "GuardPushback": {
-    "Tags": [
-      "Ability.Reaction.HitReaction.GuardPushback"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Reaction.HitReaction.GuardPushback"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.HitReaction",
-        "State.Guarding"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action.Parry",
-        "Ability.Sprint",
-        "Ability.Boss.Pattern",
-        "Ability.Reaction.HitReaction"
-      ],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.HitReaction", "State.Guarding"],
+      "CancelTags": ["Ability.Action.Parry", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
-        {"Tag": "Event.Guard.Pushback", "Source": "GameplayEvent"}
+        {"Tag": "Event.Guard.Pushback"}
       ],
       "bAllowRetrigger": true
     },
-    "Cost": null,
-    "Montage": {"MontageId": "GuardPushback"},
-    "End": "Montage",
     "Tasks": [
-      {"Task": "Face", "To": "Target"}
+      {"Task": "PlayMontage", "Montage": "GuardPushback"}
     ]
   },
   "GuardBreak": {
-    "Tags": [
-      "Ability.Reaction.HitReaction.GuardBreak"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Reaction.HitReaction.GuardBreak"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.HitReaction"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Action",
-        "Ability.Sprint",
-        "Ability.Boss.Pattern",
-        "Ability.Reaction.HitReaction"
-      ],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
-        {"Tag": "Event.Guard.Break", "Source": "GameplayEvent"}
+        {"Tag": "Event.Guard.Break"}
       ],
       "bAllowRetrigger": true
     },
-    "Cost": null,
-    "Montage": {"MontageId": "GuardBreak"},
-    "End": "Montage",
     "Tasks": [
-      {"Task": "Face", "To": "Target"}
+      {"Task": "PlayMontage", "Montage": "GuardBreak"}
     ]
   },
   "DoubleStrike": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Boss.Pattern"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "DoubleStrike"},
-    "End": "Montage",
-    "Tasks": [],
-    "PatternSelection": {
-      "Phases": [
-        1,
-        2
-      ],
-      "WeightNear": 40,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "ResponseRange": 0,
-      "ResponseChance": 0
-    }
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "DoubleStrike"}
+    ],
+    "PatternSelection": {"Phases": [1, 2], "WeightNear": 40, "WeightMid": 0, "WeightFar": 0}
   },
   "Sweep": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
+    "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 5,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "Sweep"},
-    "End": "Montage",
-    "Tasks": [],
-    "PatternSelection": {
-      "Phases": [
-        1,
-        2
-      ],
-      "WeightNear": 30,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "ResponseRange": 0,
-      "ResponseChance": 0
-    }
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "Sweep"}
+    ],
+    "PatternSelection": {"Phases": [1, 2], "WeightNear": 30, "WeightMid": 0, "WeightFar": 0}
   },
   "DashThrust": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
+    "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 10,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "DashThrust"},
-    "End": "Montage",
-    "Tasks": [],
-    "PatternSelection": {
-      "Phases": [
-        1,
-        2
-      ],
-      "WeightNear": 0,
-      "WeightMid": 40,
-      "WeightFar": 60,
-      "ResponseRange": 0,
-      "ResponseChance": 0
-    }
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "DashThrust"}
+    ],
+    "PatternSelection": {"Phases": [1, 2], "WeightNear": 0, "WeightMid": 40, "WeightFar": 60}
   },
   "LeapSlam": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
+    "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 12,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy", "bRequired": true},
-    "Montage": {"MontageId": "LeapSlam"},
-    "End": "Montage",
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
     "Tasks": [
+      {"Task": "PlayMontage", "Montage": "LeapSlam"},
       {"Task": "Launch", "AirTime": 1.35, "To": "Target", "MaxDistance": 1200}
     ],
-    "PatternSelection": {
-      "Phases": [
-        2
-      ],
-      "WeightNear": 0,
-      "WeightMid": 40,
-      "WeightFar": 40,
-      "ResponseRange": 0,
-      "ResponseChance": 0
-    }
+    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 40, "WeightFar": 40}
   },
   "QuintupleStrike": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
+    "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 8,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "QuintupleStrike"},
-    "End": "Montage",
-    "Tasks": [],
-    "PatternSelection": {
-      "Phases": [
-        2
-      ],
-      "WeightNear": 40,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "ResponseRange": 0,
-      "ResponseChance": 0
-    }
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "QuintupleStrike"}
+    ],
+    "PatternSelection": {"Phases": [2], "WeightNear": 40, "WeightMid": 0, "WeightFar": 0}
   },
   "SwordWave": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
+    "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 10,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "SwordWave"},
-    "End": "Montage",
-    "Tasks": [],
-    "PatternSelection": {
-      "Phases": [
-        2
-      ],
-      "WeightNear": 0,
-      "WeightMid": 20,
-      "WeightFar": 60,
-      "ResponseRange": 0,
-      "ResponseChance": 0
-    }
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "SwordWave"}
+    ],
+    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 20, "WeightFar": 60}
   },
   "JumpSlam": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
+    "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 6,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Targeting": {"Preset": "Enemy"},
-    "Montage": {"MontageId": "JumpSlam"},
-    "End": "Montage",
-    "Tasks": [],
-    "PatternSelection": {
-      "Phases": [
-        1,
-        2
-      ],
-      "WeightNear": 30,
-      "WeightMid": 30,
-      "WeightFar": 0,
-      "ResponseRange": 0,
-      "ResponseChance": 0
-    }
+    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "JumpSlam"}
+    ],
+    "PatternSelection": {"Phases": [1, 2], "WeightNear": 30, "WeightMid": 30, "WeightFar": 0}
   },
   "Backstep": {
-    "Tags": [
-      "Ability.Boss.Pattern"
-    ],
+    "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 4,
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.HitReaction",
-        "State.Groggy",
-        "State.Execution",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [],
-      "BlockTags": [],
-      "CancelTags": [],
-      "Triggers": [],
-      "bAllowRetrigger": false
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Cost": null,
-    "Montage": {"MontageId": "Backstep"},
-    "End": "Montage",
     "Tasks": [
-      {"Task": "ScaleRootMotion", "Distance": 500}
+      {"Task": "PlayMontage", "Montage": "Backstep"}
     ],
-    "PatternSelection": {
-      "Phases": [
-        1,
-        2
-      ],
-      "WeightNear": 0,
-      "WeightMid": 0,
-      "WeightFar": 0,
-      "ResponseRange": 400,
-      "ResponseChance": 0.3
-    }
+    "PatternSelection": {"Phases": [1, 2], "ResponseRange": 400, "ResponseChance": 0.3}
   },
   "Groggy": {
-    "Tags": [
-      "Ability.Reaction.Groggy"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Groggy",
-        "State.GroggyImmune",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [
-        "State.Groggy"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Boss.Pattern",
-        "Ability.Action",
-        "Ability.Sprint",
-        "Ability.Reaction.HitReaction"
-      ],
+      "BlockedTags": ["State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
+      "CancelTags": ["Ability.Boss.Pattern", "Ability.Action", "Ability.Sprint", "Ability.Reaction.HitReaction"],
       "Triggers": [
-        {"Tag": "Event.Groggy", "Source": "GameplayEvent"}
-      ],
-      "bAllowRetrigger": false
+        {"Tag": "Event.Groggy"}
+      ]
     },
-    "Cost": null,
-    "Montage": {"MontageId": "Groggy"},
-    "End": "Montage",
-    "Tasks": []
+    "Tasks": [
+      {"Task": "ApplyEffect", "Effect": "Groggy"},
+      {"Task": "PlayMontage", "Montage": "Groggy"}
+    ]
   },
   "Executed": {
-    "Tags": [
-      "Ability.Reaction.Executed"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Reaction.Executed"],
     "Activation": {
-      "RequiredTags": [
-        "State.Groggy"
-      ],
-      "BlockedTags": [
-        "State.Dead"
-      ],
-      "OwnedTags": [
-        "State.Groggy",
-        "State.Execution",
-        "State.PassThrough"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Reaction.Groggy"
-      ],
+      "RequiredTags": ["State.Groggy"],
+      "BlockedTags": ["State.Dead"],
+      "OwnedTags": ["State.Execution", "State.PassThrough"],
+      "CancelTags": ["Ability.Reaction.Groggy"],
       "Triggers": [
-        {"Tag": "Event.Executed", "Source": "GameplayEvent"}
-      ],
-      "bAllowRetrigger": false
+        {"Tag": "Event.Executed"}
+      ]
     },
-    "Cost": null,
-    "Montage": {"MontageId": "Executed"},
-    "End": "Montage",
     "Tasks": [
-      {"Task": "Face", "To": "Target"}
+      {"Task": "PlayMontage", "Montage": "Executed"}
     ]
   },
   "PhaseTransition": {
-    "Tags": [
-      "Ability.Reaction.PhaseTransition"
-    ],
-    "Cooldown": 0,
+    "Tags": ["Ability.Reaction.PhaseTransition"],
     "Activation": {
-      "RequiredTags": [],
-      "BlockedTags": [
-        "State.Groggy",
-        "State.Dead",
-        "State.NonCombat"
-      ],
-      "OwnedTags": [
-        "State.Invincible"
-      ],
-      "BlockTags": [],
-      "CancelTags": [
-        "Ability.Boss.Pattern"
-      ],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
+      "OwnedTags": ["State.Invincible"],
+      "CancelTags": ["Ability.Boss.Pattern"],
       "Triggers": [
-        {"Tag": "Event.PhaseTransition", "Source": "GameplayEvent"}
-      ],
-      "bAllowRetrigger": false
+        {"Tag": "Event.PhaseTransition"}
+      ]
     },
-    "Cost": null,
-    "Montage": {"MontageId": "PhaseTransition"},
-    "End": "Montage",
-    "Tasks": []
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "PhaseTransition"}
+    ]
   }
 }

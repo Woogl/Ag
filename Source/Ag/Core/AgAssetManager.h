@@ -82,6 +82,9 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAgEffectSet> Effects;
 
+	UPROPERTY(Transient)
+	TMap<EAgEffect, TObjectPtr<UGameplayEffect>> NativeEffects;
+
 	UPROPERTY()
 	TObjectPtr<UAgProjectileSet> Projectiles;
 

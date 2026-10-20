@@ -13,6 +13,7 @@
 class UAnimMontage;
 class UBlueprint;
 class UAnimSequenceBase;
+class UNiagaraSystem;
 class USkeleton;
 class UStateTree;
 class UStateTreeSchema;
@@ -56,7 +57,8 @@ struct FAgMontageSection
 
 /**
  * 엔진 MCP 도구와 에디터 파이썬으로 할 수 없는 에셋 편집: 몽타주 섹션, 몽타주 구간과 몽타주 길이, 스켈레톤 슬롯 그룹,
- * 위젯 애니메이션, 블루프린트 컴포넌트의 Parent Socket, StateTree 에셋의 생성과 상태·태스크·전환 편집과 컴파일. AgEditor 모듈이 MCP 툴셋으로 등록합니다.
+ * 위젯 애니메이션, 블루프린트 컴포넌트의 Parent Socket, 나이아가라 시스템의 사용자 파라미터, StateTree 에셋의 생성과
+ * 상태·태스크·전환 편집과 컴파일. AgEditor 모듈이 MCP 툴셋으로 등록합니다.
  * 고친 에셋은 저장하지 않으므로 에셋 도구로 저장합니다. StateTree는 경로로 상태를 가리키고(이름을 '/'로 이음, 예:
  * Root/전투), 엔진의 StateTree 조회 도구로 읽습니다.
  */
@@ -109,6 +111,17 @@ public:
 	/** 위젯 애니메이션 AnimationName을 위젯 디자이너와 같은 방식으로 지웁니다. 없었으면 false입니다. */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, FName AnimationName);
+
+	/**
+	 * 나이아가라 시스템에 색 사용자 파라미터 User.Name을 더하거나 기본값을 바꿉니다. 이미터는 User.Name에 바인딩해 읽습니다.
+	 * @return 시스템이 없거나 Name이 비었거나, 같은 이름의 다른 타입 파라미터가 있으면 false입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool SetNiagaraUserColor(UNiagaraSystem* System, FName Name, FLinearColor Value);
+
+	/** SetNiagaraUserColor의 실수 파라미터판입니다. */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool SetNiagaraUserFloat(UNiagaraSystem* System, FName Name, float Value);
 
 	/**
 	 * 스키마 클래스로 새 StateTree 에셋을 만듭니다. 'Root' 상태 하나가 들어 있습니다.

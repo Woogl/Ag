@@ -4,12 +4,8 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "Abilities/GameplayAbilityTargetTypes.h"
-
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "Combat/AgProjectile.h"
-#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgEffectData.h"
@@ -20,59 +16,41 @@ UAbilityTask* FAgSpawnProjectileParams::MakeTask(const FAgTaskContext& Context) 
 	const FAgProjectileDefinition* Projectile = UAgAssetManager::Get().GetProjectiles().Find(ProjectileId);
 	if (!Projectile)
 	{
-		UE_LOG(LogAg, Error, TEXT("Abilities.%s: projectile %s missing in Projectiles (play %d)"),
-			*Context.Runner.GetAbilityId().ToString(), *ProjectileId.ToString(), Context.MontageInstanceId);
+		UE_LOG(LogAg, Error, TEXT("Abilities.%s: projectile %s missing in Projectiles"), *Context.Ability.GetAbilityId().ToString(),
+			*ProjectileId.ToString());
 		return nullptr;
 	}
-	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(&Context.Runner, Context.MontageInstanceId, *Projectile, Origin, SocketName);
+	return UAgAbilityTask_SpawnProjectile::SpawnProjectile(&Context.Ability, *Projectile, SocketName);
 }
 
-UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId, const FAgProjectileDefinition& Projectile, EAgProjectileOrigin Origin, FName SocketName)
+UAgAbilityTask_SpawnProjectile* UAgAbilityTask_SpawnProjectile::SpawnProjectile(UGameplayAbility* Owner, const FAgProjectileDefinition& Projectile, FName SocketName)
 {
 	UAgAbilityTask_SpawnProjectile* Task = NewAbilityTask<UAgAbilityTask_SpawnProjectile>(Owner);
-	Task->SourceInstanceId = MontageInstanceId;
 	Task->ProjectileClass = Projectile.ProjectileClass;
 	Task->FlightParams = Projectile.Params;
-	Task->Hit = Projectile.Attack;
-	Task->SpawnOrigin = Origin;
+	Task->Damage = Projectile.Damage;
 	Task->SpawnSocket = SocketName;
 	return Task;
 }
 
 void UAgAbilityTask_SpawnProjectile::Activate()
 {
-	if (!IsSourceActive())
+	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	if (!Character || !ProjectileClass || !Ability || !Ability->IsActive())
 	{
 		EndTask();
 		return;
 	}
-	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
-	if (!ProjectileClass)
+	const USkeletalMeshComponent* Mesh = Character->GetMesh();
+	if (!SpawnSocket.IsNone() && !Mesh->DoesSocketExist(SpawnSocket))
 	{
+		UE_LOG(LogAg, Error, TEXT("SpawnProjectile: %s has no socket %s"), *GetNameSafe(Mesh->GetSkeletalMeshAsset()), *SpawnSocket.ToString());
 		EndTask();
 		return;
 	}
-	const UAnimMontage* Montage = AbilitySystemComponent->GetCurrentMontage();
-	FTransform Transform;
-	if (SpawnOrigin == EAgProjectileOrigin::CharacterFeetForward)
-	{
-		Direction = Character->GetActorForwardVector().GetSafeNormal2D();
-		const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
-		Transform = FTransform(Direction.Rotation(), Character->GetActorLocation() + Direction * Capsule->GetScaledCapsuleRadius() -
-														 FVector(0, 0, Capsule->GetScaledCapsuleHalfHeight()));
-	}
-	else if (SpawnOrigin == EAgProjectileOrigin::MeshSocket && !SpawnSocket.IsNone() && Character->GetMesh()->DoesSocketExist(SpawnSocket))
-	{
-		Transform = Character->GetMesh()->GetSocketTransform(SpawnSocket);
-		Direction = Transform.GetRotation().GetForwardVector();
-	}
-	else
-	{
-		UE_LOG(LogAg, Error, TEXT("%s projectile %s has invalid socket/origin %s"), *GetNameSafe(Montage),
-			*GetNameSafe(ProjectileClass.Get()), *SpawnSocket.ToString());
-		EndTask();
-		return;
-	}
+	Direction = Character->GetActorForwardVector().GetSafeNormal2D();
+	const FVector Location = SpawnSocket.IsNone() ? Character->GetActorLocation() : Mesh->GetSocketLocation(SpawnSocket);
+	const FTransform Transform(Direction.Rotation(), Location);
 	FGameplayAbilityTargetData_LocationInfo* Target = new FGameplayAbilityTargetData_LocationInfo();
 	Target->TargetLocation.LocationType = EGameplayAbilityTargetingLocationType::LiteralTransform;
 	Target->TargetLocation.LiteralTransform = Transform;
@@ -85,7 +63,7 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 		return;
 	}
 	PendingProjectile = Cast<AAgProjectile>(Spawned);
-	if (!IsValid(PendingProjectile) || !IsSourceActive() || IsFinished())
+	if (!IsValid(PendingProjectile) || !Ability->IsActive() || IsFinished())
 	{
 		if (IsValid(Spawned))
 		{
@@ -112,33 +90,16 @@ void UAgAbilityTask_SpawnProjectile::OnDestroy(bool bInOwnerFinished)
 
 void UAgAbilityTask_SpawnProjectile::HandleSpawned(AActor* Actor)
 {
-	if (!IsValid(Actor) || Actor != PendingProjectile || IsFinished() || !IsSourceActive())
+	if (!IsValid(Actor) || Actor != PendingProjectile || IsFinished() || !Ability->IsActive())
 	{
 		return;
-	}
-	if (SpawnOrigin == EAgProjectileOrigin::CharacterFeetForward)
-	{
-		PendingProjectile->AddActorWorldOffset(FVector(0.f, 0.f, PendingProjectile->GetCollisionHalfHeight()));
 	}
 	const FGameplayEffectSpecHandle DamageSpec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
 	if (DamageSpec.IsValid())
 	{
 		DamageSpec.Data->GetContext().AddOrigin(PendingProjectile->GetActorLocation());
-		Hit.AddToSpec(*DamageSpec.Data);
+		Damage.AddToSpec(*DamageSpec.Data);
 	}
 	PendingProjectile->Launch(DamageSpec, Direction, FlightParams);
 	PendingProjectile = nullptr;
-}
-
-bool UAgAbilityTask_SpawnProjectile::IsSourceActive() const
-{
-	if (!Ability || !Ability->IsActive() || !AbilitySystemComponent.IsValid() || AbilitySystemComponent->GetAnimatingAbility() != Ability)
-	{
-		return false;
-	}
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr;
-	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(SourceInstanceId) : nullptr;
-	return Instance && Instance->IsActive() && Anim->GetActiveInstanceForMontage(Instance->Montage) == Instance &&
-	       AbilitySystemComponent->GetCurrentMontage() == Instance->Montage;
 }

@@ -1,6 +1,6 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "AbilitySystem/AgHitResultGameplayEffectComponent.h"
+#include "AbilitySystem/AgDamageResultGameplayEffectComponent.h"
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
@@ -51,7 +51,8 @@ namespace
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 		const FGameplayTag Event = GetReactionEvent(SpecTags);
-		if (Event.IsValid() && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+		if (Event.IsValid() && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
+			!TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 		{
 			SendEvent(Target, Event, Instigator);
 		}
@@ -74,17 +75,23 @@ namespace
 		}
 	}
 
-	void ApplyToSelf(UAbilitySystemComponent& ASC, EAgEffect Effect)
+	void ApplyToSelf(UAbilitySystemComponent& ASC, const UGameplayEffect* Effect)
 	{
-		ASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(Effect), 1.f, ASC.MakeEffectContext());
+		ASC.ApplyGameplayEffectToSelf(Effect, 1.f, ASC.MakeEffectContext());
+	}
+
+	void ApplyHitstop(UAgAbilitySystemComponent& ASC, float Duration)
+	{
+		const FGameplayEffectSpecHandle Spec = ASC.MakeEffectSpec(EAgEffect::Hitstop, 1.f, ASC.MakeEffectContext());
+		Spec.Data->SetDuration(Duration, true);
+		ASC.ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	}
 
 	void StartPerfectDodge(AAgCharacterBase& Dodger)
 	{
 		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Dodger.GetAbilitySystemComponent());
-		const FGameplayEffectQuery Query =
-			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_PerfectDodgeWindow));
-		const TArray<FActiveGameplayEffectHandle> Windows = ASC->GetActiveEffects(Query);
+		const FGameplayTagContainer WindowTag(AgGameplayTags::State_PerfectDodgeWindow);
+		const TArray<FActiveGameplayEffectHandle> Windows = ASC->GetActiveEffects(FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(WindowTag));
 		if (Windows.IsEmpty())
 		{
 			return;
@@ -92,24 +99,23 @@ namespace
 		const FActiveGameplayEffect* Window = ASC->GetActiveGameplayEffect(Windows[0]);
 		const UAgGameplayAbility* Dodge =
 			Window ? Cast<UAgGameplayAbility>(Window->Spec.GetContext().GetAbilityInstance_NotReplicated()) : nullptr;
-		const FAgResourceCostParams Refund = Dodge ? Dodge->GetCost() : FAgResourceCostParams();
-		for (const FActiveGameplayEffectHandle& Handle : Windows)
-		{
-			ASC->RemoveActiveGameplayEffect(Handle);
-		}
-		if (Refund.Amount > 0.f)
+		const FAgResourceCost Refund = Dodge ? Dodge->GetCost() : FAgResourceCost();
+		ASC->RemoveActiveEffectsWithGrantedTags(WindowTag);
+		if (!Refund.IsFree())
 		{
 			const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
 			if (Spec.IsValid())
 			{
-				AgResource::SetAmount(*Spec.Data, Refund.Resource, Refund.Amount);
+				AgResource::SetAmounts(*Spec.Data, Refund.SP, Refund.MP, Refund.UP);
 				ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 			}
 		}
-		ApplyToSelf(*ASC, EAgEffect::PerfectDodgeReward);
-		ApplyToSelf(*ASC, EAgEffect::DodgeCounterChance);
 		if (const UAgPlayerData* Data = Cast<UAgPlayerData>(Dodger.GetCharacterData()))
 		{
+			for (FName Effect : Data->PerfectDodgeEffects)
+			{
+				ApplyToSelf(*ASC, UAgAssetManager::Get().FindEffect(Effect));
+			}
 			Dodger.GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->PerfectDodgeSlowMotionSpeed,
 				Data->PerfectDodgeSlowMotionDuration);
 		}
@@ -118,13 +124,20 @@ namespace
 	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker)
 	{
 		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Defender.GetAbilitySystemComponent());
-		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::ParryPPLoss, 1.f, ASC->MakeEffectContext());
-		if (Spec.IsValid())
+		const UAgPlayerData& Data = *CastChecked<UAgPlayerData>(Defender.GetCharacterData());
+		for (FName Id : Data.ParryAttackerEffects)
 		{
-			ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Attacker.GetAbilitySystemComponent());
+			if (const UGameplayEffect* Effect = UAgAssetManager::Get().FindEffect(Id))
+			{
+				const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(*Effect, 1.f, ASC->MakeEffectContext());
+				ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Attacker.GetAbilitySystemComponent());
+			}
 		}
 		ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
-		ApplyToSelf(*ASC, EAgEffect::ParryReward);
+		for (FName Effect : Data.ParryEffects)
+		{
+			ApplyToSelf(*ASC, UAgAssetManager::Get().FindEffect(Effect));
+		}
 	}
 
 	EAgCameraShake GetHitShake(const UAgCameraData& Camera, const FGameplayTagContainer& SpecTags, bool bPlayerAttacked)
@@ -156,7 +169,7 @@ namespace
 	}
 } // namespace
 
-void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
+void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
 {
 	UAbilitySystemComponent* TargetASC = ActiveGEContainer.Owner;
 	AAgCharacterBase* Target = CastChecked<AAgCharacterBase>(TargetASC->GetAvatarActor());
@@ -215,14 +228,12 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target);
 	}
 
-	const bool bUltimate = SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Ultimate);
 	FGameplayCueParameters CueParameters;
 	CueParameters.Location = Context.GetOrigin();
 	CueParameters.Instigator = Attacker;
 	CueParameters.EffectCauser = Causer;
 	const FGameplayTag ResultCue = bParry                    ? AgGameplayTags::GameplayCue_Parry
 	                               : (bGuard || bGuardBreak) ? AgGameplayTags::GameplayCue_Guard
-	                               : bUltimate               ? AgGameplayTags::GameplayCue_UltimateFinish
 	                                                         : AgGameplayTags::GameplayCue_Hit;
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
 	const EAgCameraShake Shake = GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>());
@@ -244,16 +255,15 @@ void UAgHitResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGamepl
 
 	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 	{
-		const UGameplayEffect* Hitstop = UAgAssetManager::Get().GetEffect(EAgEffect::Hitstop);
-		TargetASC->ApplyGameplayEffectToSelf(Hitstop, 1.f, TargetASC->MakeEffectContext());
+		const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
+		ApplyHitstop(*CastChecked<UAgAbilitySystemComponent>(TargetASC), HitstopDuration);
 		if (Causer == Attacker)
 		{
-			UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
-			AttackerASC->ApplyGameplayEffectToSelf(Hitstop, 1.f, AttackerASC->MakeEffectContext());
+			ApplyHitstop(*CastChecked<UAgAbilitySystemComponent>(Attacker->GetAbilitySystemComponent()), HitstopDuration);
 		}
 	}
 
-	if (bHit && bUltimate)
+	if (bHit && SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Ultimate))
 	{
 		const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Attacker->GetCharacterData());
 		Target->GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->UltimateSlowMotionSpeed,

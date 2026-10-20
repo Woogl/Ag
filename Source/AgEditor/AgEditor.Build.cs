@@ -17,6 +17,8 @@ public class AgEditor : ModuleRules
 			"UMGEditor",
 			"MovieScene",
 			"MovieSceneTracks",
+			"Niagara",
+			"NiagaraCore",
 			"ToolsetRegistry",
 			"DirectoryWatcher",
 			"EditorSubsystem",

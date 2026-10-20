@@ -33,11 +33,6 @@ void AAgProjectile::Launch(const FGameplayEffectSpecHandle& InDamageSpec, const 
 	Traveled = 0.f;
 }
 
-float AAgProjectile::GetCollisionHalfHeight() const
-{
-	return HitBox->GetScaledBoxExtent().Z;
-}
-
 void AAgProjectile::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -49,7 +44,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		return;
 	}
 
-	// 상자 바닥은 지면에 닿아 있으므로, 벽은 상자 가운데 높이의 선으로 찾아 바닥을 벽으로 치지 않습니다.
+	// 벽은 상자 가운데 높이의 선으로 찾아, 상자가 스치는 바닥이나 낮은 턱을 벽으로 치지 않습니다.
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgProjectile), false, this);
 	QueryParams.AddIgnoredActor(ShooterCharacter);
 	const FVector Start = GetActorLocation();

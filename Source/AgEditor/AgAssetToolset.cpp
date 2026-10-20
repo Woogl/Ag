@@ -18,6 +18,9 @@
 #include "Misc/PackageName.h"
 #include "Misc/StringOutputDevice.h"
 #include "MovieScene.h"
+#include "NiagaraSystem.h"
+#include "NiagaraTypes.h"
+#include "NiagaraUserRedirectionParameterStore.h"
 #include "Sections/MovieSceneFloatSection.h"
 #include "StateTree.h"
 #include "StateTreeCompilerLog.h"
@@ -87,6 +90,30 @@ namespace
 	{
 		const UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
 		return NodeStruct && NodeStruct->IsChildOf(Base) && EditorData && EditorData->Schema && EditorData->Schema->IsStructAllowed(NodeStruct);
+	}
+
+	template <typename TValue>
+	bool SetNiagaraUserParameter(UNiagaraSystem* System, FName Name, const FNiagaraTypeDefinition& Type, const TValue& Value)
+	{
+		if (!System || Name.IsNone())
+		{
+			return false;
+		}
+
+		FNiagaraVariable Variable(Type, Name);
+		FNiagaraUserRedirectionParameterStore::MakeUserVariable(Variable);
+		FNiagaraUserRedirectionParameterStore& Parameters = System->GetExposedParameters();
+		const bool bOtherType = Parameters.ReadParameterVariables().ContainsByPredicate([&Variable](const FNiagaraVariableWithOffset& Existing)
+		{
+			return Existing.GetName() == Variable.GetName() && Existing.GetType() != Variable.GetType();
+		});
+		if (bOtherType)
+		{
+			return false;
+		}
+
+		System->Modify();
+		return Parameters.SetParameterValue(Value, Variable, true);
 	}
 } // namespace
 
@@ -271,6 +298,16 @@ bool UAgAssetToolset::RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprint, F
 		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(WidgetBlueprint);
 	}
 	return bRemoved;
+}
+
+bool UAgAssetToolset::SetNiagaraUserColor(UNiagaraSystem* System, FName Name, FLinearColor Value)
+{
+	return SetNiagaraUserParameter(System, Name, FNiagaraTypeDefinition::GetColorDef(), Value);
+}
+
+bool UAgAssetToolset::SetNiagaraUserFloat(UNiagaraSystem* System, FName Name, float Value)
+{
+	return SetNiagaraUserParameter(System, Name, FNiagaraTypeDefinition::GetFloatDef(), Value);
 }
 
 UStateTree* UAgAssetToolset::CreateStateTree(const FString& AssetPath, TSubclassOf<UStateTreeSchema> Schema)

@@ -18,7 +18,6 @@
 #include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
-#include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
 #include "Game/AgBossStageGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -40,7 +39,6 @@ namespace
 }
 
 const FName AAgCharacterBase::WeaponTag(TEXT("Weapon"));
-const FName AAgCharacterBase::WeaponCollisionTag(TEXT("WeaponCollision"));
 
 AAgCharacterBase::AAgCharacterBase()
 {
@@ -92,7 +90,17 @@ bool AAgCharacterBase::IsDead() const
 bool AAgCharacterBase::CanLosePP() const
 {
 	return !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_GroggyImmune) &&
-	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
+	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
+	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Invincible);
+}
+
+AAgCharacterBase* AAgCharacterBase::GetLockOnTarget() const
+{
+	const UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(AbilitySystemComponent);
+	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn) : nullptr;
+	const UAgGameplayAbility* Instance = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
+	return Instance ? Cast<AAgCharacterBase>(Instance->GetActionTarget()) : nullptr;
 }
 
 bool AAgCharacterBase::IsFacingFixed() const
@@ -185,6 +193,17 @@ void AAgCharacterBase::SetTimeCompensation(float Compensation)
 	UpdateTimeDilation();
 }
 
+void AAgCharacterBase::NotifyLanded()
+{
+	// 엔진은 소스를 즉시 지우지 않고 제거 표시만 하므로, 종료된 Launch는 없는 것으로 봅니다.
+	const TSharedPtr<FRootMotionSource> LaunchSource = GetCharacterMovement()->GetRootMotionSource(UAgAbilityTask_Launch::SourceName);
+	const bool bLaunching = LaunchSource.IsValid() && !LaunchSource->Status.HasFlag(ERootMotionSourceStatusFlags::MarkedForRemoval);
+	if (!IsDead() && !bLaunching)
+	{
+		SendEventToSelf(AgGameplayTags::Event_Landed);
+	}
+}
+
 void AAgCharacterBase::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
@@ -214,8 +233,6 @@ void AAgCharacterBase::BeginPlay()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute())
 		.AddUObject(this, &ThisClass::HandleMOVChanged);
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetPPAttribute())
-		.AddUObject(this, &ThisClass::HandlePPChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleHitstopChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PassThrough, EGameplayTagEventType::NewOrRemoved)
@@ -274,15 +291,7 @@ void AAgCharacterBase::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
-	// 띄우는 동안의 착지 가운데 Launch가 착지로 보지 않은 것(체공 시간의 앞부분)은 다시 떠오르므로 알리지 않습니다.
-	// 착지로 본 Launch는 엔진 착지 알림(Super::Landed) 안에서 소스를 지우는데, 엔진은 제거 표시만 하고 다음 이동
-	// 갱신에서 빼므로 표시된 소스는 없는 것으로 봅니다.
-	const TSharedPtr<FRootMotionSource> LaunchSource = GetCharacterMovement()->GetRootMotionSource(UAgAbilityTask_Launch::SourceName);
-	const bool bLaunching = LaunchSource.IsValid() && !LaunchSource->Status.HasFlag(ERootMotionSourceStatusFlags::MarkedForRemoval);
-	if (!IsDead() && !bLaunching)
-	{
-		SendEventToSelf(AgGameplayTags::Event_Landed);
-	}
+	NotifyLanded();
 }
 
 void AAgCharacterBase::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
@@ -292,6 +301,16 @@ void AAgCharacterBase::OnMovementModeChanged(EMovementMode PrevMovementMode, uin
 	if (HasActorBegunPlay())
 	{
 		AbilitySystemComponent->SetLooseGameplayTagCount(AgGameplayTags::State_Airborne, GetCharacterMovement()->IsFalling() ? 1 : 0);
+	}
+}
+
+void AAgCharacterBase::MoveBlockedBy(const FHitResult& Impact)
+{
+	Super::MoveBlockedBy(Impact);
+
+	if (!IsDead())
+	{
+		SendEventToSelf(AgGameplayTags::Event_MoveBlocked);
 	}
 }
 
@@ -347,16 +366,6 @@ void AAgCharacterBase::UpdateMoveSpeed()
 	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV() * GetMoveSpeedMultiplier();
 }
 
-void AAgCharacterBase::RestartRegenDelay(FActiveGameplayEffectHandle& Handle, EAgEffect DelayEffect)
-{
-	if (Handle.IsValid())
-	{
-		AbilitySystemComponent->RemoveActiveGameplayEffect(Handle);
-	}
-	Handle = AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(DelayEffect), 1.f,
-		AbilitySystemComponent->MakeEffectContext());
-}
-
 TArray<FString> AAgCharacterBase::GetCharacterDataIds() const
 {
 	TArray<FString> Options;
@@ -395,14 +404,6 @@ void AAgCharacterBase::InitializeAttributes()
 void AAgCharacterBase::HandleMOVChanged(const FOnAttributeChangeData& Data)
 {
 	UpdateMoveSpeed();
-}
-
-void AAgCharacterBase::HandlePPChanged(const FOnAttributeChangeData& Data)
-{
-	if (Data.NewValue < Data.OldValue)
-	{
-		RestartRegenDelay(PPRegenDelay, EAgEffect::PPRegenDelay);
-	}
 }
 
 void AAgCharacterBase::HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount)
@@ -487,8 +488,8 @@ void AAgCharacterBase::UpdateTimeDilation()
 
 FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds)
 {
-	const UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(AbilitySystemComponent->GetAnimatingAbility());
-	const AActor* Target = Runner ? Runner->GetTargetingTarget() : nullptr;
+	const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(AbilitySystemComponent->GetAnimatingAbility());
+	const AActor* Target = Ability ? Ability->GetTargetingTarget() : nullptr;
 	if (!Target)
 	{
 		return WorldRootMotion;
@@ -497,7 +498,7 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	FVector Delta = WorldRootMotion.GetTranslation();
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	const float Toward = FVector::DotProduct(FVector(Delta.X, Delta.Y, 0.f), ToTarget);
-	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - Runner->GetStopDistance());
+	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - Ability->GetStopDistance());
 	if (Toward <= Allowed)
 	{
 		return WorldRootMotion;

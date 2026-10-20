@@ -7,32 +7,15 @@
 #include "GameplayTagContainer.h"
 #include "AgEffectData.generated.h"
 
-class UAgHitResultGameplayEffectComponent;
-class UGameplayEffectExecutionCalculation;
-
 UENUM()
 enum class EAgEffect : uint8
 {
 	Damage,
 	Resource,
 	Cooldown,
-	Hitstop,
-	SPRegenDelay,
-	SPRegenDelayEmpty,
-	PPRegenDelay,
 	Kill,
+	Hitstop,
 	PPRefill,
-	ParryPPLoss,
-	ParryReward,
-	PerfectDodgeReward,
-	DodgeCounterChance,
-};
-
-UENUM()
-enum class EAgModifierOp : uint8
-{
-	Add,
-	Override
 };
 
 USTRUCT()
@@ -41,10 +24,7 @@ struct FAgEffectModifier
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TFieldPath<FProperty> Attribute;
-
-	UPROPERTY()
-	EAgModifierOp Op = EAgModifierOp::Add;
+	FGameplayAttribute Attribute;
 
 	UPROPERTY()
 	TOptional<float> Value;
@@ -53,10 +33,28 @@ struct FAgEffectModifier
 	TOptional<float> PerSecond;
 
 	UPROPERTY()
-	FGameplayTag SetByCaller;
+	FGameplayAttribute FromAttribute;
 
 	UPROPERTY()
-	TFieldPath<FProperty> FromAttribute;
+	float Coefficient = 1.f;
+
+	UPROPERTY()
+	FGameplayTagContainer RequiredTags;
+
+	UPROPERTY()
+	FGameplayTagContainer IgnoredTags;
+};
+
+USTRUCT()
+struct FAgRegenDelay
+{
+	GENERATED_BODY()
+
+	UPROPERTY(meta = (DataId = "Effects"))
+	FName Effect;
+
+	UPROPERTY(meta = (DataId = "Effects"))
+	FName EffectAtZero;
 };
 
 USTRUCT()
@@ -71,37 +69,16 @@ struct FAgEffectDefinition
 	TOptional<float> Duration;
 
 	UPROPERTY()
-	TOptional<float> Period;
-
-	UPROPERTY()
-	TOptional<bool> ExecutePeriodicOnApplication;
-
-	UPROPERTY()
-	TOptional<EGameplayEffectPeriodInhibitionRemovedPolicy> PeriodicInhibitionPolicy;
-
-	UPROPERTY()
 	TArray<FAgEffectModifier> Modifiers;
-
-	UPROPERTY()
-	TArray<TSubclassOf<UGameplayEffectExecutionCalculation>> Executions;
-
-	UPROPERTY()
-	FGameplayTagContainer AssetTags;
 
 	UPROPERTY()
 	FGameplayTagContainer GrantedTags;
 
 	UPROPERTY()
-	FGameplayTagContainer ApplicationIgnoredTags;
-
-	UPROPERTY()
-	FGameplayTagContainer OngoingRequiredTags;
-
-	UPROPERTY()
 	FGameplayTagContainer OngoingIgnoredTags;
 
 	UPROPERTY()
-	TArray<TSubclassOf<UAgHitResultGameplayEffectComponent>> Components;
+	TOptional<FAgRegenDelay> RegenDelay;
 };
 
 UCLASS()
@@ -119,11 +96,11 @@ public:
 
 namespace AgEffectData
 {
-	FName Id(EAgEffect Effect);
+	UGameplayEffect* MakeNativeEffect(EAgEffect Id, UObject& Outer);
 
 	/**
 	 * 객체 이름에 Version을 붙여 읽을 때마다 새 객체를 만듭니다. 같은 이름으로 다시 만들면 엔진이 기존 객체를
 	 * 그 자리에서 부수고 다시 만들어, 걸려 있는 효과가 망가지기 때문입니다.
 	 */
-	void Build(const TMap<FName, FAgEffectDefinition>& Definitions, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out);
+	UGameplayEffect* MakeEffect(FName Id, const FAgEffectDefinition& Definition, UObject& Outer, int32 Version);
 }

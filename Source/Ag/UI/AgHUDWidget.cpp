@@ -172,7 +172,7 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 
 	FGameplayAbilitySpecHandle SkillHandle;
 	const UAgGameplayAbility* Skill = Cast<UAgGameplayAbility>(FindAbility(*ASC, AgGameplayTags::Ability_Action_Skill, SkillHandle));
-	const int32 SkillCost = Skill ? FMath::RoundToInt(Skill->GetCost().Amount) : 0;
+	const int32 SkillCost = Skill ? FMath::RoundToInt(Skill->GetCost().MP) : 0;
 	if (SkillCost != ShownSkillCost)
 	{
 		ShownSkillCost = SkillCost;
@@ -193,22 +193,16 @@ void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameD
 	SetBarRatio(*BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
 	UpdateTrail(BossHPTrail, *BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
-	// GroggyTime 효과는 착지한 순간부터 셉니다.
-	// 처형이나 히트스톱으로 그로기가 효과보다 길어질 수 있습니다.
 	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
 	const UAbilitySystemComponent* BossASC = BossCharacter.GetAbilitySystemComponent();
 	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
 		const FGameplayEffectQuery Query =
-			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_GroggyTime));
+			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_Groggy));
 		const TArray<TPair<float, float>> Times = BossASC->GetActiveEffectsTimeRemainingAndDuration(Query);
 		if (!Times.IsEmpty() && Times[0].Value > 0.f)
 		{
 			PPBarRatio = FMath::Clamp(1.f - Times[0].Key / Times[0].Value, 0.f, 1.f);
-		}
-		else
-		{
-			PPBarRatio = BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne) ? 0.f : 1.f;
 		}
 	}
 	BossPPBar->SetPercent(PPBarRatio);

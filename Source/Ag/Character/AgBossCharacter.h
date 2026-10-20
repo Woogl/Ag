@@ -8,7 +8,9 @@
 #include "AgBossCharacter.generated.h"
 
 class AAgPlayerCharacter;
+class UStateTree;
 class UWidgetComponent;
+struct FAbilityEndedData;
 
 UCLASS(Abstract)
 class AAgBossCharacter : public AAgCharacterBase
@@ -23,9 +25,12 @@ public:
 		return Phase;
 	}
 
-	void EnterPhase2();
-
 	AAgCharacterBase* GetTarget() const;
+
+	FVector GetLockOnLocation() const;
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TObjectPtr<UStateTree> AIStateTree;
 
 protected:
 	virtual void BeginPlay() override;
@@ -42,6 +47,8 @@ private:
 	 * 그로기와 섞이지 않게 지웁니다.
 	 */
 	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void HandleAbilityEnded(const FAbilityEndedData& Data);
 
 	bool IsExecutionTargetOf(AAgPlayerCharacter& Player) const;
 

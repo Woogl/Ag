@@ -17,42 +17,30 @@ enum class EAgHitReaction : uint8
 	KnockUp UMETA(DisplayName = "넉업"),
 };
 
-USTRUCT(BlueprintType)
-struct FAgAttackHit
+USTRUCT()
+struct FAgDamage
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	float DamageMultiplier = 1.f;
+	UPROPERTY()
+	float HPMultiplier = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	float PoiseMultiplier = 1.f;
+	UPROPERTY()
+	float PPMultiplier = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	EAgHitReaction HitReaction = EAgHitReaction::Flinch;
+	UPROPERTY()
+	EAgHitReaction HitReaction = EAgHitReaction::None;
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
+	UPROPERTY()
 	bool bGuardable = true;
-};
 
-USTRUCT(BlueprintType)
-struct FAgPlayerAttackHit : public FAgAttackHit
-{
-	GENERATED_BODY()
-
-	FAgPlayerAttackHit() = default;
-
-	explicit FAgPlayerAttackHit(const FAgAttackHit& Hit)
-		: FAgAttackHit(Hit)
-	{
-	}
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
+	UPROPERTY()
 	float MPCharge = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attack")
+	UPROPERTY()
 	float UPCharge = 0.f;
 
+	UPROPERTY()
 	bool bFinisher = false;
 
 	void AddToSpec(FGameplayEffectSpec& Spec) const;

@@ -9,6 +9,7 @@
 #include "AgAbilityTask_Transition.generated.h"
 
 class UAbilitySystemComponent;
+class UAgAbilityTask_PlayMontage;
 struct FGameplayEventData;
 
 USTRUCT()
@@ -17,22 +18,25 @@ struct FAgTransitionParams : public FAgTaskParams
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FAgTransition Next;
+	FName Section;
+
+	UPROPERTY()
+	TOptional<float> BlendTime;
+
+	UPROPERTY()
+	FGameplayTag Event;
+
+	UPROPERTY()
+	FGameplayTag Tag;
+
+	UPROPERTY()
+	bool bSectionEndsWithTag = false;
 
 	UPROPERTY()
 	FGameplayTagContainer RequiredTags;
 
 	UPROPERTY()
 	FGameplayTagContainer BlockedTags;
-
-	UPROPERTY()
-	FGameplayTag Event;
-
-	UPROPERTY()
-	FGameplayTag BeforeTagEnds;
-
-	UPROPERTY()
-	bool bOptional = false;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
@@ -43,28 +47,21 @@ class UAgAbilityTask_Transition : public UAbilityTask
 	GENERATED_BODY()
 
 public:
-	static UAgAbilityTask_Transition* Transition(UGameplayAbility* Owner, const FAgTransitionParams& Params, bool bOnce, int32 MontageInstanceId);
+	static UAgAbilityTask_Transition* Transition(UGameplayAbility* Owner, const FAgTransitionParams& Params, UAgAbilityTask_PlayMontage* Playback);
 
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	bool AreConditionsMet() const;
-
-	void WatchTags(UAbilitySystemComponent& ASC, const FGameplayTagContainer& Tags);
+	TOptional<float> FindTagEndingDelay(const UAbilitySystemComponent& ASC) const;
 
 	void TryTransition();
 	void HandleEvent(const FGameplayEventData* Payload);
 	void HandleTagChanged(const FGameplayTag Tag, int32 NewCount);
-	void HandleTagEnding();
 
 	FAgTransitionParams Params;
-	int32 MontageInstanceId = INDEX_NONE;
-
-	bool bOnce = false;
+	TWeakObjectPtr<UAgAbilityTask_PlayMontage> Playback;
 	FDelegateHandle EventHandle;
-	TArray<TPair<FGameplayTag, FDelegateHandle>> TagHandles;
+	FDelegateHandle TagHandle;
 	FTimerHandle EndingTimer;
-
-	bool bTagEnding = false;
 };

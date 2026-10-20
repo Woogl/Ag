@@ -3,7 +3,6 @@
 #include "UI/AgDamageFloater.h"
 
 #include "Components/WidgetComponent.h"
-#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "UI/AgDamageFloaterWidget.h"
 
@@ -19,9 +18,8 @@ AAgDamageFloater::AAgDamageFloater()
 	RootComponent = Widget;
 }
 
-void AAgDamageFloater::Spawn(UObject* WorldContextObject, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount)
+void AAgDamageFloater::Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount)
 {
-	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull);
 	if (!World || !WidgetClass)
 	{
 		return;

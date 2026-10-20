@@ -2,15 +2,44 @@
 
 #include "Data/AgEffectData.h"
 
-#include "AbilitySystem/AgHitResultGameplayEffectComponent.h"
+#include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgDamageExecution.h"
+#include "AbilitySystem/AgDamageResultGameplayEffectComponent.h"
+#include "AbilitySystem/AgRegenDelayGameplayEffectComponent.h"
+#include "Core/AgGameplayTags.h"
 #include "GameplayEffectComponents/AssetTagsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagRequirementsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
-#include "GameplayEffectExecutionCalculation.h"
 
 namespace
 {
-	FGameplayEffectModifierMagnitude MakeMagnitude(const FAgEffectModifier& Modifier, float Period)
+	constexpr float PeriodicEffectInterval = 0.1f;
+
+	FGameplayModifierInfo& AddModifier(UGameplayEffect& Effect, FGameplayAttribute Attribute, EGameplayModOp::Type Op, const FGameplayEffectModifierMagnitude& Magnitude)
+	{
+		FGameplayModifierInfo& Modifier = Effect.Modifiers.AddDefaulted_GetRef();
+		Modifier.Attribute = Attribute;
+		Modifier.ModifierOp = Op;
+		Modifier.ModifierMagnitude = Magnitude;
+		return Modifier;
+	}
+
+	FAttributeBasedFloat MakeTargetAttribute(FGameplayAttribute Attribute, float Coefficient)
+	{
+		FAttributeBasedFloat AttributeBased;
+		AttributeBased.BackingAttribute = FGameplayEffectAttributeCaptureDefinition(Attribute, EGameplayEffectAttributeCaptureSource::Target, false);
+		AttributeBased.Coefficient = FScalableFloat(Coefficient);
+		return AttributeBased;
+	}
+
+	FSetByCallerFloat MakeSetByCaller(FGameplayTag Tag)
+	{
+		FSetByCallerFloat SetByCaller;
+		SetByCaller.DataTag = Tag;
+		return SetByCaller;
+	}
+
+	FGameplayEffectModifierMagnitude MakeMagnitude(const FAgEffectModifier& Modifier)
 	{
 		if (Modifier.Value)
 		{
@@ -19,89 +48,97 @@ namespace
 		if (Modifier.PerSecond)
 		{
 			// 기획서의 초당 값을 그대로 적도록, 주기마다 더할 값으로 바꿉니다.
-			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.PerSecond * Period));
+			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.PerSecond * PeriodicEffectInterval));
 		}
-		if (Modifier.SetByCaller.IsValid())
-		{
-			FSetByCallerFloat SetByCaller;
-			SetByCaller.DataTag = Modifier.SetByCaller;
-			return FGameplayEffectModifierMagnitude(SetByCaller);
-		}
-		FAttributeBasedFloat AttributeBased;
-		AttributeBased.BackingAttribute = FGameplayEffectAttributeCaptureDefinition(FGameplayAttribute(Modifier.FromAttribute.Get()),
-			EGameplayEffectAttributeCaptureSource::Target, false);
-		return FGameplayEffectModifierMagnitude(AttributeBased);
+		return FGameplayEffectModifierMagnitude(MakeTargetAttribute(Modifier.FromAttribute, Modifier.Coefficient));
+	}
+
+	void AddAssetTag(UGameplayEffect& Effect, FGameplayTag Tag)
+	{
+		FInheritedTagContainer Changes;
+		Changes.Added.AddTag(Tag);
+		Effect.AddComponent<UAssetTagsGameplayEffectComponent>().SetAndApplyAssetTagChanges(Changes);
+	}
+
+	void AddGrantedTags(UGameplayEffect& Effect, const FGameplayTagContainer& Tags)
+	{
+		FInheritedTagContainer Changes;
+		Changes.Added = Tags;
+		Effect.AddComponent<UTargetTagsGameplayEffectComponent>().SetAndApplyTargetTagChanges(Changes);
 	}
 } // namespace
 
-FName AgEffectData::Id(EAgEffect Effect)
+UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 {
-	return FName(*StaticEnum<EAgEffect>()->GetNameStringByValue(static_cast<int64>(Effect)));
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer, FName(*StaticEnum<EAgEffect>()->GetNameStringByValue(static_cast<int64>(Id))));
+	switch (Id)
+	{
+		case EAgEffect::Damage:
+			AddAssetTag(*Effect, AgGameplayTags::Effect_Damage);
+			Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>().ApplicationTagRequirements.IgnoreTags.AddTag(AgGameplayTags::State_Dead);
+			Effect->Executions.AddDefaulted_GetRef().CalculationClass = UAgDamageExecution::StaticClass();
+			Effect->AddComponent<UAgDamageResultGameplayEffectComponent>();
+			break;
+		case EAgEffect::Resource:
+			AddModifier(*Effect, UAgAttributeSet::GetSPAttribute(), EGameplayModOp::AddBase, MakeSetByCaller(AgGameplayTags::SetByCaller_SP));
+			AddModifier(*Effect, UAgAttributeSet::GetMPAttribute(), EGameplayModOp::AddBase, MakeSetByCaller(AgGameplayTags::SetByCaller_MP));
+			AddModifier(*Effect, UAgAttributeSet::GetUPAttribute(), EGameplayModOp::AddBase, MakeSetByCaller(AgGameplayTags::SetByCaller_UP));
+			break;
+		case EAgEffect::Cooldown:
+			Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+			AddAssetTag(*Effect, AgGameplayTags::Effect_Cooldown);
+			break;
+		case EAgEffect::Kill:
+			AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::Override, FScalableFloat(0.f));
+			break;
+		case EAgEffect::Hitstop:
+			Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+			AddGrantedTags(*Effect, FGameplayTagContainer(AgGameplayTags::State_Hitstop));
+			break;
+		case EAgEffect::PPRefill:
+			AddModifier(*Effect, UAgAttributeSet::GetPPAttribute(), EGameplayModOp::Override, MakeTargetAttribute(UAgAttributeSet::GetMaxPPAttribute(), 1.f));
+			break;
+	}
+
+	// 에셋은 PostLoad가 부르는 함수로, 컴포넌트의 태그를 GE에 모읍니다.
+	Effect->OnGameplayEffectChanged();
+	return Effect;
 }
 
-void AgEffectData::Build(const TMap<FName, FAgEffectDefinition>& Definitions, UObject& Outer, int32 Version, TMap<FName, TObjectPtr<UGameplayEffect>>& Out)
+UGameplayEffect* AgEffectData::MakeEffect(FName Id, const FAgEffectDefinition& Definition, UObject& Outer, int32 Version)
 {
-	for (const TPair<FName, FAgEffectDefinition>& Pair : Definitions)
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer, FName(*FString::Printf(TEXT("%s_%d"), *Id.ToString(), Version)));
+	Effect->DurationPolicy = Definition.DurationPolicy;
+	if (Definition.Duration)
 	{
-		const FAgEffectDefinition& Definition = Pair.Value;
-		UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer, FName(*FString::Printf(TEXT("%s_%d"), *Pair.Key.ToString(), Version)));
-		Effect->DurationPolicy = Definition.DurationPolicy;
-		if (Definition.Duration)
-		{
-			Effect->DurationMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(*Definition.Duration));
-		}
-		if (Definition.Period)
-		{
-			Effect->Period = FScalableFloat(*Definition.Period);
-		}
-		if (Definition.ExecutePeriodicOnApplication)
-		{
-			Effect->bExecutePeriodicEffectOnApplication = *Definition.ExecutePeriodicOnApplication;
-		}
-		if (Definition.PeriodicInhibitionPolicy)
-		{
-			Effect->PeriodicInhibitionPolicy = *Definition.PeriodicInhibitionPolicy;
-		}
-		for (const FAgEffectModifier& Modifier : Definition.Modifiers)
-		{
-			FGameplayModifierInfo& Info = Effect->Modifiers.AddDefaulted_GetRef();
-			Info.Attribute = FGameplayAttribute(Modifier.Attribute.Get());
-			Info.ModifierOp = Modifier.Op == EAgModifierOp::Override ? EGameplayModOp::Override : EGameplayModOp::AddBase;
-			Info.ModifierMagnitude = MakeMagnitude(Modifier, Effect->Period.Value);
-		}
-		for (const TSubclassOf<UGameplayEffectExecutionCalculation>& Execution : Definition.Executions)
-		{
-			Effect->Executions.AddDefaulted_GetRef().CalculationClass = Execution;
-		}
-		if (!Definition.AssetTags.IsEmpty())
-		{
-			FInheritedTagContainer Changes;
-			Changes.Added = Definition.AssetTags;
-			Effect->AddComponent<UAssetTagsGameplayEffectComponent>().SetAndApplyAssetTagChanges(Changes);
-		}
-		if (!Definition.GrantedTags.IsEmpty())
-		{
-			FInheritedTagContainer Changes;
-			Changes.Added = Definition.GrantedTags;
-			Effect->AddComponent<UTargetTagsGameplayEffectComponent>().SetAndApplyTargetTagChanges(Changes);
-		}
-		if (!Definition.ApplicationIgnoredTags.IsEmpty() || !Definition.OngoingRequiredTags.IsEmpty() ||
-			!Definition.OngoingIgnoredTags.IsEmpty())
-		{
-			UTargetTagRequirementsGameplayEffectComponent& Requirements =
-				Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>();
-			Requirements.ApplicationTagRequirements.IgnoreTags = Definition.ApplicationIgnoredTags;
-			Requirements.OngoingTagRequirements.RequireTags = Definition.OngoingRequiredTags;
-			Requirements.OngoingTagRequirements.IgnoreTags = Definition.OngoingIgnoredTags;
-		}
-		// 엔진은 컴포넌트 목록을 AddComponent<T>로만 열어 두므로, Components는 이 클래스만 받습니다.
-		if (!Definition.Components.IsEmpty())
-		{
-			Effect->AddComponent<UAgHitResultGameplayEffectComponent>();
-		}
-
-		// 에셋은 PostLoad가 부르는 함수로, 컴포넌트의 태그를 GE에 모읍니다.
-		Effect->OnGameplayEffectChanged();
-		Out.Add(Pair.Key, Effect);
+		Effect->DurationMagnitude = FGameplayEffectModifierMagnitude(FScalableFloat(*Definition.Duration));
 	}
+	if (Definition.Modifiers.ContainsByPredicate([](const FAgEffectModifier& Modifier)
+	{ return Modifier.PerSecond.IsSet(); }))
+	{
+		Effect->Period = FScalableFloat(PeriodicEffectInterval);
+		Effect->bExecutePeriodicEffectOnApplication = false;
+		Effect->PeriodicInhibitionPolicy = EGameplayEffectPeriodInhibitionRemovedPolicy::ResetPeriod;
+	}
+	for (const FAgEffectModifier& Modifier : Definition.Modifiers)
+	{
+		FGameplayModifierInfo& Info = AddModifier(*Effect, Modifier.Attribute, EGameplayModOp::AddBase, MakeMagnitude(Modifier));
+		Info.TargetTags.RequireTags = Modifier.RequiredTags;
+		Info.TargetTags.IgnoreTags = Modifier.IgnoredTags;
+	}
+	if (!Definition.GrantedTags.IsEmpty())
+	{
+		AddGrantedTags(*Effect, Definition.GrantedTags);
+	}
+	if (!Definition.OngoingIgnoredTags.IsEmpty())
+	{
+		Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>().OngoingTagRequirements.IgnoreTags = Definition.OngoingIgnoredTags;
+	}
+	if (Definition.RegenDelay)
+	{
+		Effect->AddComponent<UAgRegenDelayGameplayEffectComponent>().Delay = *Definition.RegenDelay;
+	}
+
+	Effect->OnGameplayEffectChanged();
+	return Effect;
 }

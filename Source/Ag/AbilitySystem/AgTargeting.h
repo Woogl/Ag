@@ -5,14 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "Tasks/TargetingFilterTask_BasicFilterTemplate.h"
+#include "Tasks/TargetingTask.h"
 #include "AgTargeting.generated.h"
 
-struct FAgAbilityTargeting;
+struct FAgTargetingRequest;
 struct FTargetingRequestHandle;
 
 struct FAgTargetingConditions
 {
-	float Range = -1.f;
+	float Range = 0.f;
 
 	FGameplayTagRequirements TagRequirements;
 
@@ -22,8 +23,20 @@ struct FAgTargetingConditions
 
 namespace AgTargeting
 {
-	AActor* FindTarget(const FAgAbilityTargeting& Targeting, AActor& Source);
+	TArray<AActor*> FindTargets(const FAgTargetingRequest& Request, AActor& Source);
+	AActor* FindTarget(const FAgTargetingRequest& Request, AActor& Source);
 }
+
+UCLASS(meta = (DisplayName = "Ag Select In Range"))
+class UAgTargetingSelectionTask_Range : public UTargetingTask
+{
+	GENERATED_BODY()
+
+public:
+	UAgTargetingSelectionTask_Range(const FObjectInitializer& ObjectInitializer);
+
+	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
+};
 
 UCLASS(meta = (DisplayName = "Ag Filter Hostile"))
 class UAgTargetingFilterTask_Hostile : public UTargetingFilterTask_BasicFilterTemplate
@@ -50,18 +63,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Target Filter")
 	FGameplayTagRequirements Requirements;
-};
-
-UCLASS(meta = (DisplayName = "Ag Filter Distance"))
-class UAgTargetingFilterTask_Distance : public UTargetingFilterTask_BasicFilterTemplate
-{
-	GENERATED_BODY()
-
-public:
-	UAgTargetingFilterTask_Distance(const FObjectInitializer& ObjectInitializer);
-
-protected:
-	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
 UCLASS(meta = (DisplayName = "Ag Filter On Screen"))

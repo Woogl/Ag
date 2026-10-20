@@ -11,7 +11,6 @@ class AAgCharacterBase;
 class UAbilitySystemComponent;
 class UAgBossData;
 class UStateTreeAIComponent;
-struct FAbilityEndedData;
 struct FGameplayEventData;
 
 UCLASS()
@@ -50,15 +49,10 @@ private:
 
 	void HandleTargetBasicAttack(const FGameplayEventData* Payload);
 
-	void HandleBossAbilityEnded(const FAbilityEndedData& Data);
-
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
 
-	TWeakObjectPtr<AAgCharacterBase> Target;
 	TWeakObjectPtr<UAbilitySystemComponent> TargetASC;
 	FDelegateHandle BasicAttackHandle;
-	TWeakObjectPtr<UAbilitySystemComponent> BossASC;
-	FDelegateHandle AbilityEndedHandle;
 	bool bPhaseTransitionStarted = false;
 };

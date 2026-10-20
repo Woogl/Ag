@@ -9,6 +9,7 @@
 #include "AI/AgBossAIController.h"
 #include "Character/AgBossCharacter.h"
 #include "Data/AgCharacterData.h"
+#include "Kismet/GameplayStatics.h"
 #include "StateTreeExecutionContext.h"
 
 bool FAgBossAICondition_BossDead::TestCondition(FStateTreeExecutionContext& Context) const
@@ -19,9 +20,10 @@ bool FAgBossAICondition_BossDead::TestCondition(FStateTreeExecutionContext& Cont
 
 bool FAgBossAICondition_PlayerDead::TestCondition(FStateTreeExecutionContext& Context) const
 {
+	// 락온 대상은 죽으면 놓으므로 대상이 아니라 플레이어를 봅니다.
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
-	const AAgCharacterBase* Target = Controller->GetTarget();
-	return Target && Target->IsDead();
+	const AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerCharacter(Controller, 0));
+	return Player && Player->IsDead();
 }
 
 bool FAgBossAICondition_Reacting::TestCondition(FStateTreeExecutionContext& Context) const

@@ -77,7 +77,7 @@ FAnimMontageInstance* UAgAbilitySystemComponent::PlayMontageWithBlendIn(UGamepla
 		return nullptr;
 	}
 
-	// 엔진 PlayMontage처럼 재생 중인 어빌리티를 기록합니다. 캐릭터와 Task가 이 기록으로 재생 중인 Runner를 찾습니다.
+	// 엔진 PlayMontage처럼 재생 중인 어빌리티를 기록합니다. 캐릭터와 Task가 이 기록으로 재생 중인 어빌리티를 찾습니다.
 	LocalAnimMontageInfo.AnimMontage = &Montage;
 	LocalAnimMontageInfo.AnimatingAbility = &Ability;
 	LocalAnimMontageInfo.PlayInstanceId =

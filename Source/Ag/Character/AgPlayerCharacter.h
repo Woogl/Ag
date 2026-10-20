@@ -38,8 +38,6 @@ public:
 
 	virtual AActor* GetFallbackFacingTarget() const override;
 
-	AAgCharacterBase* GetLockOnTarget() const;
-
 	void UpdateRotationMode();
 
 	const UInputMappingContext* GetInputMapping() const
@@ -110,8 +108,6 @@ private:
 
 	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
-	void HandleSPChanged(const FOnAttributeChangeData& Data);
-
 	void UpdateTimeStopScreen(bool bStopped);
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -163,7 +159,6 @@ private:
 
 	bool bGuardHeld = false;
 	bool bDodgeHeld = false;
-	FActiveGameplayEffectHandle SPRegenDelay;
 
 	TWeakObjectPtr<AAgCharacterBase> LockOnCameraTarget;
 

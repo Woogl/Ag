@@ -8,7 +8,6 @@
 #include "AgCharacterData.generated.h"
 
 class UAnimMontage;
-class UStateTree;
 
 USTRUCT(BlueprintType)
 struct FAgAttributes
@@ -133,8 +132,14 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
 	float GuardMoveSpeedRatio = 1.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
-	float ParryPPRatio = 0.f;
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (DataId = "Effects"))
+	TArray<FName> ParryEffects;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (DataId = "Effects"))
+	TArray<FName> ParryAttackerEffects;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (DataId = "Effects"))
+	TArray<FName> PerfectDodgeEffects;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
 	float UltimateSlowMotionSpeed = 1.f;
@@ -147,9 +152,6 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s"))
 	float PerfectDodgeSlowMotionDuration = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "cm"))
-	float LockOnReleaseRange = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint")
 	float SprintSpeedRatio = 1.f;
@@ -167,9 +169,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm"))
 	float FarDistance = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s"))
-	float RetryInterval = 0.5f;
-
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PatternRecoveryWaitPhase1 = FFloatInterval(0.f, 0.f);
 
@@ -181,16 +180,4 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")
 	float Phase2HPRatio = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On")
-	FName LockOnBone;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
-	FName ExecutionPromptBone;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	TObjectPtr<UStateTree> AIStateTree;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (DataId = "TargetingPresets"))
-	FName AITargetingPreset;
 };

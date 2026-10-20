@@ -20,7 +20,7 @@ struct FAgProjectileDefinition
 	FAgProjectileParams Params;
 
 	UPROPERTY()
-	FAgPlayerAttackHit Attack;
+	FAgDamage Damage;
 };
 
 UCLASS()

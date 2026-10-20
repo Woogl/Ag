@@ -36,7 +36,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_GuardPushback, "Ability.Reaction.HitReaction.GuardPushback");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_GuardBreak, "Ability.Reaction.HitReaction.GuardBreak");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Groggy, "Ability.Reaction.Groggy");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_Executed, "Ability.Reaction.Executed", "처형 피격 (그로기를 이어 받음)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_Executed, "Ability.Reaction.Executed", "처형 피격 (그로기를 종료하고 처형 상태로 전환)");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern, "Ability.Boss.Pattern", "보스 패턴 어빌리티 (패턴을 한꺼번에 취소할 때 씀)");
 
@@ -57,7 +57,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Airborne, "State.Airborne", "이동 모드가 떨어지는 중 (캐릭터가 붙임)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_PassThrough, "State.PassThrough", "캐릭터끼리 통과: 캡슐이 Pawn 채널을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_TimeStop, "State.TimeStop", "가진 캐릭터만 빼고 게임 전체의 시간을 멈춤");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyTime, "State.GroggyTime", "그로기 시간 (GroggyTime 효과가 줌)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dashing, "State.Dashing", "돌진 중 (Dash Task가 도는 동안)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Cutscene, "State.Cutscene", "컷신 재생 중 (PlayCutscene Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "비전투 (플레이어 사망 뒤의 보스)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyImmune, "State.GroggyImmune", "그로기 면역. PP 감소와 그로기 진입 대상에서 제외");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");
@@ -78,19 +79,20 @@ namespace AgGameplayTags
 		"내 공격이 가드·가드 브레이크·패리로 막힘 (DashThrust의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Landed, "Event.Landed", "캐릭터가 착지함 (캐릭터가 자기에게 보냄)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Apex, "Event.Apex", "공중에서 수직 속도가 오름에서 내림으로 바뀜 (캐릭터가 자기에게 보냄)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_MoveBlocked, "Event.MoveBlocked", "이동이 벽에 막힘. 턱을 넘지 못한 충돌만 (캐릭터가 자기에게 보냄)");
 
 	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_SP, "SetByCaller.SP");
 	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_MP, "SetByCaller.MP");
 	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_UP, "SetByCaller.UP");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_DamageMultiplier, "SetByCaller.DamageMultiplier", "공격의 대미지 배율");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_PoiseMultiplier, "SetByCaller.PoiseMultiplier", "공격의 PP 배율");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_HPMultiplier, "SetByCaller.HPMultiplier", "공격의 HP 배율");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_PPMultiplier, "SetByCaller.PPMultiplier", "공격의 PP 배율");
 
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage, "Effect.Damage", "대미지 효과(Effects.json의 Damage)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Cooldown, "Effect.Cooldown", "행동 쿨다운 효과(Effects.json의 Cooldown)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage, "Effect.Damage", "대미지 효과");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Cooldown, "Effect.Cooldown", "행동 쿨다운 효과");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_Flinch, "Effect.Damage.Reaction.Flinch", "피격 반응 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockUp, "Effect.Damage.Reaction.KnockUp", "피격 반응 넉업");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockBack, "Effect.Damage.Reaction.KnockBack", "피격 반응 넉백");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unguardable, "Effect.Damage.Unguardable", "가드와 패리로 막을 수 없는 공격 (가드 불가)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unblockable, "Effect.Damage.Unblockable", "가드와 패리로 막을 수 없는 공격 (가드 불가)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Finisher, "Effect.Damage.Finisher", "마지막 일격 (처형의 마지막 일격, 궁극기 마무리)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_PerfectDodge, "Effect.Damage.Result.PerfectDodge", "피격 결과 극한 회피");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Parry, "Effect.Damage.Result.Parry", "피격 결과 패리");
@@ -101,9 +103,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Hit, "GameplayCue.Hit", "일반 피격의 이펙트와 효과음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Guard, "GameplayCue.Guard", "가드·가드 브레이크의 이펙트와 효과음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Parry, "GameplayCue.Parry", "패리 전용 이펙트와 효과음");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateFinish, "GameplayCue.UltimateFinish", "궁극기 마무리 적중의 이펙트와 효과음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateSlashes, "GameplayCue.UltimateSlashes",
-		"궁극기 베기 선: 켜진 동안 실행마다 하나씩 새기고, 꺼지면 모두 지움");
+		"궁극기 베기 선: 켜진 동안 실행마다 하나씩 새기고, 꺼지면 선마다 터뜨린 뒤 모두 지움");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_DamageFloater, "GameplayCue.DamageFloater", "대미지 숫자");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UnblockableTelegraph, "GameplayCue.UnblockableTelegraph", "가드 불가 예고");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_ParryTelegraph, "GameplayCue.ParryTelegraph", "패리 예고");

@@ -9,32 +9,27 @@
 
 struct FGameplayEffectSpec;
 
-UENUM()
-enum class EAgResource : uint8
-{
-	SP,
-	MP,
-	UP
-};
-
 namespace AgResource
 {
 	/** 넣지 않은 SetByCaller 값은 엔진이 오류로 남기므로 바꾸지 않는 자원도 0을 넣습니다. */
 	void SetAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP);
-
-	void SetAmount(FGameplayEffectSpec& Spec, EAgResource Resource, float Amount);
 }
 
 USTRUCT()
-struct FAgResourceCostParams
+struct FAgResourceCost
 {
 	GENERATED_BODY()
 
 	UPROPERTY()
-	EAgResource Resource = EAgResource::SP;
+	float SP = 0.f;
 
 	UPROPERTY()
-	float Amount = 0.f;
+	float MP = 0.f;
+
+	UPROPERTY()
+	float UP = 0.f;
+
+	bool IsFree() const;
 
 	void AddToSpec(FGameplayEffectSpec& Spec) const;
 };
@@ -86,7 +81,7 @@ struct FAgAbilityActivation
 };
 
 USTRUCT()
-struct FAgAbilityTargeting
+struct FAgTargetingRequest
 {
 	GENERATED_BODY()
 
@@ -94,13 +89,19 @@ struct FAgAbilityTargeting
 	FName Preset;
 
 	UPROPERTY()
-	TOptional<float> Range;
+	float Range = 0.f;
 
 	UPROPERTY()
 	FGameplayTagContainer TargetRequiredTags;
 
 	UPROPERTY()
 	FGameplayTagContainer TargetBlockedTags;
+};
+
+USTRUCT()
+struct FAgAbilityTargeting : public FAgTargetingRequest
+{
+	GENERATED_BODY()
 
 	UPROPERTY()
 	bool bRequired = false;
@@ -133,19 +134,10 @@ struct FAgPatternSelection
 	float ResponseChance = 0.f;
 };
 
-USTRUCT()
-struct FAgAbilityMontage
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName MontageId;
-};
-
 UENUM()
 enum class EAgAbilityEnd : uint8
 {
-	Montage,
+	Tasks,
 	TriggerTag
 };
 
@@ -164,16 +156,13 @@ struct FAgAbilityData
 	FAgAbilityActivation Activation;
 
 	UPROPERTY()
-	TOptional<FAgResourceCostParams> Cost;
+	FAgResourceCost Cost;
 
 	UPROPERTY()
 	TOptional<FAgAbilityTargeting> Targeting;
 
 	UPROPERTY()
-	TOptional<FAgAbilityMontage> Montage;
-
-	UPROPERTY()
-	EAgAbilityEnd End = EAgAbilityEnd::Montage;
+	EAgAbilityEnd End = EAgAbilityEnd::Tasks;
 
 	UPROPERTY()
 	TArray<FInstancedStruct> Tasks;

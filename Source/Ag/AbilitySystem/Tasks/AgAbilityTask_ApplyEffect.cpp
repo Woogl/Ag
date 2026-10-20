@@ -10,7 +10,7 @@
 
 UAbilityTask* FAgApplyEffectParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_ApplyEffect::ApplyEffect(&Context.Runner, Effect, Context.Placement == EAgTaskPlacement::Window || bRemoveOnEnd);
+	return UAgAbilityTask_ApplyEffect::ApplyEffect(&Context.Ability, Effect, bRemoveOnEnd);
 }
 
 UAgAbilityTask_ApplyEffect* UAgAbilityTask_ApplyEffect::ApplyEffect(UGameplayAbility* Owner, FName InEffect, bool bInRemoveOnEnd)
@@ -23,15 +23,15 @@ UAgAbilityTask_ApplyEffect* UAgAbilityTask_ApplyEffect::ApplyEffect(UGameplayAbi
 
 void UAgAbilityTask_ApplyEffect::Activate()
 {
-	UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability);
+	UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
 	const UGameplayEffect* Definition = UAgAssetManager::Get().FindEffect(Effect);
-	if (!Runner || !Definition || !AbilitySystemComponent.IsValid())
+	if (!AgAbility || !Definition || !AbilitySystemComponent.IsValid())
 	{
 		UE_LOG(LogAg, Error, TEXT("ApplyEffect: effect %s is missing in Effects"), *Effect.ToString());
 		EndTask();
 		return;
 	}
-	const FGameplayEffectSpecHandle Spec = Runner->MakeEffectSpec(*Definition);
+	const FGameplayEffectSpecHandle Spec = AgAbility->MakeEffectSpec(*Definition);
 	if (!Spec.IsValid())
 	{
 		EndTask();

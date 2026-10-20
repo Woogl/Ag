@@ -7,14 +7,8 @@
 #include "Data/AgProjectileData.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_SpawnProjectile.generated.h"
-class AAgProjectile;
 
-UENUM()
-enum class EAgProjectileOrigin : uint8
-{
-	CharacterFeetForward,
-	MeshSocket
-};
+class AAgProjectile;
 
 USTRUCT()
 struct FAgSpawnProjectileParams : public FAgTaskParams
@@ -23,9 +17,6 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 
 	UPROPERTY(meta = (DataId = "Projectiles"))
 	FName ProjectileId;
-
-	UPROPERTY()
-	EAgProjectileOrigin Origin = EAgProjectileOrigin::CharacterFeetForward;
 
 	UPROPERTY()
 	FName SocketName;
@@ -39,21 +30,18 @@ class UAgAbilityTask_SpawnProjectile : public UAbilityTask_SpawnActor
 	GENERATED_BODY()
 
 public:
-	static UAgAbilityTask_SpawnProjectile* SpawnProjectile(UGameplayAbility* Owner, int32 MontageInstanceId, const FAgProjectileDefinition& Projectile, EAgProjectileOrigin Origin, FName SocketName);
+	static UAgAbilityTask_SpawnProjectile* SpawnProjectile(UGameplayAbility* Owner, const FAgProjectileDefinition& Projectile, FName SocketName);
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
 	UFUNCTION()
 	void HandleSpawned(AActor* Actor);
-	bool IsSourceActive() const;
-	int32 SourceInstanceId = INDEX_NONE;
 
 	UPROPERTY()
 	TSubclassOf<AAgProjectile> ProjectileClass;
-	EAgProjectileOrigin SpawnOrigin = EAgProjectileOrigin::CharacterFeetForward;
 	FName SpawnSocket;
-	FAgPlayerAttackHit Hit;
+	FAgDamage Damage;
 	FAgProjectileParams FlightParams;
 	FVector Direction = FVector::ForwardVector;
 

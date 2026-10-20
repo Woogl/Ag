@@ -11,15 +11,14 @@ void AgResource::SetAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UP);
 }
 
-void AgResource::SetAmount(FGameplayEffectSpec& Spec, EAgResource Resource, float Amount)
+bool FAgResourceCost::IsFree() const
 {
-	SetAmounts(Spec, Resource == EAgResource::SP ? Amount : 0.f, Resource == EAgResource::MP ? Amount : 0.f,
-		Resource == EAgResource::UP ? Amount : 0.f);
+	return SP <= 0.f && MP <= 0.f && UP <= 0.f;
 }
 
-void FAgResourceCostParams::AddToSpec(FGameplayEffectSpec& Spec) const
+void FAgResourceCost::AddToSpec(FGameplayEffectSpec& Spec) const
 {
-	AgResource::SetAmount(Spec, Resource, -Amount);
+	AgResource::SetAmounts(Spec, -SP, -MP, -UP);
 }
 
 bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const

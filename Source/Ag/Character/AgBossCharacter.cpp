@@ -3,10 +3,12 @@
 #include "Character/AgBossCharacter.h"
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Character/AgPlayerCharacter.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
@@ -16,6 +18,12 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+
+namespace
+{
+	const FName LockOnBone(TEXT("spine_05"));
+	const FName ExecutionPromptBone(TEXT("head"));
+} // namespace
 
 AAgBossCharacter::AAgBossCharacter()
 {
@@ -27,7 +35,6 @@ AAgBossCharacter::AAgBossCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
-	// 붙일 본은 캐릭터 데이터에 있어 생성자에서 알 수 없으므로 BeginPlay에서 붙입니다.
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
 	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get()})
@@ -43,15 +50,15 @@ AAgBossCharacter::AAgBossCharacter()
 	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
 }
 
-void AAgBossCharacter::EnterPhase2()
-{
-	Phase = 2;
-}
-
 AAgCharacterBase* AAgBossCharacter::GetTarget() const
 {
 	const AAgBossAIController* AIController = Cast<AAgBossAIController>(GetController());
 	return AIController ? AIController->GetTarget() : nullptr;
+}
+
+FVector AAgBossCharacter::GetLockOnLocation() const
+{
+	return GetMesh()->GetBoneIndex(LockOnBone) != INDEX_NONE ? GetMesh()->GetBoneLocation(LockOnBone) : GetActorLocation();
 }
 
 void AAgBossCharacter::BeginPlay()
@@ -59,9 +66,10 @@ void AAgBossCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	AttachWorldWidgets();
-	GetAbilitySystemComponent()
-		->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
+	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 }
 
 void AAgBossCharacter::Tick(float DeltaSeconds)
@@ -77,9 +85,22 @@ void AAgBossCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCoun
 	{
 		return;
 	}
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_GroggyTime));
+	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
 	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+	ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_Groggy));
+}
+
+void AAgBossCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
+{
+	const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(Data.AbilityThatEnded);
+	if (Data.bWasCancelled || !Ability || IsDead() ||
+		!Ability->GetDefinitionTags().HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition))
+	{
+		return;
+	}
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+	Phase = 2;
 }
 
 bool AAgBossCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
@@ -92,9 +113,8 @@ bool AAgBossCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
 
 void AAgBossCharacter::AttachWorldWidgets()
 {
-	const UAgBossData* Data = CastChecked<UAgBossData>(GetCharacterData());
-	LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->LockOnBone);
-	ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Data->ExecutionPromptBone);
+	LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LockOnBone);
+	ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, ExecutionPromptBone);
 }
 
 void AAgBossCharacter::UpdateWorldWidgets()

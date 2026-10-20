@@ -68,6 +68,7 @@ public:
 protected:
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual bool PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data) override;
 
 	/** 대미지 GE는 HP를 먼저 바꾸므로 사망 판정이 먼저이고, 죽으면 그로기 어빌리티가 막힙니다. */
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;

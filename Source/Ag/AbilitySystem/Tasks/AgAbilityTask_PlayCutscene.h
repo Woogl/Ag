@@ -18,9 +18,6 @@ struct FAgPlayCutsceneParams : public FAgTaskParams
 	UPROPERTY()
 	TObjectPtr<ULevelSequence> Sequence;
 
-	UPROPERTY()
-	FAgTransition Next;
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
@@ -36,7 +33,7 @@ class UAgAbilityTask_PlayCutscene : public UAbilityTask
 public:
 	UAgAbilityTask_PlayCutscene();
 
-	static UAgAbilityTask_PlayCutscene* PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params, int32 MontageInstanceId);
+	static UAgAbilityTask_PlayCutscene* PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params);
 
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
@@ -56,6 +53,5 @@ private:
 	UPROPERTY()
 	TObjectPtr<ALevelSequenceActor> SequenceActor;
 
-	FAgTransition Next;
-	int32 MontageInstanceId = INDEX_NONE;
+	bool bTagAdded = false;
 };

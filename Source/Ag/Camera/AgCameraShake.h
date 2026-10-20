@@ -6,7 +6,6 @@
 #include "AgCameraShake.generated.h"
 
 struct FAgCameraShakeSettings;
-class UAgCameraData;
 
 UCLASS(meta = (ScriptName = "AgCameraShakeEffect"))
 class UAgCameraShake : public UCameraShakeBase
@@ -15,5 +14,5 @@ class UAgCameraShake : public UCameraShakeBase
 
 public:
 	UAgCameraShake(const FObjectInitializer& ObjectInitializer);
-	void Initialize(const FAgCameraShakeSettings& Settings, const UAgCameraData& Camera);
+	void Initialize(const FAgCameraShakeSettings& Settings);
 };

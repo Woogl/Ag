@@ -1,15 +1,13 @@
 {
   "Enemy": [
-    {"Class": "/Script/TargetingSystem.TargetingSelectionTask_AOE", "ShapeType": "Sphere", "Radius": {"Value": 5000}, "CollisionObjectTypes": ["Pawn"]},
+    {"Class": "/Script/Ag.AgTargetingSelectionTask_Range"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_Distance"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ],
   "LockOn": [
-    {"Class": "/Script/TargetingSystem.TargetingSelectionTask_AOE", "ShapeType": "Sphere", "Radius": {"Value": 5000}, "CollisionObjectTypes": ["Pawn"]},
+    {"Class": "/Script/Ag.AgTargetingSelectionTask_Range"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_Distance"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/Ag.AgTargetingFilterTask_OnScreen"},
     {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}

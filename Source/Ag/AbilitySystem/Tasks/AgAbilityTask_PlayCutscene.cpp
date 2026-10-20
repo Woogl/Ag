@@ -3,14 +3,22 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_PlayCutscene.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystemComponent.h"
+#include "Core/AgGameplayTags.h"
 #include "DefaultLevelSequenceInstanceData.h"
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
 
+namespace
+{
+	// 레벨 시퀀스에서 재생하는 캐릭터를 받는 바인딩에 붙인 태그와 같아야 합니다.
+	const FName OwnerBindingTag(TEXT("Owner"));
+}
+
 UAbilityTask* FAgPlayCutsceneParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_PlayCutscene::PlayCutscene(&Context.Runner, *this, Context.MontageInstanceId);
+	return UAgAbilityTask_PlayCutscene::PlayCutscene(&Context.Ability, *this);
 }
 
 UAgAbilityTask_PlayCutscene::UAgAbilityTask_PlayCutscene()
@@ -18,22 +26,22 @@ UAgAbilityTask_PlayCutscene::UAgAbilityTask_PlayCutscene()
 	bTickingTask = true;
 }
 
-UAgAbilityTask_PlayCutscene* UAgAbilityTask_PlayCutscene::PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params, int32 InMontageInstanceId)
+UAgAbilityTask_PlayCutscene* UAgAbilityTask_PlayCutscene::PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params)
 {
 	UAgAbilityTask_PlayCutscene* Task = NewAbilityTask<UAgAbilityTask_PlayCutscene>(Owner);
 	Task->Cutscene = Params.Sequence;
-	Task->Next = Params.Next;
-	Task->MontageInstanceId = InMontageInstanceId;
 	return Task;
 }
 
 void UAgAbilityTask_PlayCutscene::Activate()
 {
-	if (!Cutscene || !GetAvatarActor())
+	if (!Cutscene || !GetAvatarActor() || !AbilitySystemComponent.IsValid())
 	{
-		HandleFinished();
+		EndTask();
 		return;
 	}
+	bTagAdded = true;
+	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Cutscene);
 
 	FMovieSceneSequencePlaybackSettings Settings;
 	Settings.bDisableLookAtInput = true;
@@ -44,12 +52,13 @@ void UAgAbilityTask_PlayCutscene::Activate()
 	ULevelSequencePlayer* Player = ULevelSequencePlayer::CreateLevelSequencePlayer(this, Cutscene, Settings, NewActor);
 	if (!Player || !NewActor)
 	{
-		HandleFinished();
+		EndTask();
 		return;
 	}
 	SequenceActor = NewActor;
 	SequenceActor->bOverrideInstanceData = true;
 	CastChecked<UDefaultLevelSequenceInstanceData>(SequenceActor->DefaultInstanceData)->TransformOriginActor = GetAvatarActor();
+	SequenceActor->SetBindingByTag(OwnerBindingTag, {GetAvatarActor()});
 	Player->OnFinished.AddDynamic(this, &ThisClass::HandleFinished);
 	Player->Play();
 }
@@ -79,24 +88,17 @@ void UAgAbilityTask_PlayCutscene::OnDestroy(bool bInOwnerFinished)
 		SequenceActor->Destroy();
 		SequenceActor = nullptr;
 	}
+	if (bTagAdded && AbilitySystemComponent.IsValid())
+	{
+		bTagAdded = false;
+		AbilitySystemComponent->RemoveLooseGameplayTag(AgGameplayTags::State_Cutscene);
+	}
 	Super::OnDestroy(bInOwnerFinished);
 }
 
 void UAgAbilityTask_PlayCutscene::HandleFinished()
 {
-	if (IsFinished())
-	{
-		return;
-	}
-	// 전환이 이 구간을 끝내므로 전환하지 않았을 때만 스스로 끝냅니다.
-	if (UAgGameplayAbility* Runner = Cast<UAgGameplayAbility>(Ability))
-	{
-		Runner->RequestTransition(Next, MontageInstanceId);
-	}
-	if (!IsFinished())
-	{
-		EndTask();
-	}
+	EndTask();
 }
 
 float UAgAbilityTask_PlayCutscene::GetOwnerTimeDilation() const

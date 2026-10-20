@@ -77,6 +77,7 @@ DerivedDataCache/*
 *.slnx
 
 .idea/*
+*.DotSettings.user
 */.obsidian/*
 
 # AI 스킬의 정본은 .agents/skills이다. .claude/skills는 그 폴더를 가리키는 junction이라 추적하지 않는다.

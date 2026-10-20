@@ -4,10 +4,10 @@
 #include "Core/AgGameplayTags.h"
 #include "GameplayEffect.h"
 
-void FAgPlayerAttackHit::AddToSpec(FGameplayEffectSpec& Spec) const
+void FAgDamage::AddToSpec(FGameplayEffectSpec& Spec) const
 {
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_DamageMultiplier, DamageMultiplier);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PoiseMultiplier, PoiseMultiplier);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier, HPMultiplier);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PPMultiplier, PPMultiplier);
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, MPCharge);
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UPCharge);
 	switch (HitReaction)
@@ -26,7 +26,7 @@ void FAgPlayerAttackHit::AddToSpec(FGameplayEffectSpec& Spec) const
 	}
 	if (!bGuardable)
 	{
-		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Unguardable);
+		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Unblockable);
 	}
 	if (bFinisher)
 	{

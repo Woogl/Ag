@@ -19,7 +19,7 @@ struct FAgApplyEffectParams : public FAgTaskParams
 	FName Effect;
 
 	UPROPERTY()
-	bool bRemoveOnEnd = false;
+	bool bRemoveOnEnd = true;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

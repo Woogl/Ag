@@ -3,6 +3,7 @@
 #include "Core/AgAssetManager.h"
 
 #include "Ag.h"
+#include "AttributeSet.h"
 #include "Data/AgAbilityData.h"
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
@@ -24,7 +25,6 @@
 #include "Serialization/JsonSerializer.h"
 #include "StructUtils/InstancedStruct.h"
 #include "TargetingSystem/TargetingPreset.h"
-#include "UObject/FieldPathProperty.h"
 #include "UObject/Package.h"
 #include "UObject/PropertyOptional.h"
 #include "UObject/UnrealType.h"
@@ -120,7 +120,7 @@ const UGameplayEffect* UAgAssetManager::FindEffect(FName Id) const
 
 const UGameplayEffect* UAgAssetManager::GetEffect(EAgEffect Effect) const
 {
-	return FindEffect(AgEffectData::Id(Effect));
+	return NativeEffects.FindChecked(Effect).Get();
 }
 
 UAgCharacterData* UAgAssetManager::FindCharacterData(FName Id) const
@@ -189,6 +189,13 @@ void UAgAssetManager::StartInitialLoading()
 {
 	Super::StartInitialLoading();
 
+	const UEnum* NativeEffectEnum = StaticEnum<EAgEffect>();
+	// 마지막 값은 UHT가 붙이는 _MAX입니다.
+	for (int32 Index = 0; Index < NativeEffectEnum->NumEnums() - 1; ++Index)
+	{
+		const EAgEffect Effect = static_cast<EAgEffect>(NativeEffectEnum->GetValueByIndex(Index));
+		NativeEffects.Add(Effect, AgEffectData::MakeNativeEffect(Effect, *this));
+	}
 	LoadJsonData();
 }
 
@@ -228,9 +235,9 @@ bool UAgAssetManager::LoadJsonData()
 		return ReadJson(FString(JsonFolderName) / FileName, nullptr, *FindFProperty<FProperty>(Owner, PropertyName), Out);
 	};
 	// 다른 파일이 ID로 가리키는 정의 파일을 먼저 읽습니다. 오류를 모두 알리도록 실패해도 다음 파일을 읽습니다.
-	bool bRead = Read(CombatRulesFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CombatRules), &NewRules);
+	bool bRead = Read(EffectsFile, UAgEffectSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgEffectSet, Definitions), &NewEffects->Definitions);
+	bRead = Read(CombatRulesFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CombatRules), &NewRules) && bRead;
 	bRead = Read(CameraDataFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CameraData), &NewCamera) && bRead;
-	bRead = Read(EffectsFile, UAgEffectSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgEffectSet, Definitions), &NewEffects->Definitions) && bRead;
 	bRead = Read(ProjectilesFile, UAgProjectileSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgProjectileSet, Projectiles), &NewProjectiles->Projectiles) && bRead;
 	bRead = Read(TargetingPresetsFile, UAgTargetingPresetSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgTargetingPresetSet, Definitions), &NewTargetingPresets->Definitions) && bRead;
 	bRead = Read(AbilitiesFile, UAgAbilitySet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAbilitySet, Abilities), &NewAbilities->Abilities) && bRead;
@@ -241,7 +248,10 @@ bool UAgAssetManager::LoadJsonData()
 		return false;
 	}
 
-	AgEffectData::Build(NewEffects->Definitions, *this, DataVersion, NewEffects->Effects);
+	for (const TPair<FName, FAgEffectDefinition>& Pair : NewEffects->Definitions)
+	{
+		NewEffects->Effects.Add(Pair.Key, AgEffectData::MakeEffect(Pair.Key, Pair.Value, *this, DataVersion));
+	}
 	for (const TPair<FName, FAgTargetingPresetDefinition>& Pair : NewTargetingPresets->Definitions)
 	{
 		UTargetingPreset* Preset = NewObject<UTargetingPreset>(this, FName(*FString::Printf(TEXT("%s_%d"), *Pair.Key.ToString(), DataVersion)));
@@ -394,6 +404,23 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 		*static_cast<FGameplayTag*>(Out) = Tag;
 		return true;
 	}
+	if (StructProperty && StructProperty->Struct == FGameplayAttribute::StaticStruct())
+	{
+		// 엔진 형식은 필드 경로를 담은 객체라 길어서, 어트리뷰트 세트의 속성 이름만 적습니다.
+		const FString Name = Value->Type == EJson::String ? Value->AsString() : FString();
+		TArray<FProperty*> Attributes;
+		FGameplayAttribute::GetAllAttributeProperties(Attributes, FString(), false);
+		FProperty* const* Attribute = Attributes.FindByPredicate([&Name](const FProperty* Property)
+		{
+			return Property->GetFName() == FName(*Name) && FGameplayAttribute::IsGameplayAttributeDataProperty(Property);
+		});
+		if (!Attribute)
+		{
+			return Fail(Path, Name + TEXT(" is not an attribute"));
+		}
+		*static_cast<FGameplayAttribute*>(Out) = FGameplayAttribute(*Attribute);
+		return true;
+	}
 	if (StructProperty && StructProperty->Struct == FInstancedStruct::StaticStruct())
 	{
 		const TSharedPtr<FJsonObject>* Object = nullptr;
@@ -514,11 +541,6 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 	if (Reference && !Reference->GetObjectPropertyValue(Out) && !Value->AsString().IsEmpty() && Value->AsString() != TEXT("None"))
 	{
 		return Fail(Path, Value->AsString() + TEXT(" is not an asset or class of ") + Reference->PropertyClass->GetName());
-	}
-	const FFieldPathProperty* FieldPath = CastField<FFieldPathProperty>(&Property);
-	if (FieldPath && !static_cast<const FFieldPath*>(Out)->GetTyped(FieldPath->PropertyClass))
-	{
-		return Fail(Path, Value->AsString() + TEXT(" is not a property"));
 	}
 #if WITH_METADATA
 	// 배열 원소의 메타데이터는 배열 속성에 있습니다.

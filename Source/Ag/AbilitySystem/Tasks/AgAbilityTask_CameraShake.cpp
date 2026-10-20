@@ -3,13 +3,13 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_CameraShake.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "Engine/World.h"
 #include "Game/AgPlayerController.h"
 #include "GameFramework/Pawn.h"
-#include "Kismet/GameplayStatics.h"
 
 UAbilityTask* FAgCameraShakeParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_CameraShake::CameraShake(&Context.Runner, Shake, Range);
+	return UAgAbilityTask_CameraShake::CameraShake(&Context.Ability, Shake, Range);
 }
 
 UAgAbilityTask_CameraShake* UAgAbilityTask_CameraShake::CameraShake(UGameplayAbility* Owner, EAgCameraShake InShake, float InRange)
@@ -23,11 +23,14 @@ UAgAbilityTask_CameraShake* UAgAbilityTask_CameraShake::CameraShake(UGameplayAbi
 void UAgAbilityTask_CameraShake::Activate()
 {
 	const AActor* Owner = GetAvatarActor();
-	AAgPlayerController* Controller = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	const APawn* Pawn = Controller ? Controller->GetPawn() : nullptr;
-	if (Owner && Pawn && Owner->GetHorizontalDistanceTo(Pawn) <= Range)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); Owner && It; ++It)
 	{
-		Controller->PlayCameraShake(Shake);
+		AAgPlayerController* Controller = Cast<AAgPlayerController>(It->Get());
+		const APawn* Pawn = Controller ? Controller->GetPawn() : nullptr;
+		if (Pawn && Owner->GetHorizontalDistanceTo(Pawn) <= Range)
+		{
+			Controller->PlayCameraShake(Shake);
+		}
 	}
 	EndTask();
 }

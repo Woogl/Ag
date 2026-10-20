@@ -47,18 +47,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
 	FAgCameraShakeSettings LargeShake;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
-	float ShakePitchFrequency = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
-	float ShakeYawFrequency = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
-	float ShakeYFrequency = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Camera Shake")
-	float ShakeZFrequency = 0.f;
-
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Lock-On", meta = (Units = "deg"))
 	float LockOnPitchMin = 0.f;
 

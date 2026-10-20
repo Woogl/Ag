@@ -39,9 +39,9 @@ void AAgPlayerController::PlayCameraShake(EAgCameraShake Shake)
 	}
 
 	FAddCameraShakeParams ShakeParams;
-	ShakeParams.Initializer.BindLambda([Settings, &Camera](UCameraShakeBase* ShakeInstance)
+	ShakeParams.Initializer.BindLambda([Settings](UCameraShakeBase* ShakeInstance)
 	{
-		CastChecked<UAgCameraShake>(ShakeInstance)->Initialize(*Settings, Camera);
+		CastChecked<UAgCameraShake>(ShakeInstance)->Initialize(*Settings);
 	});
 	PlayerCameraManager->StartCameraShake(UAgCameraShake::StaticClass(), ShakeParams);
 }

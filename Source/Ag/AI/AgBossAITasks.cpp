@@ -15,6 +15,8 @@
 
 namespace
 {
+	constexpr float RetryInterval = 0.5f;
+
 	bool IsPhaseTransitionActive(const UAbilitySystemComponent& ASC)
 	{
 		for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
@@ -70,13 +72,12 @@ EStateTreeRunStatus FAgBossAITask_Approach::Tick(FStateTreeExecutionContext& Con
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
-	const UAgBossData* Data = InstanceData.Controller->GetBossData();
 	if (const AAgCharacterBase* Target = InstanceData.Controller->GetTarget())
 	{
 		Boss->AddMovementInput((Target->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D(), 1.f);
 	}
 	InstanceData.Elapsed += DeltaTime;
-	return InstanceData.Elapsed >= Data->RetryInterval ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
+	return InstanceData.Elapsed >= RetryInterval ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
 }
 
 EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const

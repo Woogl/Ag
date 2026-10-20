@@ -1,0 +1,55 @@
+// Copyright Woogle. All Rights Reserved.
+
+#include "AbilitySystem/AgRegenDelayGameplayEffectComponent.h"
+
+#include "AbilitySystemComponent.h"
+#include "Core/AgAssetManager.h"
+#include "GameplayEffect.h"
+
+bool UAgRegenDelayGameplayEffectComponent::OnActiveGameplayEffectAdded(FActiveGameplayEffectsContainer& GEContainer, FActiveGameplayEffect& ActiveGE) const
+{
+	UAbilitySystemComponent* ASC = GEContainer.Owner;
+	FActiveGameplayEffectEvents* EventSet = ASC ? ASC->GetActiveEffectEventSet(ActiveGE.Handle) : nullptr;
+	if (!EventSet)
+	{
+		return true;
+	}
+
+	TArray<FGameplayAttribute> Attributes;
+	for (const FGameplayModifierInfo& Modifier : ActiveGE.Spec.Def->Modifiers)
+	{
+		Attributes.AddUnique(Modifier.Attribute);
+	}
+	TArray<TTuple<FGameplayAttribute, FDelegateHandle>> Bindings;
+	for (const FGameplayAttribute& Attribute : Attributes)
+	{
+		Bindings.Emplace(Attribute, ASC->GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, &ThisClass::HandleAttributeChanged, ASC));
+	}
+	EventSet->OnEffectRemoved.AddUObject(this, &ThisClass::HandleEffectRemoved, ASC, MoveTemp(Bindings));
+	return true;
+}
+
+void UAgRegenDelayGameplayEffectComponent::HandleAttributeChanged(const FOnAttributeChangeData& Data, UAbilitySystemComponent* ASC) const
+{
+	if (Data.NewValue >= Data.OldValue)
+	{
+		return;
+	}
+	const FName EffectId = Data.NewValue <= 0.f && !Delay.EffectAtZero.IsNone() ? Delay.EffectAtZero : Delay.Effect;
+	const UGameplayEffect* DelayEffect = UAgAssetManager::Get().FindEffect(EffectId);
+	if (!DelayEffect)
+	{
+		return;
+	}
+	// 0이 될 때 건 다른 대기 효과도 함께 처음부터 다시 세도록 효과가 아닌 태그로 지웁니다.
+	ASC->RemoveActiveEffectsWithGrantedTags(DelayEffect->GetGrantedTags());
+	ASC->ApplyGameplayEffectToSelf(DelayEffect, 1.f, ASC->MakeEffectContext());
+}
+
+void UAgRegenDelayGameplayEffectComponent::HandleEffectRemoved(const FGameplayEffectRemovalInfo& RemovalInfo, UAbilitySystemComponent* ASC, TArray<TTuple<FGameplayAttribute, FDelegateHandle>> Bindings) const
+{
+	for (const TTuple<FGameplayAttribute, FDelegateHandle>& Binding : Bindings)
+	{
+		ASC->GetGameplayAttributeValueChangeDelegate(Binding.Key).Remove(Binding.Value);
+	}
+}

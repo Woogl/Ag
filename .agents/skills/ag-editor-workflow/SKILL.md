@@ -73,6 +73,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 - 지우기 전에 `get_referencers`로 참조를 확인한다. 리비전 컨트롤이 꺼진 에디터에서 MCP `AssetTools.delete`는 메모리의 패키지만 지우고 `.uasset`은 남긴다. 파일은 `git rm`으로 지운다.
 - 참조를 다른 에셋으로 바꾼 직후 지우려면 먼저 `unreal.SystemLibrary.collect_garbage()`를 부른다. 아니면 강제 삭제가 ensure에 걸린다.
 - `AssetTools.rename_assets`는 옛 경로에 리다이렉터를 남기고, 파이썬에는 리다이렉터를 정리하는 함수가 없다. 리다이렉터를 `save_packages`로 저장해 dirty를 없앤 뒤 `git rm -f`로 지운다.
+  - 리다이렉터 파일을 지운 뒤 그 대상 에셋까지 에디터에서 지우면, 옛 경로 패키지가 dirty로 남고 저장·언로드·삭제가 모두 실패한다. 에디터를 닫을 때 '콘텐츠 저장' 창에서 '저장 안 함'으로 버린다.
 - INI의 소프트 경로가 가리키는 에셋은 이름 변경이 취소된다(확인 창이 무인 실행에서 자동으로 취소된다). 복제하고, INI가 복제본을 가리키게 한 뒤, 에디터를 닫고 옛 파일을 지운다.
 
 ### 블루프린트
@@ -85,6 +86,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
   - 블루프린트 컴포넌트는 `SubobjectDataSubsystem.add_new_subobject`로 더하고, 이름은 `rename_subobject_member_variable`로 바꾼다(`rename_subobject`는 조용히 실패한다).
   - 부모 C++ 클래스의 UPROPERTY와 같은 이름의 블루프린트 변수는 컴파일이 실패한다.
 - 컴파일 뒤 `bp.get_editor_property("status")`를 확인하고, 오류 상태로 저장하지 않는다.
+- 그래프 읽기: MCP `BlueprintTools.read_graph_dsl`은 빈 문자열을 돌려줄 때가 있다. `list_graphs` → `find_nodes`(`title` 빈 문자열이면 모든 노드) → `get_node_infos`로 노드와 핀 연결을 읽는다.
 - 부모 클래스는 `unreal.BlueprintEditorLibrary.reparent_blueprint(bp, cls)` 뒤 컴파일해 바꾼다. 옛 부모에만 있던 속성은 사라지니 먼저 읽어 둔다.
 - C++ 속성을 Transient로 바꿔도, 블루프린트에 전에 저장된 그 속성의 값은 블루프린트 CDO에 다시 읽혀 저장할 때 참조(import)로 남는다. 그 참조 에셋을 지울 때는 에디터를 닫고 에셋 파일을 지운 뒤, 에디터를 다시 켜 블루프린트를 다시 저장하고 `.uasset`에 옛 경로가 없는지 `grep -a`로 확인한다. 컴파일하면 레벨에 배치된 인스턴스가 다시 만들어져 레벨이 dirty가 되므로 저장만 한다.
 - 테스트용 액터를 에디터 월드에 스폰하면 레벨이 dirty가 된다. 잴 것이 있으면 임시 스폰(`EditorActorSubsystem.spawn_actor_from_class(cls, loc, rot, True)`)으로 띄우고 지운다.
@@ -94,7 +96,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 - 몽타주 섹션과 트랙 길이는 엔진 MCP와 파이썬으로 바꿀 수 없다. `AgAssetToolset.SetMontageSegments`·`SetMontageSections`를 쓴다. 섹션은 시작 시간 순서로 넘긴다(툴셋이 정렬하지 않는다).
 - 복제한 몽타주는 `SetMontageSegments` 뒤에도 옛 섹션의 시퀀스 참조가 남는다. `SetMontageSections`를 다시 부르고 저장한다.
 - `SetMontageSegments`로 몽타주가 길어지면 옛 끝에서 끝나던 노티파이 상태를 엔진이 새 끝까지 늘리지만, 끝 링크는 옛 구간에 남는다. 그 노티파이는 지우고(`remove_animation_notify_events_by_track`) 다시 넣는다.
-- 몽타주 안의 게임 규칙 시각(판정·보호·워핑·후딜 같은 사건)은 노티파이가 아니라 `Data/MontageTimelines.json`에서 고친다([몽타주 시간표](<../../../Docs/Program/몽타주 시간표.md>)). 몽타주에는 연출과 루트 모션 노티파이만 두며, 프로젝트 노티파이나 엔진 워핑 노티파이를 넣으면 시간표와 같은 일이 두 번 일어난다. 데이터를 읽을 때 몽타주와 대조하지 않으므로 섹션 이름이나 시각이 틀려도 재생할 때야 드러난다.
+- 몽타주 안의 게임 규칙 시각(판정·보호·워핑·후딜 같은 사건)은 노티파이가 아니라 `Data/MontageTimelines.json`에서 고친다([몽타주 시간표](<../../../Docs/Program/몽타주 시간표.md>)). 몽타주에는 연출 노티파이만 두며(루트 모션 끄기는 Dash가 맡는다), 프로젝트 노티파이나 엔진 워핑 노티파이를 넣으면 시간표와 같은 일이 두 번 일어난다. 데이터를 읽을 때 몽타주와 대조하지 않으므로 섹션 이름이나 시각이 틀려도 재생할 때야 드러난다.
 - 몽타주 노티파이는 `get_properties`로 읽을 수 없다. `unreal.AnimationLibrary.get_animation_notify_events(montage)`로 읽고, 트랙별로는 `get_animation_notify_events_for_track`으로 읽는다.
 - 노티파이 시각을 float 값 그대로 읽으려면 `unreal.AnimationLibrary.get_anim_notify_event_trigger_time`(트리거 오프셋 포함)과 `get_anim_notify_event_duration`을 쓴다. 이벤트의 `trigger_time_offset`과 `Duration`은 파이썬에서 읽을 수 없고, `export_text()`의 값은 소수 6자리다.
 - 노티파이는 `unreal.AnimationLibrary.add_animation_notify_event(montage, 트랙 이름, 시각, 노티파이 클래스)`로 더하고, 돌려받은 노티파이에 속성(`gameplay_cue` 등)을 쓴 뒤 저장한다.
@@ -102,16 +104,23 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 - 엔진 노티파이는 정방향 재생에서 '앞 위치 < 노티파이 시각 ≤ 지금 위치'일 때만 울린다. 섹션 시작 시각에 정확히 둔 노티파이는 그 섹션으로 점프한 직후 울리지 않으니 조금 뒤에 둔다. 시간표의 지점은 섹션 이동 직후 그 위치의 지점도 실행한다.
 - 몽타주는 섹션 시작 시각에 정확히 둔 노티파이에 −0.0001초 오프셋을 줘 앞 섹션 끝에서 울린다. 반복 섹션 바로 뒤 섹션의 시작에 둔 노티파이 상태는 반복할 때마다 켜졌다 꺼지므로, 시작을 0.0001초 뒤에 둔다.
 - 몽타주 시작(0초)에 둔 루트 모션 끄기 노티파이는 엔진이 0.0001초 뒤에 켜고, 몽타주는 한 프레임 안에서 루트 모션을 먼저 뽑은 뒤 분기점 노티파이를 처리한다. 그래서 첫 프레임에 그 앞 조각의 루트 모션이 남고, 그 프레임은 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않고 수평 속도도 덮어쓴다. 몽타주 전체에서 루트 모션을 쓰지 않으려면 노티파이 대신 시퀀스의 루트 모션을 끄고 루트 뼈를 고정한다(`enable_root_motion` False, `force_root_lock` True).
-- 루트 모션 끄기 노티파이 구간 안에서 새로 재생한 몽타주 인스턴스(BlendTime 전환)도 첫 프레임의 루트 모션을 먼저 뽑고, 캐릭터 무브먼트는 그 속도를 다음 프레임들에도 이어 간다. 그 구간에 쓰는 시퀀스는 루트 모션을 끈다.
+- 루트 모션을 끈 재생(노티파이 구간, Dash)에서 새로 재생한 몽타주 인스턴스(BlendTime 전환)는 끈 상태를 받지 않고 첫 프레임의 루트 모션을 먼저 뽑고, 캐릭터 무브먼트는 그 속도를 다음 프레임들에도 이어 간다. 그 구간에 쓰는 시퀀스는 루트 모션을 끈다.
 - 몽타주를 이어 재생할 때, `OnBlendOut`은 길이에서 블렌드 아웃 시간을 뺀 때에 온다. 거기서 다음 몽타주를 시작하면 앞 모션이 잘리므로, 앞 몽타주의 `BlendOutTriggerTime`을 0으로 둔다.
 - 스크립트로 만든 블렌드 스페이스는 `ResampleData()`가 불리지 않아 기본 자세(A 포즈)를 재생한다. `OpenEditorForAsset`으로 열고 dirty로 만든 뒤 저장한다.
 - 애님 그래프 노드의 값이 핀으로 보이면(`bShowPin`) 컴파일할 때 핀 기본값이 덮어쓴다. `BlueprintTools.set_pin_value`로 바꾼다. 핀만 바꾸면 패키지가 dirty가 되지 않아 저장되지 않으니, 노드를 따로 dirty로 만들어 저장한 뒤 파일 시각을 확인한다.
 - 포즈 평가(`AnimPoseExtensions.get_anim_pose_at_time`)에 몽타주를 넘기면 엔진이 `check`로 죽는다. 시퀀스를 넘긴다. 모션 측정은 [Samurai 애니메이션 조사](<../../../Docs/Art/Samurai 애니메이션 조사.md>) '측정 방법'과 `Scripts/MotionImages/ue_probe.py`를 따른다.
 
+### 레벨 시퀀스
+
+- `LevelSequenceEditorSubsystem.add_spawnable_from_class`로 캐릭터 블루프린트를 더하면 엔진이 위치 트랙과 메시의 Control Rig 트랙을 저절로 붙인다. 쓰지 않으면 지운다. 위치 트랙은 게임에서 바인딩한 액터를 그 자리에 붙잡아 둔다. Replaceable 바인딩은 `convert_to_custom_binding(binding, unreal.MovieSceneReplaceableActorBinding.static_class())`로 바꾼다. 이 함수들은 시퀀서에 열린 시퀀스에서 동작한다(`LevelSequenceEditorBlueprintLibrary.open_level_sequence`).
+- 섹션의 `set_range_seconds`는 끝 프레임을 포함 범위로 넣어 다음 섹션과 1틱 겹친다. 끝을 1틱(1 / 틱 해상도) 당겨 넣는다.
+- 바인딩의 `get_display_name()`은 Text라 dict 키로 쓰려면 `str()`로 바꾼다.
+- 뒤에 있는 에디터에서 파이썬으로 시퀀서 시간을 옮겼을 때 미리 보기 캐릭터의 애니메이션이 갱신되지 않았다(몽타주 재생 위치도 멈춤). 사람이 에디터를 앞에 두고 시퀀서를 끌면 갱신됐다. 미리 보기 자세는 사람에게 확인을 부탁한다.
+
 ### GAS와 StateTree
 
 - GameplayCue를 복제하면 태그를 바꿀 때까지 "Multiple gameplay cues ... Skipping" 경고가 나고 원본만 재생된다. 복제본의 CDO에 `set_editor_property('gameplay_cue_tag', tag)`로 태그를 주면 바로 다시 등록된다. 엔진 `GameplayCueToolset.AddCueTag`는 태그 ini에 쓰므로 쓰지 않는다(AGENTS.md 코딩 규칙 3).
-- 에디터를 켤 때 부모 클래스를 찾지 못한 GameplayCue 블루프린트는 경고 없이 Cue 목록에서 빠진다. 켜 둔 에디터에서 부모를 바꿔 저장해도 목록은 다시 만들어지지 않아, 그 세션의 PIE에서는 그 Cue가 나오지 않는다. 부모를 바꿨으면 에디터를 다시 켠 뒤 확인한다. 등록 여부는 `GameplayCueManager_0`의 `GlobalGameplayCueSet`에서 `GameplayCueData`의 태그로 본다(파이썬에 `GameplayCueSet` 타입이 없어 `ObjectIterator(unreal.Object)`에서 클래스 이름으로 찾는다).
+- 에디터를 켤 때 부모 클래스를 찾지 못한 GameplayCue 블루프린트는 경고 없이 Cue 목록에서 빠진다. 켜 둔 에디터에서 부모를 바꿔 저장해도 목록은 다시 만들어지지 않아, 그 세션의 PIE에서는 그 Cue가 나오지 않는다. 부모를 바꿨으면 에디터를 다시 켠 뒤 확인한다. 등록 여부는 `GameplayCueManager_0`의 `GlobalGameplayCueSet`에서 `GameplayCueData`의 태그로 본다(파이썬에 `GameplayCueSet` 타입이 없어 `ObjectIterator(unreal.Object)`에서 클래스 이름으로 찾는다). `GameplayCueData`는 파이썬으로 읽을 수 없으니 그 객체를 T3D로 내보내 읽는다(몽타주 T3D와 같은 방법). 엔진 `GameplayCueToolset.GetCueInfo`·`FindCueTagsWithoutNotifies`는 등록된 큐도 노티파이가 없다고 답하므로 쓰지 않는다.
 - StateTree는 `AgAssetToolset`의 StateTree 함수로 고치고, `CompileStateTree`(빈 문자열이면 오류 없음)로 컴파일한 뒤 저장한다. 읽기와 스키마 속성은 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '프로젝트 MCP 도구'를 따른다.
 - 파이썬으로 상태 이름을 바꾸려면 `unreal.ObjectIterator(unreal.StateTreeState)`를 `get_outermost().get_name() == '/Game/AI/ST_Boss'`로 걸러 `set_editor_property('name', ...)`로 바꾸고, 컴파일하고 저장한다. 전환은 ID로 이어져 있어 그대로 남는다.
 
@@ -120,7 +129,18 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 - MCP `set_properties`는 배열 크기와 요소를 한 번에 바꾸지 못한다. 먼저 남길 요소를 `get_properties`가 돌려준 그대로(객체 참조는 `{"refPath": ...}`) 넘겨 줄이고, 같은 크기에서 새 값을 넣는다.
 - 인스턴스 하위 객체 배열에 요소를 더할 때는 남길 요소를 그대로 두고 새 자리에 클래스 경로(`{"refPath": "/Script/Ag.<클래스>"}`)를 넣는다. 그 클래스의 새 하위 객체가 생긴다.
 - 구조체 안의 EditDefaultsOnly 필드는 `set_editor_property`로 쓸 수 없다. `struct.import_text('(...)')`로 채운 뒤 구조체 전체를 CDO에 쓴다.
+- `get_editor_property`가 돌려준 배열의 요소를 고칠 때는 요소를 변수로 받아 고친 뒤 배열에 다시 넣는다(`info = arr[0]`, 고치기, `arr[0] = info`). `arr[0].import_text(...)`는 복사본만 바꾼다.
 - 머티리얼 Custom 노드의 입력은 `set_properties` 한 번에 하나씩, 요소를 통째로(`inputName`과 `input`) 넣어 늘린다.
+
+### 나이아가라
+
+- 경량(Stateless) 시스템은 엔진 템플릿(`/Niagara/DefaultAssets/Templates/Systems/MinimalLightweight`)을 `duplicate_asset`으로 복제해 만든다. 이미터(`UNiagaraStatelessEmitter`)는 파이썬 타입이 없어 `ObjectIterator(unreal.Object)`에서 outer와 클래스 이름으로 찾고, 모듈(`Modules`)·렌더러·`EmitterState`·`FixedBounds`는 `set_editor_property`로 고친다.
+- 사용자 파라미터는 파이썬과 MCP로 읽거나 더할 수 없다. `AgAssetToolset.SetNiagaraUserColor`·`SetNiagaraUserFloat`를 쓴다.
+- 분포를 사용자 파라미터에 바인딩할 때는 분포 구조체에 `import_text('(Mode=Binding,ParameterBinding=(Name="User.X",TypeDefHandle=(RegisteredTypeIndex=N)))')`를 쓴다. N은 에디터 세션의 타입 번호라, 같은 타입의 렌더러 바인딩(`ColorBinding`은 색, `SpriteRotationBinding`은 실수)을 `export_text()`해 읽는다.
+- 구조체 안의 분포(Dynamic Material Parameters의 `Parameter0` 등)는 고쳐도 엔진이 표(`Values`)를 다시 만들지 않는다. 곡선이면 `ChannelCurves`와 같은 값의 `Values`를 함께 넣는다.
+- 이미터를 고친 뒤에는 시스템의 실행 데이터가 다시 만들어지지 않아 고치기 전 모양으로 재생된다. 저장하고 `EditorLoadingAndSavingUtils.reload_packages`로 다시 읽는다.
+- 경량 이미터는 `seek_to_desired_age`·`set_desired_age`로 나이를 옮겨도 그 시점 모양이 나오지 않는다. 시간대별 모양은 실제 시간으로 재생하며 찍는다.
+- 미리 보기는 임시 액터(`spawn_actor_from_class(..., True)`)로 띄운다. 임시 액터는 `EditorActorSubsystem.get_all_level_actors`에 나오지 않으니 `GameplayStatics.get_all_actors_of_class`로 찾아 지운다. 뒤에 있는 에디터의 뷰포트는 다시 그려지지 않아 `AutomationLibrary.take_high_res_screenshot`이 찍히지 않으므로, PIE 항목의 `bThrottleCPUWhenNotForeground`를 잠시 끈다.
 
 ### UI
 
