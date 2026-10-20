@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
-#include "InputCoreTypes.h"
 #include "AgHUDWidget.generated.h"
 
 class AAgBossCharacter;
@@ -100,9 +99,6 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> ControlsGuideActions;
-
-	UPROPERTY(EditAnywhere, Category = "HUD|Controls Guide")
-	TMap<FKey, FText> KeyDisplayNames;
 
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;

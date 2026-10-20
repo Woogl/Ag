@@ -8,6 +8,7 @@
 #include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgControlsGuideData.h"
 #include "Data/AgEffectData.h"
 #include "Data/AgMontageTimeline.h"
 #include "Data/AgProjectileData.h"
@@ -36,6 +37,7 @@ namespace
 
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
 	const TCHAR* const CameraDataFile = TEXT("Camera.json");
+	const TCHAR* const ControlsGuideFile = TEXT("ControlsGuide.json");
 	const TCHAR* const EffectsFile = TEXT("Effects.json");
 	const TCHAR* const ProjectilesFile = TEXT("Projectiles.json");
 	const TCHAR* const MontageTimelinesFile = TEXT("MontageTimelines.json");
@@ -60,6 +62,7 @@ UAgAssetManager::UAgAssetManager()
 {
 	CombatRules = CreateDefaultSubobject<UAgCombatRules>(TEXT("CombatRules"));
 	CameraData = CreateDefaultSubobject<UAgCameraData>(TEXT("CameraData"));
+	ControlsGuideData = CreateDefaultSubobject<UAgControlsGuideData>(TEXT("ControlsGuideData"));
 	Effects = CreateDefaultSubobject<UAgEffectSet>(TEXT("Effects"));
 	Projectiles = CreateDefaultSubobject<UAgProjectileSet>(TEXT("Projectiles"));
 	MontageTimelines = CreateDefaultSubobject<UAgMontageTimelineData>(TEXT("MontageTimelines"));
@@ -89,6 +92,11 @@ const UAgCombatRules& UAgAssetManager::GetCombatRules() const
 const UAgCameraData& UAgAssetManager::GetCameraData() const
 {
 	return *CameraData;
+}
+
+const UAgControlsGuideData& UAgAssetManager::GetControlsGuideData() const
+{
+	return *ControlsGuideData;
 }
 
 const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const
@@ -204,6 +212,7 @@ bool UAgAssetManager::LoadJsonData()
 	++DataVersion;
 	TObjectPtr<UAgCombatRules> NewRules = NewObject<UAgCombatRules>(this);
 	TObjectPtr<UAgCameraData> NewCamera = NewObject<UAgCameraData>(this);
+	TObjectPtr<UAgControlsGuideData> NewControlsGuide = NewObject<UAgControlsGuideData>(this);
 	UAgEffectSet* NewEffects = NewObject<UAgEffectSet>(this);
 	UAgProjectileSet* NewProjectiles = NewObject<UAgProjectileSet>(this);
 	UAgMontageTimelineData* NewTimelines = NewObject<UAgMontageTimelineData>(this);
@@ -212,6 +221,7 @@ bool UAgAssetManager::LoadJsonData()
 	JsonLoadTargets.Reset();
 	JsonLoadTargets.Add(NewRules);
 	JsonLoadTargets.Add(NewCamera);
+	JsonLoadTargets.Add(NewControlsGuide);
 	JsonLoadTargets.Add(NewEffects);
 	JsonLoadTargets.Add(NewProjectiles);
 	JsonLoadTargets.Add(NewTimelines);
@@ -238,6 +248,7 @@ bool UAgAssetManager::LoadJsonData()
 	bool bRead = Read(EffectsFile, UAgEffectSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgEffectSet, Definitions), &NewEffects->Definitions);
 	bRead = Read(CombatRulesFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CombatRules), &NewRules) && bRead;
 	bRead = Read(CameraDataFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CameraData), &NewCamera) && bRead;
+	bRead = Read(ControlsGuideFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, ControlsGuideData), &NewControlsGuide) && bRead;
 	bRead = Read(ProjectilesFile, UAgProjectileSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgProjectileSet, Projectiles), &NewProjectiles->Projectiles) && bRead;
 	bRead = Read(TargetingPresetsFile, UAgTargetingPresetSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgTargetingPresetSet, Definitions), &NewTargetingPresets->Definitions) && bRead;
 	bRead = Read(AbilitiesFile, UAgAbilitySet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAbilitySet, Abilities), &NewAbilities->Abilities) && bRead;
@@ -261,6 +272,7 @@ bool UAgAssetManager::LoadJsonData()
 
 	CopyJsonProperties(*NewRules, *CombatRules);
 	CopyJsonProperties(*NewCamera, *CameraData);
+	CopyJsonProperties(*NewControlsGuide, *ControlsGuideData);
 	CopyJsonProperties(*NewEffects, *Effects);
 	CopyJsonProperties(*NewProjectiles, *Projectiles);
 	CopyJsonProperties(*NewTimelines, *MontageTimelines);

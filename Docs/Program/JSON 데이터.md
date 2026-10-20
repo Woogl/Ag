@@ -32,6 +32,7 @@
 | `MontageTimelines.json` | 몽타주 시간표([몽타주 시간표](<몽타주 시간표.md>)) | 몽타주 경로 |
 | `TargetingPresets.json` | 대상 프리셋 정의(아래 '대상 프리셋') | 프리셋 ID |
 | `CombatRules.json` | 모든 캐릭터에 공통인 전투 규칙(히트스톱 시간 포함)과 HUD 감소 잔상의 대기·감소 시간 | 속성 이름 |
+| `ControlsGuide.json` | 조작 안내의 키 표시 이름과 행동 설명 | `KeyDisplayNames`, `ActionDescriptions` |
 | `Camera.json` | 락온 카메라와 셰이크의 상황별 단계 | 속성 이름 |
 
 - 정의 파일 다섯은 최상위가 ID를 키로 하는 객체입니다.
@@ -169,6 +170,7 @@ flowchart LR
 | `UAgTargetingPresetSet` | `UObject` | `TargetingPresets.json`의 정의(Task 배열)와 그 정의로 만든 TargetingPreset. 프리셋 ID마다 하나입니다. |
 | `UAgMontageTimelineData` | `UObject` | `MontageTimelines.json`의 값([몽타주 시간표](<몽타주 시간표.md>)) |
 | `UAgCombatRules` | `UObject` | `CombatRules.json`의 값. 공통 전투 규칙과 HUD 감소 잔상 시간 |
+| `UAgControlsGuideData` | `UObject` | `ControlsGuide.json`의 값과 공통 표시 목록 생성 |
 | `UAgCameraData` | `UObject` | `Camera.json`의 값. 락온 카메라 설정, 셰이크 단계별 설정과 상황별 단계 |
 
 Task의 Params는 각 Task의 헤더에 있고, 공통 부모(`FAgTaskParams`)와 이름 규칙으로 찾기는 `AgTaskParams`가 맡습니다([어빌리티와 AbilityTask](<어빌리티와 AbilityTask.md>) '스키마와 등록'). 효과 정의로 GE를 만드는 일은 `AgEffectData`가 맡습니다. 스펙을 만들고 값을 넣는 곳은 '코드가 효과를 쓰는 방법'을 따릅니다.
@@ -194,6 +196,7 @@ classDiagram
     UAssetManager <|-- UAgAssetManager
     UAgAssetManager *-- UAgCombatRules : CombatRules
     UAgAssetManager *-- UAgCameraData : CameraData
+    UAgAssetManager *-- UAgControlsGuideData : ControlsGuideData
     UAgAssetManager *-- UAgEffectSet : Effects
     UAgAssetManager *-- UGameplayEffect : NativeEffects
     UAgAssetManager *-- UAgProjectileSet : Projectiles

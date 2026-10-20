@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#2c3644"/>
+      <stop offset="1" stop-color="#11151b"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 배경 (임시) -->
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">타이틀 화면 (LV_FrontEnd) · 기준 해상도 1920 × 1080</text>
+
+  <!-- 게임 제목 -->
+  <text x="960" y="430" font-size="224" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="24">AG</text>
+
+  <!-- 버튼 (세로 배치) -->
+  <g font-size="32" text-anchor="middle">
+    <rect x="780" y="600" width="360" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <text x="960" y="647" fill="#FFFFFF" font-weight="700">Start</text>
+
+    <rect x="780" y="696" width="360" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="743" fill="#c9d1db">Controls</text>
+    <rect x="780" y="792" width="360" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="839" fill="#c9d1db">Quit</text>
+  </g>
+<rect width="1920" height="1080" fill="#000000" fill-opacity="0.7"/>
+<g transform="translate(-636,-52)">
+  <g fill="#FFFFFF">
+    <rect x="1320" y="230" width="552" height="724" rx="8" fill="#000000" fill-opacity="1"/>
+    <text x="1344" y="278" font-size="32" font-weight="700">Controls</text>
+    <g font-size="24">
+      <text x="1344" y="328">W, A, S, D</text><text x="1520" y="328">이동</text>
+      <text x="1344" y="372">마우스 이동</text><text x="1520" y="372">시야</text>
+      <text x="1344" y="416">좌클릭</text><text x="1520" y="416">평타</text>
+      <text x="1344" y="460">우클릭</text><text x="1520" y="460">가드 / 패리</text>
+      <text x="1344" y="540">Left Shift</text><text x="1520" y="540">회피 / 달리기</text>
+      <text x="1344" y="642">Space</text><text x="1520" y="642">점프</text>
+      <text x="1344" y="686">E</text><text x="1520" y="686">스킬</text>
+      <text x="1344" y="730">Q</text><text x="1520" y="730">궁극기</text>
+      <text x="1344" y="774">F</text><text x="1520" y="774">처형</text>
+      <text x="1344" y="818">휠 클릭</text><text x="1520" y="818">락온 / 락온 해제</text>
+    </g>
+    <g font-size="20" fill="#c9d1db">
+      <text x="1344" y="490">누르고 있으면 가드, 누른 직후 패리 구간</text>
+      <text x="1344" y="570">누르면 회피, 회피 후에도 계속 누르고 있으면</text>
+      <text x="1344" y="598">달리기</text>
+    </g>
+  </g>
+
+<rect x="1476" y="858" width="240" height="72" rx="8" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
+<text x="1596" y="905" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
+</g>
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 닫기: Confirm 버튼 · 팝업 뒤의 타이틀 버튼은 조작할 수 없음</text>
+</svg>

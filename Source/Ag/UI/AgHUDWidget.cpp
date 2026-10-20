@@ -15,12 +15,11 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Data/AgControlsGuideData.h"
 #include "EngineUtils.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
 #include "GameFramework/PlayerController.h"
-#include "InputAction.h"
-#include "InputMappingContext.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
 namespace
@@ -118,29 +117,12 @@ void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
 		return;
 	}
 
-	TArray<const UInputAction*> Actions;
-	TMap<const UInputAction*, TArray<FText>> KeysByAction;
-	for (const FEnhancedActionKeyMapping& KeyMapping : Mapping->GetMappings())
-	{
-		if (!KeyMapping.Action)
-		{
-			continue;
-		}
-		TArray<FText>& Keys = KeysByAction.FindOrAdd(KeyMapping.Action);
-		if (Keys.IsEmpty())
-		{
-			Actions.Add(KeyMapping.Action);
-		}
-		const FText* DisplayName = KeyDisplayNames.Find(KeyMapping.Key);
-		Keys.Add(DisplayName ? *DisplayName : KeyMapping.Key.GetDisplayName(false));
-	}
-
 	TArray<FText> KeyLines;
 	TArray<FText> ActionLines;
-	for (const UInputAction* Action : Actions)
+	for (const FAgControlsGuideEntry& Entry : UAgAssetManager::Get().GetControlsGuideData().MakeEntries(*Mapping))
 	{
-		KeyLines.Add(FText::Join(FText::FromString(TEXT(", ")), KeysByAction[Action]));
-		ActionLines.Add(Action->ActionDescription);
+		KeyLines.Add(Entry.Keys);
+		ActionLines.Add(Entry.Action);
 	}
 	const FText LineBreak = FText::FromString(TEXT("\n"));
 	ControlsGuideKeys->SetText(FText::Join(LineBreak, KeyLines));

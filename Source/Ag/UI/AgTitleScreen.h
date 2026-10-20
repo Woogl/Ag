@@ -7,6 +7,9 @@
 #include "AgTitleScreen.generated.h"
 
 class UAgButton;
+class UAgControlsGuideRow;
+class UInputMappingContext;
+class UVerticalBox;
 
 UCLASS(Abstract)
 class UAgTitleScreen : public UCommonActivatableWidget
@@ -15,6 +18,7 @@ class UAgTitleScreen : public UCommonActivatableWidget
 
 protected:
 	virtual void NativeOnInitialized() override;
+	virtual void NativeOnActivated() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
@@ -22,5 +26,31 @@ protected:
 	TObjectPtr<UAgButton> StartButton;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UAgButton> ControlsButton;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> QuitButton;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidget> ControlsPanel;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UAgButton> CloseButton;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UVerticalBox> ControlsRows;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Controls Guide")
+	TObjectPtr<UInputMappingContext> GuideInputMapping;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Controls Guide")
+	TSubclassOf<UAgControlsGuideRow> ControlsRowClass;
+
+private:
+	void OpenControls();
+	void CloseControls();
+	void SetControlsOpen(bool bOpen);
+
+	bool bControlsOpen = false;
+	bool bReturnToControls = false;
 };

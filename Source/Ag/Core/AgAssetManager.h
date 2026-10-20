@@ -11,6 +11,7 @@ class UAgAbilitySet;
 class UAgCameraData;
 class UAgCharacterData;
 class UAgCombatRules;
+class UAgControlsGuideData;
 class UAgEffectSet;
 class UAgMontageTimelineData;
 class UAgProjectileSet;
@@ -36,6 +37,8 @@ public:
 	const UAgCombatRules& GetCombatRules() const;
 
 	const UAgCameraData& GetCameraData() const;
+
+	const UAgControlsGuideData& GetControlsGuideData() const;
 
 	AG_API const UAgMontageTimelineData& GetMontageTimelines() const;
 
@@ -78,6 +81,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAgCameraData> CameraData;
+
+	UPROPERTY()
+	TObjectPtr<UAgControlsGuideData> ControlsGuideData;
 
 	UPROPERTY()
 	TObjectPtr<UAgEffectSet> Effects;
