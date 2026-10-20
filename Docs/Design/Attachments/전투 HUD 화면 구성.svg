@@ -84,7 +84,7 @@
       <rect x="1788" y="924" width="72" height="72" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="4 3"/>
     </g>
     <path d="M1824 912 H1860 A12 12 0 0 1 1872 924 V996 A12 12 0 0 1 1860 1008 H1788 A12 12 0 0 1 1776 996 V924 A12 12 0 0 1 1788 912 Z" fill="none" stroke="#A970FF" stroke-width="6" stroke-dasharray="218 363" stroke-linecap="round"/>
-    <text x="1824" y="1028" font-size="20">R</text>
+    <text x="1824" y="1028" font-size="20">Q</text>
   </g>
 
   <text x="1652" y="980" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 슬롯: 쿨다운 중인 모습</text>
@@ -100,7 +100,7 @@
     <text x="1576" y="532">Left Shift</text><text x="1707" y="532">회피 / 달리기</text>
     <text x="1576" y="560">Space</text><text x="1707" y="560">점프</text>
     <text x="1576" y="588">E</text><text x="1707" y="588">스킬</text>
-    <text x="1576" y="616">R</text><text x="1707" y="616">궁극기</text>
+    <text x="1576" y="616">Q</text><text x="1707" y="616">궁극기</text>
     <text x="1576" y="644">F</text><text x="1707" y="644">처형</text>
     <text x="1576" y="672">휠 클릭</text><text x="1707" y="672">락온 / 락온 해제</text>
   </g>
