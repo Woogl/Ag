@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WIDTH, HEIGHT, HEADER = 480, 401, 30
 RENDER_SCALE = 2
-CAMERA_ZOOM = 1.3
+CAMERA_ZOOM = 1.6
 WARMUP_FRAMES = 3
 FPS = 20
 HOLD_START, HOLD_END = 300, 500

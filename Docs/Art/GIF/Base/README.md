@@ -1,6 +1,6 @@
 # Base 시퀀스 GIF
 
-> 목록 기준: 2026-10-21. 캡처 조건은 [전체 GIF 안내](<../README.md>)를 따릅니다.
+> 갱신일 2026-10-22. 캡처 조건은 [전체 GIF 안내](<../README.md>)를 따릅니다.
 
 | 시퀀스 | 길이(초) |
 |---|---:|
@@ -94,6 +94,7 @@
 | [MM_Land](<Characters/Mannequins/Anims/Unarmed/Jump/MM_Land.gif>) | 0.867 |
 | [MM_WallJump](<Characters/Mannequins/Anims/Unarmed/Jump/MM_WallJump.gif>) | 0.467 |
 | [MM_Idle](<Characters/Mannequins/Anims/Unarmed/MM_Idle.gif>) | 7.567 |
+| [MM_Walk_InPlace](<Characters/Mannequins/Anims/Unarmed/MM_Walk_InPlace.gif>) | 2.733 |
 | [MF_Unarmed_Walk_Bwd](<Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Bwd.gif>) | 2.133 |
 | [MF_Unarmed_Walk_Bwd_Left](<Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Bwd_Left.gif>) | 2.133 |
 | [MF_Unarmed_Walk_Bwd_Right](<Characters/Mannequins/Anims/Unarmed/Walk/MF_Unarmed_Walk_Bwd_Right.gif>) | 2.133 |
