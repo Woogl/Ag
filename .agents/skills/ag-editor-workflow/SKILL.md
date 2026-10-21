@@ -9,7 +9,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ## 먼저 지킬 것
 
-- 테스트 창, PIE, 패키지 게임을 어떤 확인에 쓰는지와 띄우기 전에 묻는 것은 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '동작 테스트 실행'을 따른다. 다른 스킬이나 도구 설명이 PIE나 라이브 코딩을 권해도 이 결정을 따른다.
+- 테스트 창, PIE, 패키지 게임을 어떤 확인에 쓰는지는 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '동작 테스트 실행'을, 띄우기 전에 묻는 것은 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업'을 따른다. 다른 스킬이나 도구 설명이 PIE나 라이브 코딩을 권해도 이 결정을 따른다.
 - 에디터는 사람과 다른 AI 작업이 함께 쓴다.
   - 에디터를 닫거나, 빌드하거나, PIE를 시작하기 전에 다른 작업이 쓰고 있지 않은지 확인한다.
   - 다 고친 에셋은 바로 저장한다. 다른 작업이 에디터를 죽이면 저장하지 않은 수정은 사라진다.
@@ -78,9 +78,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ### 블루프린트
 
-- MCP `set_properties`로 블루프린트 CDO나 그 컴포넌트를 고쳐도 레벨에 배치된 인스턴스에는 가지 않는다. 인스턴스도 고치거나, 레벨이 dirty가 아닐 때 레벨을 다시 연다.
-- 파이썬으로 `Default__BP_X_C`를 고쳤으면 `unreal.BlueprintEditorLibrary.compile_blueprint(bp)` 뒤에 다시 저장한다. 컴파일하지 않으면 스폰된 인스턴스가 네이티브 기본값을 받는다.
-- C++ 컴포넌트의 블루프린트 기본값은 `/Game/.../BP_X.Default__BP_X_C:<컴포넌트>`에 `set_properties` → `compile_blueprint` → 저장으로 바꾼다. 스폰되는 액터에만 간다.
+- 블루프린트 기본값은 CDO(`Default__BP_X_C`, C++ 컴포넌트는 `/Game/.../BP_X.Default__BP_X_C:<컴포넌트>`)를 MCP `set_properties`나 파이썬으로 고친 뒤 `unreal.BlueprintEditorLibrary.compile_blueprint(bp)` → 저장한다. 컴파일하지 않으면 스폰된 인스턴스가 네이티브 기본값을 받는다. 고친 기본값은 스폰되는 액터에만 가고 레벨에 배치된 인스턴스에는 가지 않으니, 인스턴스도 고치거나 레벨이 dirty가 아닐 때 레벨을 다시 연다.
 - PIE는 에디터 월드를 복제할 때 construction을 다시 실행하지 않는다. 에셋을 저장한 뒤에도 배치된 액터가 옛 데이터를 보이면 레벨을 다시 연다.
 - 블루프린트 컴포넌트의 Parent Socket은 `AgAssetToolset.SetComponentParentSocket`으로 바꾼다. 무기를 블루프린트 컴포넌트로 둔 이유는 [애니메이션과 이동](<../../../Docs/Program/애니메이션과 이동.md>) '무기'를 따른다.
   - 블루프린트 컴포넌트는 `SubobjectDataSubsystem.add_new_subobject`로 더하고, 이름은 `rename_subobject_member_variable`로 바꾼다(`rename_subobject`는 조용히 실패한다).
@@ -96,15 +94,14 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 - 몽타주 섹션과 트랙 길이는 엔진 MCP와 파이썬으로 바꿀 수 없다. `AgAssetToolset.SetMontageSegments`·`SetMontageSections`를 쓴다. 섹션은 시작 시간 순서로 넘긴다(툴셋이 정렬하지 않는다).
 - 복제한 몽타주는 `SetMontageSegments` 뒤에도 옛 섹션의 시퀀스 참조가 남는다. `SetMontageSections`를 다시 부르고 저장한다.
 - `SetMontageSegments`로 몽타주가 길어지면 옛 끝에서 끝나던 노티파이 상태를 엔진이 새 끝까지 늘리지만, 끝 링크는 옛 구간에 남는다. 그 노티파이는 지우고(`remove_animation_notify_events_by_track`) 다시 넣는다.
-- 몽타주 안의 게임 규칙 시각(판정·보호·워핑·후딜 같은 사건)은 노티파이가 아니라 `Data/MontageTimelines.json`에서 고친다([몽타주 시간표](<../../../Docs/Program/몽타주 시간표.md>)). 몽타주에는 연출 노티파이만 두며(루트 모션 끄기는 Dash가 맡는다), 프로젝트 노티파이나 엔진 워핑 노티파이를 넣으면 시간표와 같은 일이 두 번 일어난다. 데이터를 읽을 때 몽타주와 대조하지 않으므로 섹션 이름이나 시각이 틀려도 재생할 때야 드러난다.
+- 몽타주 안의 게임 규칙 시각(판정·보호·워핑·후딜 같은 사건)은 노티파이가 아니라 `Data/MontageTimelines.json`에서 고친다([몽타주 시간표](<../../../Docs/Program/몽타주 시간표.md>)). 몽타주에 두는 노티파이는 몽타주 시간표 '몽타주에 남는 노티파이'를 따른다. 데이터를 읽을 때 몽타주와 대조하지 않으므로 섹션 이름이나 시각이 틀려도 재생할 때야 드러난다.
 - 몽타주 노티파이는 `get_properties`로 읽을 수 없다. `unreal.AnimationLibrary.get_animation_notify_events(montage)`로 읽고, 트랙별로는 `get_animation_notify_events_for_track`으로 읽는다.
 - 노티파이 시각을 float 값 그대로 읽으려면 `unreal.AnimationLibrary.get_anim_notify_event_trigger_time`(트리거 오프셋 포함)과 `get_anim_notify_event_duration`을 쓴다. 이벤트의 `trigger_time_offset`과 `Duration`은 파이썬에서 읽을 수 없고, `export_text()`의 값은 소수 6자리다.
 - 노티파이는 `unreal.AnimationLibrary.add_animation_notify_event(montage, 트랙 이름, 시각, 노티파이 클래스)`로 더하고, 돌려받은 노티파이에 속성(`gameplay_cue` 등)을 쓴 뒤 저장한다.
 - 몽타주 섹션의 시작 시간과 다음 섹션은 파이썬 속성으로 읽을 수 없다(`composite_sections`에 접근하지 못한다). `unreal.AssetExportTask`의 `exporter`에 `unreal.ObjectExporterT3D()`를 주고 `unreal.Exporter.run_asset_export_task`로 T3D를 내보내면 `CompositeSections`(시각 `LinkValue`, `NextSectionName`)와 `Notifies`(시각, 길이, `TriggerTimeOffset`, 끝 링크)가 소수 6자리로 나온다.
-- 엔진 노티파이는 정방향 재생에서 '앞 위치 < 노티파이 시각 ≤ 지금 위치'일 때만 울린다. 섹션 시작 시각에 정확히 둔 노티파이는 그 섹션으로 점프한 직후 울리지 않으니 조금 뒤에 둔다. 시간표의 지점은 섹션 이동 직후 그 위치의 지점도 실행한다.
-- 몽타주는 섹션 시작 시각에 정확히 둔 노티파이에 −0.0001초 오프셋을 줘 앞 섹션 끝에서 울린다. 반복 섹션 바로 뒤 섹션의 시작에 둔 노티파이 상태는 반복할 때마다 켜졌다 꺼지므로, 시작을 0.0001초 뒤에 둔다.
+- 섹션 시작에 둘 노티파이는 시작 시각보다 0.0001초 이상 뒤에 둔다. 시작 시각에 정확히 두면, 엔진 노티파이는 정방향 재생에서 '앞 위치 < 노티파이 시각 ≤ 지금 위치'일 때만 울려 그 섹션으로 점프한 직후에는 울리지 않고, 몽타주는 그 노티파이에 −0.0001초 오프셋을 줘 앞 섹션 끝에서 울리며, 반복 섹션 바로 뒤 섹션의 시작에 둔 노티파이 상태는 반복할 때마다 켜졌다 꺼진다.
 - 몽타주 시작(0초)에 둔 루트 모션 끄기 노티파이는 엔진이 0.0001초 뒤에 켜고, 몽타주는 한 프레임 안에서 루트 모션을 먼저 뽑은 뒤 분기점 노티파이를 처리한다. 그래서 첫 프레임에 그 앞 조각의 루트 모션이 남고, 그 프레임은 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않고 수평 속도도 덮어쓴다. 몽타주 전체에서 루트 모션을 쓰지 않으려면 노티파이 대신 시퀀스의 루트 모션을 끄고 루트 뼈를 고정한다(`enable_root_motion` False, `force_root_lock` True).
-- 루트 모션을 끈 재생(노티파이 구간, Dash)에서 새로 재생한 몽타주 인스턴스(BlendTime 전환)는 끈 상태를 받지 않고 첫 프레임의 루트 모션을 먼저 뽑고, 캐릭터 무브먼트는 그 속도를 다음 프레임들에도 이어 간다. 그 구간에 쓰는 시퀀스는 루트 모션을 끈다.
+- 루트 모션을 끈 재생(Dash, Launch)에서 새로 재생한 몽타주 인스턴스(BlendTime 전환)는 끈 상태를 받지 않고 첫 프레임의 루트 모션을 먼저 뽑고, 캐릭터 무브먼트는 그 속도를 다음 프레임들에도 이어 간다. 그 구간에 쓰는 시퀀스는 루트 모션을 끈다.
 - 몽타주를 이어 재생할 때, `OnBlendOut`은 길이에서 블렌드 아웃 시간을 뺀 때에 온다. 거기서 다음 몽타주를 시작하면 앞 모션이 잘리므로, 앞 몽타주의 `BlendOutTriggerTime`을 0으로 둔다.
 - 스크립트로 만든 블렌드 스페이스는 `ResampleData()`가 불리지 않아 기본 자세(A 포즈)를 재생한다. `OpenEditorForAsset`으로 열고 dirty로 만든 뒤 저장한다.
 - 애님 그래프 노드의 값이 핀으로 보이면(`bShowPin`) 컴파일할 때 핀 기본값이 덮어쓴다. `BlueprintTools.set_pin_value`로 바꾼다. 핀만 바꾸면 패키지가 dirty가 되지 않아 저장되지 않으니, 노드를 따로 dirty로 만들어 저장한 뒤 파일 시각을 확인한다.
@@ -115,13 +112,13 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 - `LevelSequenceEditorSubsystem.add_spawnable_from_class`로 캐릭터 블루프린트를 더하면 엔진이 위치 트랙과 메시의 Control Rig 트랙을 저절로 붙인다. 쓰지 않으면 지운다. 위치 트랙은 게임에서 바인딩한 액터를 그 자리에 붙잡아 둔다. Replaceable 바인딩은 `convert_to_custom_binding(binding, unreal.MovieSceneReplaceableActorBinding.static_class())`로 바꾼다. 이 함수들은 시퀀서에 열린 시퀀스에서 동작한다(`LevelSequenceEditorBlueprintLibrary.open_level_sequence`).
 - 섹션의 `set_range_seconds`는 끝 프레임을 포함 범위로 넣어 다음 섹션과 1틱 겹친다. 끝을 1틱(1 / 틱 해상도) 당겨 넣는다.
 - 바인딩의 `get_display_name()`은 Text라 dict 키로 쓰려면 `str()`로 바꾼다.
-- 뒤에 있는 에디터에서 파이썬으로 시퀀서 시간을 옮겼을 때 미리 보기 캐릭터의 애니메이션이 갱신되지 않았다(몽타주 재생 위치도 멈춤). 사람이 에디터를 앞에 두고 시퀀서를 끌면 갱신됐다. 미리 보기 자세는 사람에게 확인을 부탁한다.
+- 뒤에 있는 에디터에서 파이썬으로 시퀀서 시간을 옮기면 미리 보기 캐릭터의 애니메이션이 갱신되지 않는다(몽타주 재생 위치도 멈춤). 사람이 에디터를 앞에 두고 시퀀서를 끌어야 갱신된다. 미리 보기 자세는 사람에게 확인을 부탁한다.
 
 ### GAS와 StateTree
 
 - GameplayCue를 복제하면 태그를 바꿀 때까지 "Multiple gameplay cues ... Skipping" 경고가 나고 원본만 재생된다. 복제본의 CDO에 `set_editor_property('gameplay_cue_tag', tag)`로 태그를 주면 바로 다시 등록된다. 엔진 `GameplayCueToolset.AddCueTag`는 태그 ini에 쓰므로 쓰지 않는다(AGENTS.md 코딩 규칙 3).
 - 에디터를 켤 때 부모 클래스를 찾지 못한 GameplayCue 블루프린트는 경고 없이 Cue 목록에서 빠진다. 켜 둔 에디터에서 부모를 바꿔 저장해도 목록은 다시 만들어지지 않아, 그 세션의 PIE에서는 그 Cue가 나오지 않는다. 부모를 바꿨으면 에디터를 다시 켠 뒤 확인한다. 등록 여부는 `GameplayCueManager_0`의 `GlobalGameplayCueSet`에서 `GameplayCueData`의 태그로 본다(파이썬에 `GameplayCueSet` 타입이 없어 `ObjectIterator(unreal.Object)`에서 클래스 이름으로 찾는다). `GameplayCueData`는 파이썬으로 읽을 수 없으니 그 객체를 T3D로 내보내 읽는다(몽타주 T3D와 같은 방법). 엔진 `GameplayCueToolset.GetCueInfo`·`FindCueTagsWithoutNotifies`는 등록된 큐도 노티파이가 없다고 답하므로 쓰지 않는다.
-- StateTree는 `AgAssetToolset`의 StateTree 함수로 고치고, `CompileStateTree`(빈 문자열이면 오류 없음)로 컴파일한 뒤 저장한다. 읽기와 스키마 속성은 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '프로젝트 MCP 도구'를 따른다.
+- StateTree는 `AgAssetToolset`의 StateTree 함수로 고치고, `CompileStateTree`(빈 문자열이면 오류 없음)로 컴파일한 뒤 저장한다. 읽을 때는 엔진의 StateTree 조회 도구를 쓰고, 스키마의 속성은 엔진의 `set_properties`로 스키마 객체에 쓴다.
 - 파이썬으로 상태 이름을 바꾸려면 `unreal.ObjectIterator(unreal.StateTreeState)`를 `get_outermost().get_name() == '/Game/AI/ST_Boss'`로 걸러 `set_editor_property('name', ...)`로 바꾸고, 컴파일하고 저장한다. 전환은 ID로 이어져 있어 그대로 남는다.
 
 ### 구조체와 배열
@@ -163,7 +160,7 @@ PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Program/개발 
 - 키 입력은 확인용 입력([개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '확인용 입력')으로 넣는다. 회피 방향(`DevMoveInput`)은 회피 키보다 한 프레임 이상 먼저 넣는다. `DevPressInput`은 다음 원격 호출 전에 끝나므로 몽타주 확인은 `DevMashInput`으로 한다.
 - 보스는 `boss.get_controller().get_component_by_class(unreal.BrainComponent).stop_logic("test")`로 멈춘다. 멈추지 않으면 StateTree가 파이썬으로 실행한 패턴을 끊는다.
 - 행동(보스 패턴 포함)은 모두 같은 클래스 `UAgGameplayAbility`의 스펙이라 태그로 실행되지 않는다. 행동 태그는 스펙 태그에 있고, 엔진 `TryActivateAbilitiesByTag`·`FindAllAbilitiesWithTags`는 어빌리티의 에셋 태그만 본다. `asc.get_all_abilities()`의 핸들은 `Characters.json`에서 그 캐릭터의 `Abilities` 순서이므로, 그 순서로 고른 핸들로 `asc.try_activate_ability(handle, True)`를 부른다.
-- `Data` JSON은 저장하면 PIE 중에도 바로 다시 읽힌다(`UAgDataReloadSubsystem`). 테스트 때문에 고칠 때는 '동작 테스트 실행'을 따르고, 끝나면 원래 바이트로 되돌린다.
+- `Data` JSON은 저장하면 PIE 중에도 바로 다시 읽힌다(`UAgDataReloadSubsystem`). 테스트 때문에 고칠 때는 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업'을 따르고, 끝나면 원래 바이트로 되돌린다.
 - 엔진 자동화 테스트를 돌린 뒤에는 남은 컴파일 오류 창이 PIE 시작을 막을 수 있다. 에디터를 다시 켜면 풀린다.
 - 에디터를 다시 켠 직후에는 첫 MCP 호출이 두 번 처리될 수 있다. StartPIE가 'A play session is already running'으로 답하면 방금 보낸 첫 호출이 먼저 처리된 것일 수 있으니 로그의 `Dispatching` 줄부터 본다.
 - CommonUI는 에디터에서 PIE 뷰포트가 포커스를 가질 때만 입력 설정과 첫 포커스를 적용한다. 뒤에 있는 PIE에서 버튼 선택이 보이지 않으면 버그로 보기 전에 포커스부터 확인한다. 사람의 마우스가 떠 있는 PIE 창을 지나가도 버튼이 선택되니, 선택이 이상하면 `is_hovered()`와 커서 위치를 본다.
@@ -190,13 +187,13 @@ PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Program/개발 
 | 캐릭터 무브먼트 | `char.get_editor_property("character_movement")` |
 | PIE 월드 | `unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()` |
 | 콘솔 명령 | `unreal.SystemLibrary.execute_console_command(world, cmd, unreal.GameplayStatics.get_player_controller(world, 0))` |
-| JSON 데이터 객체 | 에디터의 에셋 매니저는 `/Engine/Transient.UnrealEdEngine_0:AgAssetManager_0`이다. 하위 객체를 `unreal.find_object(None, <매니저 경로> + '.Effects')`처럼 이름(`CombatRules`, `CameraData`, `Effects`, `Projectiles`, `MontageTimelines`, `TargetingPresets`, `Abilities`)으로 찾는다. 파이썬 타입이 없는 클래스(`UAgEffectSet` 등)도 이렇게 찾는다. `ObjectIterator`로 찾으면 매니저 CDO의 같은 이름 하위 객체(`/Script/Ag.Default__AgAssetManager:<이름>`)와 읽을 때 만든 임시 객체도 함께 나온다. |
+| JSON 데이터 객체 | 에디터의 에셋 매니저는 `/Engine/Transient.UnrealEdEngine_0:AgAssetManager_0`이다. 하위 객체를 `unreal.find_object(None, <매니저 경로> + '.Effects')`처럼 이름(`CombatRules`, `Effects`, `Projectiles`, `MontageTimelines`, `TargetingPresets`, `Abilities`, 캐릭터 데이터 `Player`·`Boss`)으로 찾는다. 파이썬 타입이 없는 클래스(`UAgEffectSet` 등)도 이렇게 찾는다. `ObjectIterator`로 찾으면 매니저 CDO의 같은 이름 하위 객체(`/Script/Ag.Default__AgAssetManager:<이름>`)와 읽을 때 만든 임시 객체도 함께 나온다. |
 | 파이썬 타입이 없는 클래스 | CDO를 `unreal.find_object(None, '/Script/<모듈>.Default__<클래스>')`로 찾는다 |
 | 속성 이름 | `get_editor_property`·`set_editor_property`는 네이티브 C++ 이름(`bThrottleCPUWhenNotForeground`, `MaxHP`)도 받는다 |
 
 ## 패키징
 
-- 패키지 게임을 띄우기 전의 물음은 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '동작 테스트 실행'을 따른다.
+- 패키지 게임을 띄우기 전의 물음은 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업'을 따른다.
 - `Saved/StagedBuilds` 아래의 `Ag.exe`가 아직 돌고 있으면 스테이지 단계가 실패한다(ExitCode=102). 먼저 끈다.
 - 다른 작업이 에디터를 빌드하려는 중에는 패키징하지 않는다. 쿡이 에디터 DLL을 불러온다.
 - 명령: `RunUAT.bat BuildCookRun -project=<저장소>\Ag.uproject -noP4 -platform=Win64 -clientconfig=Development -build -cook -stage -pak -nocompileeditor -unattended -utf8output`. `-nocompileeditor`는 켜져 있는 에디터의 DLL을 건드리지 않게 한다. 결과는 `Saved/StagedBuilds/Windows`에 생긴다.
