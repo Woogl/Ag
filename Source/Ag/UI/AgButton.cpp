@@ -37,10 +37,20 @@ void UAgButton::NativeOnHovered()
 	Super::NativeOnHovered();
 
 	// 마우스와 키보드가 늘 같은 버튼에서 이어지도록 포커스를 옮깁니다.
+	// 이미 포커스가 있던 버튼은 Slate가 포커스 이벤트를 다시 보내지 않으므로 선택을 직접 켭니다.
 	if (GetIsEnabled())
 	{
 		SetFocus();
+		SetIsSelected(true, false);
 	}
+}
+
+void UAgButton::NativeOnUnhovered()
+{
+	Super::NativeOnUnhovered();
+
+	// 하이라이트만 끄고 포커스는 남겨 다음 방향키가 이 버튼에서 이어지게 합니다.
+	ClearSelection();
 }
 
 void UAgButton::HandleFocusLost()

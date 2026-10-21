@@ -20,6 +20,7 @@ protected:
 	virtual void NativePreConstruct() override;
 	virtual void NativeOnCurrentTextStyleChanged() override;
 	virtual void NativeOnHovered() override;
+	virtual void NativeOnUnhovered() override;
 	virtual void HandleFocusLost() override;
 
 	UPROPERTY(EditAnywhere, Category = "Button")
