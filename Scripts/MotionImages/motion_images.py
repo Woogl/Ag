@@ -3,8 +3,9 @@
 쓰는 법은 README.md를 따릅니다.
 
     python Scripts/MotionImages/motion_images.py probe                          그림 파일의 모션 데이터 뽑기 (1분 정도)
-    python Scripts/MotionImages/motion_images.py make [image ...]               plan, capture, compose를 차례로 실행
-    python Scripts/MotionImages/motion_images.py compose [image ...] [--out DIR] 캡처해 둔 칸으로 다시 합성
+    python Scripts/MotionImages/motion_images.py assemble [image ...]          기존 시퀀스 GIF를 조립
+    python Scripts/MotionImages/motion_images.py make [image ...]               GIF는 조립, 칸 그림은 캡처·합성
+    python Scripts/MotionImages/motion_images.py compose [image ...] [--out DIR] GIF 조립 또는 캡처한 칸 합성
 
 plan과 capture도 따로 실행할 수 있습니다. image는 .json을 뺀 그림 파일 이름이고, 없으면 모든 그림입니다.
 """
@@ -440,10 +441,18 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["probe", "plan", "capture", "compose", "make"])
+    parser.add_argument("command", choices=["probe", "plan", "capture", "compose", "make", "assemble"])
     parser.add_argument("images", nargs="*")
     parser.add_argument("--out", default=ATTACHMENTS, help="compose/make: folder for the images (default Docs/Design/Attachments)")
     args = parser.parse_args()
+    if args.command in ("make", "compose", "assemble"):
+        from assemble import assemble_sheet
+        sheets = load_sheets(args.images)
+        if args.command == "assemble" or not any(sheet.get("rows") for sheet in sheets):
+            for sheet in sheets:
+                if "animation" in sheet:
+                    assemble_sheet(sheet, args.out, GIF_FPS, GIF_HOLD_START, GIF_HOLD_END)
+            return
     if args.command == "probe":
         probe()
     elif args.command == "plan":

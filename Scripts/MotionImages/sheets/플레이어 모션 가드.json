@@ -13,20 +13,6 @@
         "from": 0.0,
         "to": 0.9833
       }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Samurai/Guard",
-          "t": 0.0
-        },
-        "to": {
-          "clip": "Samurai/Guard",
-          "t": 0.3
-        },
-        "label": "패리 구간",
-        "color": "cyan"
-      }
     ]
   }
 }

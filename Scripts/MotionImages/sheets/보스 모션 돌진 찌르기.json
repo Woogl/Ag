@@ -24,33 +24,6 @@
         "from": 0.22,
         "to": 0.9833
       }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Halberd/Attack_Heavy1_Start",
-          "t": 0.6767
-        },
-        "to": {
-          "clip": "Halberd/Attack_Heavy1",
-          "t": 0.1
-        },
-        "label": "패리 예고",
-        "color": "yellow"
-      },
-      {
-        "from": {
-          "clip": "Halberd/Attack_Heavy1",
-          "t": 0.1
-        },
-        "to": {
-          "clip": "Halberd/Attack_Heavy1",
-          "t": 0.2201
-        },
-        "label": "돌진 찌르기 (돌진하는 동안)",
-        "color": "yellow",
-        "border": true
-      }
     ]
   }
 }

@@ -15,15 +15,6 @@
         "from": 0.25,
         "to": 1.2333
       }
-    ],
-    "marks": [
-      {
-        "clip": "Halberd/Attack_Sprint",
-        "t": 0.5,
-        "label": "휩쓸기",
-        "lead": 0.38,
-        "lead_label": "패리 예고"
-      }
     ]
   }
 }

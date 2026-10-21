@@ -19,29 +19,6 @@
         "from": 0.0,
         "to": 0.9833
       }
-    ],
-    "marks": [
-      {
-        "clip": "Halberd/Attack_Combo2",
-        "t": 0.75,
-        "label": "1발 발사",
-        "lead": 0.3,
-        "lead_label": "패리 예고"
-      },
-      {
-        "clip": "Halberd/Attack_Combo3",
-        "t": 0.5,
-        "label": "2발 발사",
-        "lead": 0.3,
-        "lead_label": "패리 예고"
-      },
-      {
-        "clip": "Halberd/Attack_Combo4",
-        "t": 0.28,
-        "label": "3발 발사",
-        "lead": 0.3,
-        "lead_label": "패리 예고"
-      }
     ]
   }
 }

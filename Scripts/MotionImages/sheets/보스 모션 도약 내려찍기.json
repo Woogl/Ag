@@ -19,28 +19,6 @@
         "from": 0.0,
         "to": 0.8167
       }
-    ],
-    "marks": [
-      {
-        "clip": "Halberd/Attack_Airborne_End",
-        "t": 0.0,
-        "label": "착지 내려찍기 (가드 불가)",
-        "red": true
-      }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Halberd/Attack_Airborne_Start",
-          "t": 0.152
-        },
-        "to": {
-          "clip": "Halberd/Attack_Airborne_Start",
-          "t": 0.3667
-        },
-        "label": "가드 불가 예고",
-        "color": "red"
-      }
     ]
   }
 }

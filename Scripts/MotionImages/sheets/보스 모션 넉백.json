@@ -8,20 +8,6 @@
         "from": 0.0,
         "to": 1.3167
       }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Halberd/Hit_knockdown",
-          "t": 0.1
-        },
-        "to": {
-          "clip": "Halberd/Hit_knockdown",
-          "t": 1.3167
-        },
-        "label": "무적",
-        "color": "cyan"
-      }
     ]
   }
 }

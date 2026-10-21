@@ -20,15 +20,6 @@
         "from": 0.35,
         "to": 1.15
       }
-    ],
-    "marks": [
-      {
-        "clip": "Halberd/Attack_Heavy2",
-        "t": 0.3833,
-        "label": "내려찍기",
-        "lead": 0.34,
-        "lead_label": "패리 예고"
-      }
     ]
   }
 }

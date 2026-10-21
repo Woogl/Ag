@@ -13,39 +13,6 @@
         "from": 0.0,
         "to": 0.5667
       }
-    ],
-    "marks": [
-      {
-        "clip": "Samurai/Parry",
-        "t": 0.0667,
-        "label": "쳐올려 튕겨 냄"
-      }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Samurai/Guard",
-          "t": 0.0
-        },
-        "to": {
-          "clip": "Samurai/Guard",
-          "t": 0.2
-        },
-        "label": "패리 구간",
-        "color": "cyan"
-      },
-      {
-        "from": {
-          "clip": "Samurai/Parry",
-          "t": 0.25
-        },
-        "to": {
-          "clip": "Samurai/Parry",
-          "t": 0.5667
-        },
-        "label": "후딜",
-        "color": "cyan"
-      }
     ]
   }
 }

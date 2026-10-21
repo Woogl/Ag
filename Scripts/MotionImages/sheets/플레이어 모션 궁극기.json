@@ -28,51 +28,6 @@
         "from": 0.0,
         "to": 0.8167
       }
-    ],
-    "marks": [
-      {
-        "clip": "Samurai/UnequipB",
-        "t": 2.0667,
-        "label": "마무리"
-      }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Samurai/Attack_Heavy1_Start",
-          "t": 0.0
-        },
-        "to": {
-          "clip": "Samurai/UnequipB",
-          "t": 0.0
-        },
-        "label": "컷신 (무적 · 시간 정지)",
-        "color": "cyan"
-      },
-      {
-        "from": {
-          "clip": "Samurai/UnequipB",
-          "t": 0.0
-        },
-        "to": {
-          "clip": "Samurai/UnequipB",
-          "t": 2.0667
-        },
-        "label": "베기 (무적 · 시간 정지)",
-        "color": "cyan"
-      },
-      {
-        "from": {
-          "clip": "Samurai/Equip",
-          "t": 0.0
-        },
-        "to": {
-          "clip": "Samurai/Equip",
-          "t": 0.8167
-        },
-        "label": "칼 뽑기 (무적 · 후딜)",
-        "color": "cyan"
-      }
     ]
   }
 }

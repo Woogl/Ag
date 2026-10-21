@@ -31,22 +31,6 @@
         "from": 0.65,
         "to": 1.4333
       }
-    ],
-    "marks": [
-      {
-        "clip": "Halberd/Attack_Combo1",
-        "t": 0.2333,
-        "label": "1타 찌르기",
-        "lead": 0.37,
-        "lead_label": "패리 예고"
-      },
-      {
-        "clip": "Halberd/Attack_Combo2",
-        "t": 0.75,
-        "label": "2타 내려찍기",
-        "lead": 0.36,
-        "lead_label": "패리 예고"
-      }
     ]
   }
 }

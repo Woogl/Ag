@@ -28,47 +28,6 @@
         "from": 0.0,
         "to": 1.2167
       }
-    ],
-    "marks": [
-      {
-        "clip": "Samurai/Attack_Combo_B1",
-        "t": 0.2833,
-        "label": "1타 내려베기"
-      },
-      {
-        "clip": "Samurai/Attack_Combo_B2",
-        "t": 0.3,
-        "label": "2타 사선 내려베기"
-      },
-      {
-        "clip": "Samurai/Attack_Combo_B3",
-        "t": 0.3,
-        "label": "3타 올려베기"
-      },
-      {
-        "clip": "Samurai/Attack_Combo_B4",
-        "t": 0.3,
-        "label": "4타 올려베기"
-      },
-      {
-        "clip": "Samurai/Attack_Combo_B5",
-        "t": 0.3167,
-        "label": "5타 크게 내려베기"
-      }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Samurai/Attack_Combo_B5",
-          "t": 0.9167
-        },
-        "to": {
-          "clip": "Samurai/Attack_Combo_B5",
-          "t": 1.2167
-        },
-        "label": "후딜",
-        "color": "cyan"
-      }
     ]
   }
 }

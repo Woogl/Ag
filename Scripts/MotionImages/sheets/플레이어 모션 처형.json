@@ -9,32 +9,6 @@
         "from": 0.0,
         "to": 1.2333
       }
-    ],
-    "marks": [
-      {
-        "clip": "Warrior/Execute",
-        "t": 0.3333,
-        "label": "찌르기"
-      },
-      {
-        "clip": "Warrior/Execute",
-        "t": 0.8,
-        "label": "마지막 일격"
-      }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Warrior/Execute",
-          "t": 0.0
-        },
-        "to": {
-          "clip": "Warrior/Execute",
-          "t": 1.2333
-        },
-        "label": "무적",
-        "color": "cyan"
-      }
     ]
   }
 }

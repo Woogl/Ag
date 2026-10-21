@@ -8,44 +8,6 @@
         "from": 0.0,
         "to": 0.7
       }
-    ],
-    "spans": [
-      {
-        "from": {
-          "clip": "Samurai/Dodge",
-          "t": 0.0
-        },
-        "to": {
-          "clip": "Samurai/Dodge",
-          "t": 0.15
-        },
-        "label": "무적 · 극한 회피 구간",
-        "color": "cyan"
-      },
-      {
-        "from": {
-          "clip": "Samurai/Dodge",
-          "t": 0.15
-        },
-        "to": {
-          "clip": "Samurai/Dodge",
-          "t": 0.3
-        },
-        "label": "무적",
-        "color": "cyan"
-      },
-      {
-        "from": {
-          "clip": "Samurai/Dodge",
-          "t": 0.4
-        },
-        "to": {
-          "clip": "Samurai/Dodge",
-          "t": 0.7
-        },
-        "label": "후딜",
-        "color": "cyan"
-      }
     ]
   }
 }
