@@ -77,7 +77,8 @@
     },
     "End": "TriggerTag",
     "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "ParryWindow"}
+      {"Task": "ApplyEffect", "Effect": "ParryWindow"},
+      {"Task": "ApplyEffect", "Effect": "GuardMoveSpeed"}
     ]
   },
   "Parry": {
@@ -91,6 +92,7 @@
     },
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "ApplyEffect", "Effect": "ParryReward", "bRemoveOnEnd": false},
       {"Task": "PlayMontage", "Montage": "Parry"}
     ]
   },
@@ -152,7 +154,8 @@
     },
     "End": "TriggerTag",
     "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "SprintDrain"}
+      {"Task": "ApplyEffect", "Effect": "SprintDrain"},
+      {"Task": "ApplyEffect", "Effect": "SprintSpeed"}
     ]
   },
   "LockOn": {
@@ -165,16 +168,6 @@
     "Targeting": {"Preset": "LockOn", "Range": 2000, "bRequired": true},
     "Tasks": [
       {"Task": "WaitTargetLost", "ReleaseRange": 3000}
-    ]
-  },
-  "EnemyLockOn": {
-    "Tags": ["Ability.LockOn"],
-    "Activation": {
-      "BlockedTags": ["State.Dead"]
-    },
-    "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
-    "Tasks": [
-      {"Task": "WaitTargetLost"}
     ]
   },
   "KnockBack": {
@@ -358,8 +351,8 @@
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat", "State.HitReaction"],
-      "CancelTags": ["Ability.Boss.Pattern", "Ability.Action", "Ability.Sprint", "Ability.Reaction.HitReaction"],
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Groggy"}
       ]
@@ -384,7 +377,8 @@
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "Executed"}
-    ]
+    ],
+    "DeathMontage": "ExecutedDeath"
   },
   "PhaseTransition": {
     "Tags": ["Ability.Reaction.PhaseTransition"],
@@ -398,6 +392,16 @@
     },
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "PhaseTransition"}
+    ]
+  },
+  "EnemyLockOn": {
+    "Tags": ["Ability.LockOn"],
+    "Activation": {
+      "BlockedTags": ["State.Dead"]
+    },
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
+    "Tasks": [
+      {"Task": "WaitTargetLost"}
     ]
   }
 }

@@ -52,7 +52,6 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	virtual float GetMoveSpeedMultiplier() const override;
 
 	virtual void OnJumped_Implementation() override;
 
@@ -183,6 +182,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> LockOnAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	float InputBufferTime = 0.3f;
 
 	FVector MoveInputDirection = FVector::ZeroVector;
 

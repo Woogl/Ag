@@ -56,6 +56,12 @@
     "Duration": 0.3,
     "GrantedTags": ["State.ParryWindow"]
   },
+  "GuardMoveSpeed": {
+    "DurationPolicy": "Infinite",
+    "Modifiers": [
+      {"Attribute": "MOV", "Multiplier": 0.65}
+    ]
+  },
   "PerfectDodgeWindow": {
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.PerfectDodgeWindow"]
@@ -69,6 +75,12 @@
     "DurationPolicy": "Infinite",
     "Modifiers": [
       {"Attribute": "SP", "PerSecond": -12, "RequiredTags": ["Input.Move"]}
+    ]
+  },
+  "SprintSpeed": {
+    "DurationPolicy": "Infinite",
+    "Modifiers": [
+      {"Attribute": "MOV", "Multiplier": 1.5}
     ]
   },
   "ParryReward": {
@@ -92,5 +104,13 @@
     "DurationPolicy": "HasDuration",
     "Duration": 1,
     "GrantedTags": ["State.DodgeCounterChance"]
+  },
+  "PerfectDodgeSlowMotion": {
+    "SlowMotionSpeed": 0.3,
+    "SlowMotionDuration": 0.5
+  },
+  "UltimateSlowMotion": {
+    "SlowMotionSpeed": 0.3,
+    "SlowMotionDuration": 0.8
   }
 }

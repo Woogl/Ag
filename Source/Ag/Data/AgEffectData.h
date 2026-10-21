@@ -33,6 +33,9 @@ struct FAgEffectModifier
 	TOptional<float> PerSecond;
 
 	UPROPERTY()
+	TOptional<float> Multiplier;
+
+	UPROPERTY()
 	FGameplayAttribute FromAttribute;
 
 	UPROPERTY()
@@ -79,6 +82,12 @@ struct FAgEffectDefinition
 
 	UPROPERTY()
 	TOptional<FAgRegenDelay> RegenDelay;
+
+	UPROPERTY()
+	float SlowMotionSpeed = 1.f;
+
+	UPROPERTY()
+	float SlowMotionDuration = 0.f;
 };
 
 UCLASS()

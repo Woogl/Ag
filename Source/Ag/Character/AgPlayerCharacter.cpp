@@ -112,8 +112,6 @@ void AAgPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetCharacterMovement()->RotationRate.Yaw = CastChecked<UAgPlayerData>(GetCharacterData())->YawRotationRate;
-
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
@@ -222,17 +220,6 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		FGameplayTag(AgGameplayTags::Input_Dodge));
 	EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::HandleInputReleased,
 		FGameplayTag(AgGameplayTags::Input_Jump));
-}
-
-float AAgPlayerCharacter::GetMoveSpeedMultiplier() const
-{
-	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
-	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding))
-	{
-		return Data->GuardMoveSpeedRatio;
-	}
-	return ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) ? Data->SprintSpeedRatio : 1.f;
 }
 
 void AAgPlayerCharacter::OnJumped_Implementation()
@@ -523,8 +510,7 @@ void AAgPlayerCharacter::TryRunBufferedInput()
 
 	const FGameplayTag InputTag = BufferedInput;
 	BufferedInput = FGameplayTag();
-	const UAgPlayerData* Data = CastChecked<UAgPlayerData>(GetCharacterData());
-	const bool bExpired = GetWorld()->GetTimeSeconds() - BufferedInputTime > Data->InputBufferTime;
+	const bool bExpired = GetWorld()->GetTimeSeconds() - BufferedInputTime > InputBufferTime;
 	if (IsDead() || bExpired || (InputTag == AgGameplayTags::Input_Guard && !bGuardHeld))
 	{
 		return;
@@ -687,5 +673,4 @@ void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, floa
 void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	UpdateRotationMode();
-	UpdateMoveSpeed();
 }

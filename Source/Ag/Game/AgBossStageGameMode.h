@@ -29,6 +29,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgResultScreen> ResultScreenClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Result")
+	float DeathPresentationTime = 4.f;
+
 private:
 	void HandleCombatantDied(AAgCharacterBase* DeadCharacter);
 	void ShowResult();

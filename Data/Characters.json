@@ -1,5 +1,6 @@
 {
   "Player": {
+    "DisplayName": "린",
     "Attributes": {
       "HP": 1000,
       "MaxHP": 1000,
@@ -32,36 +33,25 @@
       "GuardPushback",
       "GuardBreak"
     ],
-    "DeathPresentationTime": 3,
     "StopDistance": 100,
-    "InputBufferTime": 0.3,
-    "GuardSPCostRatio": 0.25,
-    "GuardMoveSpeedRatio": 0.65,
-    "ParryEffects": ["ParryReward"],
     "ParryAttackerEffects": ["ParryPPLoss"],
-    "UltimateSlowMotionSpeed": 0.3,
-    "UltimateSlowMotionDuration": 0.8,
-    "PerfectDodgeSlowMotionSpeed": 0.3,
-    "PerfectDodgeSlowMotionDuration": 0.3,
-    "PerfectDodgeEffects": ["PerfectDodgeReward", "DodgeCounterChance"],
-    "SprintSpeedRatio": 1.5,
-    "YawRotationRate": 540,
+    "PerfectDodgeEffects": ["PerfectDodgeReward", "DodgeCounterChance", "PerfectDodgeSlowMotion"],
     "Effects": ["SPRegen", "GroggyImmune"],
     "Montages": {
       "BasicAttack": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
-      "Dodge": "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge",
-      "GuardFlinch": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch",
-      "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
-      "GuardBreak": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak",
-      "Parry": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
-      "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
-      "DodgeCounter": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
       "Jump": "/Game/Animations/AM_Player_Jump.AM_Player_Jump",
       "JumpAttack": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
+      "Dodge": "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge",
+      "DodgeCounter": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
+      "GuardFlinch": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch",
+      "Parry": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
+      "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
       "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
       "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
       "KnockBack": "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp"
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
+      "GuardBreak": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak"
     }
   },
   "Boss": {
@@ -92,11 +82,7 @@
       "PhaseTransition",
       "EnemyLockOn"
     ],
-    "DeathPresentationTime": 4,
     "StopDistance": 150,
-    "DeathMotions": [
-      {"Montage": "Executed", "KilledBy": "Ability.Action.Execution", "Death": "ExecutedDeath"}
-    ],
     "NearDistance": 300,
     "FarDistance": 1000,
     "PatternRecoveryWaitPhase1": {"Min": 1, "Max": 2},
@@ -113,12 +99,12 @@
       "SwordWave": "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave",
       "JumpCleave": "/Game/Animations/AM_Boss_JumpCleave.AM_Boss_JumpCleave",
       "Backstep": "/Game/Animations/AM_Boss_Backstep.AM_Boss_Backstep",
+      "KnockBack": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
       "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
       "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
       "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath",
-      "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
-      "KnockBack": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp"
+      "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition"
     }
   }
 }

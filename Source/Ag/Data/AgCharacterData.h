@@ -54,21 +54,6 @@ struct FAgAttributes
 	float MOV = 0.f;
 };
 
-USTRUCT(BlueprintType)
-struct FAgDeathMotion
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleAnywhere, Category = "Death")
-	FName Montage;
-
-	UPROPERTY(VisibleAnywhere, Category = "Death")
-	FGameplayTag KilledBy;
-
-	UPROPERTY(VisibleAnywhere, Category = "Death")
-	FName Death;
-};
-
 UCLASS(Abstract, BlueprintType)
 class UAgCharacterData : public UObject
 {
@@ -98,14 +83,8 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Abilities"))
 	TArray<FName> Abilities;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Death")
-	float DeathPresentationTime = 0.f;
-
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement")
 	float StopDistance = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Death")
-	TArray<FAgDeathMotion> DeathMotions;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Effects"))
 	TArray<FName> Effects;
@@ -123,41 +102,11 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Input")
-	float InputBufferTime = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
-	float GuardSPCostRatio = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
-	float GuardMoveSpeedRatio = 1.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (DataId = "Effects"))
-	TArray<FName> ParryEffects;
-
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (DataId = "Effects"))
 	TArray<FName> ParryAttackerEffects;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (DataId = "Effects"))
 	TArray<FName> PerfectDodgeEffects;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
-	float UltimateSlowMotionSpeed = 1.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
-	float UltimateSlowMotionDuration = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
-	float PerfectDodgeSlowMotionSpeed = 1.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
-	float PerfectDodgeSlowMotionDuration = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint")
-	float SprintSpeedRatio = 1.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Movement")
-	float YawRotationRate = 0.f;
 };
 
 UCLASS(BlueprintType)

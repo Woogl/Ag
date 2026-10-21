@@ -7,13 +7,13 @@
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgSlowMotionGameplayEffectComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Combat/AgTimeSubsystem.h"
 #include "Combat/AgProjectile.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
@@ -134,18 +134,21 @@ namespace
 				ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 			}
 		}
+		// 화면 효과의 길이는 함께 거는 효과 중 슬로우모션의 길이를 따릅니다.
+		FGameplayCueParameters ScreenParameters;
 		if (const UAgPlayerData* Data = Cast<UAgPlayerData>(Dodger.GetCharacterData()))
 		{
-			for (FName Effect : Data->PerfectDodgeEffects)
+			for (FName Id : Data->PerfectDodgeEffects)
 			{
-				ApplyToSelf(*ASC, UAgAssetManager::Get().FindEffect(Effect));
+				const UGameplayEffect* Effect = UAgAssetManager::Get().FindEffect(Id);
+				ApplyToSelf(*ASC, Effect);
+				if (const UAgSlowMotionGameplayEffectComponent* SlowMotion = Effect ? Effect->FindComponent<UAgSlowMotionGameplayEffectComponent>() : nullptr)
+				{
+					ScreenParameters.RawMagnitude = SlowMotion->Duration;
+				}
 			}
-			Dodger.GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->PerfectDodgeSlowMotionSpeed,
-				Data->PerfectDodgeSlowMotionDuration);
-			FGameplayCueParameters ScreenParameters;
-			ScreenParameters.RawMagnitude = Data->PerfectDodgeSlowMotionDuration;
-			ASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_PerfectDodgeScreen, ScreenParameters);
 		}
+		ASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_PerfectDodgeScreen, ScreenParameters);
 	}
 
 	void ApplyParryAttackerEffects(AAgCharacterBase& Defender, AAgCharacterBase& Attacker)
@@ -168,13 +171,7 @@ namespace
 		{
 			ApplyParryAttackerEffects(Defender, Attacker);
 		}
-		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Defender.GetAbilitySystemComponent());
-		const UAgPlayerData& Data = *CastChecked<UAgPlayerData>(Defender.GetCharacterData());
-		ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
-		for (FName Effect : Data.ParryEffects)
-		{
-			ApplyToSelf(*ASC, UAgAssetManager::Get().FindEffect(Effect));
-		}
+		Defender.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
 	}
 
 } // namespace
@@ -274,13 +271,6 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		{
 			ApplyHitstop(*CastChecked<UAgAbilitySystemComponent>(Attacker->GetAbilitySystemComponent()), HitstopDuration);
 		}
-	}
-
-	if (bHit && SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Ultimate))
-	{
-		const UAgPlayerData* Data = CastChecked<UAgPlayerData>(Attacker->GetCharacterData());
-		Target->GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->UltimateSlowMotionSpeed,
-			Data->UltimateSlowMotionDuration);
 	}
 
 	const TSharedPtr<FAgHitRewardState> Reward = FAgGameplayEffectContext::GetHitReward(Context);

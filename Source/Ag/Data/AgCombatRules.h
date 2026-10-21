@@ -20,4 +20,7 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit")
 	float HitstopDuration = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
+	float GuardSPCostRatio = 0.f;
 };

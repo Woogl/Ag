@@ -16,7 +16,6 @@ namespace
 		Payload.EventTag = EventTag;
 		Payload.Target = Character;
 		Payload.Instigator = Spec.GetContext().GetEffectCauser();
-		Payload.InstigatorTags = *Spec.CapturedSourceTags.GetAggregatedTags();
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Character, EventTag, Payload);
 	}
 }

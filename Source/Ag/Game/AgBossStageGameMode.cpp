@@ -5,7 +5,6 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Data/AgCharacterData.h"
 #include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
@@ -56,10 +55,9 @@ void AAgBossStageGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 	bResultDecided = true;
 	bStageCleared = bBossDied;
 
-	const float Delay = DeadCharacter->GetCharacterData()->DeathPresentationTime;
-	if (Delay > 0.f)
+	if (DeathPresentationTime > 0.f)
 	{
-		GetWorldTimerManager().SetTimer(ResultTimer, this, &ThisClass::ShowResult, Delay);
+		GetWorldTimerManager().SetTimer(ResultTimer, this, &ThisClass::ShowResult, DeathPresentationTime);
 	}
 	else
 	{

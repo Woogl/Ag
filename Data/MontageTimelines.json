@@ -147,9 +147,9 @@
   },
   "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter": {
     "Default": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.23, "Effect": "Invincible"},
       {"Task": "RootMotion", "Start": 0, "End": 0.05, "TargetingRange": 850, "MaxDistance": 750, "RotationMethod": "Slerp", "bWarpTranslation": true},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.23, "Effect": "Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.23, "Effect": "Invincible"},
       {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 2.5, "PPMultiplier": 5, "HitReaction": "Flinch", "bGuardable": true}}
     ]
   },
@@ -198,7 +198,8 @@
     ],
     "Draw": [
       {"Task": "AreaHit", "Time": 0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Enemy", "Range": 1000}},
-      {"Task": "CameraShake", "Time": 0, "Shake": "Large"}
+      {"Task": "CameraShake", "Time": 0, "Shake": "Large"},
+      {"Task": "ApplyEffect", "Time": 0, "Effect": "UltimateSlowMotion", "bRemoveOnEnd": false}
     ]
   }
 }

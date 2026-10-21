@@ -269,11 +269,6 @@ void AAgCharacterBase::FellOutOfWorld(const UDamageType& DamageType)
 	Kill();
 }
 
-void AAgCharacterBase::UpdateMoveSpeed()
-{
-	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV() * GetMoveSpeedMultiplier();
-}
-
 void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
 {
 	FGameplayEventData Payload;
@@ -397,12 +392,12 @@ void AAgCharacterBase::InitializeAttributes()
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMOVAttribute(), Attributes.MOV);
 
 	// 변경 델리게이트는 값이 바뀔 때만 불리므로, MOV는 여기서 한 번 적용합니다.
-	UpdateMoveSpeed();
+	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV();
 }
 
 void AAgCharacterBase::HandleMOVChanged(const FOnAttributeChangeData& Data)
 {
-	UpdateMoveSpeed();
+	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 }
 
 void AAgCharacterBase::HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount)
@@ -453,15 +448,11 @@ void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
 
 	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 Die 전에 읽습니다.
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	for (const FAgDeathMotion& Motion : CharacterData->DeathMotions)
+	const UAnimMontage* Playing = AnimInstance ? AbilitySystemComponent->GetCurrentMontage() : nullptr;
+	const UAgGameplayAbility* Animating = Playing ? Cast<UAgGameplayAbility>(AbilitySystemComponent->GetAnimatingAbility()) : nullptr;
+	const FAgAbilityData* AnimatingData = Animating ? CharacterData->FindAbility(Animating->GetAbilityId()) : nullptr;
+	if (UAnimMontage* Death = AnimatingData && !AnimatingData->DeathMontage.IsNone() ? CharacterData->FindMontage(AnimatingData->DeathMontage) : nullptr)
 	{
-		UAnimMontage* Playing = CharacterData->FindMontage(Motion.Montage);
-		UAnimMontage* Death = CharacterData->FindMontage(Motion.Death);
-		if (!AnimInstance || !Playing || !Death || !Payload || !Payload->InstigatorTags.HasTagExact(Motion.KilledBy) ||
-			!AnimInstance->Montage_IsPlaying(Playing))
-		{
-			continue;
-		}
 		const float Position = AnimInstance->Montage_GetPosition(Playing);
 		Die(FVector::ZeroVector, false);
 		FAnimMontageInstance* Instance = AnimInstance->Montage_Play(Death, 1.f, EMontagePlayReturnType::MontageLength, Position) > 0.f

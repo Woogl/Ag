@@ -24,13 +24,13 @@
 
 | 파일 | 내용 | 최상위 키 |
 | - | - | - |
-| `Characters.json` | 캐릭터마다 스탯, 쓰는 어빌리티 ID 목록(부여 순서), 시작할 때 거는 효과 ID 목록, 몽타주 ID별 에셋, 캐릭터 종류별 값(플레이어의 입력·가드·슬로모션·달리기 값, 보스의 AI·페이즈 값) | 캐릭터 ID(`Player`, `Boss`) |
+| `Characters.json` | 캐릭터마다 스탯, 쓰는 어빌리티 ID 목록(부여 순서), 시작할 때 거는 효과 ID 목록, 몽타주 ID별 에셋, 캐릭터 종류별 값(플레이어가 코드에서 거는 효과 ID 목록, 보스의 AI·페이즈 값) | 캐릭터 ID(`Player`, `Boss`) |
 | `Abilities.json` | 행동 정의(아래 '행동'). 두 캐릭터가 함께 쓰는 정의(`KnockBack`, `KnockUp`, `Juggle`)는 하나입니다. | 어빌리티 ID |
 | `Effects.json` | 기획자가 조정하는 GameplayEffect 정의 | 효과 ID |
 | `Projectiles.json` | 투사체 클래스, 비행 값, 공격 값 | 투사체 ID |
 | `MontageTimelines.json` | 몽타주 시간표([몽타주 시간표](<몽타주 시간표.md>)) | 몽타주 경로 |
 | `TargetingPresets.json` | 대상 프리셋 정의([대상 찾기와 락온](<대상 찾기와 락온.md>) '대상 프리셋') | 프리셋 ID |
-| `CombatRules.json` | 모든 캐릭터에 공통인 전투 규칙(히트스톱 시간 포함) | 속성 이름 |
+| `CombatRules.json` | 모든 캐릭터에 공통인 전투 규칙(히트스톱 시간, 가드의 SP 소모 포함) | 속성 이름 |
 
 - 파일을 추가할 때는 `LoadJsonData`의 읽기 목록에도 등록합니다. `Data` 폴더에 JSON을 두는 것만으로 로딩·검증 대상이 되지는 않습니다.
 - 현재 효과 데이터에는 외부 에셋 참조가 없고, 대상 프리셋은 네이티브 Task만 사용합니다. 이 데이터들에 에셋 참조를 추가하면 `ModifyCook`의 참조 수집 대상도 함께 확장해야 합니다.
@@ -121,17 +121,19 @@ flowchart LR
 | - | - | - |
 | `DurationPolicy` | `Instant`, `HasDuration`, `Infinite`. 기본 `Instant` | `DurationPolicy` |
 | `Duration` | `HasDuration`의 시간(초). | `DurationMagnitude` |
-| `Modifiers` | 모디파이어 객체의 배열입니다. 각 항목에 `Attribute`를 적고, 더할 크기는 `Value`(고정 값), `PerSecond`(초당 값), `FromAttribute`(대상의 다른 어트리뷰트) 중 하나로 지정합니다. `FromAttribute`에는 선택 `Coefficient`를 곱합니다(기본 1). 선택 `RequiredTags`, `IgnoredTags`는 그 모디파이어가 적용되는 대상 태그 조건입니다. 어트리뷰트는 `UAgAttributeSet`의 속성 이름(`SP`)으로 적습니다. | `Modifiers`, 크기의 `Coefficient`, 모디파이어의 `TargetTags` |
+| `Modifiers` | 모디파이어 객체의 배열입니다. 각 항목에 `Attribute`를 적고, 크기는 `Value`(더할 고정 값), `PerSecond`(더할 초당 값), `Multiplier`(곱할 배율), `FromAttribute`(더할 대상의 다른 어트리뷰트) 중 하나로 지정합니다. `FromAttribute`에는 선택 `Coefficient`를 곱합니다(기본 1). 선택 `RequiredTags`, `IgnoredTags`는 그 모디파이어가 적용되는 대상 태그 조건입니다. 어트리뷰트는 `UAgAttributeSet`의 속성 이름(`SP`)으로 적습니다. | `Modifiers`, 크기의 `Coefficient`, 모디파이어의 `TargetTags` |
 | `GrantedTags` | 걸려 있는 동안 대상에 붙는 태그 | 대상 태그 컴포넌트 |
 | `OngoingIgnoredTags` | 걸려 있는 동안 대상에 있으면 효과가 꺼지는 태그 | 대상 태그 조건 컴포넌트 |
 | `RegenDelay` | 선택. 회복 효과의 리젠 대기: `Effect`(대기 효과 ID), 선택 `EffectAtZero`(값이 0이 되었을 때의 대기 효과 ID) | 리젠 대기 컴포넌트([캐릭터와 GAS](<캐릭터와 GAS.md>) 'GameplayEffect') |
+| `SlowMotionSpeed`, `SlowMotionDuration` | 선택. 실행될 때 거는 게임 전체 슬로우모션의 속도 배율(기본 1)과 실제 시간(초). Duration이 있을 때만 겁니다. 즉시 효과에 씁니다. | 슬로우모션 컴포넌트([전투 규칙](<전투 규칙.md>) '슬로우모션') |
 
 - `PerSecond`가 있는 효과는 C++에서 주기 효과로 구성합니다. `AgEffectData.cpp`의 `PeriodicEffectInterval` 간격으로 실행하며, 적용 직후에는 실행하지 않고 중단됐다 재개되면 주기를 처음부터 셉니다(`ResetPeriod`). 이 실행 정책은 JSON에 노출하지 않습니다. 로더는 초당 값에 공통 간격을 곱해 한 번에 더할 값으로 넣습니다. 회복·소모량과 리젠 대기 시간은 JSON에서 관리합니다.
 - 모디파이어의 태그 조건은 엔진이 즉시·주기 효과를 실행할 때마다 대상의 지금 태그로 판정합니다. 상태에 따라 양만 다른 회복(가드 중 SP 회복)은 효과를 나누지 않고 모디파이어 조건으로 나눕니다.
 - 회복 효과는 대기 태그를 `OngoingIgnoredTags`에 두어 멈춥니다. `RegenDelay`가 대기를 다시 거는 동작은 [캐릭터와 GAS](<캐릭터와 GAS.md>)의 '리젠'을 따릅니다.
+- `Multiplier`는 `PerSecond`와 한 효과에 두지 않습니다. 주기 효과의 모디파이어는 주기마다 기본값에 적용되므로 배율이 계속 곱해집니다.
 - `Instant`에는 `PerSecond`, `GrantedTags`, 지속 조건을 쓰지 않습니다. `Duration`은 `HasDuration`에만 씁니다. 이 조합과 모디파이어 크기의 중복·누락은 작성할 때 확인하며, 로더가 검사하지 않습니다.
 - 필드는 지금 효과들이 쓰는 것만 둡니다. 새 효과가 다른 GE 설정을 필요로 하면 그때 필드를 더합니다.
-- GE 컴포넌트는 생성 코드가 `AddComponent<T>`로 붙입니다. JSON 효과의 리젠 대기 컴포넌트는 클래스 경로 대신 `RegenDelay` 필드로 선택합니다. 대미지 계산기와 결과 처리 컴포넌트는 코드 전용 효과 생성부에서 직접 붙입니다.
+- GE 컴포넌트는 생성 코드가 `AddComponent<T>`로 붙입니다. JSON 효과의 리젠 대기·슬로우모션 컴포넌트는 클래스 경로 대신 `RegenDelay`·`SlowMotionDuration` 필드로 선택합니다. 대미지 계산기와 결과 처리 컴포넌트는 코드 전용 효과 생성부에서 직접 붙입니다.
 
 ### 효과에 두는 값
 
@@ -139,7 +141,7 @@ flowchart LR
 
 ## 몽타주 관리
 
-몽타주 경로의 원본은 `Characters.json` 캐릭터 항목의 `Montages`입니다. PlayMontage의 `Montage`, 사망 모션(`DeathMotions`), 코드가 직접 재생하는 모션(`Jump`, `GuardFlinch`)은 이 ID를 가리키고 에셋 경로를 다시 적지 않습니다. 한 행동의 여러 모션은 ID를 나누지 않고 한 몽타주의 섹션으로 둡니다. ID는 에셋 파일 이름이 아니라 모션을 고르는 키라, 같은 ID에 캐릭터마다 다른 에셋을 둘 수 있습니다. 에셋을 옮기거나 이름을 바꾸면 JSON 경로와 그 몽타주 시간표의 키(몽타주 경로)도 함께 바꿉니다. 실제 ID와 에셋은 [데이터 위치표](<데이터 위치표.md>)를 따릅니다.
+몽타주 경로의 원본은 `Characters.json` 캐릭터 항목의 `Montages`입니다. PlayMontage의 `Montage`, 행동의 `DeathMontage`, 코드가 직접 재생하는 모션(`Jump`, `GuardFlinch`)은 이 ID를 가리키고 에셋 경로를 다시 적지 않습니다. 한 행동의 여러 모션은 ID를 나누지 않고 한 몽타주의 섹션으로 둡니다. ID는 에셋 파일 이름이 아니라 모션을 고르는 키라, 같은 ID에 캐릭터마다 다른 에셋을 둘 수 있습니다. 에셋을 옮기거나 이름을 바꾸면 JSON 경로와 그 몽타주 시간표의 키(몽타주 경로)도 함께 바꿉니다. 실제 ID와 에셋은 [데이터 위치표](<데이터 위치표.md>)를 따릅니다.
 
 ## 투사체 정의
 

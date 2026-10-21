@@ -1,5 +1,6 @@
 {
   "GuardReduction": 0.5,
   "DefenseConstant": 100,
-  "HitstopDuration": 0.12
+  "HitstopDuration": 0.12,
+  "GuardSPCostRatio": 0.25
 }

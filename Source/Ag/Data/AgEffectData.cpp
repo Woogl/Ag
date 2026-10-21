@@ -6,6 +6,7 @@
 #include "AbilitySystem/AgDamageExecution.h"
 #include "AbilitySystem/AgDamageResultGameplayEffectComponent.h"
 #include "AbilitySystem/AgRegenDelayGameplayEffectComponent.h"
+#include "AbilitySystem/AgSlowMotionGameplayEffectComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "GameplayEffectComponents/AssetTagsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagRequirementsGameplayEffectComponent.h"
@@ -49,6 +50,10 @@ namespace
 		{
 			// 기획서의 초당 값을 그대로 적도록, 주기마다 더할 값으로 바꿉니다.
 			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.PerSecond * PeriodicEffectInterval));
+		}
+		if (Modifier.Multiplier)
+		{
+			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.Multiplier));
 		}
 		return FGameplayEffectModifierMagnitude(MakeTargetAttribute(Modifier.FromAttribute, Modifier.Coefficient));
 	}
@@ -122,7 +127,8 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	}
 	for (const FAgEffectModifier& Modifier : Definition.Modifiers)
 	{
-		FGameplayModifierInfo& Info = AddModifier(*Effect, Modifier.Attribute, EGameplayModOp::AddBase, MakeMagnitude(Modifier));
+		const EGameplayModOp::Type Op = Modifier.Multiplier ? EGameplayModOp::MultiplyCompound : EGameplayModOp::AddBase;
+		FGameplayModifierInfo& Info = AddModifier(*Effect, Modifier.Attribute, Op, MakeMagnitude(Modifier));
 		Info.TargetTags.RequireTags = Modifier.RequiredTags;
 		Info.TargetTags.IgnoreTags = Modifier.IgnoredTags;
 	}
@@ -137,6 +143,12 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	if (Definition.RegenDelay)
 	{
 		Effect->AddComponent<UAgRegenDelayGameplayEffectComponent>().Delay = *Definition.RegenDelay;
+	}
+	if (Definition.SlowMotionDuration > 0.f)
+	{
+		UAgSlowMotionGameplayEffectComponent& SlowMotion = Effect->AddComponent<UAgSlowMotionGameplayEffectComponent>();
+		SlowMotion.Speed = Definition.SlowMotionSpeed;
+		SlowMotion.Duration = Definition.SlowMotionDuration;
 	}
 
 	Effect->OnGameplayEffectChanged();

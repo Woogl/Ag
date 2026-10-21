@@ -169,6 +169,9 @@ struct FAgAbilityData
 	TArray<TInstancedStruct<FAgTaskParams>> Tasks;
 
 	UPROPERTY()
+	FName DeathMontage;
+
+	UPROPERTY()
 	TOptional<FAgPatternSelection> PatternSelection;
 
 	bool HasSameGrantSettings(const FAgAbilityData& Other) const;

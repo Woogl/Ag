@@ -113,13 +113,6 @@ public:
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
 protected:
-	virtual float GetMoveSpeedMultiplier() const
-	{
-		return 1.f;
-	}
-
-	void UpdateMoveSpeed();
-
 	void SendEventToSelf(const FGameplayTag& EventTag);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))

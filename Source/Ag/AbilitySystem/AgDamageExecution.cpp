@@ -94,7 +94,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	if (TargetTags.HasTag(AgGameplayTags::State_Guarding) && bGuardable && DefenderData)
 	{
-		const float GuardSPCost = HPDamage * DefenderData->GuardSPCostRatio;
+		const float GuardSPCost = HPDamage * Rules.GuardSPCostRatio;
 		const bool bGuardBreak = TargetSP < GuardSPCost;
 		Spec.AddDynamicAssetTag(bGuardBreak ? AgGameplayTags::Effect_Damage_Result_GuardBreak : AgGameplayTags::Effect_Damage_Result_Guard);
 		AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant, Rules.GuardReduction));
