@@ -94,14 +94,14 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> BossPPTrailBar;
 
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> ControlsGuideKeys;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> ControlsGuideActions;
-
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "HUD|Trail")
+	float TrailDelay = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "HUD|Trail")
+	float TrailShrinkTime = 0.f;
 
 private:
 	struct FAgTrail
@@ -112,8 +112,6 @@ private:
 		float ShrinkFrom = 1.f;
 		float ShrinkElapsed = -1.f;
 	};
-
-	void ShowControlsGuide(const AAgPlayerCharacter& Player);
 
 	void UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime);
 	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);

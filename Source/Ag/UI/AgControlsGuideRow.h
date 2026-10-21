@@ -7,17 +7,24 @@
 #include "AgControlsGuideRow.generated.h"
 
 class UTextBlock;
-struct FAgControlsGuideEntry;
 
 UCLASS(Abstract)
 class UAgControlsGuideRow : public UCommonUserWidget
 {
 	GENERATED_BODY()
 
-public:
-	void SetEntry(const FAgControlsGuideEntry& Entry);
-
 protected:
+	virtual void NativePreConstruct() override;
+
+	UPROPERTY(EditAnywhere, Category = "Controls Guide")
+	FText Keys;
+
+	UPROPERTY(EditAnywhere, Category = "Controls Guide")
+	FText Action;
+
+	UPROPERTY(EditAnywhere, Category = "Controls Guide", meta = (MultiLine = true))
+	FText Description;
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> KeysText;
 

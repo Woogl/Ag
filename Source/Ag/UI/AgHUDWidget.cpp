@@ -11,11 +11,8 @@
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
-#include "Data/AgCombatRules.h"
-#include "Data/AgControlsGuideData.h"
 #include "EngineUtils.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
@@ -50,8 +47,6 @@ void UAgHUDWidget::NativeConstruct()
 
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
-		ShowControlsGuide(*Player);
-
 		if (UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
 		{
 			PlayerASC = ASC;
@@ -109,26 +104,6 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 }
 
-void UAgHUDWidget::ShowControlsGuide(const AAgPlayerCharacter& Player)
-{
-	const UInputMappingContext* Mapping = Player.GetInputMapping();
-	if (!Mapping)
-	{
-		return;
-	}
-
-	TArray<FText> KeyLines;
-	TArray<FText> ActionLines;
-	for (const FAgControlsGuideEntry& Entry : UAgAssetManager::Get().GetControlsGuideData().MakeEntries(*Mapping))
-	{
-		KeyLines.Add(Entry.Keys);
-		ActionLines.Add(Entry.Action);
-	}
-	const FText LineBreak = FText::FromString(TEXT("\n"));
-	ControlsGuideKeys->SetText(FText::Join(LineBreak, KeyLines));
-	ControlsGuideActions->SetText(FText::Join(LineBreak, ActionLines));
-}
-
 void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime)
 {
 	const UAgAttributeSet* Stats = Player.GetAttributeSet();
@@ -164,19 +139,20 @@ void UAgHUDWidget::UpdatePlayer(const AAgPlayerCharacter& Player, float GameDelt
 
 void UAgHUDWidget::UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime)
 {
-	// 에디터에서 데이터 파일을 다시 읽으면 이름이 바뀌므로 매 프레임 확인합니다.
-	const FText& BossName = BossCharacter.GetCharacterData()->DisplayName;
-	if (!BossNameText->GetText().IdenticalTo(BossName))
-	{
-		BossNameText->SetText(BossName);
-	}
+	// 에디터에서 데이터 파일을 다시 읽으면 이름이 바뀌므로 매 프레임 넣습니다. 같은 텍스트면 Slate가 다시 그리지 않습니다.
+	BossNameText->SetText(BossCharacter.GetCharacterData()->DisplayName);
 
 	const UAgAttributeSet* Stats = BossCharacter.GetAttributeSet();
 	SetBarRatio(*BossHPBar, Stats->GetHP(), Stats->GetMaxHP());
 	UpdateTrail(BossHPTrail, *BossHPTrailBar, Stats->GetMaxHP() > 0.f ? Stats->GetHP() / Stats->GetMaxHP() : 0.f, GameDeltaTime);
 
-	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
 	const UAbilitySystemComponent* BossASC = BossCharacter.GetAbilitySystemComponent();
+	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+	{
+		return;
+	}
+
+	float PPBarRatio = Stats->GetMaxPP() > 0.f ? Stats->GetPP() / Stats->GetMaxPP() : 0.f;
 	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
 		const FGameplayEffectQuery Query =
@@ -265,12 +241,11 @@ void UAgHUDWidget::SetValueText(UTextBlock& Text, float Value, float MaxValue, F
 
 void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime, bool bShowDrop) const
 {
-	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	if (Trail.LastBarRatio >= 0.f && BarRatio < Trail.LastBarRatio)
 	{
 		if (bShowDrop)
 		{
-			Trail.Wait = Rules.HUDTrailDelay;
+			Trail.Wait = TrailDelay;
 			Trail.ShrinkElapsed = -1.f;
 		}
 		else if (Trail.Ratio <= Trail.LastBarRatio)
@@ -297,7 +272,7 @@ void UAgHUDWidget::UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float Ba
 	else
 	{
 		Trail.ShrinkElapsed += DeltaTime;
-		const float Alpha = Rules.HUDTrailShrinkTime > 0.f ? FMath::Min(Trail.ShrinkElapsed / Rules.HUDTrailShrinkTime, 1.f) : 1.f;
+		const float Alpha = TrailShrinkTime > 0.f ? FMath::Min(Trail.ShrinkElapsed / TrailShrinkTime, 1.f) : 1.f;
 		Trail.Ratio = FMath::Lerp(Trail.ShrinkFrom, BarRatio, Alpha);
 	}
 	TrailBar.SetPercent(Trail.Ratio);

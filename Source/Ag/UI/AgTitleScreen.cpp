@@ -3,11 +3,7 @@
 #include "UI/AgTitleScreen.h"
 
 #include "Game/AgFrontEndGameMode.h"
-#include "Components/VerticalBox.h"
-#include "Core/AgAssetManager.h"
-#include "Data/AgControlsGuideData.h"
 #include "UI/AgButton.h"
-#include "UI/AgControlsGuideRow.h"
 
 void UAgTitleScreen::NativeOnInitialized()
 {
@@ -50,16 +46,9 @@ TOptional<FUIInputConfig> UAgTitleScreen::GetDesiredInputConfig() const
 
 void UAgTitleScreen::OpenControls()
 {
-	if (bControlsOpen || !GuideInputMapping || !ControlsRowClass)
+	if (bControlsOpen)
 	{
 		return;
-	}
-	ControlsRows->ClearChildren();
-	for (const FAgControlsGuideEntry& Entry : UAgAssetManager::Get().GetControlsGuideData().MakeEntries(*GuideInputMapping))
-	{
-		UAgControlsGuideRow* Row = CreateWidget<UAgControlsGuideRow>(GetOwningPlayer(), ControlsRowClass);
-		ControlsRows->AddChildToVerticalBox(Row);
-		Row->SetEntry(Entry);
 	}
 	SetControlsOpen(true);
 	CloseButton->SetFocus();

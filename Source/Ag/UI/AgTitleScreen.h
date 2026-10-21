@@ -7,9 +7,6 @@
 #include "AgTitleScreen.generated.h"
 
 class UAgButton;
-class UAgControlsGuideRow;
-class UInputMappingContext;
-class UVerticalBox;
 
 UCLASS(Abstract)
 class UAgTitleScreen : public UCommonActivatableWidget
@@ -36,15 +33,6 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> CloseButton;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UVerticalBox> ControlsRows;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Controls Guide")
-	TObjectPtr<UInputMappingContext> GuideInputMapping;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Controls Guide")
-	TSubclassOf<UAgControlsGuideRow> ControlsRowClass;
 
 private:
 	void OpenControls();

@@ -3,12 +3,13 @@
 #include "UI/AgControlsGuideRow.h"
 
 #include "Components/TextBlock.h"
-#include "Data/AgControlsGuideData.h"
 
-void UAgControlsGuideRow::SetEntry(const FAgControlsGuideEntry& Entry)
+void UAgControlsGuideRow::NativePreConstruct()
 {
-	KeysText->SetText(Entry.Keys);
-	ActionText->SetText(Entry.Action);
-	DescriptionText->SetText(Entry.Description);
-	DescriptionText->SetVisibility(Entry.Description.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+	Super::NativePreConstruct();
+
+	KeysText->SetText(Keys);
+	ActionText->SetText(Action);
+	DescriptionText->SetText(Description);
+	DescriptionText->SetVisibility(Description.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 }
