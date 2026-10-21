@@ -67,10 +67,10 @@ namespace
 	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
-		const FGameplayTag Event = GetReactionEvent(SpecTags);
+		const FGameplayTag Event = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) ? AgGameplayTags::Event_Hit_Flinch
+		                                                                                               : GetReactionEvent(SpecTags);
 		// 처형은 두 캐릭터의 모션을 프레임 단위로 맞물리므로 흔들지도 않습니다.
-		if ((!Event.IsValid() && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch)) ||
-			TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+		if (!Event.IsValid() || TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 		{
 			return;
 		}

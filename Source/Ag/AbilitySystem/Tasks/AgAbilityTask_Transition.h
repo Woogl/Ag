@@ -54,6 +54,10 @@ public:
 private:
 	TOptional<float> FindTagEndingDelay(const UAbilitySystemComponent& ASC) const;
 
+	/** 주인에게 태그가 있으면 사라지기를 기다리기 시작하고 true를 돌려줍니다. */
+	bool WaitForTag();
+	void RecheckTag();
+
 	void TryTransition();
 	void HandleEvent(const FGameplayEventData* Payload);
 	void HandleTagChanged(const FGameplayTag Tag, int32 NewCount);

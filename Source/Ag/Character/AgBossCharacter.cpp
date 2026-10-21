@@ -3,6 +3,7 @@
 #include "Character/AgBossCharacter.h"
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
+#include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
@@ -18,6 +19,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
 
 namespace
 {
@@ -63,6 +65,8 @@ void AAgBossCharacter::BeginPlay()
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleHitReactionChanged);
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 }
 
@@ -86,6 +90,27 @@ void AAgBossCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCoun
 		ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 	}
 	ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_Groggy));
+}
+
+void AAgBossCharacter::HandleHitReactionChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		return;
+	}
+	// 그로기 행동은 피격 반응 중에 시작하지 못하므로(행동 정의의 BlockedTags), PP가 0으로 남아 있으면 다시 보냅니다.
+	// 재발동(저글)은 같은 프레임 안에서 태그를 뗐다 다시 붙이므로 다음 틱에 확인합니다.
+	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]
+	{
+		UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+		if (!IsDead() && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) && GetAttributeSet()->GetPP() <= 0.f)
+		{
+			// 그로기 행동은 발동하는 동안 이 태그로 일어선 자세에 맞는 시작 섹션을 고릅니다.
+			ASC->AddLooseGameplayTag(AgGameplayTags::State_GroggyDelayed);
+			SendEventToSelf(AgGameplayTags::Event_Groggy);
+			ASC->RemoveLooseGameplayTag(AgGameplayTags::State_GroggyDelayed);
+		}
+	}));
 }
 
 void AAgBossCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)

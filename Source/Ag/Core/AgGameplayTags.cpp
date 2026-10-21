@@ -30,9 +30,11 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_LockOn, "Ability.LockOn", "락온. 행동이 아니라 행동 상태의 제한과 취소를 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction, "Ability.Reaction", "이벤트로 발동하는 상태 어빌리티");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction, "Ability.Reaction.HitReaction",
-		"상태 우선순위 4의 피격 반응: 넉업, 넉백, 가드 밀림, 가드 브레이크");
+		"상태 우선순위 4의 피격 반응: 넉업(저글 포함), 넉백, 가드 밀림, 가드 브레이크");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockBack, "Ability.Reaction.HitReaction.KnockBack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockUp, "Ability.Reaction.HitReaction.KnockUp");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction_Juggle, "Ability.Reaction.HitReaction.Juggle",
+		"넉업으로 떠 있는 동안 움찔에 맞아 다시 조금 떠오름");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_GuardPushback, "Ability.Reaction.HitReaction.GuardPushback");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_GuardBreak, "Ability.Reaction.HitReaction.GuardBreak");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Groggy, "Ability.Reaction.Groggy");
@@ -61,11 +63,13 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Cutscene, "State.Cutscene", "컷신 재생 중 (PlayCutscene Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "비전투 (플레이어 사망 뒤의 보스)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyImmune, "State.GroggyImmune", "그로기 면역. PP 감소와 그로기 진입 대상에서 제외");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyDelayed, "State.GroggyDelayed", "피격 반응이 끝나 미뤘던 그로기를 시작하는 동안");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_PPDelay, "State.Regen.PPDelay", "PP 리젠 대기");
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockBack, "Event.Hit.KnockBack");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockUp, "Event.Hit.KnockUp");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Flinch, "Event.Hit.Flinch");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Pushback, "Event.Guard.Pushback");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Break, "Event.Guard.Break");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Groggy, "Event.Groggy");

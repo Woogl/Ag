@@ -26,18 +26,12 @@ void UAgAbilityTask_Transition::Activate()
 		EventHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(Params.Event).AddUObject(this, &ThisClass::HandleEvent);
 		return;
 	}
-	if (ASC && Params.Tag.IsValid() && ASC->HasMatchingGameplayTag(Params.Tag))
+	if (ASC && Params.Tag.IsValid())
 	{
-		TagHandle = ASC->RegisterGameplayTagEvent(Params.Tag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleTagChanged);
-		const TOptional<float> Delay = Params.bSectionEndsWithTag ? FindTagEndingDelay(*ASC) : TOptional<float>();
-		if (Delay && *Delay <= 0.f)
+		// 같은 시각에 시작한 항목이 아직 태그를 붙이지 않았을 수 있어, 없으면 다음 틱에 다시 봅니다.
+		if (!WaitForTag())
 		{
-			TryTransition();
-		}
-		else if (Delay)
-		{
-			// 효과의 지속 시간은 월드 시간이므로 월드 타이머로 기다립니다.
-			GetWorld()->GetTimerManager().SetTimer(EndingTimer, FTimerDelegate::CreateUObject(this, &ThisClass::TryTransition), *Delay, false);
+			EndingTimer = GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::RecheckTag));
 		}
 		return;
 	}
@@ -78,6 +72,35 @@ TOptional<float> UAgAbilityTask_Transition::FindTagEndingDelay(const UAbilitySys
 	const float SectionLength = SectionIndex == INDEX_NONE ? 0.f : Montage->GetSectionLength(SectionIndex);
 	const float PlayRate = FMath::Abs(Montage ? Montage->RateScale : 1.f);
 	return FMath::Max(Times) - (PlayRate > UE_SMALL_NUMBER ? SectionLength / PlayRate : SectionLength);
+}
+
+bool UAgAbilityTask_Transition::WaitForTag()
+{
+	UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
+	if (!ASC || !ASC->HasMatchingGameplayTag(Params.Tag))
+	{
+		return false;
+	}
+	TagHandle = ASC->RegisterGameplayTagEvent(Params.Tag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleTagChanged);
+	const TOptional<float> Delay = Params.bSectionEndsWithTag ? FindTagEndingDelay(*ASC) : TOptional<float>();
+	if (Delay && *Delay <= 0.f)
+	{
+		TryTransition();
+	}
+	else if (Delay)
+	{
+		// 효과의 지속 시간은 월드 시간이므로 월드 타이머로 기다립니다.
+		GetWorld()->GetTimerManager().SetTimer(EndingTimer, FTimerDelegate::CreateUObject(this, &ThisClass::TryTransition), *Delay, false);
+	}
+	return true;
+}
+
+void UAgAbilityTask_Transition::RecheckTag()
+{
+	if (!IsFinished() && !WaitForTag())
+	{
+		TryTransition();
+	}
 }
 
 void UAgAbilityTask_Transition::TryTransition()

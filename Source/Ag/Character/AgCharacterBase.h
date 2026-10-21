@@ -120,6 +120,8 @@ protected:
 
 	void UpdateMoveSpeed();
 
+	void SendEventToSelf(const FGameplayTag& EventTag);
+
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))
 	FName CharacterDataId;
 
@@ -138,8 +140,6 @@ private:
 	void GrantAbilities();
 
 	void ApplyEffects();
-
-	void SendEventToSelf(const FGameplayTag& EventTag);
 
 	UFUNCTION()
 	TArray<FString> GetCharacterDataIds() const;

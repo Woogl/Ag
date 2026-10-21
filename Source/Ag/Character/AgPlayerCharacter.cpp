@@ -68,23 +68,6 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 }
 
-TConstArrayView<FGameplayTag> AAgPlayerCharacter::GetInputAbilityTags()
-{
-	static const FGameplayTag Tags[] = {AgGameplayTags::Ability_Action_JumpAttack,
-		AgGameplayTags::Ability_Action_DodgeCounter,
-		AgGameplayTags::Ability_Action_BasicAttack,
-		AgGameplayTags::Ability_Action_Guard,
-		AgGameplayTags::Ability_Action_Dodge,
-		AgGameplayTags::Ability_Sprint,
-		AgGameplayTags::Ability_Action_Jump,
-		AgGameplayTags::Ability_Action_Skill,
-		AgGameplayTags::Ability_Action_Ultimate,
-		AgGameplayTags::Ability_Action_Execution,
-		AgGameplayTags::Ability_LockOn,
-		AgGameplayTags::Ability_Action_Parry};
-	return Tags;
-}
-
 void AAgPlayerCharacter::UpdateRotationMode()
 {
 	// 락온 카메라는 대상을 보므로, 카메라 정면을 바라보면 대상을 바라봅니다.
@@ -109,7 +92,8 @@ EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContai
 	{
 		if (bPlayerAttacked)
 		{
-			return bFinisher ? FinisherShake : (bHeavy ? PlayerHitHeavyShake : PlayerHitShake);
+			// 궁극기 마무리 셰이크는 적중 여부와 관계없이 몽타주 시간표에서 한 번 재생한다.
+			return bFinisher ? EAgCameraShake::None : (bHeavy ? PlayerHitHeavyShake : PlayerHitShake);
 		}
 		return bHeavy ? PlayerHurtHeavyShake : PlayerHurtShake;
 	}

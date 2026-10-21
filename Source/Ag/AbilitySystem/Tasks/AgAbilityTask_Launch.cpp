@@ -6,11 +6,11 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
-#include "Ag.h"
 
 namespace
 {
@@ -40,27 +40,42 @@ void UAgAbilityTask_Launch::Activate()
 
 	Rotation = Character->GetActorRotation();
 	Distance = 0.f;
-	const AActor* Target = Params.To == EAgLaunchTo::Target ? AgAbility->GetActionTarget() : nullptr;
+	if (Params.Direction == EAgLaunchDirection::Back)
+	{
+		Rotation.Yaw += 180.f;
+		Distance = Params.Distance;
+	}
+	const AActor* Target = Params.Direction == EAgLaunchDirection::Target ? AgAbility->GetActionTarget() : nullptr;
 	if (Target)
 	{
 		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
 		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - AgAbility->GetStopDistance());
 		Distance = Params.MaxDistance ? FMath::Min(Distance, *Params.MaxDistance) : Distance;
-		if (!Delta.IsNearlyZero())
-		{
-			Rotation = Delta.Rotation();
-		}
+		Rotation = Delta.IsNearlyZero() ? Character->GetActorRotation() : Delta.Rotation();
 	}
-	Height = Params.Height ? *Params.Height : -Movement->GetGravityZ() * FMath::Square(Params.AirTime) / 8.f;
+	const float Gravity = -Movement->GetGravityZ();
+	Height = Params.Height ? *Params.Height : Gravity * FMath::Square(Params.AirTime.Get(0.f)) / 8.f;
+	if (Params.Altitude)
+	{
+		FFindFloorResult Floor;
+		Movement->ComputeFloorDist(Movement->UpdatedComponent->GetComponentLocation(), *Params.Altitude, *Params.Altitude, Floor, Character->GetCapsuleComponent()->GetScaledCapsuleRadius());
+		Height = FMath::Max(Height, *Params.Altitude - (Floor.bBlockingHit ? Floor.FloorDist : *Params.Altitude));
+	}
+	const float AirTime = Params.AirTime.Get(FMath::Sqrt(8.f * Height / Gravity));
 
 	// 엔진 Task의 생성 함수가 하는 설정입니다.
 	ForceName = SourceName;
-	Duration = Params.AirTime;
-	MinimumLandedTriggerTime = Params.AirTime * MinLandedAirTimeRatio;
+	Duration = AirTime;
+	MinimumLandedTriggerTime = AirTime * MinLandedAirTimeRatio;
 	bFinishOnLanded = true;
 	FinishVelocityMode = ERootMotionFinishVelocityMode::SetVelocity;
 	FinishSetVelocity = FVector::ZeroVector;
 	SharedInitAndApply();
+	if (UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance())
+	{
+		Anim->OnMontageStarted.AddDynamic(this, &ThisClass::DisableMontageRootMotion);
+		DisableMontageRootMotion(Ability->GetCurrentMontage());
+	}
 	Super::Activate();
 }
 
@@ -76,8 +91,18 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 		return;
 	}
 
-	// 부모 틱은 기억한 조기 착지만으로 Task를 끝내므로, 현재 접지를 먼저 확인하고 착지 알림까지 이어 줍니다.
+	// 궤적을 마친 뒤에는 소스가 없어 엔진 착지가 착지를 알리므로, 땅에 닿으면 끝내기만 합니다.
 	const bool bOnGround = MovementComponent->IsMovingOnGround();
+	if (bArcEnded)
+	{
+		if (bOnGround)
+		{
+			Finish();
+		}
+		return;
+	}
+
+	// 부모 틱은 기억한 조기 착지만으로 Task를 끝내므로, 현재 접지를 먼저 확인하고 착지 알림까지 이어 줍니다.
 	if (GetWorld()->GetTimeSeconds() >= StartTime + MinimumLandedTriggerTime && bOnGround)
 	{
 		Finish();
@@ -87,20 +112,56 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 	if (!bOnGround)
 	{
 		bHasLanded = false;
+		// 착지로 끝내는 엔진 소스는 체공 시간이 지나면 끝 속도로 등속 이동하므로, 공중에서 소스를 지워 그 속도로
+		// 엔진 중력을 따라 떨어지게 합니다. 착지할 때까지 몽타주 루트 모션은 계속 끕니다.
+		const TSharedPtr<FRootMotionSource> Source = MovementComponent->GetRootMotionSourceByID(RootMotionSourceID);
+		if (Source.IsValid() && Source->GetTime() >= Source->Duration)
+		{
+			Source->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::MaintainLastRootMotionVelocity;
+			MovementComponent->RemoveRootMotionSourceByID(RootMotionSourceID);
+			bArcEnded = true;
+			return;
+		}
 	}
 	Super::TickTask(DeltaTime);
-	if (IsFinished())
+}
+
+void UAgAbilityTask_Launch::OnDestroy(bool bInOwnerFinished)
+{
+	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
+	if (MovementComponent.IsValid() && !MovementComponent->IsMovingOnGround())
+	{
+		// 공중에서 취소되어도(저글이 넉업을 이어받는 등) 그 속도로 떨어지게 합니다.
+		if (const TSharedPtr<FRootMotionSource> Source = MovementComponent->GetRootMotionSourceByID(RootMotionSourceID))
+		{
+			Source->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::MaintainLastRootMotionVelocity;
+		}
+	}
+	if (UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr)
+	{
+		Anim->OnMontageStarted.RemoveDynamic(this, &ThisClass::DisableMontageRootMotion);
+		if (FAnimMontageInstance* Instance = MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr)
+		{
+			Instance->PopDisableRootMotion();
+		}
+	}
+	Super::OnDestroy(bInOwnerFinished);
+}
+
+void UAgAbilityTask_Launch::DisableMontageRootMotion(UAnimMontage* Montage)
+{
+	// 몽타주 루트 모션이 있으면 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않으므로 공중에 있는 동안 끕니다.
+	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
+	UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr;
+	FAnimMontageInstance* Instance = Anim && Montage ? Anim->GetActiveInstanceForMontage(Montage) : nullptr;
+	if (!Instance || Instance->GetInstanceID() == MontageInstanceId)
 	{
 		return;
 	}
-
-	// 캐릭터 무브먼트는 몽타주가 루트 모션을 주면(루트 모션이 없는 섹션이라도 몽타주에 루트 모션이 있고 끄기
-	// 노티파이 밖이면) 루트 모션 소스를 쓰지 않습니다.
-	const FAnimMontageInstance* Instance = Character->GetRootMotionAnimMontageInstance();
-	if (!bReportedRootMotion && Instance && Instance->Montage && Instance->Montage->HasRootMotion() && !Instance->IsRootMotionDisabled())
+	if (FAnimMontageInstance* Previous = MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr)
 	{
-		bReportedRootMotion = true;
-		UE_LOG(LogAg, Error, TEXT("Launch: %s gives montage root motion at %.3f, so the launch does not move %s"),
-			*GetNameSafe(Instance->Montage), Instance->GetPosition(), *Character->GetName());
+		Previous->PopDisableRootMotion();
 	}
+	Instance->PushDisableRootMotion();
+	MontageInstanceId = Instance->GetInstanceID();
 }

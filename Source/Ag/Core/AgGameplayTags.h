@@ -34,6 +34,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockBack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockUp);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Juggle);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_GuardPushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Groggy);
@@ -62,11 +63,13 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Cutscene);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_NonCombat);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GroggyImmune);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GroggyDelayed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_SPDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_PPDelay);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockBack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Break);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Groggy);

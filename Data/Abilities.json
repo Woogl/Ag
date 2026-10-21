@@ -47,6 +47,7 @@
     },
     "Cost": {"SP": 20},
     "Tasks": [
+      {"Task": "RootMotion", "Direction": "MoveInput", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Roll", "RequiredTags": ["Input.Move"]},
       {"Task": "PlayMontage", "Montage": "Dodge", "BlockedTags": ["Input.Move"]}
     ]
@@ -89,6 +90,7 @@
       ]
     },
     "Tasks": [
+      {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "Parry"}
     ]
   },
@@ -187,6 +189,7 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
+      {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "KnockBack"}
     ]
   },
@@ -202,8 +205,27 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
+      {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "KnockUp"},
-      {"Task": "Launch", "AirTime": 0.6, "Height": 120}
+      {"Task": "Launch", "AirTime": 0.75, "Height": 75}
+    ]
+  },
+  "Juggle": {
+    "Tags": ["Ability.Reaction.HitReaction.Juggle"],
+    "Activation": {
+      "RequiredTags": ["State.Airborne", "State.HitReaction"],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
+      "Triggers": [
+        {"Tag": "Event.Hit.Flinch"}
+      ],
+      "bAllowRetrigger": true
+    },
+    "Tasks": [
+      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "PlayMontage", "Montage": "KnockUp"},
+      {"Task": "Launch", "Height": 10, "Altitude": 75, "Direction": "Back", "Distance": 20}
     ]
   },
   "GuardPushback": {
@@ -218,6 +240,7 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
+      {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "GuardPushback"}
     ]
   },
@@ -233,6 +256,7 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
+      {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "GuardBreak"}
     ]
   },
@@ -280,7 +304,7 @@
     "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "LeapSlam"},
-      {"Task": "Launch", "AirTime": 1.35, "To": "Target", "MaxDistance": 1200}
+      {"Task": "Launch", "AirTime": 1.35, "Height": 220, "Direction": "Target", "MaxDistance": 1200}
     ],
     "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 40, "WeightFar": 40}
   },
@@ -334,7 +358,7 @@
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
+      "BlockedTags": ["State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat", "State.HitReaction"],
       "CancelTags": ["Ability.Boss.Pattern", "Ability.Action", "Ability.Sprint", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Groggy"}
@@ -342,7 +366,8 @@
     },
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "Groggy"},
-      {"Task": "PlayMontage", "Montage": "Groggy"}
+      {"Task": "PlayMontage", "Montage": "Groggy", "BlockedTags": ["State.GroggyDelayed"]},
+      {"Task": "PlayMontage", "Montage": "Groggy", "Section": "Loop", "RequiredTags": ["State.GroggyDelayed"]}
     ]
   },
   "Executed": {
@@ -357,6 +382,7 @@
       ]
     },
     "Tasks": [
+      {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "Executed"}
     ]
   },

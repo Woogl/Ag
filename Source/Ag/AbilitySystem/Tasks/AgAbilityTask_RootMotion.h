@@ -11,10 +11,10 @@
 class URootMotionModifier_SkewWarp;
 
 UENUM()
-enum class EAgRootMotionTo : uint8
+enum class EAgRootMotionDirection : uint8
 {
 	Target,
-	Direction,
+	Back,
 	MoveInput
 };
 
@@ -24,7 +24,7 @@ struct FAgRootMotionParams : public FAgTaskParams
 	GENERATED_BODY()
 
 	UPROPERTY()
-	EAgRootMotionTo To = EAgRootMotionTo::Target;
+	EAgRootMotionDirection Direction = EAgRootMotionDirection::Target;
 
 	UPROPERTY()
 	bool bWarpTranslation = true;
@@ -37,9 +37,6 @@ struct FAgRootMotionParams : public FAgTaskParams
 
 	UPROPERTY()
 	EMotionWarpRotationMethod RotationMethod = EMotionWarpRotationMethod::ConstantRate;
-
-	UPROPERTY()
-	float Angle = 0.f;
 
 	UPROPERTY()
 	float Distance = 0.f;

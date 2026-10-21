@@ -28,6 +28,7 @@
       "LockOn",
       "KnockBack",
       "KnockUp",
+      "Juggle",
       "GuardPushback",
       "GuardBreak"
     ],
@@ -70,7 +71,7 @@
       "MaxHP": 3000,
       "PP": 1500,
       "MaxPP": 1500,
-      "ATK": 150,
+      "ATK": 200,
       "DEF": 100,
       "MOV": 250
     },
@@ -85,6 +86,7 @@
       "Backstep",
       "KnockBack",
       "KnockUp",
+      "Juggle",
       "Groggy",
       "Executed",
       "PhaseTransition",

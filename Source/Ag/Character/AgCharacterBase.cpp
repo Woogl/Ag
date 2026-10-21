@@ -274,6 +274,15 @@ void AAgCharacterBase::UpdateMoveSpeed()
 	GetCharacterMovement()->MaxWalkSpeed = AttributeSet->GetMOV() * GetMoveSpeedMultiplier();
 }
 
+void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
+{
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	Payload.Instigator = this;
+	Payload.Target = this;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
+}
+
 void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
 {
 	if (IsDead())
@@ -354,15 +363,6 @@ void AAgCharacterBase::ApplyEffects()
 		AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(EffectId), 1.f,
 			AbilitySystemComponent->MakeEffectContext());
 	}
-}
-
-void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
-{
-	FGameplayEventData Payload;
-	Payload.EventTag = EventTag;
-	Payload.Instigator = this;
-	Payload.Target = this;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
 }
 
 TArray<FString> AAgCharacterBase::GetCharacterDataIds() const

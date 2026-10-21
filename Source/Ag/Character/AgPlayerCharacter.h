@@ -29,9 +29,6 @@ public:
 		return FGenericTeamId(0);
 	}
 
-	/** 한 캐릭터에서 태그마다 행동이 하나 이하입니다(데이터 검증이 같은 표를 읽음). */
-	static TConstArrayView<FGameplayTag> GetInputAbilityTags();
-
 	static const FName JumpMontageId;
 	static const FName JumpStartSection;
 	static const FName JumpLandSection;
@@ -153,9 +150,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
 	EAgCameraShake ExecutionBlowShake = EAgCameraShake::None;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
-	EAgCameraShake FinisherShake = EAgCameraShake::None;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;

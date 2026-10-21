@@ -47,7 +47,7 @@ void UAgAbilityTask_RootMotion::Activate()
 		return;
 	}
 	const bool bHasDuration = EndTime > StartTime;
-	if (Params.To == EAgRootMotionTo::Target)
+	if (Params.Direction == EAgRootMotionDirection::Target)
 	{
 		// 피격 방향은 이벤트의 공격자이므로 추적 거리로 제한하지 않습니다.
 		if (bHasDuration)
@@ -58,7 +58,7 @@ void UAgAbilityTask_RootMotion::Activate()
 		bFacingOnly = !ActionTarget || (bHasDuration && !AgTargeting::IsInRange(*Character, *ActionTarget, TargetingRange));
 		Target = bFacingOnly ? Character->GetLockOnTarget() : ActionTarget;
 	}
-	else if (Params.To == EAgRootMotionTo::MoveInput)
+	else if (Params.Direction == EAgRootMotionDirection::MoveInput)
 	{
 		MoveInputDirection = Character->GetMoveInputDirection().GetSafeNormal2D();
 		bFacingOnly = true;
@@ -91,9 +91,9 @@ void UAgAbilityTask_RootMotion::Activate()
 	}
 	const FVector Location = Character->GetActorLocation();
 	WarpGoal = Location;
-	if (Params.To == EAgRootMotionTo::Direction)
+	if (Params.Direction == EAgRootMotionDirection::Back)
 	{
-		WarpGoal += Character->GetActorForwardVector().GetSafeNormal2D().RotateAngleAxis(Params.Angle, FVector::UpVector) * Params.Distance;
+		WarpGoal -= Character->GetActorForwardVector().GetSafeNormal2D() * Params.Distance;
 	}
 	else if (!bFacingOnly && Character->GetHorizontalDistanceTo(Target.Get()) > AgAbility->GetStopDistance())
 	{
@@ -118,7 +118,7 @@ void UAgAbilityTask_RootMotion::Activate()
 	// 켜기·지우기와 루트 모션 보정은 엔진 Motion Warping이 재생 위치로 합니다.
 	Modifier = URootMotionModifier_SkewWarp::AddRootMotionModifierSkewWarp(Warping, Instance->Montage.Get(), StartTime, EndTime, WarpTargetName,
 		EWarpPointAnimProvider::None, FTransform::Identity, NAME_None, Params.bWarpTranslation && !bFacingOnly, true,
-		Params.To != EAgRootMotionTo::Direction, EMotionWarpRotationType::Default, Params.RotationMethod, 1.f, MaxRotationRate);
+		Params.Direction != EAgRootMotionDirection::Back, EMotionWarpRotationType::Default, Params.RotationMethod, 1.f, MaxRotationRate);
 }
 
 void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
@@ -133,7 +133,7 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 	const float Position = Instance->GetPosition();
 	LastPosition = Position;
 
-	if (Params.To == EAgRootMotionTo::Target)
+	if (Params.Direction == EAgRootMotionDirection::Target)
 	{
 		const AActor* Goal = Target.Get();
 		bStopped = !Goal ||
@@ -194,14 +194,14 @@ void UAgAbilityTask_RootMotion::OnDestroy(bool bInOwnerFinished)
 
 bool UAgAbilityTask_RootMotion::HasGoal() const
 {
-	return Params.To == EAgRootMotionTo::Direction ||
-	       (Params.To == EAgRootMotionTo::Target ? Target.IsValid() : !MoveInputDirection.IsNearlyZero());
+	return Params.Direction == EAgRootMotionDirection::Back ||
+	       (Params.Direction == EAgRootMotionDirection::Target ? Target.IsValid() : !MoveInputDirection.IsNearlyZero());
 }
 
 FVector UAgAbilityTask_RootMotion::GetFacingDirection() const
 {
 	const AActor* Avatar = GetAvatarActor();
-	if (Params.To == EAgRootMotionTo::Target && Target.IsValid() && Avatar)
+	if (Params.Direction == EAgRootMotionDirection::Target && Target.IsValid() && Avatar)
 	{
 		return (Target->GetActorLocation() - Avatar->GetActorLocation()).GetSafeNormal2D();
 	}
