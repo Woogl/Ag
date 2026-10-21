@@ -9,6 +9,8 @@
 
 class UGameplayEffect;
 enum class EAgEffect : uint8;
+struct FAgDamage;
+struct FAgHitRewardState;
 
 UCLASS()
 class UAgGameplayAbility : public UGameplayAbility
@@ -27,6 +29,7 @@ public:
 	/** 엔진 MakeOutgoingGameplayEffectSpec은 GE 클래스를 받는데 Effects.json의 효과는 GE 객체이므로 직접 만듭니다. */
 	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect) const;
 	FGameplayEffectSpecHandle MakeEffectSpec(const UGameplayEffect& Effect) const;
+	FGameplayEffectSpecHandle MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitRewardState>& Reward) const;
 
 	FName GetAbilityId() const
 	{
@@ -61,6 +64,7 @@ public:
 	/** 평타처럼 다시 재생할 때마다 대상을 고르는 행동을 위해 재생 Task가 부릅니다. */
 	void RefreshTarget();
 
+	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
 
 protected:

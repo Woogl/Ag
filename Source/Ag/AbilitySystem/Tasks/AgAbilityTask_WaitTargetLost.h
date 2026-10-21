@@ -24,11 +24,10 @@ UCLASS()
 class UAgAbilityTask_WaitTargetLost : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgWaitTargetLostParams;
 
 public:
 	UAgAbilityTask_WaitTargetLost();
-
-	static UAgAbilityTask_WaitTargetLost* WaitTargetLost(UGameplayAbility* Owner, const FAgWaitTargetLostParams& Params);
 
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
@@ -36,6 +35,9 @@ public:
 private:
 	bool IsTargetLost() const;
 
+	UPROPERTY()
 	FAgWaitTargetLostParams Params;
+
 	TWeakObjectPtr<AAgCharacterBase> Target;
+	float ReleaseRange = 0.f;
 };

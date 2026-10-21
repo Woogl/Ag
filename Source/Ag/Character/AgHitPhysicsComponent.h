@@ -16,6 +16,8 @@ struct FAgPhysicsHit
 	FVector Direction = FVector::ZeroVector;
 
 	FName Bone;
+
+	bool bGuard = false;
 };
 
 UCLASS()
@@ -27,23 +29,12 @@ public:
 	UAgHitPhysicsComponent();
 
 	void Play(const FAgPhysicsHit& Hit);
-
-	void PlayGuard(const FAgPhysicsHit& Hit);
-
 	void Stop();
 
+	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-protected:
-	virtual void BeginPlay() override;
-
 private:
-	struct FAgPendingHit
-	{
-		FAgPhysicsHit Hit;
-		bool bGuard = false;
-	};
-
 	struct FAgFrozenBody
 	{
 		int32 BodyIndex = INDEX_NONE;
@@ -52,9 +43,7 @@ private:
 		bool bGravity = true;
 	};
 
-	void Request(const FAgPhysicsHit& Hit, bool bGuard);
-
-	void Start(const FAgPhysicsHit& Hit, bool bGuard);
+	void Start(const FAgPhysicsHit& Hit);
 
 	void HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount);
 
@@ -68,7 +57,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Hit Physics", meta = (ClampMin = 0, ClampMax = 1))
 	float MaxBlendWeight = 0.7f;
 
-	TArray<FAgPendingHit> PendingHits;
+	TArray<FAgPhysicsHit> PendingHits;
 
 	TArray<FAgFrozenBody> FrozenBodies;
 

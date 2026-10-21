@@ -7,14 +7,8 @@
 
 UAbilityTask* FAgSendGameplayEventParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_SendGameplayEvent::SendGameplayEvent(&Context.Ability, *this);
-}
-
-UAgAbilityTask_SendGameplayEvent* UAgAbilityTask_SendGameplayEvent::SendGameplayEvent(UGameplayAbility* Owner, const FAgSendGameplayEventParams& Params)
-{
-	UAgAbilityTask_SendGameplayEvent* Task = NewAbilityTask<UAgAbilityTask_SendGameplayEvent>(Owner);
-	Task->Event = Params.Event;
-	Task->Recipient = Params.Recipient;
+	UAgAbilityTask_SendGameplayEvent* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_SendGameplayEvent>(&Context.Ability);
+	Task->Params = *this;
 	return Task;
 }
 
@@ -23,14 +17,14 @@ void UAgAbilityTask_SendGameplayEvent::Activate()
 	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
 	AActor* Owner = GetAvatarActor();
 	AActor* Target = AgAbility ? AgAbility->GetActionTarget() : nullptr;
-	AActor* Receiver = Recipient == EAgEventRecipient::Owner ? Owner : Target;
+	AActor* Receiver = Params.To == EAgSendGameplayEventTo::Owner ? Owner : Target;
 	if (Owner && Receiver)
 	{
 		FGameplayEventData Payload;
-		Payload.EventTag = Event;
+		Payload.EventTag = Params.Event;
 		Payload.Instigator = Owner;
 		Payload.Target = Target;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Receiver, Event, Payload);
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Receiver, Params.Event, Payload);
 	}
 	EndTask();
 }

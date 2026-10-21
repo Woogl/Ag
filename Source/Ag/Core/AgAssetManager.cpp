@@ -1,15 +1,15 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "Core/AgAssetManager.h"
+#include "Core/AgGameplayTags.h"
 
 #include "Ag.h"
 #include "AttributeSet.h"
 #include "Data/AgAbilityData.h"
-#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
-#include "Data/AgControlsGuideData.h"
 #include "Data/AgEffectData.h"
+#include "Data/AgHitReward.h"
 #include "Data/AgMontageTimeline.h"
 #include "Data/AgProjectileData.h"
 #include "Data/AgTargetingPresetData.h"
@@ -21,11 +21,11 @@
 #include "JsonObjectConverter.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
-#include "Misc/ScopeExit.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "StructUtils/InstancedStruct.h"
 #include "TargetingSystem/TargetingPreset.h"
+#include "UObject/GCObjectScopeGuard.h"
 #include "UObject/Package.h"
 #include "UObject/PropertyOptional.h"
 #include "UObject/UnrealType.h"
@@ -36,8 +36,6 @@ namespace
 	const TCHAR* const JsonFolderName = TEXT("Data");
 
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
-	const TCHAR* const CameraDataFile = TEXT("Camera.json");
-	const TCHAR* const ControlsGuideFile = TEXT("ControlsGuide.json");
 	const TCHAR* const EffectsFile = TEXT("Effects.json");
 	const TCHAR* const ProjectilesFile = TEXT("Projectiles.json");
 	const TCHAR* const MontageTimelinesFile = TEXT("MontageTimelines.json");
@@ -61,8 +59,6 @@ namespace
 UAgAssetManager::UAgAssetManager()
 {
 	CombatRules = CreateDefaultSubobject<UAgCombatRules>(TEXT("CombatRules"));
-	CameraData = CreateDefaultSubobject<UAgCameraData>(TEXT("CameraData"));
-	ControlsGuideData = CreateDefaultSubobject<UAgControlsGuideData>(TEXT("ControlsGuideData"));
 	Effects = CreateDefaultSubobject<UAgEffectSet>(TEXT("Effects"));
 	Projectiles = CreateDefaultSubobject<UAgProjectileSet>(TEXT("Projectiles"));
 	MontageTimelines = CreateDefaultSubobject<UAgMontageTimelineData>(TEXT("MontageTimelines"));
@@ -87,16 +83,6 @@ FString UAgAssetManager::GetJsonFolder()
 const UAgCombatRules& UAgAssetManager::GetCombatRules() const
 {
 	return *CombatRules;
-}
-
-const UAgCameraData& UAgAssetManager::GetCameraData() const
-{
-	return *CameraData;
-}
-
-const UAgControlsGuideData& UAgAssetManager::GetControlsGuideData() const
-{
-	return *ControlsGuideData;
 }
 
 const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const
@@ -171,7 +157,7 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 
 	// JSON에서 읽은 Transient 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 효과의 GE와 대상 프리셋은
 	// 실행 중에 만들고 클래스만 가리킵니다.
-	TArray<UObject*> DataObjects = {CombatRules, CameraData, Projectiles, MontageTimelines, Abilities};
+	TArray<UObject*> DataObjects = {CombatRules, Projectiles, MontageTimelines, Abilities};
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
 		DataObjects.Add(Pair.Value);
@@ -209,36 +195,23 @@ void UAgAssetManager::StartInitialLoading()
 
 bool UAgAssetManager::LoadJsonData()
 {
-	++DataVersion;
 	TObjectPtr<UAgCombatRules> NewRules = NewObject<UAgCombatRules>(this);
-	TObjectPtr<UAgCameraData> NewCamera = NewObject<UAgCameraData>(this);
-	TObjectPtr<UAgControlsGuideData> NewControlsGuide = NewObject<UAgControlsGuideData>(this);
 	UAgEffectSet* NewEffects = NewObject<UAgEffectSet>(this);
 	UAgProjectileSet* NewProjectiles = NewObject<UAgProjectileSet>(this);
 	UAgMontageTimelineData* NewTimelines = NewObject<UAgMontageTimelineData>(this);
 	UAgTargetingPresetSet* NewTargetingPresets = NewObject<UAgTargetingPresetSet>(this);
 	UAgAbilitySet* NewAbilities = NewObject<UAgAbilitySet>(this);
-	JsonLoadTargets.Reset();
-	JsonLoadTargets.Add(NewRules);
-	JsonLoadTargets.Add(NewCamera);
-	JsonLoadTargets.Add(NewControlsGuide);
-	JsonLoadTargets.Add(NewEffects);
-	JsonLoadTargets.Add(NewProjectiles);
-	JsonLoadTargets.Add(NewTimelines);
-	JsonLoadTargets.Add(NewTargetingPresets);
-	JsonLoadTargets.Add(NewAbilities);
+	TArray<UObject*> LoadTargets = {NewRules, NewEffects, NewProjectiles, NewTimelines, NewTargetingPresets, NewAbilities};
 	TMap<FName, TObjectPtr<UAgCharacterData>> NewCharacters;
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : Characters)
 	{
 		UAgCharacterData* Candidate = NewObject<UAgCharacterData>(this, Pair.Value->GetClass());
 		NewCharacters.Add(Pair.Key, Candidate);
-		JsonLoadTargets.Add(Candidate);
+		LoadTargets.Add(Candidate);
 	}
+	// 읽는 동안 클래스·에셋 로딩이 GC를 돌릴 수 있는데, 새 객체는 아직 아무도 가리키지 않습니다.
+	const TGCObjectsScopeGuard<UObject> LoadTargetsGuard(LoadTargets);
 	JsonIds.Reset();
-	ON_SCOPE_EXIT
-	{
-		JsonLoadTargets.Reset();
-	};
 
 	const auto Read = [this](const TCHAR* FileName, const UStruct* Owner, FName PropertyName, void* Out)
 	{
@@ -247,8 +220,6 @@ bool UAgAssetManager::LoadJsonData()
 	// 다른 파일이 ID로 가리키는 정의 파일을 먼저 읽습니다. 오류를 모두 알리도록 실패해도 다음 파일을 읽습니다.
 	bool bRead = Read(EffectsFile, UAgEffectSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgEffectSet, Definitions), &NewEffects->Definitions);
 	bRead = Read(CombatRulesFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CombatRules), &NewRules) && bRead;
-	bRead = Read(CameraDataFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, CameraData), &NewCamera) && bRead;
-	bRead = Read(ControlsGuideFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, ControlsGuideData), &NewControlsGuide) && bRead;
 	bRead = Read(ProjectilesFile, UAgProjectileSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgProjectileSet, Projectiles), &NewProjectiles->Projectiles) && bRead;
 	bRead = Read(TargetingPresetsFile, UAgTargetingPresetSet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgTargetingPresetSet, Definitions), &NewTargetingPresets->Definitions) && bRead;
 	bRead = Read(AbilitiesFile, UAgAbilitySet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAbilitySet, Abilities), &NewAbilities->Abilities) && bRead;
@@ -261,18 +232,16 @@ bool UAgAssetManager::LoadJsonData()
 
 	for (const TPair<FName, FAgEffectDefinition>& Pair : NewEffects->Definitions)
 	{
-		NewEffects->Effects.Add(Pair.Key, AgEffectData::MakeEffect(Pair.Key, Pair.Value, *this, DataVersion));
+		NewEffects->Effects.Add(Pair.Key, AgEffectData::MakeEffect(Pair.Value, *this));
 	}
-	for (const TPair<FName, FAgTargetingPresetDefinition>& Pair : NewTargetingPresets->Definitions)
+	for (const TPair<FName, FTargetingTaskSet>& Pair : NewTargetingPresets->Definitions)
 	{
-		UTargetingPreset* Preset = NewObject<UTargetingPreset>(this, FName(*FString::Printf(TEXT("%s_%d"), *Pair.Key.ToString(), DataVersion)));
-		Preset->GetMutableTargetingTaskSet().Tasks = Pair.Value.Tasks;
+		UTargetingPreset* Preset = NewObject<UTargetingPreset>(this);
+		Preset->GetMutableTargetingTaskSet() = Pair.Value;
 		NewTargetingPresets->Presets.Add(Pair.Key, Preset);
 	}
 
 	CopyJsonProperties(*NewRules, *CombatRules);
-	CopyJsonProperties(*NewCamera, *CameraData);
-	CopyJsonProperties(*NewControlsGuide, *ControlsGuideData);
 	CopyJsonProperties(*NewEffects, *Effects);
 	CopyJsonProperties(*NewProjectiles, *Projectiles);
 	CopyJsonProperties(*NewTimelines, *MontageTimelines);
@@ -325,6 +294,19 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 			}
 		}
 	}
+	const FObjectProperty* ObjectProperty = CastField<FObjectProperty>(&Property);
+	if (ObjectProperty && ObjectProperty->PropertyClass->IsChildOf(UAgCharacterData::StaticClass()))
+	{
+		// 캐릭터 ID와 클래스는 생성자에서 정하므로 null 처리나 참조 변환보다 먼저 확인합니다.
+		if (!ObjectProperty->GetObjectPropertyValue(Out))
+		{
+			return Fail(Path, TEXT("unknown character ID"));
+		}
+		if (!Value->IsNull() && Value->Type != EJson::Object)
+		{
+			return Fail(Path, TEXT("must be an object or null"));
+		}
+	}
 	if (Value->IsNull())
 	{
 		return true;
@@ -375,7 +357,6 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 	}
 
 	const FStructProperty* StructProperty = CastField<FStructProperty>(&Property);
-	const FObjectProperty* ObjectProperty = CastField<FObjectProperty>(&Property);
 	const UStruct* Type = nullptr;
 	void* Container = nullptr;
 	const TCHAR* TypeKey = nullptr;
@@ -406,8 +387,12 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 	}
 	if (StructProperty && StructProperty->Struct == FGameplayTag::StaticStruct())
 	{
+		if (Value->Type != EJson::String)
+		{
+			return Fail(Path, TEXT("must be a gameplay tag string"));
+		}
 		// 엔진 변환은 등록되지 않은 태그 이름도 그대로 받으므로 직접 찾습니다.
-		const FString Name = Value->Type == EJson::String ? Value->AsString() : FString();
+		const FString Name = Value->AsString();
 		const FGameplayTag Tag = Name.IsEmpty() ? FGameplayTag() : FGameplayTag::RequestGameplayTag(FName(*Name), false);
 		if (!Name.IsEmpty() && !Tag.IsValid())
 		{
@@ -523,6 +508,14 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 				continue;
 			}
 			bRead = ReadJson(Child(Key), Field.Value, *Found, Found->ContainerPtrToValuePtr<void>(Container)) && bRead;
+		}
+		if (bRead && Type == FAgHitReward::StaticStruct())
+		{
+			const FAgHitReward& Reward = *static_cast<const FAgHitReward*>(Container);
+			if (!FMath::IsFinite(Reward.MP) || !FMath::IsFinite(Reward.UP) || Reward.MP < 0.f || Reward.UP < 0.f || (Reward.MP == 0.f && Reward.UP == 0.f))
+			{
+				return Fail(Path, TEXT("HitReward must contain finite non-negative amounts with at least one positive amount"));
+			}
 		}
 		return bRead;
 	}

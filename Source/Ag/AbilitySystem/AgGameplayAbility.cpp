@@ -1,6 +1,7 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgGameplayEffectContext.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgTargeting.h"
@@ -10,6 +11,7 @@
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgAttackData.h"
 #include "Data/AgEffectData.h"
 #include "Data/AgTaskParams.h"
 #include "Ag.h"
@@ -121,11 +123,35 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffe
 	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, &Effect);
 }
 
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitRewardState>& Reward) const
+{
+	const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::Damage);
+	if (Spec.IsValid())
+	{
+		FAgGameplayEffectContext* Context = new FAgGameplayEffectContext();
+		static_cast<FGameplayEffectContext&>(*Context) = *Spec.Data->GetContext().Get();
+		Context->HitReward = Reward;
+		Spec.Data->SetContext(FGameplayEffectContextHandle(Context));
+		Damage.AddToSpec(*Spec.Data);
+	}
+	return Spec;
+}
+
 void UAgGameplayAbility::RefreshTarget()
 {
 	if (IsActive() && ExecutionDefinition.Targeting)
 	{
 		ActionTarget = FindTargetingTarget(ExecutionDefinition, CurrentActorInfo);
+	}
+}
+
+void UAgGameplayAbility::OnGameplayTaskActivated(UGameplayTask& Task)
+{
+	Super::OnGameplayTaskActivated(Task);
+	// 엔진은 Activate를 마친 Task를 그동안 행동이 끝났어도 목록에 넣고 끝내지 않으므로, 여기서 끝냅니다.
+	if (!IsActive())
+	{
+		Task.EndTask();
 	}
 }
 
@@ -164,14 +190,14 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	{
 		// End가 Tasks인 행동이 첫 Task가 끝나는 순간 끝나지 않도록, 발동 Task를 모두 시작한 뒤부터 봅니다.
 		TGuardValue<bool> StartingTasks(bStartingTasks, true);
-		const TArray<FInstancedStruct> Tasks = ExecutionDefinition.Tasks;
-		for (const FInstancedStruct& Item : Tasks)
+		const TArray<TInstancedStruct<FAgTaskParams>> Tasks = ExecutionDefinition.Tasks;
+		for (const TInstancedStruct<FAgTaskParams>& Item : Tasks)
 		{
 			if (!IsActive())
 			{
 				return;
 			}
-			if (UAbilityTask* Task = Item.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*this}))
+			if (UAbilityTask* Task = Item.Get().MakeTask(FAgTaskContext{*this}))
 			{
 				Task->ReadyForActivation();
 			}
@@ -264,12 +290,7 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(FGameplayAbilitySpe
 	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(*Effect, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
 	if (Spec.IsValid())
 	{
-		FGameplayAbilitySpec* AbilitySpec = ASC->FindAbilitySpecFromHandle(Handle);
-		ApplyAbilityTagsToGameplayEffectSpec(*Spec.Data, AbilitySpec);
-		if (AbilitySpec)
-		{
-			Spec.Data->SetByCallerTagMagnitudes = AbilitySpec->SetByCallerTagMagnitudes;
-		}
+		ApplyAbilityTagsToGameplayEffectSpec(*Spec.Data, ASC->FindAbilitySpecFromHandle(Handle));
 	}
 	return Spec;
 }

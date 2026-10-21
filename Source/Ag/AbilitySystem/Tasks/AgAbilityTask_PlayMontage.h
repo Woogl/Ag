@@ -39,7 +39,7 @@ struct FAgTimelineEntry
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FInstancedStruct Params;
+	TInstancedStruct<FAgTaskParams> Params;
 
 	UPROPERTY()
 	TObjectPtr<UAbilityTask> Task;
@@ -54,11 +54,10 @@ UCLASS()
 class UAgAbilityTask_PlayMontage : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgPlayMontageParams;
 
 public:
 	UAgAbilityTask_PlayMontage();
-
-	static UAgAbilityTask_PlayMontage* PlayMontage(UAgGameplayAbility* Owner, const FAgPlayMontageParams& Params);
 
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
@@ -95,6 +94,7 @@ private:
 	void RunTimelinePoint(int32 Entry);
 	void EndPointTasks();
 
+	UPROPERTY()
 	FAgPlayMontageParams Params;
 
 	UPROPERTY()

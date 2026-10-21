@@ -9,7 +9,7 @@
 #include "AgAbilityTask_SendGameplayEvent.generated.h"
 
 UENUM()
-enum class EAgEventRecipient : uint8
+enum class EAgSendGameplayEventTo : uint8
 {
 	Owner,
 	Target
@@ -24,7 +24,7 @@ struct FAgSendGameplayEventParams : public FAgTaskParams
 	FGameplayTag Event;
 
 	UPROPERTY()
-	EAgEventRecipient Recipient = EAgEventRecipient::Owner;
+	EAgSendGameplayEventTo To = EAgSendGameplayEventTo::Owner;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
@@ -33,13 +33,12 @@ UCLASS()
 class UAgAbilityTask_SendGameplayEvent : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgSendGameplayEventParams;
 
 public:
-	static UAgAbilityTask_SendGameplayEvent* SendGameplayEvent(UGameplayAbility* Owner, const FAgSendGameplayEventParams& Params);
-
 	virtual void Activate() override;
 
 private:
-	FGameplayTag Event;
-	EAgEventRecipient Recipient = EAgEventRecipient::Owner;
+	UPROPERTY()
+	FAgSendGameplayEventParams Params;
 };

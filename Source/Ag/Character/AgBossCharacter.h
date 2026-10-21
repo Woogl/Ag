@@ -25,8 +25,6 @@ public:
 		return Phase;
 	}
 
-	AAgCharacterBase* GetTarget() const;
-
 	FVector GetLockOnLocation() const;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
@@ -43,8 +41,6 @@ private:
 	void HandleAbilityEnded(const FAbilityEndedData& Data);
 
 	bool IsExecutionTargetOf(AAgPlayerCharacter& Player) const;
-
-	void AttachWorldWidgets();
 
 	void UpdateWorldWidgets();
 

@@ -23,7 +23,9 @@ namespace
 
 UAbilityTask* FAgPlayMontageParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_PlayMontage::PlayMontage(&Context.Ability, *this);
+	UAgAbilityTask_PlayMontage* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_PlayMontage>(&Context.Ability);
+	Task->Params = *this;
+	return Task;
 }
 
 UAgAbilityTask_PlayMontage::UAgAbilityTask_PlayMontage()
@@ -31,13 +33,6 @@ UAgAbilityTask_PlayMontage::UAgAbilityTask_PlayMontage()
 	// ASC는 Task를 TG_DuringPhysics에 틱하므로, 몽타주가 진행된 뒤(TG_PrePhysics의 이동·메시 틱) 판정해 같은 프레임의
 	// 공격 판정(TG_PostPhysics)보다 먼저 구간을 엽니다.
 	bTickingTask = true;
-}
-
-UAgAbilityTask_PlayMontage* UAgAbilityTask_PlayMontage::PlayMontage(UAgGameplayAbility* Owner, const FAgPlayMontageParams& InParams)
-{
-	UAgAbilityTask_PlayMontage* Task = NewAbilityTask<UAgAbilityTask_PlayMontage>(Owner);
-	Task->Params = InParams;
-	return Task;
 }
 
 void UAgAbilityTask_PlayMontage::Activate()
@@ -230,9 +225,9 @@ void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Insta
 	// 데이터를 다시 읽어도 이 재생이 끝날 때까지 같은 항목을 쓰도록 복사합니다.
 	for (const TPair<FName, FAgTimelineSection>& Section : Timeline->Sections)
 	{
-		for (const FInstancedStruct& Item : Section.Value.Tasks)
+		for (const TInstancedStruct<FAgTaskParams>& Item : Section.Value.Tasks)
 		{
-			const FAgTaskParams& ItemParams = Item.Get<FAgTaskParams>();
+			const FAgTaskParams& ItemParams = Item.Get();
 			float Start = 0.f;
 			float End = 0.f;
 			if (!AgMontageTimeline::ResolveTimes(*PlayedMontage, Section.Key, ItemParams, Start, End))
@@ -313,10 +308,10 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 	const int32 InstanceId = MontageInstanceId;
 	for (const FPending& Item : Pending)
 	{
-		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로 매번 확인합니다. 항목 실행 안에서 전환해 위치가 바뀌었으면
-		// 옮긴 위치의 판정이 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환 지점과 같은 시각에는 다른
-		// 항목을 두지 않습니다.
-		if (IsFinished() || MontageInstanceId != InstanceId || TimelinePosition != NewPosition)
+		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로 매번 확인합니다. 이 Task가 시작하는 중(첫 판정)에는 행동이 끝나도
+		// 엔진이 이 Task를 끝내지 않으므로 행동도 봅니다. 항목 실행 안에서 전환해 위치가 바뀌었으면 옮긴 위치의 판정이
+		// 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환 지점과 같은 시각에는 다른 항목을 두지 않습니다.
+		if (IsFinished() || !Ability->IsActive() || MontageInstanceId != InstanceId || TimelinePosition != NewPosition)
 		{
 			return;
 		}
@@ -365,7 +360,7 @@ void UAgAbilityTask_PlayMontage::StopTimeline()
 void UAgAbilityTask_PlayMontage::StartTimelineWindow(int32 Entry)
 {
 	FAgTimelineEntry& Item = TimelineEntries[Entry];
-	UAbilityTask* Task = Item.Params.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), Item.Start, Item.End, this});
+	UAbilityTask* Task = Item.Params.Get().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), Item.Start, Item.End, this});
 	if (!Task)
 	{
 		return;
@@ -389,7 +384,7 @@ void UAgAbilityTask_PlayMontage::RunTimelinePoint(int32 Entry)
 {
 	// 지점 Task는 다시 재생해도 남고, 재생이 끝날 때 끝납니다.
 	const FAgTimelineEntry& Item = TimelineEntries[Entry];
-	UAbilityTask* Task = Item.Params.Get<FAgTaskParams>().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), Item.Start, Item.Start, this});
+	UAbilityTask* Task = Item.Params.Get().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), Item.Start, Item.Start, this});
 	if (!Task)
 	{
 		return;

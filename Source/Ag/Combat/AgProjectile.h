@@ -21,6 +21,8 @@ public:
 	AAgProjectile();
 
 	void Launch(const FGameplayEffectSpecHandle& InDamageSpec, const FVector& Direction, const FAgProjectileParams& InParams);
+	void Reflect(AAgCharacterBase& Defender);
+	bool IsReflected() const;
 
 protected:
 	virtual void Tick(float DeltaSeconds) override;
@@ -35,6 +37,7 @@ private:
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
 	TArray<TWeakObjectPtr<AActor>> TouchedActors;
+	TWeakObjectPtr<AAgCharacterBase> Reflector;
 
 	/** 여러 대상에 다시 쓰므로, 대상별 결과와 적중 위치는 이 스펙의 복사본에만 기록합니다. */
 	UPROPERTY()

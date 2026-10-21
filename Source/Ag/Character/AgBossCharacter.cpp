@@ -37,9 +37,10 @@ AAgBossCharacter::AAgBossCharacter()
 
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
+	LockOnMarker->SetupAttachment(GetMesh(), LockOnBone);
+	ExecutionPrompt->SetupAttachment(GetMesh(), ExecutionPromptBone);
 	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get()})
 	{
-		WorldWidget->SetupAttachment(GetMesh());
 		WorldWidget->SetWidgetSpace(EWidgetSpace::Screen);
 		WorldWidget->SetDrawAtDesiredSize(true);
 		WorldWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -48,12 +49,6 @@ AAgBossCharacter::AAgBossCharacter()
 	}
 
 	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
-}
-
-AAgCharacterBase* AAgBossCharacter::GetTarget() const
-{
-	const AAgBossAIController* AIController = Cast<AAgBossAIController>(GetController());
-	return AIController ? AIController->GetTarget() : nullptr;
 }
 
 FVector AAgBossCharacter::GetLockOnLocation() const
@@ -65,7 +60,6 @@ void AAgBossCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AttachWorldWidgets();
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
@@ -121,12 +115,6 @@ bool AAgBossCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
 	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Execution) : nullptr;
 	const FAgAbilityData* Execution = Spec ? Player.FindAbility(Spec->Handle) : nullptr;
 	return Execution && Execution->Targeting && AgTargeting::FindTarget(*Execution->Targeting, Player) == this;
-}
-
-void AAgBossCharacter::AttachWorldWidgets()
-{
-	LockOnMarker->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, LockOnBone);
-	ExecutionPrompt->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, ExecutionPromptBone);
 }
 
 void AAgBossCharacter::UpdateWorldWidgets()

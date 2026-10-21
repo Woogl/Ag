@@ -135,7 +135,7 @@
     },
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "Execution"},
-      {"Task": "SendGameplayEvent", "Event": "Event.Executed", "Recipient": "Target"}
+      {"Task": "SendGameplayEvent", "Event": "Event.Executed", "To": "Target"}
     ]
   },
   "Sprint": {

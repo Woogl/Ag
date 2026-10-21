@@ -10,6 +10,7 @@
 UENUM()
 enum class EAgLaunchTo : uint8
 {
+	Up,
 	Target
 };
 
@@ -25,7 +26,7 @@ struct FAgLaunchParams : public FAgTaskParams
 	TOptional<float> Height;
 
 	UPROPERTY()
-	TOptional<EAgLaunchTo> To;
+	EAgLaunchTo To = EAgLaunchTo::Up;
 
 	UPROPERTY()
 	TOptional<float> MaxDistance;
@@ -37,16 +38,17 @@ UCLASS()
 class UAgAbilityTask_Launch : public UAbilityTask_ApplyRootMotionJumpForce
 {
 	GENERATED_BODY()
+	friend struct FAgLaunchParams;
 
 public:
 	static const FName SourceName;
-
-	static UAgAbilityTask_Launch* Launch(UGameplayAbility* Owner, const FAgLaunchParams& Params);
 
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
 
 private:
+	UPROPERTY()
 	FAgLaunchParams Params;
+
 	bool bReportedRootMotion = false;
 };

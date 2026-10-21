@@ -27,11 +27,11 @@ struct FAgMontageSegment
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
 	TObjectPtr<UAnimSequenceBase> Animation;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
 	float StartTime = 0.f;
 
 	/** 0이면 애니메이션 끝까지 재생합니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
 	float EndTime = 0.f;
 
 	/** 이 조각의 재생 속도. 1보다 작으면 몽타주에서 더 길게 재생됩니다(DoubleStrike의 느린 패턴 전조 동작). */
@@ -47,7 +47,7 @@ struct FAgMontageSection
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
 	FName Name;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage", meta = (Units = "s"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Montage")
 	float StartTime = 0.f;
 
 	/** 다음에 재생할 섹션. None이면 몽타주가 끝나고, 자기 이름이면 반복합니다. */

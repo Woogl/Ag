@@ -31,6 +31,6 @@ protected:
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	TObjectPtr<UWidgetAnimation> FadeAnimation;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Damage Floater", meta = (Units = "cm", ClampMin = 0))
+	UPROPERTY(EditDefaultsOnly, Category = "Damage Floater", meta = (ClampMin = 0))
 	float RiseHeight = 0.f;
 };

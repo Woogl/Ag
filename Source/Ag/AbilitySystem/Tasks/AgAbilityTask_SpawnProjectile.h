@@ -3,12 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/Tasks/AbilityTask_SpawnActor.h"
-#include "Data/AgProjectileData.h"
+#include "Abilities/Tasks/AbilityTask.h"
+#include "Data/AgHitReward.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_SpawnProjectile.generated.h"
-
-class AAgProjectile;
 
 USTRUCT()
 struct FAgSpawnProjectileParams : public FAgTaskParams
@@ -16,35 +14,28 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 	GENERATED_BODY()
 
 	UPROPERTY(meta = (DataId = "Projectiles"))
-	FName ProjectileId;
+	FName Projectile;
 
 	UPROPERTY()
 	FName SocketName;
 
+	UPROPERTY()
+	TOptional<FAgHitReward> HitReward;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
+// 엔진 UAbilityTask_SpawnActor는 블루프린트 노드용이라 생성이 두 호출로 나뉘므로, 발사는 Activate에서 직접 지연 생성합니다.
 UCLASS()
-class UAgAbilityTask_SpawnProjectile : public UAbilityTask_SpawnActor
+class UAgAbilityTask_SpawnProjectile : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgSpawnProjectileParams;
 
 public:
-	static UAgAbilityTask_SpawnProjectile* SpawnProjectile(UGameplayAbility* Owner, const FAgProjectileDefinition& Projectile, FName SocketName);
 	virtual void Activate() override;
-	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	UFUNCTION()
-	void HandleSpawned(AActor* Actor);
-
 	UPROPERTY()
-	TSubclassOf<AAgProjectile> ProjectileClass;
-	FName SpawnSocket;
-	FAgDamage Damage;
-	FAgProjectileParams FlightParams;
-	FVector Direction = FVector::ForwardVector;
-
-	UPROPERTY()
-	TObjectPtr<AAgProjectile> PendingProjectile;
+	FAgSpawnProjectileParams Params;
 };

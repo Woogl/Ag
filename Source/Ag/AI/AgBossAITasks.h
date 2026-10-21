@@ -109,9 +109,7 @@ struct FAgBossAITask_RunPattern : public FStateTreeAITaskBase
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 
 private:
-	static int32 PickWeighted(TConstArrayView<float> Weights, float Random01);
-
-	static void GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights);
+	static void GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates);
 };
 
 USTRUCT()

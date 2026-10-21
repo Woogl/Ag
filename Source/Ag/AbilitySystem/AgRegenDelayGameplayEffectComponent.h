@@ -11,7 +11,7 @@ class UAbilitySystemComponent;
 struct FGameplayEffectRemovalInfo;
 struct FOnAttributeChangeData;
 
-UCLASS(DisplayName = "Ag Regen Delay")
+UCLASS()
 class UAgRegenDelayGameplayEffectComponent : public UGameplayEffectComponent
 {
 	GENERATED_BODY()

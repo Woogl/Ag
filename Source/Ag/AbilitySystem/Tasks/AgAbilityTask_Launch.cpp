@@ -20,17 +20,12 @@ namespace
 
 UAbilityTask* FAgLaunchParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_Launch::Launch(&Context.Ability, *this);
+	UAgAbilityTask_Launch* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_Launch>(&Context.Ability, UAgAbilityTask_Launch::SourceName);
+	Task->Params = *this;
+	return Task;
 }
 
 const FName UAgAbilityTask_Launch::SourceName(TEXT("AgLaunch"));
-
-UAgAbilityTask_Launch* UAgAbilityTask_Launch::Launch(UGameplayAbility* Owner, const FAgLaunchParams& InParams)
-{
-	UAgAbilityTask_Launch* Task = NewAbilityTask<UAgAbilityTask_Launch>(Owner, SourceName);
-	Task->Params = InParams;
-	return Task;
-}
 
 void UAgAbilityTask_Launch::Activate()
 {
@@ -45,7 +40,7 @@ void UAgAbilityTask_Launch::Activate()
 
 	Rotation = Character->GetActorRotation();
 	Distance = 0.f;
-	const AActor* Target = Params.To ? AgAbility->GetActionTarget() : nullptr;
+	const AActor* Target = Params.To == EAgLaunchTo::Target ? AgAbility->GetActionTarget() : nullptr;
 	if (Target)
 	{
 		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);

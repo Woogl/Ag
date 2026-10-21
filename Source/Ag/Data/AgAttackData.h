@@ -35,12 +35,6 @@ struct FAgDamage
 	bool bGuardable = true;
 
 	UPROPERTY()
-	float MPCharge = 0.f;
-
-	UPROPERTY()
-	float UPCharge = 0.f;
-
-	UPROPERTY()
 	bool bFinisher = false;
 
 	void AddToSpec(FGameplayEffectSpec& Spec) const;
@@ -51,9 +45,9 @@ struct FAgProjectileParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm/s"))
+	UPROPERTY(EditAnywhere, Category = "Projectile")
 	float Speed = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Projectile", meta = (Units = "cm"))
+	UPROPERTY(EditAnywhere, Category = "Projectile")
 	float Range = 0.f;
 };

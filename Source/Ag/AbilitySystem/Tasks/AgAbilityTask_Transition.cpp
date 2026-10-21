@@ -12,14 +12,9 @@
 
 UAbilityTask* FAgTransitionParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_Transition::Transition(&Context.Ability, *this, Context.Playback);
-}
-
-UAgAbilityTask_Transition* UAgAbilityTask_Transition::Transition(UGameplayAbility* Owner, const FAgTransitionParams& InParams, UAgAbilityTask_PlayMontage* InPlayback)
-{
-	UAgAbilityTask_Transition* Task = NewAbilityTask<UAgAbilityTask_Transition>(Owner);
-	Task->Params = InParams;
-	Task->Playback = InPlayback;
+	UAgAbilityTask_Transition* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_Transition>(&Context.Ability);
+	Task->Params = *this;
+	Task->Playback = Context.Playback;
 	return Task;
 }
 
@@ -62,8 +57,6 @@ void UAgAbilityTask_Transition::OnDestroy(bool bInOwnerFinished)
 			ASC->RegisterGameplayTagEvent(Params.Tag, EGameplayTagEventType::NewOrRemoved).Remove(TagHandle);
 		}
 	}
-	EventHandle.Reset();
-	TagHandle.Reset();
 	if (const UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(EndingTimer);
@@ -81,8 +74,10 @@ TOptional<float> UAgAbilityTask_Transition::FindTagEndingDelay(const UAbilitySys
 	}
 	const UAnimMontage* Montage = Ability ? Ability->GetCurrentMontage() : nullptr;
 	const int32 SectionIndex = Montage ? Montage->GetSectionIndex(Params.Section) : INDEX_NONE;
+	// 섹션 길이는 몽타주 시간이라, 재생 배율로 나눠 효과의 지속 시간과 같은 월드 시간으로 맞춥니다.
 	const float SectionLength = SectionIndex == INDEX_NONE ? 0.f : Montage->GetSectionLength(SectionIndex);
-	return FMath::Max(Times) - SectionLength;
+	const float PlayRate = FMath::Abs(Montage ? Montage->RateScale : 1.f);
+	return FMath::Max(Times) - (PlayRate > UE_SMALL_NUMBER ? SectionLength / PlayRate : SectionLength);
 }
 
 void UAgAbilityTask_Transition::TryTransition()

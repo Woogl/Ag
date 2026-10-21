@@ -6,6 +6,7 @@
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Data/AgAbilityData.h"
 #include "Data/AgAttackData.h"
+#include "Data/AgHitReward.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_AreaHit.generated.h"
 
@@ -20,6 +21,9 @@ struct FAgAreaHitParams : public FAgTaskParams
 	UPROPERTY()
 	FAgTargetingRequest Area;
 
+	UPROPERTY()
+	TOptional<FAgHitReward> HitReward;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
@@ -27,11 +31,12 @@ UCLASS()
 class UAgAbilityTask_AreaHit : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgAreaHitParams;
 
 public:
-	static UAgAbilityTask_AreaHit* AreaHit(UGameplayAbility* Owner, const FAgAreaHitParams& Params);
 	virtual void Activate() override;
 
 private:
+	UPROPERTY()
 	FAgAreaHitParams Params;
 };

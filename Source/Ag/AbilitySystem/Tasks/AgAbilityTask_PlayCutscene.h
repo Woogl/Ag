@@ -29,11 +29,10 @@ UCLASS()
 class UAgAbilityTask_PlayCutscene : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgPlayCutsceneParams;
 
 public:
 	UAgAbilityTask_PlayCutscene();
-
-	static UAgAbilityTask_PlayCutscene* PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params);
 
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
@@ -48,7 +47,7 @@ private:
 	float GetOwnerTimeDilation() const;
 
 	UPROPERTY()
-	TObjectPtr<ULevelSequence> Cutscene;
+	FAgPlayCutsceneParams Params;
 
 	UPROPERTY()
 	TObjectPtr<ALevelSequenceActor> SequenceActor;

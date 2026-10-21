@@ -51,11 +51,10 @@ UCLASS()
 class UAgAbilityTask_RootMotion : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgRootMotionParams;
 
 public:
 	UAgAbilityTask_RootMotion();
-
-	static UAgAbilityTask_RootMotion* RootMotion(UGameplayAbility* Owner, const FAgRootMotionParams& Params, float StartTime, float EndTime);
 
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
@@ -66,10 +65,12 @@ private:
 	FVector GetFacingDirection() const;
 	void RemoveWarpTarget();
 
+	UPROPERTY()
 	FAgRootMotionParams Params;
 
 	float StartTime = 0.f;
 	float EndTime = 0.f;
+	float TargetingRange = 0.f;
 
 	float LastPosition = 0.f;
 	TWeakObjectPtr<AActor> Target;

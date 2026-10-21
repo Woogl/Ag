@@ -85,12 +85,9 @@ UAgHitPhysicsComponent::UAgHitPhysicsComponent()
 
 void UAgHitPhysicsComponent::Play(const FAgPhysicsHit& Hit)
 {
-	Request(Hit, false);
-}
-
-void UAgHitPhysicsComponent::PlayGuard(const FAgPhysicsHit& Hit)
-{
-	Request(Hit, true);
+	// 피격 처리는 반응 뒤에 히트스톱을 걸므로, 다음 틱에 히트스톱이 끝났는지 보고 시작합니다.
+	PendingHits.Add(Hit);
+	SetComponentTickEnabled(true);
 }
 
 void UAgHitPhysicsComponent::Stop()
@@ -105,6 +102,15 @@ void UAgHitPhysicsComponent::Stop()
 	SetComponentTickEnabled(false);
 }
 
+void UAgHitPhysicsComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleHitstopChanged);
+}
+
 void UAgHitPhysicsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -113,9 +119,9 @@ void UAgHitPhysicsComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		return;
 	}
-	for (const FAgPendingHit& Pending : PendingHits)
+	for (const FAgPhysicsHit& Hit : PendingHits)
 	{
-		Start(Pending.Hit, Pending.bGuard);
+		Start(Hit);
 	}
 	PendingHits.Reset();
 	if (RangeBone.IsNone())
@@ -144,45 +150,29 @@ void UAgHitPhysicsComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 }
 
-void UAgHitPhysicsComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(GetOwner());
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandleHitstopChanged);
-}
-
-void UAgHitPhysicsComponent::Request(const FAgPhysicsHit& Hit, bool bGuard)
-{
-	// 피격 처리는 반응 뒤에 히트스톱을 걸므로, 다음 틱에 히트스톱이 끝났는지 보고 시작합니다.
-	PendingHits.Add({Hit, bGuard});
-	SetComponentTickEnabled(true);
-}
-
-void UAgHitPhysicsComponent::Start(const FAgPhysicsHit& Hit, bool bGuard)
+void UAgHitPhysicsComponent::Start(const FAgPhysicsHit& Hit)
 {
 	USkeletalMeshComponent* Mesh = GetMesh();
-	const FName HitBone = bGuard ? NAME_None : FindHitBone(*Mesh, Hit);
-	const FName NewRangeBone = bGuard ? GuardRangeBone : FindRangeBone(*Mesh, HitBone);
+	const FName HitBone = Hit.bGuard ? NAME_None : FindHitBone(*Mesh, Hit);
+	const FName NewRangeBone = Hit.bGuard ? GuardRangeBone : FindRangeBone(*Mesh, HitBone);
 	// 물리 자세가 남은 바디를 키네마틱으로 되돌리면 애니메이션 자세로 튀므로, 흔드는 동안 범위와 팔은 더하기만 합니다.
 	if (RangeBone.IsNone() || Mesh->BoneIsChildOf(RangeBone, NewRangeBone))
 	{
 		RangeBone = NewRangeBone;
 	}
-	bArms = bArms || bGuard;
+	bArms = bArms || Hit.bGuard;
 	// 키네마틱 바디는 애니메이션 자세에 고정돼 관절로 이어진 가슴을 붙잡으므로, 팔도 물리로 돌리고 가드가 아니면
 	// 섞는 비율만 0으로 두어 보이는 팔과 무기는 몸통을 따라가게 합니다.
 	Mesh->SetAllBodiesBelowSimulatePhysics(RangeBone, true);
 	// 맞은 바디 하나만 밀면 관절로 이어진 상체 전체가 힘을 나눠 받고 애니메이션에 고정된 바디가 힘을 받아 거의 움직이지
 	// 않으므로, 범위 안 바디를 모두 같은 속도로 밀고 맞은 바디만 맞은 위치에서 밀어 그 자리를 중심으로 돌게 합니다.
 	// 가드는 양손으로 칼을 쥐어 두 손을 함께 맞은 위치에서 밀어야 손이 손잡이에서 벌어지지 않습니다.
-	const FBodyInstance* HitBody = bGuard ? nullptr : Mesh->GetBodyInstance(HitBone);
+	const FBodyInstance* HitBody = Hit.bGuard ? nullptr : Mesh->GetBodyInstance(HitBone);
 	const FBodyInstance* LeftHand = Mesh->GetBodyInstance(HandBones[0]);
 	const FBodyInstance* RightHand = Mesh->GetBodyInstance(HandBones[1]);
-	Mesh->ForEachBodyBelow(RangeBone, true, false, [this, &Hit, bGuard, HitBody, LeftHand, RightHand](FBodyInstance* Body)
+	Mesh->ForEachBodyBelow(RangeBone, true, false, [this, &Hit, HitBody, LeftHand, RightHand](FBodyInstance* Body)
 	{
-		if (bGuard ? (Body == LeftHand || Body == RightHand) : Body == HitBody)
+		if (Hit.bGuard ? (Body == LeftHand || Body == RightHand) : Body == HitBody)
 		{
 			PushAtHit(*Body, Hit, PushSpeed);
 		}

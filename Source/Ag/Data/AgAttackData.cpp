@@ -8,8 +8,6 @@ void FAgDamage::AddToSpec(FGameplayEffectSpec& Spec) const
 {
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier, HPMultiplier);
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PPMultiplier, PPMultiplier);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, MPCharge);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UPCharge);
 	switch (HitReaction)
 	{
 		case EAgHitReaction::Flinch:

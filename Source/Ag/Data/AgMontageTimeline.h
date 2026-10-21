@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/AgTaskParams.h"
 #include "StructUtils/InstancedStruct.h"
 #include "AgMontageTimeline.generated.h"
 
@@ -15,7 +16,7 @@ struct FAgTimelineSection
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TArray<FInstancedStruct> Tasks;
+	TArray<TInstancedStruct<FAgTaskParams>> Tasks;
 };
 
 USTRUCT()

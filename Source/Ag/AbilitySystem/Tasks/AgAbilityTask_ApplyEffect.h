@@ -28,15 +28,15 @@ UCLASS()
 class UAgAbilityTask_ApplyEffect : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgApplyEffectParams;
 
 public:
-	static UAgAbilityTask_ApplyEffect* ApplyEffect(UGameplayAbility* Owner, FName Effect, bool bRemoveOnEnd);
-
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	FName Effect;
-	bool bRemoveOnEnd = false;
+	UPROPERTY()
+	FAgApplyEffectParams Params;
+
 	FActiveGameplayEffectHandle Applied;
 };

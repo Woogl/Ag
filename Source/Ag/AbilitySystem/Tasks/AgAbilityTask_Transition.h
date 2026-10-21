@@ -45,10 +45,9 @@ UCLASS()
 class UAgAbilityTask_Transition : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgTransitionParams;
 
 public:
-	static UAgAbilityTask_Transition* Transition(UGameplayAbility* Owner, const FAgTransitionParams& Params, UAgAbilityTask_PlayMontage* Playback);
-
 	virtual void Activate() override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
@@ -59,7 +58,9 @@ private:
 	void HandleEvent(const FGameplayEventData* Payload);
 	void HandleTagChanged(const FGameplayTag Tag, int32 NewCount);
 
+	UPROPERTY()
 	FAgTransitionParams Params;
+
 	TWeakObjectPtr<UAgAbilityTask_PlayMontage> Playback;
 	FDelegateHandle EventHandle;
 	FDelegateHandle TagHandle;

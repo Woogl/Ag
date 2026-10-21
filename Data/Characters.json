@@ -11,7 +11,7 @@
       "MaxUP": 100,
       "ATK": 100,
       "DEF": 50,
-      "MOV": 400
+      "MOV": 350
     },
     "Abilities": [
       "BasicAttack",
@@ -44,6 +44,7 @@
     "PerfectDodgeSlowMotionDuration": 0.3,
     "PerfectDodgeEffects": ["PerfectDodgeReward", "DodgeCounterChance"],
     "SprintSpeedRatio": 1.5,
+    "YawRotationRate": 540,
     "Effects": ["SPRegen", "GroggyImmune"],
     "Montages": {
       "BasicAttack": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",

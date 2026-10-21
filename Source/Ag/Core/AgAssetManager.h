@@ -8,10 +8,8 @@
 
 class FJsonValue;
 class UAgAbilitySet;
-class UAgCameraData;
 class UAgCharacterData;
 class UAgCombatRules;
-class UAgControlsGuideData;
 class UAgEffectSet;
 class UAgMontageTimelineData;
 class UAgProjectileSet;
@@ -35,10 +33,6 @@ public:
 	AG_API static FString GetJsonFolder();
 
 	const UAgCombatRules& GetCombatRules() const;
-
-	const UAgCameraData& GetCameraData() const;
-
-	const UAgControlsGuideData& GetControlsGuideData() const;
 
 	AG_API const UAgMontageTimelineData& GetMontageTimelines() const;
 
@@ -72,18 +66,8 @@ private:
 
 	TMap<FName, TSet<FName>> JsonIds;
 
-	/** 검증 중인 객체도 로딩 도중 GC가 따라갈 수 있게 보관합니다. */
-	UPROPERTY()
-	TArray<TObjectPtr<UObject>> JsonLoadTargets;
-
 	UPROPERTY()
 	TObjectPtr<UAgCombatRules> CombatRules;
-
-	UPROPERTY()
-	TObjectPtr<UAgCameraData> CameraData;
-
-	UPROPERTY()
-	TObjectPtr<UAgControlsGuideData> ControlsGuideData;
 
 	UPROPERTY()
 	TObjectPtr<UAgEffectSet> Effects;
@@ -106,6 +90,4 @@ private:
 	/** 항목의 형식을 데이터 클래스가 정하므로 ID와 클래스의 짝은 생성자에 적습니다. */
 	UPROPERTY()
 	TMap<FName, TObjectPtr<UAgCharacterData>> Characters;
-
-	int32 DataVersion = 0;
 };

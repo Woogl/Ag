@@ -6,7 +6,7 @@
 #include "GameplayEffectComponent.h"
 #include "AgDamageResultGameplayEffectComponent.generated.h"
 
-UCLASS(DisplayName = "Ag Damage Result")
+UCLASS()
 class UAgDamageResultGameplayEffectComponent : public UGameplayEffectComponent
 {
 	GENERATED_BODY()

@@ -18,7 +18,9 @@ namespace
 
 UAbilityTask* FAgPlayCutsceneParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_PlayCutscene::PlayCutscene(&Context.Ability, *this);
+	UAgAbilityTask_PlayCutscene* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_PlayCutscene>(&Context.Ability);
+	Task->Params = *this;
+	return Task;
 }
 
 UAgAbilityTask_PlayCutscene::UAgAbilityTask_PlayCutscene()
@@ -26,16 +28,9 @@ UAgAbilityTask_PlayCutscene::UAgAbilityTask_PlayCutscene()
 	bTickingTask = true;
 }
 
-UAgAbilityTask_PlayCutscene* UAgAbilityTask_PlayCutscene::PlayCutscene(UGameplayAbility* Owner, const FAgPlayCutsceneParams& Params)
-{
-	UAgAbilityTask_PlayCutscene* Task = NewAbilityTask<UAgAbilityTask_PlayCutscene>(Owner);
-	Task->Cutscene = Params.Sequence;
-	return Task;
-}
-
 void UAgAbilityTask_PlayCutscene::Activate()
 {
-	if (!Cutscene || !GetAvatarActor() || !AbilitySystemComponent.IsValid())
+	if (!Params.Sequence || !GetAvatarActor() || !AbilitySystemComponent.IsValid())
 	{
 		EndTask();
 		return;
@@ -49,7 +44,7 @@ void UAgAbilityTask_PlayCutscene::Activate()
 	Settings.bHideHud = true;
 	Settings.PlayRate = GetOwnerTimeDilation();
 	ALevelSequenceActor* NewActor = nullptr;
-	ULevelSequencePlayer* Player = ULevelSequencePlayer::CreateLevelSequencePlayer(this, Cutscene, Settings, NewActor);
+	ULevelSequencePlayer* Player = ULevelSequencePlayer::CreateLevelSequencePlayer(this, Params.Sequence, Settings, NewActor);
 	if (!Player || !NewActor)
 	{
 		EndTask();

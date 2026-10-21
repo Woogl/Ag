@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/AgTaskParams.h"
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
 #include "AgAbilityData.generated.h"
@@ -165,7 +166,7 @@ struct FAgAbilityData
 	EAgAbilityEnd End = EAgAbilityEnd::Tasks;
 
 	UPROPERTY()
-	TArray<FInstancedStruct> Tasks;
+	TArray<TInstancedStruct<FAgTaskParams>> Tasks;
 
 	UPROPERTY()
 	TOptional<FAgPatternSelection> PatternSelection;

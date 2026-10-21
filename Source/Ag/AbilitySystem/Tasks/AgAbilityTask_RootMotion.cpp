@@ -3,6 +3,7 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_RootMotion.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgTargeting.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
@@ -24,21 +25,16 @@ namespace
 
 UAbilityTask* FAgRootMotionParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_RootMotion::RootMotion(&Context.Ability, *this, Context.Start, Context.End);
+	UAgAbilityTask_RootMotion* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_RootMotion>(&Context.Ability);
+	Task->Params = *this;
+	Task->StartTime = Context.Start;
+	Task->EndTime = Context.End;
+	return Task;
 }
 
 UAgAbilityTask_RootMotion::UAgAbilityTask_RootMotion()
 {
 	bTickingTask = true;
-}
-
-UAgAbilityTask_RootMotion* UAgAbilityTask_RootMotion::RootMotion(UGameplayAbility* Owner, const FAgRootMotionParams& InParams, float InStartTime, float InEndTime)
-{
-	UAgAbilityTask_RootMotion* Task = NewAbilityTask<UAgAbilityTask_RootMotion>(Owner);
-	Task->Params = InParams;
-	Task->StartTime = InStartTime;
-	Task->EndTime = InEndTime;
-	return Task;
 }
 
 void UAgAbilityTask_RootMotion::Activate()
@@ -56,10 +52,10 @@ void UAgAbilityTask_RootMotion::Activate()
 		// 피격 방향은 이벤트의 공격자이므로 추적 거리로 제한하지 않습니다.
 		if (bHasDuration)
 		{
-			Params.TargetingRange = FMath::Min(Params.TargetingRange.Get(AgAbility->GetTargetingRange()), AgAbility->GetTargetingRange());
+			TargetingRange = FMath::Min(Params.TargetingRange.Get(AgAbility->GetTargetingRange()), AgAbility->GetTargetingRange());
 		}
 		AActor* ActionTarget = AgAbility->GetActionTarget();
-		bFacingOnly = !ActionTarget || (bHasDuration && Params.TargetingRange && Character->GetHorizontalDistanceTo(ActionTarget) > *Params.TargetingRange);
+		bFacingOnly = !ActionTarget || (bHasDuration && !AgTargeting::IsInRange(*Character, *ActionTarget, TargetingRange));
 		Target = bFacingOnly ? Character->GetLockOnTarget() : ActionTarget;
 	}
 	else if (Params.To == EAgRootMotionTo::MoveInput)
@@ -141,7 +137,7 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 	{
 		const AActor* Goal = Target.Get();
 		bStopped = !Goal ||
-		           (!bFacingOnly && Params.TargetingRange && Character->GetHorizontalDistanceTo(Goal) > *Params.TargetingRange);
+		           (!bFacingOnly && !AgTargeting::IsInRange(*Character, *Goal, TargetingRange));
 	}
 	if (bStopped)
 	{
@@ -192,7 +188,6 @@ void UAgAbilityTask_RootMotion::OnDestroy(bool bInOwnerFinished)
 	{
 		Warp->SetState(ERootMotionModifierState::MarkedForRemoval);
 	}
-	Modifier.Reset();
 	RemoveWarpTarget();
 	Super::OnDestroy(bInOwnerFinished);
 }

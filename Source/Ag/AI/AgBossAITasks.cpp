@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
+#include "Algo/SelectRandomWeighted.h"
 #include "Character/AgBossCharacter.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
@@ -105,16 +106,16 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 			const FGameplayAbilitySpec* Spec = Boss->FindAbilitySpec(Candidate);
 			return Spec && Spec->Ability && Spec->GetPrimaryInstance()->CanActivateAbility(Spec->Handle, ActorInfo);
 		};
-		TArray<FName> Candidates;
-		TArray<float> Weights;
-		GatherCandidates(Data->Abilities, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), IsReady, Candidates, Weights);
+		TArray<TPair<FName, float>> Candidates;
+		GatherCandidates(Data->Abilities, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), IsReady, Candidates);
 
-		const int32 Picked = PickWeighted(Weights, FMath::FRand());
-		if (Picked == INDEX_NONE)
+		const TPair<FName, float>* Picked =
+			Algo::SelectRandomWeightedBy(Candidates, [](const TPair<FName, float>& Candidate) { return Candidate.Value; });
+		if (!Picked)
 		{
 			return EStateTreeRunStatus::Failed;
 		}
-		Pattern = Candidates[Picked];
+		Pattern = Picked->Key;
 	}
 
 	const FGameplayAbilitySpec* Spec = Boss->FindAbilitySpec(Pattern);
@@ -138,41 +139,9 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::Tick(FStateTreeExecutionContext& C
 	return Spec && Spec->IsActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
-int32 FAgBossAITask_RunPattern::PickWeighted(TConstArrayView<float> Weights, float Random01)
+void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates)
 {
-	float Total = 0.f;
-	for (const float Weight : Weights)
-	{
-		Total += FMath::Max(0.f, Weight);
-	}
-	if (Total <= 0.f)
-	{
-		return INDEX_NONE;
-	}
-
-	float Threshold = FMath::Clamp(Random01, 0.f, 1.f) * Total;
-	int32 LastPositive = INDEX_NONE;
-	for (int32 Index = 0; Index < Weights.Num(); ++Index)
-	{
-		const float Weight = FMath::Max(0.f, Weights[Index]);
-		if (Weight <= 0.f)
-		{
-			continue;
-		}
-		LastPositive = Index;
-		if (Threshold < Weight)
-		{
-			return Index;
-		}
-		Threshold -= Weight;
-	}
-	return LastPositive;
-}
-
-void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<FName>& OutIds, TArray<float>& OutWeights)
-{
-	OutIds.Reset();
-	OutWeights.Reset();
+	OutCandidates.Reset();
 	for (FName Id : AbilityIds)
 	{
 		const FAgAbilityData* Ability = UAgAssetManager::Get().FindAbility(Id);
@@ -187,8 +156,7 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityId
 			Distance <= NearDistance ? Pattern->WeightNear : (Distance <= FarDistance ? Pattern->WeightMid : Pattern->WeightFar);
 		if (Weight > 0.f && Pattern->Phases.Contains(Phase) && IsReady(Id))
 		{
-			OutIds.Add(Id);
-			OutWeights.Add(Weight);
+			OutCandidates.Emplace(Id, Weight);
 		}
 	}
 }

@@ -14,13 +14,8 @@
 
 UAbilityTask* FAgDashParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_Dash::Dash(&Context.Ability, *this);
-}
-
-UAgAbilityTask_Dash* UAgAbilityTask_Dash::Dash(UGameplayAbility* Owner, const FAgDashParams& InParams)
-{
-	UAgAbilityTask_Dash* Task = NewAbilityTask<UAgAbilityTask_Dash>(Owner, TEXT("AgDash"));
-	Task->Params = InParams;
+	UAgAbilityTask_Dash* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_Dash>(&Context.Ability, TEXT("AgDash"));
+	Task->Params = *this;
 	return Task;
 }
 
@@ -49,9 +44,9 @@ void UAgAbilityTask_Dash::Activate()
 		return;
 	}
 	AttackBlockedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackBlocked)
-	                          .AddUObject(this, &ThisClass::HandleBlocked);
+	                          .AddUObject(this, &ThisClass::HandleAttackBlocked);
 	MoveBlockedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_MoveBlocked)
-	                        .AddUObject(this, &ThisClass::HandleBlocked);
+	                        .AddUObject(this, &ThisClass::HandleMoveBlocked);
 
 	// 몽타주 루트 모션이 있으면 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않으므로 돌진하는 동안 끕니다.
 	UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance();
@@ -131,14 +126,19 @@ void UAgAbilityTask_Dash::OnDestroy(bool bInOwnerFinished)
 	{
 		Instance->PopDisableRootMotion();
 	}
-	AttackBlockedHandle.Reset();
-	MoveBlockedHandle.Reset();
-	bTagAdded = false;
-	MontageInstanceId = INDEX_NONE;
 	Super::OnDestroy(bInOwnerFinished);
 }
 
-void UAgAbilityTask_Dash::HandleBlocked(const FGameplayEventData* Payload)
+void UAgAbilityTask_Dash::HandleAttackBlocked(const FGameplayEventData* Payload)
+{
+	// 막힘 이벤트는 주인의 모든 공격(앞 행동이 쏜 투사체 포함)에 오므로, 이 행동의 공격이 막혔을 때만 멈춥니다.
+	if (Payload && Payload->ContextHandle.GetAbilityInstance_NotReplicated() == Ability)
+	{
+		EndTask();
+	}
+}
+
+void UAgAbilityTask_Dash::HandleMoveBlocked(const FGameplayEventData* Payload)
 {
 	EndTask();
 }

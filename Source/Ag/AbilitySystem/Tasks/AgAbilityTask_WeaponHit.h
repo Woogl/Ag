@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Data/AgAttackData.h"
+#include "Data/AgHitReward.h"
 #include "Data/AgTaskParams.h"
 #include "Engine/EngineBaseTypes.h"
 #include "AgAbilityTask_WeaponHit.generated.h"
@@ -12,6 +13,7 @@
 class AAgCharacterBase;
 class UCapsuleComponent;
 struct FHitResult;
+struct FAgHitRewardState;
 
 USTRUCT()
 struct FAgWeaponHitParams : public FAgTaskParams
@@ -24,6 +26,9 @@ struct FAgWeaponHitParams : public FAgTaskParams
 	UPROPERTY()
 	FName ComponentTag = TEXT("WeaponCollision");
 
+	UPROPERTY()
+	TOptional<FAgHitReward> HitReward;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
@@ -31,11 +36,11 @@ UCLASS()
 class UAgAbilityTask_WeaponHit : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgWeaponHitParams;
 
 public:
 	UAgAbilityTask_WeaponHit();
 
-	static UAgAbilityTask_WeaponHit* WeaponHit(UGameplayAbility* Owner, const FAgWeaponHitParams& Params);
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
@@ -63,7 +68,10 @@ private:
 	bool Sweep(FAgWeaponEdge& Edge);
 	bool Hit(AAgCharacterBase& Target, const FVector& Location, const FHitResult& Contact);
 
+	UPROPERTY()
 	FAgWeaponHitParams Params;
+
+	TSharedPtr<FAgHitRewardState> HitReward;
 	TArray<FAgWeaponEdge> Edges;
 	TSet<TWeakObjectPtr<AActor>> TouchedActors;
 	FAgSweepTickFunction SweepTick;

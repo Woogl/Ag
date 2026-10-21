@@ -2,12 +2,12 @@
 
 #include "AbilitySystem/Tasks/AgAbilityTask_WeaponHit.h"
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgGameplayEffectContext.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgCollision.h"
-#include "Data/AgEffectData.h"
 #include "Engine/World.h"
 #include "Ag.h"
 
@@ -52,11 +52,13 @@ namespace
 		}
 		return NAME_None;
 	}
-}
+} // namespace
 
 UAbilityTask* FAgWeaponHitParams::MakeTask(const FAgTaskContext& Context) const
 {
-	return UAgAbilityTask_WeaponHit::WeaponHit(&Context.Ability, *this);
+	UAgAbilityTask_WeaponHit* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_WeaponHit>(&Context.Ability);
+	Task->Params = *this;
+	return Task;
 }
 
 UAgAbilityTask_WeaponHit::UAgAbilityTask_WeaponHit()
@@ -67,22 +69,16 @@ UAgAbilityTask_WeaponHit::UAgAbilityTask_WeaponHit()
 	SweepTick.EndTickGroup = TG_PostPhysics;
 }
 
-UAgAbilityTask_WeaponHit* UAgAbilityTask_WeaponHit::WeaponHit(UGameplayAbility* Owner, const FAgWeaponHitParams& InParams)
-{
-	UAgAbilityTask_WeaponHit* Task = NewAbilityTask<UAgAbilityTask_WeaponHit>(Owner);
-	Task->Params = InParams;
-	return Task;
-}
-
 void UAgAbilityTask_WeaponHit::Activate()
 {
 	Super::Activate();
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!Character || Character->IsDead() || !Ability || !Ability->IsActive())
+	if (!Character)
 	{
 		EndTask();
 		return;
 	}
+	HitReward = FAgHitRewardState::Make(Params.HitReward);
 	TArray<UCapsuleComponent*> Capsules;
 	Character->GetComponents(Capsules);
 	for (UCapsuleComponent* Capsule : Capsules)
@@ -101,24 +97,14 @@ void UAgAbilityTask_WeaponHit::Activate()
 		EndTask();
 		return;
 	}
-	// 첫 판정의 피해 콜백에서 취소되면 OnDestroy가 이미 등록된 틱까지 정리합니다.
+	// 같은 때에 시작한 Task(막힘을 기다리는 Dash)가 모두 시작한 뒤에 피해 결과가 나도록, 첫 스윕도 이 프레임의 물리
+	// 갱신 뒤 틱에서 합니다.
 	SweepTick.AddPrerequisite(Character->GetMesh(), Character->GetMesh()->PrimaryComponentTick);
 	SweepTick.RegisterTickFunction(Character->GetLevel());
-	SweepEdges();
 }
 
 void UAgAbilityTask_WeaponHit::TickTask(float DeltaTime)
 {
-	if (!IsActive())
-	{
-		return;
-	}
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!Character || Character->IsDead() || !Ability || !Ability->IsActive())
-	{
-		EndTask();
-		return;
-	}
 	SweepEdges();
 }
 
@@ -239,19 +225,14 @@ bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Loca
 		return true;
 	}
 	TouchedActors.Add(&Target);
-	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(EAgEffect::Damage);
+	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeDamageSpec(Params.Damage, HitReward);
 	if (Spec.IsValid())
 	{
 		// 엔진은 Origin이 없으면 HitResult의 TraceStart를 Origin으로 넣으므로, 맞은 위치를 먼저 넣습니다.
 		Spec.Data->GetContext().AddOrigin(Location);
 		Spec.Data->GetContext().AddHitResult(Contact);
-		Params.Damage.AddToSpec(*Spec.Data);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target.GetAbilitySystemComponent());
 	}
-	if (!IsActive() || !Ability->IsActive())
-	{
-		EndTask();
-		return false;
-	}
-	return true;
+	// 피해가 행동이나 이 구간을 끝냈으면 엔진이나 재생 Task가 이 Task도 끝냈습니다.
+	return IsActive();
 }

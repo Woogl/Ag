@@ -50,7 +50,7 @@ struct FAgAttributes
 	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float DEF = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes", meta = (Units = "cm/s"))
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	float MOV = 0.f;
 };
 
@@ -98,10 +98,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Abilities"))
 	TArray<FName> Abilities;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Death", meta = (Units = "s"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Death")
 	float DeathPresentationTime = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement", meta = (Units = "cm"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement")
 	float StopDistance = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Death")
@@ -123,7 +123,7 @@ class UAgPlayerData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Input", meta = (Units = "s"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Input")
 	float InputBufferTime = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
@@ -144,17 +144,20 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
 	float UltimateSlowMotionSpeed = 1.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
 	float UltimateSlowMotionDuration = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
 	float PerfectDodgeSlowMotionSpeed = 1.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion", meta = (Units = "s"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Slow Motion")
 	float PerfectDodgeSlowMotionDuration = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Sprint")
 	float SprintSpeedRatio = 1.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Movement")
+	float YawRotationRate = 0.f;
 };
 
 UCLASS(BlueprintType)
@@ -163,10 +166,10 @@ class UAgBossData : public UAgCharacterData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	float NearDistance = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "cm"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	float FarDistance = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
@@ -175,7 +178,7 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PatternRecoveryWaitPhase2 = FFloatInterval(0.f, 0.f);
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (Units = "s"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	float FixedRecoveryWait = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")

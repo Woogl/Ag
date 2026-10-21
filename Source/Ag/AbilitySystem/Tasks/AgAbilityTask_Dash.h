@@ -33,18 +33,20 @@ UCLASS()
 class UAgAbilityTask_Dash : public UAbilityTask_ApplyRootMotionConstantForce
 {
 	GENERATED_BODY()
+	friend struct FAgDashParams;
 
 public:
-	static UAgAbilityTask_Dash* Dash(UGameplayAbility* Owner, const FAgDashParams& Params);
-
 	virtual void Activate() override;
 	virtual void TickTask(float DeltaTime) override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	void HandleBlocked(const FGameplayEventData* Payload);
+	void HandleAttackBlocked(const FGameplayEventData* Payload);
+	void HandleMoveBlocked(const FGameplayEventData* Payload);
 
+	UPROPERTY()
 	FAgDashParams Params;
+
 	bool bTagAdded = false;
 	int32 MontageInstanceId = INDEX_NONE;
 

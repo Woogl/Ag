@@ -1,6 +1,8 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "AbilitySystem/AgDamageResultGameplayEffectComponent.h"
+#include "AbilitySystem/AgGameplayEffectContext.h"
+#include "Camera/AgCameraShake.h"
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
@@ -12,15 +14,14 @@
 #include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgTimeSubsystem.h"
+#include "Combat/AgProjectile.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAbilityData.h"
-#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
 #include "GameplayEffect.h"
-#include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
 namespace
@@ -50,9 +51,10 @@ namespace
 		return FGameplayTag();
 	}
 
-	FAgPhysicsHit MakePhysicsHit(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context)
+	FAgPhysicsHit MakePhysicsHit(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context, bool bGuard)
 	{
 		FAgPhysicsHit Hit;
+		Hit.bGuard = bGuard;
 		Hit.Location = Context.GetOrigin();
 		// WeaponHit은 HitResult의 TraceStart·TraceEnd에 날의 맞은 지점이 지나온 선을 담습니다.
 		const FHitResult* Contact = Context.GetHitResult();
@@ -76,7 +78,7 @@ namespace
 		{
 			SendEvent(Target, Event, Instigator);
 		}
-		Target->GetHitPhysics()->Play(MakePhysicsHit(*Instigator, *Target, Context));
+		Target->GetHitPhysics()->Play(MakePhysicsHit(*Instigator, *Target, Context, false));
 	}
 
 	void StartGuardReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
@@ -94,7 +96,7 @@ namespace
 		{
 			Target->PlayAnimMontage(Target->GetCharacterData()->FindMontage(GuardFlinchMontageId));
 		}
-		Target->GetHitPhysics()->PlayGuard(MakePhysicsHit(*Instigator, *Target, Context));
+		Target->GetHitPhysics()->Play(MakePhysicsHit(*Instigator, *Target, Context, true));
 	}
 
 	void ApplyToSelf(UAbilitySystemComponent& ASC, const UGameplayEffect* Effect)
@@ -140,10 +142,13 @@ namespace
 			}
 			Dodger.GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(Data->PerfectDodgeSlowMotionSpeed,
 				Data->PerfectDodgeSlowMotionDuration);
+			FGameplayCueParameters ScreenParameters;
+			ScreenParameters.RawMagnitude = Data->PerfectDodgeSlowMotionDuration;
+			ASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_PerfectDodgeScreen, ScreenParameters);
 		}
 	}
 
-	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker)
+	void ApplyParryAttackerEffects(AAgCharacterBase& Defender, AAgCharacterBase& Attacker)
 	{
 		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Defender.GetAbilitySystemComponent());
 		const UAgPlayerData& Data = *CastChecked<UAgPlayerData>(Defender.GetCharacterData());
@@ -155,6 +160,16 @@ namespace
 				ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Attacker.GetAbilitySystemComponent());
 			}
 		}
+	}
+
+	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker, bool bProjectile)
+	{
+		if (!bProjectile)
+		{
+			ApplyParryAttackerEffects(Defender, Attacker);
+		}
+		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Defender.GetAbilitySystemComponent());
+		const UAgPlayerData& Data = *CastChecked<UAgPlayerData>(Defender.GetCharacterData());
 		ASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
 		for (FName Effect : Data.ParryEffects)
 		{
@@ -162,33 +177,6 @@ namespace
 		}
 	}
 
-	EAgCameraShake GetHitShake(const UAgCameraData& Camera, const FGameplayTagContainer& SpecTags, bool bPlayerAttacked)
-	{
-		const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
-		if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
-		{
-			return bFinisher ? Camera.ExecutionBlowShake : Camera.ExecutionStabShake;
-		}
-
-		const bool bHeavy = GetReactionEvent(SpecTags).IsValid();
-		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
-		{
-			if (bPlayerAttacked)
-			{
-				return bFinisher ? Camera.FinisherShake : (bHeavy ? Camera.PlayerHitHeavyShake : Camera.PlayerHitShake);
-			}
-			return bHeavy ? Camera.PlayerHurtHeavyShake : Camera.PlayerHurtShake;
-		}
-		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Parry))
-		{
-			return Camera.ParryShake;
-		}
-		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Guard))
-		{
-			return bHeavy ? Camera.GuardPushbackShake : Camera.GuardShake;
-		}
-		return Camera.GuardBreakShake;
-	}
 } // namespace
 
 void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
@@ -198,6 +186,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	const FGameplayEffectContextHandle Context = GESpec.GetContext();
 	AAgCharacterBase* Attacker = CastChecked<AAgCharacterBase>(Context.GetInstigator());
 	AActor* Causer = Context.GetEffectCauser();
+	AAgProjectile* Projectile = Cast<AAgProjectile>(Causer);
 
 	// 공격의 성질(적용하는 쪽), 피격 결과(실행 계산), 공격한 어빌리티의 태그(엔진)가 모두 스펙 태그에 있습니다.
 	const FGameplayTagContainer& SpecTags = std::as_const(GESpec).CapturedSourceTags.GetSpecTags();
@@ -215,6 +204,11 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		return;
 	}
+	// 반사탄의 PP 효과도 피격 반응 전에 적용해야 그로기가 넉백보다 우선합니다.
+	if (bHit && Projectile && Projectile->IsReflected() && !Target->IsDead())
+	{
+		ApplyParryAttackerEffects(*Attacker, *Target);
+	}
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, parry %d, guard %d, guard break %d, HP now %.0f, PP now %.0f, SP now %.0f"),
 		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, bGuardBreak, TargetStats->GetHP(), TargetStats->GetPP(),
@@ -226,7 +220,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		if (bParry)
 		{
-			ApplyParry(*Target, *Attacker);
+			ApplyParry(*Target, *Attacker, Projectile != nullptr);
 			SendEvent(Target, AgGameplayTags::Event_Parry, Causer, Context);
 		}
 		else if (bGuard)
@@ -245,7 +239,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 
 	if (!bHit)
 	{
-		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target);
+		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target, Context);
 	}
 
 	FGameplayCueParameters CueParameters;
@@ -256,10 +250,9 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	                               : (bGuard || bGuardBreak) ? AgGameplayTags::GameplayCue_Guard
 	                                                         : AgGameplayTags::GameplayCue_Hit;
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
-	const EAgCameraShake Shake = GetHitShake(UAgAssetManager::Get().GetCameraData(), SpecTags, Attacker->IsA<AAgPlayerCharacter>());
-	if (AAgPlayerController* PlayerController = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(Target, 0)))
+	if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(Target, 0)))
 	{
-		PlayerController->PlayCameraShake(Shake);
+		AgCameraShake::Play(Player, Player->GetCombatCameraShake(SpecTags, Attacker->IsA<AAgPlayerCharacter>()));
 	}
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
@@ -290,16 +283,21 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 			Data->UltimateSlowMotionDuration);
 	}
 
-	const float MPCharge = GESpec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP);
-	const float UPCharge = GESpec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP);
-	if (bHit && (MPCharge > 0.f || UPCharge > 0.f))
+	const TSharedPtr<FAgHitRewardState> Reward = FAgGameplayEffectContext::GetHitReward(Context);
+	if (bHit && Reward && !Reward->bGranted)
 	{
 		UAgAbilitySystemComponent* AttackerASC = CastChecked<UAgAbilitySystemComponent>(Attacker->GetAbilitySystemComponent());
 		const FGameplayEffectSpecHandle ChargeSpec = AttackerASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
 		if (ChargeSpec.IsValid())
 		{
-			AgResource::SetAmounts(*ChargeSpec.Data, 0.f, MPCharge, UPCharge);
+			// 자원 변경 콜백이 다시 적중을 일으킬 수 있으므로 적용 전에 지급 기회를 사용합니다.
+			Reward->bGranted = true;
+			AgResource::SetAmounts(*ChargeSpec.Data, 0.f, Reward->Amounts.MP, Reward->Amounts.UP);
 			AttackerASC->ApplyGameplayEffectSpecToSelf(*ChargeSpec.Data);
 		}
+	}
+	if (bParry && IsValid(Projectile) && !Target->IsDead())
+	{
+		Projectile->Reflect(*Target);
 	}
 }
