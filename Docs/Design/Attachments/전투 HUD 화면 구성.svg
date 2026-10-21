@@ -77,14 +77,12 @@
     <path d="M1716 960 L1763.02 1024.72 A80 80 0 1 1 1716 880 Z" fill="#FFFFFF" fill-opacity="0.35" clip-path="url(#skillSlotInside)"/>
     <text x="1716" y="971" font-size="32" font-weight="700" stroke="#000000" stroke-width="3" paint-order="stroke">3</text>
     <text x="1757" y="1002" font-size="20" text-anchor="end">30</text>
-    <text x="1716" y="1028" font-size="20">E</text>
 
     <g opacity="0.5">
       <rect x="1776" y="912" width="96" height="96" rx="12" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="3"/>
       <rect x="1788" y="924" width="72" height="72" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="4 3"/>
     </g>
     <path d="M1824 912 H1860 A12 12 0 0 1 1872 924 V996 A12 12 0 0 1 1860 1008 H1788 A12 12 0 0 1 1776 996 V924 A12 12 0 0 1 1788 912 Z" fill="none" stroke="#A970FF" stroke-width="6" stroke-dasharray="218 363" stroke-linecap="round"/>
-    <text x="1824" y="1028" font-size="20">Q</text>
   </g>
 
   <text x="1652" y="980" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 슬롯: 쿨다운 중인 모습</text>
