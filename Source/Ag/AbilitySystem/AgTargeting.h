@@ -9,36 +9,26 @@
 #include "AgTargeting.generated.h"
 
 struct FAgTargetingRequest;
-struct FTargetingRequestHandle;
-
-struct FAgTargetingConditions
-{
-	float Range = 0.f;
-
-	FGameplayTagRequirements TagRequirements;
-
-	static FAgTargetingConditions& FindOrAdd(FTargetingRequestHandle Handle);
-	static FAgTargetingConditions* Find(FTargetingRequestHandle Handle);
-};
 
 namespace AgTargeting
 {
 	TArray<AActor*> FindTargets(const FAgTargetingRequest& Request, AActor& Source);
 	AActor* FindTarget(const FAgTargetingRequest& Request, AActor& Source);
+	bool IsInRange(const AActor& Source, const AActor& Target, float Range);
 }
 
-UCLASS(meta = (DisplayName = "Ag Select In Range"))
-class UAgTargetingSelectionTask_Range : public UTargetingTask
+UCLASS()
+class UAgTargetingSelectionTask_Sphere : public UTargetingTask
 {
 	GENERATED_BODY()
 
 public:
-	UAgTargetingSelectionTask_Range(const FObjectInitializer& ObjectInitializer);
+	UAgTargetingSelectionTask_Sphere(const FObjectInitializer& ObjectInitializer);
 
 	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
 };
 
-UCLASS(meta = (DisplayName = "Ag Filter Hostile"))
+UCLASS()
 class UAgTargetingFilterTask_Hostile : public UTargetingFilterTask_BasicFilterTemplate
 {
 	GENERATED_BODY()
@@ -50,7 +40,7 @@ protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
-UCLASS(meta = (DisplayName = "Ag Filter Tag Requirements"))
+UCLASS()
 class UAgTargetingFilterTask_TagRequirements : public UTargetingFilterTask_BasicFilterTemplate
 {
 	GENERATED_BODY()
@@ -65,7 +55,7 @@ protected:
 	FGameplayTagRequirements Requirements;
 };
 
-UCLASS(meta = (DisplayName = "Ag Filter On Screen"))
+UCLASS()
 class UAgTargetingFilterTask_OnScreen : public UTargetingFilterTask_BasicFilterTemplate
 {
 	GENERATED_BODY()

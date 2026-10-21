@@ -51,6 +51,18 @@ AAgCharacterBase::AAgCharacterBase(const FObjectInitializer& ObjectInitializer)
 	HitPhysics = CreateDefaultSubobject<UAgHitPhysicsComponent>(TEXT("HitPhysics"));
 	CharacterDataClass = UAgCharacterData::StaticClass();
 
+	PerfectDodgeCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PerfectDodgeCapsule"));
+	PerfectDodgeCapsule->SetupAttachment(GetCapsuleComponent());
+	PerfectDodgeCapsule->SetUsingAbsoluteLocation(true);
+	PerfectDodgeCapsule->SetUsingAbsoluteRotation(true);
+	PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 투사체와 대상 찾기는 Pawn 오브젝트 종류로 찾고 응답은 보지 않으므로, 응답은 무기 판정 채널만 둡니다.
+	PerfectDodgeCapsule->SetCollisionObjectType(ECC_Pawn);
+	PerfectDodgeCapsule->SetCollisionResponseToAllChannels(ECR_Ignore);
+	PerfectDodgeCapsule->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
+	PerfectDodgeCapsule->SetGenerateOverlapEvents(false);
+	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
+
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 
@@ -173,6 +185,9 @@ void AAgCharacterBase::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleHitstopChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PassThrough, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandlePassThroughChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PerfectDodgeWindow, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandlePerfectDodgeWindowChanged);
+	PerfectDodgeCapsule->SetCapsuleSize(GetCapsuleComponent()->GetUnscaledCapsuleRadius(), GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_TimeStop, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleTimeStopChanged);
 	DeathEventHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death)
@@ -400,6 +415,19 @@ void AAgCharacterBase::HandlePassThroughChanged(const FGameplayTag Tag, int32 Ne
 	if (!IsDead())
 	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, NewCount > 0 ? ECR_Ignore : PawnResponse.GetValue());
+	}
+}
+
+void AAgCharacterBase::HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	if (NewCount > 0)
+	{
+		PerfectDodgeCapsule->SetWorldLocation(GetCapsuleComponent()->GetComponentLocation());
+		PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	else
+	{
+		PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 

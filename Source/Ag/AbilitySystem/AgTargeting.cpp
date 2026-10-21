@@ -5,9 +5,12 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Character/AgCharacterBase.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
-#include "EngineUtils.h"
+#include "Engine/OverlapResult.h"
+#include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "GenericTeamAgentInterface.h"
 #include "TargetingSystem/TargetingPreset.h"
@@ -15,40 +18,8 @@
 #include "Types/TargetingSystemDataStores.h"
 #include "Types/TargetingSystemTypes.h"
 
-namespace UE::TargetingSystem
-{
-	extern TTargetingDataStore<FAgTargetingConditions> GAgTargetingConditionsDataStore;
-
-	template <>
-	FAgTargetingConditions& TTargetingDataStore<FAgTargetingConditions>::FindOrAdd(FTargetingRequestHandle Handle)
-	{
-		return GAgTargetingConditionsDataStore.Items.FindOrAdd(Handle);
-	}
-
-	template <>
-	FAgTargetingConditions* TTargetingDataStore<FAgTargetingConditions>::Find(FTargetingRequestHandle Handle)
-	{
-		return GAgTargetingConditionsDataStore.Items.Find(Handle);
-	}
-
-	template <>
-	void TTargetingDataStore<FAgTargetingConditions>::OnTargetingRequestHandleReleased(FTargetingRequestHandle Handle)
-	{
-		GAgTargetingConditionsDataStore.Items.Remove(Handle);
-	}
-
-	TTargetingDataStore<FAgTargetingConditions> GAgTargetingConditionsDataStore;
-}
-
-FAgTargetingConditions& FAgTargetingConditions::FindOrAdd(FTargetingRequestHandle Handle)
-{
-	return UE::TargetingSystem::GAgTargetingConditionsDataStore.FindOrAdd(Handle);
-}
-
-FAgTargetingConditions* FAgTargetingConditions::Find(FTargetingRequestHandle Handle)
-{
-	return UE::TargetingSystem::GAgTargetingConditionsDataStore.Find(Handle);
-}
+DECLARE_TARGETING_DATA_STORE(FAgTargetingRequest)
+DEFINE_TARGETING_DATA_STORE(FAgTargetingRequest)
 
 TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AActor& Source)
 {
@@ -67,10 +38,7 @@ TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AAc
 	Context.SourceActor = &Source;
 	Context.InstigatorActor = &Source;
 	FTargetingRequestHandle Handle = UTargetingSubsystem::MakeTargetRequestHandle(Preset, Context);
-	FAgTargetingConditions& Conditions = FAgTargetingConditions::FindOrAdd(Handle);
-	Conditions.Range = Request.Range;
-	Conditions.TagRequirements.RequireTags = Request.TargetRequiredTags;
-	Conditions.TagRequirements.IgnoreTags = Request.TargetBlockedTags;
+	UE::TargetingSystem::TTargetingDataStore<FAgTargetingRequest>::FindOrAdd(Handle) = Request;
 
 	// 프리셋의 Task는 즉시 실행되므로 결과를 바로 읽고 핸들을 놓습니다.
 	Subsystem->ExecuteTargetingRequestWithHandle(Handle);
@@ -82,30 +50,48 @@ TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AAc
 AActor* AgTargeting::FindTarget(const FAgTargetingRequest& Request, AActor& Source)
 {
 	const TArray<AActor*> Targets = FindTargets(Request, Source);
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(&Source);
+	AActor* LockOnTarget = Character ? Character->GetLockOnTarget() : nullptr;
+	if (LockOnTarget && Targets.Contains(LockOnTarget))
+	{
+		return LockOnTarget;
+	}
 	return Targets.IsEmpty() ? nullptr : Targets[0];
 }
 
-UAgTargetingSelectionTask_Range::UAgTargetingSelectionTask_Range(const FObjectInitializer& ObjectInitializer)
+bool AgTargeting::IsInRange(const AActor& Source, const AActor& Target, float Range)
+{
+	const UPrimitiveComponent* Collision = Cast<UPrimitiveComponent>(Target.GetRootComponent());
+	return Range > 0.f && Collision && Collision->OverlapComponent(Source.GetActorLocation(), FQuat::Identity, FCollisionShape::MakeSphere(Range));
+}
+
+UAgTargetingSelectionTask_Sphere::UAgTargetingSelectionTask_Sphere(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-void UAgTargetingSelectionTask_Range::Execute(const FTargetingRequestHandle& TargetingHandle) const
+void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& TargetingHandle) const
 {
 	Super::Execute(TargetingHandle);
 	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
 
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
-	const FAgTargetingConditions* Conditions = FAgTargetingConditions::Find(TargetingHandle);
-	if (Owner && Owner->GetWorld() && Conditions && Conditions->Range > 0.f)
+	const FAgTargetingRequest* Request = UE::TargetingSystem::TTargetingDataStore<FAgTargetingRequest>::Find(TargetingHandle);
+	if (Owner && Owner->GetWorld() && Request && Request->Range > 0.f)
 	{
+		// 엔진 AOE는 모양의 크기를 Task 속성으로만 받아 요청마다 반경을 바꿀 수 없으므로, 같은 겹침 검사를 요청의 Range로 합니다.
+		TArray<FOverlapResult> Overlaps;
+		const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgTargetingSphere), false, Owner);
+		Owner->GetWorld()->OverlapMultiByObjectType(Overlaps, Owner->GetActorLocation(), FQuat::Identity, FCollisionObjectQueryParams(ECC_Pawn),
+			FCollisionShape::MakeSphere(Request->Range), QueryParams);
 		FTargetingDefaultResultsSet& Results = FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle);
-		// 엔진 AOE의 구체 반경은 높이 차이까지 제한하므로 캐릭터 중심의 수평 거리로 후보를 모읍니다.
-		for (TActorIterator<AAgCharacterBase> It(Owner->GetWorld()); It; ++It)
+		for (const FOverlapResult& Overlap : Overlaps)
 		{
-			AAgCharacterBase* Candidate = *It;
-			if (Candidate == Owner || Owner->GetHorizontalDistanceTo(Candidate) > Conditions->Range)
+			// 캐릭터 메시도 Pawn 오브젝트 종류라, 캡슐(몸과 회피를 시작한 자리)에 닿은 결과만 씁니다.
+			AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(Overlap.GetActor());
+			if (!Candidate || !Cast<UCapsuleComponent>(Overlap.GetComponent()) ||
+				Results.TargetResults.ContainsByPredicate([Candidate](const FTargetingDefaultResultData& Result) { return Result.HitResult.GetActor() == Candidate; }))
 			{
 				continue;
 			}
@@ -144,8 +130,8 @@ bool UAgTargetingFilterTask_TagRequirements::ShouldFilterTarget(const FTargeting
 		return true;
 	}
 	const FGameplayTagContainer& Tags = ASC->GetOwnedGameplayTags();
-	const FAgTargetingConditions* Conditions = FAgTargetingConditions::Find(TargetingHandle);
-	return !Requirements.RequirementsMet(Tags) || (Conditions && !Conditions->TagRequirements.RequirementsMet(Tags));
+	const FAgTargetingRequest* Request = UE::TargetingSystem::TTargetingDataStore<FAgTargetingRequest>::Find(TargetingHandle);
+	return !Requirements.RequirementsMet(Tags) || (Request && (!Tags.HasAll(Request->TargetRequiredTags) || Tags.HasAny(Request->TargetBlockedTags)));
 }
 
 UAgTargetingFilterTask_OnScreen::UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer)

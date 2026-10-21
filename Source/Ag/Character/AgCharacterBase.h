@@ -17,6 +17,7 @@ struct FAgAbilityData;
 class UMotionWarpingComponent;
 class UAgHitPhysicsComponent;
 class UAnimMontage;
+class UCapsuleComponent;
 class AAgCharacterBase;
 struct FGameplayAbilitySpec;
 struct FGameplayEventData;
@@ -95,7 +96,6 @@ public:
 
 	FAgCharacterDiedSignature OnDied;
 
-protected:
 	virtual void PreInitializeComponents() override;
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
@@ -112,6 +112,7 @@ protected:
 
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
+protected:
 	virtual float GetMoveSpeedMultiplier() const
 	{
 		return 1.f;
@@ -151,6 +152,8 @@ private:
 
 	void HandlePassThroughChanged(const FGameplayTag Tag, int32 NewCount);
 
+	void HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount);
+
 	void HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void HandleDeathEvent(const FGameplayEventData* Payload);
@@ -178,6 +181,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Animation")
 	TObjectPtr<UAgHitPhysicsComponent> HitPhysics;
+
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	TObjectPtr<UCapsuleComponent> PerfectDodgeCapsule;
 
 	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 

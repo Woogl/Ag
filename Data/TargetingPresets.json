@@ -1,12 +1,12 @@
 {
   "Enemy": [
-    {"Class": "/Script/Ag.AgTargetingSelectionTask_Range"},
+    {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ],
   "LockOn": [
-    {"Class": "/Script/Ag.AgTargetingSelectionTask_Range"},
+    {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/Ag.AgTargetingFilterTask_OnScreen"},
