@@ -50,7 +50,6 @@ bool UAgTimeSubsystem::StartTimeStop(UObject& Requester, AAgCharacterBase& Exemp
 	bTimeStopped = true;
 	TimeStopExempt = &Exempt;
 	Exempt.SetTimeCompensation(GetTimeStopCompensation());
-	OnTimeStopChanged.Broadcast(true);
 	UE_LOG(LogAg, Verbose, TEXT("Time stop starts: %s keeps moving"), *Exempt.GetName());
 	return true;
 }
@@ -80,7 +79,6 @@ void UAgTimeSubsystem::EndTimeStop(UObject& Requester)
 	{
 		GetWorld()->GetWorldSettings()->SetTimeDilation(1.f);
 	}
-	OnTimeStopChanged.Broadcast(false);
 }
 
 float UAgTimeSubsystem::GetTimeStopCompensation() const

@@ -98,9 +98,5 @@ namespace AgEffectData
 {
 	UGameplayEffect* MakeNativeEffect(EAgEffect Id, UObject& Outer);
 
-	/**
-	 * 객체 이름에 Version을 붙여 읽을 때마다 새 객체를 만듭니다. 같은 이름으로 다시 만들면 엔진이 기존 객체를
-	 * 그 자리에서 부수고 다시 만들어, 걸려 있는 효과가 망가지기 때문입니다.
-	 */
-	UGameplayEffect* MakeEffect(FName Id, const FAgEffectDefinition& Definition, UObject& Outer, int32 Version);
+	UGameplayEffect* MakeEffect(const FAgEffectDefinition& Definition, UObject& Outer);
 }

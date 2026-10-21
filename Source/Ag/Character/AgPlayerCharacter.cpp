@@ -13,9 +13,6 @@
 #include "Camera/CameraComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Core/AgAssetManager.h"
-#include "Data/AgCameraData.h"
-#include "Combat/AgTimeSubsystem.h"
-#include "Components/PostProcessComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -69,11 +66,6 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
-
-	TimeStopScreen = CreateDefaultSubobject<UPostProcessComponent>(TEXT("TimeStopScreen"));
-	TimeStopScreen->SetupAttachment(RootComponent);
-	TimeStopScreen->bUnbound = true;
-	TimeStopScreen->BlendWeight = 0.f;
 }
 
 TConstArrayView<FGameplayTag> AAgPlayerCharacter::GetInputAbilityTags()
@@ -103,9 +95,40 @@ void AAgPlayerCharacter::UpdateRotationMode()
 	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
 
+EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContainer& SpecTags, bool bPlayerAttacked) const
+{
+	const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
+	if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
+	{
+		return bFinisher ? ExecutionBlowShake : ExecutionStabShake;
+	}
+
+	const bool bHeavy = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockUp) ||
+	                    SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockBack);
+	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
+	{
+		if (bPlayerAttacked)
+		{
+			return bFinisher ? FinisherShake : (bHeavy ? PlayerHitHeavyShake : PlayerHitShake);
+		}
+		return bHeavy ? PlayerHurtHeavyShake : PlayerHurtShake;
+	}
+	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Parry))
+	{
+		return ParryShake;
+	}
+	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Guard))
+	{
+		return bHeavy ? GuardPushbackShake : GuardShake;
+	}
+	return GuardBreakShake;
+}
+
 void AAgPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetCharacterMovement()->RotationRate.Yaw = CastChecked<UAgPlayerData>(GetCharacterData())->YawRotationRate;
 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
@@ -119,7 +142,6 @@ void AAgPlayerCharacter::BeginPlay()
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	UpdateRotationMode();
-	GetWorld()->GetSubsystem<UAgTimeSubsystem>()->OnTimeStopChanged.AddUObject(this, &ThisClass::UpdateTimeStopScreen);
 }
 
 void AAgPlayerCharacter::Tick(float DeltaSeconds)
@@ -612,7 +634,7 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 void AAgPlayerCharacter::UpdateSprint()
 {
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const bool bWantsSprint = bDodgeHeld && !MoveInputDirection.IsNearlyZero() && GetAttributeSet()->GetSP() > 0.f;
+	const bool bWantsSprint = bDodgeHeld && GetAttributeSet()->GetSP() > 0.f;
 	if (ASC->HasMatchingGameplayTag(AgGameplayTags::Input_Sprint))
 	{
 		SetTriggerTag(AgGameplayTags::Input_Sprint, AgGameplayTags::Ability_Sprint, bWantsSprint);
@@ -620,7 +642,7 @@ void AAgPlayerCharacter::UpdateSprint()
 	}
 
 	const FGameplayAbilitySpec* Dodge = CastChecked<UAgAbilitySystemComponent>(ASC)->FindSpecByTag(AgGameplayTags::Ability_Action_Dodge);
-	if (bWantsSprint && !bGuardHeld && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && Dodge && Dodge->IsActive())
+	if (bWantsSprint && !MoveInputDirection.IsNearlyZero() && !bGuardHeld && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && Dodge && Dodge->IsActive())
 	{
 		SetTriggerTag(AgGameplayTags::Input_Sprint, AgGameplayTags::Ability_Sprint, true);
 	}
@@ -657,7 +679,6 @@ void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, floa
 	{
 		return;
 	}
-	const UAgCameraData& CameraData = UAgAssetManager::Get().GetCameraData();
 
 	const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(&Target);
 	const FVector LockOnPoint = Boss ? Boss->GetLockOnLocation() : Target.GetActorLocation();
@@ -665,7 +686,7 @@ void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, floa
 	const FVector Pivot = CameraBoom->GetComponentLocation();
 	FRotator Goal = (LockOnPoint - Pivot).Rotation();
 	Goal.Pitch =
-		FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), CameraData.LockOnPitchMin, CameraData.LockOnPitchMax) - CameraData.LockOnLookDown;
+		FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), LockOnPitchMin, LockOnPitchMax) - LockOnLookDown;
 	Goal.Roll = 0.f;
 
 	const FRotator Current = PlayerController->GetControlRotation();
@@ -673,9 +694,9 @@ void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, floa
 	const float CurrentYaw = static_cast<float>(Current.Yaw);
 	const float GoalYaw = CurrentYaw + static_cast<float>(FMath::FindDeltaAngleDegrees(Current.Yaw, Goal.Yaw));
 	const float Pitch = SpringToward(CurrentPitch, LockOnPitchRate, static_cast<float>(Goal.Pitch), DeltaTime,
-		CameraData.LockOnSmoothingTime, CameraData.LockOnRotationSpeed);
+		LockOnSmoothingTime, LockOnRotationSpeed);
 	const float Yaw =
-		SpringToward(CurrentYaw, LockOnYawRate, GoalYaw, DeltaTime, CameraData.LockOnSmoothingTime, CameraData.LockOnRotationSpeed);
+		SpringToward(CurrentYaw, LockOnYawRate, GoalYaw, DeltaTime, LockOnSmoothingTime, LockOnRotationSpeed);
 	PlayerController->SetControlRotation(FRotator(Pitch, Yaw, 0.f));
 }
 
@@ -683,9 +704,4 @@ void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 Ne
 {
 	UpdateRotationMode();
 	UpdateMoveSpeed();
-}
-
-void AAgPlayerCharacter::UpdateTimeStopScreen(bool bStopped)
-{
-	TimeStopScreen->BlendWeight = bStopped ? 1.f : 0.f;
 }

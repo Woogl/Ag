@@ -8,8 +8,6 @@
 
 class AAgCharacterBase;
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FAgTimeStopChanged, bool);
-
 /**
  * 시간 정지는 엔진·GAS 타이머(그로기 시간, 쿨다운, 리젠)도 멈추도록 캐릭터마다가 아니라 게임 전체 시간 배율로 겁니다.
  */
@@ -31,8 +29,6 @@ public:
 	}
 
 	float GetTimeStopCompensation() const;
-
-	FAgTimeStopChanged OnTimeStopChanged;
 
 private:
 	/** 시간 정지 중에 부르면 시간 정지 배율을 덮으므로, 시간 정지가 아닐 때만 부릅니다. */

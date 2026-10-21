@@ -70,7 +70,7 @@ namespace
 
 UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 {
-	UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer, FName(*StaticEnum<EAgEffect>()->GetNameStringByValue(static_cast<int64>(Id))));
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer);
 	switch (Id)
 	{
 		case EAgEffect::Damage:
@@ -105,9 +105,9 @@ UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 	return Effect;
 }
 
-UGameplayEffect* AgEffectData::MakeEffect(FName Id, const FAgEffectDefinition& Definition, UObject& Outer, int32 Version)
+UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition, UObject& Outer)
 {
-	UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer, FName(*FString::Printf(TEXT("%s_%d"), *Id.ToString(), Version)));
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer);
 	Effect->DurationPolicy = Definition.DurationPolicy;
 	if (Definition.Duration)
 	{

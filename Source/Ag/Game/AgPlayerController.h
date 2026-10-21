@@ -6,8 +6,6 @@
 #include "GameFramework/PlayerController.h"
 #include "AgPlayerController.generated.h"
 
-enum class EAgCameraShake : uint8;
-
 class UCommonActivatableWidget;
 class UAgHUDWidget;
 class UAgResultScreen;
@@ -19,8 +17,6 @@ class AAgPlayerController : public APlayerController
 
 public:
 	AAgPlayerController();
-
-	void PlayCameraShake(EAgCameraShake Shake);
 
 	UCommonActivatableWidget* PushScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass, int32 ZOrder = 0);
 

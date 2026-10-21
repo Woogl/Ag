@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/AgCharacterBase.h"
+#include "Camera/AgCameraShake.h"
 #include "GameplayTagContainer.h"
 #include "AgPlayerCharacter.generated.h"
 
@@ -11,7 +12,6 @@ class UCameraComponent;
 class UGameplayAbility;
 class UInputAction;
 class UInputMappingContext;
-class UPostProcessComponent;
 class USpringArmComponent;
 struct FAbilityEndedData;
 struct FInputActionValue;
@@ -38,10 +38,7 @@ public:
 
 	void UpdateRotationMode();
 
-	const UInputMappingContext* GetInputMapping() const
-	{
-		return InputMapping;
-	}
+	EAgCameraShake GetCombatCameraShake(const FGameplayTagContainer& SpecTags, bool bPlayerAttacked) const;
 
 	USpringArmComponent* GetCameraBoom() const
 	{
@@ -106,16 +103,59 @@ private:
 
 	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
-	void UpdateTimeStopScreen(bool bStopped);
-
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
 
-	UPROPERTY(VisibleAnywhere, Category = "Time Stop")
-	TObjectPtr<UPostProcessComponent> TimeStopScreen;
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Lock-On")
+	float LockOnPitchMin = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Lock-On")
+	float LockOnPitchMax = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Lock-On")
+	float LockOnLookDown = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Lock-On")
+	float LockOnRotationSpeed = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Lock-On")
+	float LockOnSmoothingTime = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake PlayerHitShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake PlayerHitHeavyShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake ParryShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake PlayerHurtShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake PlayerHurtHeavyShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake GuardShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake GuardPushbackShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake GuardBreakShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake ExecutionStabShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake ExecutionBlowShake = EAgCameraShake::None;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat Shake")
+	EAgCameraShake FinisherShake = EAgCameraShake::None;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;

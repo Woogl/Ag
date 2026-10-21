@@ -18,12 +18,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit")
 	float DefenseConstant = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit", meta = (Units = "s"))
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit")
 	float HitstopDuration = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "HUD|Trail", meta = (Units = "s"))
-	float HUDTrailDelay = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "HUD|Trail", meta = (Units = "s"))
-	float HUDTrailShrinkTime = 0.f;
 };

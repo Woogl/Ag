@@ -7,6 +7,7 @@
 #include "AgGameplayCueNotify_Looping.generated.h"
 
 class UStaticMeshComponent;
+class UAgPostProcessComponent;
 
 UCLASS(Abstract)
 class AAgGameplayCueNotify_Looping : public AGameplayCueNotify_Looping
@@ -17,10 +18,20 @@ public:
 	AAgGameplayCueNotify_Looping();
 
 protected:
+	virtual bool Recycle() override;
+	virtual bool GameplayCuePendingRemove() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual bool OnActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
 	virtual bool WhileActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
 	virtual bool OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
 	virtual bool OnRemove_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
+
+#if WITH_EDITOR
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
+#endif
+
+	UPROPERTY(VisibleAnywhere, Category = "Screen Effect")
+	TObjectPtr<UAgPostProcessComponent> PostProcess;
 
 	/** 엔진은 캐릭터의 몸 메시에 붙이므로 무기에 붙일 때 켭니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "GCN Defaults")

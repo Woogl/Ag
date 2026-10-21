@@ -2,17 +2,20 @@
 
 #pragma once
 
-#include "Camera/CameraShakeBase.h"
+#include "CoreMinimal.h"
 #include "AgCameraShake.generated.h"
 
-struct FAgCameraShakeSettings;
-
-UCLASS(meta = (ScriptName = "AgCameraShakeEffect"))
-class UAgCameraShake : public UCameraShakeBase
+class APawn;
+UENUM()
+enum class EAgCameraShake : uint8
 {
-	GENERATED_BODY()
-
-public:
-	UAgCameraShake(const FObjectInitializer& ObjectInitializer);
-	void Initialize(const FAgCameraShakeSettings& Settings);
+	None UMETA(DisplayName = "없음"),
+	Small UMETA(DisplayName = "작음"),
+	Medium UMETA(DisplayName = "보통"),
+	Large UMETA(DisplayName = "큼"),
 };
+
+namespace AgCameraShake
+{
+	void Play(APawn* Target, EAgCameraShake Shake);
+}

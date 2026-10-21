@@ -3,11 +3,6 @@
 #include "Game/AgPlayerController.h"
 
 #include "Ag.h"
-#include "Camera/AgCameraShake.h"
-#include "Camera/CameraModifier_CameraShake.h"
-#include "Camera/PlayerCameraManager.h"
-#include "Core/AgAssetManager.h"
-#include "Data/AgCameraData.h"
 #include "CommonActivatableWidget.h"
 #include "Game/AgCheatManager.h"
 #include "UI/AgHUDWidget.h"
@@ -22,28 +17,6 @@ namespace
 AAgPlayerController::AAgPlayerController()
 {
 	CheatClass = UAgCheatManager::StaticClass();
-}
-
-void AAgPlayerController::PlayCameraShake(EAgCameraShake Shake)
-{
-	if (Shake == EAgCameraShake::None || !IsLocalController() || !PlayerCameraManager)
-	{
-		return;
-	}
-
-	const UAgCameraData& Camera = UAgAssetManager::Get().GetCameraData();
-	const FAgCameraShakeSettings* Settings = Camera.FindShakeSettings(Shake);
-	if (!Settings)
-	{
-		return;
-	}
-
-	FAddCameraShakeParams ShakeParams;
-	ShakeParams.Initializer.BindLambda([Settings](UCameraShakeBase* ShakeInstance)
-	{
-		CastChecked<UAgCameraShake>(ShakeInstance)->Initialize(*Settings);
-	});
-	PlayerCameraManager->StartCameraShake(UAgCameraShake::StaticClass(), ShakeParams);
 }
 
 UCommonActivatableWidget* AAgPlayerController::PushScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass, int32 ZOrder)

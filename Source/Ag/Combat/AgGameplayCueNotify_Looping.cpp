@@ -2,18 +2,47 @@
 
 #include "Combat/AgGameplayCueNotify_Looping.h"
 
+#include "Camera/AgPostProcessComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "NiagaraComponent.h"
 
+#if WITH_EDITOR
+#include "Misc/DataValidation.h"
+#endif
+
 AAgGameplayCueNotify_Looping::AAgGameplayCueNotify_Looping()
 {
+	PostProcess = CreateDefaultSubobject<UAgPostProcessComponent>(TEXT("PostProcess"));
+	PostProcess->OnFinished.BindUObject(this, &ThisClass::GameplayCueFinishedCallback);
+
 	RecurringMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RecurringMesh"));
 	RecurringMesh->SetupAttachment(RootComponent);
 	RecurringMesh->bAutoRegister = false;
 	RecurringMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RecurringMesh->SetGenerateOverlapEvents(false);
+}
+
+bool AAgGameplayCueNotify_Looping::Recycle()
+{
+	PostProcess->Reset();
+	ClearRecurringMeshes();
+	bAutoDestroyOnRemove = GetClass()->GetDefaultObject<AAgGameplayCueNotify_Looping>()->bAutoDestroyOnRemove;
+	return Super::Recycle();
+}
+
+bool AAgGameplayCueNotify_Looping::GameplayCuePendingRemove()
+{
+	// 페이드 중 다시 적용되면 새 큐가 맡도록, 게임 시간 종료 타이머 없이도 회수 예정임을 알립니다.
+	return PostProcess->IsFadingOut() || Super::GameplayCuePendingRemove();
+}
+
+void AAgGameplayCueNotify_Looping::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	PostProcess->Reset();
+	ClearRecurringMeshes();
+	Super::EndPlay(EndPlayReason);
 }
 
 bool AAgGameplayCueNotify_Looping::OnActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
@@ -30,6 +59,10 @@ bool AAgGameplayCueNotify_Looping::WhileActive_Implementation(AActor* Target, co
 	SetActorHiddenInGame(false);
 	const bool bResult = Super::WhileActive_Implementation(Target, ResolveParameters(Target, Parameters));
 	ApplyNiagaraParameters(LoopingSpawnResults);
+	if (!bLoopingEffectsRemoved && !PostProcess->IsPlaying())
+	{
+		PostProcess->Start(Target);
+	}
 	return bResult;
 }
 
@@ -43,6 +76,11 @@ bool AAgGameplayCueNotify_Looping::OnExecute_Implementation(AActor* Target, cons
 
 bool AAgGameplayCueNotify_Looping::OnRemove_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
+	if (PostProcess->IsPlaying())
+	{
+		// 엔진의 즉시 회수는 페이드가 끝난 뒤 컴포넌트의 완료 콜백이 대신합니다.
+		bAutoDestroyOnRemove = !PostProcess->Stop();
+	}
 	if (!bRemovalEffectsAtRecurringMeshes)
 	{
 		ClearRecurringMeshes();
@@ -58,6 +96,20 @@ bool AAgGameplayCueNotify_Looping::OnRemove_Implementation(AActor* Target, const
 	OnRemoval(Target, Parameters, RemovalSpawnResults);
 	return false;
 }
+
+#if WITH_EDITOR
+EDataValidationResult AAgGameplayCueNotify_Looping::IsDataValid(FDataValidationContext& Context) const
+{
+	const EDataValidationResult Result = Super::IsDataValid(Context);
+	FString Error;
+	if (!PostProcess->ValidateSettings(Error))
+	{
+		Context.AddError(FText::FromString(Error));
+		return EDataValidationResult::Invalid;
+	}
+	return Result;
+}
+#endif
 
 FGameplayCueParameters AAgGameplayCueNotify_Looping::ResolveParameters(AActor* Target, const FGameplayCueParameters& Parameters) const
 {

@@ -1,7 +1,5 @@
 {
   "GuardReduction": 0.5,
   "DefenseConstant": 100,
-  "HitstopDuration": 0.12,
-  "HUDTrailDelay": 0.5,
-  "HUDTrailShrinkTime": 0.3
+  "HitstopDuration": 0.12
 }

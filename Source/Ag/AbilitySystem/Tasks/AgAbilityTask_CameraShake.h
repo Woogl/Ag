@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
-#include "Data/AgCameraData.h"
+#include "Camera/AgCameraShake.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_CameraShake.generated.h"
 
@@ -17,7 +17,7 @@ struct FAgCameraShakeParams : public FAgTaskParams
 	EAgCameraShake Shake = EAgCameraShake::None;
 
 	UPROPERTY()
-	float Range = 0.f;
+	float MaxDistance = 0.f;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
@@ -26,13 +26,12 @@ UCLASS()
 class UAgAbilityTask_CameraShake : public UAbilityTask
 {
 	GENERATED_BODY()
+	friend struct FAgCameraShakeParams;
 
 public:
-	static UAgAbilityTask_CameraShake* CameraShake(UGameplayAbility* Owner, EAgCameraShake Shake, float Range);
-
 	virtual void Activate() override;
 
 private:
-	EAgCameraShake Shake = EAgCameraShake::None;
-	float Range = 0.f;
+	UPROPERTY()
+	FAgCameraShakeParams Params;
 };
