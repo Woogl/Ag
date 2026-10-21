@@ -31,7 +31,17 @@
       {"Task": "Transition", "Start": 0, "Tag": "State.Groggy", "bSectionEndsWithTag": true, "Section": "End"}
     ]
   },
-  "/Game/Animations/AM_Boss_JumpSlam.AM_Boss_JumpSlam": {
+  "/Game/Animations/AM_Boss_GroundSlam.AM_Boss_GroundSlam": {
+    "Start": [
+      {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
+      {"Task": "Transition", "Start": 0, "EndSection": "Loop", "Event": "Event.Landed", "Section": "End"}
+    ],
+    "End": [
+      {"Task": "CameraShake", "Time": 0, "Shake": "Medium", "MaxDistance": 5000},
+      {"Task": "AreaHit", "Time": 0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}, "Area": {"Preset": "Enemy", "Range": 5000, "TargetBlockedTags": ["State.Airborne"]}}
+    ]
+  },
+  "/Game/Animations/AM_Boss_JumpCleave.AM_Boss_JumpCleave": {
     "Default": [
       {"Task": "RootMotion", "Start": 0, "End": 0.274, "MaxDistance": 850, "bWarpTranslation": true},
       {"Task": "RootMotion", "Start": 0.274, "End": 0.4, "MaxDistance": 200, "bWarpTranslation": true},
@@ -40,17 +50,7 @@
   },
   "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack": {
     "Default": [
-      {"Task": "ApplyEffect", "Time": 0.1, "Effect": "Invincible"}
-    ]
-  },
-  "/Game/Animations/AM_Boss_LeapSlam.AM_Boss_LeapSlam": {
-    "Start": [
-      {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
-      {"Task": "Transition", "Start": 0, "EndSection": "Loop", "Event": "Event.Landed", "Section": "End"}
-    ],
-    "End": [
-      {"Task": "CameraShake", "Time": 0, "Shake": "Medium", "MaxDistance": 1500},
-      {"Task": "AreaHit", "Time": 0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}, "Area": {"Preset": "Enemy", "Range": 350, "TargetBlockedTags": ["State.Airborne"]}}
+      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
     ]
   },
   "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike": {
@@ -92,7 +92,7 @@
       {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Section": "Land"}
     ],
     "Land": [
-      {"Task": "ApplyEffect", "Time": 0.1, "Effect": "Invincible"},
+      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"},
       {"Task": "Transition", "Time": 0.7, "Section": "GetUp", "BlendTime": 0.25}
     ]
   },
@@ -172,7 +172,7 @@
   },
   "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack": {
     "Default": [
-      {"Task": "ApplyEffect", "Time": 0.1, "Effect": "Invincible"}
+      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
     ]
   },
   "/Game/Animations/AM_Player_Parry.AM_Player_Parry": {

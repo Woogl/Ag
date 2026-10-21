@@ -7,7 +7,7 @@
     },
     "Damage": {
       "HPMultiplier": 1.2,
-      "HitReaction": "KnockBack",
+      "HitReaction": "Flinch",
       "bGuardable": true
     }
   }

@@ -293,9 +293,9 @@
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "DashThrust"}
     ],
-    "PatternSelection": {"Phases": [1, 2], "WeightNear": 0, "WeightMid": 40, "WeightFar": 60}
+    "PatternSelection": {"Phases": [1, 2], "WeightNear": 0, "WeightMid": 40, "WeightFar": 40}
   },
-  "LeapSlam": {
+  "GroundSlam": {
     "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 12,
     "Activation": {
@@ -303,10 +303,10 @@
     },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
     "Tasks": [
-      {"Task": "PlayMontage", "Montage": "LeapSlam"},
-      {"Task": "Launch", "AirTime": 1.35, "Height": 220, "Direction": "Target", "MaxDistance": 1200}
+      {"Task": "PlayMontage", "Montage": "GroundSlam"},
+      {"Task": "Launch", "AirTime": 1.2, "Height": 220, "Direction": "Target", "MaxDistance": 1200}
     ],
-    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 40, "WeightFar": 40}
+    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 80, "WeightFar": 80}
   },
   "QuintupleStrike": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -318,7 +318,7 @@
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "QuintupleStrike"}
     ],
-    "PatternSelection": {"Phases": [2], "WeightNear": 40, "WeightMid": 0, "WeightFar": 0}
+    "PatternSelection": {"Phases": [2], "WeightNear": 80, "WeightMid": 0, "WeightFar": 0}
   },
   "SwordWave": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -330,9 +330,9 @@
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "SwordWave"}
     ],
-    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 20, "WeightFar": 60}
+    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 80, "WeightFar": 80}
   },
-  "JumpSlam": {
+  "JumpCleave": {
     "Tags": ["Ability.Boss.Pattern"],
     "Cooldown": 6,
     "Activation": {
@@ -340,7 +340,7 @@
     },
     "Targeting": {"Preset": "Enemy", "Range": 5000},
     "Tasks": [
-      {"Task": "PlayMontage", "Montage": "JumpSlam"}
+      {"Task": "PlayMontage", "Montage": "JumpCleave"}
     ],
     "PatternSelection": {"Phases": [1, 2], "WeightNear": 30, "WeightMid": 30, "WeightFar": 0}
   },
