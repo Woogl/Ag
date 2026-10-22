@@ -6,7 +6,7 @@
       "OwnedTags": ["State.Acting"],
       "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "BasicAttack"}
     ]
@@ -31,7 +31,7 @@
       "OwnedTags": ["State.Acting"],
       "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "JumpAttack"}
     ]
@@ -47,8 +47,17 @@
     },
     "Cost": {"SP": 20},
     "Tasks": [
-      {"Task": "RootMotion", "Direction": "MoveInput", "bWarpTranslation": false},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Roll", "RequiredTags": ["Input.Move"]},
+      {"Task": "ApplyEffect", "Effect": "PerfectDodgeWindow"},
+      {"Task": "RootMotion", "Direction": "MoveInput", "bWarpTranslation": false, "BlockedTags": ["State.LockedOn"]},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move"], "BlockedTags": ["State.LockedOn"]},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Forward"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "ForwardRight", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "ForwardRight"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Right", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Right"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "BackwardRight", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "BackwardRight"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Backward", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Backward"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "BackwardLeft", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "BackwardLeft"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Left", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Left"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "ForwardLeft", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "ForwardLeft"},
       {"Task": "PlayMontage", "Montage": "Dodge", "BlockedTags": ["Input.Move"]}
     ]
   },
@@ -60,9 +69,35 @@
       "OwnedTags": ["State.Acting"],
       "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "DodgeCounter"}
+    ]
+  },
+  "PerfectDodge": {
+    "Tags": ["Ability.Action.PerfectDodge"],
+    "Activation": {
+      "BlockedTags": ["State.Dead"],
+      "OwnedTags": ["State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"],
+      "Triggers": [
+        {"Tag": "Event.PerfectDodge"}
+      ]
+    },
+    "Tasks": [
+      {"Task": "RootMotion"},
+      {"Task": "ApplyEffect", "Effect": "PerfectDodgeReward"},
+      {"Task": "ApplyEffect", "Effect": "DodgeCounterChance", "bRemoveOnEnd": false},
+      {"Task": "ApplyEffect", "Effect": "PerfectDodgeSlowMotion"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Forward", "MoveDirection": "Forward"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Right", "MoveDirection": "ForwardRight"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Right", "MoveDirection": "Right"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Right", "MoveDirection": "BackwardRight"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Backward", "MoveDirection": "Backward"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "MoveDirection": "BackwardLeft"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "MoveDirection": "Left"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "MoveDirection": "ForwardLeft"},
+      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Backward", "BlockedTags": ["Input.Move"]}
     ]
   },
   "Guard": {
@@ -92,7 +127,8 @@
     },
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
-      {"Task": "ApplyEffect", "Effect": "ParryReward", "bRemoveOnEnd": false},
+      {"Task": "ApplyEffect", "Effect": "ParryReward"},
+      {"Task": "ApplyEffect", "Effect": "SPRegenDelay", "bRemoveOnEnd": false},
       {"Task": "PlayMontage", "Montage": "Parry"}
     ]
   },
@@ -104,8 +140,8 @@
       "OwnedTags": ["State.Acting"],
       "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "Cost": {"MP": 30},
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Cost": {"MP": 40},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "Skill"}
     ]
@@ -135,7 +171,7 @@
       "TargetRequiredTags": ["State.Groggy"],
       "TargetBlockedTags": ["State.Execution", "State.Airborne"],
       "bRequired": true,
-      "StopDistance": 95
+      "TargetSpacing": 95
     },
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "Execution"},
@@ -161,6 +197,7 @@
   "LockOn": {
     "Tags": ["Ability.LockOn"],
     "Activation": {
+      "OwnedTags": ["State.LockedOn"],
       "Triggers": [
         {"Tag": "Input.LockOn", "Source": "OwnedTagPresent"}
       ]
@@ -200,7 +237,7 @@
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "KnockUp"},
-      {"Task": "Launch", "AirTime": 0.75, "Height": 75}
+      {"Task": "Launch", "AirTime": 0.75, "Height": 55}
     ]
   },
   "Juggle": {
@@ -218,7 +255,7 @@
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "KnockUp"},
-      {"Task": "Launch", "Height": 10, "Altitude": 75, "Direction": "Back", "Distance": 20}
+      {"Task": "Launch", "Height": 15, "Altitude": 55, "Direction": "Back", "Distance": 10}
     ]
   },
   "GuardPushback": {
@@ -258,11 +295,11 @@
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "DoubleStrike"}
     ],
-    "PatternSelection": {"Phases": [1, 2], "WeightNear": 40, "WeightMid": 0, "WeightFar": 0}
+    "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 300}, "Weight": 4}
   },
   "Sweep": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -270,11 +307,11 @@
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "Sweep"}
     ],
-    "PatternSelection": {"Phases": [1, 2], "WeightNear": 30, "WeightMid": 0, "WeightFar": 0}
+    "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 300}, "Weight": 3}
   },
   "DashThrust": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -282,11 +319,11 @@
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "DashThrust"}
     ],
-    "PatternSelection": {"Phases": [1, 2], "WeightNear": 0, "WeightMid": 40, "WeightFar": 40}
+    "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 4}
   },
   "GroundSlam": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -294,12 +331,12 @@
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "GroundSlam"},
       {"Task": "Launch", "AirTime": 1.2, "Height": 220, "Direction": "Target", "MaxDistance": 1200}
     ],
-    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 80, "WeightFar": 80}
+    "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 8}
   },
   "QuintupleStrike": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -307,11 +344,11 @@
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "QuintupleStrike"}
     ],
-    "PatternSelection": {"Phases": [2], "WeightNear": 80, "WeightMid": 0, "WeightFar": 0}
+    "PatternSelection": {"Phases": [2], "Distance": {"Min": 0, "Max": 300}, "Weight": 8}
   },
   "SwordWave": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -319,11 +356,11 @@
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "SwordWave"}
     ],
-    "PatternSelection": {"Phases": [2], "WeightNear": 0, "WeightMid": 80, "WeightFar": 80}
+    "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 8}
   },
   "JumpCleave": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -331,11 +368,11 @@
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
-    "Targeting": {"Preset": "Enemy", "Range": 5000},
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "JumpCleave"}
     ],
-    "PatternSelection": {"Phases": [1, 2], "WeightNear": 30, "WeightMid": 30, "WeightFar": 0}
+    "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 1000}, "Weight": 3}
   },
   "Backstep": {
     "Tags": ["Ability.Boss.Pattern"],
@@ -346,7 +383,7 @@
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "Backstep"}
     ],
-    "PatternSelection": {"Phases": [1, 2], "ResponseRange": 400, "ResponseChance": 0.3}
+    "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 400}, "ResponseChance": 0.3}
   },
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
@@ -392,6 +429,18 @@
     },
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "PhaseTransition"}
+    ]
+  },
+  "Parried": {
+    "Tags": ["Ability.Reaction.Parried"],
+    "Activation": {
+      "BlockedTags": ["State.Dead"],
+      "Triggers": [
+        {"Tag": "Event.Parried"}
+      ]
+    },
+    "Tasks": [
+      {"Task": "ApplyEffect", "Effect": "ParryPPLoss"}
     ]
   },
   "EnemyLockOn": {

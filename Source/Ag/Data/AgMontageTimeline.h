@@ -40,8 +40,3 @@ public:
 	/** 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다. */
 	const FAgMontageTimeline* Find(UAnimMontage* Montage) const;
 };
-
-namespace AgMontageTimeline
-{
-	bool ResolveTimes(const UAnimMontage& Montage, FName Section, const FAgTaskParams& Params, float& OutStart, float& OutEnd);
-}

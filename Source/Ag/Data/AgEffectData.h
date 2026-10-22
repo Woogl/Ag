@@ -55,9 +55,6 @@ struct FAgRegenDelay
 
 	UPROPERTY(meta = (DataId = "Effects"))
 	FName Effect;
-
-	UPROPERTY(meta = (DataId = "Effects"))
-	FName EffectAtZero;
 };
 
 USTRUCT()

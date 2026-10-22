@@ -108,7 +108,7 @@ struct FAgAbilityTargeting : public FAgTargetingRequest
 	bool bRequired = false;
 
 	UPROPERTY()
-	TOptional<float> StopDistance;
+	float TargetSpacing = 0.f;
 };
 
 USTRUCT()
@@ -120,19 +120,15 @@ struct FAgPatternSelection
 	TArray<int32> Phases;
 
 	UPROPERTY()
-	float WeightNear = 0.f;
+	FFloatInterval Distance = FFloatInterval(0.f, 0.f);
 
 	UPROPERTY()
-	float WeightMid = 0.f;
-
-	UPROPERTY()
-	float WeightFar = 0.f;
-
-	UPROPERTY()
-	float ResponseRange = 0.f;
+	float Weight = 0.f;
 
 	UPROPERTY()
 	float ResponseChance = 0.f;
+
+	bool IsAvailable(float TargetDistance, int32 Phase) const;
 };
 
 UENUM()

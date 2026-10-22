@@ -30,10 +30,7 @@ struct FAgTaskParams
 	virtual ~FAgTaskParams() = default;
 
 	UPROPERTY()
-	float Time = 0.f;
-
-	UPROPERTY()
-	TOptional<float> Start;
+	float Start = 0.f;
 
 	UPROPERTY()
 	TOptional<float> End;

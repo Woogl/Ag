@@ -83,9 +83,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Abilities"))
 	TArray<FName> Abilities;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Attack Movement")
-	float StopDistance = 0.f;
-
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Effects"))
 	TArray<FName> Effects;
 
@@ -100,13 +97,6 @@ UCLASS(BlueprintType)
 class UAgPlayerData : public UAgCharacterData
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard", meta = (DataId = "Effects"))
-	TArray<FName> ParryAttackerEffects;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Dodge", meta = (DataId = "Effects"))
-	TArray<FName> PerfectDodgeEffects;
 };
 
 UCLASS(BlueprintType)
@@ -116,20 +106,8 @@ class UAgBossData : public UAgCharacterData
 
 public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	float NearDistance = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	float FarDistance = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	FFloatInterval PatternRecoveryWaitPhase1 = FFloatInterval(0.f, 0.f);
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	FFloatInterval PatternRecoveryWaitPhase2 = FFloatInterval(0.f, 0.f);
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	float FixedRecoveryWait = 0.f;
+	FFloatInterval PatternRecoveryTime = FFloatInterval(0.f, 0.f);
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")
-	float Phase2HPRatio = 0.f;
+	TArray<float> PhaseTransitionHPRatios;
 };

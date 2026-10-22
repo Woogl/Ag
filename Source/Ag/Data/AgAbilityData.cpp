@@ -21,6 +21,11 @@ void FAgResourceCost::AddToSpec(FGameplayEffectSpec& Spec) const
 	AgResource::SetAmounts(Spec, -SP, -MP, -UP);
 }
 
+bool FAgPatternSelection::IsAvailable(float TargetDistance, int32 Phase) const
+{
+	return Distance.Contains(TargetDistance) && (Phases.IsEmpty() || Phases.Contains(Phase));
+}
+
 bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
 {
 	return Tags == Other.Tags && FAgAbilityActivation::StaticStruct()->CompareScriptStruct(&Activation, &Other.Activation, 0);

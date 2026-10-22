@@ -20,6 +20,7 @@
       "JumpAttack",
       "Dodge",
       "DodgeCounter",
+      "PerfectDodge",
       "Guard",
       "Parry",
       "Skill",
@@ -33,9 +34,6 @@
       "GuardPushback",
       "GuardBreak"
     ],
-    "StopDistance": 100,
-    "ParryAttackerEffects": ["ParryPPLoss"],
-    "PerfectDodgeEffects": ["PerfectDodgeReward", "DodgeCounterChance", "PerfectDodgeSlowMotion"],
     "Effects": ["SPRegen", "GroggyImmune"],
     "Montages": {
       "BasicAttack": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
@@ -43,6 +41,7 @@
       "JumpAttack": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
       "Dodge": "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge",
       "DodgeCounter": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
+      "PerfectDodge": "/Game/Animations/AM_Player_PerfectDodge.AM_Player_PerfectDodge",
       "GuardFlinch": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch",
       "Parry": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
       "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
@@ -63,7 +62,7 @@
       "MaxPP": 1500,
       "ATK": 200,
       "DEF": 100,
-      "MOV": 250
+      "MOV": 200
     },
     "Abilities": [
       "DoubleStrike",
@@ -80,15 +79,11 @@
       "Groggy",
       "Executed",
       "PhaseTransition",
+      "Parried",
       "EnemyLockOn"
     ],
-    "StopDistance": 150,
-    "NearDistance": 300,
-    "FarDistance": 1000,
-    "PatternRecoveryWaitPhase1": {"Min": 1, "Max": 2},
-    "PatternRecoveryWaitPhase2": {"Min": 0.5, "Max": 1.2},
-    "FixedRecoveryWait": 1,
-    "Phase2HPRatio": 0.5,
+    "PatternRecoveryTime": {"Min": 0.5, "Max": 1.2},
+    "PhaseTransitionHPRatios": [0.5],
     "Effects": ["PPRegen"],
     "Montages": {
       "DoubleStrike": "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike",

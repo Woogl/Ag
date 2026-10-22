@@ -3,17 +3,12 @@
     "DurationPolicy": "Infinite",
     "Modifiers": [
       {"Attribute": "SP", "PerSecond": 40, "IgnoredTags": ["State.Guarding"]},
-      {"Attribute": "SP", "PerSecond": 20, "RequiredTags": ["State.Guarding"]}
+      {"Attribute": "SP", "PerSecond": 10, "RequiredTags": ["State.Guarding"]}
     ],
     "OngoingIgnoredTags": ["State.Regen.SPDelay"],
-    "RegenDelay": {"Effect": "SPRegenDelay", "EffectAtZero": "SPRegenDelayAtZero"}
+    "RegenDelay": {"Effect": "SPRegenDelay"}
   },
   "SPRegenDelay": {
-    "DurationPolicy": "HasDuration",
-    "Duration": 1,
-    "GrantedTags": ["State.Regen.SPDelay"]
-  },
-  "SPRegenDelayAtZero": {
     "DurationPolicy": "HasDuration",
     "Duration": 2,
     "GrantedTags": ["State.Regen.SPDelay"]
@@ -63,7 +58,8 @@
     ]
   },
   "PerfectDodgeWindow": {
-    "DurationPolicy": "Infinite",
+    "DurationPolicy": "HasDuration",
+    "Duration": 0.2,
     "GrantedTags": ["State.PerfectDodgeWindow"]
   },
   "Groggy": {

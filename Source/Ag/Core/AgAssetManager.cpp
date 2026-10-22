@@ -33,7 +33,7 @@
 namespace
 {
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
-	const TCHAR* const JsonFolderName = TEXT("Data");
+	const TCHAR* const JsonFolderName = TEXT("DesignData");
 
 	const TCHAR* const CombatRulesFile = TEXT("CombatRules.json");
 	const TCHAR* const EffectsFile = TEXT("Effects.json");
