@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4553"/>
+      <stop offset="1" stop-color="#2a323d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경: 멈춘 전투 장면 (임시) -->
+  <rect width="1920" height="760" fill="url(#sky)"/>
+  <rect y="760" width="1920" height="320" fill="#222831"/>
+  <path d="M0 760 H1920" stroke="#4a5563" stroke-width="2"/>
+
+  <!-- 보스 -->
+  <g fill="#4b5563">
+    <circle cx="1180" cy="360" r="30"/>
+    <rect x="1122" y="396" width="116" height="220" rx="24"/>
+    <rect x="1132" y="606" width="40" height="150" rx="14"/>
+    <rect x="1188" y="606" width="40" height="150" rx="14"/>
+    <rect x="1242" y="420" width="12" height="280" rx="3" fill="#6b7280" transform="rotate(18 1248 420)"/>
+  </g>
+
+  <!-- 플레이어 -->
+  <g fill="#3f4753">
+    <circle cx="760" cy="560" r="24"/>
+    <rect x="714" y="590" width="92" height="170" rx="20"/>
+  </g>
+
+  <!-- 전투 HUD (멈춘 채로 메뉴 아래에 보임) -->
+  <g fill="#9aa4b1" fill-opacity="0.8">
+    <rect x="460" y="110" width="1000" height="14"/>
+    <rect x="460" y="128" width="1000" height="6" fill="#c9d1db"/>
+    <rect x="48" y="958" width="400" height="8" fill="#c9d1db"/>
+    <rect x="48" y="970" width="400" height="16"/>
+    <rect x="48" y="992" width="400" height="10" fill="#7c8a9c"/>
+    <rect x="1668" y="936" width="96" height="96" rx="6" fill="none" stroke="#9aa4b1" stroke-width="3"/>
+    <rect x="1776" y="936" width="96" height="96" rx="6" fill="none" stroke="#9aa4b1" stroke-width="3"/>
+  </g>
+
+  <!-- 화면을 60% 어둡게 -->
+  <rect width="1920" height="1080" fill="#000000" fill-opacity="0.6"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">일시정지 메뉴 · 기준 해상도 1920 × 1080 · 보스전에서 Esc를 누르면 표시 (뒤의 전투 HUD는 그대로 보임)</text>
+
+  <!-- 버튼 (세로 배치, 화면 가운데) -->
+  <g font-size="32" font-weight="700" text-anchor="middle">
+    <rect x="750" y="366" width="420" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <text x="960" y="413" fill="#FFFFFF">Resume</text>
+
+    <rect x="750" y="458" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="505" fill="#c9d1db">Restart</text>
+
+    <rect x="750" y="550" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="597" fill="#c9d1db">Return to Title</text>
+
+    <rect x="750" y="642" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="689" fill="#c9d1db">Quit</text>
+  </g>
+  <text x="1190" y="408" font-size="16" fill="#9aa4b1">← 처음 선택된 버튼</text>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="880" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, ↑·↓ / 실행: 좌클릭, Enter, Space / 닫기: Resume 또는 Esc</text>
+</svg>

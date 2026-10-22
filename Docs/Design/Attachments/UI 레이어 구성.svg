@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1780" height="980" viewBox="0 0 1780 980" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <marker id="arrowInput" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#f5c84c"/>
+    </marker>
+    <marker id="arrowAxis" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#9aa4b1"/>
+    </marker>
+  </defs>
+
+  <rect width="1780" height="980" fill="#11151b"/>
+
+  <!-- 쌓는 방향 -->
+  <line x1="56" y1="860" x2="56" y2="150" stroke="#9aa4b1" stroke-width="2" marker-end="url(#arrowAxis)"/>
+  <text x="40" y="505" font-size="22" fill="#9aa4b1" text-anchor="middle" transform="rotate(-90 40 505)">위 레이어가 아래 레이어를 덮음</text>
+
+  <!-- 화면 평면은 400×225 평면 좌표로 그리고 비스듬히 눕힘: matrix(1 0 -0.35 0.4 x y) -->
+
+  <!-- ============ 왼쪽: LV_FrontEnd ============ -->
+  <text x="140" y="70" font-size="32" font-weight="700" fill="#FFFFFF">LV_FrontEnd · 조작 안내 팝업을 연 상태</text>
+
+  <!-- 월드 위치 UI (비어 있음) -->
+  <g transform="matrix(1 0 -0.35 0.4 180 720)">
+    <rect width="400" height="225" fill="none" stroke="#6b7480" stroke-width="2.5" stroke-dasharray="10 8"/>
+  </g>
+  <!-- Game (비어 있음) -->
+  <g transform="matrix(1 0 -0.35 0.4 180 540)">
+    <rect width="400" height="225" fill="none" stroke="#9aa4b1" stroke-width="2.5" stroke-dasharray="10 8"/>
+  </g>
+  <!-- Menu: 타이틀 화면 -->
+  <g transform="matrix(1 0 -0.35 0.4 180 360)">
+    <rect width="400" height="225" fill="#222a35" stroke="#9aa4b1" stroke-width="2.5"/>
+    <rect x="160" y="40" width="80" height="40" rx="3" fill="#FFFFFF" fill-opacity="0.85"/>
+    <rect x="160" y="110" width="80" height="20" rx="3" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="2"/>
+    <rect x="160" y="140" width="80" height="20" rx="3" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="2"/>
+    <rect x="160" y="170" width="80" height="20" rx="3" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="2"/>
+  </g>
+  <!-- Modal: 조작 안내 팝업 -->
+  <g transform="matrix(1 0 -0.35 0.4 180 180)">
+    <rect width="400" height="225" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="2.5"/>
+    <rect x="150" y="25" width="100" height="175" rx="4" fill="#2b3036"/>
+    <rect x="162" y="40" width="76" height="110" rx="3" fill="#000000" fill-opacity="0.45"/>
+    <rect x="170" y="165" width="60" height="22" rx="3" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
+  </g>
+
+  <!-- 왼쪽 라벨 -->
+  <g fill="#FFFFFF">
+    <text x="600" y="215" font-size="30" font-weight="700">Modal</text>
+    <text x="600" y="251" font-size="24">조작 안내 팝업</text>
+    <text x="600" y="281" font-size="21" fill="#f5c84c">입력을 받음</text>
+
+    <text x="600" y="395" font-size="30" font-weight="700">Menu</text>
+    <text x="600" y="431" font-size="24">타이틀 화면</text>
+    <text x="600" y="461" font-size="21" fill="#9aa4b1">표시는 유지, 입력 없음</text>
+
+    <text x="600" y="575" font-size="30" font-weight="700">Game</text>
+    <text x="600" y="611" font-size="24" fill="#9aa4b1">(비어 있음)</text>
+
+    <text x="600" y="755" font-size="30" font-weight="700" fill="#9aa4b1">레이어 밖</text>
+    <text x="600" y="791" font-size="24" fill="#9aa4b1">(비어 있음)</text>
+  </g>
+
+  <!-- 왼쪽 입력 화살표 -->
+  <line x1="341" y1="100" x2="341" y2="222" stroke="#f5c84c" stroke-width="4" marker-end="url(#arrowInput)"/>
+  <text x="356" y="122" font-size="24" font-weight="700" fill="#f5c84c">입력</text>
+
+  <!-- ============ 오른쪽: LV_BossStage ============ -->
+  <text x="1020" y="70" font-size="32" font-weight="700" fill="#FFFFFF">LV_BossStage · 일시정지 메뉴를 연 상태</text>
+
+  <!-- 월드 위치 UI: 락온 마커, 처형 안내, 대미지 숫자 -->
+  <g transform="matrix(1 0 -0.35 0.4 1060 720)">
+    <rect width="400" height="225" fill="none" stroke="#6b7480" stroke-width="2.5" stroke-dasharray="10 8"/>
+    <circle cx="200" cy="120" r="9" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+    <rect x="166" y="62" width="68" height="16" rx="8" fill="#000000" fill-opacity="0.55" stroke="#c9d1db" stroke-width="1.5"/>
+    <rect x="226" y="134" width="26" height="12" fill="#FFFFFF"/>
+  </g>
+  <!-- Game: 전투 HUD -->
+  <g transform="matrix(1 0 -0.35 0.4 1060 540)">
+    <rect width="400" height="225" fill="#222a35" stroke="#9aa4b1" stroke-width="2.5"/>
+    <rect x="120" y="14" width="160" height="7" fill="#c0392b"/>
+    <rect x="12" y="186" width="110" height="5" fill="#d4a017"/>
+    <rect x="12" y="196" width="110" height="7" fill="#2ecc71"/>
+    <rect x="12" y="208" width="110" height="5" fill="#3b82f6"/>
+    <circle cx="372" cy="196" r="14" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+    <circle cx="340" cy="204" r="9" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+    <rect x="328" y="80" width="60" height="64" rx="3" fill="#000000" fill-opacity="0.45"/>
+  </g>
+  <!-- Menu: 일시정지 메뉴 -->
+  <g transform="matrix(1 0 -0.35 0.4 1060 360)">
+    <rect width="400" height="225" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="2.5"/>
+    <rect x="160" y="50" width="80" height="22" rx="3" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <rect x="160" y="82" width="80" height="22" rx="3" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="2"/>
+    <rect x="160" y="114" width="80" height="22" rx="3" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="2"/>
+    <rect x="160" y="146" width="80" height="22" rx="3" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="2"/>
+  </g>
+  <!-- Modal (비어 있음) -->
+  <g transform="matrix(1 0 -0.35 0.4 1060 180)">
+    <rect width="400" height="225" fill="none" stroke="#9aa4b1" stroke-width="2.5" stroke-dasharray="10 8"/>
+  </g>
+
+  <!-- 오른쪽 라벨 -->
+  <g fill="#FFFFFF">
+    <text x="1480" y="215" font-size="30" font-weight="700">Modal</text>
+    <text x="1480" y="251" font-size="24" fill="#9aa4b1">(비어 있음)</text>
+
+    <text x="1480" y="395" font-size="30" font-weight="700">Menu</text>
+    <text x="1480" y="431" font-size="24">일시정지 메뉴</text>
+    <text x="1480" y="461" font-size="21" fill="#f5c84c">입력을 받음</text>
+
+    <text x="1480" y="575" font-size="30" font-weight="700">Game</text>
+    <text x="1480" y="611" font-size="24">전투 HUD</text>
+    <text x="1480" y="641" font-size="21" fill="#9aa4b1">표시는 유지, 입력 없음</text>
+
+    <text x="1480" y="755" font-size="30" font-weight="700" fill="#9aa4b1">레이어 밖</text>
+    <text x="1480" y="791" font-size="24">락온 마커, 처형 안내,</text>
+    <text x="1480" y="821" font-size="24">대미지 숫자</text>
+    <text x="1480" y="853" font-size="21" fill="#9aa4b1">모든 레이어보다 아래</text>
+  </g>
+
+  <!-- 오른쪽 입력 화살표: 빈 Modal을 지나 Menu로 -->
+  <line x1="1221" y1="100" x2="1221" y2="402" stroke="#f5c84c" stroke-width="4" marker-end="url(#arrowInput)"/>
+  <text x="1236" y="122" font-size="24" font-weight="700" fill="#f5c84c">입력</text>
+
+  <!-- 범례 -->
+  <g font-size="22" fill="#9aa4b1">
+    <line x1="140" y1="930" x2="190" y2="930" stroke="#f5c84c" stroke-width="4" marker-end="url(#arrowInput)"/>
+    <text x="204" y="937">입력: 화면이 있는 가장 위 레이어에서 마지막에 연 화면</text>
+    <rect x="1020" y="918" width="48" height="24" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="6 5"/>
+    <text x="1082" y="937">점선: 화면이 없는 레이어</text>
+  </g>
+</svg>

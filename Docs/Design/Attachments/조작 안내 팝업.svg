@@ -17,9 +17,9 @@
   <text x="960" y="430" font-size="224" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="24">AG</text>
 
   <!-- 버튼 (세로 배치) -->
-  <g font-size="32" text-anchor="middle">
+  <g font-size="32" font-weight="700" text-anchor="middle">
     <rect x="780" y="600" width="360" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
-    <text x="960" y="647" fill="#FFFFFF" font-weight="700">Start</text>
+    <text x="960" y="647" fill="#FFFFFF">Start</text>
 
     <rect x="780" y="696" width="360" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
     <text x="960" y="743" fill="#c9d1db">Controls</text>
@@ -29,26 +29,27 @@
   <rect width="1920" height="1080" fill="#000000" fill-opacity="0.7"/>
 
   <!-- 팝업 패널 -->
-  <rect x="780" y="290" width="360" height="500" rx="8" fill="#2b3036"/>
-  <text x="804" y="346" font-size="32" font-weight="700" fill="#FFFFFF">Controls</text>
+  <rect x="780" y="276" width="360" height="528" rx="8" fill="#2b3036"/>
+  <text x="804" y="332" font-size="32" font-weight="700" fill="#FFFFFF">Controls</text>
 
   <!-- 조작 안내 (전투 HUD와 같은 모양) -->
-  <rect x="804" y="378" width="312" height="304" rx="8" fill="#000000" fill-opacity="0.45"/>
+  <rect x="804" y="364" width="312" height="332" rx="8" fill="#000000" fill-opacity="0.45"/>
   <g font-size="20" fill="#FFFFFF">
-    <text x="820" y="410">W, A, S, D</text><text x="951" y="410">이동</text>
-    <text x="820" y="438">마우스 이동</text><text x="951" y="438">시야</text>
-    <text x="820" y="466">좌클릭</text><text x="951" y="466">평타</text>
-    <text x="820" y="494">우클릭</text><text x="951" y="494">가드 / 패리</text>
-    <text x="820" y="522">Left Shift</text><text x="951" y="522">회피 / 달리기</text>
-    <text x="820" y="550">Space</text><text x="951" y="550">점프</text>
-    <text x="820" y="578">E</text><text x="951" y="578">스킬</text>
-    <text x="820" y="606">Q</text><text x="951" y="606">궁극기</text>
-    <text x="820" y="634">F</text><text x="951" y="634">처형</text>
-    <text x="820" y="662">휠 클릭</text><text x="951" y="662">락온 / 락온 해제</text>
+    <text x="820" y="396">W, A, S, D</text><text x="951" y="396">이동</text>
+    <text x="820" y="424">마우스 이동</text><text x="951" y="424">시야</text>
+    <text x="820" y="452">좌클릭</text><text x="951" y="452">평타</text>
+    <text x="820" y="480">우클릭</text><text x="951" y="480">가드 / 패리</text>
+    <text x="820" y="508">Left Shift</text><text x="951" y="508">회피 / 달리기</text>
+    <text x="820" y="536">Space</text><text x="951" y="536">점프</text>
+    <text x="820" y="564">E</text><text x="951" y="564">스킬</text>
+    <text x="820" y="592">Q</text><text x="951" y="592">궁극기</text>
+    <text x="820" y="620">F</text><text x="951" y="620">처형</text>
+    <text x="820" y="648">휠 클릭</text><text x="951" y="648">락온 / 락온 해제</text>
+    <text x="820" y="676">Esc</text><text x="951" y="676">일시정지</text>
   </g>
 
-  <rect x="840" y="694" width="240" height="72" rx="8" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
-  <text x="960" y="741" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
+  <rect x="840" y="708" width="240" height="72" rx="8" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
+  <text x="960" y="755" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
 
   <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
   <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 닫기: Confirm 버튼 · 팝업 뒤의 타이틀 버튼은 조작할 수 없음</text>

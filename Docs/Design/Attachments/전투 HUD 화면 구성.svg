@@ -55,9 +55,6 @@
   <text x="960" y="314" font-size="32" fill="#FFFFFF" text-anchor="middle">[F] 처형</text>
   <text x="1128" y="336" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
 
-  <!-- [6] 대미지 숫자 -->
-  <text x="1075" y="525" font-size="44" font-weight="700" fill="#FFFFFF" stroke="#000000" stroke-width="3" paint-order="stroke">120</text>
-
   <!-- [1] 플레이어 상태: SP / HP / MP -->
   <rect x="48" y="974" width="400" height="8" fill="#000000" fill-opacity="0.5"/>
   <rect x="48" y="974" width="300" height="8" fill="#4CC38A"/>
@@ -76,7 +73,7 @@
     <!-- 쿨다운 표시: 남은 비율만큼 덮개, 경계는 위쪽 가운데부터 시계 방향으로 돎 -->
     <path d="M1716 960 L1763.02 1024.72 A80 80 0 1 1 1716 880 Z" fill="#FFFFFF" fill-opacity="0.35" clip-path="url(#skillSlotInside)"/>
     <text x="1716" y="971" font-size="32" font-weight="700" stroke="#000000" stroke-width="3" paint-order="stroke">3</text>
-    <text x="1757" y="1002" font-size="20" text-anchor="end">30</text>
+    <text x="1757" y="1002" font-size="20" text-anchor="end">50</text>
 
     <g opacity="0.5">
       <rect x="1776" y="912" width="96" height="96" rx="12" fill="#000000" fill-opacity="0.55" stroke="#9aa4b1" stroke-width="3"/>
@@ -88,19 +85,20 @@
   <text x="1652" y="980" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 슬롯: 쿨다운 중인 모습</text>
   <text x="1652" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
 
-  <!-- [7] 조작 안내 (오른쪽 가운데) -->
-  <rect x="1560" y="388" width="312" height="304" rx="8" fill="#000000" fill-opacity="0.45"/>
+  <!-- [6] 조작 안내 (오른쪽 가운데) -->
+  <rect x="1560" y="374" width="312" height="332" rx="8" fill="#000000" fill-opacity="0.45"/>
   <g font-size="20" fill="#FFFFFF">
-    <text x="1576" y="420">W, A, S, D</text><text x="1707" y="420">이동</text>
-    <text x="1576" y="448">마우스 이동</text><text x="1707" y="448">시야</text>
-    <text x="1576" y="476">좌클릭</text><text x="1707" y="476">평타</text>
-    <text x="1576" y="504">우클릭</text><text x="1707" y="504">가드 / 패리</text>
-    <text x="1576" y="532">Left Shift</text><text x="1707" y="532">회피 / 달리기</text>
-    <text x="1576" y="560">Space</text><text x="1707" y="560">점프</text>
-    <text x="1576" y="588">E</text><text x="1707" y="588">스킬</text>
-    <text x="1576" y="616">Q</text><text x="1707" y="616">궁극기</text>
-    <text x="1576" y="644">F</text><text x="1707" y="644">처형</text>
-    <text x="1576" y="672">휠 클릭</text><text x="1707" y="672">락온 / 락온 해제</text>
+    <text x="1576" y="406">W, A, S, D</text><text x="1707" y="406">이동</text>
+    <text x="1576" y="434">마우스 이동</text><text x="1707" y="434">시야</text>
+    <text x="1576" y="462">좌클릭</text><text x="1707" y="462">평타</text>
+    <text x="1576" y="490">우클릭</text><text x="1707" y="490">가드 / 패리</text>
+    <text x="1576" y="518">Left Shift</text><text x="1707" y="518">회피 / 달리기</text>
+    <text x="1576" y="546">Space</text><text x="1707" y="546">점프</text>
+    <text x="1576" y="574">E</text><text x="1707" y="574">스킬</text>
+    <text x="1576" y="602">Q</text><text x="1707" y="602">궁극기</text>
+    <text x="1576" y="630">F</text><text x="1707" y="630">처형</text>
+    <text x="1576" y="658">휠 클릭</text><text x="1707" y="658">락온 / 락온 해제</text>
+    <text x="1576" y="686">Esc</text><text x="1707" y="686">일시정지</text>
   </g>
 
   <!-- 번호 표시 -->
@@ -115,9 +113,7 @@
     <text x="1000" y="456">4</text>
     <circle cx="1108" cy="303" r="16" fill="#FFD23F"/>
     <text x="1108" y="309">5</text>
-    <circle cx="1160" cy="514" r="16" fill="#FFD23F"/>
-    <text x="1160" y="520">6</text>
     <circle cx="1536" cy="540" r="16" fill="#FFD23F"/>
-    <text x="1536" y="546">7</text>
+    <text x="1536" y="546">6</text>
   </g>
 </svg>

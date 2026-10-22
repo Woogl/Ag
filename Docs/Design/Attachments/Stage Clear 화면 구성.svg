@@ -37,9 +37,9 @@
   <text x="960" y="400" font-size="112" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="8">STAGE CLEAR</text>
 
   <!-- 버튼 (세로 배치) -->
-  <g font-size="32" text-anchor="middle">
+  <g font-size="32" font-weight="700" text-anchor="middle">
     <rect x="750" y="560" width="420" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
-    <text x="960" y="607" fill="#FFFFFF" font-weight="700">Try Again</text>
+    <text x="960" y="607" fill="#FFFFFF">Restart</text>
 
     <rect x="750" y="652" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
     <text x="960" y="699" fill="#c9d1db">Return to Title</text>
