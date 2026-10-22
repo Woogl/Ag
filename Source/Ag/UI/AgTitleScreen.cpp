@@ -3,15 +3,23 @@
 #include "UI/AgTitleScreen.h"
 
 #include "Game/AgFrontEndGameMode.h"
+#include "Game/AgPlayerController.h"
 #include "UI/AgButton.h"
+#include "UI/AgControlsPopup.h"
+#include "UI/AgUILayout.h"
+
+UAgTitleScreen::UAgTitleScreen(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bAutoRestoreFocus = true;
+}
 
 void UAgTitleScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
 	ControlsButton->OnClicked().AddUObject(this, &ThisClass::OpenControls);
-	CloseButton->OnClicked().AddUObject(this, &ThisClass::CloseControls);
-	for (UAgButton* Button : {StartButton.Get(), ControlsButton.Get(), QuitButton.Get(), CloseButton.Get()})
+	for (UAgButton* Button : {StartButton.Get(), ControlsButton.Get(), QuitButton.Get()})
 	{
 		Button->SetAllNavigationRules(EUINavigationRule::Stop, NAME_None);
 	}
@@ -27,16 +35,9 @@ void UAgTitleScreen::NativeOnInitialized()
 	}
 }
 
-void UAgTitleScreen::NativeOnActivated()
-{
-	bReturnToControls = false;
-	SetControlsOpen(false);
-	Super::NativeOnActivated();
-}
-
 UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
 {
-	return bControlsOpen ? CloseButton.Get() : (bReturnToControls ? ControlsButton.Get() : StartButton.Get());
+	return StartButton;
 }
 
 TOptional<FUIInputConfig> UAgTitleScreen::GetDesiredInputConfig() const
@@ -46,33 +47,8 @@ TOptional<FUIInputConfig> UAgTitleScreen::GetDesiredInputConfig() const
 
 void UAgTitleScreen::OpenControls()
 {
-	if (bControlsOpen)
+	if (AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>())
 	{
-		return;
+		PlayerController->PushScreen(EAgUILayer::Modal, ControlsPopupClass);
 	}
-	SetControlsOpen(true);
-	CloseButton->SetFocus();
-}
-
-void UAgTitleScreen::CloseControls()
-{
-	if (!bControlsOpen)
-	{
-		return;
-	}
-	bReturnToControls = true;
-	SetControlsOpen(false);
-	ControlsButton->SetFocus();
-}
-
-void UAgTitleScreen::SetControlsOpen(bool bOpen)
-{
-	bControlsOpen = bOpen;
-	ControlsPanel->SetVisibility(bOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-	// CommonUI 버튼은 패널만 비활성화하면 키보드 실행이 남습니다.
-	for (UAgButton* Button : {StartButton.Get(), ControlsButton.Get(), QuitButton.Get()})
-	{
-		Button->SetIsEnabled(!bOpen);
-	}
-	CloseButton->SetIsEnabled(bOpen);
 }

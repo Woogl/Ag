@@ -38,7 +38,7 @@ protected:
 	TObjectPtr<UCommonTextBlock> TitleText;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> TryAgainButton;
+	TObjectPtr<UAgButton> RestartButton;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> ReturnToTitleButton;

@@ -14,10 +14,14 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "EngineUtils.h"
+#include "Game/AgPlayerController.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
 #include "GameFramework/PlayerController.h"
+#include "Input/CommonUIInputTypes.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "UI/AgPauseMenu.h"
+#include "UI/AgUILayout.h"
 
 namespace
 {
@@ -28,6 +32,17 @@ void UAgHUDWidget::HideStatus()
 {
 	bStatusHidden = true;
 	StatusPanel->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UAgHUDWidget::NativeOnInitialized()
+{
+	Super::NativeOnInitialized();
+
+	FBindUIActionArgs EscapeArgs(FUIActionTag::ConvertChecked(AgGameplayTags::UI_Action_Escape), false,
+		FSimpleDelegate::CreateUObject(this, &ThisClass::OpenPauseMenu));
+	// UI 액션 바인딩은 기본으로 메뉴 입력 모드에서만 받으므로, 게임 입력 모드인 HUD는 바꿔 둡니다.
+	EscapeArgs.InputMode = ECommonInputMode::Game;
+	RegisterUIActionBinding(EscapeArgs);
 }
 
 void UAgHUDWidget::NativeConstruct()
@@ -84,7 +99,9 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	StatusPanel->SetVisibility(bStatusHidden || bCutscene ? ESlateVisibility::Collapsed : StatusPanelVisibility);
 
 	// 잔상은 게임 시간으로 흘러 슬로우모션에 함께 느려집니다.
-	const float GameDeltaTime = GetWorld()->GetDeltaSeconds();
+	// 엔진은 일시정지 중에도 GetDeltaSeconds에 프레임 시간을 넣으므로 멈춘 동안은 0으로 셉니다.
+	const UWorld* World = GetWorld();
+	const float GameDeltaTime = World->IsPaused() ? 0.f : World->GetDeltaSeconds();
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
 		UpdatePlayer(*Player, GameDeltaTime);
@@ -101,6 +118,14 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	if (const AAgBossCharacter* BossCharacter = Boss.Get())
 	{
 		UpdateBoss(*BossCharacter, GameDeltaTime);
+	}
+}
+
+void UAgHUDWidget::OpenPauseMenu()
+{
+	if (AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>())
+	{
+		PlayerController->PushScreen(EAgUILayer::Menu, PauseMenuClass);
 	}
 }
 

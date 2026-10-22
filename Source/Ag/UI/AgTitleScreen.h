@@ -7,17 +7,23 @@
 #include "AgTitleScreen.generated.h"
 
 class UAgButton;
+class UAgControlsPopup;
 
 UCLASS(Abstract)
 class UAgTitleScreen : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 
+public:
+	UAgTitleScreen(const FObjectInitializer& ObjectInitializer);
+
 protected:
 	virtual void NativeOnInitialized() override;
-	virtual void NativeOnActivated() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgControlsPopup> ControlsPopupClass;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> StartButton;
@@ -28,17 +34,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> QuitButton;
 
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UWidget> ControlsPanel;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> CloseButton;
-
 private:
 	void OpenControls();
-	void CloseControls();
-	void SetControlsOpen(bool bOpen);
-
-	bool bControlsOpen = false;
-	bool bReturnToControls = false;
 };

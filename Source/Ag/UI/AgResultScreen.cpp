@@ -18,7 +18,7 @@ void UAgResultScreen::NativeOnInitialized()
 
 	if (AAgBossStageGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgBossStageGameMode>())
 	{
-		TryAgainButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::RestartStage);
+		RestartButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::RestartStage);
 		ReturnToTitleButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::OpenFrontEnd);
 		QuitButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::QuitGame);
 	}
@@ -28,9 +28,9 @@ void UAgResultScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	// 버튼마다 꺼야 포커스를 받은 버튼도 실행 키(Enter, Space)를 받지 않습니다.
-	// 버튼을 담은 패널만 끄면 마우스만 막힙니다.
-	for (UAgButton* Button : {TryAgainButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
+	// 버튼마다 꺼야 ?�커?��? 받�? 버튼???�행 ??Enter, Space)�?받�? ?�습?�다.
+	// 버튼???��? ?�널�??�면 마우?�만 막힙?�다.
+	for (UAgButton* Button : {RestartButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
 	{
 		Button->SetIsEnabled(false);
 	}
@@ -43,7 +43,7 @@ void UAgResultScreen::OnAnimationFinished_Implementation(const UWidgetAnimation*
 
 	if (Animation == FadeInAnimation)
 	{
-		for (UAgButton* Button : {TryAgainButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
+		for (UAgButton* Button : {RestartButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
 		{
 			Button->SetIsEnabled(true);
 		}
@@ -53,7 +53,7 @@ void UAgResultScreen::OnAnimationFinished_Implementation(const UWidgetAnimation*
 
 UWidget* UAgResultScreen::NativeGetDesiredFocusTarget() const
 {
-	return TryAgainButton;
+	return RestartButton;
 }
 
 TOptional<FUIInputConfig> UAgResultScreen::GetDesiredInputConfig() const

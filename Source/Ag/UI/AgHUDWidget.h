@@ -9,6 +9,7 @@
 class AAgBossCharacter;
 class AAgPlayerCharacter;
 class UAbilitySystemComponent;
+class UAgPauseMenu;
 class UGameplayAbility;
 class UImage;
 class UProgressBar;
@@ -26,6 +27,7 @@ public:
 	void HideStatus();
 
 protected:
+	virtual void NativeOnInitialized() override;
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
@@ -103,6 +105,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "HUD|Trail")
 	float TrailShrinkTime = 0.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgPauseMenu> PauseMenuClass;
+
 private:
 	struct FAgTrail
 	{
@@ -112,6 +117,8 @@ private:
 		float ShrinkFrom = 1.f;
 		float ShrinkElapsed = -1.f;
 	};
+
+	void OpenPauseMenu();
 
 	void UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime);
 	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);
