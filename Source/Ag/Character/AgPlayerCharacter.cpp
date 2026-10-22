@@ -92,8 +92,7 @@ EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContai
 	{
 		if (Source == this)
 		{
-			// 궁극기 마무리 셰이크는 적중 여부와 관계없이 몽타주 시간표에서 한 번 재생한다.
-			return bFinisher ? EAgCameraShake::None : (bHeavy ? PlayerHitHeavyShake : PlayerHitShake);
+			return bHeavy ? PlayerHitHeavyShake : PlayerHitShake;
 		}
 		return bHeavy ? PlayerHurtHeavyShake : PlayerHurtShake;
 	}
