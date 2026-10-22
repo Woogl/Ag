@@ -16,7 +16,7 @@
 
 3. 게임플레이 태그는 `AgGameplayTags.h`·`.cpp`에 네이티브로만 선언한다. 태그 ini는 쓰지 않는다.
 
-4. C++ 타입 이름은 Unreal Engine 5의 기본 Prefix에 `Ag`를 추가한다. (예시: `AAgCharacterBase`)
+4. C++ 타입 이름은 Unreal Engine 5의 기본 Prefix에 `Ag`를 추가한다. (예시: `AAgCharacterBase`) 에셋 이름에는 붙이지 않는다. (예시: `BP_Boss`)
 
 5. 명시적인 타입을 사용한다. 단, 타입을 직접 표기할 수 없거나 타입 표기가 지나치게 복잡해 가독성을 해치는 경우에는 `auto`를 허용한다.
 
