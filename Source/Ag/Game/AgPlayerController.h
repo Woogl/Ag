@@ -9,6 +9,8 @@
 class UCommonActivatableWidget;
 class UAgHUDWidget;
 class UAgResultScreen;
+class UAgUILayout;
+enum class EAgUILayer : uint8;
 
 UCLASS()
 class AAgPlayerController : public APlayerController
@@ -18,14 +20,23 @@ class AAgPlayerController : public APlayerController
 public:
 	AAgPlayerController();
 
-	UCommonActivatableWidget* PushScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass, int32 ZOrder = 0);
+	virtual void ReceivedPlayer() override;
+
+	UCommonActivatableWidget* PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
 	void ShowHUD(TSubclassOf<UAgHUDWidget> HUDClass);
 	void HideHUD();
 
 	void ShowResult(TSubclassOf<UAgResultScreen> ResultScreenClass, bool bStageCleared);
 
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgUILayout> UILayoutClass;
+
 private:
+	UPROPERTY()
+	TObjectPtr<UAgUILayout> UILayout;
+
 	UPROPERTY()
 	TObjectPtr<UAgHUDWidget> HUDWidget;
 };

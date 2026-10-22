@@ -164,15 +164,13 @@ void UAgGameplayAbility::OnGameplayTaskDeactivated(UGameplayTask& Task)
 void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
 	const FAgAbilityData* Definition = FindDefinition(Handle, ActorInfo);
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActorFromActorInfo());
-	if (!Definition || !Character)
+	if (!Definition)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
 	ExecutionDefinition = *Definition;
 	const TOptional<FAgAbilityTargeting>& Targeting = ExecutionDefinition.Targeting;
-	StopDistance = Targeting && Targeting->StopDistance ? *Targeting->StopDistance : Character->GetCharacterData()->StopDistance;
 
 	RefreshTarget();
 	if (!Targeting && IsEventTrigger(TriggerEventData))
@@ -286,7 +284,6 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(FGameplayAbilitySpe
 	{
 		return FGameplayEffectSpecHandle();
 	}
-	// 피격 처리가 컨텍스트의 어빌리티로 극한 회피 구간 효과를 건 행동의 비용을 읽으므로 어빌리티의 컨텍스트로 만듭니다.
 	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(*Effect, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo));
 	if (Spec.IsValid())
 	{

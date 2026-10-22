@@ -35,17 +35,8 @@ namespace
 EStateTreeRunStatus FAgBossAITask_Wait::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
-	const UAgBossData* Data = InstanceData.Controller->GetBossData();
-	if (InstanceData.Wait == EAgBossWait::Fixed)
-	{
-		InstanceData.Duration = Data->FixedRecoveryWait;
-	}
-	else
-	{
-		const FFloatInterval& Range = Boss->GetPhase() == 1 ? Data->PatternRecoveryWaitPhase1 : Data->PatternRecoveryWaitPhase2;
-		InstanceData.Duration = FMath::FRandRange(Range.Min, Range.Max);
-	}
+	const FFloatInterval& RecoveryTime = InstanceData.Controller->GetBossData()->PatternRecoveryTime;
+	InstanceData.Duration = FMath::FRandRange(RecoveryTime.Min, RecoveryTime.Max);
 	InstanceData.Elapsed = 0.f;
 	InstanceData.StrafeDirection = FMath::RandBool() ? 1.f : -1.f;
 	return InstanceData.Duration > 0.f ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
@@ -107,7 +98,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 			return Spec && Spec->Ability && Spec->GetPrimaryInstance()->CanActivateAbility(Spec->Handle, ActorInfo);
 		};
 		TArray<TPair<FName, float>> Candidates;
-		GatherCandidates(Data->Abilities, Distance, Data->NearDistance, Data->FarDistance, Boss->GetPhase(), IsReady, Candidates);
+		GatherCandidates(Data->Abilities, Distance, Boss->GetPhase(), IsReady, Candidates);
 
 		const TPair<FName, float>* Picked =
 			Algo::SelectRandomWeightedBy(Candidates, [](const TPair<FName, float>& Candidate) { return Candidate.Value; });
@@ -139,7 +130,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::Tick(FStateTreeExecutionContext& C
 	return Spec && Spec->IsActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
-void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates)
+void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates)
 {
 	OutCandidates.Reset();
 	for (FName Id : AbilityIds)
@@ -152,11 +143,9 @@ void FAgBossAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityId
 			continue;
 		}
 
-		const float Weight =
-			Distance <= NearDistance ? Pattern->WeightNear : (Distance <= FarDistance ? Pattern->WeightMid : Pattern->WeightFar);
-		if (Weight > 0.f && Pattern->Phases.Contains(Phase) && IsReady(Id))
+		if (Pattern->Weight > 0.f && Pattern->IsAvailable(Distance, Phase) && IsReady(Id))
 		{
-			OutCandidates.Emplace(Id, Weight);
+			OutCandidates.Emplace(Id, Pattern->Weight);
 		}
 	}
 }
@@ -167,7 +156,7 @@ EStateTreeRunStatus FAgBossAITask_PhaseTransition::EnterState(FStateTreeExecutio
 	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
 	const UAbilitySystemComponent* ASC = Boss->GetAbilitySystemComponent();
 
-	InstanceData.Controller->MarkPhaseTransitionStarted();
+	InstanceData.Controller->MarkPhaseTransitionStarted(Boss->GetReachedPhase());
 	FGameplayEventData Payload;
 	Payload.EventTag = AgGameplayTags::Event_PhaseTransition;
 	Payload.Target = Boss;

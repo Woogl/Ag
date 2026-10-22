@@ -25,6 +25,9 @@ public:
 		return Phase;
 	}
 
+	/** 현재 HP로 들어선 마지막 페이즈입니다. 페이즈 전환이 끝나야 현재 페이즈가 됩니다. */
+	int32 GetReachedPhase() const;
+
 	FVector GetLockOnLocation() const;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")

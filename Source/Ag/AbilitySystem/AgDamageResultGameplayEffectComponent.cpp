@@ -6,8 +6,6 @@
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgGameplayAbility.h"
-#include "AbilitySystem/AgSlowMotionGameplayEffectComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -99,11 +97,6 @@ namespace
 		Target->GetHitPhysics()->Play(MakePhysicsHit(*Instigator, *Target, Context, true));
 	}
 
-	void ApplyToSelf(UAbilitySystemComponent& ASC, const UGameplayEffect* Effect)
-	{
-		ASC.ApplyGameplayEffectToSelf(Effect, 1.f, ASC.MakeEffectContext());
-	}
-
 	void ApplyHitstop(UAgAbilitySystemComponent& ASC, float Duration)
 	{
 		const FGameplayEffectSpecHandle Spec = ASC.MakeEffectSpec(EAgEffect::Hitstop, 1.f, ASC.MakeEffectContext());
@@ -111,65 +104,21 @@ namespace
 		ASC.ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	}
 
-	void StartPerfectDodge(AAgCharacterBase& Dodger)
+	void StartPerfectDodge(AAgCharacterBase& Dodger, AAgCharacterBase& Attacker)
 	{
-		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Dodger.GetAbilitySystemComponent());
 		const FGameplayTagContainer WindowTag(AgGameplayTags::State_PerfectDodgeWindow);
-		const TArray<FActiveGameplayEffectHandle> Windows = ASC->GetActiveEffects(FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(WindowTag));
-		if (Windows.IsEmpty())
+		if (Dodger.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(WindowTag) == 0)
 		{
 			return;
 		}
-		const FActiveGameplayEffect* Window = ASC->GetActiveGameplayEffect(Windows[0]);
-		const UAgGameplayAbility* Dodge =
-			Window ? Cast<UAgGameplayAbility>(Window->Spec.GetContext().GetAbilityInstance_NotReplicated()) : nullptr;
-		const FAgResourceCost Refund = Dodge ? Dodge->GetCost() : FAgResourceCost();
-		ASC->RemoveActiveEffectsWithGrantedTags(WindowTag);
-		if (!Refund.IsFree())
-		{
-			const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
-			if (Spec.IsValid())
-			{
-				AgResource::SetAmounts(*Spec.Data, Refund.SP, Refund.MP, Refund.UP);
-				ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
-			}
-		}
-		// 화면 효과의 길이는 함께 거는 효과 중 슬로우모션의 길이를 따릅니다.
-		FGameplayCueParameters ScreenParameters;
-		if (const UAgPlayerData* Data = Cast<UAgPlayerData>(Dodger.GetCharacterData()))
-		{
-			for (FName Id : Data->PerfectDodgeEffects)
-			{
-				const UGameplayEffect* Effect = UAgAssetManager::Get().FindEffect(Id);
-				ApplyToSelf(*ASC, Effect);
-				if (const UAgSlowMotionGameplayEffectComponent* SlowMotion = Effect ? Effect->FindComponent<UAgSlowMotionGameplayEffectComponent>() : nullptr)
-				{
-					ScreenParameters.RawMagnitude = SlowMotion->Duration;
-				}
-			}
-		}
-		ASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_PerfectDodgeScreen, ScreenParameters);
-	}
-
-	void ApplyParryAttackerEffects(AAgCharacterBase& Defender, AAgCharacterBase& Attacker)
-	{
-		UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Defender.GetAbilitySystemComponent());
-		const UAgPlayerData& Data = *CastChecked<UAgPlayerData>(Defender.GetCharacterData());
-		for (FName Id : Data.ParryAttackerEffects)
-		{
-			if (const UGameplayEffect* Effect = UAgAssetManager::Get().FindEffect(Id))
-			{
-				const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(*Effect, 1.f, ASC->MakeEffectContext());
-				ASC->ApplyGameplayEffectSpecToTarget(*Spec.Data, Attacker.GetAbilitySystemComponent());
-			}
-		}
+		SendEvent(&Dodger, AgGameplayTags::Event_PerfectDodge, &Attacker);
 	}
 
 	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker, bool bProjectile)
 	{
 		if (!bProjectile)
 		{
-			ApplyParryAttackerEffects(Defender, Attacker);
+			SendEvent(&Attacker, AgGameplayTags::Event_Parried, &Defender);
 		}
 		Defender.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
 	}
@@ -189,7 +138,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	const FGameplayTagContainer& SpecTags = std::as_const(GESpec).CapturedSourceTags.GetSpecTags();
 	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_PerfectDodge))
 	{
-		StartPerfectDodge(*Target);
+		StartPerfectDodge(*Target, *Attacker);
 		return;
 	}
 
@@ -201,10 +150,10 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		return;
 	}
-	// 반사탄의 PP 효과도 피격 반응 전에 적용해야 그로기가 넉백보다 우선합니다.
+	// 반사탄에 맞은 대상의 패리당함 반응(PP 감소)도 피격 반응 전이어야 그로기가 넉백보다 우선합니다.
 	if (bHit && Projectile && Projectile->IsReflected() && !Target->IsDead())
 	{
-		ApplyParryAttackerEffects(*Attacker, *Target);
+		SendEvent(Target, AgGameplayTags::Event_Parried, Attacker);
 	}
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, parry %d, guard %d, guard break %d, HP now %.0f, PP now %.0f, SP now %.0f"),
@@ -249,7 +198,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
 	if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(Target, 0)))
 	{
-		AgCameraShake::Play(Player, Player->GetCombatCameraShake(SpecTags, Attacker->IsA<AAgPlayerCharacter>()));
+		AgCameraShake::Play(Player, Player->GetCombatCameraShake(SpecTags, Attacker));
 	}
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)

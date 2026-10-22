@@ -120,8 +120,10 @@ AAgCharacterBase* AAgCharacterBase::GetLockOnTarget() const
 
 bool AAgCharacterBase::IsFacingFixed() const
 {
+	// 엔진 GetCurrentMontage는 블렌드 아웃을 시작한 몽타주를 돌려주지 않아, 행동이 끝나기 전 블렌드 아웃부터 돕니다.
 	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
-	return (Animating && Animating->IsActive()) || AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
+	return (Animating && Animating->IsActive() && AbilitySystemComponent->GetCurrentMontage()) ||
+	       AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
 }
 
 void AAgCharacterBase::Kill()
@@ -278,20 +280,10 @@ void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
 }
 
-void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
+void AAgCharacterBase::ApplyDeathState()
 {
-	if (IsDead())
-	{
-		return;
-	}
-
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
 	AbilitySystemComponent->CancelAllAbilities();
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && bRagdoll)
-	{
-		AnimInstance->StopAllMontages(0.f);
-	}
 
 	// 사망 모션은 루트 모션으로 계속 움직이므로 이동은 끄지 않고 멈추기만 합니다. 보스 AI는 사망 상태로 넘어가
 	// 이동 입력을 더 주지 않습니다.
@@ -302,13 +294,46 @@ void AAgCharacterBase::Die(const FVector& PushVelocity, bool bRagdoll)
 	GetCharacterMovement()->StopMovementImmediately();
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+}
 
-	if (bRagdoll)
+void AAgCharacterBase::DieWithRagdoll(const FVector& PushVelocity)
+{
+	if (IsDead())
 	{
-		StartRagdoll(PushVelocity);
+		return;
 	}
 
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->StopAllMontages(0.f);
+	}
+
+	ApplyDeathState();
+	StartRagdoll(PushVelocity);
 	OnDied.Broadcast(this);
+}
+
+void AAgCharacterBase::DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition)
+{
+	if (IsDead())
+	{
+		return;
+	}
+
+	ApplyDeathState();
+	OnDied.Broadcast(this);
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	FAnimMontageInstance* Instance = AnimInstance && AnimInstance->Montage_Play(&DeathMontage, 1.f, EMontagePlayReturnType::MontageLength, StartPosition) > 0.f
+	                                     ? AnimInstance->GetActiveInstanceForMontage(&DeathMontage)
+	                                     : nullptr;
+	if (!Instance)
+	{
+		StartRagdoll(FVector::ZeroVector);
+		return;
+	}
+	DeathMotionInstanceId = Instance->GetInstanceID();
+	Instance->OnMontageBlendingOutStarted = FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleDeathMotionBlendingOut);
 }
 
 void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
@@ -446,32 +471,22 @@ void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
 		return;
 	}
 
-	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 Die 전에 읽습니다.
+	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 사망 처리 전에 읽습니다.
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	const UAnimMontage* Playing = AnimInstance ? AbilitySystemComponent->GetCurrentMontage() : nullptr;
 	const UAgGameplayAbility* Animating = Playing ? Cast<UAgGameplayAbility>(AbilitySystemComponent->GetAnimatingAbility()) : nullptr;
 	const FAgAbilityData* AnimatingData = Animating ? CharacterData->FindAbility(Animating->GetAbilityId()) : nullptr;
 	if (UAnimMontage* Death = AnimatingData && !AnimatingData->DeathMontage.IsNone() ? CharacterData->FindMontage(AnimatingData->DeathMontage) : nullptr)
 	{
-		const float Position = AnimInstance->Montage_GetPosition(Playing);
-		Die(FVector::ZeroVector, false);
-		FAnimMontageInstance* Instance = AnimInstance->Montage_Play(Death, 1.f, EMontagePlayReturnType::MontageLength, Position) > 0.f
-		                                     ? AnimInstance->GetActiveInstanceForMontage(Death)
-		                                     : nullptr;
-		if (!Instance)
-		{
-			StartRagdoll(FVector::ZeroVector);
-			return;
-		}
-		DeathMotionInstanceId = Instance->GetInstanceID();
-		Instance->OnMontageBlendingOutStarted = FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleDeathMotionBlendingOut);
+		const float Position = AnimInstance ? AnimInstance->Montage_GetPosition(Playing) : 0.f;
+		DieWithDeathMotion(*Death, Position);
 		return;
 	}
 
 	const AActor* Attacker = Payload ? Payload->Instigator.Get() : nullptr;
 	const FVector Push =
 		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * DeathPushSpeed : FVector::ZeroVector;
-	Die(Push);
+	DieWithRagdoll(Push);
 }
 
 void AAgCharacterBase::HandleDeathMotionBlendingOut(UAnimMontage* Montage, bool bInterrupted)
@@ -501,7 +516,7 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	FVector Delta = WorldRootMotion.GetTranslation();
 	const FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 	const float Toward = FVector::DotProduct(FVector(Delta.X, Delta.Y, 0.f), ToTarget);
-	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - Ability->GetStopDistance());
+	const float Allowed = FMath::Max(0.f, GetHorizontalDistanceTo(Target) - Ability->GetTargetSpacing());
 	if (Toward <= Allowed)
 	{
 		return WorldRootMotion;

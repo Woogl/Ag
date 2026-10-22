@@ -20,9 +20,9 @@ UAgAbilityTask_WaitTargetLost::UAgAbilityTask_WaitTargetLost()
 
 void UAgAbilityTask_WaitTargetLost::Activate()
 {
-	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
-	Target = AgAbility ? Cast<AAgCharacterBase>(AgAbility->GetActionTarget()) : nullptr;
-	ReleaseRange = Params.ReleaseRange.Get(AgAbility ? AgAbility->GetTargetingRange() : 0.f);
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
+	Target = Cast<AAgCharacterBase>(AgAbility->GetActionTarget());
+	ReleaseRange = Params.ReleaseRange.Get(AgAbility->GetTargetingRange());
 	if (IsTargetLost())
 	{
 		EndTask();

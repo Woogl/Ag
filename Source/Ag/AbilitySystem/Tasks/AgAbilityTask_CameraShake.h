@@ -16,9 +16,6 @@ struct FAgCameraShakeParams : public FAgTaskParams
 	UPROPERTY()
 	EAgCameraShake Shake = EAgCameraShake::None;
 
-	UPROPERTY()
-	float MaxDistance = 0.f;
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

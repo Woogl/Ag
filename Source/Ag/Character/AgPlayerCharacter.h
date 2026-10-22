@@ -35,7 +35,7 @@ public:
 
 	void UpdateRotationMode();
 
-	EAgCameraShake GetCombatCameraShake(const FGameplayTagContainer& SpecTags, bool bPlayerAttacked) const;
+	EAgCameraShake GetCombatCameraShake(const FGameplayTagContainer& SpecTags, const AActor* Source) const;
 
 	USpringArmComponent* GetCameraBoom() const
 	{

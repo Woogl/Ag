@@ -35,13 +35,11 @@ void UAgRegenDelayGameplayEffectComponent::HandleAttributeChanged(const FOnAttri
 	{
 		return;
 	}
-	const FName EffectId = Data.NewValue <= 0.f && !Delay.EffectAtZero.IsNone() ? Delay.EffectAtZero : Delay.Effect;
-	const UGameplayEffect* DelayEffect = UAgAssetManager::Get().FindEffect(EffectId);
+	const UGameplayEffect* DelayEffect = UAgAssetManager::Get().FindEffect(Delay.Effect);
 	if (!DelayEffect)
 	{
 		return;
 	}
-	// 0이 될 때 건 다른 대기 효과도 함께 처음부터 다시 세도록 효과가 아닌 태그로 지웁니다.
 	ASC->RemoveActiveEffectsWithGrantedTags(DelayEffect->GetGrantedTags());
 	ASC->ApplyGameplayEffectToSelf(DelayEffect, 1.f, ASC->MakeEffectContext());
 }

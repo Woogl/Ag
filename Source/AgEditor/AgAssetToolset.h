@@ -57,7 +57,7 @@ struct FAgMontageSection
 
 /**
  * 엔진 MCP 도구와 에디터 파이썬으로 할 수 없는 에셋 편집: 몽타주 섹션, 몽타주 구간과 몽타주 길이, 스켈레톤 슬롯 그룹,
- * 위젯 애니메이션, 블루프린트 컴포넌트의 Parent Socket, 나이아가라 시스템의 사용자 파라미터, StateTree 에셋의 생성과
+ * 위젯 애니메이션, 블루프린트 컴포넌트의 Parent Socket, 나이아가라 시스템의 사용자 파라미터·모듈·이미터 이름, StateTree 에셋의 생성과
  * 상태·태스크·전환 편집과 컴파일. AgEditor 모듈이 MCP 툴셋으로 등록합니다.
  * 고친 에셋은 저장하지 않으므로 에셋 도구로 저장합니다. StateTree는 경로로 상태를 가리키고(이름을 '/'로 이음, 예:
  * Root/전투), 엔진의 StateTree 조회 도구로 읽습니다.
@@ -124,6 +124,41 @@ public:
 	static bool SetNiagaraUserFloat(UNiagaraSystem* System, FName Name, float Value);
 
 	/**
+	 * 나이아가라 이미터의 모듈과 그 입력을 한 줄에 하나씩 '모듈 | 입력 | 값'으로 돌려줍니다. 값은 연결한 파라미터 이름,
+	 * 다이내믹 입력 이름, 또는 언리얼 텍스트 형식의 값입니다.
+	 * @return 시스템이나 이미터가 없으면 빈 문자열입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static FString GetNiagaraModuleInputs(UNiagaraSystem* System, FName EmitterName);
+
+	/**
+	 * 나이아가라 이미터 모듈의 입력을 나이아가라 편집기의 스택에서 고치는 것과 같이 바꾸고 시스템을 컴파일합니다.
+	 * @param ModuleName 스택에 보이는 모듈 이름(예: Initialize Particle).
+	 * @param InputName 스택에 보이는 입력 이름(예: Ribbon Width).
+	 * @param Value User., Engine., Emitter., System., Particles.로 시작하면 그 파라미터에 연결하고, 아니면 값을 넣습니다.
+	 *        값은 실수·정수는 숫자, 벡터는 (X=1,Y=0,Z=0), 색은 (R=1,G=1,B=1,A=1), 열거형은 값 이름(예: Direct Set)입니다.
+	 * @return 이미터·모듈·입력이 없거나 값을 읽지 못하면 false이고 시스템은 그대로입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool SetNiagaraModuleInput(UNiagaraSystem* System, FName EmitterName, const FString& ModuleName, const FString& InputName, const FString& Value);
+
+	/** 나이아가라 이미터에서 모듈(스택에 보이는 이름)을 지우고 시스템을 컴파일합니다. 없거나 지울 수 없는 모듈이면 false입니다. */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool RemoveNiagaraModule(UNiagaraSystem* System, FName EmitterName, const FString& ModuleName);
+
+	/**
+	 * 나이아가라 시스템의 사용자 파라미터 User.Name을 지우고 시스템을 컴파일합니다. 그 파라미터에 연결한 모듈 입력은
+	 * 먼저 SetNiagaraModuleInput으로 값을 넣어 끊습니다.
+	 * @return 그 파라미터가 없으면 false입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool RemoveNiagaraUserParameter(UNiagaraSystem* System, FName Name);
+
+	/** 나이아가라 이미터의 이름을 바꿉니다(스택에서 이미터 이름을 고치는 것과 같음). 그 이름의 이미터가 없으면 false입니다. */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool RenameNiagaraEmitter(UNiagaraSystem* System, FName EmitterName, FName NewName);
+
+	/**
 	 * 스키마 클래스로 새 StateTree 에셋을 만듭니다. 'Root' 상태 하나가 들어 있습니다.
 	 * 스키마의 속성(AI 스키마의 AIControllerClass, ContextActorClass 등)은 엔진의 ObjectTools.set_properties로
 	 * 에디터 데이터의 Schema 하위 객체에 씁니다.
@@ -149,7 +184,7 @@ public:
 	/**
 	 * 상태에 태스크를 더합니다.
 	 * @param Task 태스크 구조체(예: /Script/Ag.AgBossAITask_Wait). 스키마가 허용하는 태스크여야 합니다.
-	 * @param InstanceValues 태스크 인스턴스 데이터의 값. 언리얼 텍스트 형식이고(예: (Wait=AfterPattern)), 비우면 기본값입니다.
+	 * @param InstanceValues 태스크 인스턴스 데이터의 값. 언리얼 텍스트 형식이고(예: (Pattern=Backstep)), 비우면 기본값입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool AddStateTreeTask(UStateTree* StateTree, const FString& StatePath, UScriptStruct* Task, const FString& InstanceValues);

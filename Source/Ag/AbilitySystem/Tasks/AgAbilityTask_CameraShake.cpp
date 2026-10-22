@@ -17,12 +17,10 @@ UAbilityTask* FAgCameraShakeParams::MakeTask(const FAgTaskContext& Context) cons
 
 void UAgAbilityTask_CameraShake::Activate()
 {
-	const AActor* Owner = GetAvatarActor();
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); Owner && It; ++It)
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		APlayerController* Controller = It->Get();
-		APawn* Pawn = Controller ? Controller->GetPawn() : nullptr;
-		if (Pawn && Owner->GetHorizontalDistanceTo(Pawn) <= Params.MaxDistance)
+		const APlayerController* Controller = It->Get();
+		if (APawn* Pawn = Controller ? Controller->GetPawn() : nullptr)
 		{
 			AgCameraShake::Play(Pawn, Params.Shake);
 		}

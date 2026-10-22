@@ -17,15 +17,15 @@ UAbilityTask* FAgApplyEffectParams::MakeTask(const FAgTaskContext& Context) cons
 
 void UAgAbilityTask_ApplyEffect::Activate()
 {
-	UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
 	const UGameplayEffect* Definition = UAgAssetManager::Get().FindEffect(Params.Effect);
-	if (!AgAbility || !Definition || !AbilitySystemComponent.IsValid())
+	if (!Definition)
 	{
 		UE_LOG(LogAg, Error, TEXT("ApplyEffect: effect %s is missing in Effects"), *Params.Effect.ToString());
 		EndTask();
 		return;
 	}
-	const FGameplayEffectSpecHandle Spec = AgAbility->MakeEffectSpec(*Definition);
+	// 주인의 ASC가 없으면 스펙이 만들어지지 않습니다.
+	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(*Definition);
 	if (!Spec.IsValid())
 	{
 		EndTask();
@@ -43,17 +43,41 @@ void UAgAbilityTask_ApplyEffect::Activate()
 		return;
 	}
 	Applied = Handle;
-	if (!Params.bRemoveOnEnd)
+	if (!Params.bRemoveOnEnd || Definition->DurationPolicy == EGameplayEffectDurationType::Instant)
 	{
 		EndTask();
+		return;
 	}
+	// 효과가 지속 시간으로 먼저 사라진 뒤에도 Task가 남으면 End가 Tasks인 행동이 끝나지 않으므로 함께 끝냅니다.
+	FOnActiveGameplayEffectRemoved_Info* Removed = AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(Handle);
+	if (!Removed)
+	{
+		Applied.Invalidate();
+		EndTask();
+		return;
+	}
+	RemovedHandle = Removed->AddUObject(this, &ThisClass::HandleEffectRemoved);
 }
 
 void UAgAbilityTask_ApplyEffect::OnDestroy(bool bInOwnerFinished)
 {
-	if (Params.bRemoveOnEnd && Applied.IsValid() && AbilitySystemComponent.IsValid())
+	if (Applied.IsValid() && AbilitySystemComponent.IsValid())
 	{
-		AbilitySystemComponent->RemoveActiveGameplayEffect(Applied);
+		// 지우면서 부른 알림이 Task를 다시 끝내지 않도록 먼저 풉니다.
+		if (FOnActiveGameplayEffectRemoved_Info* Removed = AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(Applied))
+		{
+			Removed->Remove(RemovedHandle);
+		}
+		if (Params.bRemoveOnEnd)
+		{
+			AbilitySystemComponent->RemoveActiveGameplayEffect(Applied);
+		}
 	}
 	Super::OnDestroy(bInOwnerFinished);
+}
+
+void UAgAbilityTask_ApplyEffect::HandleEffectRemoved(const FGameplayEffectRemovalInfo& RemovalInfo)
+{
+	Applied.Invalidate();
+	EndTask();
 }

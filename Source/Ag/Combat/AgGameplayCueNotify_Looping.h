@@ -6,6 +6,7 @@
 #include "GameplayCueNotify_Looping.h"
 #include "AgGameplayCueNotify_Looping.generated.h"
 
+class UNiagaraComponent;
 class UStaticMeshComponent;
 class UAgPostProcessComponent;
 
@@ -21,6 +22,7 @@ protected:
 	virtual bool Recycle() override;
 	virtual bool GameplayCuePendingRemove() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual bool OnActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
 	virtual bool WhileActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
 	virtual bool OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
@@ -42,6 +44,20 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "GCN Defaults")
 	TMap<FName, float> NiagaraFloatParameters;
+
+	/**
+	 * 비우지 않으면 효과를 붙이는 소켓(DefaultPlacementInfo의 SocketName)과 이 소켓의 가운데에 놓고 X축을 이 소켓 쪽으로
+	 * 돌립니다. 두 소켓 사이 거리는 NiagaraSocketDistanceParameter에 넣습니다.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "GCN Defaults")
+	FName PlacementEndSocketName;
+
+	UPROPERTY(EditDefaultsOnly, Category = "GCN Defaults")
+	FName NiagaraSocketDistanceParameter;
+
+	/** 나이아가라는 월드 시간으로 진행하므로, 대상의 시간 배율(히트스톱, 시간 정지 보정)을 따를 때 켭니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "GCN Defaults")
+	bool bUseTargetTimeDilation = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "GCN Recurring Mesh (On Execute)")
 	TObjectPtr<UStaticMeshComponent> RecurringMesh;
@@ -65,10 +81,15 @@ protected:
 private:
 	FGameplayCueParameters ResolveParameters(AActor* Target, const FGameplayCueParameters& Parameters) const;
 	void ApplyNiagaraParameters(const FGameplayCueNotify_SpawnResult& SpawnResult) const;
+	void PlaceBetweenSockets(UNiagaraComponent& Niagara) const;
+	void ApplyTargetTimeDilation(const FGameplayCueNotify_SpawnResult& SpawnResult) const;
+	void StopTargetTimeDilation();
 	void PlaceRecurringMesh(AActor* Target);
 	void PlayRemovalEffectsAtRecurringMeshes(AActor* Target, const FGameplayCueParameters& Parameters);
 	void ClearRecurringMeshes();
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UStaticMeshComponent>> PlacedMeshes;
+
+	TWeakObjectPtr<AActor> CueTarget;
 };

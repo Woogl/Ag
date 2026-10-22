@@ -19,6 +19,7 @@ public class AgEditor : ModuleRules
 			"MovieSceneTracks",
 			"Niagara",
 			"NiagaraCore",
+			"NiagaraEditor",
 			"ToolsetRegistry",
 			"DirectoryWatcher",
 			"EditorSubsystem",

@@ -4,6 +4,7 @@
 
 #include "Ag.h"
 #include "Camera/AgPostProcessComponent.h"
+#include "Combat/AgTimeSubsystem.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
 
@@ -48,13 +49,14 @@ bool AAgGameplayCueNotify_BurstLatent::OnExecute_Implementation(AActor* Target, 
 		GameplayCueFinishedCallback();
 		return false;
 	}
-	if (!FMath::IsFinite(Parameters.RawMagnitude) || Parameters.RawMagnitude <= 0.f)
+	const float Duration = GetWorld()->GetSubsystem<UAgTimeSubsystem>()->GetSlowMotionDuration();
+	if (Duration <= 0.f)
 	{
-		UE_LOG(LogAg, Error, TEXT("%s: screen effect RawMagnitude must be a positive duration"), *GetName());
+		UE_LOG(LogAg, Error, TEXT("%s: screen effect needs a running slow motion for its duration"), *GetName());
 		GameplayCueFinishedCallback();
 		return false;
 	}
-	if (!PostProcess->Start(Target, Parameters.RawMagnitude))
+	if (!PostProcess->Start(Target, Duration))
 	{
 		GameplayCueFinishedCallback();
 		return false;

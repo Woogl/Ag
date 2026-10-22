@@ -53,6 +53,20 @@ AAgBossCharacter::AAgBossCharacter()
 	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
 }
 
+int32 AAgBossCharacter::GetReachedPhase() const
+{
+	const TArray<float>& TransitionHPRatios = CastChecked<UAgBossData>(GetCharacterData())->PhaseTransitionHPRatios;
+	const UAgAttributeSet* Stats = GetAttributeSet();
+	for (int32 Index = TransitionHPRatios.Num() - 1; Index >= 0; --Index)
+	{
+		if (Stats->GetHP() <= Stats->GetMaxHP() * TransitionHPRatios[Index])
+		{
+			return Index + 2;
+		}
+	}
+	return 1;
+}
+
 FVector AAgBossCharacter::GetLockOnLocation() const
 {
 	return GetMesh()->GetBoneIndex(LockOnBone) != INDEX_NONE ? GetMesh()->GetBoneLocation(LockOnBone) : GetActorLocation();
@@ -130,7 +144,7 @@ void AAgBossCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 	if (bPhaseTransitionCompleted)
 	{
-		Phase = 2;
+		Phase = GetReachedPhase();
 	}
 }
 

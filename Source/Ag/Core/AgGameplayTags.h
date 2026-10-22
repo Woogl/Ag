@@ -23,6 +23,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_DodgeCounter);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Guard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Parry);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Skill);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Ultimate);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Execution);
@@ -40,6 +41,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Executed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_PhaseTransition);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Parried);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
@@ -55,6 +57,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_DodgeCounterChance);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hitstop);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Sprinting);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_LockedOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Jumping);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Airborne);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_PassThrough);
@@ -77,6 +80,8 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Death);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PhaseTransition);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parry);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parried);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BasicAttackStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackBlocked);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Landed);
@@ -115,4 +120,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_DamageFloater);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryTelegraph);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_WeaponTrail);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Action_Escape);
 } // namespace AgGameplayTags

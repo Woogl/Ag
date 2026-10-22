@@ -6,6 +6,7 @@
 #include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/AgTitleScreen.h"
+#include "UI/AgUILayout.h"
 
 AAgFrontEndGameMode::AAgFrontEndGameMode()
 {
@@ -16,7 +17,7 @@ void AAgFrontEndGameMode::OpenBossStage()
 {
 	if (BossStageMap.IsNull())
 	{
-		UE_LOG(LogAg, Error, TEXT("BossStageMap is not set (BP_AgFrontEndGameMode)."));
+		UE_LOG(LogAg, Error, TEXT("BossStageMap is not set (BP_FrontEndGameMode)."));
 		return;
 	}
 	UGameplayStatics::OpenLevelBySoftObjectPtr(this, BossStageMap);
@@ -28,6 +29,6 @@ void AAgFrontEndGameMode::HandleStartingNewPlayer_Implementation(APlayerControll
 
 	if (AAgPlayerController* PlayerController = Cast<AAgPlayerController>(NewPlayer))
 	{
-		PlayerController->PushScreen(TitleScreenClass);
+		PlayerController->PushScreen(EAgUILayer::Menu, TitleScreenClass);
 	}
 }

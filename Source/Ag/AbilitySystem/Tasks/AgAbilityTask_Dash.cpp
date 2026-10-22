@@ -22,15 +22,13 @@ UAbilityTask* FAgDashParams::MakeTask(const FAgTaskContext& Context) const
 void UAgAbilityTask_Dash::Activate()
 {
 	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!Movement || !AgAbility || !AbilitySystemComponent.IsValid() || Params.Speed <= 0.f)
+	if (!Movement || !AbilitySystemComponent.IsValid() || Params.Speed <= 0.f)
 	{
 		EndTask();
 		return;
 	}
-	bTagAdded = true;
-	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dashing);
 
 	const FVector Forward = Character->GetActorForwardVector().GetSafeNormal2D();
 	Target = AgAbility->GetActionTarget();
@@ -43,6 +41,8 @@ void UAgAbilityTask_Dash::Activate()
 		EndTask();
 		return;
 	}
+	bTagAdded = true;
+	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dashing);
 	AttackBlockedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackBlocked)
 	                          .AddUObject(this, &ThisClass::HandleAttackBlocked);
 	MoveBlockedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_MoveBlocked)

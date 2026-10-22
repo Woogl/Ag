@@ -41,6 +41,19 @@ namespace
 		return FVector(Center.X + Radius * FMath::Cos(Angle), Center.Y + Radius * FMath::Sin(Angle), FMath::Lerp(A.Z, B.Z, Alpha));
 	}
 
+	bool GetEdge(const UCapsuleComponent* Capsule, FVector& OutStart, FVector& OutEnd)
+	{
+		if (!Capsule)
+		{
+			return false;
+		}
+		const FVector Center = Capsule->GetComponentLocation();
+		const FVector HalfSegment = Capsule->GetUpVector() * Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere();
+		OutStart = Center + HalfSegment;
+		OutEnd = Center - HalfSegment;
+		return true;
+	}
+
 	FName FindAttachBone(const USceneComponent& Component, const USkeletalMeshComponent& Mesh)
 	{
 		for (const USceneComponent* Child = &Component; Child; Child = Child->GetAttachParent())
@@ -103,11 +116,6 @@ void UAgAbilityTask_WeaponHit::Activate()
 	SweepTick.RegisterTickFunction(Character->GetLevel());
 }
 
-void UAgAbilityTask_WeaponHit::TickTask(float DeltaTime)
-{
-	SweepEdges();
-}
-
 void UAgAbilityTask_WeaponHit::OnDestroy(bool bInOwnerFinished)
 {
 	SweepTick.SetTickFunctionEnable(false);
@@ -119,26 +127,13 @@ void UAgAbilityTask_WeaponHit::FAgSweepTickFunction::ExecuteTick(float DeltaTime
 {
 	if (IsValid(Target) && Target->IsActive() && TickType != LEVELTICK_ViewportsOnly)
 	{
-		Target->TickTask(DeltaTime);
+		Target->SweepEdges();
 	}
 }
 
 FString UAgAbilityTask_WeaponHit::FAgSweepTickFunction::DiagnosticMessage()
 {
 	return Target->GetFullName() + TEXT("[SweepTick]");
-}
-
-bool UAgAbilityTask_WeaponHit::GetEdge(const UCapsuleComponent* Capsule, FVector& OutStart, FVector& OutEnd)
-{
-	if (!Capsule)
-	{
-		return false;
-	}
-	const FVector Center = Capsule->GetComponentLocation();
-	const FVector HalfSegment = Capsule->GetUpVector() * Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere();
-	OutStart = Center + HalfSegment;
-	OutEnd = Center - HalfSegment;
-	return true;
 }
 
 void UAgAbilityTask_WeaponHit::SweepEdges()

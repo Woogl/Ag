@@ -30,7 +30,7 @@ protected:
 	TSubclassOf<UAgResultScreen> ResultScreenClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Result")
-	float DeathPresentationTime = 4.f;
+	float StageResultPresentationTime = 4.f;
 
 private:
 	void HandleCombatantDied(AAgCharacterBase* DeadCharacter);

@@ -126,7 +126,9 @@ protected:
 	bool bEndingPlay = false;
 
 private:
-	void Die(const FVector& PushVelocity, bool bRagdoll = true);
+	void ApplyDeathState();
+	void DieWithRagdoll(const FVector& PushVelocity);
+	void DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition);
 
 	void StartRagdoll(const FVector& PushVelocity);
 

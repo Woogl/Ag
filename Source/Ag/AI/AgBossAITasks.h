@@ -11,13 +11,6 @@
 
 class AAgBossAIController;
 
-UENUM()
-enum class EAgBossWait : uint8
-{
-	Fixed,
-	AfterPattern,
-};
-
 USTRUCT()
 struct FAgBossAITask_WaitInstanceData
 {
@@ -25,9 +18,6 @@ struct FAgBossAITask_WaitInstanceData
 
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AAgBossAIController> Controller = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "Parameter")
-	EAgBossWait Wait = EAgBossWait::Fixed;
 
 	float Duration = 0.f;
 	float Elapsed = 0.f;
@@ -109,7 +99,7 @@ struct FAgBossAITask_RunPattern : public FStateTreeAITaskBase
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 
 private:
-	static void GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, float NearDistance, float FarDistance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates);
+	static void GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates);
 };
 
 USTRUCT()

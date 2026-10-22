@@ -30,9 +30,9 @@ const FName UAgAbilityTask_Launch::SourceName(TEXT("AgLaunch"));
 void UAgAbilityTask_Launch::Activate()
 {
 	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!Movement || !AgAbility)
+	if (!Movement)
 	{
 		EndTask();
 		return;
@@ -49,7 +49,7 @@ void UAgAbilityTask_Launch::Activate()
 	if (Target)
 	{
 		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
-		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - AgAbility->GetStopDistance());
+		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - AgAbility->GetTargetSpacing());
 		Distance = Params.MaxDistance ? FMath::Min(Distance, *Params.MaxDistance) : Distance;
 		Rotation = Delta.IsNearlyZero() ? Character->GetActorRotation() : Delta.Rotation();
 	}

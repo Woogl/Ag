@@ -56,9 +56,9 @@ public:
 		return ExecutionDefinition.Targeting ? ExecutionDefinition.Targeting->Range : 0.f;
 	}
 
-	float GetStopDistance() const
+	float GetTargetSpacing() const
 	{
-		return StopDistance;
+		return ExecutionDefinition.Targeting ? ExecutionDefinition.Targeting->TargetSpacing : 0.f;
 	}
 
 	/** 평타처럼 다시 재생할 때마다 대상을 고르는 행동을 위해 재생 Task가 부릅니다. */
@@ -95,7 +95,6 @@ private:
 	FAgAbilityData ExecutionDefinition;
 
 	TWeakObjectPtr<AActor> ActionTarget;
-	float StopDistance = 0.f;
 
 	bool bStartingTasks = false;
 };

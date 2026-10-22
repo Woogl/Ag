@@ -28,13 +28,13 @@ public:
 
 	bool IsBossReacting() const;
 
-	bool HasStartedPhaseTransition() const
+	int32 GetPhaseTransitionTarget() const
 	{
-		return bPhaseTransitionStarted;
+		return PhaseTransitionTarget;
 	}
-	void MarkPhaseTransitionStarted()
+	void MarkPhaseTransitionStarted(int32 TargetPhase)
 	{
-		bPhaseTransitionStarted = true;
+		PhaseTransitionTarget = TargetPhase;
 	}
 
 protected:
@@ -54,5 +54,6 @@ private:
 
 	TWeakObjectPtr<UAbilitySystemComponent> TargetASC;
 	FDelegateHandle BasicAttackHandle;
-	bool bPhaseTransitionStarted = false;
+	/** 마지막으로 시작한 페이즈 전환이 향하는 페이즈입니다. 전환이 취소되어도 같은 페이즈로는 다시 전환하지 않습니다. */
+	int32 PhaseTransitionTarget = 1;
 };

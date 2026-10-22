@@ -19,6 +19,47 @@ namespace
 		const FGameplayAbilityActorInfo* Info = Ability ? Ability->GetCurrentActorInfo() : nullptr;
 		return Info ? Info->GetAnimInstance() : nullptr;
 	}
+
+	bool MatchesMoveDirection(const UAgGameplayAbility& Ability, const AAgCharacterBase& Character, EAgMoveDirection Direction)
+	{
+		const FVector Input = Character.GetMoveInputDirection();
+		if (Input.IsNearlyZero())
+		{
+			return false;
+		}
+		// 함께 시작하는 몸 돌리기와 순서가 없어도 같은 섹션을 고르도록, 대상이 있으면 정면 대신 대상 쪽을 기준으로 잽니다.
+		const AActor* Target = Ability.GetActionTarget();
+		const FVector ToTarget = Target ? (Target->GetActorLocation() - Character.GetActorLocation()).GetSafeNormal2D() : FVector::ZeroVector;
+		const double BaseYaw = ToTarget.IsNearlyZero() ? Character.GetActorRotation().Yaw : ToTarget.Rotation().Yaw;
+		const float Delta = FMath::FindDeltaAngleDegrees(static_cast<float>(BaseYaw), static_cast<float>(Input.Rotation().Yaw));
+		return (FMath::RoundToInt(Delta / 45.f) & 7) == static_cast<int32>(Direction);
+	}
+
+	TOptional<float> GetStartTime(const UAnimMontage& Montage, FName Section, const FAgTaskParams& Params)
+	{
+		const int32 SectionIndex = Montage.GetSectionIndex(Section);
+		if (SectionIndex == INDEX_NONE)
+		{
+			return {};
+		}
+		float SectionStart = 0.f;
+		float SectionEnd = 0.f;
+		Montage.GetSectionStartAndEndTime(SectionIndex, SectionStart, SectionEnd);
+		return SectionStart + Params.Start;
+	}
+
+	TOptional<float> GetEndTime(const UAnimMontage& Montage, FName Section, const FAgTaskParams& Params)
+	{
+		const int32 SectionIndex = Montage.GetSectionIndex(Params.EndSection.IsNone() ? Section : Params.EndSection);
+		if (SectionIndex == INDEX_NONE)
+		{
+			return {};
+		}
+		float SectionStart = 0.f;
+		float SectionEnd = 0.f;
+		Montage.GetSectionStartAndEndTime(SectionIndex, SectionStart, SectionEnd);
+		return Params.End ? SectionStart + *Params.End : SectionEnd;
+	}
 }
 
 UAbilityTask* FAgPlayMontageParams::MakeTask(const FAgTaskContext& Context) const
@@ -38,10 +79,10 @@ UAgAbilityTask_PlayMontage::UAgAbilityTask_PlayMontage()
 void UAgAbilityTask_PlayMontage::Activate()
 {
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
-	if (!Character || !AgAbility || !ASC || !ASC->HasAllMatchingGameplayTags(Params.RequiredTags) ||
-		ASC->HasAnyMatchingGameplayTags(Params.BlockedTags))
+	if (!Character || !ASC || !ASC->HasAllMatchingGameplayTags(Params.RequiredTags) ||
+		ASC->HasAnyMatchingGameplayTags(Params.BlockedTags) || (Params.MoveDirection && !MatchesMoveDirection(*AgAbility, *Character, *Params.MoveDirection)))
 	{
 		EndTask();
 		return;
@@ -79,10 +120,8 @@ void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 	if (!bInOwnerFinished)
 	{
 		EndTimeline();
-		EndPointTasks();
 	}
 	StopTimeline();
-	PointTasks.Reset();
 
 	const int32 InstanceId = MontageInstanceId;
 	MontageInstanceId = INDEX_NONE;
@@ -97,22 +136,37 @@ void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 	Super::OnDestroy(bInOwnerFinished);
 }
 
-void UAgAbilityTask_PlayMontage::RequestTransition(FName Section, const TOptional<float>& BlendTime)
+void UAgAbilityTask_PlayMontage::JumpToSection(FName Section)
 {
 	if (IsFinished() || Section.IsNone() || MontageInstanceId == INDEX_NONE)
 	{
 		return;
 	}
-	if (!BlendTime)
+	UAnimInstance* Anim = FindAnimInstance(Ability);
+	const FAnimMontageInstance* Instance =
+		Anim && MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
+	if (!Instance)
 	{
-		JumpToSection(Section);
 		return;
 	}
-	if (UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability))
+
+	// 엔진은 블렌드 아웃 중인 재생을 옮기지 않으므로 위치가 바뀌었을 때만 시간표를 다시 맞춥니다.
+	const float Before = Instance->GetPosition();
+	Anim->Montage_JumpToSection(Section, Instance->Montage);
+	if (!IsFinished() && Instance->GetPosition() != Before)
 	{
-		AgAbility->RefreshTarget();
+		EvaluateTimeline(Instance->GetPosition(), EAgTimelineMode::Jump);
 	}
-	Play(Section, *BlendTime);
+}
+
+void UAgAbilityTask_PlayMontage::ReplaySection(FName Section, float BlendTime)
+{
+	if (IsFinished() || Section.IsNone() || MontageInstanceId == INDEX_NONE)
+	{
+		return;
+	}
+	CastChecked<UAgGameplayAbility>(Ability)->RefreshTarget();
+	Play(Section, BlendTime);
 }
 
 void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
@@ -156,25 +210,6 @@ void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
 	BeginTimeline(*Instance);
 }
 
-void UAgAbilityTask_PlayMontage::JumpToSection(FName Section)
-{
-	UAnimInstance* Anim = FindAnimInstance(Ability);
-	const FAnimMontageInstance* Instance =
-		Anim && MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
-	if (!Instance)
-	{
-		return;
-	}
-
-	// 엔진은 블렌드 아웃 중인 재생을 옮기지 않으므로 위치가 바뀌었을 때만 시간표를 다시 맞춥니다.
-	const float Before = Instance->GetPosition();
-	Anim->Montage_JumpToSection(Section, Instance->Montage);
-	if (!IsFinished() && Instance->GetPosition() != Before)
-	{
-		EvaluateTimeline(Instance->GetPosition(), EAgTimelineMode::Jump);
-	}
-}
-
 void UAgAbilityTask_PlayMontage::CancelAbility()
 {
 	// 블루프린트에서 PlayMontageAndWait의 OnInterrupted를 CancelAbility에 잇는 것과 같습니다.
@@ -187,7 +222,7 @@ void UAgAbilityTask_PlayMontage::CancelAbility()
 
 void UAgAbilityTask_PlayMontage::HandleMontageBlendingOut(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId)
 {
-	if (bInterrupted && OwnsMontage(InstanceId))
+	if (bInterrupted && IsCurrentMontageInstance(InstanceId))
 	{
 		FinishPlayback(true);
 	}
@@ -195,7 +230,7 @@ void UAgAbilityTask_PlayMontage::HandleMontageBlendingOut(UAnimMontage* EndedMon
 
 void UAgAbilityTask_PlayMontage::HandleMontageEnded(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId)
 {
-	if (OwnsMontage(InstanceId))
+	if (IsCurrentMontageInstance(InstanceId))
 	{
 		FinishPlayback(bInterrupted);
 	}
@@ -228,9 +263,9 @@ void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Insta
 		for (const TInstancedStruct<FAgTaskParams>& Item : Section.Value.Tasks)
 		{
 			const FAgTaskParams& ItemParams = Item.Get();
-			float Start = 0.f;
-			float End = 0.f;
-			if (!AgMontageTimeline::ResolveTimes(*PlayedMontage, Section.Key, ItemParams, Start, End))
+			const TOptional<float> Start = GetStartTime(*PlayedMontage, Section.Key, ItemParams);
+			const TOptional<float> End = GetEndTime(*PlayedMontage, Section.Key, ItemParams);
+			if (!Start || !End)
 			{
 				UE_LOG(LogAg, Error, TEXT("%s: section %s or %s of the timeline is missing in the montage"), *GetNameSafe(PlayedMontage),
 					*Section.Key.ToString(), *ItemParams.EndSection.ToString());
@@ -238,9 +273,8 @@ void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Insta
 			}
 			FAgTimelineEntry& Entry = TimelineEntries.AddDefaulted_GetRef();
 			Entry.Params = Item;
-			Entry.bWindow = ItemParams.Start.IsSet();
-			Entry.Start = Start;
-			Entry.End = End;
+			Entry.Start = *Start;
+			Entry.End = *End;
 		}
 	}
 	TimelinePosition = Instance.GetPosition();
@@ -252,33 +286,22 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 	enum class EPhase : uint8
 	{
 		Begin,
-		End,
-		Point
+		End
 	};
 	struct FPending
 	{
 		float Time = 0.f;
-		EPhase Phase = EPhase::Point;
+		EPhase Phase = EPhase::Begin;
 		int32 Entry = INDEX_NONE;
 	};
-	TArray<FPending> Pending;
+	TArray<FPending, TInlineAllocator<8>> Pending;
 
-	// 재생 시작과 섹션 이동의 위치는 섹션 시작 시각 그대로라 섹션 0초 지점의 시각과 정확히 같습니다.
+	// 재생 시작과 섹션 이동의 위치는 섹션 시작 시각 그대로라 섹션 0초 항목의 Start와 정확히 같습니다.
 	const float Previous = TimelinePosition;
 	const bool bForward = Mode == EAgTimelineMode::Advance && NewPosition >= Previous;
 	for (int32 Index = 0; Index < TimelineEntries.Num(); ++Index)
 	{
 		const FAgTimelineEntry& Entry = TimelineEntries[Index];
-		if (!Entry.bWindow)
-		{
-			const bool bReached = bForward ? (Previous < Entry.Start && Entry.Start <= NewPosition)
-			                               : (Mode == EAgTimelineMode::Jump && Entry.Start == NewPosition);
-			if (bReached)
-			{
-				Pending.Add(FPending{Entry.Start, EPhase::Point, Index});
-			}
-			continue;
-		}
 		if (bForward && !Entry.bActive && Previous < Entry.Start && Entry.Start <= NewPosition)
 		{
 			Pending.Add(FPending{Entry.Start, EPhase::Begin, Index});
@@ -302,7 +325,11 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 	TimelinePosition = NewPosition;
 	Pending.Sort([](const FPending& A, const FPending& B)
 	{
-		return A.Time < B.Time;
+		if (!FMath::IsNearlyEqual(A.Time, B.Time))
+		{
+			return A.Time < B.Time;
+		}
+		return A.Phase == EPhase::End && B.Phase == EPhase::Begin;
 	});
 
 	const int32 InstanceId = MontageInstanceId;
@@ -310,7 +337,7 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 	{
 		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로 매번 확인합니다. 이 Task가 시작하는 중(첫 판정)에는 행동이 끝나도
 		// 엔진이 이 Task를 끝내지 않으므로 행동도 봅니다. 항목 실행 안에서 전환해 위치가 바뀌었으면 옮긴 위치의 판정이
-		// 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환 지점과 같은 시각에는 다른 항목을 두지 않습니다.
+		// 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환과 같은 시각에는 다른 항목을 두지 않습니다.
 		if (IsFinished() || !Ability->IsActive() || MontageInstanceId != InstanceId || TimelinePosition != NewPosition)
 		{
 			return;
@@ -325,9 +352,6 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 			case EPhase::End:
 				Entry.bActive = false;
 				EndTimelineWindow(Item.Entry);
-				break;
-			case EPhase::Point:
-				RunTimelinePoint(Item.Entry);
 				break;
 		}
 	}
@@ -377,30 +401,5 @@ void UAgAbilityTask_PlayMontage::EndTimelineWindow(int32 Entry)
 	if (Task)
 	{
 		Task->EndTask();
-	}
-}
-
-void UAgAbilityTask_PlayMontage::RunTimelinePoint(int32 Entry)
-{
-	// 지점 Task는 다시 재생해도 남고, 재생이 끝날 때 끝납니다.
-	const FAgTimelineEntry& Item = TimelineEntries[Entry];
-	UAbilityTask* Task = Item.Params.Get().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), Item.Start, Item.Start, this});
-	if (!Task)
-	{
-		return;
-	}
-	PointTasks.Add(Task);
-	Task->ReadyForActivation();
-}
-
-void UAgAbilityTask_PlayMontage::EndPointTasks()
-{
-	const TArray<TObjectPtr<UAbilityTask>> Tasks = MoveTemp(PointTasks);
-	for (UAbilityTask* Task : Tasks)
-	{
-		if (Task)
-		{
-			Task->EndTask();
-		}
 	}
 }

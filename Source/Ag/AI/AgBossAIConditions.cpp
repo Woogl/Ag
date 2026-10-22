@@ -4,7 +4,6 @@
 
 #include "Abilities/GameplayAbility.h"
 #include "Data/AgAbilityData.h"
-#include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgBossAIController.h"
 #include "Character/AgBossCharacter.h"
@@ -36,14 +35,7 @@ bool FAgBossAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecutionC
 {
 	const AAgBossAIController* Controller = Context.GetInstanceData(*this).Controller;
 	const AAgBossCharacter* Boss = Controller->GetBoss();
-	const UAgBossData* Data = Controller->GetBossData();
-	if (Boss->IsDead() || Controller->HasStartedPhaseTransition() || Controller->IsBossReacting())
-	{
-		return false;
-	}
-
-	const UAgAttributeSet* Stats = Boss->GetAttributeSet();
-	return Stats->GetHP() <= Stats->GetMaxHP() * Data->Phase2HPRatio;
+	return !Boss->IsDead() && !Controller->IsBossReacting() && Boss->GetReachedPhase() > Controller->GetPhaseTransitionTarget();
 }
 
 bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext& Context) const
@@ -54,7 +46,7 @@ bool FAgBossAICondition_BackstepReady::TestCondition(FStateTreeExecutionContext&
 	const FAgAbilityData* Pattern = Controller->GetBossData()->FindAbility(InstanceData.Pattern);
 	const FAgPatternSelection* Params = Pattern ? Pattern->PatternSelection.GetPtrOrNull() : nullptr;
 	const AAgCharacterBase* Target = Controller->GetTarget();
-	if (!Params || !Target || Boss->GetHorizontalDistanceTo(Target) > Params->ResponseRange)
+	if (!Params || !Target || !Params->IsAvailable(Boss->GetHorizontalDistanceTo(Target), Boss->GetPhase()))
 	{
 		return false;
 	}

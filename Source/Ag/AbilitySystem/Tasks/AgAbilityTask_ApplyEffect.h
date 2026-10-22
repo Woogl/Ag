@@ -9,6 +9,7 @@
 #include "AgAbilityTask_ApplyEffect.generated.h"
 
 class UGameplayEffect;
+struct FGameplayEffectRemovalInfo;
 
 USTRUCT()
 struct FAgApplyEffectParams : public FAgTaskParams
@@ -35,8 +36,11 @@ public:
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
+	void HandleEffectRemoved(const FGameplayEffectRemovalInfo& RemovalInfo);
+
 	UPROPERTY()
 	FAgApplyEffectParams Params;
 
 	FActiveGameplayEffectHandle Applied;
+	FDelegateHandle RemovedHandle;
 };

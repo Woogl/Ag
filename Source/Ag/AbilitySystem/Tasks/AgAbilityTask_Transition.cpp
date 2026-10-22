@@ -114,7 +114,14 @@ void UAgAbilityTask_Transition::TryTransition()
 		ASC && ASC->HasAllMatchingGameplayTags(Params.RequiredTags) && !ASC->HasAnyMatchingGameplayTags(Params.BlockedTags);
 	if (bMet && Playback.IsValid())
 	{
-		Playback->RequestTransition(Params.Section, Params.BlendTime);
+		if (Params.BlendTime)
+		{
+			Playback->ReplaySection(Params.Section, *Params.BlendTime);
+		}
+		else
+		{
+			Playback->JumpToSection(Params.Section);
+		}
 	}
 	// 이벤트를 기다리는 전환만 조건이 맞지 않을 때 다음 이벤트를 기다립니다.
 	if (bMet || !Params.Event.IsValid())

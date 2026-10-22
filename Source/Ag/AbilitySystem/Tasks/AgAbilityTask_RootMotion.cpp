@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/Tasks/AgAbilityTask_RootMotion.h"
 
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "Animation/AnimInstance.h"
@@ -39,9 +40,11 @@ UAgAbilityTask_RootMotion::UAgAbilityTask_RootMotion()
 
 void UAgAbilityTask_RootMotion::Activate()
 {
-	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!AgAbility || !Character)
+	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
+	if (!Character || !ASC || !ASC->HasAllMatchingGameplayTags(Params.RequiredTags) ||
+		ASC->HasAnyMatchingGameplayTags(Params.BlockedTags))
 	{
 		EndTask();
 		return;
@@ -95,11 +98,10 @@ void UAgAbilityTask_RootMotion::Activate()
 	{
 		WarpGoal -= Character->GetActorForwardVector().GetSafeNormal2D() * Params.Distance;
 	}
-	else if (!bFacingOnly && Character->GetHorizontalDistanceTo(Target.Get()) > AgAbility->GetStopDistance())
+	else if (!bFacingOnly && Character->GetHorizontalDistanceTo(Target.Get()) > AgAbility->GetTargetSpacing())
 	{
 		const FVector TargetLocation = Target->GetActorLocation();
-		const FVector Approach = TargetLocation - (TargetLocation - Location).GetSafeNormal2D() * AgAbility->GetStopDistance();
-		WarpGoal = Params.MaxDistance ? Location + (Approach - Location).GetClampedToMaxSize2D(*Params.MaxDistance) : Approach;
+		WarpGoal = TargetLocation - (TargetLocation - Location).GetSafeNormal2D() * AgAbility->GetTargetSpacing();
 	}
 	const FVector Direction = GetFacingDirection();
 	// 실행마다 자기 목표 이름을 써서 다른 구간의 목표를 덮거나 지우지 않습니다.

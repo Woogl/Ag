@@ -42,7 +42,6 @@ public:
 	UAgAbilityTask_WeaponHit();
 
 	virtual void Activate() override;
-	virtual void TickTask(float DeltaTime) override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
@@ -61,8 +60,6 @@ private:
 		FVector LastStart = FVector::ZeroVector;
 		FVector LastEnd = FVector::ZeroVector;
 	};
-
-	static bool GetEdge(const UCapsuleComponent* Capsule, FVector& OutStart, FVector& OutEnd);
 
 	void SweepEdges();
 	bool Sweep(FAgWeaponEdge& Edge);

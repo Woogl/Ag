@@ -13,6 +13,20 @@ class UAnimMontage;
 class UAgGameplayAbility;
 struct FAnimMontageInstance;
 
+// 정면에서 시계 방향으로 45°씩이며, 값의 순서가 곧 각도입니다.
+UENUM()
+enum class EAgMoveDirection : uint8
+{
+	Forward,
+	ForwardRight,
+	Right,
+	BackwardRight,
+	Backward,
+	BackwardLeft,
+	Left,
+	ForwardLeft
+};
+
 USTRUCT()
 struct FAgPlayMontageParams : public FAgTaskParams
 {
@@ -30,6 +44,9 @@ struct FAgPlayMontageParams : public FAgTaskParams
 	UPROPERTY()
 	FGameplayTagContainer BlockedTags;
 
+	UPROPERTY()
+	TOptional<EAgMoveDirection> MoveDirection;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
@@ -46,7 +63,6 @@ struct FAgTimelineEntry
 
 	float Start = 0.f;
 	float End = 0.f;
-	bool bWindow = false;
 	bool bActive = false;
 };
 
@@ -63,7 +79,8 @@ public:
 	virtual void TickTask(float DeltaTime) override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
-	void RequestTransition(FName Section, const TOptional<float>& BlendTime);
+	void JumpToSection(FName Section);
+	void ReplaySection(FName Section, float BlendTime);
 
 private:
 	enum class EAgTimelineMode : uint8
@@ -72,13 +89,12 @@ private:
 		Jump
 	};
 
-	bool OwnsMontage(int32 InstanceId) const
+	bool IsCurrentMontageInstance(int32 InstanceId) const
 	{
 		return !IsFinished() && InstanceId != INDEX_NONE && MontageInstanceId == InstanceId;
 	}
 
 	void Play(FName Section, float BlendTime);
-	void JumpToSection(FName Section);
 	void CancelAbility();
 
 	void HandleMontageBlendingOut(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId);
@@ -91,8 +107,6 @@ private:
 	void StopTimeline();
 	void StartTimelineWindow(int32 Entry);
 	void EndTimelineWindow(int32 Entry);
-	void RunTimelinePoint(int32 Entry);
-	void EndPointTasks();
 
 	UPROPERTY()
 	FAgPlayMontageParams Params;
@@ -104,9 +118,6 @@ private:
 
 	UPROPERTY()
 	TArray<FAgTimelineEntry> TimelineEntries;
-
-	UPROPERTY()
-	TArray<TObjectPtr<UAbilityTask>> PointTasks;
 
 	float TimelinePosition = 0.f;
 };

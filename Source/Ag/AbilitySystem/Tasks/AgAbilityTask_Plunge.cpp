@@ -18,6 +18,8 @@ UAbilityTask* FAgPlungeParams::MakeTask(const FAgTaskContext& Context) const
 	}
 	// 지속 시간이 없으므로 구간이 끝날 때 끝납니다.
 	const FVector Velocity(Movement->Velocity.X, Movement->Velocity.Y, -Speed);
-	return UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(&Context.Ability, TEXT("AgPlunge"), Velocity, static_cast<float>(Velocity.Size()), -1.f, false,
+	const FVector Direction = Velocity.GetSafeNormal();
+	const float Strength = static_cast<float>(Velocity.Size());
+	return UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(&Context.Ability, TEXT("AgPlunge"), Direction, Strength, -1.f, false,
 		nullptr, ERootMotionFinishVelocityMode::SetVelocity, FVector::ZeroVector, 0.f, false);
 }

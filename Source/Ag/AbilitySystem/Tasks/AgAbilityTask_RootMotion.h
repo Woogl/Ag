@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Data/AgTaskParams.h"
+#include "GameplayTagContainer.h"
 #include "RootMotionModifier.h"
 #include "AgAbilityTask_RootMotion.generated.h"
 
@@ -33,13 +34,16 @@ struct FAgRootMotionParams : public FAgTaskParams
 	TOptional<float> TargetingRange;
 
 	UPROPERTY()
-	TOptional<float> MaxDistance;
-
-	UPROPERTY()
 	EMotionWarpRotationMethod RotationMethod = EMotionWarpRotationMethod::ConstantRate;
 
 	UPROPERTY()
 	float Distance = 0.f;
+
+	UPROPERTY()
+	FGameplayTagContainer RequiredTags;
+
+	UPROPERTY()
+	FGameplayTagContainer BlockedTags;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

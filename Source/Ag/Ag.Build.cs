@@ -38,7 +38,7 @@ public class Ag : ModuleRules
 		}
 
 		// JSON 데이터 파일은 Content 밖에 있어 쿡이 알지 못하므로 따로 넣습니다.
-		RuntimeDependencies.Add("$(ProjectDir)/Data/*.json", StagedFileType.UFS);
+		RuntimeDependencies.Add("$(ProjectDir)/DesignData/*.json", StagedFileType.UFS);
 
 		PublicIncludePaths.AddRange(new string[] {
 			"Ag"

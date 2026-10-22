@@ -78,7 +78,7 @@ void AAgPlayerCharacter::UpdateRotationMode()
 	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
 
-EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContainer& SpecTags, bool bPlayerAttacked) const
+EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContainer& SpecTags, const AActor* Source) const
 {
 	const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
 	if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
@@ -90,7 +90,7 @@ EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContai
 	                    SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockBack);
 	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
 	{
-		if (bPlayerAttacked)
+		if (Source == this)
 		{
 			// 궁극기 마무리 셰이크는 적중 여부와 관계없이 몽타주 시간표에서 한 번 재생한다.
 			return bFinisher ? EAgCameraShake::None : (bHeavy ? PlayerHitHeavyShake : PlayerHitShake);
@@ -278,7 +278,7 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 		return;
 	}
 
-	// 회피가 누른 키 쪽으로 구르고 Input.Move로 Roll을 고르므로, 이동을 무시할 때도 방향과 태그는 정합니다.
+	// 회피가 누른 키 쪽으로 구르고 Input.Move로 구르기 섹션을 고르므로, 이동을 무시할 때도 방향과 태그는 정합니다.
 	const FVector2D Input = Value.Get<FVector2D>();
 	const FRotationMatrix YawMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f));
 	const FVector Forward = YawMatrix.GetUnitAxis(EAxis::X);

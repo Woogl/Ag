@@ -30,6 +30,11 @@ public:
 
 	float GetTimeStopCompensation() const;
 
+	float GetSlowMotionDuration() const
+	{
+		return SlowMotionDuration;
+	}
+
 private:
 	/** 시간 정지 중에 부르면 시간 정지 배율을 덮으므로, 시간 정지가 아닐 때만 부릅니다. */
 	void ApplySlowMotion(float Speed, float RealDuration);
@@ -37,6 +42,8 @@ private:
 	void EndSlowMotion();
 
 	FTimerHandle SlowMotionTimer;
+
+	float SlowMotionDuration = 0.f;
 
 	float PendingSlowMotionSpeed = 1.f;
 	float PendingSlowMotionDuration = 0.f;

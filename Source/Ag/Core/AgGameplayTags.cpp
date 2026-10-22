@@ -21,6 +21,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_DodgeCounter, "Ability.Action.DodgeCounter");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Guard, "Ability.Action.Guard");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_Parry, "Ability.Action.Parry", "패리 모션 (패리 이벤트로 발동, 가드를 끝내지 않음)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_PerfectDodge, "Ability.Action.PerfectDodge", "극한 회피 모션 (극한 회피 이벤트로 발동, 회피를 끝냄)");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Skill, "Ability.Action.Skill");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Ultimate, "Ability.Action.Ultimate");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Execution, "Ability.Action.Execution");
@@ -40,6 +41,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Groggy, "Ability.Reaction.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_Executed, "Ability.Reaction.Executed", "처형 피격 (그로기를 종료하고 처형 상태로 전환)");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Parried, "Ability.Reaction.Parried");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern, "Ability.Boss.Pattern", "보스 패턴 어빌리티 (패턴을 한꺼번에 취소할 때 씀)");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
@@ -55,6 +57,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_DodgeCounterChance, "State.DodgeCounterChance", "회피 반격 기회");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Hitstop, "State.Hitstop", "히트스톱. 캐릭터의 모션과 이동이 멈춤");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Sprinting, "State.Sprinting", "달리는 중");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_LockedOn, "State.LockedOn", "락온 중 (락온 어빌리티가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Jumping, "State.Jumping", "점프해 공중에 있음 (캐릭터가 점프할 때 붙이고 착지할 때 뗌)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Airborne, "State.Airborne", "이동 모드가 떨어지는 중 (캐릭터가 붙임)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_PassThrough, "State.PassThrough", "캐릭터끼리 통과: 캡슐이 Pawn 채널을 무시함");
@@ -77,6 +80,10 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition, "Event.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Parry, "Event.Parry", "패리함 (피격 처리가 막은 쪽에 보냄, 패리 모션을 시작함)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Parried, "Event.Parried",
+		"패리당함 (피격 처리가 근접 공격을 패리당한 공격자와 반사탄에 맞은 대상에 보냄, Instigator는 패리한 캐릭터)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodge, "Event.PerfectDodge",
+		"극한 회피함 (피격 처리가 피한 쪽에 보냄, Instigator는 공격한 캐릭터, 극한 회피 모션을 시작함)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted",
 		"플레이어가 평타의 한 타나 점프 공격을 시작함 (Backstep 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked",
@@ -118,4 +125,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_DamageFloater, "GameplayCue.DamageFloater", "대미지 숫자");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UnblockableTelegraph, "GameplayCue.UnblockableTelegraph", "가드 불가 예고");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_ParryTelegraph, "GameplayCue.ParryTelegraph", "패리 예고");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_WeaponTrail, "GameplayCue.WeaponTrail", "무기 궤적");
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(UI_Action_Escape, "UI.Action.Escape", "Esc: 일시정지 메뉴 열기, 팝업·메뉴 닫기");
 } // namespace AgGameplayTags

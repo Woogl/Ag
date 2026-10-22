@@ -55,9 +55,9 @@ void AAgBossStageGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 	bResultDecided = true;
 	bStageCleared = bBossDied;
 
-	if (DeathPresentationTime > 0.f)
+	if (StageResultPresentationTime > 0.f)
 	{
-		GetWorldTimerManager().SetTimer(ResultTimer, this, &ThisClass::ShowResult, DeathPresentationTime);
+		GetWorldTimerManager().SetTimer(ResultTimer, this, &ThisClass::ShowResult, StageResultPresentationTime);
 	}
 	else
 	{

@@ -18,8 +18,8 @@ UAbilityTask* FAgAreaHitParams::MakeTask(const FAgTaskContext& Context) const
 void UAgAbilityTask_AreaHit::Activate()
 {
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
-	if (Character && AgAbility)
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
+	if (Character)
 	{
 		const TSharedPtr<FAgHitRewardState> HitReward = FAgHitRewardState::Make(Params.HitReward);
 		for (AActor* Target : AgTargeting::FindTargets(Params.Area, *Character))

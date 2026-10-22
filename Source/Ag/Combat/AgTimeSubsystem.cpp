@@ -45,6 +45,7 @@ bool UAgTimeSubsystem::StartTimeStop(UObject& Requester, AAgCharacterBase& Exemp
 	// 시간 정지가 게임 전체 시간 배율을 대신 쥐므로, 도는 슬로우모션은 여기서 끝납니다. 지난 시간 정지에서
 	// 기다리던 슬로우모션도 이 시간 정지의 끝에 남지 않게 지웁니다.
 	GetWorld()->GetTimerManager().ClearTimer(SlowMotionTimer);
+	SlowMotionDuration = 0.f;
 	PendingSlowMotionDuration = 0.f;
 	GetWorld()->GetWorldSettings()->SetTimeDilation(TimeStopDilation);
 	bTimeStopped = true;
@@ -92,12 +93,14 @@ void UAgTimeSubsystem::ApplySlowMotion(float Speed, float RealDuration)
 	// 실제 시간 RealDuration 뒤에 끝납니다.
 	AWorldSettings* WorldSettings = GetWorld()->GetWorldSettings();
 	WorldSettings->SetTimeDilation(Speed);
+	SlowMotionDuration = RealDuration;
 	GetWorld()->GetTimerManager().SetTimer(SlowMotionTimer, this, &ThisClass::EndSlowMotion, RealDuration * WorldSettings->GetEffectiveTimeDilation(), false);
 	UE_LOG(LogAg, Verbose, TEXT("Slow motion starts: speed %.2f for %.2f s of real time"), Speed, RealDuration);
 }
 
 void UAgTimeSubsystem::EndSlowMotion()
 {
+	SlowMotionDuration = 0.f;
 	GetWorld()->GetWorldSettings()->SetTimeDilation(1.f);
 	UE_LOG(LogAg, Verbose, TEXT("Slow motion ends"));
 }

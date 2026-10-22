@@ -14,9 +14,8 @@ UAbilityTask* FAgSendGameplayEventParams::MakeTask(const FAgTaskContext& Context
 
 void UAgAbilityTask_SendGameplayEvent::Activate()
 {
-	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
 	AActor* Owner = GetAvatarActor();
-	AActor* Target = AgAbility ? AgAbility->GetActionTarget() : nullptr;
+	AActor* Target = CastChecked<UAgGameplayAbility>(Ability)->GetActionTarget();
 	AActor* Receiver = Params.To == EAgSendGameplayEventTo::Owner ? Owner : Target;
 	if (Owner && Receiver)
 	{

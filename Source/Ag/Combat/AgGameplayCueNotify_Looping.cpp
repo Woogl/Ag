@@ -2,6 +2,7 @@
 
 #include "Combat/AgGameplayCueNotify_Looping.h"
 
+#include "Ag.h"
 #include "Camera/AgPostProcessComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
@@ -45,8 +46,15 @@ void AAgGameplayCueNotify_Looping::EndPlay(const EEndPlayReason::Type EndPlayRea
 	Super::EndPlay(EndPlayReason);
 }
 
+void AAgGameplayCueNotify_Looping::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	ApplyTargetTimeDilation(LoopingSpawnResults);
+}
+
 bool AAgGameplayCueNotify_Looping::OnActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
+	CueTarget = Target;
 	const bool bResult = Super::OnActive_Implementation(Target, ResolveParameters(Target, Parameters));
 	ApplyNiagaraParameters(ApplicationSpawnResults);
 	return bResult;
@@ -57,17 +65,23 @@ bool AAgGameplayCueNotify_Looping::WhileActive_Implementation(AActor* Target, co
 	// 엔진 Looping 큐는 숨긴 채 만든 액터를 다시 보이게 하지 않아(Actor 큐의 WhileActive를 부르지 않음), 재활용되지
 	// 않은 액터에서는 놓은 메시가 그려지지 않습니다.
 	SetActorHiddenInGame(false);
+	CueTarget = Target;
 	const bool bResult = Super::WhileActive_Implementation(Target, ResolveParameters(Target, Parameters));
 	ApplyNiagaraParameters(LoopingSpawnResults);
 	if (!bLoopingEffectsRemoved && !PostProcess->IsPlaying())
 	{
 		PostProcess->Start(Target);
 	}
+	if (!bLoopingEffectsRemoved && bUseTargetTimeDilation)
+	{
+		SetActorTickEnabled(true);
+	}
 	return bResult;
 }
 
 bool AAgGameplayCueNotify_Looping::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
+	CueTarget = Target;
 	const bool bResult = Super::OnExecute_Implementation(Target, ResolveParameters(Target, Parameters));
 	ApplyNiagaraParameters(RecurringSpawnResults);
 	PlaceRecurringMesh(Target);
@@ -76,6 +90,7 @@ bool AAgGameplayCueNotify_Looping::OnExecute_Implementation(AActor* Target, cons
 
 bool AAgGameplayCueNotify_Looping::OnRemove_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
+	StopTargetTimeDilation();
 	if (PostProcess->IsPlaying())
 	{
 		// 엔진의 즉시 회수는 페이드가 끝난 뒤 컴포넌트의 완료 콜백이 대신합니다.
@@ -136,8 +151,65 @@ void AAgGameplayCueNotify_Looping::ApplyNiagaraParameters(const FGameplayCueNoti
 			{
 				Niagara->SetVariableFloat(Parameter.Key, Parameter.Value);
 			}
+			if (!PlacementEndSocketName.IsNone())
+			{
+				PlaceBetweenSockets(*Niagara);
+			}
 		}
 	}
+	ApplyTargetTimeDilation(SpawnResult);
+}
+
+void AAgGameplayCueNotify_Looping::PlaceBetweenSockets(UNiagaraComponent& Niagara) const
+{
+	const USceneComponent* Parent = Niagara.GetAttachParent();
+	const FName StartSocketName = Niagara.GetAttachSocketName();
+	if (!Parent || !Parent->DoesSocketExist(StartSocketName) || !Parent->DoesSocketExist(PlacementEndSocketName))
+	{
+		UE_LOG(LogAg, Error, TEXT("%s: %s has no socket %s or %s"), *GetName(), *GetNameSafe(Parent), *StartSocketName.ToString(), *PlacementEndSocketName.ToString());
+		return;
+	}
+
+	const FVector Start = Parent->GetSocketLocation(StartSocketName);
+	const FVector End = Parent->GetSocketLocation(PlacementEndSocketName);
+	Niagara.SetWorldLocationAndRotation((Start + End) * 0.5, FRotationMatrix::MakeFromX(End - Start).Rotator());
+	if (!NiagaraSocketDistanceParameter.IsNone())
+	{
+		Niagara.SetVariableFloat(NiagaraSocketDistanceParameter, FVector::Distance(Start, End));
+	}
+}
+
+void AAgGameplayCueNotify_Looping::ApplyTargetTimeDilation(const FGameplayCueNotify_SpawnResult& SpawnResult) const
+{
+	const AActor* Target = CueTarget.Get();
+	if (!bUseTargetTimeDilation || !Target)
+	{
+		return;
+	}
+	for (UFXSystemComponent* FX : SpawnResult.FxSystemComponents)
+	{
+		if (UNiagaraComponent* Niagara = Cast<UNiagaraComponent>(FX))
+		{
+			Niagara->SetCustomTimeDilation(Target->CustomTimeDilation);
+		}
+	}
+}
+
+void AAgGameplayCueNotify_Looping::StopTargetTimeDilation()
+{
+	SetActorTickEnabled(false);
+	if (bUseTargetTimeDilation)
+	{
+		// 꺼진 뒤 남은 꼬리는 월드 시간으로 사라지게 합니다. 풀로 돌아간 나이아가라가 멈춘 배율을 가져가지 않게 합니다.
+		for (UFXSystemComponent* FX : LoopingSpawnResults.FxSystemComponents)
+		{
+			if (UNiagaraComponent* Niagara = Cast<UNiagaraComponent>(FX))
+			{
+				Niagara->SetCustomTimeDilation(1.f);
+			}
+		}
+	}
+	CueTarget.Reset();
 }
 
 void AAgGameplayCueNotify_Looping::PlaceRecurringMesh(AActor* Target)
