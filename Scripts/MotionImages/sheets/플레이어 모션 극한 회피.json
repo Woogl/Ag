@@ -1,0 +1,28 @@
+{
+  "image": "플레이어 모션 극한 회피",
+  "character": "player",
+  "animation": {
+    "segments": [
+      {
+        "clip": "Dodge_and_Evade/Dodge_NoHandSpin_Left",
+        "from": 0.3,
+        "to": 1.333
+      },
+      {
+        "clip": "Dodge_and_Evade/Dodge_NoHandSpin_Right",
+        "from": 0.3,
+        "to": 1.333
+      },
+      {
+        "clip": "Dodge_and_Evade/Dodge_Roll_Forward",
+        "from": 0.2,
+        "to": 1.333
+      },
+      {
+        "clip": "Dodge_and_Evade/Dodge_Cartwheel_Back",
+        "from": 0.2,
+        "to": 1.333
+      }
+    ]
+  }
+}

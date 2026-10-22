@@ -62,7 +62,7 @@ class Ctx:
         """콘솔 명령을 실행한다(예: 테스트용 콘솔 명령 AgKillBoss)."""
         unreal.SystemLibrary.execute_console_command(self.world, command, self.pc)
 
-    # 자원(어트리뷰트). 이 창의 메모리만 바꾸고 Data JSON은 건드리지 않는다.
+    # 자원(어트리뷰트). 이 창의 메모리만 바꾸고 DesignData JSON은 건드리지 않는다.
     # 값만 바꾸고 변경 이벤트는 일으키지 않으므로, HP를 0으로 해도 사망하지 않고 HUD도 바뀌지 않는다.
     def attr(self, who, name):
         return (self.paset if who == "p" else self.baset).get_editor_property(name).current_value

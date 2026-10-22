@@ -2,7 +2,9 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-WIDTH, HEIGHT, HEADER = 480, 401, 30
+WIDTH, HEIGHT, HEADER = 480, 401, 56
+HEADER_COLOR = (20, 23, 28)
+HEADER_FONT_SIZE = 20
 RENDER_SCALE = 2
 CAMERA_ZOOM = 1.6
 WARMUP_FRAMES = 3
@@ -23,4 +25,8 @@ PACK_WEAPONS = {
 def output_relative(path):
     if "/Fab/ARPG_Pack/" in path:
         return Path(path.split("/")[4].removeprefix("ARPG_")) / (path.rsplit("/", 1)[-1] + ".gif")
+    if "/Fab/Dodge_and_Evade_Anims/" in path:
+        return Path("Dodge_and_Evade") / (path.rsplit("/", 1)[-1] + ".gif")
+    if "/Fab/Dodge_Animations/" in path:
+        return Path("Dodge_Animations") / (path.rsplit("/", 1)[-1] + ".gif")
     return Path("Base") / Path(path.removeprefix("/Game/")).with_suffix(".gif")

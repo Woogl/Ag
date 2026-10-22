@@ -5,7 +5,9 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from settings import BACKGROUND, FPS, HEADER, HEIGHT, HOLD_END, HOLD_START, WIDTH
+from settings import BACKGROUND, FPS, HEADER, HEADER_COLOR, HEADER_FONT_SIZE, HEIGHT, HOLD_END, HOLD_START, WIDTH
+
+FONT_PATH = "C:/Windows/Fonts/arial.ttf"
 
 
 def compose_sequence(sequence_dir):
@@ -14,7 +16,12 @@ def compose_sequence(sequence_dir):
     if meta.get("mask") != "inverse_opacity":
         raise ValueError("이전 색상 키잉 프레임에는 실루엣 정보가 없습니다. 새 설정으로 재촬영하세요.")
     start = time.perf_counter()
-    font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 10)
+    font = ImageFont.truetype(FONT_PATH, HEADER_FONT_SIZE)
+    name = meta["path"].rsplit("/", 1)[-1]
+    # 긴 시퀀스 이름은 띠 너비에 들어갈 때까지만 글씨를 줄입니다.
+    name_font = font
+    while name_font.size > 12 and name_font.getlength(name) > WIDTH - 12:
+        name_font = ImageFont.truetype(FONT_PATH, name_font.size - 1)
     frames, durations = [], []
     for index, moment in enumerate(meta["times"]):
         with Image.open(folder / ("%06d.png" % index)) as source:
@@ -28,14 +35,14 @@ def compose_sequence(sequence_dir):
         frame = Image.composite(Image.new("RGB", frame.size, BACKGROUND), frame, inverse_opacity)
         if frame.size != (WIDTH, HEIGHT):
             frame = frame.resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
-        canvas = Image.new("RGB", (WIDTH, HEIGHT + HEADER), (20, 23, 28))
+        canvas = Image.new("RGB", (WIDTH, HEIGHT + HEADER), HEADER_COLOR)
         canvas.paste(frame, (0, HEADER))
         draw = ImageDraw.Draw(canvas)
-        draw.text((6, 2), meta["path"].rsplit("/", 1)[-1], font=font, fill="white")
+        draw.text((6, 4), name, font=name_font, fill="white")
         label = "%.2f / %.2f s | 1x | %d fps" % (moment, meta["length"], FPS)
         if "/Fab/" not in meta["path"]:
             label += " | body motion (no weapon)"
-        draw.text((6, 16), label, font=font, fill=(170, 190, 210))
+        draw.text((6, 30), label, font=font, fill=(170, 190, 210))
         frames.append(canvas)
         durations.append(round(1000 / FPS))
     durations[0] += HOLD_START

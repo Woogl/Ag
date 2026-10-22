@@ -13,14 +13,18 @@ SOURCE = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(SOURCE)
 OUTPUT_WIDTH = 480
 OUTPUT_HEIGHT = math.floor((SOURCE.HEIGHT + SOURCE.HEADER) * OUTPUT_WIDTH / SOURCE.WIDTH + 0.5)
+# 정보 띠가 낮던 이전 촬영 크기입니다.
+LEGACY_SIZES = ((640, 574), (480, 431))
 
 
 def read_clip(clip):
     pack, name = clip.split("/", 1)
     path = ROOT / "Docs/Art/GIF" / pack / ("ARPG_" + pack + "_Anim_UE_" + name + ".gif")
+    if not path.exists():
+        path = path.with_name(name + ".gif")
     frames, samples = [], []
     with Image.open(path) as image:
-        if image.size not in ((640, 574), (SOURCE.WIDTH, SOURCE.HEIGHT + SOURCE.HEADER)):
+        if image.size not in LEGACY_SIZES + ((SOURCE.WIDTH, SOURCE.HEIGHT + SOURCE.HEADER),):
             raise ValueError("원본 GIF 크기가 다릅니다: " + str(path))
         count = image.n_frames
         for index, frame in enumerate(ImageSequence.Iterator(image)):
@@ -36,8 +40,11 @@ def read_clip(clip):
             # 축소 뒤에도 원본 프레임의 색으로 매핑해 새 팔레트의 색 변화를 피합니다.
             indexed = body.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
             if body.size != (OUTPUT_WIDTH, OUTPUT_HEIGHT):
-                resized = body.resize((OUTPUT_WIDTH, OUTPUT_HEIGHT), Image.Resampling.LANCZOS)
-                indexed = resized.quantize(palette=indexed, dither=Image.Dither.NONE)
+                resized = body.resize((OUTPUT_WIDTH, round(body.height * OUTPUT_WIDTH / body.width)), Image.Resampling.LANCZOS)
+                # 이전 원본은 세로로 늘리지 않고, 위를 정보 띠 색으로 채워 지금 크기에 맞춥니다.
+                padded = Image.new("RGB", (OUTPUT_WIDTH, OUTPUT_HEIGHT), SOURCE.HEADER_COLOR)
+                padded.paste(resized, (0, OUTPUT_HEIGHT - resized.height))
+                indexed = padded.quantize(palette=indexed, dither=Image.Dither.NONE)
             frames.append(indexed)
             samples.extend([len(frames) - 1] * sample_count)
     return frames, samples

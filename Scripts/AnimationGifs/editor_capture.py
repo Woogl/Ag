@@ -35,7 +35,10 @@ def atomic_json(path, value):
 def inventory():
     assets = unreal.AssetRegistryHelpers.get_asset_registry().get_assets_by_class(
         unreal.TopLevelAssetPath("/Script/Engine", "AnimSequence"), True)
-    return sorted(str(asset.package_name) for asset in assets if str(asset.package_name).startswith("/Game/"))
+    # 다른 스켈레톤의 시퀀스(Dodge Animations 팩의 UE4 마네킹용 원본)는 프로젝트 마네킹에서 재생되지 않아 뺍니다.
+    skeleton = "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin"
+    return sorted(str(asset.package_name) for asset in assets
+                  if str(asset.package_name).startswith("/Game/") and skeleton in str(asset.get_tag_value("Skeleton")))
 
 
 class Capture:
@@ -154,11 +157,12 @@ class Capture:
             raise RuntimeError("Not an AnimSequence: " + self.path)
         self.length = unreal.AnimationLibrary.get_sequence_length(self.animation)
         self.times = [min(i / FPS, self.length) for i in range(math.ceil(self.length * FPS) + 1)]
-        self.character_name = "player" if "ARPG_Samurai" in self.path else "boss"
+        player = "ARPG_Samurai" in self.path or "/Dodge_and_Evade_Anims/" in self.path or "/Fab/Dodge_Animations/" in self.path
+        self.character_name = "player" if player else "boss"
         self.actor, self.mesh, equipment = self.character(self.character_name)
         visible = [self.actor]
         for weapon, component, pack in equipment:
-            enabled = "no_weapon" not in self.path and ((pack == "game" and ("ARPG_Samurai" in self.path or "ARPG_Halberd" in self.path)) or (pack != "game" and "/ARPG_" + pack + "/" in self.path))
+            enabled = "no_weapon" not in self.path and ((pack == "game" and (player or "ARPG_Halberd" in self.path)) or (pack != "game" and "/ARPG_" + pack + "/" in self.path))
             component.set_visibility(enabled, True)
             if enabled:
                 visible.append(weapon)

@@ -87,9 +87,9 @@ def quat_to_rotator(q):
 # ------------------------------------------------------------------ characters and weapons
 # 캡처용 임시 캐릭터는 레벨의 물체에서 멀리 떨어진 곳에 둡니다. 무기는 blueprint의 게임 무기를 그대로 씁니다(weapons).
 CHARACTERS = {
-    "player": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple", "blueprint": "/Game/Characters/BP_AgPlayer",
+    "player": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple", "blueprint": "/Game/Characters/BP_Player",
                "actor": (0.0, -20000.0, 0.0)},
-    "boss": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple", "blueprint": "/Game/Characters/BP_AgBoss",
+    "boss": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple", "blueprint": "/Game/Characters/BP_Boss",
              "actor": (0.0, 20000.0, 0.0)},
 }
 WEAPON_BONE = "hand_r"   # 무기를 이 본 기준으로 붙입니다. 게임 무기 소켓이 붙은 본입니다.
