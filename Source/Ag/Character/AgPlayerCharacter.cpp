@@ -87,7 +87,7 @@ EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContai
 	}
 
 	const bool bHeavy = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockUp) ||
-	                    SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockBack);
+	                    SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockDown);
 	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
 	{
 		if (Source == this)
@@ -346,7 +346,7 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 	BufferedInput = InputTag != AgGameplayTags::Input_Execute && IsActionInputBlocked(InputTag) ? InputTag : FGameplayTag();
 	BufferedInputTime = GetWorld()->GetTimeSeconds();
 
-	// 막힌 동안에도 실행 중인 행동은 입력 이벤트를 받으므로(평타의 다음 타) 키는 지금도 넣습니다.
+	// 막힌 동안에도 실행 중인 행동은 입력 이벤트를 받으므로(기본 공격의 다음 타) 키는 지금도 넣습니다.
 	RunInput(InputTag);
 }
 
@@ -484,7 +484,7 @@ bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) cons
 
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// 이번 프레임에 이어지는 상태(행동을 끊은 피격 반응, 평타의 후딜 표시)가 정해진 뒤에 보도록
+	// 이번 프레임에 이어지는 상태(행동을 끊은 피격 반응, 기본 공격의 후딜 표시)가 정해진 뒤에 보도록
 	// 다음 프레임에 확인합니다.
 	if (NewCount != 0)
 	{
@@ -592,7 +592,7 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 {
 	FGameplayTagContainer Enders;
 	Enders.AddTag(AgGameplayTags::Ability_Action);
-	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockBack);
+	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockDown);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockUp);
 	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinitionTags().HasAny(Enders))
 	{

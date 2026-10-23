@@ -29,7 +29,7 @@ AI가 동작 테스트를 공유 에디터의 PIE 대신 테스트 창(별도 �
 ## 시나리오
 
 ```python
-TITLE = "평타 콤보 (보스 AI 정지)"   # 창 제목과 화면 첫 줄
+TITLE = "기본 공격 콤보 (보스 AI 정지)"   # 창 제목과 화면 첫 줄
 AI_ON = False                        # True면 준비가 끝난 뒤 보스 AI를 다시 켭니다.
 
 def _start(c):
@@ -38,7 +38,7 @@ def _start(c):
 
 STEPS = [                            # (시작 후 초, 화면에 띄울 항목, 할 일)
     (1.5, "보스 앞 1.5m에 서서 보스를 봄", _start),
-    (2.5, "평타 키 연타 (4초)", lambda c: c.mash("Input.Attack")),
+    (2.5, "기본 공격 키 연타 (4초)", lambda c: c.mash("Input.Attack")),
     (6.5, "연타 멈춤", lambda c: c.mash()),
     (8.5, "판정", None),             # 마지막 단계가 지나면 evaluate를 부릅니다.
 ]

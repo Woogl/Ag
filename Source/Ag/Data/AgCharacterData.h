@@ -106,7 +106,7 @@ class UAgBossData : public UAgCharacterData
 
 public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	FFloatInterval PatternRecoveryTime = FFloatInterval(0.f, 0.f);
+	FFloatInterval PostPatternDelayTime = FFloatInterval(0.f, 0.f);
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")
 	TArray<float> PhaseTransitionHPRatios;

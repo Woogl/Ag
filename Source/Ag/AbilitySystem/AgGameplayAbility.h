@@ -61,7 +61,7 @@ public:
 		return ExecutionDefinition.Targeting ? ExecutionDefinition.Targeting->TargetSpacing : 0.f;
 	}
 
-	/** 평타처럼 다시 재생할 때마다 대상을 고르는 행동을 위해 재생 Task가 부릅니다. */
+	/** 기본 공격처럼 다시 재생할 때마다 대상을 고르는 행동을 위해 재생 Task가 부릅니다. */
 	void RefreshTarget();
 
 	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;

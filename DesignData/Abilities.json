@@ -207,20 +207,20 @@
       {"Task": "WaitTargetLost", "ReleaseRange": 3000}
     ]
   },
-  "KnockBack": {
-    "Tags": ["Ability.Reaction.HitReaction.KnockBack"],
+  "KnockDown": {
+    "Tags": ["Ability.Reaction.HitReaction.KnockDown"],
     "Activation": {
       "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.HitReaction"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
-        {"Tag": "Event.Hit.KnockBack"}
+        {"Tag": "Event.Hit.KnockDown"}
       ],
       "bAllowRetrigger": true
     },
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
-      {"Task": "PlayMontage", "Montage": "KnockBack"}
+      {"Task": "PlayMontage", "Montage": "KnockDown"}
     ]
   },
   "KnockUp": {

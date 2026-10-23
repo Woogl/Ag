@@ -16,8 +16,8 @@ void FAgDamage::AddToSpec(FGameplayEffectSpec& Spec) const
 		case EAgHitReaction::KnockUp:
 			Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_KnockUp);
 			break;
-		case EAgHitReaction::KnockBack:
-			Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_KnockBack);
+		case EAgHitReaction::KnockDown:
+			Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Reaction_KnockDown);
 			break;
 		default:
 			break;

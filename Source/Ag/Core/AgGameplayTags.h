@@ -33,7 +33,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LockOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockBack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Juggle);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_GuardPushback);
@@ -70,7 +70,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_SPDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_PPDelay);
 
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockBack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
@@ -98,7 +98,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Cooldown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockUp);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockBack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Unblockable);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Finisher);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_PerfectDodge);

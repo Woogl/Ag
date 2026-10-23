@@ -13,7 +13,7 @@ enum class EAgHitReaction : uint8
 {
 	None UMETA(DisplayName = "없음"),
 	Flinch UMETA(DisplayName = "움찔"),
-	KnockBack UMETA(DisplayName = "넉백"),
+	KnockDown UMETA(DisplayName = "넉다운"),
 	KnockUp UMETA(DisplayName = "넉업"),
 };
 

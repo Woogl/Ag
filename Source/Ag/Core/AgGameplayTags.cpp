@@ -4,7 +4,7 @@
 
 namespace AgGameplayTags
 {
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Attack, "Input.Attack", "평타 키");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Attack, "Input.Attack", "기본 공격 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Guard, "Input.Guard", "가드 키. 가드 중에는 가드의 트리거 태그로 붙어 있음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Dodge, "Input.Dodge", "회피·달리기 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Jump, "Input.Jump", "점프 키");
@@ -31,8 +31,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_LockOn, "Ability.LockOn", "락온. 행동이 아니라 행동 상태의 제한과 취소를 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction, "Ability.Reaction", "이벤트로 발동하는 상태 어빌리티");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction, "Ability.Reaction.HitReaction",
-		"상태 우선순위 4의 피격 반응: 넉업(저글 포함), 넉백, 가드 밀림, 가드 브레이크");
-	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockBack, "Ability.Reaction.HitReaction.KnockBack");
+		"상태 우선순위 4의 피격 반응: 넉업(저글 포함), 넉다운, 가드 밀림, 가드 브레이크");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockDown, "Ability.Reaction.HitReaction.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockUp, "Ability.Reaction.HitReaction.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction_Juggle, "Ability.Reaction.HitReaction.Juggle",
 		"넉업으로 떠 있는 동안 움찔에 맞아 다시 조금 떠오름");
@@ -47,7 +47,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Execution, "State.Execution", "상태 우선순위 2: 처형 중 (역할은 실행 문맥으로 구분)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Groggy, "State.Groggy", "상태 우선순위 3: 그로기");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_HitReaction, "State.HitReaction", "상태 우선순위 4: 넉업, 넉백, 가드 밀림, 가드 브레이크");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_HitReaction, "State.HitReaction", "상태 우선순위 4: 넉업, 넉다운, 가드 밀림, 가드 브레이크");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Busy, "State.Busy", "행동 중. 후딜 전까지 다른 행동을 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Acting, "State.Acting", "모션이 있는 플레이어 행동이 실행 중. 그동안 이동 입력을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Invincible, "State.Invincible", "무적");
@@ -70,7 +70,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_PPDelay, "State.Regen.PPDelay", "PP 리젠 대기");
 
-	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockBack, "Event.Hit.KnockBack");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockDown, "Event.Hit.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockUp, "Event.Hit.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Flinch, "Event.Hit.Flinch");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Pushback, "Event.Guard.Pushback");
@@ -85,7 +85,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodge, "Event.PerfectDodge",
 		"극한 회피함 (피격 처리가 피한 쪽에 보냄, Instigator는 공격한 캐릭터, 극한 회피 모션을 시작함)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted",
-		"플레이어가 평타의 한 타나 점프 공격을 시작함 (Backstep 검사)");
+		"플레이어가 기본 공격의 한 타나 점프 공격을 시작함 (Backstep 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked",
 		"내 공격이 가드·가드 브레이크·패리로 막힘. 그 피해의 효과 컨텍스트를 실음 (DashThrust의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Landed, "Event.Landed", "캐릭터가 착지함 (캐릭터가 자기에게 보냄)");
@@ -102,7 +102,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Cooldown, "Effect.Cooldown", "행동 쿨다운 효과");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_Flinch, "Effect.Damage.Reaction.Flinch", "피격 반응 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockUp, "Effect.Damage.Reaction.KnockUp", "피격 반응 넉업");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockBack, "Effect.Damage.Reaction.KnockBack", "피격 반응 넉백");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockDown, "Effect.Damage.Reaction.KnockDown", "피격 반응 넉다운");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unblockable, "Effect.Damage.Unblockable", "가드와 패리로 막을 수 없는 공격 (가드 불가)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Finisher, "Effect.Damage.Finisher", "마지막 일격 (처형의 마지막 일격, 궁극기 마무리)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_PerfectDodge, "Effect.Damage.Result.PerfectDodge", "피격 결과 극한 회피");

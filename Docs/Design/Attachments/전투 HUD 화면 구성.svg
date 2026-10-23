@@ -90,7 +90,7 @@
   <g font-size="20" fill="#FFFFFF">
     <text x="1576" y="406">W, A, S, D</text><text x="1707" y="406">이동</text>
     <text x="1576" y="434">마우스 이동</text><text x="1707" y="434">시야</text>
-    <text x="1576" y="462">좌클릭</text><text x="1707" y="462">평타</text>
+    <text x="1576" y="462">좌클릭</text><text x="1707" y="462">기본 공격</text>
     <text x="1576" y="490">우클릭</text><text x="1707" y="490">가드 / 패리</text>
     <text x="1576" y="518">Left Shift</text><text x="1707" y="518">회피 / 달리기</text>
     <text x="1576" y="546">Space</text><text x="1707" y="546">점프</text>

@@ -20,7 +20,7 @@
       {"Task": "RootMotion", "Start": 0, "End": 0.386, "bWarpTranslation": true},
       {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
       {"Task": "RootMotion", "Start": 0.52, "End": 1.42, "bWarpTranslation": false},
-      {"Task": "WeaponHit", "Start": 1.47, "End": 1.57, "Damage": {"HPMultiplier": 1.4, "HitReaction": "KnockBack", "bGuardable": true}}
+      {"Task": "WeaponHit", "Start": 1.47, "End": 1.57, "Damage": {"HPMultiplier": 1.4, "HitReaction": "KnockDown", "bGuardable": true}}
     ]
   },
   "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy": {
@@ -45,7 +45,7 @@
     "Default": [
       {"Task": "RootMotion", "Start": 0, "End": 0.274, "bWarpTranslation": true},
       {"Task": "RootMotion", "Start": 0.274, "End": 0.4, "bWarpTranslation": true},
-      {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "HitReaction": "KnockBack", "bGuardable": true}}
+      {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "HitReaction": "KnockDown", "bGuardable": true}}
     ]
   },
   "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack": {

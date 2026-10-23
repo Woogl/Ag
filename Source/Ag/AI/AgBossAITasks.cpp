@@ -35,7 +35,7 @@ namespace
 EStateTreeRunStatus FAgBossAITask_Wait::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const FFloatInterval& RecoveryTime = InstanceData.Controller->GetBossData()->PatternRecoveryTime;
+	const FFloatInterval& RecoveryTime = InstanceData.Controller->GetBossData()->PostPatternDelayTime;
 	InstanceData.Duration = FMath::FRandRange(RecoveryTime.Min, RecoveryTime.Max);
 	InstanceData.Elapsed = 0.f;
 	InstanceData.StrafeDirection = FMath::RandBool() ? 1.f : -1.f;
@@ -122,7 +122,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 
 EStateTreeRunStatus FAgBossAITask_RunPattern::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	// 패턴이 넉백이나 그로기로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이
+	// 패턴이 넉다운이나 그로기로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이
 	// 먼저 적용됩니다.
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	const UAbilitySystemComponent* ASC = InstanceData.Controller->GetBoss()->GetAbilitySystemComponent();

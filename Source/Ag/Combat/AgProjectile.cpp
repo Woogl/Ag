@@ -60,9 +60,9 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	{
 		Damage.HitReaction = EAgHitReaction::KnockUp;
 	}
-	else if (AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockBack))
+	else if (AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockDown))
 	{
-		Damage.HitReaction = EAgHitReaction::KnockBack;
+		Damage.HitReaction = EAgHitReaction::KnockDown;
 	}
 	else if (AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
 	{

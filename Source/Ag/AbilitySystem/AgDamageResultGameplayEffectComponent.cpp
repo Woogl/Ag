@@ -42,9 +42,9 @@ namespace
 		{
 			return AgGameplayTags::Event_Hit_KnockUp;
 		}
-		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockBack))
+		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockDown))
 		{
-			return AgGameplayTags::Event_Hit_KnockBack;
+			return AgGameplayTags::Event_Hit_KnockDown;
 		}
 		return FGameplayTag();
 	}
@@ -150,7 +150,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		return;
 	}
-	// 반사탄에 맞은 대상의 패리당함 반응(PP 감소)도 피격 반응 전이어야 그로기가 넉백보다 우선합니다.
+	// 반사탄에 맞은 대상의 패리당함 반응(PP 감소)도 피격 반응 전이어야 그로기가 넉다운보다 우선합니다.
 	if (bHit && Projectile && Projectile->IsReflected() && !Target->IsDead())
 	{
 		SendEvent(Target, AgGameplayTags::Event_Parried, Attacker);
