@@ -27,5 +27,5 @@
     <text x="960" y="839" fill="#c9d1db">Quit</text>
   </g>
   <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
-  <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, ↑·↓ / 실행: 좌클릭, Enter, Space</text>
+  <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, ↑·↓ / 실행: 좌클릭, Enter</text>
 </svg>

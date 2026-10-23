@@ -61,3 +61,24 @@ void UAgButton::HandleFocusLost()
 	// SetIsSelected(false)는 토글 버튼만 선택을 풀어 주므로 ClearSelection을 씁니다.
 	ClearSelection();
 }
+
+FReply UAgButton::NativeOnPreviewKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	// 슬레이트 버튼이 Space를 실행 키로 소비하거나 클릭을 발생시키지 않도록 가로챕니다.
+	if (InKeyEvent.GetKey() == EKeys::SpaceBar)
+	{
+		return FReply::Handled();
+	}
+
+	return Super::NativeOnPreviewKeyDown(InGeometry, InKeyEvent);
+}
+
+FReply UAgButton::NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (InKeyEvent.GetKey() == EKeys::SpaceBar)
+	{
+		return FReply::Handled();
+	}
+
+	return Super::NativeOnKeyUp(InGeometry, InKeyEvent);
+}
