@@ -7,6 +7,8 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
@@ -24,6 +26,15 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+}
+
+bool AAgEnemyCharacter::CanLosePP() const
+{
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	return ASC && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_GroggyImmune) &&
+	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
+	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
+	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Invincible);
 }
 
 int32 AAgEnemyCharacter::GetReachedPhase() const
@@ -65,6 +76,71 @@ void AAgEnemyCharacter::BeginPlay()
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleHitReactionChanged);
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
+}
+
+void AAgEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (FAnimMontageInstance* DeathMotion = AnimInstance ? AnimInstance->GetMontageInstanceForID(DeathMotionInstanceId) : nullptr)
+	{
+		DeathMotion->OnMontageBlendingOutStarted.Unbind();
+	}
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void AAgEnemyCharacter::HandleDeathEvent(const FGameplayEventData* Payload)
+{
+	if (IsDead() || bEndingPlay)
+	{
+		return;
+	}
+
+	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 사망 처리 전에 읽습니다.
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	const UAnimMontage* Playing = AnimInstance ? GetAbilitySystemComponent()->GetCurrentMontage() : nullptr;
+	const UAgGameplayAbility* Animating = Playing ? Cast<UAgGameplayAbility>(GetAbilitySystemComponent()->GetAnimatingAbility()) : nullptr;
+	const FAgAbilityData* AnimatingData = Animating ? GetCharacterData()->FindAbility(Animating->GetAbilityId()) : nullptr;
+	if (UAnimMontage* Death = AnimatingData && !AnimatingData->DeathMontage.IsNone() ? GetCharacterData()->FindMontage(AnimatingData->DeathMontage) : nullptr)
+	{
+		const float Position = AnimInstance ? AnimInstance->Montage_GetPosition(Playing) : 0.f;
+		DieWithDeathMotion(*Death, Position);
+		return;
+	}
+
+	Super::HandleDeathEvent(Payload);
+}
+
+void AAgEnemyCharacter::DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition)
+{
+	if (IsDead())
+	{
+		return;
+	}
+
+	ApplyDeathState();
+	OnDied.Broadcast(this);
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	FAnimMontageInstance* Instance = AnimInstance && AnimInstance->Montage_Play(&DeathMontage, 1.f, EMontagePlayReturnType::MontageLength, StartPosition) > 0.f
+	                                     ? AnimInstance->GetActiveInstanceForMontage(&DeathMontage)
+	                                     : nullptr;
+	if (!Instance)
+	{
+		StartRagdoll(FVector::ZeroVector);
+		return;
+	}
+	DeathMotionInstanceId = Instance->GetInstanceID();
+	Instance->OnMontageBlendingOutStarted = FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleDeathMotionBlendingOut);
+}
+
+void AAgEnemyCharacter::HandleDeathMotionBlendingOut(UAnimMontage* Montage, bool bInterrupted)
+{
+	DeathMotionInstanceId = INDEX_NONE;
+	if (!bEndingPlay)
+	{
+		StartRagdoll(FVector::ZeroVector);
+	}
 }
 
 void AAgEnemyCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount)

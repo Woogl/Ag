@@ -21,6 +21,7 @@ public:
 	void RestartStage();
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -39,4 +40,5 @@ private:
 	bool bResultDecided = false;
 	bool bStageCleared = false;
 	FTimerHandle ResultTimer;
+	TSet<TWeakObjectPtr<AAgCharacterBase>> RegisteredCombatants;
 };

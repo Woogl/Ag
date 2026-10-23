@@ -13,7 +13,6 @@
 #include "Animation/AnimMontage.h"
 #include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgCharacterMovementComponent.h"
-#include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
@@ -21,9 +20,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
-#include "Game/AgBossStageGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
 #include "GameFramework/RootMotionSource.h"
 #include "MotionWarpingComponent.h"
 
@@ -50,18 +47,6 @@ AAgCharacterBase::AAgCharacterBase(const FObjectInitializer& ObjectInitializer)
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 	HitPhysics = CreateDefaultSubobject<UAgHitPhysicsComponent>(TEXT("HitPhysics"));
 	CharacterDataClass = UAgCharacterData::StaticClass();
-
-	PerfectDodgeCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PerfectDodgeCapsule"));
-	PerfectDodgeCapsule->SetupAttachment(GetCapsuleComponent());
-	PerfectDodgeCapsule->SetUsingAbsoluteLocation(true);
-	PerfectDodgeCapsule->SetUsingAbsoluteRotation(true);
-	PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	// 투사체와 대상 찾기는 Pawn 오브젝트 종류로 찾고 응답은 보지 않으므로, 응답은 무기 판정 채널만 둡니다.
-	PerfectDodgeCapsule->SetCollisionObjectType(ECC_Pawn);
-	PerfectDodgeCapsule->SetCollisionResponseToAllChannels(ECR_Ignore);
-	PerfectDodgeCapsule->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
-	PerfectDodgeCapsule->SetGenerateOverlapEvents(false);
-	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -117,14 +102,6 @@ const FAgAbilityData* AAgCharacterBase::FindAbility(const FGameplayAbilitySpecHa
 bool AAgCharacterBase::IsDead() const
 {
 	return AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Dead);
-}
-
-bool AAgCharacterBase::CanLosePP() const
-{
-	return !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_GroggyImmune) &&
-	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
-	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
-	       !AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Invincible);
 }
 
 AAgCharacterBase* AAgCharacterBase::GetLockOnTarget() const
@@ -201,11 +178,6 @@ void AAgCharacterBase::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleHitstopChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PassThrough, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandlePassThroughChanged);
-	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PerfectDodgeWindow, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandlePerfectDodgeWindowChanged);
-	PerfectDodgeCapsule->SetCapsuleSize(GetCapsuleComponent()->GetUnscaledCapsuleRadius(), GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
-	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_TimeStop, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandleTimeStopChanged);
 	DeathEventHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death)
 	                       .AddUObject(this, &ThisClass::HandleDeathEvent);
 	PawnResponse = GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_Pawn);
@@ -215,23 +187,11 @@ void AAgCharacterBase::BeginPlay()
 	ApplyEffects();
 
 	GetCharacterMovement()->ProcessRootMotionPostConvertToWorld.BindUObject(this, &ThisClass::ClampRootMotion);
-
-	if (AAgBossStageGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgBossStageGameMode>())
-	{
-		GameMode->RegisterCombatant(this);
-	}
 }
 
 void AAgCharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// ASC는 자기가 등록 해제될 때에야 어빌리티를 취소합니다. 그 전에 메시가 등록 해제되며 몽타주를 끊으면, 살아 있는
-	// 어빌리티나 사망 모션의 콜백이 그때 메시를 바꿉니다(처형 사망의 래그돌이 이미 지운 물리 상태를 다시 만듦).
 	bEndingPlay = true;
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (FAnimMontageInstance* DeathMotion = AnimInstance ? AnimInstance->GetMontageInstanceForID(DeathMotionInstanceId) : nullptr)
-	{
-		DeathMotion->OnMontageBlendingOutStarted.Unbind();
-	}
 	AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death).Remove(DeathEventHandle);
 	AbilitySystemComponent->CancelAllAbilities();
 
@@ -285,15 +245,6 @@ void AAgCharacterBase::FellOutOfWorld(const UDamageType& DamageType)
 	Kill();
 }
 
-void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
-{
-	FGameplayEventData Payload;
-	Payload.EventTag = EventTag;
-	Payload.Instigator = this;
-	Payload.Target = this;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
-}
-
 void AAgCharacterBase::ApplyDeathState()
 {
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
@@ -301,13 +252,18 @@ void AAgCharacterBase::ApplyDeathState()
 
 	// 사망 모션은 루트 모션으로 계속 움직이므로 이동은 끄지 않고 멈추기만 합니다. 적 AI는 사망 상태로 넘어가
 	// 이동 입력을 더 주지 않습니다.
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-	{
-		DisableInput(PlayerController);
-	}
 	GetCharacterMovement()->StopMovementImmediately();
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+}
+
+void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
+{
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	Payload.Instigator = this;
+	Payload.Target = this;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
 }
 
 void AAgCharacterBase::DieWithRagdoll(const FVector& PushVelocity)
@@ -327,29 +283,6 @@ void AAgCharacterBase::DieWithRagdoll(const FVector& PushVelocity)
 	OnDied.Broadcast(this);
 }
 
-void AAgCharacterBase::DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition)
-{
-	if (IsDead())
-	{
-		return;
-	}
-
-	ApplyDeathState();
-	OnDied.Broadcast(this);
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	FAnimMontageInstance* Instance = AnimInstance && AnimInstance->Montage_Play(&DeathMontage, 1.f, EMontagePlayReturnType::MontageLength, StartPosition) > 0.f
-	                                     ? AnimInstance->GetActiveInstanceForMontage(&DeathMontage)
-	                                     : nullptr;
-	if (!Instance)
-	{
-		StartRagdoll(FVector::ZeroVector);
-		return;
-	}
-	DeathMotionInstanceId = Instance->GetInstanceID();
-	Instance->OnMontageBlendingOutStarted = FOnMontageBlendingOutStarted::CreateUObject(this, &ThisClass::HandleDeathMotionBlendingOut);
-}
-
 void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 {
 	GetCharacterMovement()->DisableMovement();
@@ -364,6 +297,19 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 	{
 		MeshComponent->AddImpulse(PushVelocity, NAME_None, true);
 	}
+}
+
+void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
+{
+	if (IsDead() || bEndingPlay)
+	{
+		return;
+	}
+
+	const AActor* Attacker = Payload ? Payload->Instigator.Get() : nullptr;
+	const FVector Push =
+		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * DeathPushSpeed : FVector::ZeroVector;
+	DieWithRagdoll(Push);
 }
 
 void AAgCharacterBase::GrantAbilities()
@@ -449,66 +395,6 @@ void AAgCharacterBase::HandlePassThroughChanged(const FGameplayTag Tag, int32 Ne
 	if (!IsDead())
 	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, NewCount > 0 ? ECR_Ignore : PawnResponse.GetValue());
-	}
-}
-
-void AAgCharacterBase::HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount)
-{
-	if (NewCount > 0)
-	{
-		PerfectDodgeCapsule->SetWorldLocation(GetCapsuleComponent()->GetComponentLocation());
-		PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	}
-	else
-	{
-		PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-}
-
-void AAgCharacterBase::HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount)
-{
-	UAgTimeSubsystem* TimeSubsystem = GetWorld()->GetSubsystem<UAgTimeSubsystem>();
-	if (NewCount > 0)
-	{
-		TimeSubsystem->StartTimeStop(*this, *this);
-	}
-	else
-	{
-		TimeSubsystem->EndTimeStop(*this);
-	}
-}
-
-void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
-{
-	if (IsDead() || bEndingPlay)
-	{
-		return;
-	}
-
-	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 사망 처리 전에 읽습니다.
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	const UAnimMontage* Playing = AnimInstance ? AbilitySystemComponent->GetCurrentMontage() : nullptr;
-	const UAgGameplayAbility* Animating = Playing ? Cast<UAgGameplayAbility>(AbilitySystemComponent->GetAnimatingAbility()) : nullptr;
-	const FAgAbilityData* AnimatingData = Animating ? CharacterData->FindAbility(Animating->GetAbilityId()) : nullptr;
-	if (UAnimMontage* Death = AnimatingData && !AnimatingData->DeathMontage.IsNone() ? CharacterData->FindMontage(AnimatingData->DeathMontage) : nullptr)
-	{
-		const float Position = AnimInstance ? AnimInstance->Montage_GetPosition(Playing) : 0.f;
-		DieWithDeathMotion(*Death, Position);
-		return;
-	}
-
-	const AActor* Attacker = Payload ? Payload->Instigator.Get() : nullptr;
-	const FVector Push =
-		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * DeathPushSpeed : FVector::ZeroVector;
-	DieWithRagdoll(Push);
-}
-
-void AAgCharacterBase::HandleDeathMotionBlendingOut(UAnimMontage* Montage, bool bInterrupted)
-{
-	DeathMotionInstanceId = INDEX_NONE;
-	if (!bEndingPlay)
-	{
-		StartRagdoll(FVector::ZeroVector);
 	}
 }
 

@@ -17,7 +17,6 @@ struct FAgAbilityData;
 class UMotionWarpingComponent;
 class UAgHitPhysicsComponent;
 class UAnimMontage;
-class UCapsuleComponent;
 class AAgCharacterBase;
 struct FGameplayAbilitySpec;
 struct FGameplayEventData;
@@ -86,7 +85,10 @@ public:
 
 	bool IsDead() const;
 
-	bool CanLosePP() const;
+	virtual bool CanLosePP() const
+	{
+		return false;
+	}
 
 	virtual FVector GetMoveInputDirection() const
 	{
@@ -122,7 +124,15 @@ public:
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
 
 protected:
+	virtual void ApplyDeathState();
+
 	void SendEventToSelf(const FGameplayTag& EventTag);
+
+	void DieWithRagdoll(const FVector& PushVelocity);
+
+	void StartRagdoll(const FVector& PushVelocity);
+
+	virtual void HandleDeathEvent(const FGameplayEventData* Payload);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))
 	FName CharacterDataId;
@@ -137,12 +147,6 @@ protected:
 	bool bEndingPlay = false;
 
 private:
-	void ApplyDeathState();
-	void DieWithRagdoll(const FVector& PushVelocity);
-	void DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition);
-
-	void StartRagdoll(const FVector& PushVelocity);
-
 	void GrantAbilities();
 
 	void ApplyEffects();
@@ -157,13 +161,6 @@ private:
 	void HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void HandlePassThroughChanged(const FGameplayTag Tag, int32 NewCount);
-
-	void HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount);
-
-	void HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount);
-
-	void HandleDeathEvent(const FGameplayEventData* Payload);
-	void HandleDeathMotionBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 
 	void UpdateTimeDilation();
 
@@ -188,15 +185,11 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Animation")
 	TObjectPtr<UAgHitPhysicsComponent> HitPhysics;
 
-	UPROPERTY(VisibleAnywhere, Category = "Combat")
-	TObjectPtr<UCapsuleComponent> PerfectDodgeCapsule;
-
 	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 
 	TEnumAsByte<ECollisionResponse> PawnResponse = ECR_Block;
 
 	float PreviousVelocityZ = 0.f;
 
-	int32 DeathMotionInstanceId = INDEX_NONE;
 	FDelegateHandle DeathEventHandle;
 };

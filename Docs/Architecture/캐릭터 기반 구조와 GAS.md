@@ -24,10 +24,11 @@
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·보스 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 시간 정지 요청, 극한 회피 구간의 회피를 시작한 자리 캡슐 `PerfectDodgeCapsule`), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 사망 처리와 사망 모션 |
+| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
 | `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 플레이어와 보스의 기본 회전. 제자리 회전 중에는 애님 인스턴스가 계산한 회전량을 액터에 적용하며, 그 밖에는 엔진 회전을 사용합니다. |
-| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라와 락온 카메라, 입력 매핑, 입력 계층(행동 태그로 스펙 찾기, 트리거 태그, 이동 입력 태그, 선입력, 점프와 점프 모션) |
-| `AAgBossCharacter` | `AAgCharacterBase` | 페이즈 같은 보스 상태, 피격 반응 뒤로 미룬 그로기의 시작, 그로기·처형 피격·페이즈 전환이 끝날 때의 PP 회복과 2페이즈 진입. 보스에 표시하는 월드 위치 HUD(락온 마커, 처형 안내) |
+| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라와 락온 카메라, 입력 매핑, 입력 계층(행동 태그로 스펙 찾기, 트리거 태그, 이동 입력 태그, 선입력, 점프와 점프 모션), 극한 회피 구간의 회피를 시작한 자리 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 플레이어 입력 비활성화 |
+| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 순찰 및 원위치 관리, 시야 판정, PP 감소 허용 여부(`CanLosePP`), 그로기 및 처형 피격 종료 시의 PP 회복, 처형 피격 중 전용 사망 모션(`DeathMontage`) |
+| `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 페이즈 및 페이즈 전환, 월드 위치 HUD(락온 마커, 처형 안내) |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, PP 감소량 반올림과 감소 허용 조건 적용, 사망·그로기 판정 |
 
 ```mermaid
@@ -63,7 +64,8 @@ classDiagram
     IAbilitySystemInterface <|.. AAgCharacterBase
     IGenericTeamAgentInterface <|.. AAgCharacterBase
     AAgCharacterBase <|-- AAgPlayerCharacter
-    AAgCharacterBase <|-- AAgBossCharacter
+    AAgCharacterBase <|-- AAgEnemyCharacter
+    AAgEnemyCharacter <|-- AAgBossCharacter
 
     AAgCharacterBase *-- UAgAttributeSet : AttributeSet
     UAttributeSet <|-- UAgAttributeSet
@@ -107,7 +109,7 @@ sequenceDiagram
     participant D as 캐릭터 데이터
     participant GM as 보스전 게임 모드
     C->>ASC: InitAbilityActorInfo
-    C->>ASC: MOV 변화, 히트스톱·캐릭터 통과·극한 회피 구간·시간 정지 태그, 사망 이벤트 구독
+    C->>ASC: MOV 변화, 히트스톱·캐릭터 통과 태그, 사망 이벤트 구독
     C->>D: 스탯 초기값
     C->>ASC: 스탯 기본값(최대값 먼저), MOV 반영
     C->>D: 어빌리티 ID 목록<br>(정의는 Abilities.json)
@@ -115,8 +117,7 @@ sequenceDiagram
     C->>D: 시작 효과 ID 목록<br>(정의는 Effects.json)
     C->>ASC: GameplayEffect 적용<br>(리젠, 그로기 면역)
     C->>C: 루트 모션 자르기 연결
-    C->>GM: RegisterCombatant
-    Note over C,GM: 플레이어: 어빌리티 시작·끝, 상태 태그 구독, 락온 회전 방식<br>보스: 그로기 태그, 어빌리티 끝 구독
+    Note over C,GM: 게임 모드: BeginPlay 및 플레이어 스폰 시 전투원 등록<br>플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작·끝, 상태 태그 구독, 락온 회전 방식, 사망 시 입력 비활성화<br>적: 그로기 태그, 어빌리티 끝 구독, 처형 사망 모션
 ```
 
 ### GameplayEffect

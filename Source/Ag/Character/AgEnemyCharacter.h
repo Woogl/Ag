@@ -8,6 +8,7 @@
 #include "AgEnemyCharacter.generated.h"
 
 class ATargetPoint;
+class UAnimMontage;
 class UStateTree;
 struct FAbilityEndedData;
 
@@ -18,6 +19,8 @@ class AAgEnemyCharacter : public AAgCharacterBase
 
 public:
 	AAgEnemyCharacter();
+
+	virtual bool CanLosePP() const override;
 
 	int32 GetPhase() const
 	{
@@ -51,8 +54,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual void HandleDeathEvent(const FGameplayEventData* Payload) override;
 
 private:
+	void DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition);
+	void HandleDeathMotionBlendingOut(UAnimMontage* Montage, bool bInterrupted);
 	/** 처형 시작으로 그로기가 끝나면 PP 회복은 처형 피격 종료까지 미룹니다. */
 	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
 
@@ -67,4 +75,6 @@ private:
 	FTransform HomeTransform;
 
 	int32 Phase = 1;
+
+	int32 DeathMotionInstanceId = INDEX_NONE;
 };

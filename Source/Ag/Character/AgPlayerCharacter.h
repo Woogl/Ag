@@ -9,6 +9,7 @@
 #include "AgPlayerCharacter.generated.h"
 
 class UCameraComponent;
+class UCapsuleComponent;
 class UGameplayAbility;
 class UInputAction;
 class UInputMappingContext;
@@ -52,6 +53,8 @@ protected:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	virtual void ApplyDeathState() override;
+
 private:
 	void Move(const FInputActionValue& Value);
 
@@ -94,11 +97,18 @@ private:
 
 	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
+	void HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount);
+
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	TObjectPtr<UCapsuleComponent> PerfectDodgeCapsule;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Camera|Lock-On")
 	float LockOnPitchMin = 0.f;

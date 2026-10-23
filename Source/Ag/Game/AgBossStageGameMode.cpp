@@ -5,14 +5,16 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
+#include "EngineUtils.h"
 #include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
 void AAgBossStageGameMode::RegisterCombatant(AAgCharacterBase* Combatant)
 {
-	if (Combatant)
+	if (Combatant && !RegisteredCombatants.Contains(Combatant))
 	{
+		RegisteredCombatants.Add(Combatant);
 		Combatant->OnDied.AddUObject(this, &ThisClass::HandleCombatantDied);
 	}
 }
@@ -25,6 +27,16 @@ void AAgBossStageGameMode::RestartStage()
 	}
 }
 
+void AAgBossStageGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
+	{
+		RegisterCombatant(*It);
+	}
+}
+
 void AAgBossStageGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
@@ -32,6 +44,11 @@ void AAgBossStageGameMode::HandleStartingNewPlayer_Implementation(APlayerControl
 	if (AAgPlayerController* PlayerController = Cast<AAgPlayerController>(NewPlayer))
 	{
 		PlayerController->ShowHUD(HUDWidgetClass);
+	}
+
+	if (AAgCharacterBase* PlayerCharacter = NewPlayer ? Cast<AAgCharacterBase>(NewPlayer->GetPawn()) : nullptr)
+	{
+		RegisterCombatant(PlayerCharacter);
 	}
 }
 
