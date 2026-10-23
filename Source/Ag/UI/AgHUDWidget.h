@@ -82,6 +82,9 @@ protected:
 	TObjectPtr<UImage> UPGauge;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidget> BossStatusPanel;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> BossNameText;
 
 	UPROPERTY(meta = (BindWidget))

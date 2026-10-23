@@ -21,6 +21,7 @@
 #include "Data/AgEffectData.h"
 #include "GameplayEffect.h"
 #include "Kismet/GameplayStatics.h"
+#include "Perception/AISense_Damage.h"
 
 namespace
 {
@@ -150,6 +151,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		return;
 	}
+	UAISense_Damage::ReportDamageEvent(Target, Target, Attacker, 1.f, Attacker->GetActorLocation(), Context.GetOrigin());
 	// 반사탄에 맞은 대상의 패리당함 반응(PP 감소)도 피격 반응 전이어야 그로기가 넉다운보다 우선합니다.
 	if (bHit && Projectile && Projectile->IsReflected() && !Target->IsDead())
 	{

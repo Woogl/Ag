@@ -24,11 +24,6 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
-	virtual FGenericTeamId GetGenericTeamId() const override
-	{
-		return FGenericTeamId(0);
-	}
-
 	static const FName JumpMontageId;
 	static const FName JumpStartSection;
 	static const FName JumpLandSection;

@@ -117,7 +117,11 @@ void UAgHUDWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 			break;
 		}
 	}
-	if (const AAgBossCharacter* BossCharacter = Boss.Get())
+	const AAgBossCharacter* BossCharacter = Boss.Get();
+	const bool bBossInCombat =
+		BossCharacter && !BossCharacter->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
+	BossStatusPanel->SetVisibility(bBossInCombat ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	if (bBossInCombat)
 	{
 		UpdateBoss(*BossCharacter, GameDeltaTime);
 	}

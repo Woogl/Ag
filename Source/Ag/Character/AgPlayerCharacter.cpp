@@ -52,6 +52,7 @@ const FName AAgPlayerCharacter::JumpLandSection(TEXT("Land"));
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
 	CharacterDataClass = UAgPlayerData::StaticClass();
+	Team = EAgTeam::Ally;
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;

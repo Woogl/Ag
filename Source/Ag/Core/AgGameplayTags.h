@@ -42,7 +42,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Executed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_PhaseTransition);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Parried);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Boss_Pattern);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Enemy_Pattern);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Execution);

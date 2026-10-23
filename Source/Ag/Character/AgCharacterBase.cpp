@@ -80,6 +80,23 @@ UAbilitySystemComponent* AAgCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+ETeamAttitude::Type AAgCharacterBase::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	const IGenericTeamAgentInterface* OtherAgent = Cast<const IGenericTeamAgentInterface>(&Other);
+	if (!OtherAgent)
+	{
+		return ETeamAttitude::Neutral;
+	}
+	const FGenericTeamId OtherTeam = OtherAgent->GetGenericTeamId();
+	if (OtherTeam == GetGenericTeamId())
+	{
+		return ETeamAttitude::Friendly;
+	}
+	// 적군은 중립을 노리지 않습니다. 적중은 Friendly가 아니면 맞으므로, 공격 판정에 들어온 중립은 맞습니다.
+	const bool bIgnored = Team == EAgTeam::Enemy && OtherTeam == FGenericTeamId(static_cast<uint8>(EAgTeam::Neutral));
+	return bIgnored ? ETeamAttitude::Neutral : ETeamAttitude::Hostile;
+}
+
 FGameplayAbilitySpec* AAgCharacterBase::FindAbilitySpec(FName Id) const
 {
 	const FGameplayAbilitySpecHandle* Handle = AbilityIds.FindKey(Id);
@@ -122,8 +139,7 @@ bool AAgCharacterBase::IsFacingFixed() const
 {
 	// 엔진 GetCurrentMontage는 블렌드 아웃을 시작한 몽타주를 돌려주지 않아, 행동이 끝나기 전 블렌드 아웃부터 돕니다.
 	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
-	return (Animating && Animating->IsActive() && AbilitySystemComponent->GetCurrentMontage()) ||
-	       AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
+	return Animating && Animating->IsActive() && AbilitySystemComponent->GetCurrentMontage();
 }
 
 void AAgCharacterBase::Kill()
@@ -158,7 +174,7 @@ void AAgCharacterBase::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
 
-	// 보스 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 보스 데이터를 읽으므로,
+	// 적 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 적 데이터를 읽으므로,
 	// 그 전에 연결합니다.
 	CharacterData = UAgAssetManager::Get().FindCharacterData(CharacterDataId);
 	if (!CharacterData || !CharacterData->IsA(CharacterDataClass))
@@ -283,7 +299,7 @@ void AAgCharacterBase::ApplyDeathState()
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dead);
 	AbilitySystemComponent->CancelAllAbilities();
 
-	// 사망 모션은 루트 모션으로 계속 움직이므로 이동은 끄지 않고 멈추기만 합니다. 보스 AI는 사망 상태로 넘어가
+	// 사망 모션은 루트 모션으로 계속 움직이므로 이동은 끄지 않고 멈추기만 합니다. 적 AI는 사망 상태로 넘어가
 	// 이동 입력을 더 주지 않습니다.
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{

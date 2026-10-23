@@ -212,7 +212,7 @@
     "Activation": {
       "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.HitReaction"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Hit.KnockDown"}
       ],
@@ -228,7 +228,7 @@
     "Activation": {
       "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.HitReaction"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Hit.KnockUp"}
       ],
@@ -246,7 +246,7 @@
       "RequiredTags": ["State.Airborne", "State.HitReaction"],
       "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.HitReaction"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Hit.Flinch"}
       ],
@@ -263,7 +263,7 @@
     "Activation": {
       "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.HitReaction", "State.Guarding"],
-      "CancelTags": ["Ability.Action.Parry", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
+      "CancelTags": ["Ability.Action.Parry", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Guard.Pushback"}
       ],
@@ -279,7 +279,7 @@
     "Activation": {
       "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.HitReaction"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Guard.Break"}
       ],
@@ -291,7 +291,7 @@
     ]
   },
   "DoubleStrike": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
     },
@@ -302,7 +302,7 @@
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 300}, "Weight": 4}
   },
   "Sweep": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Cooldown": 5,
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
@@ -314,7 +314,7 @@
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 300}, "Weight": 3}
   },
   "DashThrust": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Cooldown": 10,
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
@@ -326,7 +326,7 @@
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 4}
   },
   "GroundSlam": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Cooldown": 12,
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
@@ -339,7 +339,7 @@
     "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 8}
   },
   "QuintupleStrike": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Cooldown": 8,
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
@@ -351,7 +351,7 @@
     "PatternSelection": {"Phases": [2], "Distance": {"Min": 0, "Max": 300}, "Weight": 8}
   },
   "SwordWave": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Cooldown": 10,
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
@@ -363,7 +363,7 @@
     "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 8}
   },
   "JumpCleave": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Cooldown": 6,
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
@@ -375,7 +375,7 @@
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 1000}, "Weight": 3}
   },
   "Backstep": {
-    "Tags": ["Ability.Boss.Pattern"],
+    "Tags": ["Ability.Enemy.Pattern"],
     "Cooldown": 4,
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
@@ -389,7 +389,7 @@
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Boss.Pattern", "Ability.Reaction.HitReaction"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Groggy"}
       ]
@@ -422,7 +422,7 @@
     "Activation": {
       "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
       "OwnedTags": ["State.Invincible"],
-      "CancelTags": ["Ability.Boss.Pattern"],
+      "CancelTags": ["Ability.Enemy.Pattern"],
       "Triggers": [
         {"Tag": "Event.PhaseTransition"}
       ]

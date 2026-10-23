@@ -115,7 +115,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	for (const FHitResult& Contact : Reached)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
-		if (!IsValid(Target) || Target->IsDead() || FGenericTeamId::GetAttitude(DamageSource, Target) != ETeamAttitude::Hostile || TouchedActors.Contains(Target))
+		if (!IsValid(Target) || Target->IsDead() || DamageSource->GetTeamAttitudeTowards(*Target) == ETeamAttitude::Friendly || TouchedActors.Contains(Target))
 		{
 			continue;
 		}

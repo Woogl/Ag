@@ -87,13 +87,19 @@ class UAgPlayerData : public UAgCharacterData
 };
 
 UCLASS(BlueprintType)
-class UAgBossData : public UAgCharacterData
+class UAgEnemyData : public UAgCharacterData
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PostPatternDelayTime = FFloatInterval(0.f, 0.f);
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
+	float SightDistance = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
+	float SightAngle = 0.f;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")
 	TArray<float> PhaseTransitionHPRatios;

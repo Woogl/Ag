@@ -38,7 +38,7 @@
     ],
     "End": [
       {"Task": "CameraShake", "Start":0, "Shake": "Medium"},
-      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}, "Area": {"Preset": "Enemy", "Range": 5000, "TargetBlockedTags": ["State.Airborne"]}}
+      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}, "Area": {"Preset": "Hit", "Range": 5000, "TargetBlockedTags": ["State.Airborne"]}}
     ]
   },
   "/Game/Animations/AM_Boss_JumpCleave.AM_Boss_JumpCleave": {
@@ -200,7 +200,7 @@
     "Default": [
       {"Task": "RootMotion", "Start": 0, "End": 0.3333333, "RotationMethod": "Slerp", "bWarpTranslation": true},
       {"Task": "WeaponHit", "Start": 0.3333333, "End": 0.8, "Damage": {"HPMultiplier": 1.5, "bGuardable": true}},
-      {"Task": "AreaHit", "Start":0.8, "Damage": {"HPMultiplier": 4.5, "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Enemy", "Range": 150}}
+      {"Task": "AreaHit", "Start":0.8, "Damage": {"HPMultiplier": 4.5, "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 150}}
     ]
   },
   "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack": {
@@ -240,7 +240,7 @@
       {"Task": "Transition", "Start": 0, "Tag": "State.Cutscene", "Section": "Judgment"}
     ],
     "Draw": [
-      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Enemy", "Range": 1000}},
+      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
       {"Task": "CameraShake", "Start":0, "Shake": "Large"},
       {"Task": "ApplyEffect", "Start":0, "Effect": "UltimateSlowMotion"}
     ]

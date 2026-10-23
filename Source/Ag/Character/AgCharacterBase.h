@@ -26,6 +26,13 @@ struct FOnAttributeChangeData;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase*);
 
+enum class EAgTeam : uint8
+{
+	Ally,
+	Enemy,
+	Neutral
+};
+
 UCLASS(Abstract)
 class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
 {
@@ -40,8 +47,10 @@ public:
 
 	virtual FGenericTeamId GetGenericTeamId() const override
 	{
-		return FGenericTeamId(1);
+		return FGenericTeamId(static_cast<uint8>(Team));
 	}
+
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 	UAgAttributeSet* GetAttributeSet() const
 	{
@@ -119,6 +128,8 @@ protected:
 	FName CharacterDataId;
 
 	TSubclassOf<UAgCharacterData> CharacterDataClass;
+
+	EAgTeam Team = EAgTeam::Neutral;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAgCharacterData> CharacterData;

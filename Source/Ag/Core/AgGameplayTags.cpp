@@ -42,7 +42,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_Executed, "Ability.Reaction.Executed", "처형 피격 (그로기를 종료하고 처형 상태로 전환)");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Parried, "Ability.Reaction.Parried");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Boss_Pattern, "Ability.Boss.Pattern", "보스 패턴 어빌리티 (패턴을 한꺼번에 취소할 때 씀)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Enemy_Pattern, "Ability.Enemy.Pattern", "적 패턴 어빌리티 (패턴을 한꺼번에 취소할 때 씀)");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Execution, "State.Execution", "상태 우선순위 2: 처형 중 (역할은 실행 문맥으로 구분)");
@@ -64,7 +64,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_TimeStop, "State.TimeStop", "가진 캐릭터만 빼고 게임 전체의 시간을 멈춤");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dashing, "State.Dashing", "돌진 중 (Dash Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Cutscene, "State.Cutscene", "컷신 재생 중 (PlayCutscene Task가 도는 동안)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "비전투 (플레이어 사망 뒤의 보스)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "적이 전투 중이 아님 (비전투 상태, 플레이어 사망 뒤 대기)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyImmune, "State.GroggyImmune", "그로기 면역. PP 감소와 그로기 진입 대상에서 제외");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyDelayed, "State.GroggyDelayed", "피격 반응이 끝나 미뤘던 그로기를 시작하는 동안");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");

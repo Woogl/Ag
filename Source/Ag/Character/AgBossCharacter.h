@@ -3,49 +3,31 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/AgCharacterBase.h"
-#include "GameplayTagContainer.h"
+#include "Character/AgEnemyCharacter.h"
 #include "AgBossCharacter.generated.h"
 
 class AAgPlayerCharacter;
-class UStateTree;
 class UWidgetComponent;
-struct FAbilityEndedData;
 
 UCLASS(Abstract)
-class AAgBossCharacter : public AAgCharacterBase
+class AAgBossCharacter : public AAgEnemyCharacter
 {
 	GENERATED_BODY()
 
 public:
 	AAgBossCharacter();
 
-	int32 GetPhase() const
+	virtual bool CanReturnToNonCombat() const override
 	{
-		return Phase;
+		return false;
 	}
-
-	/** 현재 HP로 들어선 마지막 페이즈입니다. 페이즈 전환이 끝나야 현재 페이즈가 됩니다. */
-	int32 GetReachedPhase() const;
 
 	FVector GetLockOnLocation() const;
 
-	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	TObjectPtr<UStateTree> AIStateTree;
-
 protected:
-	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	/** 처형 시작으로 그로기가 끝나면 PP 회복은 처형 피격 종료까지 미룹니다. */
-	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
-
-	/** 피격 반응 중에 PP가 0이 되었으면 그 반응이 끝날 때 그로기를 시작합니다. */
-	void HandleHitReactionChanged(const FGameplayTag Tag, int32 NewCount);
-
-	void HandleAbilityEnded(const FAbilityEndedData& Data);
-
 	bool IsExecutionTargetOf(AAgPlayerCharacter& Player) const;
 
 	void UpdateWorldWidgets();
@@ -55,6 +37,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
-
-	int32 Phase = 1;
 };

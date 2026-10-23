@@ -116,7 +116,12 @@ bool UAgTargetingFilterTask_Hostile::ShouldFilterTarget(const FTargetingRequestH
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
-	return !Owner || FGenericTeamId::GetAttitude(Owner, TargetData.HitResult.GetActor()) != ETeamAttitude::Hostile;
+	if (!Owner)
+	{
+		return true;
+	}
+	const ETeamAttitude::Type Attitude = FGenericTeamId::GetAttitude(Owner, TargetData.HitResult.GetActor());
+	return bIncludeNeutral ? Attitude == ETeamAttitude::Friendly : Attitude != ETeamAttitude::Hostile;
 }
 
 UAgTargetingFilterTask_TagRequirements::UAgTargetingFilterTask_TagRequirements(const FObjectInitializer& ObjectInitializer)

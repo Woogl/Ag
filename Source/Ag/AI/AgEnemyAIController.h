@@ -4,29 +4,35 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "AgBossAIController.generated.h"
+#include "Perception/AIPerceptionTypes.h"
+#include "AgEnemyAIController.generated.h"
 
-class AAgBossCharacter;
 class AAgCharacterBase;
+class AAgEnemyCharacter;
 class UAbilitySystemComponent;
-class UAgBossData;
+class UAgEnemyData;
+class UAISenseConfig_Damage;
+class UAISenseConfig_Sight;
 class UStateTreeAIComponent;
 struct FGameplayEventData;
 
 UCLASS()
-class AAgBossAIController : public AAIController
+class AAgEnemyAIController : public AAIController
 {
 	GENERATED_BODY()
 
 public:
-	AAgBossAIController();
+	AAgEnemyAIController();
 
-	AAgBossCharacter* GetBoss() const;
-	const UAgBossData* GetBossData() const;
+	AAgEnemyCharacter* GetEnemy() const;
+	const UAgEnemyData* GetEnemyData() const;
 
 	AAgCharacterBase* GetTarget() const;
 
-	bool IsBossReacting() const;
+	bool IsEnemyReacting() const;
+
+	/** 적대 상대가 시야에 보이거나, 마지막으로 보이거나 맞은 뒤 놓친 시간이 전투 규칙의 TargetLostTime보다 짧습니다. */
+	bool IsTargetNoticed() const;
 
 	int32 GetPhaseTransitionTarget() const
 	{
@@ -37,13 +43,19 @@ public:
 		PhaseTransitionTarget = TargetPhase;
 	}
 
+	virtual FGenericTeamId GetGenericTeamId() const override;
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	void UpdateTarget();
+	void ConfigureSight(const UAgEnemyData& Data);
+
+	UFUNCTION()
+	void HandleTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 	void BindTargetEvents();
 
@@ -51,6 +63,15 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "AI")
 	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
+
+	UPROPERTY(VisibleAnywhere, Category = "AI")
+	TObjectPtr<UAISenseConfig_Sight> SightConfig;
+
+	UPROPERTY(VisibleAnywhere, Category = "AI")
+	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
+
+	bool bTargetInSight = false;
+	double LastNoticedTime = -1.;
 
 	TWeakObjectPtr<UAbilitySystemComponent> TargetASC;
 	FDelegateHandle BasicAttackHandle;

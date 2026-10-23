@@ -23,4 +23,7 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
 	float GuardSPCostRatio = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
+	float TargetLostTime = 0.f;
 };

@@ -162,7 +162,7 @@ public:
 	 * 스키마 클래스로 새 StateTree 에셋을 만듭니다. 'Root' 상태 하나가 들어 있습니다.
 	 * 스키마의 속성(AI 스키마의 AIControllerClass, ContextActorClass 등)은 엔진의 ObjectTools.set_properties로
 	 * 에디터 데이터의 Schema 하위 객체에 씁니다.
-	 * @param AssetPath 예: /Game/AI/ST_Boss
+	 * @param AssetPath 예: /Game/AI/ST_Enemy
 	 * @return 만든 에셋. 그 경로에 에셋이 이미 있거나 만들지 못하면 null입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
@@ -183,7 +183,7 @@ public:
 
 	/**
 	 * 상태에 태스크를 더합니다.
-	 * @param Task 태스크 구조체(예: /Script/Ag.AgBossAITask_Wait). 스키마가 허용하는 태스크여야 합니다.
+	 * @param Task 태스크 구조체(예: /Script/Ag.AgEnemyAITask_Wait). 스키마가 허용하는 태스크여야 합니다.
 	 * @param InstanceValues 태스크 인스턴스 데이터의 값. 언리얼 텍스트 형식이고(예: (Pattern=Backstep)), 비우면 기본값입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
@@ -197,7 +197,7 @@ public:
 	 * 상태에 TargetPath 상태로 가는 전환을 더합니다.
 	 * @param Trigger EStateTreeTransitionTrigger 값 이름: OnStateCompleted, OnStateSucceeded, OnStateFailed, OnTick, OnEvent.
 	 * @param EventTag Trigger가 OnEvent일 때 기다리는 이벤트.
-	 * @param Condition 전환 조건 구조체(예: /Script/Ag.AgBossAICondition_PlayerDead). 조건이 없으면 null.
+	 * @param Condition 전환 조건 구조체(예: /Script/Ag.AgEnemyAICondition_PlayerDead). 조건이 없으면 null.
 	 * @param ConditionValues 조건 인스턴스 데이터의 값. 언리얼 텍스트 형식이고, 비우면 기본값입니다.
 	 * @return 상태나 대상이 없거나, Trigger를 모르거나, 조건을 스키마가 허용하지 않으면 false입니다.
 	 */

@@ -83,6 +83,8 @@
       "EnemyLockOn"
     ],
     "PostPatternDelayTime": {"Min": 0.5, "Max": 1.2},
+    "SightDistance": 2000,
+    "SightAngle": 120,
     "PhaseTransitionHPRatios": [0.5],
     "Effects": ["PPRegen"],
     "Montages": {

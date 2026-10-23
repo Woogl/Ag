@@ -215,7 +215,7 @@ bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge)
 bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Location, const FHitResult& Contact)
 {
 	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
-	if (Target.IsDead() || Character->GetTeamAttitudeTowards(Target) != ETeamAttitude::Hostile || TouchedActors.Contains(&Target))
+	if (Target.IsDead() || Character->GetTeamAttitudeTowards(Target) == ETeamAttitude::Friendly || TouchedActors.Contains(&Target))
 	{
 		return true;
 	}

@@ -5,6 +5,11 @@
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ],
+  "Hit": [
+    {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile", "bIncludeNeutral": true},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}}
+  ],
   "LockOn": [
     {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},

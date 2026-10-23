@@ -81,7 +81,7 @@ UAgAssetManager::UAgAssetManager()
 	TargetingPresets = CreateDefaultSubobject<UAgTargetingPresetSet>(TEXT("TargetingPresets"));
 	Abilities = CreateDefaultSubobject<UAgAbilitySet>(TEXT("Abilities"));
 	Characters.Add(TEXT("Player"), CreateDefaultSubobject<UAgPlayerData>(TEXT("Player")));
-	Characters.Add(TEXT("Boss"), CreateDefaultSubobject<UAgBossData>(TEXT("Boss")));
+	Characters.Add(TEXT("Boss"), CreateDefaultSubobject<UAgEnemyData>(TEXT("Boss")));
 }
 
 UAgAssetManager& UAgAssetManager::Get()
