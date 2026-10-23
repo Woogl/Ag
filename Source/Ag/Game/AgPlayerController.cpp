@@ -4,9 +4,11 @@
 
 #include "Ag.h"
 #include "CommonActivatableWidget.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Game/AgCheatManager.h"
 #include "UI/AgBattleResultScreen.h"
 #include "UI/AgHUDWidget.h"
+#include "UI/AgNavigationConfig.h"
 #include "UI/AgUILayout.h"
 
 AAgPlayerController::AAgPlayerController()
@@ -17,6 +19,11 @@ AAgPlayerController::AAgPlayerController()
 void AAgPlayerController::ReceivedPlayer()
 {
 	Super::ReceivedPlayer();
+
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().SetNavigationConfig(MakeShared<FAgNavigationConfig>());
+	}
 
 	// 게임 모드가 PostLogin에서 첫 화면을 열기 전에 레이아웃이 있어야 합니다.
 	// 엔진은 PostLogin 직전의 SetPlayer에서 이 함수를 부릅니다.
