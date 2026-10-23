@@ -343,7 +343,10 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 		return;
 	}
 
-	BufferedInput = InputTag != AgGameplayTags::Input_Execute && IsActionInputBlocked(InputTag) ? InputTag : FGameplayTag();
+	const bool bFallingJump = InputTag == AgGameplayTags::Input_Jump && GetCharacterMovement()->IsFalling();
+	BufferedInput = !bFallingJump && InputTag != AgGameplayTags::Input_Execute && IsActionInputBlocked(InputTag)
+	                    ? InputTag
+	                    : FGameplayTag();
 	BufferedInputTime = GetWorld()->GetTimeSeconds();
 
 	// 막힌 동안에도 실행 중인 행동은 입력 이벤트를 받으므로(기본 공격의 다음 타) 키는 지금도 넣습니다.
