@@ -5,8 +5,8 @@
 #include "Ag.h"
 #include "CommonActivatableWidget.h"
 #include "Game/AgCheatManager.h"
+#include "UI/AgBattleResultScreen.h"
 #include "UI/AgHUDWidget.h"
-#include "UI/AgResultScreen.h"
 #include "UI/AgUILayout.h"
 
 AAgPlayerController::AAgPlayerController()
@@ -52,10 +52,10 @@ void AAgPlayerController::HideHUD()
 	}
 }
 
-void AAgPlayerController::ShowResult(TSubclassOf<UAgResultScreen> ResultScreenClass, bool bStageCleared)
+void AAgPlayerController::ShowResult(TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass, bool bStageCleared)
 {
-	if (UAgResultScreen* ResultScreen = Cast<UAgResultScreen>(PushScreen(EAgUILayer::Menu, ResultScreenClass)))
+	if (UAgBattleResultScreen* BattleResultScreen = Cast<UAgBattleResultScreen>(PushScreen(EAgUILayer::Menu, BattleResultScreenClass)))
 	{
-		ResultScreen->SetResult(bStageCleared);
+		BattleResultScreen->SetResult(bStageCleared);
 	}
 }

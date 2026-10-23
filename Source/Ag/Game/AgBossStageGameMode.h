@@ -7,8 +7,8 @@
 #include "AgBossStageGameMode.generated.h"
 
 class AAgCharacterBase;
+class UAgBattleResultScreen;
 class UAgHUDWidget;
-class UAgResultScreen;
 
 UCLASS(Abstract)
 class AAgBossStageGameMode : public AAgGameMode
@@ -27,7 +27,7 @@ protected:
 	TSubclassOf<UAgHUDWidget> HUDWidgetClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UAgResultScreen> ResultScreenClass;
+	TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Result")
 	float StageResultPresentationTime = 4.f;

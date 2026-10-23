@@ -7,8 +7,8 @@
 #include "AgPlayerController.generated.h"
 
 class UCommonActivatableWidget;
+class UAgBattleResultScreen;
 class UAgHUDWidget;
-class UAgResultScreen;
 class UAgUILayout;
 enum class EAgUILayer : uint8;
 
@@ -27,7 +27,7 @@ public:
 	void ShowHUD(TSubclassOf<UAgHUDWidget> HUDClass);
 	void HideHUD();
 
-	void ShowResult(TSubclassOf<UAgResultScreen> ResultScreenClass, bool bStageCleared);
+	void ShowResult(TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass, bool bStageCleared);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")

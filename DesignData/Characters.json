@@ -47,7 +47,7 @@
       "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
       "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
       "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
-      "KnockDown": "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack",
+      "KnockDown": "/Game/Animations/AM_Player_KnockDown.AM_Player_KnockDown",
       "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
       "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
       "GuardBreak": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak"
@@ -94,7 +94,7 @@
       "SwordWave": "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave",
       "JumpCleave": "/Game/Animations/AM_Boss_JumpCleave.AM_Boss_JumpCleave",
       "Backstep": "/Game/Animations/AM_Boss_Backstep.AM_Boss_Backstep",
-      "KnockDown": "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack",
+      "KnockDown": "/Game/Animations/AM_Boss_KnockDown.AM_Boss_KnockDown",
       "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
       "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
       "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",

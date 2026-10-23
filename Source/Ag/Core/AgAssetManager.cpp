@@ -17,6 +17,7 @@
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
 #include "Engine/EngineTypes.h"
+#include "Engine/World.h"
 #include "GameplayTagContainer.h"
 #include "JsonObjectConverter.h"
 #include "Misc/FileHelper.h"
@@ -53,6 +54,21 @@ namespace
 				It->CopyCompleteValue(It->ContainerPtrToValuePtr<void>(&To), It->ContainerPtrToValuePtr<void>(&From));
 			}
 		}
+	}
+
+	/** 읽지 못한 에셋·클래스·정의 ID·Task는 비어 있습니다. 배열·맵에 남기면 쓰는 코드가 빈 원소를 만나므로 원소째 뺍니다. */
+	bool IsEmptyReference(const FProperty& Property, const void* Value)
+	{
+		if (const FObjectPropertyBase* Object = CastField<FObjectPropertyBase>(&Property))
+		{
+			return !Object->GetObjectPropertyValue(Value);
+		}
+		if (const FNameProperty* Name = CastField<FNameProperty>(&Property))
+		{
+			return Name->GetPropertyValue(Value).IsNone();
+		}
+		const FStructProperty* Struct = CastField<FStructProperty>(&Property);
+		return Struct && Struct->Struct == FInstancedStruct::StaticStruct() && !static_cast<const FInstancedStruct*>(Value)->IsValid();
 	}
 } // namespace
 
@@ -139,7 +155,7 @@ TArray<FName> UAgAssetManager::GetCharacterDataIds(const UClass* DataClass) cons
 #if WITH_EDITOR
 void UAgAssetManager::ReloadJsonData()
 {
-	if (LoadJsonData() && GEngine)
+	if (LoadJsonData(false) && GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
 			TEXT("Data reloaded. Spawn settings apply on the next play start."));
@@ -150,7 +166,7 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 {
 	Super::ModifyCook(TargetPlatforms, PackagesToCook, PackagesToNeverCook);
 	// 초기 로딩 이후 파일이 바뀌었더라도 쿡은 최신 JSON 전체를 검사합니다. 읽기 오류의 Error 로그가 쿡을 실패시킵니다.
-	if (!LoadJsonData())
+	if (!LoadJsonData(false))
 	{
 		return;
 	}
@@ -190,10 +206,20 @@ void UAgAssetManager::StartInitialLoading()
 		const EAgEffect Effect = static_cast<EAgEffect>(NativeEffectEnum->GetValueByIndex(Index));
 		NativeEffects.Add(Effect, AgEffectData::MakeNativeEffect(Effect, *this));
 	}
-	LoadJsonData();
+	LoadJsonData(true);
+#if WITH_EDITOR
+	// 에셋 쪽에서 고친 오류는 JSON이 바뀌지 않아 파일 감시가 다시 읽지 않으므로, 게임 월드를 시작할 때 다시 읽습니다.
+	FWorldDelegates::OnPostWorldInitialization.AddWeakLambda(this, [this](UWorld* World, const UWorld::InitializationValues)
+	{
+		if (bJsonLoadFailed && World->IsGameWorld())
+		{
+			LoadJsonData(false);
+		}
+	});
+#endif
 }
 
-bool UAgAssetManager::LoadJsonData()
+bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 {
 	TObjectPtr<UAgCombatRules> NewRules = NewObject<UAgCombatRules>(this);
 	UAgEffectSet* NewEffects = NewObject<UAgEffectSet>(this);
@@ -225,7 +251,10 @@ bool UAgAssetManager::LoadJsonData()
 	bRead = Read(AbilitiesFile, UAgAbilitySet::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAbilitySet, Abilities), &NewAbilities->Abilities) && bRead;
 	bRead = Read(MontageTimelinesFile, UAgMontageTimelineData::StaticClass(), GET_MEMBER_NAME_CHECKED(UAgMontageTimelineData, Timelines), &NewTimelines->Timelines) && bRead;
 	bRead = Read(CharactersFile, StaticClass(), GET_MEMBER_NAME_CHECKED(UAgAssetManager, Characters), &NewCharacters) && bRead;
-	if (!bRead)
+	bJsonLoadFailed = !bRead;
+	// 처음에는 이전 데이터가 없으므로 오류가 있어도 읽은 값으로 시작합니다. 다시 읽기는 진행 중인 플레이의 데이터를 빼지 않게
+	// 이전 데이터를 유지합니다.
+	if (!bRead && !bInitialLoad)
 	{
 		return false;
 	}
@@ -249,11 +278,9 @@ bool UAgAssetManager::LoadJsonData()
 	CopyJsonProperties(*NewAbilities, *Abilities);
 	for (const TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : NewCharacters)
 	{
-		UAgCharacterData& Target = *Characters.FindChecked(Pair.Key);
-		CopyJsonProperties(*Pair.Value, Target);
-		Target.MarkJsonDataLoaded();
+		CopyJsonProperties(*Pair.Value, *Characters.FindChecked(Pair.Key));
 	}
-	return true;
+	return bRead;
 }
 
 bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value, const FProperty& Property, void* Out)
@@ -326,9 +353,18 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 		FScriptArrayHelper Helper(Array, Out);
 		Helper.Resize(Items->Num());
 		bool bRead = true;
-		for (int32 Index = 0; Index < Items->Num(); ++Index)
+		for (int32 Index = 0, Slot = 0; Index < Items->Num(); ++Index)
 		{
-			bRead = ReadJson(FString::Printf(TEXT("%s[%d]"), *Path, Index), (*Items)[Index], *Array->Inner, Helper.GetRawPtr(Index)) && bRead;
+			const bool bItem = ReadJson(FString::Printf(TEXT("%s[%d]"), *Path, Index), (*Items)[Index], *Array->Inner, Helper.GetRawPtr(Slot));
+			bRead = bItem && bRead;
+			if (!bItem && IsEmptyReference(*Array->Inner, Helper.GetRawPtr(Slot)))
+			{
+				Helper.RemoveValues(Slot);
+			}
+			else
+			{
+				++Slot;
+			}
 		}
 		return bRead;
 	}
@@ -351,7 +387,15 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 				continue;
 			}
 			// 이미 있는 항목(캐릭터 데이터)에는 그 객체에 읽습니다.
-			bRead = ReadJson(Child(Key), Entry.Value, *Map->ValueProp, Helper.FindOrAdd(KeyValue.GetObjAddress())) && bRead;
+			void* Item = Helper.FindOrAdd(KeyValue.GetObjAddress());
+			if (!ReadJson(Child(Key), Entry.Value, *Map->ValueProp, Item))
+			{
+				bRead = false;
+				if (IsEmptyReference(*Map->ValueProp, Item))
+				{
+					Helper.RemovePair(KeyValue.GetObjAddress());
+				}
+			}
 		}
 		return bRead;
 	}
@@ -547,12 +591,24 @@ bool UAgAssetManager::ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value
 	{
 		return Fail(Path, Value->AsString() + TEXT(" is not an asset or class of ") + Reference->PropertyClass->GetName());
 	}
+	// 엔진 로더는 리다이렉터를 따라가 옛 경로도 읽지만, 에디터는 JSON 경로를 참조로 모르므로 리다이렉터가 지워지기 전에 알립니다.
+	const UObject* Referenced = Reference ? Reference->GetObjectPropertyValue(Out) : nullptr;
+	if (Referenced && !Referenced->GetPathName().Equals(Value->AsString(), ESearchCase::IgnoreCase))
+	{
+		const FString Message = Path + TEXT(": ") + Value->AsString() + TEXT(" is redirected to ") + Referenced->GetPathName() + TEXT("; use the new path");
+		UE_LOG(LogAg, Warning, TEXT("%s"), *Message);
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 15.f, FColor::Yellow, Message);
+		}
+	}
 #if WITH_METADATA
 	// 배열 원소의 메타데이터는 배열 속성에 있습니다.
 	const FString* DataId = CastField<FNameProperty>(&Property) ? Property.GetOwnerProperty()->FindMetaData(TEXT("DataId")) : nullptr;
 	const TSet<FName>* Ids = DataId ? JsonIds.Find(FName(**DataId)) : nullptr;
 	if (DataId && (!Ids || !Ids->Contains(*static_cast<const FName*>(Out))))
 	{
+		*static_cast<FName*>(Out) = NAME_None;
 		return Fail(Path, Value->AsString() + TEXT(" is not an ID in ") + *DataId + TEXT(".json"));
 	}
 #endif

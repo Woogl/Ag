@@ -66,6 +66,7 @@ EStateTreeRunStatus FAgBossAITask_Approach::Tick(FStateTreeExecutionContext& Con
 	AAgBossCharacter* Boss = InstanceData.Controller->GetBoss();
 	if (const AAgCharacterBase* Target = InstanceData.Controller->GetTarget())
 	{
+		// 아레나가 장애물 없는 평지라 NavMesh 없이 대상 쪽으로 이동 입력을 줍니다.
 		Boss->AddMovementInput((Target->GetActorLocation() - Boss->GetActorLocation()).GetSafeNormal2D(), 1.f);
 	}
 	InstanceData.Elapsed += DeltaTime;
@@ -100,6 +101,7 @@ EStateTreeRunStatus FAgBossAITask_RunPattern::EnterState(FStateTreeExecutionCont
 		TArray<TPair<FName, float>> Candidates;
 		GatherCandidates(Data->Abilities, Distance, Boss->GetPhase(), IsReady, Candidates);
 
+		// StateTree의 가중치 선택은 패턴마다 상태가 필요해, 패턴 목록을 보스 데이터에만 두려고 여기서 고릅니다.
 		const TPair<FName, float>* Picked =
 			Algo::SelectRandomWeightedBy(Candidates, [](const TPair<FName, float>& Candidate) { return Candidate.Value; });
 		if (!Picked)

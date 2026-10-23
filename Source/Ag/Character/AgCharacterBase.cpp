@@ -161,11 +161,9 @@ void AAgCharacterBase::PreInitializeComponents()
 	// 보스 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 보스 데이터를 읽으므로,
 	// 그 전에 연결합니다.
 	CharacterData = UAgAssetManager::Get().FindCharacterData(CharacterDataId);
-	// 다시 읽기에 실패해도 기존 정상 값을 유지하므로, 여기서 멈추는 것은 처음 읽기에 실패한 경우뿐입니다.
-	if (!CharacterData || !CharacterData->IsA(CharacterDataClass) || !CharacterData->HasValidJsonData())
+	if (!CharacterData || !CharacterData->IsA(CharacterDataClass))
 	{
-		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing, has the wrong type or is not valid."), *GetName(),
-			*CharacterDataId.ToString());
+		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing or has the wrong type."), *GetName(), *CharacterDataId.ToString());
 	}
 }
 

@@ -117,7 +117,8 @@ void UAgAbilityTask_RootMotion::Activate()
 	{
 		MaxRotationRate /= PlayRate;
 	}
-	// 켜기·지우기와 루트 모션 보정은 엔진 Motion Warping이 재생 위치로 합니다.
+	// 재생을 시작할 때 모두 등록하면 끊긴 재생의 대기 Modifier가 같은 몽타주의 다음 재생에서 함께 켜져 워핑이 두 번 걸리므로,
+	// 구간마다 등록합니다. 켜기·지우기와 루트 모션 보정은 엔진 Motion Warping이 재생 위치로 합니다.
 	Modifier = URootMotionModifier_SkewWarp::AddRootMotionModifierSkewWarp(Warping, Instance->Montage.Get(), StartTime, EndTime, WarpTargetName,
 		EWarpPointAnimProvider::None, FTransform::Identity, NAME_None, Params.bWarpTranslation && !bFacingOnly, true,
 		Params.Direction != EAgRootMotionDirection::Back, EMotionWarpRotationType::Default, Params.RotationMethod, 1.f, MaxRotationRate);
@@ -163,7 +164,8 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 		return;
 	}
 
-	// ConstantRate의 틱 시간에는 주인의 시간 배율이 이미 들어 있습니다.
+	// 루트 모션 소스로 돌리지 않는 것은, 엔진이 우선순위가 가장 높은 Override 소스 하나의 회전만 그 속도와 함께 적용해
+	// Launch·Dash의 이동과 부딪히기 때문입니다. ConstantRate의 틱 시간에는 주인의 시간 배율이 이미 들어 있습니다.
 	const float CurrentYaw = static_cast<float>(Character->GetActorRotation().Yaw);
 	const float GoalYaw = static_cast<float>(Direction.Rotation().Yaw);
 	float Yaw = CurrentYaw;

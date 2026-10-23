@@ -20,7 +20,7 @@ struct FAgTaskContext
 
 /**
  * 구조체 메타데이터는 에디터 전용이라 Task 이름 X의 Params는 이름 규칙(FAgXParams)으로 찾습니다.
- * 시간표 항목은 시각과 Params를 한 JSON 객체에 적으므로 시각 필드를 공통 부모에 둡니다.
+ * 타임라인 항목은 시각과 Params를 한 JSON 객체에 적으므로 시각 필드를 공통 부모에 둡니다.
  */
 USTRUCT()
 struct FAgTaskParams

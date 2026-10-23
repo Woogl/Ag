@@ -116,7 +116,7 @@ void UAgAbilityTask_PlayMontage::TickTask(float DeltaTime)
 
 void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 {
-	// 행동이 끝나 엔진이 끝내면 남은 Task도 엔진이 끝내므로, 스스로 끝날 때만 시간표 Task를 끝냅니다.
+	// 행동이 끝나 엔진이 끝내면 남은 Task도 엔진이 끝내므로, 스스로 끝날 때만 타임라인 Task를 끝냅니다.
 	if (!bInOwnerFinished)
 	{
 		EndTimeline();
@@ -150,7 +150,7 @@ void UAgAbilityTask_PlayMontage::JumpToSection(FName Section)
 		return;
 	}
 
-	// 엔진은 블렌드 아웃 중인 재생을 옮기지 않으므로 위치가 바뀌었을 때만 시간표를 다시 맞춥니다.
+	// 엔진은 블렌드 아웃 중인 재생을 옮기지 않으므로 위치가 바뀌었을 때만 타임라인을 다시 맞춥니다.
 	const float Before = Instance->GetPosition();
 	Anim->Montage_JumpToSection(Section, Instance->Montage);
 	if (!IsFinished() && Instance->GetPosition() != Before)
@@ -359,7 +359,7 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 
 void UAgAbilityTask_PlayMontage::EndTimeline()
 {
-	// Task가 끝나며 다시 재생해도 버린 시간표에 닿지 않도록, 켜진 구간의 Task를 모아 시간표를 버린 뒤 끝냅니다.
+	// Task가 끝나며 다시 재생해도 버린 타임라인에 닿지 않도록, 켜진 구간의 Task를 모아 타임라인을 버린 뒤 끝냅니다.
 	TArray<UAbilityTask*> Active;
 	for (const FAgTimelineEntry& Entry : TimelineEntries)
 	{
@@ -389,7 +389,7 @@ void UAgAbilityTask_PlayMontage::StartTimelineWindow(int32 Entry)
 	{
 		return;
 	}
-	// 시작하는 동안 전환하면 시간표가 바뀔 수 있으므로 항목에는 시작하기 전에 둡니다.
+	// 시작하는 동안 전환하면 타임라인이 바뀔 수 있으므로 항목에는 시작하기 전에 둡니다.
 	Item.Task = Task;
 	Task->ReadyForActivation();
 }

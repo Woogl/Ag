@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
 #include "Tasks/TargetingFilterTask_BasicFilterTemplate.h"
+#include "Tasks/TargetingSortTask_Base.h"
 #include "Tasks/TargetingTask.h"
 #include "AgTargeting.generated.h"
 
@@ -65,4 +66,16 @@ public:
 
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
+};
+
+UCLASS()
+class UAgTargetingSortTask_ScreenCenter : public UTargetingSortTask_Base
+{
+	GENERATED_BODY()
+
+public:
+	UAgTargetingSortTask_ScreenCenter(const FObjectInitializer& ObjectInitializer);
+
+protected:
+	virtual float GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };

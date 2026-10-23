@@ -1,5 +1,5 @@
 # Copyright Woogle. All Rights Reserved.
-"""sheets/의 그림 파일로 기획서 모션 그림(Docs/Design/Attachments/<그림 이름>.gif, 칸 그림은 .jpg)을 만듭니다.
+"""sheets/의 그림 파일로 기획서 모션 그림(Docs/Art/Attachments/<그림 이름>.gif, 칸 그림은 .jpg)을 만듭니다.
 쓰는 법은 README.md를 따릅니다.
 
     python Scripts/MotionImages/motion_images.py probe                          그림 파일의 모션 데이터 뽑기 (1분 정도)
@@ -443,7 +443,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=["probe", "plan", "capture", "compose", "make", "assemble"])
     parser.add_argument("images", nargs="*")
-    parser.add_argument("--out", default=ATTACHMENTS, help="compose/make: folder for the images (default Docs/Design/Attachments)")
+    parser.add_argument("--out", default=ATTACHMENTS, help="compose/make: folder for the images (default Docs/Art/Attachments)")
     args = parser.parse_args()
     if args.command in ("make", "compose", "assemble"):
         from assemble import assemble_sheet

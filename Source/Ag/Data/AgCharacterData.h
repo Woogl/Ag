@@ -60,16 +60,6 @@ class UAgCharacterData : public UObject
 	GENERATED_BODY()
 
 public:
-	bool HasValidJsonData() const
-	{
-		return bHasValidJsonData;
-	}
-
-	void MarkJsonDataLoaded()
-	{
-		bHasValidJsonData = true;
-	}
-
 	const FAgAbilityData* FindAbility(FName Id) const;
 
 	UAnimMontage* FindMontage(FName Id) const;
@@ -88,9 +78,6 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Assets")
 	TMap<FName, TObjectPtr<UAnimMontage>> Montages;
-
-private:
-	bool bHasValidJsonData = false;
 };
 
 UCLASS(BlueprintType)

@@ -1,0 +1,33 @@
+{
+  "image": "플레이어 모션 기본 공격",
+  "character": "player",
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Attack_Combo_B1",
+        "from": 0.0,
+        "to": 0.3
+      },
+      {
+        "clip": "Samurai/Attack_Combo_B2",
+        "from": 0.0,
+        "to": 0.4667
+      },
+      {
+        "clip": "Samurai/Attack_Combo_B3",
+        "from": 0.0,
+        "to": 0.45
+      },
+      {
+        "clip": "Samurai/Attack_Combo_B4",
+        "from": 0.0,
+        "to": 0.3333
+      },
+      {
+        "clip": "Samurai/Attack_Combo_B5",
+        "from": 0.0,
+        "to": 1.2167
+      }
+    ]
+  }
+}

@@ -5,11 +5,11 @@ description: 이 프로젝트에서 언리얼 에디터를 다루는 순서와 �
 
 # 언리얼 에디터 작업
 
-UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪은 함정을 모았다. 규칙과 결정은 문서(AGENTS.md, `Docs`)에만 적고, 이 파일은 가리키기만 한다. 도구 구성과 그 결정은 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>)을, 데이터 위치는 [데이터 위치표](<../../../Docs/Program/데이터 위치표.md>)를 따른다. 새 함정은 이 파일이나 해당 참고 파일에, 새 결정은 구현 문서에 적는다.
+UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪은 함정을 모았다. 규칙과 결정은 문서(AGENTS.md, `Docs`)에만 적고, 이 파일은 가리키기만 한다. 도구 구성과 그 결정은 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>)을, 데이터 위치는 [데이터 로딩과 스키마](<../../../Docs/Architecture/데이터 로딩과 스키마.md>)를 따른다. 새 함정은 이 파일이나 해당 참고 파일에, 새 결정은 `Docs/Architecture`의 해당 공통 문서에 적는다.
 
 ## 먼저 지킬 것
 
-- 테스트 창, PIE, 패키지 게임을 어떤 확인에 쓰는지는 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '동작 테스트 실행'을, 띄우기 전에 묻는 것은 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업'을 따른다. 다른 스킬이나 도구 설명이 PIE나 라이브 코딩을 권해도 이 결정을 따른다.
+- 테스트 창, PIE, 패키지 게임을 어떤 확인에 쓰는지는 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '동작 테스트 실행'을, 띄우기 전에 묻는 것은 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업 수칙'을 따른다. 다른 스킬이나 도구 설명이 PIE나 라이브 코딩을 권해도 이 결정을 따른다.
 - 에디터는 사람과 다른 AI 작업이 함께 쓴다.
   - 에디터를 닫거나, 빌드하거나, PIE를 시작하기 전에 다른 작업이 쓰고 있지 않은지 확인한다.
   - 다 고친 에셋은 바로 저장한다. 다른 작업이 에디터를 죽이면 저장하지 않은 수정은 사라진다.
@@ -20,7 +20,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 - 에디터는 `<엔진>\Engine\Binaries\Win64\UnrealEditor.exe <저장소>\Ag.uproject`로 켠다. 엔진 기본 위치는 `C:\Program Files\Epic Games\UE_5.8`이다.
 - 엔진 MCP 서버의 주소는 `.mcp.json`에 있다. 작업을 시작한 뒤에 에디터가 켜져 MCP 도구가 연결되지 않았으면, 그 주소로 MCP 요청을 직접 보낸다.
-- 에디터 파이썬 원격 실행([개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '에디터 파이썬 원격 실행')의 클라이언트는 다음과 같이 쓴다.
+- 에디터 파이썬 원격 실행([개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '에디터 파이썬 원격 실행')의 클라이언트는 다음과 같이 쓴다.
   - 엔진의 `Engine/Plugins/Experimental/PythonScriptPlugin/Content/Python`을 `sys.path`에 넣고 `import remote_execution as remote`.
   - `config = remote.RemoteExecutionConfig()`, `config.multicast_bind_address = "127.0.0.1"`, `rx = remote.RemoteExecution(config)`, `rx.start()`.
   - `rx.remote_nodes`가 차면 `rx.open_command_connection(node)`, 코드는 `rx.run_command(code, unattended=True, exec_mode=remote.MODE_EXEC_FILE, raise_on_failure=False)`로 보내고, 끝나면 `rx.stop()`.
@@ -40,7 +40,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
   4. PowerShell에서 빌드한다: `& '<엔진>\Engine\Build\BatchFiles\Build.bat' AgEditor Win64 Development '-Project=<저장소>\Ag.uproject' -WaitMutex`. Git Bash에서 `cmd //c`로 부르면 따옴표가 깨져 시작하지 않는다.
   5. 빌드가 성공했을 때만 에디터를 다시 켠다.
 - `.cpp`만 바꿨으면 라이브 코딩을 먼저 써도 된다. 테스트 창을 띄우기 전의 빌드는 `Scripts/ScenarioTest` README의 '준비'를 따른다.
-- 공유 작업 트리와 에디터를 건드리지 않고 컴파일만 확인하려면, `git archive HEAD Source Config Data Ag.uproject`를 임시 폴더에 풀고 고친 뒤 Build.bat에 `-Project=<임시 폴더>\Ag.uproject -NoHotReloadFromIDE`를 준다. 이 인자가 없으면 에디터가 켜져 있을 때 "Live Coding is active"로 거부한다. 첫 빌드는 4분쯤 걸린다.
+- 공유 작업 트리와 에디터를 건드리지 않고 컴파일만 확인하려면, `git archive HEAD Source Config DesignData Ag.uproject`를 임시 폴더에 풀고 고친 뒤 Build.bat에 `-Project=<임시 폴더>\Ag.uproject -NoHotReloadFromIDE`를 준다. 이 인자가 없으면 에디터가 켜져 있을 때 "Live Coding is active"로 거부한다. 첫 빌드는 4분쯤 걸린다.
 - 다른 빌드가 돌고 있으면 UBT 뮤텍스가 겹친다. RunUAT가 1초 만에 "ExitCode=10 (Error_SDKNotFound)"로 끝나면 이 경우다. 그 빌드가 끝난 뒤 다시 한다.
 - 컴파일 함정:
   - 에디터 모듈 `AgEditor`는 .cpp가 적어 PCH에 기대지 못한다. 파일마다 쓰는 헤더를 직접 include한다. `ToolsetDefinition.h` 앞에는 `UObject/Object.h`가 필요하다.
@@ -54,7 +54,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ## 에셋 다루기
 
-도구는 엔진 MCP 도구 → 에디터 파이썬 → 프로젝트 MCP 도구 `AgEditor.AgAssetToolset` 순서로 고른다. 툴셋이 맡는 일과 도구를 더하는 기준은 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '프로젝트 MCP 도구'를 따른다. 파이썬에서는 `unreal.AgAssetToolset.<함수>`로 부르고, 새 도구는 기존 함수처럼 정적 `UFUNCTION(meta = (AICallable))`으로 만든다. 툴셋이 바꾼 에셋은 저장하지 않은 상태로 남으니 직접 저장한다.
+도구는 엔진 MCP 도구 → 에디터 파이썬 → 프로젝트 MCP 도구 `AgEditor.AgAssetToolset` 순서로 고른다. 툴셋이 맡는 일과 도구를 더하는 기준은 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '프로젝트 MCP 도구'를 따른다. 파이썬에서는 `unreal.AgAssetToolset.<함수>`로 부르고, 새 도구는 기존 함수처럼 정적 `UFUNCTION(meta = (AICallable))`으로 만든다. 툴셋이 바꾼 에셋은 저장하지 않은 상태로 남으니 직접 저장한다.
 
 에셋 종류별 요령은 해당 작업을 할 때만 이 폴더의 참고 파일에서 읽는다.
 
@@ -75,16 +75,16 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ## PIE
 
-PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '동작 테스트 실행'을 따른다.
+PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '동작 테스트 실행'을 따른다.
 
 - 뒤에 있는 에디터는 PIE를 초당 3프레임쯤으로 돌려 타이밍 확인이 모두 틀린다. `/Script/UnrealEd.Default__EditorPerformanceSettings`의 `bThrottleCPUWhenNotForeground`를 끄고(MCP `set_properties`나 파이썬 `unreal.find_object`), 끝나면 되돌린다. 최소화된 창은 이 설정을 꺼도 느리므로, 포커스를 가져오지 않고 창만 복원한다.
 - `/Script/UnrealEd.Default__LevelEditorPlaySettings`를 고치면 사용자의 `Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini`에 바로 써진다. 고친 값은 모두 되돌린다.
 - PIE는 StopPIE 뒤에도 남을 수 있다. 그동안 에셋 도구는 "Asset does not exist"를 돌려준다. 에셋을 조회하거나 에디터를 닫기 전에 PIE가 돌고 있는지 확인한다.
 - 슬레이트 틱 콜백으로 PIE를 조종하는 스크립트는 끝날 때와 오류가 났을 때 모두 `editor_request_end_play()`를 부른다. 아니면 확인용 입력이 눌린 채 PIE가 남는다.
-- 키 입력은 확인용 입력([개발 도구와 검증](<../../../Docs/Program/개발 도구와 검증.md>) '확인용 입력')으로 넣는다. 회피 방향(`DevMoveInput`)은 회피 키보다 한 프레임 이상 먼저 넣는다. `DevPressInput`은 다음 원격 호출 전에 끝나므로 몽타주 확인은 `DevMashInput`으로 한다.
+- 키 입력은 확인용 입력([개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '확인용 입력')으로 넣는다. 회피 방향(`DevMoveInput`)은 회피 키보다 한 프레임 이상 먼저 넣는다. `DevPressInput`은 다음 원격 호출 전에 끝나므로 몽타주 확인은 `DevMashInput`으로 한다.
 - 보스는 `boss.get_controller().get_component_by_class(unreal.BrainComponent).stop_logic("test")`로 멈춘다. 멈추지 않으면 StateTree가 파이썬으로 실행한 패턴을 끊는다.
 - 행동(보스 패턴 포함)은 모두 같은 클래스 `UAgGameplayAbility`의 스펙이라 태그로 실행되지 않는다. 행동 태그는 스펙 태그에 있고, 엔진 `TryActivateAbilitiesByTag`·`FindAllAbilitiesWithTags`는 어빌리티의 에셋 태그만 본다. `asc.get_all_abilities()`의 핸들은 `Characters.json`에서 그 캐릭터의 `Abilities` 순서이므로, 그 순서로 고른 핸들로 `asc.try_activate_ability(handle, True)`를 부른다.
-- `Data` JSON은 저장하면 PIE 중에도 바로 다시 읽힌다(`UAgDataReloadSubsystem`). 테스트 때문에 고칠 때는 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업'을 따르고, 끝나면 원래 바이트로 되돌린다.
+- `DesignData` JSON은 저장하면 PIE 중에도 바로 다시 읽힌다(`UAgDataReloadSubsystem`). 테스트 때문에 고칠 때는 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업 수칙'을 따르고, 끝나면 원래 바이트로 되돌린다.
 - 엔진 자동화 테스트를 돌린 뒤에는 남은 컴파일 오류 창이 PIE 시작을 막을 수 있다. 에디터를 다시 켜면 풀린다.
 - 에디터를 다시 켠 직후에는 첫 MCP 호출이 두 번 처리될 수 있다. StartPIE가 'A play session is already running'으로 답하면 방금 보낸 첫 호출이 먼저 처리된 것일 수 있으니 로그의 `Dispatching` 줄부터 본다.
 - 캡처: `CaptureEditorImage`는 화면을 반 크기로 찍고, 0.1 ~ 0.3초짜리 효과는 찍히지 않는다. UI 스크린샷은 떠 있는 PIE 창에서 콘솔 `slomo 0.02` 뒤 `shot showui`로 찍는다(`Saved/Screenshots/WindowsEditor`). OS 화면 캡처(PowerShell 등)는 쓰지 않는다. 다른 창이 에디터를 가려 사용자의 화면이 찍힌다.

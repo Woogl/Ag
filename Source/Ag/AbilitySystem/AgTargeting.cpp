@@ -61,6 +61,7 @@ AActor* AgTargeting::FindTarget(const FAgTargetingRequest& Request, AActor& Sour
 
 bool AgTargeting::IsInRange(const AActor& Source, const AActor& Target, float Range)
 {
+	// 찾을 때와 같은 구·캡슐 겹침으로 봅니다. 거리로 비교하면 범위 끝에서 찾자마자 풀리기를 되풀이합니다.
 	const UPrimitiveComponent* Collision = Cast<UPrimitiveComponent>(Target.GetRootComponent());
 	return Range > 0.f && Collision && Collision->OverlapComponent(Source.GetActorLocation(), FQuat::Identity, FCollisionShape::MakeSphere(Range));
 }
@@ -91,7 +92,8 @@ void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& Ta
 			// 캐릭터 메시도 Pawn 오브젝트 종류라, 캡슐(몸과 회피를 시작한 자리)에 닿은 결과만 씁니다.
 			AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(Overlap.GetActor());
 			if (!Candidate || !Cast<UCapsuleComponent>(Overlap.GetComponent()) ||
-				Results.TargetResults.ContainsByPredicate([Candidate](const FTargetingDefaultResultData& Result) { return Result.HitResult.GetActor() == Candidate; }))
+				Results.TargetResults.ContainsByPredicate([Candidate](const FTargetingDefaultResultData& Result)
+			{ return Result.HitResult.GetActor() == Candidate; }))
 			{
 				continue;
 			}
@@ -157,4 +159,36 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 	                       ScreenPosition.X >= 0.f && ScreenPosition.Y >= 0.f && ScreenPosition.X <= ViewportWidth &&
 	                       ScreenPosition.Y <= ViewportHeight;
 	return !bOnScreen;
+}
+
+UAgTargetingSortTask_ScreenCenter::UAgTargetingSortTask_ScreenCenter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bAscending = true;
+}
+
+float UAgTargetingSortTask_ScreenCenter::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+{
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const APawn* Pawn = Source ? Cast<APawn>(Source->SourceActor) : nullptr;
+	const APlayerController* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+	const AActor* Candidate = TargetData.HitResult.GetActor();
+	if (!Controller || !Candidate)
+	{
+		return TNumericLimits<float>::Max();
+	}
+	int32 ViewportWidth = 0;
+	int32 ViewportHeight = 0;
+	Controller->GetViewportSize(ViewportWidth, ViewportHeight);
+	if (ViewportWidth <= 0 || ViewportHeight <= 0)
+	{
+		return TNumericLimits<float>::Max();
+	}
+	FVector2D ScreenPosition;
+	if (!Controller->ProjectWorldLocationToScreen(Candidate->GetActorLocation(), ScreenPosition))
+	{
+		return TNumericLimits<float>::Max();
+	}
+	const FVector2D ScreenCenter(ViewportWidth * 0.5f, ViewportHeight * 0.5f);
+	return FVector2D::Distance(ScreenPosition, ScreenCenter);
 }

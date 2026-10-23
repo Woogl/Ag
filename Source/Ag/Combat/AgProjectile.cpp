@@ -41,7 +41,7 @@ void AAgProjectile::Launch(const FGameplayEffectSpecHandle& InDamageSpec, const 
 void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 {
 	const AAgCharacterBase* Shooter = GetInstigator<AAgCharacterBase>();
-	if (!IsValid(Shooter) || Shooter->IsDead() || !DamageSpec.IsValid() || IsReflected())
+	if (!IsValid(Shooter) || !DamageSpec.IsValid() || IsReflected())
 	{
 		return;
 	}
@@ -89,7 +89,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 
 	AAgCharacterBase* ShooterCharacter = GetInstigator<AAgCharacterBase>();
 	AAgCharacterBase* DamageSource = IsReflected() ? Reflector.Get() : ShooterCharacter;
-	if (!IsValid(ShooterCharacter) || ShooterCharacter->IsDead() || !IsValid(DamageSource) || !DamageSpec.IsValid())
+	if (!IsValid(ShooterCharacter) || !IsValid(DamageSource) || !DamageSpec.IsValid())
 	{
 		Destroy();
 		return;
@@ -124,7 +124,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		SetActorLocation(Contact.Location);
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
 		ApplyHit(*Target, HitLocation);
-		if (IsActorBeingDestroyed() || !IsValid(ShooterCharacter) || ShooterCharacter->IsDead())
+		if (IsActorBeingDestroyed() || !IsValid(ShooterCharacter))
 		{
 			Destroy();
 			return;
@@ -157,5 +157,8 @@ void AAgProjectile::ApplyHit(AAgCharacterBase& Target, const FVector& HitLocatio
 	Context.AddOrigin(HitLocation);
 	// SetContext는 출처 태그와 어트리뷰트를 다시 캡처하므로 적중 시점의 ATK를 씁니다.
 	Spec.SetContext(Context);
-	Context.GetInstigatorAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(Spec, Target.GetAbilitySystemComponent());
+	if (UAbilitySystemComponent* InstigatorASC = Context.GetInstigatorAbilitySystemComponent())
+	{
+		InstigatorASC->ApplyGameplayEffectSpecToTarget(Spec, Target.GetAbilitySystemComponent());
+	}
 }

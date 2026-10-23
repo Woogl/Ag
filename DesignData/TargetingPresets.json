@@ -10,6 +10,6 @@
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/Ag.AgTargetingFilterTask_OnScreen"},
-    {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
+    {"Class": "/Script/Ag.AgTargetingSortTask_ScreenCenter"}
   ]
 }

@@ -237,7 +237,7 @@
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "KnockUp"},
-      {"Task": "Launch", "AirTime": 0.75, "Height": 55}
+      {"Task": "Launch", "Height": 70, "Direction": "Back", "Distance": 50}
     ]
   },
   "Juggle": {
@@ -255,7 +255,7 @@
     "Tasks": [
       {"Task": "RootMotion", "bWarpTranslation": false},
       {"Task": "PlayMontage", "Montage": "KnockUp"},
-      {"Task": "Launch", "Height": 15, "Altitude": 55, "Direction": "Back", "Distance": 10}
+      {"Task": "Launch", "Height": 15, "Altitude": 70, "Direction": "Back", "Distance": 10}
     ]
   },
   "GuardPushback": {

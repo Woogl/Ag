@@ -66,6 +66,7 @@ struct FAgTimelineEntry
 	bool bActive = false;
 };
 
+// 엔진 PlayMontageAndWait에는 블렌드 인 시간을 정하는 길이 없고 섹션 이동과 다시 재생을 한 Task로 이어 갈 수 없어 상속하지 않습니다.
 UCLASS()
 class UAgAbilityTask_PlayMontage : public UAbilityTask
 {

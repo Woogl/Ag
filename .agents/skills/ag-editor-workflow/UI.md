@@ -9,8 +9,10 @@
   - `GetWidgets`는 부모 클래스의 BindWidget 이름도 `widget: None`으로 보여 준다. 이름이 이미 쓰였는지는 `widget`이 있는지로 판단한다.
 - 슬레이트는 틴트 알파가 0인 박스를 그리지 않는다. 채움이 투명한 둥근 박스는 외곽선도 보이지 않는다.
 - `FKey::GetDisplayName()`은 에디터 언어를 따른다(한국어 에디터에서 '왼쪽 Shift').
+- CommonUI에서 위 화면은 포커스와 키 입력만 가져가고 클릭은 뒤 화면에 닿는다. 팝업은 화면 전체를 덮는 배경으로 클릭을 막는다.
 
 ## PIE에서 확인
 
+- PIE에서는 Esc가 PIE를 끝낸다. CommonUI가 에디터의 PIE 종료 단축키와 같은 키를 일부러 넘긴다. Esc 동작은 Standalone Game으로 확인하고, 에디터 단축키는 사용자 설정이라 바꾸지 않는다.
 - CommonUI는 에디터에서 PIE 뷰포트가 포커스를 가질 때만 입력 설정과 첫 포커스를 적용한다. 뒤에 있는 PIE에서 버튼 선택이 보이지 않으면 버그로 보기 전에 포커스부터 확인한다. 사람의 마우스가 떠 있는 PIE 창을 지나가도 버튼이 선택되니, 선택이 이상하면 `is_hovered()`와 커서 위치를 본다.
 - CommonUI 버튼은 `<화면>.WidgetTree_0.<버튼>.WidgetTree_0.InternalRootButtonBase`의 `on_clicked.broadcast()`로 누른다. 화면은 `is_activated()`로 고른다. 이전 월드의 화면이 GameInstance에 남아 있다.

@@ -60,11 +60,13 @@ protected:
 	virtual void StartInitialLoading() override;
 
 private:
-	bool LoadJsonData();
+	bool LoadJsonData(bool bInitialLoad);
 
 	bool ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value, const FProperty& Property, void* Out);
 
 	TMap<FName, TSet<FName>> JsonIds;
+
+	bool bJsonLoadFailed = false;
 
 	UPROPERTY()
 	TObjectPtr<UAgCombatRules> CombatRules;

@@ -590,6 +590,7 @@ void AAgPlayerCharacter::TryResumeGuard()
 
 void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 {
+	// 엔진 PreActivate 직전의 알림이라, 극한 회피 모션이 자기 발동 Task로 주는 회피 반격 기회는 지워지지 않습니다.
 	FGameplayTagContainer Enders;
 	Enders.AddTag(AgGameplayTags::Ability_Action);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockDown);

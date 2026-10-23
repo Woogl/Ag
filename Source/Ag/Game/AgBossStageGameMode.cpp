@@ -69,6 +69,6 @@ void AAgBossStageGameMode::ShowResult()
 {
 	if (AAgPlayerController* PlayerController = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
 	{
-		PlayerController->ShowResult(ResultScreenClass, bStageCleared);
+		PlayerController->ShowResult(BattleResultScreenClass, bStageCleared);
 	}
 }

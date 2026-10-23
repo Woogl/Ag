@@ -48,7 +48,7 @@
       {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "HitReaction": "KnockDown", "bGuardable": true}}
     ]
   },
-  "/Game/Animations/AM_Boss_KnockBack.AM_Boss_KnockBack": {
+  "/Game/Animations/AM_Boss_KnockDown.AM_Boss_KnockDown": {
     "Default": [
       {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
     ]
@@ -92,8 +92,7 @@
       {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Section": "Land"}
     ],
     "Land": [
-      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"},
-      {"Task": "Transition", "Start":0.7, "Section": "GetUp", "BlendTime": 0.25}
+      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
     ]
   },
   "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack": {
@@ -101,14 +100,14 @@
       {"Task": "SendGameplayEvent", "Start":0, "Event": "Event.BasicAttackStarted"},
       {"Task": "RootMotion", "Start": 0, "End": 0.17, "TargetingRange": 170, "bWarpTranslation": true},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.38, "Effect": "Busy"},
-      {"Task": "WeaponHit", "Start": 0.27, "End": 0.3, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}},
+      {"Task": "WeaponHit", "Start": 0.27, "End": 0.3, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
       {"Task": "Transition", "Start": 0.38, "Event": "Input.Attack", "Section": "Attack2", "BlendTime": 0.25}
     ],
     "Attack2": [
       {"Task": "SendGameplayEvent", "Start":0, "Event": "Event.BasicAttackStarted"},
       {"Task": "RootMotion", "Start": 0, "End": 0.18, "TargetingRange": 220, "bWarpTranslation": true},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.40, "Effect": "Busy"},
-      {"Task": "WeaponHit", "Start": 0.28, "End": 0.32, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}},
+      {"Task": "WeaponHit", "Start": 0.28, "End": 0.32, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
       {"Task": "Transition", "Start": 0.40, "Event": "Input.Attack", "Section": "Attack3", "BlendTime": 0.25}
     ],
     "Attack3": [
@@ -129,7 +128,7 @@
       {"Task": "SendGameplayEvent", "Start":0, "Event": "Event.BasicAttackStarted"},
       {"Task": "RootMotion", "Start": 0, "End": 0.2, "TargetingRange": 230, "bWarpTranslation": true},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.9166667, "Effect": "Busy"},
-      {"Task": "WeaponHit", "Start": 0.3, "End": 0.35, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2, "HitReaction": "Flinch", "bGuardable": true}},
+      {"Task": "WeaponHit", "Start": 0.3, "End": 0.35, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
       {"Task": "Transition", "Start": 0.9166667, "Event": "Input.Attack", "Section": "Attack1", "BlendTime": 0.25}
     ]
   },
@@ -214,7 +213,7 @@
       {"Task": "Plunge", "Start": 0.3, "EndSection": "Fall", "Speed": 1000}
     ]
   },
-  "/Game/Animations/AM_Player_KnockBack.AM_Player_KnockBack": {
+  "/Game/Animations/AM_Player_KnockDown.AM_Player_KnockDown": {
     "Default": [
       {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
     ]
@@ -226,7 +225,7 @@
   },
   "/Game/Animations/AM_Player_Skill.AM_Player_Skill": {
     "Default": [
-      {"Task": "RootMotion", "Start": 0, "End": 0.3167, "TargetingRange": 310, "bWarpTranslation": true},
+      {"Task": "RootMotion", "Start": 0, "End": 0.3167, "TargetingRange": 290, "bWarpTranslation": true},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.5633, "Effect": "Busy"},
       {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "HitReward": {"UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2.5, "HitReaction": "KnockUp", "bGuardable": true}}
     ]

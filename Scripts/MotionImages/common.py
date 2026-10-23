@@ -19,7 +19,7 @@ SAVED = os.path.join(REPO, "Saved", "Tools", "MotionImages")
 PROBE_FILE = os.path.join(SAVED, "probe.json")
 JOBS_FILE = os.path.join(SAVED, "jobs.json")
 FRAMES = os.path.join(SAVED, "frames")
-ATTACHMENTS = os.path.join(REPO, "Docs", "Design", "Attachments")
+ATTACHMENTS = os.path.join(REPO, "Docs", "Art", "Attachments")
 FPS = 60.0
 
 
