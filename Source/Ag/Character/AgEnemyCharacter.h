@@ -9,6 +9,7 @@
 
 class ATargetPoint;
 class UAnimMontage;
+class UAgEnemySightPreviewComponent;
 class UStateTree;
 struct FAbilityEndedData;
 
@@ -73,6 +74,11 @@ private:
 	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
 
 	FTransform HomeTransform;
+
+#if WITH_EDITORONLY_DATA
+	UPROPERTY()
+	TObjectPtr<UAgEnemySightPreviewComponent> SightPreview;
+#endif
 
 	int32 Phase = 1;
 

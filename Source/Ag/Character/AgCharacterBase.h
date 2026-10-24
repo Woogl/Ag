@@ -61,6 +61,11 @@ public:
 		return CharacterData;
 	}
 
+	FName GetCharacterDataId() const
+	{
+		return CharacterDataId;
+	}
+
 	FGameplayAbilitySpec* FindAbilitySpec(FName Id) const;
 
 	FName FindAbilityId(const FGameplayAbilitySpecHandle Handle) const;

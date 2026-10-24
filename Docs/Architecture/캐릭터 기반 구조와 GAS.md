@@ -7,6 +7,7 @@
 | 항목 | 결정 | 이유 |
 | - | - | - |
 | ASC 위치 | 캐릭터에 둡니다. | 싱글플레이라 PlayerState에 둘 이유가 없습니다. |
+| 진영과 대상 판정 | `AAgCharacterBase`의 `EAgTeam`과 `GetTeamAttitudeTowards`가 진영 태도를 정하고, AI 컨트롤러는 빙의한 캐릭터의 태도를 전달합니다. 적은 중립을 `Neutral`로 보며 대상 선택과 지각은 `Hostile`만 받습니다. 적중은 `Friendly`가 아닌 상대에게 적용하고, 범위 적중용 `Hit` 프리셋은 `bIncludeNeutral`로 중립을 포함합니다. | 공격 대상 선택과 공격 판정에 휘말리는 대상을 구분하면서 진영 태도는 한곳에서 정합니다. |
 | 어트리뷰트 | 세트 하나에 기획서 스탯을 기획서 이름 그대로 둡니다. HP, MaxHP, SP, MaxSP, MP, MaxMP, UP, MaxUP, PP, MaxPP, ATK, DEF, MOV. 보스가 쓰지 않는 SP·MP·UP는 0입니다. 기본값이 바뀌기 전에 범위(0 ~ 최대값)로 고정합니다. PP를 더하기 모디파이어로 줄일 때는 `PreGameplayEffectExecute`에서 감소량의 절댓값을 반올림한 뒤 음수로 적용합니다. 반올림 규칙은 [전투 시스템](<../Design/System/전투 시스템.md>) '대미지'를 따릅니다. | 기획서, 데이터 위치표, 코드의 이름이 같아 대조하기 쉽습니다. 최대값에서 리젠이 더해져도 기본값이 넘치지 않아야 다음 감소가 바로 보입니다. PP 감소량을 적용 직전에 반올림하면 패리도 같은 규칙을 따르고, 리젠으로 생긴 남은 PP의 소수부는 보존됩니다. |
 | 어빌리티 목록 | 캐릭터 데이터(`Characters.json`)의 `Abilities`에 적힌 어빌리티 ID마다 단일 `UAgGameplayAbility`를 독립 스펙으로 부여합니다. 정의는 `Abilities.json`에 있고, 행동 태그와 트리거는 스펙에 넣습니다. | 같은 클래스라도 조건·이벤트·재발동·쿨다운·GE 출처가 행동마다 구분됩니다. |
 | 어빌리티 구조 | 모든 행동을 어빌리티 클래스 하나(`UAgGameplayAbility`)와 범용 Task로 실행하고, 행동이 아닌 규칙은 주인 객체가 맡습니다. | 행동 하나는 `Abilities.json` 항목과 그 몽타주의 시간표만 읽으면 파악되고, 있는 Task를 조합한 새 행동·패턴은 JSON과 몽타주만으로 더합니다. 그래서 새 Task는 둘 이상의 행동이 쓸 수 있는 기능 하나일 때만 더하고, 한 행동만 쓰는 규칙은 값은 효과 데이터에, 규칙은 주인 객체에 둡니다. 흐름 Task, 자식 어빌리티, 필드로 두 가지 일 중 하나를 고르는 Task는 만들지 않으며, 어빌리티와 재생 Task는 Task 종류나 행동·몽타주 ID로 분기하지 않습니다. |
@@ -20,15 +21,16 @@
 
 ### 캐릭터
 
-플레이어·보스 캐릭터와 컴포넌트, 보스를 움직이는 AI 컨트롤러입니다.
+플레이어·적·보스 캐릭터와 컴포넌트, 적 공통 AI 컨트롤러입니다.
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
 | `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 플레이어와 보스의 기본 회전. 제자리 회전 중에는 애님 인스턴스가 계산한 회전량을 액터에 적용하며, 그 밖에는 엔진 회전을 사용합니다. |
 | `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라와 락온 카메라, 입력 매핑, 입력 계층(행동 태그로 스펙 찾기, 트리거 태그, 이동 입력 태그, 선입력, 점프와 점프 모션), 극한 회피 구간의 회피를 시작한 자리 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 플레이어 입력 비활성화 |
-| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 순찰 및 원위치 관리, 시야 판정, PP 감소 허용 여부(`CanLosePP`), 그로기 및 처형 피격 종료 시의 PP 회복, 처형 피격 중 전용 사망 모션(`DeathMontage`) |
-| `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 페이즈 및 페이즈 전환, 월드 위치 HUD(락온 마커, 처형 안내) |
+| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈 및 페이즈 전환, PP 감소 허용 여부(`CanLosePP`), 피격 반응 종료까지 그로기 지연, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 처형 피격 중 전용 사망 모션 |
+| `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 월드 위치 HUD(락온 마커, 처형 안내) |
+| `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, AI 지각의 시야·대미지 감각과 놓친 시간 기록, 팀 태도 전달, 페이즈 전환 목표와 대상의 기본 공격 이벤트 구독 |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, PP 감소량 반올림과 감소 허용 조건 적용, 사망·그로기 판정 |
 
 ```mermaid
@@ -57,7 +59,8 @@ classDiagram
         UWidgetComponent LockOnMarker
         UWidgetComponent ExecutionPrompt
     }
-    class AAgBossAIController {
+    class AAgEnemyAIController {
+        UAIPerceptionComponent Perception
         UStateTreeAIComponent StateTreeComponent
     }
     ACharacter <|-- AAgCharacterBase
@@ -70,9 +73,11 @@ classDiagram
     AAgCharacterBase *-- UAgAttributeSet : AttributeSet
     UAttributeSet <|-- UAgAttributeSet
     AAgCharacterBase --> UAgCharacterData : CharacterData
-    AAgBossCharacter ..> AAgBossAIController : AIControllerClass
-    AAIController <|-- AAgBossAIController
-    AAgBossAIController ..> AAgBossCharacter : GetBoss
+    AAgEnemyCharacter ..> AAgEnemyAIController : AIControllerClass
+    AAgEnemyCharacter --> ATargetPoint : PatrolPoints
+    AAgEnemyCharacter *-- UAgEnemySightPreviewComponent : 에디터 전용
+    AAIController <|-- AAgEnemyAIController
+    AAgEnemyAIController ..> AAgEnemyCharacter : GetEnemy
 ```
 
 ### 레벨 시작에서 BeginPlay까지
@@ -81,14 +86,15 @@ classDiagram
 sequenceDiagram
     participant E as 엔진
     participant B as 보스
-    participant AI as 보스 AI 컨트롤러
+    participant AI as 적 AI 컨트롤러
     participant GM as 보스전 게임 모드
     participant P as 플레이어
     participant H as HUD
     E->>B: 데이터 연결,<br>컴포넌트 초기화<br>(레벨에 놓인 보스)
+    B->>B: 처음 배치된 위치·방향 기록
     B->>AI: SpawnDefaultController<br>(AutoPossessAI)
     AI->>B: 빙의, PossessedBy:<br>ASC 액터 정보 갱신
-    AI->>AI: OnPossess:<br>보스 캐릭터 기본값의<br>AIStateTree 시작
+    AI->>AI: OnPossess:<br>적 캐릭터 기본값의<br>AIStateTree 시작 (비전투)
     B->>B: 무기 컴포넌트 찾기
     E->>GM: 플레이어 참가(PostLogin)
     GM->>P: 스폰(데이터 연결),<br>빙의
@@ -97,7 +103,7 @@ sequenceDiagram
     H->>P: SP 변화 구독
     E->>B: BeginPlay
     E->>P: BeginPlay
-    Note over AI: 첫 틱: 대상(플레이어)의<br>기본 공격 시작 이벤트 구독
+    Note over AI: 시야로 플레이어를 알아차리면 전투 진입<br>대상이 생긴 뒤 기본 공격 시작 이벤트 구독
 ```
 
 ### 캐릭터 BeginPlay
@@ -122,7 +128,7 @@ sequenceDiagram
 
 ### GameplayEffect
 
-효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가 맡습니다. 행동 비용·쿨다운은 어빌리티가, 행동이 거는 효과(패리 구간, 극한 회피 구간, 그로기 시간, 달리기 소모, 패리·극한 회피의 보상과 회피 반격 기회, 패리로 잃는 PP)는 ApplyEffect가, 히트스톱·적중 충전은 피격 결과 처리 컴포넌트가, PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 보스 캐릭터가, 시작 효과와 Kill은 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
+효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가 맡습니다. 행동 비용·쿨다운은 어빌리티가, 행동이 거는 효과(패리 구간, 극한 회피 구간, 그로기 시간, 달리기 소모, 패리·극한 회피의 보상과 회피 반격 기회, 패리로 잃는 PP)는 ApplyEffect가, 히트스톱·적중 충전은 피격 결과 처리 컴포넌트가, PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과와 Kill은 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
@@ -145,7 +151,7 @@ classDiagram
     UAgGameplayAbility ..> UAgAbilitySystemComponent : MakeEffectSpec(비용, 쿨다운, ApplyEffect)
     UAgDamageResultGameplayEffectComponent ..> UAgAbilitySystemComponent : MakeEffectSpec(히트스톱, 적중 충전)
     UAgDamageResultGameplayEffectComponent ..> UAgGameplayAbility : 패리·극한 회피·패리당함 이벤트
-    AAgBossCharacter ..> UGameplayEffect : PPRefill(그로기·처형 피격 끝, 페이즈 전환 끝)
+    AAgEnemyCharacter ..> UGameplayEffect : PPRefill(그로기·처형 피격 끝, 페이즈 전환 끝)
     AAgCharacterBase ..> UGameplayEffect : 시작 효과, Kill
 ```
 

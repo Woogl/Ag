@@ -8,6 +8,7 @@
 #include "IDirectoryWatcher.h"
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
+#include "Editor.h"
 
 bool UAgDataReloadSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -49,6 +50,10 @@ void UAgDataReloadSubsystem::HandleFilesChanged(const TArray<FFileChangeData>& C
 		if (FPaths::GetExtension(Change.Filename).Equals(TEXT("json"), ESearchCase::IgnoreCase))
 		{
 			UAgAssetManager::Get().ReloadJsonData();
+			if (GEditor)
+			{
+				GEditor->RedrawLevelEditingViewports();
+			}
 			return;
 		}
 	}

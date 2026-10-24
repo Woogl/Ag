@@ -16,6 +16,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "TimerManager.h"
 
+#if WITH_EDITORONLY_DATA
+#include "Character/AgEnemySightPreviewComponent.h"
+#endif
+
 AAgEnemyCharacter::AAgEnemyCharacter()
 {
 	CharacterDataClass = UAgEnemyData::StaticClass();
@@ -26,6 +30,10 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+#if WITH_EDITORONLY_DATA
+	SightPreview = CreateEditorOnlyDefaultSubobject<UAgEnemySightPreviewComponent>(TEXT("SightPreview"));
+#endif
 }
 
 bool AAgEnemyCharacter::CanLosePP() const
