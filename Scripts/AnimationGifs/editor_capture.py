@@ -136,13 +136,13 @@ class Capture:
         equipment = [(weapon, component, "game")]
         if name == "boss":
             for pack, definitions in PACK_WEAPONS.items():
-                for asset, bone, location in definitions:
+                for asset, bone, location, (roll, pitch, yaw) in definitions:
                     extra = self.spawn(unreal.StaticMeshActor, info["actor"])
                     part = extra.get_component_by_class(unreal.StaticMeshComponent)
                     part.set_mobility(unreal.ComponentMobility.MOVABLE)
                     part.set_static_mesh(unreal.load_asset("/Game/Fab/ARPG_Pack/ARPG_" + pack + "/Demo/Weapon/Mesh/" + asset))
                     part.attach_to_component(mesh, bone, rule, rule, rule, False)
-                    part.set_relative_transform(unreal.Transform(unreal.Vector(*location), unreal.Quat(-0.089812, 0.143877, 0.059294, -0.983726).rotator(), unreal.Vector(1, 1, 1)), False, False)
+                    part.set_relative_transform(unreal.Transform(unreal.Vector(*location), unreal.Rotator(roll=roll, pitch=pitch, yaw=yaw), unreal.Vector(1, 1, 1)), False, False)
                     equipment.append((extra, part, pack))
         self.characters[name] = (actor, mesh, equipment)
         return self.characters[name]
