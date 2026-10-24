@@ -95,10 +95,10 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	if (TargetTags.HasTag(AgGameplayTags::State_Guarding) && bGuardable && DefenderData)
 	{
 		const float GuardSPCost = HPDamage * Rules.GuardSPCostRatio;
-		const bool bGuardBreak = TargetSP < GuardSPCost;
+		const bool bGuardBreak = TargetSP < GuardSPCost && !TargetTags.HasTag(AgGameplayTags::State_SuperArmor);
 		Spec.AddDynamicAssetTag(bGuardBreak ? AgGameplayTags::Effect_Damage_Result_GuardBreak : AgGameplayTags::Effect_Damage_Result_Guard);
 		AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant, Rules.GuardReduction));
-		AddOutput(OutExecutionOutput, UAgAttributeSet::GetSPAttribute(), bGuardBreak ? -TargetSP : -GuardSPCost);
+		AddOutput(OutExecutionOutput, UAgAttributeSet::GetSPAttribute(), -FMath::Min(TargetSP, GuardSPCost));
 		return;
 	}
 

@@ -50,6 +50,29 @@ namespace
 		return FGameplayTag();
 	}
 
+	FGameplayTag ResolveHitReactionEvent(const AAgCharacterBase& Target, const FGameplayTagContainer& SpecTags)
+	{
+		const UAbilitySystemComponent* ASC = Target.GetAbilitySystemComponent();
+		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_SuperArmor) ||
+			ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+		{
+			return FGameplayTag();
+		}
+
+		const EAgToughness Toughness = Target.GetCharacterData()->Toughness;
+		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
+		{
+			if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockUp) && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne))
+			{
+				return AgGameplayTags::Event_Hit_Flinch;
+			}
+			const bool bOtherReaction = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) &&
+			                            !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
+			return Toughness == EAgToughness::Small && !bOtherReaction ? AgGameplayTags::Event_Hit_Stagger : FGameplayTag();
+		}
+		return Toughness == EAgToughness::Large ? FGameplayTag() : GetReactionEvent(SpecTags);
+	}
+
 	FAgPhysicsHit MakePhysicsHit(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context, bool bGuard)
 	{
 		FAgPhysicsHit Hit;
@@ -66,14 +89,13 @@ namespace
 	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
-		const FGameplayTag Event = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) ? AgGameplayTags::Event_Hit_Flinch
-		                                                                                               : GetReactionEvent(SpecTags);
+		const bool bHasReaction = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) || GetReactionEvent(SpecTags).IsValid();
 		// 처형은 두 캐릭터의 모션을 프레임 단위로 맞물리므로 흔들지도 않습니다.
-		if (!Event.IsValid() || TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+		if (!bHasReaction || TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 		{
 			return;
 		}
-		if (Event.IsValid() && !TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+		if (const FGameplayTag Event = ResolveHitReactionEvent(*Target, SpecTags); Event.IsValid())
 		{
 			SendEvent(Target, Event, Instigator);
 		}
@@ -87,7 +109,7 @@ namespace
 		{
 			return;
 		}
-		if (bPushback)
+		if (bPushback && !Target->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_SuperArmor))
 		{
 			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Instigator);
 		}

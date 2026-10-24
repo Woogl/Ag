@@ -68,6 +68,13 @@ bool AAgEnemyAIController::IsEnemyReacting() const
 	return ASC->HasAnyMatchingGameplayTags(ReactionTags);
 }
 
+bool AAgEnemyAIController::IsEnemyFlinching() const
+{
+	const AAgEnemyCharacter* Enemy = GetEnemy();
+	const UAbilitySystemComponent* ASC = Enemy ? Enemy->GetAbilitySystemComponent() : nullptr;
+	return ASC && ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
+}
+
 bool AAgEnemyAIController::IsTargetNoticed() const
 {
 	if (bTargetInSight)

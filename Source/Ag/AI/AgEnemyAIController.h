@@ -30,6 +30,7 @@ public:
 	AAgCharacterBase* GetTarget() const;
 
 	bool IsEnemyReacting() const;
+	bool IsEnemyFlinching() const;
 
 	/** 적대 상대가 시야에 보이거나, 마지막으로 보이거나 맞은 뒤 놓친 시간이 전투 규칙의 TargetLostTime보다 짧습니다. */
 	bool IsTargetNoticed() const;

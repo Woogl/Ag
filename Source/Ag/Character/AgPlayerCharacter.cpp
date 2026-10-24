@@ -506,14 +506,15 @@ void AAgPlayerCharacter::SetTriggerTag(const FGameplayTag& TriggerTag, const FGa
 bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) const
 {
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
+	{
+		return true;
+	}
 	if (InputTag == AgGameplayTags::Input_Attack && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Jumping))
 	{
 		return false;
 	}
-	FGameplayTagContainer Blockers;
-	Blockers.AddTag(AgGameplayTags::State_Busy);
-	Blockers.AddTag(AgGameplayTags::State_HitReaction);
-	return ASC->HasAnyMatchingGameplayTags(Blockers);
+	return ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy);
 }
 
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)

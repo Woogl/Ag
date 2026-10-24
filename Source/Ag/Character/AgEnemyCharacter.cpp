@@ -81,8 +81,12 @@ void AAgEnemyCharacter::BeginPlay()
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandleHitReactionChanged);
+	const FGameplayTag DelayingReactions[] = {AgGameplayTags::State_HitReaction_KnockDown, AgGameplayTags::State_HitReaction_KnockUp,
+		AgGameplayTags::State_HitReaction_GuardPushback, AgGameplayTags::State_HitReaction_GuardBreak};
+	for (const FGameplayTag& Reaction : DelayingReactions)
+	{
+		ASC->RegisterGameplayTagEvent(Reaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleHitReactionChanged);
+	}
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 }
 
@@ -172,7 +176,7 @@ void AAgEnemyCharacter::HandleHitReactionChanged(const FGameplayTag Tag, int32 N
 	{
 		return;
 	}
-	// 그로기 행동은 피격 반응 중에 시작하지 못하므로(행동 정의의 BlockedTags), PP가 0으로 남아 있으면 다시 보냅니다.
+	// 움찔은 그로기를 지연하지 않으므로, 나머지 피격 상태의 종료만 구독합니다.
 	// 재발동(저글)은 같은 프레임 안에서 태그를 뗐다 다시 붙이므로 다음 틱에 확인합니다.
 	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]
 	{

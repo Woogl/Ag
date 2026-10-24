@@ -31,7 +31,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_LockOn, "Ability.LockOn", "락온. 행동이 아니라 행동 상태의 제한과 취소를 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction, "Ability.Reaction", "이벤트로 발동하는 상태 어빌리티");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction, "Ability.Reaction.HitReaction",
-		"상태 우선순위 4의 피격 반응: 넉업(저글 포함), 넉다운, 가드 밀림, 가드 브레이크");
+		"상태 우선순위 4의 피격 반응: 움찔 경직, 넉업(저글 포함), 넉다운, 가드 밀림, 가드 브레이크");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_Flinch, "Ability.Reaction.HitReaction.Flinch");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockDown, "Ability.Reaction.HitReaction.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockUp, "Ability.Reaction.HitReaction.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction_Juggle, "Ability.Reaction.HitReaction.Juggle",
@@ -47,7 +48,13 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Execution, "State.Execution", "상태 우선순위 2: 처형 중 (역할은 실행 문맥으로 구분)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Groggy, "State.Groggy", "상태 우선순위 3: 그로기");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_HitReaction, "State.HitReaction", "상태 우선순위 4: 넉업, 넉다운, 가드 밀림, 가드 브레이크");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_HitReaction, "State.HitReaction", "상태 우선순위 4의 피격 반응");
+	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_Flinch, "State.HitReaction.Flinch");
+	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_KnockDown, "State.HitReaction.KnockDown");
+	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_KnockUp, "State.HitReaction.KnockUp");
+	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_GuardPushback, "State.HitReaction.GuardPushback");
+	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_GuardBreak, "State.HitReaction.GuardBreak");
+	UE_DEFINE_GAMEPLAY_TAG(State_SuperArmor, "State.SuperArmor");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Busy, "State.Busy", "행동 중. 후딜 전까지 다른 행동을 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Acting, "State.Acting", "모션이 있는 플레이어 행동이 실행 중. 그동안 이동 입력을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Invincible, "State.Invincible", "무적");
@@ -73,6 +80,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockDown, "Event.Hit.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockUp, "Event.Hit.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Flinch, "Event.Hit.Flinch");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Stagger, "Event.Hit.Stagger");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Pushback, "Event.Guard.Pushback");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Break, "Event.Guard.Break");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Groggy, "Event.Groggy");

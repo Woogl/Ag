@@ -31,6 +31,12 @@ bool FAgEnemyAICondition_Reacting::TestCondition(FStateTreeExecutionContext& Con
 	return Controller->IsEnemyReacting();
 }
 
+bool FAgEnemyAICondition_Flinching::TestCondition(FStateTreeExecutionContext& Context) const
+{
+	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
+	return Controller->IsEnemyFlinching() != bInvert;
+}
+
 bool FAgEnemyAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;

@@ -33,6 +33,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LockOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Juggle);
@@ -48,6 +49,12 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Execution);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_Flinch);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_KnockDown);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_KnockUp);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_GuardPushback);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_GuardBreak);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_SuperArmor);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Busy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Acting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Invincible);
@@ -73,6 +80,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Flinch);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Break);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Groggy);

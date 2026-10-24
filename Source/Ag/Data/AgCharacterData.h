@@ -9,6 +9,14 @@
 
 class UAnimMontage;
 
+UENUM(BlueprintType)
+enum class EAgToughness : uint8
+{
+	Small UMETA(DisplayName = "소형"),
+	Medium UMETA(DisplayName = "중형"),
+	Large UMETA(DisplayName = "대형"),
+};
+
 USTRUCT(BlueprintType)
 struct FAgAttributes
 {
@@ -66,6 +74,9 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
 	FText DisplayName;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Combat")
+	EAgToughness Toughness = EAgToughness::Medium;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Attributes", meta = (ShowOnlyInnerProperties))
 	FAgAttributes Attributes;

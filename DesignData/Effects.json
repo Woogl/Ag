@@ -1,4 +1,8 @@
 {
+  "SuperArmor": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": ["State.SuperArmor"]
+  },
   "SPRegen": {
     "DurationPolicy": "Infinite",
     "Modifiers": [

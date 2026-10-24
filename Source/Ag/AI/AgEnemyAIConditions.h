@@ -59,6 +59,23 @@ struct FAgEnemyAICondition_Reacting : public FStateTreeAIConditionBase
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
+USTRUCT(meta = (DisplayName = "적: 움찔 경직 중", Category = "Ag|Enemy AI"))
+struct FAgEnemyAICondition_Flinching : public FStateTreeAIConditionBase
+{
+	GENERATED_BODY()
+
+	using FInstanceDataType = FAgEnemyAIConditionInstanceData;
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
+
+	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
+
+	UPROPERTY(EditAnywhere, Category = "Condition")
+	bool bInvert = false;
+};
+
 /** 패턴 실행 중인지는 이 조건을 둔 상태(패턴 후딜레이, 다가가기, Backstep이 끝난 뒤)가 정하므로 보지 않습니다. */
 USTRUCT(meta = (DisplayName = "적: 페이즈 전환 시작 조건", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_PhaseTransitionReady : public FStateTreeAIConditionBase

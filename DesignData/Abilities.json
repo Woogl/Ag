@@ -207,11 +207,26 @@
       {"Task": "WaitTargetLost", "ReleaseRange": 3000}
     ]
   },
+  "Flinch": {
+    "Tags": ["Ability.Reaction.HitReaction.Flinch"],
+    "Activation": {
+      "BlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "OwnedTags": ["State.HitReaction.Flinch"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
+      "Triggers": [
+        {"Tag": "Event.Hit.Stagger"}
+      ],
+      "bAllowRetrigger": true
+    },
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "Flinch"}
+    ]
+  },
   "KnockDown": {
     "Tags": ["Ability.Reaction.HitReaction.KnockDown"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.HitReaction"],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "OwnedTags": ["State.HitReaction.KnockDown"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Hit.KnockDown"}
@@ -226,8 +241,8 @@
   "KnockUp": {
     "Tags": ["Ability.Reaction.HitReaction.KnockUp"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.HitReaction"],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "OwnedTags": ["State.HitReaction.KnockUp"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Hit.KnockUp"}
@@ -243,9 +258,9 @@
   "Juggle": {
     "Tags": ["Ability.Reaction.HitReaction.Juggle"],
     "Activation": {
-      "RequiredTags": ["State.Airborne", "State.HitReaction"],
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.HitReaction"],
+      "RequiredTags": ["State.Airborne", "State.HitReaction.KnockUp"],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "OwnedTags": ["State.HitReaction.KnockUp"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Hit.Flinch"}
@@ -261,8 +276,8 @@
   "GuardPushback": {
     "Tags": ["Ability.Reaction.HitReaction.GuardPushback"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.HitReaction", "State.Guarding"],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "OwnedTags": ["State.HitReaction.GuardPushback", "State.Guarding"],
       "CancelTags": ["Ability.Action.Parry", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Guard.Pushback"}
@@ -277,8 +292,8 @@
   "GuardBreak": {
     "Tags": ["Ability.Reaction.HitReaction.GuardBreak"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.HitReaction"],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "OwnedTags": ["State.HitReaction.GuardBreak"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Guard.Break"}
@@ -388,7 +403,7 @@
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
+      "BlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Groggy"}

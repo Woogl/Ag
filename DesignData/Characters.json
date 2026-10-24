@@ -1,6 +1,7 @@
 {
   "Player": {
     "DisplayName": "린",
+    "Toughness": "Small",
     "Attributes": {
       "HP": 1000,
       "MaxHP": 1000,
@@ -28,6 +29,7 @@
       "Execution",
       "Sprint",
       "LockOn",
+      "Flinch",
       "KnockDown",
       "KnockUp",
       "Juggle",
@@ -47,6 +49,7 @@
       "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
       "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
       "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
+      "Flinch": "/Game/Animations/AM_Player_Flinch.AM_Player_Flinch",
       "KnockDown": "/Game/Animations/AM_Player_KnockDown.AM_Player_KnockDown",
       "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
       "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
@@ -55,6 +58,7 @@
   },
   "Boss": {
     "DisplayName": "커스터",
+    "Toughness": "Medium",
     "Attributes": {
       "HP": 3000,
       "MaxHP": 3000,
