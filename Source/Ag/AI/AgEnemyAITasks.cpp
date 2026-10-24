@@ -317,7 +317,7 @@ EStateTreeRunStatus FAgEnemyAITask_Patrol::Tick(FStateTreeExecutionContext& Cont
 	if (InstanceData.PointIndex == INDEX_NONE)
 	{
 		const FTransform& Home = Enemy->GetHomeTransform();
-		Controller.SetFocalPoint(Home.GetLocation() + Home.GetRotation().GetForwardVector() * HomeFacingDistance);
+		Controller.SetFocalPoint(Enemy->GetActorLocation() + Home.GetRotation().GetForwardVector() * HomeFacingDistance);
 		return EStateTreeRunStatus::Running;
 	}
 	InstanceData.PointIndex = (InstanceData.PointIndex + 1) % PointCount;

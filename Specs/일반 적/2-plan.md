@@ -130,7 +130,7 @@ stateDiagram-v2
 
 - 정찰 지점은 레벨에 둔 엔진 `ATargetPoint`이고, 레벨에 놓인 적 인스턴스의 `PatrolPoints`(`EditInstanceOnly`) 배열이 순서를 정합니다. 레벨 배치라 JSON이 아니라 레벨 에셋에 둡니다.
 - 정찰·복귀와 다가가기는 길찾기를 쓰므로 적이 있는 레벨에 `NavMeshBoundsVolume`을 둡니다. `LV_BossStage`에도 둡니다.
-- 레벨이 월드 파티션이라 정적 내비 메시는 에디터에서 만들어지지 않습니다. 프로젝트 설정의 `RecastNavMesh.RuntimeGeneration`을 Dynamic으로 두어 게임이 시작할 때 범위 안의 내비 메시를 만듭니다.
+- 내비 메시는 엔진 기본(Static)으로 에디터에서 굽고, 레벨의 `RecastNavMesh` 액터에 저장합니다. 범위를 바꾸면 내비 메시 액터가 있는 상태에서 다시 빌드하고 저장합니다.
 
 ### 보스 체력바
 
