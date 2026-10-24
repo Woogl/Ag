@@ -11,7 +11,7 @@ class UCommonActivatableWidgetStack;
 
 enum class EAgUILayer : uint8
 {
-	Game,
+	HUD,
 	Menu,
 	Modal
 };
@@ -26,7 +26,7 @@ public:
 
 protected:
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonActivatableWidgetStack> GameStack;
+	TObjectPtr<UCommonActivatableWidgetStack> HUDStack;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonActivatableWidgetStack> MenuStack;

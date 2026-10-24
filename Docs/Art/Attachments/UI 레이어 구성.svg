@@ -23,7 +23,7 @@
   <g transform="matrix(1 0 -0.35 0.4 180 720)">
     <rect width="400" height="225" fill="none" stroke="#6b7480" stroke-width="2.5" stroke-dasharray="10 8"/>
   </g>
-  <!-- Game (비어 있음) -->
+  <!-- HUD (비어 있음) -->
   <g transform="matrix(1 0 -0.35 0.4 180 540)">
     <rect width="400" height="225" fill="none" stroke="#9aa4b1" stroke-width="2.5" stroke-dasharray="10 8"/>
   </g>
@@ -53,7 +53,7 @@
     <text x="600" y="431" font-size="24">타이틀 화면</text>
     <text x="600" y="461" font-size="21" fill="#9aa4b1">표시는 유지, 입력 없음</text>
 
-    <text x="600" y="575" font-size="30" font-weight="700">Game</text>
+    <text x="600" y="575" font-size="30" font-weight="700">HUD</text>
     <text x="600" y="611" font-size="24" fill="#9aa4b1">(비어 있음)</text>
 
     <text x="600" y="755" font-size="30" font-weight="700" fill="#9aa4b1">레이어 밖</text>
@@ -74,7 +74,7 @@
     <rect x="166" y="62" width="68" height="16" rx="8" fill="#000000" fill-opacity="0.55" stroke="#c9d1db" stroke-width="1.5"/>
     <rect x="226" y="134" width="26" height="12" fill="#FFFFFF"/>
   </g>
-  <!-- Game: 전투 HUD -->
+  <!-- HUD: 전투 HUD -->
   <g transform="matrix(1 0 -0.35 0.4 1060 540)">
     <rect width="400" height="225" fill="#222a35" stroke="#9aa4b1" stroke-width="2.5"/>
     <rect x="120" y="14" width="160" height="7" fill="#c0392b"/>
@@ -107,7 +107,7 @@
     <text x="1480" y="431" font-size="24">일시정지 메뉴</text>
     <text x="1480" y="461" font-size="21" fill="#f5c84c">입력을 받음</text>
 
-    <text x="1480" y="575" font-size="30" font-weight="700">Game</text>
+    <text x="1480" y="575" font-size="30" font-weight="700">HUD</text>
     <text x="1480" y="611" font-size="24">전투 HUD</text>
     <text x="1480" y="641" font-size="21" fill="#9aa4b1">표시는 유지, 입력 없음</text>
 

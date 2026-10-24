@@ -10,8 +10,8 @@ UCommonActivatableWidget* UAgUILayout::PushScreen(EAgUILayer Layer, TSubclassOf<
 	UCommonActivatableWidgetStack* Stack = nullptr;
 	switch (Layer)
 	{
-	case EAgUILayer::Game:
-		Stack = GameStack;
+	case EAgUILayer::HUD:
+		Stack = HUDStack;
 		break;
 	case EAgUILayer::Menu:
 		Stack = MenuStack;

@@ -48,7 +48,7 @@ UCommonActivatableWidget* AAgPlayerController::PushScreen(EAgUILayer Layer, TSub
 
 void AAgPlayerController::ShowHUD(TSubclassOf<UAgHUDWidget> HUDClass)
 {
-	HUDWidget = Cast<UAgHUDWidget>(PushScreen(EAgUILayer::Game, HUDClass));
+	HUDWidget = Cast<UAgHUDWidget>(PushScreen(EAgUILayer::HUD, HUDClass));
 }
 
 void AAgPlayerController::HideHUD()
