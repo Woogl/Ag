@@ -29,7 +29,7 @@
 | `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
 | `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 플레이어와 보스의 기본 회전. 제자리 회전 중에는 애님 인스턴스가 계산한 회전량을 액터에 적용하며, 그 밖에는 엔진 회전을 사용합니다. |
 | `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라와 락온 카메라, 입력 매핑, 입력 계층(어빌리티 태그로 스펙 찾기, 트리거 태그, 이동 입력 태그, 선입력, 점프와 점프 모션), 극한 회피 구간의 회피를 시작한 자리 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 플레이어 입력 비활성화 |
-| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈 및 페이즈 전환, PP 감소 허용 여부(`CanLosePP`), 넉업·넉다운·가드 밀림·가드 브레이크 종료까지 그로기 지연, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 처형 피격 중 전용 사망 모션 |
+| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈 및 페이즈 전환, PP 감소 허용 여부(`CanLosePP`), 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 처형 피격 중 전용 사망 모션 |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 월드 위치 HUD(락온 마커, 처형 안내) |
 | `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`)과 움찔(`IsEnemyFlinching`) 조회, AI 지각의 시야·대미지 감각과 놓친 시간 기록, 팀 태도 전달, 페이즈 전환 목표와 대상의 기본 공격 이벤트 구독 |
 | `FAgEnemyAICondition_Flinching` | `FStateTreeAIConditionBase` | 공통 조건 인스턴스 데이터의 Controller로 `IsEnemyFlinching`을 조회합니다. `bInvert`로 반대 조건을 표현합니다. |
@@ -98,7 +98,8 @@ classDiagram
 
 - 공격 데이터의 `Flinch`는 결과 처리에서 행동 중단용 `Event.Hit.Stagger` 또는 저글용 `Event.Hit.Flinch`로 나뉩니다. 저글은 `State.Airborne`과 넉업 하위 상태를 함께 요구합니다. `Stagger`는 새 공격 반응 종류가 아닌 내부 이벤트입니다.
 - `Flinch`는 기존 `PlayMontage` Task 하나를 사용하고 `bAllowRetrigger`로 다시 시작합니다. 행동 제한은 블렌드아웃 시작이 아닌 몽타주 종료까지 유지합니다. 별도 피격 시간값이나 전용 실행 클래스는 없습니다.
-- 움찔은 넉업·넉다운·가드 피격 중에 발동하지 않습니다. 그로기의 발동 차단과 종료 후 지연 재판정은 기존 네 종류의 피격 하위 상태만 사용하며, 움찔은 그로기를 지연시키지 않습니다.
+- 움찔은 넉업·넉다운·가드 피격 중에 발동하지 않습니다.
+- 그로기 효과는 Groggy 어빌리티가 끝나도 지속 시간 동안 남고(`bRemoveOnEnd: false`), 처형·사망 태그가 붙으면 효과 정의의 `RemovalTags`로 지워집니다. 피격 반응 몽타주가 그로기 몽타주를 끊어 어빌리티가 취소돼도 그로기는 이어지며, 피격 반응 뒤의 그로기 자세는 ABP가 보여 줍니다.
 - 플레이어는 공중 공격의 입력 예외보다 부모 피격 상태를 먼저 확인합니다. 선입력은 상태가 해제된 다음 틱에 재검사해, 재발동 중 태그가 잠시 빠지는 순간에 실행하지 않습니다.
 - `ST_Enemy`는 전체 반응보다 움찔 전환을 먼저 검사하고, 두 상태 모두 기존 `WaitReaction` Task로 종료를 기다립니다. 움찔만 끝나면 패턴 실행으로, `Reacting && !Flinching`이면 기존 피격 반응 상태로 전환합니다. 페이즈 전환 조건은 패턴 실행보다 먼저 확인합니다.
 

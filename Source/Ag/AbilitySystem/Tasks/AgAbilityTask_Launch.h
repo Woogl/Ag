@@ -57,9 +57,6 @@ public:
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	/** 함께 발동한 Task(피격 반응의 즉시 회전 등)가 모두 시작된 뒤의 방향을 쓰도록 첫 틱에 띄웁니다. */
-	void Launch();
-
 	/** 블렌드 전환(넉업의 정점)과 함께 발동한 PlayMontage는 새 재생이므로 시작될 때마다 끕니다. */
 	UFUNCTION()
 	void DisableMontageRootMotion(UAnimMontage* Montage);
@@ -68,6 +65,5 @@ private:
 	FAgLaunchParams Params;
 
 	int32 MontageInstanceId = INDEX_NONE;
-	bool bLaunched = false;
 	bool bArcEnded = false;
 };

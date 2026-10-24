@@ -48,7 +48,7 @@
     "Cost": {"SP": 20},
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "PerfectDodgeWindow"},
-      {"Task": "RootMotion", "Direction": "MoveInput", "bWarpTranslation": false, "BlockedTags": ["State.LockedOn"]},
+      {"Task": "RootMotion", "Direction": "MoveInput", "BlockedTags": ["State.LockedOn"]},
       {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move"], "BlockedTags": ["State.LockedOn"]},
       {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Forward"},
       {"Task": "PlayMontage", "Montage": "Dodge", "Section": "ForwardRight", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "ForwardRight"},
@@ -126,7 +126,7 @@
       ]
     },
     "Tasks": [
-      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "RootMotion"},
       {"Task": "ApplyEffect", "Effect": "ParryReward"},
       {"Task": "ApplyEffect", "Effect": "SPRegenDelay", "bRemoveOnEnd": false},
       {"Task": "PlayMontage", "Montage": "Parry"}
@@ -225,7 +225,7 @@
   "KnockDown": {
     "Tags": ["Ability.Reaction.HitReaction.KnockDown"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "BlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
       "OwnedTags": ["State.HitReaction.KnockDown"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
@@ -234,14 +234,14 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
-      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "RootMotion"},
       {"Task": "PlayMontage", "Montage": "KnockDown"}
     ]
   },
   "KnockUp": {
     "Tags": ["Ability.Reaction.HitReaction.KnockUp"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "BlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
       "OwnedTags": ["State.HitReaction.KnockUp"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
@@ -250,7 +250,7 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
-      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "RootMotion"},
       {"Task": "PlayMontage", "Montage": "KnockUp"},
       {"Task": "Launch", "Height": 70, "Direction": "Back", "Distance": 50}
     ]
@@ -259,7 +259,7 @@
     "Tags": ["Ability.Reaction.HitReaction.Juggle"],
     "Activation": {
       "RequiredTags": ["State.Airborne", "State.HitReaction.KnockUp"],
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "BlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
       "OwnedTags": ["State.HitReaction.KnockUp"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
       "Triggers": [
@@ -268,7 +268,7 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
-      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "RootMotion"},
       {"Task": "PlayMontage", "Montage": "KnockUp"},
       {"Task": "Launch", "Height": 15, "Altitude": 70, "Direction": "Back", "Distance": 10}
     ]
@@ -285,7 +285,7 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
-      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "RootMotion"},
       {"Task": "PlayMontage", "Montage": "GuardPushback"}
     ]
   },
@@ -301,7 +301,7 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
-      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "RootMotion"},
       {"Task": "PlayMontage", "Montage": "GuardBreak"}
     ]
   },
@@ -375,7 +375,7 @@
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "SwordWave"}
     ],
-    "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 8}
+    "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 2000}, "Weight": 8}
   },
   "JumpCleave": {
     "Tags": ["Ability.Enemy.Pattern"],
@@ -403,16 +403,15 @@
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {
-      "BlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
+      "BlockedTags": ["State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
       "Triggers": [
         {"Tag": "Event.Groggy"}
       ]
     },
     "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "Groggy"},
-      {"Task": "PlayMontage", "Montage": "Groggy", "BlockedTags": ["State.GroggyDelayed"]},
-      {"Task": "PlayMontage", "Montage": "Groggy", "Section": "Loop", "RequiredTags": ["State.GroggyDelayed"]}
+      {"Task": "ApplyEffect", "Effect": "Groggy", "bRemoveOnEnd": false},
+      {"Task": "PlayMontage", "Montage": "Groggy", "BlockedTags": ["State.HitReaction"]}
     ]
   },
   "Executed": {
@@ -421,13 +420,13 @@
       "RequiredTags": ["State.Groggy"],
       "BlockedTags": ["State.Dead"],
       "OwnedTags": ["State.Execution", "State.PassThrough"],
-      "CancelTags": ["Ability.Reaction.Groggy"],
+      "CancelTags": ["Ability.Reaction.Groggy", "Ability.Reaction.HitReaction"],
       "Triggers": [
         {"Tag": "Event.Executed"}
       ]
     },
     "Tasks": [
-      {"Task": "RootMotion", "bWarpTranslation": false},
+      {"Task": "RootMotion"},
       {"Task": "PlayMontage", "Montage": "Executed"}
     ],
     "DeathMontage": "ExecutedDeath"

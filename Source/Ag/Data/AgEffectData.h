@@ -78,6 +78,9 @@ struct FAgEffectDefinition
 	FGameplayTagContainer OngoingIgnoredTags;
 
 	UPROPERTY()
+	FGameplayTagContainer RemovalTags;
+
+	UPROPERTY()
 	TOptional<FAgRegenDelay> RegenDelay;
 
 	UPROPERTY()

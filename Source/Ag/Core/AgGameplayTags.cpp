@@ -73,7 +73,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Cutscene, "State.Cutscene", "컷신 재생 중 (PlayCutscene Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "적이 전투 중이 아님 (비전투 상태, 플레이어 사망 뒤 대기)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyImmune, "State.GroggyImmune", "그로기 면역. PP 감소와 그로기 진입 대상에서 제외");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GroggyDelayed, "State.GroggyDelayed", "피격 반응이 끝나 미뤘던 그로기를 시작하는 동안");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_PPDelay, "State.Regen.PPDelay", "PP 리젠 대기");
 
@@ -120,8 +119,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Hit, "Effect.Damage.Result.Hit", "피격 결과 일반 피격");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue, "GameplayCue", "연출 큐");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateScreen, "GameplayCue.UltimateScreen", "궁극기 화면 효과");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PerfectDodgeScreen, "GameplayCue.PerfectDodgeScreen", "극한 회피 성공 화면 효과");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateScreen, "GameplayCue.UltimateScreen", "궁극기 포스트프로세스");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PerfectDodgeScreen, "GameplayCue.PerfectDodgeScreen", "극한 회피 성공 포스트프로세스");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_CameraShake_Small, "GameplayCue.CameraShake.Small", "작은 카메라 셰이크");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_CameraShake_Medium, "GameplayCue.CameraShake.Medium", "보통 카메라 셰이크");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_CameraShake_Large, "GameplayCue.CameraShake.Large", "큰 카메라 셰이크");

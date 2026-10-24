@@ -20,10 +20,11 @@
 | 1 | 이동 블렌드 스페이스 | `BS_Idle_Walk_Run` (템플릿) | `BS_BossMove` |
 | 2 | 가드 전환: 가드 중이면 가드 이동 블렌드 스페이스 | `BS_PlayerGuardMove` | 없음 |
 | 3 | 제자리 회전: 회전 모션의 하체만 섞음 | Warrior `Turn_*`, 가드 중 Samurai `Guard_Turn*` | Warrior `Turn_*` |
-| 4 | 공중 전환: 떨어지는 중이면 공중 반복 모션 | 템플릿 `MM_Fall_Loop` | Halberd `Airborne` |
-| 5 | `DefaultSlot`: 행동 몽타주 | 행동별 몽타주 | 패턴·피격 몽타주 |
-| 6 | `AdditiveSlot`: 덧입힘 몽타주 | `AM_GuardFlinch` | 없음 |
-| 7 | `CinematicSlot`: 레벨 시퀀스의 자세 | 궁극기 컷신 `LS_UltimateCutscene` | 없음 |
+| 4 | 그로기 전환: 그로기 중이면 그로기 반복 모션 | 없음 | Samurai `Stun` |
+| 5 | 공중 전환: 떨어지는 중이면 공중 반복 모션 | 템플릿 `MM_Fall_Loop` | Halberd `Airborne` |
+| 6 | `DefaultSlot`: 행동 몽타주 | 행동별 몽타주 | 패턴·피격 몽타주 |
+| 7 | `AdditiveSlot`: 덧입힘 몽타주 | `AM_GuardFlinch` | 없음 |
+| 8 | `CinematicSlot`: 레벨 시퀀스의 자세 | 궁극기 컷신 `LS_UltimateCutscene` | 없음 |
 
 - 보스는 가드 이동 블렌드 스페이스가 비어 있어 가드 전환이 늘 일반 이동입니다.
 - 일반 자세의 회전 모션 목록은 공통 `ABP_Character`의 기본값이고, 가드 중 목록은 `ABP_Player`에만 있습니다.

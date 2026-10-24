@@ -65,9 +65,6 @@ private:
 	/** 처형 시작으로 그로기가 끝나면 PP 회복은 처형 피격 종료까지 미룹니다. */
 	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
 
-	/** 피격 반응 중에 PP가 0이 되었으면 그 반응이 끝날 때 그로기를 시작합니다. */
-	void HandleHitReactionChanged(const FGameplayTag Tag, int32 NewCount);
-
 	void HandleAbilityEnded(const FAbilityEndedData& Data);
 
 	UPROPERTY(EditInstanceOnly, Category = "AI")

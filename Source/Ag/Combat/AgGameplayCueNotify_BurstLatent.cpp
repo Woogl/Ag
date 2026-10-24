@@ -39,7 +39,7 @@ bool AAgGameplayCueNotify_BurstLatent::OnExecute_Implementation(AActor* Target, 
 		return Super::OnExecute_Implementation(Target, Parameters);
 	}
 
-	// 부모는 게임 시간으로 종료하므로, 같은 연출 순서를 실행하고 화면 효과의 실제 시간 완료로 회수합니다.
+	// 부모는 게임 시간으로 종료하므로, 같은 연출 순서를 실행하고 포스트프로세스의 실제 시간 완료로 회수합니다.
 	GetWorld()->GetTimerManager().ClearTimer(FinishTimerHandle);
 	FGameplayCueNotify_SpawnContext SpawnContext(GetWorld(), Target, Parameters);
 	SpawnContext.SetDefaultSpawnCondition(&DefaultSpawnCondition);

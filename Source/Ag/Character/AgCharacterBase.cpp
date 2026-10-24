@@ -116,7 +116,9 @@ bool AAgCharacterBase::IsFacingFixed() const
 {
 	// 엔진 GetCurrentMontage는 블렌드 아웃을 시작한 몽타주를 돌려주지 않아, 행동이 끝나기 전 블렌드 아웃부터 돕니다.
 	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
-	return Animating && Animating->IsActive() && AbilitySystemComponent->GetCurrentMontage();
+	// 피격 반응 뒤의 그로기 자세는 몽타주가 아니라 애님 그래프가 재생합니다.
+	return (Animating && Animating->IsActive() && AbilitySystemComponent->GetCurrentMontage()) ||
+	       AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 }
 
 void AAgCharacterBase::Kill()

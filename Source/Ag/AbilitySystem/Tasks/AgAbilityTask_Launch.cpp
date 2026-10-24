@@ -30,11 +30,51 @@ const FName UAgAbilityTask_Launch::SourceName(TEXT("AgLaunch"));
 void UAgAbilityTask_Launch::Activate()
 {
 	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	if (!Character || !Character->GetCharacterMovement())
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
+	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
+	if (!Movement)
 	{
 		EndTask();
 		return;
 	}
+
+	Rotation = Character->GetActorRotation();
+	Distance = 0.f;
+	if (Params.Direction == EAgLaunchDirection::Back)
+	{
+		// 함께 시작하는 몸 돌리기와 순서가 없어도 같은 방향이 되도록, 대상이 있으면 정면 대신 대상의 반대쪽으로 띄웁니다.
+		const AActor* ActionTarget = AgAbility->GetActionTarget();
+		const FVector Away = ActionTarget ? (Character->GetActorLocation() - ActionTarget->GetActorLocation()).GetSafeNormal2D() : FVector::ZeroVector;
+		Rotation.Yaw = Away.IsNearlyZero() ? Rotation.Yaw + 180.f : Away.Rotation().Yaw;
+		Distance = Params.Distance;
+	}
+	const AActor* Target = Params.Direction == EAgLaunchDirection::Target ? AgAbility->GetActionTarget() : nullptr;
+	if (Target)
+	{
+		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
+		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - AgAbility->GetTargetSpacing());
+		Distance = Params.MaxDistance ? FMath::Min(Distance, *Params.MaxDistance) : Distance;
+		Rotation = Delta.IsNearlyZero() ? Character->GetActorRotation() : Delta.Rotation();
+	}
+	const float Gravity = -Movement->GetGravityZ();
+	Height = Params.Height ? *Params.Height : Gravity * FMath::Square(Params.AirTime.Get(0.f)) / 8.f;
+	if (Params.Altitude)
+	{
+		FFindFloorResult Floor;
+		Movement->ComputeFloorDist(Movement->UpdatedComponent->GetComponentLocation(), *Params.Altitude, *Params.Altitude, Floor, Character->GetCapsuleComponent()->GetScaledCapsuleRadius());
+		Height = FMath::Max(Height, *Params.Altitude - (Floor.bBlockingHit ? Floor.FloorDist : *Params.Altitude));
+	}
+	const float AirTime = Params.AirTime.Get(FMath::Sqrt(8.f * Height / Gravity));
+
+	// 엔진 Task의 생성 함수가 하는 설정입니다.
+	ForceName = SourceName;
+	Duration = AirTime;
+	MinimumLandedTriggerTime = AirTime * MinLandedAirTimeRatio;
+	bFinishOnLanded = true;
+	FinishVelocityMode = ERootMotionFinishVelocityMode::SetVelocity;
+	FinishSetVelocity = FVector::ZeroVector;
+	SharedInitAndApply();
+
 	if (UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance())
 	{
 		Anim->OnMontageStarted.AddDynamic(this, &ThisClass::DisableMontageRootMotion);
@@ -45,12 +85,6 @@ void UAgAbilityTask_Launch::Activate()
 
 void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 {
-	if (!bLaunched)
-	{
-		Launch();
-		return;
-	}
-
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
 	if (IsFinished() || !Character || !MovementComponent.IsValid())
 	{
@@ -122,53 +156,6 @@ void UAgAbilityTask_Launch::OnDestroy(bool bInOwnerFinished)
 		}
 	}
 	Super::OnDestroy(bInOwnerFinished);
-}
-
-void UAgAbilityTask_Launch::Launch()
-{
-	bLaunched = true;
-	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!Movement)
-	{
-		EndTask();
-		return;
-	}
-
-	Rotation = Character->GetActorRotation();
-	Distance = 0.f;
-	if (Params.Direction == EAgLaunchDirection::Back)
-	{
-		Rotation.Yaw += 180.f;
-		Distance = Params.Distance;
-	}
-	const AActor* Target = Params.Direction == EAgLaunchDirection::Target ? AgAbility->GetActionTarget() : nullptr;
-	if (Target)
-	{
-		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
-		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - AgAbility->GetTargetSpacing());
-		Distance = Params.MaxDistance ? FMath::Min(Distance, *Params.MaxDistance) : Distance;
-		Rotation = Delta.IsNearlyZero() ? Character->GetActorRotation() : Delta.Rotation();
-	}
-	const float Gravity = -Movement->GetGravityZ();
-	Height = Params.Height ? *Params.Height : Gravity * FMath::Square(Params.AirTime.Get(0.f)) / 8.f;
-	if (Params.Altitude)
-	{
-		FFindFloorResult Floor;
-		Movement->ComputeFloorDist(Movement->UpdatedComponent->GetComponentLocation(), *Params.Altitude, *Params.Altitude, Floor, Character->GetCapsuleComponent()->GetScaledCapsuleRadius());
-		Height = FMath::Max(Height, *Params.Altitude - (Floor.bBlockingHit ? Floor.FloorDist : *Params.Altitude));
-	}
-	const float AirTime = Params.AirTime.Get(FMath::Sqrt(8.f * Height / Gravity));
-
-	// 엔진 Task의 생성 함수가 하는 설정입니다.
-	ForceName = SourceName;
-	Duration = AirTime;
-	MinimumLandedTriggerTime = AirTime * MinLandedAirTimeRatio;
-	bFinishOnLanded = true;
-	FinishVelocityMode = ERootMotionFinishVelocityMode::SetVelocity;
-	FinishSetVelocity = FVector::ZeroVector;
-	SharedInitAndApply();
 }
 
 void UAgAbilityTask_Launch::DisableMontageRootMotion(UAnimMontage* Montage)

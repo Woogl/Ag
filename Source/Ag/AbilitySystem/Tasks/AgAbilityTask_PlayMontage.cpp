@@ -325,7 +325,7 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 	TimelinePosition = NewPosition;
 	Pending.Sort([](const FPending& A, const FPending& B)
 	{
-		if (!FMath::IsNearlyEqual(A.Time, B.Time))
+		if (A.Time != B.Time)
 		{
 			return A.Time < B.Time;
 		}

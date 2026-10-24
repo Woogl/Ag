@@ -3,7 +3,9 @@
 #include "Combat/AgTimeSubsystem.h"
 
 #include "Ag.h"
+#include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
+#include "Core/AgGameplayTags.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
 #include "TimerManager.h"
@@ -42,6 +44,8 @@ bool UAgTimeSubsystem::StartTimeStop(UObject& Requester, AAgCharacterBase& Exemp
 		return false;
 	}
 	TimeStopRequester = &Requester;
+	// 정지 중에는 히트스톱 타이머도 멈추므로, 계속 움직일 캐릭터의 기존 히트스톱을 먼저 끝냅니다.
+	Exempt.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_Hitstop));
 	// 시간 정지가 게임 전체 시간 배율을 대신 쥐므로, 도는 슬로우모션은 여기서 끝납니다. 지난 시간 정지에서
 	// 기다리던 슬로우모션도 이 시간 정지의 끝에 남지 않게 지웁니다.
 	GetWorld()->GetTimerManager().ClearTimer(SlowMotionTimer);

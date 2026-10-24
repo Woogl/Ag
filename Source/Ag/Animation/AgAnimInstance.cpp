@@ -87,6 +87,7 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
 	bIsGuarding = GuardMoveBlendSpace && AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
+	bIsGroggy = GroggyAnimation && AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 
 	UpdateTurnInPlace(DeltaSeconds);
 }

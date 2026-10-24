@@ -14,7 +14,6 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "TimerManager.h"
 
 #if WITH_EDITORONLY_DATA
 #include "Character/AgEnemySightPreviewComponent.h"
@@ -81,12 +80,6 @@ void AAgEnemyCharacter::BeginPlay()
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
-	const FGameplayTag DelayingReactions[] = {AgGameplayTags::State_HitReaction_KnockDown, AgGameplayTags::State_HitReaction_KnockUp,
-		AgGameplayTags::State_HitReaction_GuardPushback, AgGameplayTags::State_HitReaction_GuardBreak};
-	for (const FGameplayTag& Reaction : DelayingReactions)
-	{
-		ASC->RegisterGameplayTagEvent(Reaction, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleHitReactionChanged);
-	}
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 }
 
@@ -162,33 +155,12 @@ void AAgEnemyCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCou
 		return;
 	}
 	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
-	// 엔진은 처형 상태 태그를 먼저 붙인 뒤 그로기 행동을 취소합니다.
+	// 처형으로 끝난 그로기는 처형 상태 태그가 붙어 효과가 지워진 것입니다.
 	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 	{
 		ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 	}
 	ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_Groggy));
-}
-
-void AAgEnemyCharacter::HandleHitReactionChanged(const FGameplayTag Tag, int32 NewCount)
-{
-	if (NewCount > 0)
-	{
-		return;
-	}
-	// 움찔은 그로기를 지연하지 않으므로, 나머지 피격 상태의 종료만 구독합니다.
-	// 재발동(저글)은 같은 프레임 안에서 태그를 뗐다 다시 붙이므로 다음 틱에 확인합니다.
-	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]
-	{
-		UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-		if (!IsDead() && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) && GetAttributeSet()->GetPP() <= 0.f)
-		{
-			// 그로기 행동은 발동하는 동안 이 태그로 일어선 자세에 맞는 시작 섹션을 고릅니다.
-			ASC->AddLooseGameplayTag(AgGameplayTags::State_GroggyDelayed);
-			SendEventToSelf(AgGameplayTags::Event_Groggy);
-			ASC->RemoveLooseGameplayTag(AgGameplayTags::State_GroggyDelayed);
-		}
-	}));
 }
 
 void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)

@@ -1,0 +1,27 @@
+생성 방식: 내장 image_gen 도구
+용도: AG 캐릭터 외형 제안용 콘셉트 이미지
+기준: Docs/Art/아트 표현 사양.md, 두 캐릭터 기획서의 개요
+상세 외형은 이미지 생성을 위한 제안이며 확정 기획이나 게임 에셋에 반영하지 않았습니다.
+
+[커스터 / custer.png]
+Use case: stylized-concept
+Asset type: Original character concept illustration for AG, a third-person action RPG. A proposed visual design rather than a screenshot or an established final character design.
+Primary request: A full-body concept portrait of 커스터 (Custer), the human knight boss who fights with a halberd. One character only.
+Scene/backdrop: Restrained neutral charcoal-gray studio backdrop with a subtle painterly atmosphere and simple grounded floor shadow. No narrative environment or props.
+Subject: An adult human knight with a powerful, grounded, broad-shouldered silhouette, imposing but still believable human proportions, moderately larger than a human player character rather than a giant or monster. Fully enclosed, elegant angular knight helmet with a narrow visor and no horns. Layered articulated steel plate armor over dark woven cloth, functional gauntlets and armored boots, visibly well constructed joints and readable shapes. Equipment has subtle wear and realistic material separation, not covered in ornament. His sole weapon is a long halberd with a clear axe blade, thrusting spear point, and rear hook; coherent practical construction and a straight shaft. His two hands grip separated points on its shaft in a composed guarded stance; the complete head and shaft must be legible and wholly in frame. Calm disciplined menace, not berserk rage.
+Style/medium: High-end contemporary game character concept painting with semi-realistic anatomy, crisp silhouettes, controlled painterly edges, finely rendered steel, leather, and cloth. Restrained sophisticated detailing. A consistent companion style for a nimble katana wielder illustration.
+Composition/framing: Portrait format, full body and entire halberd from tip to butt visible, three-quarter view, character centered with ample margins. Slightly low eye level, neither extreme perspective nor fisheye. Clear expressive stance suitable for a character design presentation.
+Lighting/mood: Broad soft studio key light and restrained cool edge light, enough fill to read every armor layer. Strong value grouping and no crushed black details.
+Constraints: Human halberd knight. Two arms, two legs, plausible hands and weapon grip. No sword, no shield, no second weapon. No glowing eyes, no magic effects, no skull motif, no wings, no excessive spikes. No other characters, no panels, no text, no logos, no watermark.
+
+[린 / rin.png]
+Use case: stylized-concept
+Asset type: Original character concept illustration for AG, a third-person action RPG. A proposed visual design rather than a screenshot or an established final character design.
+Primary request: A full-body concept portrait of 린 (Rin), an agile human player character who fights with a katana, deflects blows, and dodges precisely. One character only.
+Scene/backdrop: Restrained neutral charcoal-gray studio backdrop with a subtle painterly atmosphere and simple grounded floor shadow. No narrative environment or props.
+Subject: Interpret Rin as an adult woman with an athletic, agile, believable build and a focused composed expression. Dark hair tied back neatly for combat with a few naturally loose strands. Practical fitted layered combat clothes with an overlapping tunic construction, flexible trousers, flat sturdy boots, and light articulated forearm, shoulder, and shin protection. Fully functional modest clothing with a clear slim silhouette that visibly allows rapid movement. Material-led design using woven fabric, leather, and steel with subtle wear, no busy decoration. A single slightly curved katana with a coherent handle, guard, and single-edged blade is held in both hands in a relaxed ready guard, blade angled to the side so its full continuous shape reads clearly; a matching plain empty scabbard is secured at the waist. Poised and alert, controlled capability rather than an exaggerated action pose.
+Style/medium: High-end contemporary game character concept painting with semi-realistic anatomy and face, crisp silhouettes, controlled painterly edges, finely rendered steel, leather, and cloth. Restrained sophisticated detailing. A consistent companion style for an armored halberd knight illustration.
+Composition/framing: Portrait format, full body from hair to boots and entire katana visible, three-quarter view, character centered with ample margins. Natural eye-level perspective, clear face, readable outfit construction and a clean weapon silhouette.
+Lighting/mood: Broad soft studio key light and restrained cool edge light, enough fill to read all clothing layers. Strong value grouping and no crushed black details.
+Constraints: One adult human katana wielder. Two arms, two legs, plausible hands and weapon grip. Exactly one katana and one empty scabbard. No heavy full plate armor, no firearms, no magic effects, no additional weapons, no high heels. No other characters, no panels, no text, no logos, no watermark.
+

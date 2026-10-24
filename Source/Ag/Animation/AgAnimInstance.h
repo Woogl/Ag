@@ -34,6 +34,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
+	TObjectPtr<UAnimSequenceBase> GroggyAnimation;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Assets")
 	TArray<TObjectPtr<UAnimSequence>> TurnAnimations;
 
@@ -63,6 +66,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsGuarding = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bIsGroggy = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "TurnInPlace")
 	TObjectPtr<UAnimSequence> TurnAnimation;

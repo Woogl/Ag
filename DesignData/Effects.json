@@ -69,7 +69,8 @@
   "Groggy": {
     "DurationPolicy": "HasDuration",
     "Duration": 5,
-    "GrantedTags": ["State.Groggy"]
+    "GrantedTags": ["State.Groggy"],
+    "RemovalTags": ["State.Execution", "State.Dead"]
   },
   "SprintDrain": {
     "DurationPolicy": "Infinite",

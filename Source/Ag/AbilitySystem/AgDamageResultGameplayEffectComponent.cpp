@@ -54,7 +54,7 @@ namespace
 	{
 		const UAbilitySystemComponent* ASC = Target.GetAbilitySystemComponent();
 		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_SuperArmor) ||
-			ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+			ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 		{
 			return FGameplayTag();
 		}
@@ -65,6 +65,10 @@ namespace
 			if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockUp) && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne))
 			{
 				return AgGameplayTags::Event_Hit_Flinch;
+			}
+			if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+			{
+				return FGameplayTag();
 			}
 			const bool bOtherReaction = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) &&
 			                            !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
@@ -174,7 +178,6 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		return;
 	}
 	UAISense_Damage::ReportDamageEvent(Target, Target, Attacker, 1.f, Attacker->GetActorLocation(), Context.GetOrigin());
-	// 반사탄에 맞은 대상의 패리당함 반응(PP 감소)도 피격 반응 전이어야 그로기가 넉다운보다 우선합니다.
 	if (bHit && Projectile && Projectile->IsReflected() && !Target->IsDead())
 	{
 		SendEvent(Target, AgGameplayTags::Event_Parried, Attacker);
@@ -184,8 +187,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, bGuardBreak, TargetStats->GetHP(), TargetStats->GetPP(),
 		TargetStats->GetSP());
 
-	// 사망·그로기 판정(어트리뷰트 세트)이 피격 반응보다 먼저입니다. 이번 타격으로 죽었으면 반응하지 않고, 그로기가
-	// 됐으면 그로기 태그가 이미 붙어 흔들기만 합니다.
+	// 사망 판정(어트리뷰트 세트)이 이 처리보다 먼저이므로, 이번 타격으로 죽었으면 반응하지 않습니다.
 	if (!Target->IsDead())
 	{
 		if (bParry)

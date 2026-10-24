@@ -138,7 +138,13 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	}
 	if (!Definition.OngoingIgnoredTags.IsEmpty())
 	{
-		Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>().OngoingTagRequirements.IgnoreTags = Definition.OngoingIgnoredTags;
+		Effect->FindOrAddComponent<UTargetTagRequirementsGameplayEffectComponent>().OngoingTagRequirements.IgnoreTags = Definition.OngoingIgnoredTags;
+	}
+	if (!Definition.RemovalTags.IsEmpty())
+	{
+		// 엔진 RequireTags는 모두 있어야 지우므로, 하나라도 있으면 지우도록 쿼리를 씁니다.
+		Effect->FindOrAddComponent<UTargetTagRequirementsGameplayEffectComponent>().RemovalTagRequirements.TagQuery =
+			FGameplayTagQuery::MakeQuery_MatchAnyTags(Definition.RemovalTags);
 	}
 	if (Definition.RegenDelay)
 	{
