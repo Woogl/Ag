@@ -16,8 +16,6 @@
 
 AAgEnemyAIController::AAgEnemyAIController()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeAIComponent>(TEXT("StateTree"));
 	// 실행할 StateTree는 빙의할 때 적 캐릭터에서 가져오므로 BeginPlay에 자동으로 시작하지 않습니다.
 	StateTreeComponent->SetStartLogicAutomatically(false);
@@ -110,6 +108,9 @@ void AAgEnemyAIController::OnPossess(APawn* InPawn)
 	LastNoticedTime = -1.;
 	GetAIPerceptionComponent()->OnTargetPerceptionUpdated.AddUniqueDynamic(this, &ThisClass::HandleTargetPerceptionUpdated);
 	ConfigureSight(*GetEnemyData());
+	// 플레이어 타임라인이 기본 공격 시작 이벤트를 공격 대상에게 보내므로 자기 캐릭터에서 받습니다.
+	BasicAttackHandle = Enemy->GetAbilitySystemComponent()->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted)
+	                        .AddUObject(this, &ThisClass::HandleTargetBasicAttack);
 
 	if (Enemy->AIStateTree)
 	{
@@ -123,21 +124,13 @@ void AAgEnemyAIController::OnUnPossess()
 	ClearFocus(EAIFocusPriority::Gameplay);
 	StateTreeComponent->StopLogic(TEXT("UnPossess"));
 	GetAIPerceptionComponent()->OnTargetPerceptionUpdated.RemoveDynamic(this, &ThisClass::HandleTargetPerceptionUpdated);
-	if (TargetASC.IsValid())
+	if (const AAgEnemyCharacter* Enemy = GetEnemy())
 	{
-		TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).Remove(BasicAttackHandle);
+		Enemy->GetAbilitySystemComponent()->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).Remove(BasicAttackHandle);
 	}
-	TargetASC.Reset();
 	BasicAttackHandle.Reset();
 
 	Super::OnUnPossess();
-}
-
-void AAgEnemyAIController::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	BindTargetEvents();
 }
 
 void AAgEnemyAIController::ConfigureSight(const UAgEnemyData& Data)
@@ -164,26 +157,7 @@ void AAgEnemyAIController::HandleTargetPerceptionUpdated(AActor* Actor, FAIStimu
 	LastNoticedTime = GetWorld()->GetTimeSeconds();
 }
 
-void AAgEnemyAIController::BindTargetEvents()
-{
-	// 적은 플레이어가 스폰되기 전에 빙의하므로, 빙의할 때가 아니라 대상이 생긴 뒤의 틱에서 한 번 구독합니다.
-	if (TargetASC.IsValid())
-	{
-		return;
-	}
-	if (const AAgCharacterBase* Target = GetTarget())
-	{
-		TargetASC = Target->GetAbilitySystemComponent();
-		BasicAttackHandle = TargetASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted)
-		                        .AddUObject(this, &ThisClass::HandleTargetBasicAttack);
-	}
-}
-
 void AAgEnemyAIController::HandleTargetBasicAttack(const FGameplayEventData* Payload)
 {
-	const AAgEnemyCharacter* Enemy = GetEnemy();
-	if (Payload && Enemy && Payload->Target.Get() == Enemy)
-	{
-		StateTreeComponent->SendStateTreeEvent(AgGameplayTags::Event_BasicAttackStarted);
-	}
+	StateTreeComponent->SendStateTreeEvent(AgGameplayTags::Event_BasicAttackStarted);
 }

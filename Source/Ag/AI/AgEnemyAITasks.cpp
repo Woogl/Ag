@@ -3,7 +3,6 @@
 #include "AI/AgEnemyAITasks.h"
 
 #include "Abilities/GameplayAbility.h"
-#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
@@ -21,18 +20,6 @@ namespace
 	constexpr float RetryInterval = 0.5f;
 
 	constexpr float HomeFacingDistance = 100.f;
-
-	bool IsPhaseTransitionActive(const UAbilitySystemComponent& ASC)
-	{
-		for (const FGameplayAbilitySpec& Spec : ASC.GetActivatableAbilities())
-		{
-			if (Spec.IsActive() && Spec.Ability && Spec.GetDynamicSpecSourceTags().HasTag(AgGameplayTags::Ability_Reaction_PhaseTransition))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
 
 	FVector GetPatrolDestination(const AAgEnemyCharacter& Enemy, int32 PointIndex)
 	{
@@ -112,11 +99,9 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 			return EStateTreeRunStatus::Failed;
 		}
 		const float Distance = Enemy->GetHorizontalDistanceTo(Target);
-		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
-		const auto IsReady = [Enemy, ActorInfo](FName Candidate)
+		const auto IsReady = [Enemy](FName Candidate)
 		{
-			const FGameplayAbilitySpec* Spec = Enemy->FindAbilitySpec(Candidate);
-			return Spec && Spec->Ability && Spec->GetPrimaryInstance()->CanActivateAbility(Spec->Handle, ActorInfo);
+			return Enemy->CanActivatePattern(Candidate);
 		};
 		TArray<TPair<FName, float>> Candidates;
 		GatherCandidates(Data->Abilities, Distance, Enemy->GetPhase(), IsReady, Candidates);
@@ -174,23 +159,14 @@ void FAgEnemyAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityI
 
 EStateTreeRunStatus FAgEnemyAITask_PhaseTransition::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
-	const UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
-
-	InstanceData.Controller->MarkPhaseTransitionStarted(Enemy->GetReachedPhase());
-	FGameplayEventData Payload;
-	Payload.EventTag = AgGameplayTags::Event_PhaseTransition;
-	Payload.Target = Enemy;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Enemy, AgGameplayTags::Event_PhaseTransition, Payload);
-	return IsPhaseTransitionActive(*ASC) ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Failed;
+	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	return InstanceData.Controller->GetEnemy()->StartPhaseTransition() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Failed;
 }
 
 EStateTreeRunStatus FAgEnemyAITask_PhaseTransition::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return IsPhaseTransitionActive(*InstanceData.Controller->GetEnemy()->GetAbilitySystemComponent()) ? EStateTreeRunStatus::Running
-	                                                                                                  : EStateTreeRunStatus::Succeeded;
+	return InstanceData.Controller->GetEnemy()->IsPhaseTransitionActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 EStateTreeRunStatus FAgEnemyAITask_WaitReaction::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const

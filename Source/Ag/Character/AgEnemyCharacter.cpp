@@ -38,8 +38,7 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 bool AAgEnemyCharacter::CanLosePP() const
 {
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	return ASC && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_GroggyImmune) &&
-	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
+	return ASC && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
 	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
 	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Invincible);
 }
@@ -56,6 +55,37 @@ int32 AAgEnemyCharacter::GetReachedPhase() const
 		}
 	}
 	return 1;
+}
+
+bool AAgEnemyCharacter::IsPhaseTransitionPending() const
+{
+	return GetReachedPhase() > PhaseTransitionTarget;
+}
+
+bool AAgEnemyCharacter::StartPhaseTransition()
+{
+	const int32 TargetPhase = GetReachedPhase();
+	SendEventToSelf(AgGameplayTags::Event_PhaseTransition);
+	if (!IsPhaseTransitionActive())
+	{
+		return false;
+	}
+	PhaseTransitionTarget = TargetPhase;
+	return true;
+}
+
+bool AAgEnemyCharacter::IsPhaseTransitionActive() const
+{
+	const UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AgGameplayTags::Ability_Reaction_PhaseTransition);
+	return Spec && Spec->IsActive();
+}
+
+bool AAgEnemyCharacter::CanActivatePattern(FName Id) const
+{
+	const FGameplayAbilitySpec* Spec = FindAbilitySpec(Id);
+	const UGameplayAbility* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
+	return Ability && Ability->CanActivateAbility(Spec->Handle, GetAbilitySystemComponent()->AbilityActorInfo.Get());
 }
 
 void AAgEnemyCharacter::PreInitializeComponents()

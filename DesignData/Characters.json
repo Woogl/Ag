@@ -36,7 +36,7 @@
       "GuardPushback",
       "GuardBreak"
     ],
-    "Effects": ["SPRegen", "GroggyImmune"],
+    "Effects": ["SPRegen"],
     "Montages": {
       "BasicAttack": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
       "Jump": "/Game/Animations/AM_Player_Jump.AM_Player_Jump",

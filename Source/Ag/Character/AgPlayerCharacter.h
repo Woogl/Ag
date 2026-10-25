@@ -72,8 +72,6 @@ private:
 
 	void TryJump();
 
-	void SetTriggerTag(const FGameplayTag& TriggerTag, const FGameplayTag& AbilityTag, bool bWant);
-
 	bool IsActionInputBlocked(const FGameplayTag& InputTag) const;
 
 	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);

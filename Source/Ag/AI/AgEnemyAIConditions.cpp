@@ -2,9 +2,7 @@
 
 #include "AI/AgEnemyAIConditions.h"
 
-#include "Abilities/GameplayAbility.h"
 #include "Data/AgAbilityData.h"
-#include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
 #include "Character/AgEnemyCharacter.h"
 #include "Data/AgCharacterData.h"
@@ -41,7 +39,7 @@ bool FAgEnemyAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecution
 {
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
 	const AAgEnemyCharacter* Enemy = Controller->GetEnemy();
-	return !Enemy->IsDead() && !Controller->IsEnemyReacting() && Enemy->GetReachedPhase() > Controller->GetPhaseTransitionTarget();
+	return !Enemy->IsDead() && !Controller->IsEnemyReacting() && Enemy->IsPhaseTransitionPending();
 }
 
 bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext& Context) const
@@ -57,10 +55,7 @@ bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext
 		return false;
 	}
 
-	const FGameplayAbilitySpec* Spec = Enemy->FindAbilitySpec(InstanceData.Pattern);
-	const FGameplayAbilityActorInfo* ActorInfo = Enemy->GetAbilitySystemComponent()->AbilityActorInfo.Get();
-	return Spec && Spec->Ability && Spec->GetPrimaryInstance()->CanActivateAbility(Spec->Handle, ActorInfo) &&
-	       FMath::FRand() < Params->ResponseChance;
+	return Enemy->CanActivatePattern(InstanceData.Pattern) && FMath::FRand() < Params->ResponseChance;
 }
 
 bool FAgEnemyAICondition_TargetNoticed::TestCondition(FStateTreeExecutionContext& Context) const

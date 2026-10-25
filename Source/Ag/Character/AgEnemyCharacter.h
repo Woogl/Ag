@@ -31,6 +31,16 @@ public:
 	/** 현재 HP로 들어선 마지막 페이즈입니다. 페이즈 전환이 끝나야 현재 페이즈가 됩니다. */
 	int32 GetReachedPhase() const;
 
+	/** 들어선 페이즈로의 전환을 아직 시작하지 않았습니다. 시작한 전환이 취소되어도 같은 페이즈로는 다시 전환하지 않습니다. */
+	bool IsPhaseTransitionPending() const;
+
+	/** 페이즈 전환 어빌리티를 발동하고, 시작했으면 들어선 페이즈로의 전환을 시작한 것으로 기록합니다. */
+	bool StartPhaseTransition();
+
+	bool IsPhaseTransitionActive() const;
+
+	bool CanActivatePattern(FName Id) const;
+
 	virtual bool CanReturnToNonCombat() const
 	{
 		return true;
@@ -78,6 +88,7 @@ private:
 #endif
 
 	int32 Phase = 1;
+	int32 PhaseTransitionTarget = 1;
 
 	int32 DeathMotionInstanceId = INDEX_NONE;
 };

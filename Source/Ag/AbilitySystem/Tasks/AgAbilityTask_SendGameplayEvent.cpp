@@ -16,14 +16,13 @@ void UAgAbilityTask_SendGameplayEvent::Activate()
 {
 	AActor* Owner = GetAvatarActor();
 	AActor* Target = CastChecked<UAgGameplayAbility>(Ability)->GetActionTarget();
-	AActor* Receiver = Params.To == EAgSendGameplayEventTo::Owner ? Owner : Target;
-	if (Owner && Receiver)
+	if (Owner && Target)
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = Params.Event;
 		Payload.Instigator = Owner;
 		Payload.Target = Target;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Receiver, Params.Event, Payload);
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Target, Params.Event, Payload);
 	}
 	EndTask();
 }

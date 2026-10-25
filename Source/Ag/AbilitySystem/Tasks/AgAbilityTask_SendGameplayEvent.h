@@ -8,13 +8,6 @@
 #include "GameplayTagContainer.h"
 #include "AgAbilityTask_SendGameplayEvent.generated.h"
 
-UENUM()
-enum class EAgSendGameplayEventTo : uint8
-{
-	Owner,
-	Target
-};
-
 USTRUCT()
 struct FAgSendGameplayEventParams : public FAgTaskParams
 {
@@ -22,9 +15,6 @@ struct FAgSendGameplayEventParams : public FAgTaskParams
 
 	UPROPERTY()
 	FGameplayTag Event;
-
-	UPROPERTY()
-	EAgSendGameplayEventTo To = EAgSendGameplayEventTo::Owner;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

@@ -105,12 +105,8 @@
     "Activation": {
       "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.Guarding"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"],
-      "Triggers": [
-        {"Tag": "Input.Guard", "Source": "OwnedTagPresent"}
-      ]
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "End": "TriggerTag",
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "ParryWindow"},
       {"Task": "ApplyEffect", "Effect": "GuardMoveSpeed"}
@@ -175,7 +171,7 @@
     },
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "Execution"},
-      {"Task": "SendGameplayEvent", "Event": "Event.Executed", "To": "Target"}
+      {"Task": "SendGameplayEvent", "Event": "Event.Executed"}
     ]
   },
   "Sprint": {
@@ -183,12 +179,8 @@
     "Activation": {
       "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.Sprinting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"],
-      "Triggers": [
-        {"Tag": "Input.Sprint", "Source": "OwnedTagPresent"}
-      ]
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
     },
-    "End": "TriggerTag",
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "SprintDrain"},
       {"Task": "ApplyEffect", "Effect": "SprintSpeed"}
@@ -197,10 +189,7 @@
   "LockOn": {
     "Tags": ["Ability.LockOn"],
     "Activation": {
-      "OwnedTags": ["State.LockedOn"],
-      "Triggers": [
-        {"Tag": "Input.LockOn", "Source": "OwnedTagPresent"}
-      ]
+      "OwnedTags": ["State.LockedOn"]
     },
     "Targeting": {"Preset": "LockOn", "Range": 2000, "bRequired": true},
     "Tasks": [
@@ -403,7 +392,7 @@
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {
-      "BlockedTags": ["State.Groggy", "State.GroggyImmune", "State.Execution", "State.Dead", "State.NonCombat"],
+      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
       "Triggers": [
         {"Tag": "Event.Groggy"}

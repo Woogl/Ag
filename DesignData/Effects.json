@@ -30,10 +30,6 @@
     "Duration": 6,
     "GrantedTags": ["State.Regen.PPDelay"]
   },
-  "GroggyImmune": {
-    "DurationPolicy": "Infinite",
-    "GrantedTags": ["State.GroggyImmune"]
-  },
   "Busy": {
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.Busy"]

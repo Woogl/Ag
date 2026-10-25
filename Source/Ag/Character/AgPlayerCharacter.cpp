@@ -412,7 +412,7 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 	}
 	else if (InputTag == AgGameplayTags::Input_Guard)
 	{
-		SetTriggerTag(AgGameplayTags::Input_Guard, AgGameplayTags::Ability_Action_Guard, bGuardHeld);
+		ActivateByTag(AgGameplayTags::Ability_Action_Guard);
 	}
 	else if (InputTag == AgGameplayTags::Input_Dodge)
 	{
@@ -440,8 +440,10 @@ void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 {
 	if (InputTag == AgGameplayTags::Input_Guard && bGuardHeld)
 	{
+		// 키를 누르는 동안 이어지는 행동(가드, 달리기)도 엔진 태그 트리거(OwnedTagPresent) 대신 직접 발동·취소합니다. 태그
+		// 트리거는 태그가 붙는 순간 막혀 있으면 다시 시도하지 않아, 태그를 실행 상태와 맞추는 코드가 따로 필요해집니다.
 		bGuardHeld = false;
-		SetTriggerTag(AgGameplayTags::Input_Guard, AgGameplayTags::Ability_Action_Guard, false);
+		CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent())->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Guard));
 	}
 	if (InputTag == AgGameplayTags::Input_Dodge)
 	{
@@ -470,36 +472,6 @@ void AAgPlayerCharacter::TryJump()
 	if (Ability && Ability->CanActivateAbility(Spec->Handle, ASC->AbilityActorInfo.Get()))
 	{
 		Jump();
-	}
-}
-
-void AAgPlayerCharacter::SetTriggerTag(const FGameplayTag& TriggerTag, const FGameplayTag& AbilityTag, bool bWant)
-{
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
-	const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AbilityTag);
-	const bool bRunning = Spec && Spec->IsActive();
-	if (ASC->HasMatchingGameplayTag(TriggerTag))
-	{
-		if (!bWant || !bRunning)
-		{
-			ASC->SetLooseGameplayTagCount(TriggerTag, 0);
-		}
-		return;
-	}
-
-	// 엔진은 태그가 붙는 순간에만 발동을 시도하고 막히면 다시 시도하지 않으므로, 시작할 수 있을 때만 붙입니다.
-	const UGameplayAbility* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
-	if (!bWant || bRunning || !Ability || !Ability->CanActivateAbility(Spec->Handle, ASC->AbilityActorInfo.Get()))
-	{
-		return;
-	}
-	const FGameplayAbilitySpecHandle Handle = Spec->Handle;
-	ASC->SetLooseGameplayTagCount(TriggerTag, 1);
-
-	const FGameplayAbilitySpec* Started = ASC->FindAbilitySpecFromHandle(Handle);
-	if (!Started || !Started->IsActive())
-	{
-		ASC->SetLooseGameplayTagCount(TriggerTag, 0);
 	}
 }
 
@@ -575,16 +547,6 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 	}
 
 	const FGameplayTagContainer& EndedTags = AgAbility->GetDefinitionTags();
-	const TPair<FGameplayTag, FGameplayTag> TriggerTags[] = {{AgGameplayTags::Input_Guard, AgGameplayTags::Ability_Action_Guard},
-		{AgGameplayTags::Input_Sprint, AgGameplayTags::Ability_Sprint},
-		{AgGameplayTags::Input_LockOn, AgGameplayTags::Ability_LockOn}};
-	for (const TPair<FGameplayTag, FGameplayTag>& Trigger : TriggerTags)
-	{
-		if (EndedTags.HasTagExact(Trigger.Value))
-		{
-			SetTriggerTag(Trigger.Key, Trigger.Value, false);
-		}
-	}
 	if (!bGuardHeld || EndedTags.HasTag(AgGameplayTags::Ability_Action_Guard) ||
 		(!EndedTags.HasTag(AgGameplayTags::Ability_Action) && !EndedTags.HasTag(AgGameplayTags::Ability_Reaction)))
 	{
@@ -619,7 +581,7 @@ void AAgPlayerCharacter::TryResumeGuard()
 	Running.AddTag(AgGameplayTags::State_Execution);
 	if (!ASC->HasAnyMatchingGameplayTags(Running))
 	{
-		SetTriggerTag(AgGameplayTags::Input_Guard, AgGameplayTags::Ability_Action_Guard, true);
+		ActivateByTag(AgGameplayTags::Ability_Action_Guard);
 	}
 }
 
@@ -638,18 +600,22 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 
 void AAgPlayerCharacter::UpdateSprint()
 {
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
 	const bool bWantsSprint = bDodgeHeld && GetAttributeSet()->GetSP() > 0.f;
-	if (ASC->HasMatchingGameplayTag(AgGameplayTags::Input_Sprint))
+	const FGameplayAbilitySpec* Sprint = ASC->FindSpecByTag(AgGameplayTags::Ability_Sprint);
+	if (Sprint && Sprint->IsActive())
 	{
-		SetTriggerTag(AgGameplayTags::Input_Sprint, AgGameplayTags::Ability_Sprint, bWantsSprint);
+		if (!bWantsSprint)
+		{
+			ASC->CancelAbilityHandle(Sprint->Handle);
+		}
 		return;
 	}
 
-	const FGameplayAbilitySpec* Dodge = CastChecked<UAgAbilitySystemComponent>(ASC)->FindSpecByTag(AgGameplayTags::Ability_Action_Dodge);
+	const FGameplayAbilitySpec* Dodge = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Dodge);
 	if (bWantsSprint && !MoveInputDirection.IsNearlyZero() && !bGuardHeld && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && Dodge && Dodge->IsActive())
 	{
-		SetTriggerTag(AgGameplayTags::Input_Sprint, AgGameplayTags::Ability_Sprint, true);
+		ActivateByTag(AgGameplayTags::Ability_Sprint);
 	}
 }
 
@@ -673,8 +639,16 @@ void AAgPlayerCharacter::UpdateLockOn()
 
 void AAgPlayerCharacter::ToggleLockOn()
 {
-	const bool bLockedOn = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::Input_LockOn);
-	SetTriggerTag(AgGameplayTags::Input_LockOn, AgGameplayTags::Ability_LockOn, !bLockedOn);
+	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	const FGameplayAbilitySpec* LockOn = ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn);
+	if (LockOn && LockOn->IsActive())
+	{
+		ASC->CancelAbilityHandle(LockOn->Handle);
+	}
+	else
+	{
+		ActivateByTag(AgGameplayTags::Ability_LockOn);
+	}
 }
 
 void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, float DeltaTime)
