@@ -50,7 +50,10 @@ void UAgAbilityTask_Launch::Activate()
 	{
 		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
 		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - AgAbility->GetTargetSpacing());
-		Distance = Params.MaxDistance ? FMath::Min(Distance, *Params.MaxDistance) : Distance;
+		if (Params.MaxDistance)
+		{
+			Distance = FMath::Min(Distance, *Params.MaxDistance);
+		}
 		Rotation = Delta.IsNearlyZero() ? Character->GetActorRotation() : Delta.Rotation();
 	}
 	const float Gravity = -Movement->GetGravityZ();

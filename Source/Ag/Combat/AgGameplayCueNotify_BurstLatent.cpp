@@ -6,7 +6,6 @@
 #include "Camera/AgPostProcessComponent.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Engine/World.h"
-#include "TimerManager.h"
 
 #if WITH_EDITOR
 #include "Misc/DataValidation.h"
@@ -40,7 +39,6 @@ bool AAgGameplayCueNotify_BurstLatent::OnExecute_Implementation(AActor* Target, 
 	}
 
 	// 부모는 게임 시간으로 종료하므로, 같은 연출 순서를 실행하고 포스트프로세스의 실제 시간 완료로 회수합니다.
-	GetWorld()->GetTimerManager().ClearTimer(FinishTimerHandle);
 	FGameplayCueNotify_SpawnContext SpawnContext(GetWorld(), Target, Parameters);
 	SpawnContext.SetDefaultSpawnCondition(&DefaultSpawnCondition);
 	SpawnContext.SetDefaultPlacementInfo(&DefaultPlacementInfo);

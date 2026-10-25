@@ -492,7 +492,7 @@ bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) cons
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	// 이번 프레임에 이어지는 상태(행동을 끊은 피격 반응, 기본 공격의 후딜 표시)가 정해진 뒤에 보도록
-	// 다음 프레임에 확인합니다.
+	// 타이머 처리(TG_PostPhysics 뒤)에서 확인합니다.
 	if (NewCount != 0)
 	{
 		return;
@@ -553,7 +553,7 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 		return;
 	}
 
-	// 이 행동을 취소한 행동이 시작된 뒤에 보도록 다음 프레임에 확인합니다.
+	// 이 행동을 취소한 행동이 시작된 뒤에 보도록 타이머 처리(TG_PostPhysics 뒤)에서 확인합니다.
 	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryResumeGuard);
 }
 

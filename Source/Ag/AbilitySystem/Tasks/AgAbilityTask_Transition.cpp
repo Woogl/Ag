@@ -82,15 +82,18 @@ bool UAgAbilityTask_Transition::WaitForTag()
 		return false;
 	}
 	TagHandle = ASC->RegisterGameplayTagEvent(Params.Tag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleTagChanged);
-	const TOptional<float> Delay = Params.bSectionEndsWithTag ? FindTagEndingDelay(*ASC) : TOptional<float>();
-	if (Delay && *Delay <= 0.f)
+	const TOptional<float> Delay = Params.bSectionEndsWithTag ? FindTagEndingDelay(*ASC) : NullOpt;
+	if (Delay)
 	{
-		TryTransition();
-	}
-	else if (Delay)
-	{
-		// 효과의 지속 시간은 월드 시간이므로 월드 타이머로 기다립니다.
-		GetWorld()->GetTimerManager().SetTimer(EndingTimer, FTimerDelegate::CreateUObject(this, &ThisClass::TryTransition), *Delay, false);
+		if (*Delay <= 0.f)
+		{
+			TryTransition();
+		}
+		else
+		{
+			// 효과의 지속 시간은 월드 시간이므로 월드 타이머로 기다립니다.
+			GetWorld()->GetTimerManager().SetTimer(EndingTimer, FTimerDelegate::CreateUObject(this, &ThisClass::TryTransition), *Delay, false);
+		}
 	}
 	return true;
 }

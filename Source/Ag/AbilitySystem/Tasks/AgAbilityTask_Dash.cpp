@@ -29,10 +29,12 @@ void UAgAbilityTask_Dash::Activate()
 
 	const FVector Forward = Character->GetActorForwardVector().GetSafeNormal2D();
 	Target = AgAbility->GetActionTarget();
-	float Distance = Target.IsValid()
-	                     ? static_cast<float>(FVector::Dist2D(Character->GetActorLocation(), Target->GetActorLocation())) + Params.Overshoot
-	                     : 0.f;
-	Distance = Params.MaxDistance ? (Target.IsValid() ? FMath::Min(Distance, *Params.MaxDistance) : *Params.MaxDistance) : Distance;
+	float Distance = Params.MaxDistance.Get(0.f);
+	if (Target.IsValid())
+	{
+		const float ToTarget = static_cast<float>(FVector::Dist2D(Character->GetActorLocation(), Target->GetActorLocation())) + Params.Overshoot;
+		Distance = Params.MaxDistance ? FMath::Min(ToTarget, *Params.MaxDistance) : ToTarget;
+	}
 	if (Distance <= 0.f || Forward.IsNearlyZero())
 	{
 		EndTask();
