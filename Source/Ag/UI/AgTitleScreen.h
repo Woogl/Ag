@@ -9,7 +9,7 @@
 class UAgButton;
 class UAgControlsPopup;
 
-UCLASS(Abstract)
+UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgTitleScreen : public UCommonActivatableWidget
 {
 	GENERATED_BODY()

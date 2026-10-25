@@ -16,7 +16,7 @@ enum class EAgUILayer : uint8
 	Modal
 };
 
-UCLASS(Abstract)
+UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgUILayout : public UCommonUserWidget
 {
 	GENERATED_BODY()

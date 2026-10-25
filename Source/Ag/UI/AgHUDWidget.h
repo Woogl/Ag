@@ -7,18 +7,18 @@
 #include "AgHUDWidget.generated.h"
 
 class AAgBossCharacter;
-class AAgPlayerCharacter;
 class UAbilitySystemComponent;
 class UAgPauseMenu;
+class UAgStatBar;
 class UGameplayAbility;
 class UImage;
-class UProgressBar;
 class UTextBlock;
 struct FGameplayAbilitySpecHandle;
+struct FGameplayAttribute;
 struct FGameplayTag;
 struct FOnAttributeChangeData;
 
-UCLASS(Abstract)
+UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgHUDWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
@@ -31,31 +31,18 @@ protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
-	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> StatusPanel;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> PlayerSPBar;
+	TObjectPtr<UAgStatBar> PlayerSPBar;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> PlayerSPTrailBar;
+	TObjectPtr<UAgStatBar> PlayerHPBar;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> PlayerHPBar;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> PlayerHPTrailBar;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> PlayerHPText;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> PlayerMPBar;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> PlayerMPText;
+	TObjectPtr<UAgStatBar> PlayerMPBar;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> SkillSlot;
@@ -88,65 +75,43 @@ protected:
 	TObjectPtr<UTextBlock> BossNameText;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> BossHPBar;
+	TObjectPtr<UAgStatBar> BossHPBar;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> BossHPTrailBar;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> BossPPBar;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UProgressBar> BossPPTrailBar;
+	TObjectPtr<UAgStatBar> BossPPBar;
 
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "HUD|Trail")
-	float TrailDelay = 0.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "HUD|Trail")
-	float TrailShrinkTime = 0.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgPauseMenu> PauseMenuClass;
 
 private:
-	struct FAgTrail
-	{
-		float Ratio = 1.f;
-		float LastBarRatio = -1.f;
-		float Wait = 0.f;
-		float ShrinkFrom = 1.f;
-		float ShrinkElapsed = -1.f;
-	};
-
 	void OpenPauseMenu();
+	void HandleBossChanged();
 
-	void UpdatePlayer(const AAgPlayerCharacter& Player, float GameDeltaTime);
-	void UpdateBoss(const AAgBossCharacter& BossCharacter, float GameDeltaTime);
+	void BindPlayer(UAbilitySystemComponent& ASC);
+	void BindBoss(UAbilitySystemComponent& ASC);
+
+	void UpdateStatusPanel();
+	void UpdatePlayer();
+	void UpdateSkillSlots();
+	void UpdateSkillCooldown();
+	void UpdateBoss();
+
+	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop = true);
 
 	static const UGameplayAbility* FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
 
 	static bool CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
 
-	void UpdateCooldown(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, UImage& Sweep, UTextBlock& Text);
-
-	static void SetBarRatio(UProgressBar& Bar, float Value, float MaxValue);
 	void SetSlotUsable(UWidget& SlotWidget, bool bUsable) const;
 
-	static void SetValueText(UTextBlock& Text, float Value, float MaxValue, FIntPoint& ShownValues);
-
-	void UpdateTrail(FAgTrail& Trail, UProgressBar& TrailBar, float BarRatio, float DeltaTime, bool bShowDrop = true) const;
-
-	void HandlePlayerSPChanged(const FOnAttributeChangeData& Data);
+	void HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data);
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 
 	TWeakObjectPtr<UAbilitySystemComponent> PlayerASC;
-	FDelegateHandle PlayerSPChangedHandle;
-
-	bool bPlayerSPGuardDrop = false;
 
 	bool bStatusHidden = false;
 
@@ -154,10 +119,7 @@ private:
 
 	int32 ShownSkillCost = INDEX_NONE;
 	int32 ShownCooldownKey = INDEX_NONE;
-	FIntPoint ShownHP = FIntPoint(INDEX_NONE, INDEX_NONE);
-	FIntPoint ShownMP = FIntPoint(INDEX_NONE, INDEX_NONE);
-	FAgTrail PlayerHPTrail;
-	FAgTrail PlayerSPTrail;
-	FAgTrail BossHPTrail;
-	FAgTrail BossPPTrail;
+
+	FTimerHandle CooldownTimer;
+	FTimerHandle BossTimer;
 };

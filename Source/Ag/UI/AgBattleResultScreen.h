@@ -10,7 +10,7 @@ class UAgButton;
 class UCommonTextBlock;
 class UWidgetAnimation;
 
-UCLASS(Abstract)
+UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgBattleResultScreen : public UCommonActivatableWidget
 {
 	GENERATED_BODY()

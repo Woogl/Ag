@@ -8,7 +8,7 @@
 
 class UCommonTextBlock;
 
-UCLASS(Abstract)
+UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgButton : public UCommonButtonBase
 {
 	GENERATED_BODY()

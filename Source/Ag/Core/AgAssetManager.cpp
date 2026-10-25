@@ -155,11 +155,16 @@ TArray<FName> UAgAssetManager::GetCharacterDataIds(const UClass* DataClass) cons
 #if WITH_EDITOR
 void UAgAssetManager::ReloadJsonData()
 {
-	if (LoadJsonData(false) && GEngine)
+	if (!LoadJsonData(false))
+	{
+		return;
+	}
+	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5.f, FColor::Green,
 			TEXT("Data reloaded. Spawn settings apply on the next play start."));
 	}
+	OnJsonDataReloaded.Broadcast();
 }
 
 void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook)

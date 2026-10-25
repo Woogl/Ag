@@ -53,6 +53,7 @@ public:
 
 #if WITH_EDITOR
 	AG_API void ReloadJsonData();
+	FSimpleMulticastDelegate OnJsonDataReloaded;
 	virtual void ModifyCook(TConstArrayView<const ITargetPlatform*> TargetPlatforms, TArray<FName>& PackagesToCook, TArray<FName>& PackagesToNeverCook) override;
 #endif
 
