@@ -37,8 +37,7 @@
       {"Task": "Transition", "Start": 0, "EndSection": "Loop", "Event": "Event.Landed", "Section": "End"}
     ],
     "End": [
-      {"Task": "CameraShake", "Start":0, "Shake": "Medium"},
-      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}, "Area": {"Preset": "Hit", "Range": 5000, "TargetBlockedTags": ["State.Airborne"]}}
+      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false, "bAttackerHitstop": false}, "Area": {"Preset": "Hit", "Range": 5000, "TargetBlockedTags": ["State.Airborne"]}}
     ]
   },
   "/Game/Animations/AM_Boss_JumpCleave.AM_Boss_JumpCleave": {
@@ -241,7 +240,6 @@
     ],
     "Draw": [
       {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
-      {"Task": "CameraShake", "Start":0, "Shake": "Large"},
       {"Task": "ApplyEffect", "Start":0, "Effect": "UltimateSlowMotion"}
     ]
   }

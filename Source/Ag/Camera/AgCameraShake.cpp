@@ -4,8 +4,6 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Core/AgGameplayTags.h"
-#include "GameFramework/Pawn.h"
-#include "GameFramework/PlayerController.h"
 
 namespace
 {
@@ -25,15 +23,11 @@ namespace
 	}
 }
 
-void AgCameraShake::Play(APawn* Target, EAgCameraShake Shake)
+void AgCameraShake::Play(AActor* Source, EAgCameraShake Shake)
 {
-	const APlayerController* Controller = Target ? Cast<APlayerController>(Target->GetController()) : nullptr;
 	const FGameplayTag CueTag = GetCueTag(Shake);
-	if (!Controller || !Controller->IsLocalController() || !CueTag.IsValid())
-	{
-		return;
-	}
-	if (UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target))
+	UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Source);
+	if (ASC && CueTag.IsValid())
 	{
 		ASC->ExecuteGameplayCue(CueTag, FGameplayCueParameters());
 	}

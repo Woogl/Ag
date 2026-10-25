@@ -30,4 +30,8 @@ void FAgDamage::AddToSpec(FGameplayEffectSpec& Spec) const
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Finisher);
 	}
+	if (!bAttackerHitstop)
+	{
+		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_NoAttackerHitstop);
+	}
 }

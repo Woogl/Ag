@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AgCameraShake.generated.h"
 
-class APawn;
+class AActor;
 UENUM()
 enum class EAgCameraShake : uint8
 {
@@ -17,5 +17,6 @@ enum class EAgCameraShake : uint8
 
 namespace AgCameraShake
 {
-	void Play(APawn* Target, EAgCameraShake Shake);
+	/** 셰이크 큐는 월드 재생이라, 엔진이 Source에서 각 플레이어까지의 거리로 세기를 줄여 재생합니다. */
+	void Play(AActor* Source, EAgCameraShake Shake);
 }

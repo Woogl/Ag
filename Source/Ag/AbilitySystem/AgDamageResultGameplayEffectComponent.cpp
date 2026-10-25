@@ -242,7 +242,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
 		ApplyHitstop(*CastChecked<UAgAbilitySystemComponent>(TargetASC), HitstopDuration);
-		if (Causer == Attacker)
+		if (Causer == Attacker && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_NoAttackerHitstop))
 		{
 			ApplyHitstop(*CastChecked<UAgAbilitySystemComponent>(Attacker->GetAbilitySystemComponent()), HitstopDuration);
 		}

@@ -37,6 +37,9 @@ struct FAgDamage
 	UPROPERTY()
 	bool bFinisher = false;
 
+	UPROPERTY()
+	bool bAttackerHitstop = true;
+
 	void AddToSpec(FGameplayEffectSpec& Spec) const;
 };
 
