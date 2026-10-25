@@ -3,7 +3,7 @@
 #include "UI/AgPauseMenu.h"
 
 #include "Core/AgGameplayTags.h"
-#include "Game/AgBossStageGameMode.h"
+#include "Game/AgGameMode.h"
 #include "GameFramework/PlayerController.h"
 #include "Input/CommonUIInputTypes.h"
 #include "UI/AgButton.h"
@@ -16,11 +16,11 @@ void UAgPauseMenu::NativeOnInitialized()
 		FSimpleDelegate::CreateUObject(this, &ThisClass::DeactivateWidget)));
 	ResumeButton->OnClicked().AddUObject(this, &ThisClass::DeactivateWidget);
 
-	if (AAgBossStageGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgBossStageGameMode>())
+	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
 	{
-		RestartButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::RestartStage);
-		ReturnToTitleButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::OpenFrontEnd);
-		QuitButton->OnClicked().AddUObject(GameMode, &AAgBossStageGameMode::QuitGame);
+		RestartButton->OnClicked().AddUObject(GameMode, &AAgGameMode::RestartStage);
+		ReturnToTitleButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenFrontEnd);
+		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
 	}
 }
 

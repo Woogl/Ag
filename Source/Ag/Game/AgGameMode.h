@@ -6,6 +6,11 @@
 #include "GameFramework/GameModeBase.h"
 #include "AgGameMode.generated.h"
 
+class AAgCharacterBase;
+class UAgBattleResultScreen;
+class UAgHUDWidget;
+class UAgTitleScreen;
+
 UCLASS(Abstract)
 class AAgGameMode : public AGameModeBase
 {
@@ -14,7 +19,38 @@ class AAgGameMode : public AGameModeBase
 public:
 	AAgGameMode();
 
-	void OpenFrontEnd();
+	void RegisterCombatant(AAgCharacterBase* Combatant);
 
+	void OpenFrontEnd();
+	void OpenStage();
+	void RestartStage();
 	void QuitGame();
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgTitleScreen> TitleScreenClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgHUDWidget> HUDWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Maps")
+	TSoftObjectPtr<UWorld> StageMap;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Result")
+	float StageResultPresentationTime = 4.f;
+
+private:
+	void HandleCombatantDied(AAgCharacterBase* DeadCharacter);
+	void ShowResult();
+
+	bool bResultDecided = false;
+	bool bStageCleared = false;
+	FTimerHandle ResultTimer;
+	TSet<TWeakObjectPtr<AAgCharacterBase>> RegisteredCombatants;
 };

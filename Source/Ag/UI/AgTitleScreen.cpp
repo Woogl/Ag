@@ -2,7 +2,7 @@
 
 #include "UI/AgTitleScreen.h"
 
-#include "Game/AgFrontEndGameMode.h"
+#include "Game/AgGameMode.h"
 #include "Game/AgPlayerController.h"
 #include "UI/AgButton.h"
 #include "UI/AgControlsPopup.h"
@@ -28,10 +28,10 @@ void UAgTitleScreen::NativeOnInitialized()
 	ControlsButton->SetNavigationRuleExplicit(EUINavigation::Down, QuitButton);
 	QuitButton->SetNavigationRuleExplicit(EUINavigation::Up, ControlsButton);
 
-	if (AAgFrontEndGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgFrontEndGameMode>())
+	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
 	{
-		StartButton->OnClicked().AddUObject(GameMode, &AAgFrontEndGameMode::OpenBossStage);
-		QuitButton->OnClicked().AddUObject(GameMode, &AAgFrontEndGameMode::QuitGame);
+		StartButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenStage);
+		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
 	}
 }
 
