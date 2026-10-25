@@ -121,7 +121,10 @@ void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 	{
 		EndTimeline();
 	}
-	StopTimeline();
+	else
+	{
+		StopTimeline();
+	}
 
 	const int32 InstanceId = MontageInstanceId;
 	MontageInstanceId = INDEX_NONE;
@@ -143,8 +146,7 @@ void UAgAbilityTask_PlayMontage::JumpToSection(FName Section)
 		return;
 	}
 	UAnimInstance* Anim = FindAnimInstance(Ability);
-	const FAnimMontageInstance* Instance =
-		Anim && MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
+	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 	if (!Instance)
 	{
 		return;
@@ -384,7 +386,7 @@ void UAgAbilityTask_PlayMontage::StopTimeline()
 void UAgAbilityTask_PlayMontage::StartTimelineWindow(int32 Entry)
 {
 	FAgTimelineEntry& Item = TimelineEntries[Entry];
-	UAbilityTask* Task = Item.Params.Get().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), Item.Start, Item.End, this});
+	UAbilityTask* Task = Item.Params.Get().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), FFloatInterval(Item.Start, Item.End), this});
 	if (!Task)
 	{
 		return;

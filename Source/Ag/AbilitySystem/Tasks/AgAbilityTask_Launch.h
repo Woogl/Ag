@@ -7,8 +7,6 @@
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_Launch.generated.h"
 
-class UAnimMontage;
-
 UENUM()
 enum class EAgLaunchDirection : uint8
 {
@@ -57,13 +55,9 @@ public:
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	/** 블렌드 전환(넉업의 정점)과 함께 발동한 PlayMontage는 새 재생이므로 시작될 때마다 끕니다. */
-	UFUNCTION()
-	void DisableMontageRootMotion(UAnimMontage* Montage);
-
 	UPROPERTY()
 	FAgLaunchParams Params;
 
-	int32 MontageInstanceId = INDEX_NONE;
+	bool bMontageRootMotionDisabled = false;
 	bool bArcEnded = false;
 };

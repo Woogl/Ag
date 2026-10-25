@@ -69,8 +69,7 @@ private:
 	UPROPERTY()
 	FAgRootMotionParams Params;
 
-	float StartTime = 0.f;
-	float EndTime = 0.f;
+	TOptional<FFloatInterval> Window;
 	float TargetingRange = 0.f;
 
 	float LastPosition = 0.f;

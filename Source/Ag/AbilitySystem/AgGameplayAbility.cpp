@@ -44,7 +44,7 @@ void UAgGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInf
 		AbilityId = Character->FindAbilityId(Spec.Handle);
 		if (const FAgAbilityData* Data = FindDefinition(Spec.Handle, ActorInfo))
 		{
-			GrantedDefinition = *Data;
+			Definition = *Data;
 			ActivationRequiredTags = Data->Activation.RequiredTags;
 			ActivationBlockedTags = Data->Activation.BlockedTags;
 			ActivationOwnedTags = Data->Activation.OwnedTags;
@@ -62,7 +62,7 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 	                                       ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle)
 	                                       : nullptr;
 	const UAgGameplayAbility* Instance = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
-	if (!Data || !Instance || !Instance->GrantedDefinition.HasSameGrantSettings(*Data))
+	if (!Data || !Instance || !Instance->Definition.HasSameGrantSettings(*Data))
 	{
 		UE_LOG(LogAg, Warning,
 			TEXT("Ability %s: grant settings changed or unavailable; recreate the character before activation"),
@@ -84,7 +84,7 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	// 엔진의 차단 검사는 클래스의 어빌리티 태그를 보므로, 스펙에 둔 행동 태그의 차단도 확인합니다.
-	return !ASC.AreAbilityTagsBlocked(GrantedDefinition.Tags) &&
+	return !ASC.AreAbilityTagsBlocked(Definition.Tags) &&
 	       Super::DoesAbilitySatisfyTagRequirements(ASC, SourceTags, TargetTags, OptionalRelevantTags);
 }
 
@@ -109,8 +109,8 @@ void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpe
 
 FAgResourceCost UAgGameplayAbility::GetCost() const
 {
-	const FAgAbilityData* Definition = IsActive() ? &ExecutionDefinition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
-	return Definition ? Definition->Cost : FAgResourceCost();
+	const FAgAbilityData* Data = IsActive() ? &Definition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
+	return Data ? Data->Cost : FAgResourceCost();
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
@@ -139,9 +139,9 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeDamageSpec(const FAgDamage& Da
 
 void UAgGameplayAbility::RefreshTarget()
 {
-	if (IsActive() && ExecutionDefinition.Targeting)
+	if (IsActive() && Definition.Targeting)
 	{
-		ActionTarget = FindTargetingTarget(ExecutionDefinition, CurrentActorInfo);
+		ActionTarget = FindTargetingTarget(Definition, CurrentActorInfo);
 	}
 }
 
@@ -163,14 +163,14 @@ void UAgGameplayAbility::OnGameplayTaskDeactivated(UGameplayTask& Task)
 
 void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	const FAgAbilityData* Definition = FindDefinition(Handle, ActorInfo);
-	if (!Definition)
+	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
+	if (!Data)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 		return;
 	}
-	ExecutionDefinition = *Definition;
-	const TOptional<FAgAbilityTargeting>& Targeting = ExecutionDefinition.Targeting;
+	Definition = *Data;
+	const TOptional<FAgAbilityTargeting>& Targeting = Definition.Targeting;
 
 	RefreshTarget();
 	if (!Targeting && IsEventTrigger(TriggerEventData))
@@ -184,11 +184,11 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 		return;
 	}
 
-	// Task를 시작하는 중에 행동이 끝나면 EndAbility가 실행 사본을 비우므로 목록을 복사해 돕니다.
+	// Task를 시작하는 중에 행동이 끝나고 다시 발동하면 사본이 바뀌므로 목록을 복사해 돕니다.
 	{
 		// End가 Tasks인 행동이 첫 Task가 끝나는 순간 끝나지 않도록, 발동 Task를 모두 시작한 뒤부터 봅니다.
 		TGuardValue<bool> StartingTasks(bStartingTasks, true);
-		const TArray<TInstancedStruct<FAgTaskParams>> Tasks = ExecutionDefinition.Tasks;
+		const TArray<TInstancedStruct<FAgTaskParams>> Tasks = Definition.Tasks;
 		for (const TInstancedStruct<FAgTaskParams>& Item : Tasks)
 		{
 			if (!IsActive())
@@ -211,7 +211,6 @@ void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGa
 	if (IsEndAbilityValid(Handle, ActorInfo) && ScopeLockCount == 0)
 	{
 		ActionTarget.Reset();
-		ExecutionDefinition = {};
 	}
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
@@ -237,12 +236,12 @@ bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGam
 
 void UAgGameplayAbility::ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
 {
-	if (!ExecutionDefinition.Cost.IsFree())
+	if (!Definition.Cost.IsFree())
 	{
 		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(Handle, ActorInfo, UAgAssetManager::Get().GetEffect(EAgEffect::Resource));
 		if (Spec.IsValid())
 		{
-			ExecutionDefinition.Cost.AddToSpec(*Spec.Data);
+			Definition.Cost.AddToSpec(*Spec.Data);
 			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 		}
 	}
@@ -257,7 +256,7 @@ bool UAgGameplayAbility::CheckCooldown(FGameplayAbilitySpecHandle Handle, const 
 void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
 {
 	UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(ActorInfo->AbilitySystemComponent.Get());
-	if (ExecutionDefinition.Cooldown > 0.f && ASC)
+	if (Definition.Cooldown > 0.f && ASC)
 	{
 		// 출처로 이 어빌리티 인스턴스를 넣어, 행동마다의 쿨다운을 구분합니다.
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
@@ -265,7 +264,7 @@ void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const 
 		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Cooldown, GetAbilityLevel(Handle, ActorInfo), Context);
 		if (Spec.IsValid())
 		{
-			Spec.Data->SetDuration(ExecutionDefinition.Cooldown, true);
+			Spec.Data->SetDuration(Definition.Cooldown, true);
 			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 		}
 	}
@@ -301,7 +300,7 @@ AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data, cons
 bool UAgGameplayAbility::IsEventTrigger(const FGameplayEventData* TriggerEventData) const
 {
 	// 엔진은 이벤트 트리거를 부모 태그까지 맞춰 발동합니다. 태그 트리거로 발동해도 실행 정보가 오므로 출처를 가립니다.
-	return TriggerEventData && ExecutionDefinition.Activation.Triggers.ContainsByPredicate([TriggerEventData](const FAgAbilityTrigger& Trigger)
+	return TriggerEventData && Definition.Activation.Triggers.ContainsByPredicate([TriggerEventData](const FAgAbilityTrigger& Trigger)
 	{
 		return Trigger.Source == EAgTriggerSource::GameplayEvent &&
 		       TriggerEventData->EventTag.MatchesTag(Trigger.Tag);
@@ -310,7 +309,7 @@ bool UAgGameplayAbility::IsEventTrigger(const FGameplayEventData* TriggerEventDa
 
 void UAgGameplayAbility::FinishIfTasksDone()
 {
-	if (IsActive() && !bStartingTasks && ExecutionDefinition.End == EAgAbilityEnd::Tasks && ActiveTasks.IsEmpty())
+	if (IsActive() && !bStartingTasks && Definition.End == EAgAbilityEnd::Tasks && ActiveTasks.IsEmpty())
 	{
 		K2_EndAbility();
 	}

@@ -149,6 +149,33 @@ void AAgCharacterBase::NotifyLanded()
 	}
 }
 
+void AAgCharacterBase::PushDisableMontageRootMotion()
+{
+	UAnimInstance* Anim = GetMesh()->GetAnimInstance();
+	if (++MontageRootMotionDisableCount == 1 && Anim)
+	{
+		Anim->OnMontageStarted.AddDynamic(this, &ThisClass::HandleMontageStarted);
+		DisableRootMotionMontage();
+	}
+}
+
+void AAgCharacterBase::PopDisableMontageRootMotion()
+{
+	if (MontageRootMotionDisableCount == 0 || --MontageRootMotionDisableCount > 0)
+	{
+		return;
+	}
+	if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
+	{
+		Anim->OnMontageStarted.RemoveDynamic(this, &ThisClass::HandleMontageStarted);
+		if (FAnimMontageInstance* Instance = RootMotionDisabledMontageId != INDEX_NONE ? Anim->GetMontageInstanceForID(RootMotionDisabledMontageId) : nullptr)
+		{
+			Instance->PopDisableRootMotion();
+		}
+	}
+	RootMotionDisabledMontageId = INDEX_NONE;
+}
+
 void AAgCharacterBase::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
@@ -440,4 +467,25 @@ void AAgCharacterBase::UpdateApex()
 		SendEventToSelf(AgGameplayTags::Event_Apex);
 	}
 	PreviousVelocityZ = VelocityZ;
+}
+
+void AAgCharacterBase::DisableRootMotionMontage()
+{
+	UAnimInstance* Anim = GetMesh()->GetAnimInstance();
+	FAnimMontageInstance* Instance = Anim ? Anim->GetRootMotionMontageInstance() : nullptr;
+	if (!Instance || Instance->GetInstanceID() == RootMotionDisabledMontageId)
+	{
+		return;
+	}
+	if (FAnimMontageInstance* Previous = RootMotionDisabledMontageId != INDEX_NONE ? Anim->GetMontageInstanceForID(RootMotionDisabledMontageId) : nullptr)
+	{
+		Previous->PopDisableRootMotion();
+	}
+	Instance->PushDisableRootMotion();
+	RootMotionDisabledMontageId = Instance->GetInstanceID();
+}
+
+void AAgCharacterBase::HandleMontageStarted(UAnimMontage* Montage)
+{
+	DisableRootMotionMontage();
 }

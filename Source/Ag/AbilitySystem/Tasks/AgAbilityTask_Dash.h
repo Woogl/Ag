@@ -47,8 +47,7 @@ private:
 	UPROPERTY()
 	FAgDashParams Params;
 
-	bool bTagAdded = false;
-	int32 MontageInstanceId = INDEX_NONE;
+	bool bDashing = false;
 
 	TWeakObjectPtr<AActor> Target;
 	FDelegateHandle AttackBlockedHandle;

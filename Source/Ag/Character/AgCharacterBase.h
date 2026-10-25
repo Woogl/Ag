@@ -110,6 +110,10 @@ public:
 
 	void NotifyLanded();
 
+	/** 몽타주 루트 모션이 있으면 엔진이 루트 모션 소스를 쓰지 않으므로, 소스로 움직이는 Task가 그동안 끕니다. */
+	void PushDisableMontageRootMotion();
+	void PopDisableMontageRootMotion();
+
 	FAgCharacterDiedSignature OnDied;
 
 	virtual void PreInitializeComponents() override;
@@ -174,6 +178,16 @@ private:
 	FTransform ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds);
 
 	void UpdateApex();
+
+	void DisableRootMotionMontage();
+
+	/** 끄는 동안 새로 시작한 재생(넉업 정점의 블렌드 전환 등)이 루트 모션을 가져가므로 그 재생도 끕니다. */
+	UFUNCTION()
+	void HandleMontageStarted(UAnimMontage* Montage);
+
+	int32 MontageRootMotionDisableCount = 0;
+
+	int32 RootMotionDisabledMontageId = INDEX_NONE;
 
 	UPROPERTY(VisibleAnywhere, Category = "Abilities")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;

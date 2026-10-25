@@ -3,12 +3,9 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_Launch.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
 
@@ -29,7 +26,7 @@ const FName UAgAbilityTask_Launch::SourceName(TEXT("AgLaunch"));
 
 void UAgAbilityTask_Launch::Activate()
 {
-	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
+	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
 	if (!Movement)
@@ -75,11 +72,8 @@ void UAgAbilityTask_Launch::Activate()
 	FinishSetVelocity = FVector::ZeroVector;
 	SharedInitAndApply();
 
-	if (UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance())
-	{
-		Anim->OnMontageStarted.AddDynamic(this, &ThisClass::DisableMontageRootMotion);
-		DisableMontageRootMotion(Ability->GetCurrentMontage());
-	}
+	bMontageRootMotionDisabled = true;
+	Character->PushDisableMontageRootMotion();
 	Super::Activate();
 }
 
@@ -132,7 +126,7 @@ void UAgAbilityTask_Launch::TickTask(float DeltaTime)
 
 void UAgAbilityTask_Launch::OnDestroy(bool bInOwnerFinished)
 {
-	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
+	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
 	if (MovementComponent.IsValid())
 	{
 		// 엔진의 착지 콜백은 이동 모드가 걷기로 바뀌기 전에 Task를 끝내므로, 착지는 bHasLanded로도 봅니다.
@@ -147,31 +141,9 @@ void UAgAbilityTask_Launch::OnDestroy(bool bInOwnerFinished)
 			Source->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::MaintainLastRootMotionVelocity;
 		}
 	}
-	if (UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr)
+	if (bMontageRootMotionDisabled && Character)
 	{
-		Anim->OnMontageStarted.RemoveDynamic(this, &ThisClass::DisableMontageRootMotion);
-		if (FAnimMontageInstance* Instance = MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr)
-		{
-			Instance->PopDisableRootMotion();
-		}
+		Character->PopDisableMontageRootMotion();
 	}
 	Super::OnDestroy(bInOwnerFinished);
-}
-
-void UAgAbilityTask_Launch::DisableMontageRootMotion(UAnimMontage* Montage)
-{
-	// 몽타주 루트 모션이 있으면 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않으므로 공중에 있는 동안 끕니다.
-	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr;
-	FAnimMontageInstance* Instance = Anim && Montage ? Anim->GetActiveInstanceForMontage(Montage) : nullptr;
-	if (!Instance || Instance->GetInstanceID() == MontageInstanceId)
-	{
-		return;
-	}
-	if (FAnimMontageInstance* Previous = MontageInstanceId != INDEX_NONE ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr)
-	{
-		Previous->PopDisableRootMotion();
-	}
-	Instance->PushDisableRootMotion();
-	MontageInstanceId = Instance->GetInstanceID();
 }

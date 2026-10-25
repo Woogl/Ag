@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Data/AgTaskParams.h"
-#include "AgAbilityTask_Plunge.generated.h"
+#include "AgPlungeParams.generated.h"
 
 USTRUCT()
 struct FAgPlungeParams : public FAgTaskParams

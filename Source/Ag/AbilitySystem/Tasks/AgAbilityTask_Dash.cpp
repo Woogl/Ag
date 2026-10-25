@@ -4,11 +4,8 @@
 
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
-#include "Components/SkeletalMeshComponent.h"
+#include "Character/AgCharacterBase.h"
 #include "Core/AgGameplayTags.h"
-#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/RootMotionSource.h"
 
@@ -21,7 +18,7 @@ UAbilityTask* FAgDashParams::MakeTask(const FAgTaskContext& Context) const
 
 void UAgAbilityTask_Dash::Activate()
 {
-	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
+	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
 	if (!Movement || !AbilitySystemComponent.IsValid() || Params.Speed <= 0.f)
@@ -41,21 +38,13 @@ void UAgAbilityTask_Dash::Activate()
 		EndTask();
 		return;
 	}
-	bTagAdded = true;
+	bDashing = true;
 	AbilitySystemComponent->AddLooseGameplayTag(AgGameplayTags::State_Dashing);
+	Character->PushDisableMontageRootMotion();
 	AttackBlockedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_AttackBlocked)
 	                          .AddUObject(this, &ThisClass::HandleAttackBlocked);
 	MoveBlockedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_MoveBlocked)
 	                        .AddUObject(this, &ThisClass::HandleMoveBlocked);
-
-	// 몽타주 루트 모션이 있으면 캐릭터 무브먼트가 루트 모션 소스를 쓰지 않으므로 돌진하는 동안 끕니다.
-	UAnimInstance* Anim = Character->GetMesh()->GetAnimInstance();
-	FAnimMontageInstance* Instance = Anim ? Anim->GetActiveInstanceForMontage(Ability->GetCurrentMontage()) : nullptr;
-	if (Instance)
-	{
-		Instance->PushDisableRootMotion();
-		MontageInstanceId = Instance->GetInstanceID();
-	}
 
 	// 엔진 Task의 생성 함수가 하는 설정입니다.
 	ForceName = TEXT("AgDash");
@@ -114,17 +103,15 @@ void UAgAbilityTask_Dash::OnDestroy(bool bInOwnerFinished)
 		{
 			AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_MoveBlocked).Remove(MoveBlockedHandle);
 		}
-		if (bTagAdded)
+		if (bDashing)
 		{
 			AbilitySystemComponent->RemoveLooseGameplayTag(AgGameplayTags::State_Dashing);
 		}
 	}
-	const ACharacter* Character = Cast<ACharacter>(GetAvatarActor());
-	UAnimInstance* Anim = Character && MontageInstanceId != INDEX_NONE ? Character->GetMesh()->GetAnimInstance() : nullptr;
-	FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
-	if (Instance)
+	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	if (bDashing && Character)
 	{
-		Instance->PopDisableRootMotion();
+		Character->PopDisableMontageRootMotion();
 	}
 	Super::OnDestroy(bInOwnerFinished);
 }

@@ -13,8 +13,8 @@ struct FAgTaskContext
 {
 	UAgGameplayAbility& Ability;
 
-	float Start = 0.f;
-	float End = 0.f;
+	/** 타임라인 항목의 구간으로, Params의 섹션 기준 시각과 달리 몽타주 기준 시각입니다. 발동 Task에는 없습니다. */
+	TOptional<FFloatInterval> Window;
 	UAgAbilityTask_PlayMontage* Playback = nullptr;
 };
 

@@ -28,8 +28,7 @@ UAbilityTask* FAgRootMotionParams::MakeTask(const FAgTaskContext& Context) const
 {
 	UAgAbilityTask_RootMotion* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_RootMotion>(&Context.Ability);
 	Task->Params = *this;
-	Task->StartTime = Context.Start;
-	Task->EndTime = Context.End;
+	Task->Window = Context.Window;
 	return Task;
 }
 
@@ -49,16 +48,15 @@ void UAgAbilityTask_RootMotion::Activate()
 		EndTask();
 		return;
 	}
-	const bool bHasDuration = EndTime > StartTime;
 	if (Params.Direction == EAgRootMotionDirection::Target)
 	{
 		// 피격 방향은 이벤트의 공격자이므로 추적 거리로 제한하지 않습니다.
-		if (bHasDuration)
+		if (Window)
 		{
 			TargetingRange = FMath::Min(Params.TargetingRange.Get(AgAbility->GetTargetingRange()), AgAbility->GetTargetingRange());
 		}
 		AActor* ActionTarget = AgAbility->GetActionTarget();
-		bFacingOnly = !ActionTarget || (bHasDuration && !AgTargeting::IsInRange(*Character, *ActionTarget, TargetingRange));
+		bFacingOnly = !ActionTarget || (Window && !AgTargeting::IsInRange(*Character, *ActionTarget, TargetingRange));
 		Target = bFacingOnly ? Character->GetLockOnTarget() : ActionTarget;
 	}
 	else if (Params.Direction == EAgRootMotionDirection::MoveInput)
@@ -67,8 +65,8 @@ void UAgAbilityTask_RootMotion::Activate()
 		bFacingOnly = true;
 	}
 
-	// 발동 Task도 즉시 회전할 수 있도록 몽타주를 찾기 전에 적용합니다.
-	if (!bHasDuration)
+	// 구간이 없는 발동 Task는 즉시 돕니다. 함께 시작하는 PlayMontage보다 먼저 시작할 수 있어 몽타주를 찾기 전에 돕니다.
+	if (!Window)
 	{
 		const FVector Direction = GetFacingDirection();
 		if (!Direction.IsNearlyZero())
@@ -119,7 +117,7 @@ void UAgAbilityTask_RootMotion::Activate()
 	}
 	// 재생을 시작할 때 모두 등록하면 끊긴 재생의 대기 Modifier가 같은 몽타주의 다음 재생에서 함께 켜져 워핑이 두 번 걸리므로,
 	// 구간마다 등록합니다. 켜기·지우기와 루트 모션 보정은 엔진 Motion Warping이 재생 위치로 합니다.
-	Modifier = URootMotionModifier_SkewWarp::AddRootMotionModifierSkewWarp(Warping, Instance->Montage.Get(), StartTime, EndTime, WarpTargetName,
+	Modifier = URootMotionModifier_SkewWarp::AddRootMotionModifierSkewWarp(Warping, Instance->Montage.Get(), Window->Min, Window->Max, WarpTargetName,
 		EWarpPointAnimProvider::None, FTransform::Identity, NAME_None, Params.bWarpTranslation && !bFacingOnly, true,
 		Params.Direction != EAgRootMotionDirection::Back, EMotionWarpRotationType::Default, Params.RotationMethod, 1.f, MaxRotationRate);
 }
@@ -171,9 +169,9 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 	float Yaw = CurrentYaw;
 	if (Params.RotationMethod == EMotionWarpRotationMethod::Slerp)
 	{
-		const float Remaining = EndTime - Previous;
+		const float Remaining = Window->Max - Previous;
 		const float Alpha =
-			Remaining > UE_SMALL_NUMBER ? FMath::Clamp((FMath::Min(Position, EndTime) - Previous) / Remaining, 0.f, 1.f) : 1.f;
+			Remaining > UE_SMALL_NUMBER ? FMath::Clamp((FMath::Min(Position, Window->Max) - Previous) / Remaining, 0.f, 1.f) : 1.f;
 		Yaw = CurrentYaw + FMath::FindDeltaAngleDegrees(CurrentYaw, GoalYaw) * Alpha;
 	}
 	else

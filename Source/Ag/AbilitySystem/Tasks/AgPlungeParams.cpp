@@ -1,6 +1,6 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "AbilitySystem/Tasks/AgAbilityTask_Plunge.h"
+#include "AbilitySystem/Tasks/AgPlungeParams.h"
 
 #include "Abilities/Tasks/AbilityTask_ApplyRootMotionConstantForce.h"
 #include "AbilitySystem/AgGameplayAbility.h"

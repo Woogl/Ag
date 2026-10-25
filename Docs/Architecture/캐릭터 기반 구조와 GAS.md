@@ -149,6 +149,37 @@ sequenceDiagram
     Note over C,GM: 게임 모드: BeginPlay 및 플레이어 스폰 시 전투원 등록<br>플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작·끝, 상태 태그 구독, 락온 회전 방식, 사망 시 입력 비활성화<br>적: 그로기 태그, 어빌리티 끝 구독, 처형 사망 모션
 ```
 
+### 어빌리티 실행
+
+```mermaid
+sequenceDiagram
+    participant I as 입력·AI
+    participant ASC as 캐릭터 ASC
+    participant A as UAgGameplayAbility
+    participant M as PlayMontage
+    participant T as 구간 Task
+    I->>ASC: 발동 요청(입력, 패턴,<br>이벤트·태그 트리거)
+    ASC->>A: CanActivateAbility<br>부여 당시 태그·Activation 비교,<br>태그·비용·쿨다운·필수 대상
+    ASC->>A: ActivateAbility
+    A->>A: 정의를 Definition에 복사,<br>대상 찾기, CommitAbility<br>(비용·쿨다운 효과)
+    A->>M: 발동 Task 시작<br>(PlayMontage 등)
+    M->>ASC: 몽타주 재생
+    M->>M: 시간표 복사,<br>시작 위치 판정
+    loop 매 틱(몽타주가 진행된 뒤)
+        M->>T: 지난 구간을 시각 순서로<br>시작·끝
+    end
+    T->>M: Transition
+    alt 섹션 이동
+        M->>T: 같은 시간표로<br>옮긴 위치에서 판정
+    else 다시 재생(BlendTime)
+        M->>A: 대상 다시 찾기
+        M->>T: 켜진 구간 끝,<br>새 시간표로 판정
+    end
+    M->>A: 재생 완료: 켜진 구간과<br>재생 Task 끝
+    A->>A: End가 Tasks이고<br>남은 Task가 없으면<br>EndAbility
+    Note over ASC,T: 취소(다른 어빌리티의 CancelTags, 다른 몽타주에 끊김):<br>엔진이 남은 Task를 모두 끝내고 재생 Task는 몽타주를 멈춤<br>End가 TriggerTag이면 트리거 태그가 빠질 때 엔진이 끝냄
+```
+
 ### GameplayEffect
 
 효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가 맡습니다. 어빌리티 비용·쿨다운은 어빌리티가, 어빌리티가 거는 효과(패리 구간, 극한 회피 구간, 그로기 시간, 달리기 소모, 패리·극한 회피의 보상과 회피 반격 기회, 패리로 잃는 PP)는 ApplyEffect가, 히트스톱·적중 충전은 피격 결과 처리 컴포넌트가, PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과와 Kill은 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.

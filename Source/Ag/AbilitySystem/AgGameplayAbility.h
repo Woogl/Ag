@@ -38,7 +38,7 @@ public:
 
 	const FGameplayTagContainer& GetDefinitionTags() const
 	{
-		return GrantedDefinition.Tags;
+		return Definition.Tags;
 	}
 
 	AActor* GetActionTarget() const
@@ -48,17 +48,17 @@ public:
 
 	AActor* GetTargetingTarget() const
 	{
-		return ExecutionDefinition.Targeting ? ActionTarget.Get() : nullptr;
+		return Definition.Targeting ? ActionTarget.Get() : nullptr;
 	}
 
 	float GetTargetingRange() const
 	{
-		return ExecutionDefinition.Targeting ? ExecutionDefinition.Targeting->Range : 0.f;
+		return Definition.Targeting ? Definition.Targeting->Range : 0.f;
 	}
 
 	float GetTargetSpacing() const
 	{
-		return ExecutionDefinition.Targeting ? ExecutionDefinition.Targeting->TargetSpacing : 0.f;
+		return Definition.Targeting ? Definition.Targeting->TargetSpacing : 0.f;
 	}
 
 	/** 기본 공격처럼 다시 재생할 때마다 대상을 고르는 행동을 위해 재생 Task가 부릅니다. */
@@ -87,12 +87,13 @@ private:
 
 	FName AbilityId;
 
+	/**
+	 * 데이터를 다시 읽어도 이 실행이 끝날 때까지 같은 값을 쓰도록 부여할 때와 발동할 때마다 복사해 둡니다.
+	 * 태그와 Activation은 부여할 때 스펙과 엔진 속성에 넣으므로 이 둘이 바뀐 정의로는 발동하지 않아, 사본에는 늘
+	 * 부여 당시 값이 남습니다.
+	 */
 	UPROPERTY()
-	FAgAbilityData GrantedDefinition;
-
-	/** 데이터를 다시 읽어도 이 실행이 끝날 때까지 같은 값을 쓰도록 발동할 때 복사해 둡니다. */
-	UPROPERTY()
-	FAgAbilityData ExecutionDefinition;
+	FAgAbilityData Definition;
 
 	TWeakObjectPtr<AActor> ActionTarget;
 
