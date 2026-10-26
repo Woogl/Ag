@@ -2,7 +2,6 @@
 
 #include "AbilitySystem/AgDamageResultGameplayEffectComponent.h"
 #include "AbilitySystem/AgGameplayEffectContext.h"
-#include "Camera/AgCameraShake.h"
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
@@ -138,6 +137,10 @@ namespace
 			return;
 		}
 		SendEvent(&Dodger, AgGameplayTags::Event_PerfectDodge, &Attacker);
+		if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(&Dodger))
+		{
+			Player->PlayCameraEffect(EAgCameraSituation::PerfectDodge, &Attacker);
+		}
 	}
 
 	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker, bool bProjectile)
@@ -224,7 +227,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
 	if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(Target, 0)))
 	{
-		AgCameraShake::Play(Player, Player->GetCombatCameraShake(SpecTags, Attacker));
+		Player->PlayDamageCameraEffects(SpecTags, *Attacker, *Target);
 	}
 	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());

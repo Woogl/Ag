@@ -10,7 +10,9 @@
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Camera/AgExecutionCameraModifier.h"
 #include "Camera/CameraComponent.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Character/AgBossCharacter.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
@@ -93,37 +95,63 @@ void AAgPlayerCharacter::UpdateRotationMode()
 	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
 
-EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContainer& SpecTags, const AActor* Attacker) const
+void AAgPlayerCharacter::PlayCameraEffect(EAgCameraSituation Situation, const AActor* Opponent)
 {
-	const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
-	if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
+	const FAgCameraEffect* Effect = CameraEffects.Find(Situation);
+	const APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!Effect || !PlayerController || !PlayerController->PlayerCameraManager)
 	{
-		return bFinisher ? ExecutionBlowShake : ExecutionStabShake;
+		return;
 	}
+	for (const TSubclassOf<UCameraShakeBase>& Shake : Effect->CameraShakes)
+	{
+		PlayerController->PlayerCameraManager->StartCameraShake(Shake);
+	}
+	if (Effect->bTurnToOpponent && Opponent)
+	{
+		StartCameraTurn(*Opponent, Effect->TurnAngle);
+	}
+}
 
+void AAgPlayerCharacter::PlayDamageCameraEffects(const FGameplayTagContainer& SpecTags, const AAgCharacterBase& Attacker, const AAgCharacterBase& Target)
+{
 	const bool bHeavy = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockUp) ||
 	                    SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockDown);
-	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
+	if (&Attacker == this)
 	{
-		if (Attacker == this)
+		if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 		{
-			return bHeavy ? PlayerHitHeavyShake : PlayerHitShake;
+			const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
+			PlayCameraEffect(bFinisher ? EAgCameraSituation::ExecutionBlow : EAgCameraSituation::ExecutionStab, &Target);
 		}
-		return bHeavy ? PlayerHurtHeavyShake : PlayerHurtShake;
+		else if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
+		{
+			PlayCameraEffect(bHeavy ? EAgCameraSituation::PlayerHitHeavy : EAgCameraSituation::PlayerHit, &Target);
+			if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_DodgeCounter))
+			{
+				PlayCameraEffect(EAgCameraSituation::DodgeCounterHit, &Target);
+			}
+		}
 	}
-	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Parry))
+	else if (&Target == this)
 	{
-		return ParryShake;
+		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
+		{
+			PlayCameraEffect(bHeavy ? EAgCameraSituation::PlayerHurtHeavy : EAgCameraSituation::PlayerHurt, &Attacker);
+		}
+		else if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Parry))
+		{
+			PlayCameraEffect(EAgCameraSituation::Parry, &Attacker);
+		}
+		else if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Guard))
+		{
+			PlayCameraEffect(bHeavy ? EAgCameraSituation::GuardPushback : EAgCameraSituation::Guard, &Attacker);
+		}
+		else if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_GuardBreak))
+		{
+			PlayCameraEffect(EAgCameraSituation::GuardBreak, &Attacker);
+		}
 	}
-	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Guard))
-	{
-		return bHeavy ? GuardPushbackShake : GuardShake;
-	}
-	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_GuardBreak))
-	{
-		return GuardBreakShake;
-	}
-	return EAgCameraShake::None;
 }
 
 void AAgPlayerCharacter::BeginPlay()
@@ -133,6 +161,7 @@ void AAgPlayerCharacter::BeginPlay()
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
+	ASC->AbilityCommittedCallbacks.AddUObject(this, &ThisClass::HandleAbilityCommitted);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved)
@@ -155,6 +184,8 @@ void AAgPlayerCharacter::Tick(float DeltaSeconds)
 
 	UpdateSprint();
 	UpdateLockOn();
+	// 락온 카메라처럼 히트스톱(주인의 시간 배율)에 멈추지 않도록 월드 시간으로 돕니다.
+	UpdateCameraTurn(GetWorld()->GetDeltaSeconds());
 
 #if WITH_EDITORONLY_DATA
 	// 누른 키는 다음 프레임에 뗍니다. 같은 프레임에 떼면 점프 키는 엔진 점프가 시작되기 전에 StopJumping이
@@ -210,6 +241,10 @@ void AAgPlayerCharacter::NotifyControllerChanged()
 				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
 			InputSubsystem->AddMappingContext(InputMapping, 0);
+		}
+		if (!ExecutionCamera && ExecutionCameraClass && PlayerController->PlayerCameraManager)
+		{
+			ExecutionCamera = Cast<UAgExecutionCameraModifier>(PlayerController->PlayerCameraManager->AddNewCameraModifier(ExecutionCameraClass));
 		}
 	}
 }
@@ -347,10 +382,11 @@ void AAgPlayerCharacter::MoveReleased()
 
 void AAgPlayerCharacter::Look(const FInputActionValue& Value)
 {
-	if (GetLockOnTarget())
+	if (GetLockOnTarget() || IsExecutionCameraActive())
 	{
 		return;
 	}
+	TurnOpponent.Reset();
 
 	const FVector2D Input = Value.Get<FVector2D>();
 	AddControllerYawInput(Input.X);
@@ -545,6 +581,10 @@ bool AAgPlayerCharacter::CanMove() const
 void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 {
 	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(EndedData.AbilityThatEnded);
+	if (ExecutionCamera && AgAbility && AgAbility->GetDefinitionTags().HasTag(AgGameplayTags::Ability_Action_Execution))
+	{
+		ExecutionCamera->Stop();
+	}
 	if (IsDead() || !AgAbility)
 	{
 		return;
@@ -599,6 +639,17 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinitionTags().HasAny(Enders))
 	{
 		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_DodgeCounterChance));
+	}
+}
+
+void AAgPlayerCharacter::HandleAbilityCommitted(UGameplayAbility* Ability)
+{
+	// 처형 대상은 발동 중(ActivateAbility)에 정해지므로, 발동 알림이 아니라 커밋 알림에서 읽습니다.
+	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
+	const AActor* Target = AgAbility ? AgAbility->GetActionTarget() : nullptr;
+	if (ExecutionCamera && Target && AgAbility->GetDefinitionTags().HasTag(AgGameplayTags::Ability_Action_Execution))
+	{
+		ExecutionCamera->Start(*this, *Target);
 	}
 }
 
@@ -683,6 +734,53 @@ void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, floa
 	PlayerController->SetControlRotation(FRotator(Pitch, Yaw, 0.f));
 }
 
+void AAgPlayerCharacter::StartCameraTurn(const AActor& Opponent, float Angle)
+{
+	// 같은 프레임에 여러 회전이 시작되면 처리 순서와 관계없이 가장 가까운 상대 쪽으로 돕니다.
+	if (TurnStartFrame == GFrameCounter && TurnOpponent.IsValid() &&
+		GetSquaredDistanceTo(TurnOpponent.Get()) <= GetSquaredDistanceTo(&Opponent))
+	{
+		return;
+	}
+	if (!TurnOpponent.IsValid())
+	{
+		TurnYawRate = 0.f;
+	}
+	TurnOpponent = &Opponent;
+	TurnAngle = Angle;
+	TurnStartFrame = GFrameCounter;
+}
+
+void AAgPlayerCharacter::UpdateCameraTurn(float DeltaTime)
+{
+	const AActor* Opponent = TurnOpponent.Get();
+	APlayerController* PlayerController = Cast<APlayerController>(GetController());
+	if (!Opponent || !PlayerController || GetLockOnTarget() || IsExecutionCameraActive())
+	{
+		TurnOpponent.Reset();
+		return;
+	}
+
+	const FRotator Current = PlayerController->GetControlRotation();
+	const float CurrentYaw = static_cast<float>(Current.Yaw);
+	const float OpponentYaw = static_cast<float>((Opponent->GetActorLocation() - CameraBoom->GetComponentLocation()).Rotation().Yaw);
+	const float Offset = FMath::FindDeltaAngleDegrees(CurrentYaw, OpponentYaw);
+	// 감쇠 접근은 목표 경계에 끝없이 다가가므로, 1° 안으로 들면 끝냅니다.
+	if (FMath::Abs(Offset) <= TurnAngle + 1.f)
+	{
+		TurnOpponent.Reset();
+		return;
+	}
+	const float GoalYaw = CurrentYaw + Offset - FMath::Sign(Offset) * TurnAngle;
+	const float Yaw = SpringToward(CurrentYaw, TurnYawRate, GoalYaw, DeltaTime, LockOnSmoothingTime, LockOnRotationSpeed);
+	PlayerController->SetControlRotation(FRotator(Current.Pitch, Yaw, 0.f));
+}
+
+bool AAgPlayerCharacter::IsExecutionCameraActive() const
+{
+	return ExecutionCamera && !ExecutionCamera->IsDisabled();
+}
+
 void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	UpdateRotationMode();
@@ -707,6 +805,13 @@ void AAgPlayerCharacter::HandleTimeStopChanged(const FGameplayTag Tag, int32 New
 	if (NewCount > 0)
 	{
 		TimeSubsystem->StartTimeStop(*this);
+		// 셰이크는 컷신 카메라에도 더해지므로, 진행 중인 연출을 여기서 끝냅니다.
+		if (const APlayerController* PlayerController = Cast<APlayerController>(GetController());
+			PlayerController && PlayerController->PlayerCameraManager)
+		{
+			PlayerController->PlayerCameraManager->StopAllCameraShakes(true);
+		}
+		TurnOpponent.Reset();
 	}
 	else
 	{

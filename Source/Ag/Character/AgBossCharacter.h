@@ -24,6 +24,16 @@ public:
 
 	FVector GetLockOnLocation() const;
 
+	float GetKillSlowMotionSpeed() const
+	{
+		return KillSlowMotionSpeed;
+	}
+
+	float GetKillSlowMotionDuration() const
+	{
+		return KillSlowMotionDuration;
+	}
+
 protected:
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -37,4 +47,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Death", meta = (ClampMin = "0.01", ClampMax = "1"))
+	float KillSlowMotionSpeed = 0.3f;
+
+	/** 실제 시간입니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Death", meta = (ClampMin = "0"))
+	float KillSlowMotionDuration = 1.f;
 };

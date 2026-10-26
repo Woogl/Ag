@@ -6,6 +6,7 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
+#include "Combat/AgTimeSubsystem.h"
 #include "EngineUtils.h"
 #include "Game/AgGameState.h"
 #include "Game/AgPlayerController.h"
@@ -94,7 +95,8 @@ void AAgGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 
 void AAgGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 {
-	const bool bBossDied = DeadCharacter->IsA<AAgBossCharacter>();
+	const AAgBossCharacter* DeadBoss = Cast<AAgBossCharacter>(DeadCharacter);
+	const bool bBossDied = DeadBoss != nullptr;
 	if (!bBossDied && !DeadCharacter->IsA<AAgPlayerCharacter>())
 	{
 		return;
@@ -104,6 +106,15 @@ void AAgGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 	if (!StageState || !StageState->DecideStageResult(bBossDied ? EAgStageResult::Clear : EAgStageResult::GameOver))
 	{
 		return;
+	}
+
+	if (bBossDied)
+	{
+		GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(DeadBoss->GetKillSlowMotionSpeed(), DeadBoss->GetKillSlowMotionDuration());
+		if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			Player->PlayCameraEffect(EAgCameraSituation::BossKill, DeadCharacter);
+		}
 	}
 
 	if (StageResultPresentationTime > 0.f)

@@ -23,15 +23,29 @@ void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 	{
 		return;
 	}
-	// 시간 정지 중에는 게임 전체 시간 배율과 타이머를 건드리지 않고 기억만 합니다. 같은 프레임의 처리 순서와
-	// 상관없이 시간 정지가 끝나는 순간 시작합니다.
+	// 겹치면 더 느린 속도와 더 긴 남은 시간을 고르므로, 같은 프레임의 요청(궁극기 마무리로 보스 처치)도 처리 순서와
+	// 관계없이 결과가 같습니다. 시간 정지 중에는 게임 전체 시간 배율과 타이머를 건드리지 않고 기억만 했다가, 시간
+	// 정지가 끝나는 순간 시작합니다.
 	if (bTimeStopped)
 	{
+		if (PendingSlowMotionDuration > 0.f)
+		{
+			Speed = FMath::Min(Speed, PendingSlowMotionSpeed);
+			RealDuration = FMath::Max(RealDuration, PendingSlowMotionDuration);
+		}
 		PendingSlowMotionSpeed = Speed;
 		PendingSlowMotionDuration = RealDuration;
 		UE_LOG(LogAg, Verbose, TEXT("Slow motion waits for the time stop to end: speed %.2f for %.2f s of real time"), Speed,
 			RealDuration);
 		return;
+	}
+	const FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	if (TimerManager.IsTimerActive(SlowMotionTimer))
+	{
+		// 타이머는 게임 시간으로 남아 있어 지금 배율로 나눠 실제 남은 시간으로 바꿉니다.
+		const AWorldSettings* WorldSettings = GetWorld()->GetWorldSettings();
+		Speed = FMath::Min(Speed, WorldSettings->TimeDilation);
+		RealDuration = FMath::Max(RealDuration, TimerManager.GetTimerRemaining(SlowMotionTimer) / WorldSettings->GetEffectiveTimeDilation());
 	}
 	ApplySlowMotion(Speed, RealDuration);
 }
