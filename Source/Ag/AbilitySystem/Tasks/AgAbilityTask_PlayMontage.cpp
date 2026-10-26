@@ -123,7 +123,7 @@ void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 	}
 	else
 	{
-		StopTimeline();
+		ResetTimeline();
 	}
 
 	const int32 InstanceId = MontageInstanceId;
@@ -169,6 +169,12 @@ void UAgAbilityTask_PlayMontage::ReplaySection(FName Section, float BlendTime)
 	}
 	CastChecked<UAgGameplayAbility>(Ability)->RefreshTarget();
 	Play(Section, BlendTime);
+}
+
+const FAnimMontageInstance* UAgAbilityTask_PlayMontage::GetMontageInstance() const
+{
+	UAnimInstance* Anim = MontageInstanceId != INDEX_NONE ? FindAnimInstance(Ability) : nullptr;
+	return Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 }
 
 void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
@@ -304,6 +310,7 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 	for (int32 Index = 0; Index < TimelineEntries.Num(); ++Index)
 	{
 		const FAgTimelineEntry& Entry = TimelineEntries[Index];
+		// 앞으로 진행하며 Start를 지났으면 시작하고, End까지 지났으면 함께 끝냅니다.
 		if (bForward && !Entry.bActive && Previous < Entry.Start && Entry.Start <= NewPosition)
 		{
 			Pending.Add(FPending{Entry.Start, EPhase::Begin, Index});
@@ -313,11 +320,13 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 			}
 			continue;
 		}
+		// 앞으로 진행하며 켜진 구간의 End를 지났으면 끝냅니다.
 		if (bForward && Entry.bActive && Entry.End <= NewPosition)
 		{
 			Pending.Add(FPending{Entry.End, EPhase::End, Index});
 			continue;
 		}
+		// 그 밖(재생 시작, 섹션 이동, 되감기)은 새 위치가 구간 안인지로 맞춥니다.
 		const bool bInside = Entry.Start <= NewPosition && NewPosition < Entry.End;
 		if (Entry.bActive != bInside)
 		{
@@ -340,7 +349,10 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로 매번 확인합니다. 이 Task가 시작하는 중(첫 판정)에는 행동이 끝나도
 		// 엔진이 이 Task를 끝내지 않으므로 행동도 봅니다. 항목 실행 안에서 전환해 위치가 바뀌었으면 옮긴 위치의 판정이
 		// 이미 끝났으므로 남은 항목은 실행하지 않습니다. 그래서 전환과 같은 시각에는 다른 항목을 두지 않습니다.
-		if (IsFinished() || !Ability->IsActive() || MontageInstanceId != InstanceId || TimelinePosition != NewPosition)
+		const bool bEnded = IsFinished() || !Ability->IsActive();
+		const bool bReplayed = MontageInstanceId != InstanceId;
+		const bool bMoved = TimelinePosition != NewPosition;
+		if (bEnded || bReplayed || bMoved)
 		{
 			return;
 		}
@@ -370,14 +382,14 @@ void UAgAbilityTask_PlayMontage::EndTimeline()
 			Active.Add(Entry.Task);
 		}
 	}
-	StopTimeline();
+	ResetTimeline();
 	for (UAbilityTask* Task : Active)
 	{
 		Task->EndTask();
 	}
 }
 
-void UAgAbilityTask_PlayMontage::StopTimeline()
+void UAgAbilityTask_PlayMontage::ResetTimeline()
 {
 	TimelineEntries.Reset();
 	TimelinePosition = 0.f;

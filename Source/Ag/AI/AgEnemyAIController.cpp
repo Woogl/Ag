@@ -122,6 +122,7 @@ void AAgEnemyAIController::OnPossess(APawn* InPawn)
 void AAgEnemyAIController::OnUnPossess()
 {
 	ClearFocus(EAIFocusPriority::Gameplay);
+	// 엔진도 빙의를 풀 때 로직을 멈추지만 폰을 비운 뒤라, 폰을 쓰는 Task의 ExitState를 위해 먼저 멈춥니다.
 	StateTreeComponent->StopLogic(TEXT("UnPossess"));
 	GetAIPerceptionComponent()->OnTargetPerceptionUpdated.RemoveDynamic(this, &ThisClass::HandleTargetPerceptionUpdated);
 	if (const AAgEnemyCharacter* Enemy = GetEnemy())

@@ -44,10 +44,8 @@ protected:
 	float StageResultPresentationTime = 4.f;
 
 private:
-	void RegisterCombatant(AAgCharacterBase* Combatant);
 	void HandleCombatantDied(AAgCharacterBase* DeadCharacter);
 	void ShowResult();
 
 	FTimerHandle ResultTimer;
-	TSet<TWeakObjectPtr<AAgCharacterBase>> RegisteredCombatants;
 };

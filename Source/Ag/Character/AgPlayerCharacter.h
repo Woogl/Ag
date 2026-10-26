@@ -25,18 +25,9 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
-	static const FName JumpMontageId;
-	static const FName JumpStartSection;
-	static const FName JumpLandSection;
-
 	void UpdateRotationMode();
 
-	EAgCameraShake GetCombatCameraShake(const FGameplayTagContainer& SpecTags, const AActor* Source) const;
-
-	USpringArmComponent* GetCameraBoom() const
-	{
-		return CameraBoom;
-	}
+	EAgCameraShake GetCombatCameraShake(const FGameplayTagContainer& SpecTags, const AActor* Attacker) const;
 
 	virtual FVector GetMoveInputDirection() const override
 	{
@@ -81,7 +72,7 @@ private:
 
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
 
-	void TryResumeGuard();
+	void TryRunPendingInput();
 
 	void HandleAbilityActivated(UGameplayAbility* Ability);
 

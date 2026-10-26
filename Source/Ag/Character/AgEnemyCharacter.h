@@ -88,7 +88,7 @@ private:
 #endif
 
 	int32 Phase = 1;
-	int32 PhaseTransitionTarget = 1;
+	int32 StartedTransitionPhase = 1;
 
 	int32 DeathMotionInstanceId = INDEX_NONE;
 };

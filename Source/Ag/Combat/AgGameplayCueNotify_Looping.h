@@ -21,7 +21,6 @@ public:
 protected:
 	virtual bool Recycle() override;
 	virtual bool GameplayCuePendingRemove() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
 	virtual bool OnActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
 	virtual bool WhileActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) override;
@@ -83,7 +82,7 @@ private:
 	void ApplyNiagaraParameters(const FGameplayCueNotify_SpawnResult& SpawnResult) const;
 	void PlaceBetweenSockets(UNiagaraComponent& Niagara) const;
 	void ApplyTargetTimeDilation(const FGameplayCueNotify_SpawnResult& SpawnResult) const;
-	void StopTargetTimeDilation();
+	void ReleaseCueTarget();
 	void PlaceRecurringMesh(AActor* Target);
 	void PlayRemovalEffectsAtRecurringMeshes(AActor* Target, const FGameplayCueParameters& Parameters);
 	void ClearRecurringMeshes();

@@ -37,7 +37,7 @@ namespace
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Target, EventTag, Payload);
 	}
 
-	FGameplayTag GetReactionEvent(const FGameplayTagContainer& SpecTags)
+	FGameplayTag GetKnockReactionEvent(const FGameplayTagContainer& SpecTags)
 	{
 		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockUp))
 		{
@@ -53,8 +53,7 @@ namespace
 	FGameplayTag ResolveHitReactionEvent(const AAgCharacterBase& Target, const FGameplayTagContainer& SpecTags)
 	{
 		const UAbilitySystemComponent* ASC = Target.GetAbilitySystemComponent();
-		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_SuperArmor) ||
-			ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
+		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_SuperArmor))
 		{
 			return FGameplayTag();
 		}
@@ -74,7 +73,7 @@ namespace
 			                            !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
 			return Toughness == EAgToughness::Small && !bOtherReaction ? AgGameplayTags::Event_Hit_Stagger : FGameplayTag();
 		}
-		return Toughness == EAgToughness::Large ? FGameplayTag() : GetReactionEvent(SpecTags);
+		return Toughness == EAgToughness::Large ? FGameplayTag() : GetKnockReactionEvent(SpecTags);
 	}
 
 	FAgPhysicsHit MakePhysicsHit(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context, bool bGuard)
@@ -90,10 +89,10 @@ namespace
 		return Hit;
 	}
 
-	void StartHitReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
+	void StartHitReaction(AActor* Causer, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
-		const bool bHasReaction = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) || GetReactionEvent(SpecTags).IsValid();
+		const bool bHasReaction = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) || GetKnockReactionEvent(SpecTags).IsValid();
 		// 처형은 두 캐릭터의 모션을 프레임 단위로 맞물리므로 흔들지도 않습니다.
 		if (!bHasReaction || TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 		{
@@ -101,27 +100,27 @@ namespace
 		}
 		if (const FGameplayTag Event = ResolveHitReactionEvent(*Target, SpecTags); Event.IsValid())
 		{
-			SendEvent(Target, Event, Instigator);
+			SendEvent(Target, Event, Causer);
 		}
-		Target->GetHitPhysics()->Play(MakePhysicsHit(*Instigator, *Target, Context, false));
+		Target->GetHitPhysics()->Play(MakePhysicsHit(*Causer, *Target, Context, false));
 	}
 
-	void StartGuardReaction(AActor* Instigator, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
+	void StartGuardReaction(AActor* Causer, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
-		const bool bPushback = GetReactionEvent(SpecTags).IsValid();
+		const bool bPushback = GetKnockReactionEvent(SpecTags).IsValid();
 		if (!bPushback && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
 		{
 			return;
 		}
 		if (bPushback && !Target->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_SuperArmor))
 		{
-			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Instigator);
+			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Causer);
 		}
 		else
 		{
 			Target->PlayAnimMontage(Target->GetCharacterData()->FindMontage(GuardFlinchMontageId));
 		}
-		Target->GetHitPhysics()->Play(MakePhysicsHit(*Instigator, *Target, Context, true));
+		Target->GetHitPhysics()->Play(MakePhysicsHit(*Causer, *Target, Context, true));
 	}
 
 	void ApplyHitstop(UAgAbilitySystemComponent& ASC, float Duration)
@@ -178,6 +177,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		return;
 	}
 	UAISense_Damage::ReportDamageEvent(Target, Target, Attacker, 1.f, Attacker->GetActorLocation(), Context.GetOrigin());
+	// 반사탄 적중은 패리당한 것으로 보아 Parried 어빌리티가 PP를 줄이므로, 반사한 피해에는 PP 배율이 없습니다.
 	if (bHit && Projectile && Projectile->IsReflected() && !Target->IsDead())
 	{
 		SendEvent(Target, AgGameplayTags::Event_Parried, Attacker);
@@ -226,6 +226,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		AgCameraShake::Play(Player, Player->GetCombatCameraShake(SpecTags, Attacker));
 	}
+	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
 	{
@@ -241,17 +242,17 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 	{
 		const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
-		ApplyHitstop(*CastChecked<UAgAbilitySystemComponent>(TargetASC), HitstopDuration);
+		ApplyHitstop(*Target->GetAbilitySystemComponent(), HitstopDuration);
 		if (Causer == Attacker && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_NoAttackerHitstop))
 		{
-			ApplyHitstop(*CastChecked<UAgAbilitySystemComponent>(Attacker->GetAbilitySystemComponent()), HitstopDuration);
+			ApplyHitstop(*Attacker->GetAbilitySystemComponent(), HitstopDuration);
 		}
 	}
 
 	const TSharedPtr<FAgHitRewardState> Reward = FAgGameplayEffectContext::GetHitReward(Context);
 	if (bHit && Reward && !Reward->bGranted)
 	{
-		UAgAbilitySystemComponent* AttackerASC = CastChecked<UAgAbilitySystemComponent>(Attacker->GetAbilitySystemComponent());
+		UAgAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
 		const FGameplayEffectSpecHandle ChargeSpec = AttackerASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
 		if (ChargeSpec.IsValid())
 		{

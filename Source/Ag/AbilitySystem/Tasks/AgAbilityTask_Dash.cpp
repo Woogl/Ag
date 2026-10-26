@@ -105,15 +105,20 @@ void UAgAbilityTask_Dash::OnDestroy(bool bInOwnerFinished)
 		{
 			AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_MoveBlocked).Remove(MoveBlockedHandle);
 		}
-		if (bDashing)
+	}
+	if (bDashing)
+	{
+		// 태그를 떼면 Tag Transition이 섹션을 옮기며 이 Task를 다시 끝내므로, 돌진 상태를 먼저 내리고 태그는
+		// 마지막에 뗍니다.
+		bDashing = false;
+		if (AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor()))
+		{
+			Character->PopDisableMontageRootMotion();
+		}
+		if (AbilitySystemComponent.IsValid())
 		{
 			AbilitySystemComponent->RemoveLooseGameplayTag(AgGameplayTags::State_Dashing);
 		}
-	}
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (bDashing && Character)
-	{
-		Character->PopDisableMontageRootMotion();
 	}
 	Super::OnDestroy(bInOwnerFinished);
 }

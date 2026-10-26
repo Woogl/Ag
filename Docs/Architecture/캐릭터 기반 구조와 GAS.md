@@ -46,7 +46,7 @@ classDiagram
         <<interface>>
     }
     class AAgCharacterBase {
-        UAbilitySystemComponent AbilitySystemComponent
+        UAgAbilitySystemComponent AbilitySystemComponent
         UMotionWarpingComponent MotionWarping
         USceneComponent WeaponComponent
     }
@@ -90,7 +90,7 @@ classDiagram
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 전투원 등록과 보스 기록, 승패 판정과 전투 결과 화면 열기, 맵 이동(타이틀, 스테이지, 다시 시작, 종료) |
-| `AAgGameState` | `AGameStateBase` | 스테이지의 보스와 스테이지 결과(`EAgStageResult`), 각각의 변경 알림(`OnBossChanged`, `OnStageResultChanged`) |
+| `AAgGameState` | `AGameStateBase` | 스테이지의 보스와 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함), 각각의 변경 알림(`OnBossChanged`, `OnStageResultChanged`) |
 
 ### 피격 상태와 AI 조건
 
@@ -146,7 +146,6 @@ sequenceDiagram
     participant ASC as 캐릭터 ASC
     participant D as 캐릭터 데이터
     participant GM as 게임 모드
-    C->>ASC: InitAbilityActorInfo
     C->>ASC: MOV 변화, 히트스톱·캐릭터 통과 태그, 사망 이벤트 구독
     C->>D: 스탯 초기값
     C->>ASC: 스탯 기본값(최대값 먼저), MOV 반영
@@ -155,7 +154,7 @@ sequenceDiagram
     C->>D: 시작 효과 ID 목록<br>(정의는 Effects.json)
     C->>ASC: GameplayEffect 적용<br>(리젠)
     C->>C: 루트 모션 자르기 연결
-    Note over C,GM: 게임 모드: BeginPlay 및 플레이어 스폰 시 전투원 등록, 보스는 게임 스테이트에 기록(HUD가 구독)<br>플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작·끝, 상태 태그 구독, 락온 회전 방식, 사망 시 입력 비활성화<br>적: 그로기 태그, 어빌리티 끝 구독, 처형 사망 모션
+    Note over C,GM: 게임 모드: BeginPlay에서 레벨의 전투원 등록(플레이어는 그 전에 스폰됨), 보스는 게임 스테이트에 기록(HUD가 구독)<br>플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작·끝, 상태 태그 구독, 락온 회전 방식, 사망 시 입력 비활성화<br>적: 그로기 태그, 어빌리티 끝 구독, 처형 사망 모션
 ```
 
 ### 어빌리티 실행

@@ -29,7 +29,8 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 	const FAgProjectileDefinition* Definition = UAgAssetManager::Get().GetProjectiles().Find(Params.Projectile);
 	if (!Definition || !Definition->ProjectileClass)
 	{
-		UE_LOG(LogAg, Error, TEXT("Abilities.%s: projectile %s missing in Projectiles"), *AgAbility->GetAbilityId().ToString(), *Params.Projectile.ToString());
+		UE_LOG(LogAg, Error, TEXT("SpawnProjectile (ability %s): projectile %s missing in Projectiles"), *AgAbility->GetAbilityId().ToString(),
+			*Params.Projectile.ToString());
 		EndTask();
 		return;
 	}
@@ -45,7 +46,8 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 	const FTransform Transform(Direction.Rotation(), Location);
 	if (AAgProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAgProjectile>(Definition->ProjectileClass, Transform, Character, Character, ESpawnActorCollisionHandlingMethod::AlwaysSpawn))
 	{
-		Projectile->Launch(AgAbility->MakeDamageSpec(Definition->Damage, FAgHitRewardState::Make(Params.HitReward)), Direction, Definition->Params);
+		Projectile->Launch(Definition->Damage, AgAbility->MakeDamageSpec(Definition->Damage, FAgHitRewardState::Make(Params.HitReward)), Direction,
+			Definition->Params);
 		Projectile->FinishSpawning(Transform);
 	}
 	EndTask();

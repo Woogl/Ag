@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "Engine/EngineTypes.h"
 #include "GameFramework/Character.h"
@@ -10,7 +11,6 @@
 #include "GenericTeamAgentInterface.h"
 #include "AgCharacterBase.generated.h"
 
-class UAbilitySystemComponent;
 class UAgAttributeSet;
 class UAgCharacterData;
 struct FAgAbilityData;
@@ -42,7 +42,7 @@ public:
 
 	static const FName WeaponTag;
 
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UAgAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	virtual FGenericTeamId GetGenericTeamId() const override
 	{
@@ -153,8 +153,6 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UAgCharacterData> CharacterData;
 
-	bool bEndingPlay = false;
-
 private:
 	void GrantAbilities();
 
@@ -190,7 +188,7 @@ private:
 	int32 RootMotionDisabledMontageId = INDEX_NONE;
 
 	UPROPERTY(VisibleAnywhere, Category = "Abilities")
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	TObjectPtr<UAgAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY()
 	TObjectPtr<UAgAttributeSet> AttributeSet;

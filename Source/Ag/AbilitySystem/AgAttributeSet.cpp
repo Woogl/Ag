@@ -61,6 +61,7 @@ void UAgAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 {
 	Super::PostGameplayEffectExecute(Data);
 
+	// PP 감소를 막아도 실행 뒤 콜백은 불리므로, 그로기는 PP를 잃을 수 있을 때만 판정합니다.
 	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetOwningActor());
 	if (Data.EvaluatedData.Attribute == GetHPAttribute() && GetHP() <= 0.f)
 	{

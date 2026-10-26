@@ -8,7 +8,6 @@
 #include "AI/AgEnemyAIController.h"
 #include "Algo/SelectRandomWeighted.h"
 #include "Character/AgEnemyCharacter.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Engine/TargetPoint.h"
@@ -36,7 +35,7 @@ namespace
 
 } // namespace
 
-EStateTreeRunStatus FAgEnemyAITask_Wait::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FAgEnemyAITask_PostPatternDelay::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	const FFloatInterval& RecoveryTime = InstanceData.Controller->GetEnemyData()->PostPatternDelayTime;
@@ -46,7 +45,7 @@ EStateTreeRunStatus FAgEnemyAITask_Wait::EnterState(FStateTreeExecutionContext& 
 	return InstanceData.Duration > 0.f ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
-EStateTreeRunStatus FAgEnemyAITask_Wait::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
+EStateTreeRunStatus FAgEnemyAITask_PostPatternDelay::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
@@ -104,7 +103,7 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 			return Enemy->CanActivatePattern(Candidate);
 		};
 		TArray<TPair<FName, float>> Candidates;
-		GatherCandidates(Data->Abilities, Distance, Enemy->GetPhase(), IsReady, Candidates);
+		GatherCandidates(*Data, Distance, Enemy->GetPhase(), IsReady, Candidates);
 
 		// StateTree의 가중치 선택은 패턴마다 상태가 필요해, 패턴 목록을 적 데이터에만 두려고 여기서 고릅니다.
 		const TPair<FName, float>* Picked =
@@ -137,12 +136,12 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::Tick(FStateTreeExecutionContext& 
 	return Spec && Spec->IsActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
-void FAgEnemyAITask_RunPattern::GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates)
+void FAgEnemyAITask_RunPattern::GatherCandidates(const UAgCharacterData& Data, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates)
 {
 	OutCandidates.Reset();
-	for (FName Id : AbilityIds)
+	for (FName Id : Data.Abilities)
 	{
-		const FAgAbilityData* Ability = UAgAssetManager::Get().FindAbility(Id);
+		const FAgAbilityData* Ability = Data.FindAbility(Id);
 		const FAgPatternSelection* Pattern =
 			Ability && Ability->Tags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
 		if (!Pattern)
@@ -190,10 +189,9 @@ FAgEnemyAITask_NonCombat::FAgEnemyAITask_NonCombat()
 EStateTreeRunStatus FAgEnemyAITask_NonCombat::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	UAbilitySystemComponent* ASC = InstanceData.Controller->GetEnemy()->GetAbilitySystemComponent();
+	UAgAbilitySystemComponent* ASC = InstanceData.Controller->GetEnemy()->GetAbilitySystemComponent();
 	ASC->AddLooseGameplayTag(AgGameplayTags::State_NonCombat);
-	const FGameplayTagContainer PatternTags(AgGameplayTags::Ability_Enemy_Pattern);
-	CastChecked<UAgAbilitySystemComponent>(ASC)->CancelAbilitiesWithSpecTags(PatternTags);
+	ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Enemy_Pattern));
 	return EStateTreeRunStatus::Running;
 }
 
@@ -225,8 +223,8 @@ void FAgEnemyAITask_Combat::ExitState(FStateTreeExecutionContext& Context, const
 {
 	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
 	Controller.ClearFocus(EAIFocusPriority::Gameplay);
-	UAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
-	if (const FGameplayAbilitySpec* LockOn = CastChecked<UAgAbilitySystemComponent>(ASC)->FindSpecByTag(AgGameplayTags::Ability_LockOn))
+	UAgAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
+	if (const FGameplayAbilitySpec* LockOn = ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn))
 	{
 		ASC->CancelAbilityHandle(LockOn->Handle);
 	}
@@ -234,7 +232,7 @@ void FAgEnemyAITask_Combat::ExitState(FStateTreeExecutionContext& Context, const
 
 void FAgEnemyAITask_Combat::UpdateTarget(AAgEnemyAIController& Controller)
 {
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Controller.GetEnemy()->GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* LockOn = ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn);
 	if (LockOn && !LockOn->IsActive())
 	{

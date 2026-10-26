@@ -19,14 +19,10 @@ class UAgTimeSubsystem : public UWorldSubsystem
 public:
 	void StartSlowMotion(float Speed, float RealDuration);
 
-	bool StartTimeStop(UObject& Requester, AAgCharacterBase& Exempt);
+	/** 요청한 캐릭터는 시간 정지 중에도 움직입니다. */
+	void StartTimeStop(AAgCharacterBase& Requester);
 
-	void EndTimeStop(UObject& Requester);
-
-	bool IsTimeStopped() const
-	{
-		return bTimeStopped;
-	}
+	void EndTimeStop(AAgCharacterBase& Requester);
 
 	float GetTimeStopCompensation() const;
 
@@ -49,7 +45,5 @@ private:
 	float PendingSlowMotionDuration = 0.f;
 
 	bool bTimeStopped = false;
-	TWeakObjectPtr<UObject> TimeStopRequester;
-
-	TWeakObjectPtr<AAgCharacterBase> TimeStopExempt;
+	TWeakObjectPtr<AAgCharacterBase> TimeStopRequester;
 };

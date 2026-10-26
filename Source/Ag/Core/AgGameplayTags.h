@@ -113,7 +113,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Hit);
 
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateScreen);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_PerfectDodgeScreen);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_CameraShake_Small);

@@ -30,6 +30,9 @@
 
 namespace
 {
+	const FName JumpMontageId(TEXT("Jump"));
+	const FName JumpLandSection(TEXT("Land"));
+
 	/**
 	 * CriticallyDampedSmoothing은 한 스텝이 SmoothingTime의 절반보다 짧을 때만 정확하므로 긴 프레임은 나눠 계산합니다.
 	 */
@@ -47,10 +50,6 @@ namespace
 		return Angle;
 	}
 }
-
-const FName AAgPlayerCharacter::JumpMontageId(TEXT("Jump"));
-const FName AAgPlayerCharacter::JumpStartSection(TEXT("Start"));
-const FName AAgPlayerCharacter::JumpLandSection(TEXT("Land"));
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
@@ -94,7 +93,7 @@ void AAgPlayerCharacter::UpdateRotationMode()
 	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
 
-EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContainer& SpecTags, const AActor* Source) const
+EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContainer& SpecTags, const AActor* Attacker) const
 {
 	const bool bFinisher = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
 	if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
@@ -106,7 +105,7 @@ EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContai
 	                    SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockDown);
 	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
 	{
-		if (Source == this)
+		if (Attacker == this)
 		{
 			return bHeavy ? PlayerHitHeavyShake : PlayerHitShake;
 		}
@@ -120,14 +119,18 @@ EAgCameraShake AAgPlayerCharacter::GetCombatCameraShake(const FGameplayTagContai
 	{
 		return bHeavy ? GuardPushbackShake : GuardShake;
 	}
-	return GuardBreakShake;
+	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_GuardBreak))
+	{
+		return GuardBreakShake;
+	}
+	return EAgCameraShake::None;
 }
 
 void AAgPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved)
@@ -247,7 +250,7 @@ void AAgPlayerCharacter::OnJumped_Implementation()
 	Super::OnJumped_Implementation();
 
 	// 점프 공격의 시작 조건이라, 점프 행동이 다른 까닭으로 끝나도 착지할 때까지 남깁니다.
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->SetLooseGameplayTagCount(AgGameplayTags::State_Jumping, 1);
 
 	// 키를 누른 뒤 실제 점프 전에 시작한 행동·피격 반응의 모션을 끊지 않도록, 점프 행동이 실행 중일 때만 재생합니다.
@@ -265,7 +268,7 @@ void AAgPlayerCharacter::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 
 	// 점프 공격이나 피격 반응이 점프 행동을 끝냈으면 그 행동의 모션이 착지를 맡습니다.
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Jump = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
 	const bool bJumpAbility = Jump && Jump->IsActive();
 	ASC->SetLooseGameplayTagCount(AgGameplayTags::State_Jumping, 0);
@@ -374,6 +377,7 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 		return;
 	}
 
+	// 새로 누른 키가 기억한 입력을 대신하므로, 막히지 않은 키는 기억을 지웁니다.
 	const bool bFallingJump = InputTag == AgGameplayTags::Input_Jump && GetCharacterMovement()->IsFalling();
 	BufferedInput = !bFallingJump && InputTag != AgGameplayTags::Input_Execute && IsActionInputBlocked(InputTag)
 	                    ? InputTag
@@ -386,7 +390,7 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 
 void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 {
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (InputTag == AgGameplayTags::Input_Attack)
 	{
 		const FGameplayAbilitySpec* BasicAttack = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_BasicAttack);
@@ -443,7 +447,7 @@ void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 		// 키를 누르는 동안 이어지는 행동(가드, 달리기)도 엔진 태그 트리거(OwnedTagPresent) 대신 직접 발동·취소합니다. 태그
 		// 트리거는 태그가 붙는 순간 막혀 있으면 다시 시도하지 않아, 태그를 실행 상태와 맞추는 코드가 따로 필요해집니다.
 		bGuardHeld = false;
-		CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent())->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Guard));
+		GetAbilitySystemComponent()->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Guard));
 	}
 	if (InputTag == AgGameplayTags::Input_Dodge)
 	{
@@ -457,7 +461,7 @@ void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 
 void AAgPlayerCharacter::ActivateByTag(const FGameplayTag& AbilityTag)
 {
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AbilityTag))
 	{
 		ASC->TryActivateAbility(Spec->Handle);
@@ -466,7 +470,7 @@ void AAgPlayerCharacter::ActivateByTag(const FGameplayTag& AbilityTag)
 
 void AAgPlayerCharacter::TryJump()
 {
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
 	const UGameplayAbility* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
 	if (Ability && Ability->CanActivateAbility(Spec->Handle, ASC->AbilityActorInfo.Get()))
@@ -499,7 +503,7 @@ void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 N
 	}
 	if (Tag == AgGameplayTags::State_Busy && bGuardHeld)
 	{
-		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryResumeGuard);
+		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunPendingInput);
 	}
 	else if (BufferedInput.IsValid())
 	{
@@ -554,10 +558,10 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 	}
 
 	// 이 행동을 취소한 행동이 시작된 뒤에 보도록 타이머 처리(TG_PostPhysics 뒤)에서 확인합니다.
-	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryResumeGuard);
+	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunPendingInput);
 }
 
-void AAgPlayerCharacter::TryResumeGuard()
+void AAgPlayerCharacter::TryRunPendingInput()
 {
 	// 기억한 입력은 누르고 있는 가드 키보다 나중에 누른 것이므로 먼저 처리합니다.
 	TryRunBufferedInput();
@@ -567,7 +571,7 @@ void AAgPlayerCharacter::TryResumeGuard()
 	}
 
 	// 패리 모션은 가드를 끝내지 않으므로, 가드 중이면 후딜에 든 패리 모션만 끝내 가드 자세로 돌아옵니다.
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Guard = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Guard);
 	if (Guard && Guard->IsActive())
 	{
@@ -600,7 +604,7 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 
 void AAgPlayerCharacter::UpdateSprint()
 {
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const bool bWantsSprint = bDodgeHeld && GetAttributeSet()->GetSP() > 0.f;
 	const FGameplayAbilitySpec* Sprint = ASC->FindSpecByTag(AgGameplayTags::Ability_Sprint);
 	if (Sprint && Sprint->IsActive())
@@ -639,7 +643,7 @@ void AAgPlayerCharacter::UpdateLockOn()
 
 void AAgPlayerCharacter::ToggleLockOn()
 {
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* LockOn = ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn);
 	if (LockOn && LockOn->IsActive())
 	{
@@ -702,7 +706,7 @@ void AAgPlayerCharacter::HandleTimeStopChanged(const FGameplayTag Tag, int32 New
 	UAgTimeSubsystem* TimeSubsystem = GetWorld()->GetSubsystem<UAgTimeSubsystem>();
 	if (NewCount > 0)
 	{
-		TimeSubsystem->StartTimeStop(*this, *this);
+		TimeSubsystem->StartTimeStop(*this);
 	}
 	else
 	{

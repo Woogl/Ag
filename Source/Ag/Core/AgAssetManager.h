@@ -34,7 +34,7 @@ public:
 
 	const UAgCombatRules& GetCombatRules() const;
 
-	AG_API const UAgMontageTimelineData& GetMontageTimelines() const;
+	const UAgMontageTimelineData& GetMontageTimelines() const;
 
 	const UTargetingPreset* FindTargetingPreset(FName Id) const;
 

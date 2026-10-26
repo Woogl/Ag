@@ -59,7 +59,7 @@ int32 AAgEnemyCharacter::GetReachedPhase() const
 
 bool AAgEnemyCharacter::IsPhaseTransitionPending() const
 {
-	return GetReachedPhase() > PhaseTransitionTarget;
+	return GetReachedPhase() > StartedTransitionPhase;
 }
 
 bool AAgEnemyCharacter::StartPhaseTransition()
@@ -70,14 +70,13 @@ bool AAgEnemyCharacter::StartPhaseTransition()
 	{
 		return false;
 	}
-	PhaseTransitionTarget = TargetPhase;
+	StartedTransitionPhase = TargetPhase;
 	return true;
 }
 
 bool AAgEnemyCharacter::IsPhaseTransitionActive() const
 {
-	const UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
-	const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AgGameplayTags::Ability_Reaction_PhaseTransition);
+	const FGameplayAbilitySpec* Spec = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Reaction_PhaseTransition);
 	return Spec && Spec->IsActive();
 }
 
@@ -115,6 +114,8 @@ void AAgEnemyCharacter::BeginPlay()
 
 void AAgEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	// 사망 모션은 캐릭터가 재생하고 블렌드 아웃 콜백이 래그돌을 켜므로, 끝내는 동안 재생이 끊겨도 부르지 않도록
+	// Super보다 먼저 풉니다.
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (FAnimMontageInstance* DeathMotion = AnimInstance ? AnimInstance->GetMontageInstanceForID(DeathMotionInstanceId) : nullptr)
 	{
@@ -126,7 +127,7 @@ void AAgEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AAgEnemyCharacter::HandleDeathEvent(const FGameplayEventData* Payload)
 {
-	if (IsDead() || bEndingPlay)
+	if (IsDead())
 	{
 		return;
 	}
@@ -172,10 +173,7 @@ void AAgEnemyCharacter::DieWithDeathMotion(UAnimMontage& DeathMontage, float Sta
 void AAgEnemyCharacter::HandleDeathMotionBlendingOut(UAnimMontage* Montage, bool bInterrupted)
 {
 	DeathMotionInstanceId = INDEX_NONE;
-	if (!bEndingPlay)
-	{
-		StartRagdoll(FVector::ZeroVector);
-	}
+	StartRagdoll(FVector::ZeroVector);
 }
 
 void AAgEnemyCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount)
@@ -184,7 +182,7 @@ void AAgEnemyCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCou
 	{
 		return;
 	}
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	// 처형으로 끝난 그로기는 처형 상태 태그가 붙어 효과가 지워진 것입니다.
 	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 	{

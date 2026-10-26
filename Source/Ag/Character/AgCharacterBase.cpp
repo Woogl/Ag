@@ -7,7 +7,6 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_Launch.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -60,7 +59,7 @@ AAgCharacterBase::AAgCharacterBase(const FObjectInitializer& ObjectInitializer)
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 }
 
-UAbilitySystemComponent* AAgCharacterBase::GetAbilitySystemComponent() const
+UAgAbilitySystemComponent* AAgCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }
@@ -106,8 +105,7 @@ bool AAgCharacterBase::IsDead() const
 
 AAgCharacterBase* AAgCharacterBase::GetLockOnTarget() const
 {
-	const UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(AbilitySystemComponent);
-	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn) : nullptr;
+	const FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindSpecByTag(AgGameplayTags::Ability_LockOn);
 	const UAgGameplayAbility* Instance = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
 	return Instance ? Cast<AAgCharacterBase>(Instance->GetActionTarget()) : nullptr;
 }
@@ -200,7 +198,6 @@ void AAgCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetMOVAttribute())
 		.AddUObject(this, &ThisClass::HandleMOVChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hitstop, EGameplayTagEventType::NewOrRemoved)
@@ -220,8 +217,9 @@ void AAgCharacterBase::BeginPlay()
 
 void AAgCharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	bEndingPlay = true;
 	AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death).Remove(DeathEventHandle);
+	// ASC는 자기가 등록 해제될 때에야 어빌리티를 취소합니다. 그 전에 메시가 등록 해제되며 몽타주를 끊으면 살아 있는
+	// 어빌리티의 콜백이 그때 메시를 바꾸므로(래그돌이 이미 지운 물리 상태를 다시 만듦) 먼저 취소합니다.
 	AbilitySystemComponent->CancelAllAbilities();
 
 	Super::EndPlay(EndPlayReason);
@@ -244,6 +242,7 @@ void AAgCharacterBase::PossessedBy(AController* NewController)
 
 void AAgCharacterBase::Landed(const FHitResult& Hit)
 {
+	// 엔진 착지 처리가 Launch를 먼저 끝내야, 착지 알림이 끝난 Launch를 건너뛰고 착지 이벤트를 보냅니다.
 	Super::Landed(Hit);
 
 	NotifyLanded();
@@ -330,7 +329,7 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 
 void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
 {
-	if (IsDead() || bEndingPlay)
+	if (IsDead())
 	{
 		return;
 	}

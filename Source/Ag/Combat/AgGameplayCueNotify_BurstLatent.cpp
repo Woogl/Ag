@@ -23,12 +23,6 @@ bool AAgGameplayCueNotify_BurstLatent::Recycle()
 	return Super::Recycle();
 }
 
-void AAgGameplayCueNotify_BurstLatent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	PostProcess->Reset();
-	Super::EndPlay(EndPlayReason);
-}
-
 bool AAgGameplayCueNotify_BurstLatent::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
 	PostProcess->Reset();

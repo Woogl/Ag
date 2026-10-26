@@ -66,11 +66,13 @@ TOptional<float> UAgAbilityTask_Transition::FindTagEndingDelay(const UAbilitySys
 	{
 		return {};
 	}
-	const UAnimMontage* Montage = Ability ? Ability->GetCurrentMontage() : nullptr;
+	const FAnimMontageInstance* Instance = Playback.IsValid() ? Playback->GetMontageInstance() : nullptr;
+	const UAnimMontage* Montage = Instance ? Instance->Montage.Get() : nullptr;
 	const int32 SectionIndex = Montage ? Montage->GetSectionIndex(Params.Section) : INDEX_NONE;
-	// 섹션 길이는 몽타주 시간이라, 재생 배율로 나눠 효과의 지속 시간과 같은 월드 시간으로 맞춥니다.
+	// 섹션 길이는 몽타주 시간이라, 재생 배율(Rate Scale × 재생 속도)로 나눠 효과의 지속 시간과 같은 월드 시간으로
+	// 맞춥니다.
 	const float SectionLength = SectionIndex == INDEX_NONE ? 0.f : Montage->GetSectionLength(SectionIndex);
-	const float PlayRate = FMath::Abs(Montage ? Montage->RateScale : 1.f);
+	const float PlayRate = Montage ? FMath::Abs(Montage->RateScale * Instance->GetPlayRate()) : 1.f;
 	return FMath::Max(Times) - (PlayRate > UE_SMALL_NUMBER ? SectionLength / PlayRate : SectionLength);
 }
 

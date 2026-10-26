@@ -8,6 +8,7 @@
 
 class AAgBossCharacter;
 class UAbilitySystemComponent;
+class UAgAbilitySystemComponent;
 class UAgPauseMenu;
 class UAgStatBar;
 class UGameplayAbility;
@@ -29,6 +30,10 @@ protected:
 	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
+	/**
+	 * 궁극기 컷신과 스테이지 결과 동안 한꺼번에 숨기는 묶음이라, 플레이어 상태·스킬 슬롯·보스 상태를 모두 이 안에
+	 * 둡니다.
+	 */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> StatusPanel;
 
@@ -98,9 +103,9 @@ private:
 
 	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop = true);
 
-	static const UGameplayAbility* FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
+	static const UGameplayAbility* FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
 
-	static bool CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
+	static bool CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
 
 	void SetSlotUsable(UWidget& SlotWidget, bool bUsable) const;
 
@@ -108,12 +113,13 @@ private:
 
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 
-	TWeakObjectPtr<UAbilitySystemComponent> PlayerASC;
+	TWeakObjectPtr<UAgAbilitySystemComponent> PlayerASC;
 
 	ESlateVisibility StatusPanelVisibility = ESlateVisibility::SelfHitTestInvisible;
 
 	int32 ShownSkillCost = INDEX_NONE;
-	int32 ShownCooldownKey = INDEX_NONE;
+	/** 표시 단위(1이면 정수 초, 0이면 0.1초)와 그 단위의 값입니다. */
+	FIntPoint ShownCooldown = FIntPoint(INDEX_NONE, INDEX_NONE);
 
 	FTimerHandle CooldownTimer;
 	FTimerHandle BossTimer;

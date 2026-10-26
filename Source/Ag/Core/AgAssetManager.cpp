@@ -1,7 +1,6 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "Core/AgAssetManager.h"
-#include "Core/AgGameplayTags.h"
 
 #include "Ag.h"
 #include "AttributeSet.h"
@@ -44,7 +43,11 @@ namespace
 	const TCHAR* const AbilitiesFile = TEXT("Abilities.json");
 	const TCHAR* const CharactersFile = TEXT("Characters.json");
 
-	/** 지금 객체를 가리키는 쪽이 그대로 새 값을 보도록 객체를 바꾸지 않고 값만 복사합니다. */
+	/**
+	 * 지금 객체를 가리키는 쪽이 그대로 새 값을 보도록 객체를 바꾸지 않고 값만 복사합니다. Transient 속성만
+	 * 복사하므로 데이터 객체의 JSON 필드는 Transient로 둡니다. 읽기는 `Class`로 만드는 엔진 객체를 위해 편집 가능한
+	 * 속성도 받습니다.
+	 */
 	void CopyJsonProperties(const UObject& From, UObject& To)
 	{
 		for (TFieldIterator<FProperty> It(To.GetClass()); It; ++It)

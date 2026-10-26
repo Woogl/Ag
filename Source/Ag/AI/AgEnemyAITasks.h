@@ -10,9 +10,10 @@
 #include "AgEnemyAITasks.generated.h"
 
 class AAgEnemyAIController;
+class UAgCharacterData;
 
 USTRUCT()
-struct FAgEnemyAITask_WaitInstanceData
+struct FAgEnemyAITask_PostPatternDelayInstanceData
 {
 	GENERATED_BODY()
 
@@ -25,12 +26,13 @@ struct FAgEnemyAITask_WaitInstanceData
 	float StrafeDirection = 1.f;
 };
 
-USTRUCT(meta = (DisplayName = "적: 패턴 후딜레이 대기", Category = "Ag|Enemy AI"))
-struct FAgEnemyAITask_Wait : public FStateTreeAITaskBase
+/** 패턴 후딜레이 동안 대상 주위를 옆으로 걷습니다. */
+USTRUCT(meta = (DisplayName = "적: 패턴 후딜레이", Category = "Ag|Enemy AI"))
+struct FAgEnemyAITask_PostPatternDelay : public FStateTreeAITaskBase
 {
 	GENERATED_BODY()
 
-	using FInstanceDataType = FAgEnemyAITask_WaitInstanceData;
+	using FInstanceDataType = FAgEnemyAITask_PostPatternDelayInstanceData;
 	virtual const UStruct* GetInstanceDataType() const override
 	{
 		return FInstanceDataType::StaticStruct();
@@ -100,7 +102,7 @@ struct FAgEnemyAITask_RunPattern : public FStateTreeAITaskBase
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
 
 private:
-	static void GatherCandidates(TConstArrayView<FName> AbilityIds, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates);
+	static void GatherCandidates(const UAgCharacterData& Data, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates);
 };
 
 USTRUCT()

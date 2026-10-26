@@ -117,7 +117,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_GuardBreak, "Effect.Damage.Result.GuardBreak", "피격 결과 가드 브레이크");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Hit, "Effect.Damage.Result.Hit", "피격 결과 일반 피격");
 
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue, "GameplayCue", "연출 큐");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateScreen, "GameplayCue.UltimateScreen", "궁극기 포스트프로세스");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PerfectDodgeScreen, "GameplayCue.PerfectDodgeScreen", "극한 회피 성공 포스트프로세스");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_CameraShake_Small, "GameplayCue.CameraShake.Small", "작은 카메라 셰이크");

@@ -5,30 +5,20 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgTargeting.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_PlayMontage.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 #include "RootMotionModifier_SkewWarp.h"
-
-namespace
-{
-	// 구간 Task는 재생이 바뀌면 끝나므로, 켜져 있는 동안 행동의 지금 몽타주 재생은 늘 이 구간의 재생입니다.
-	const FAnimMontageInstance* FindPlayingInstance(const UGameplayAbility* Ability, const AAgCharacterBase* Character)
-	{
-		const UAnimMontage* Montage = Ability ? Ability->GetCurrentMontage() : nullptr;
-		const UAnimInstance* Anim = Character ? Character->GetMesh()->GetAnimInstance() : nullptr;
-		return Montage && Anim ? Anim->GetActiveInstanceForMontage(Montage) : nullptr;
-	}
-}
 
 UAbilityTask* FAgRootMotionParams::MakeTask(const FAgTaskContext& Context) const
 {
 	UAgAbilityTask_RootMotion* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_RootMotion>(&Context.Ability);
 	Task->Params = *this;
 	Task->Window = Context.Window;
+	Task->Playback = Context.Playback;
 	return Task;
 }
 
@@ -57,7 +47,7 @@ void UAgAbilityTask_RootMotion::Activate()
 		}
 		AActor* ActionTarget = AgAbility->GetActionTarget();
 		bFacingOnly = !ActionTarget || (Window && !AgTargeting::IsInRange(*Character, *ActionTarget, TargetingRange));
-		Target = bFacingOnly ? Character->GetLockOnTarget() : ActionTarget;
+		FacingTarget = bFacingOnly ? Character->GetLockOnTarget() : ActionTarget;
 	}
 	else if (Params.Direction == EAgRootMotionDirection::MoveInput)
 	{
@@ -77,7 +67,7 @@ void UAgAbilityTask_RootMotion::Activate()
 		return;
 	}
 
-	const FAnimMontageInstance* Instance = FindPlayingInstance(Ability, Character);
+	const FAnimMontageInstance* Instance = Playback.IsValid() ? Playback->GetMontageInstance() : nullptr;
 	if (!HasGoal() || !Instance || !Instance->Montage)
 	{
 		EndTask();
@@ -91,14 +81,15 @@ void UAgAbilityTask_RootMotion::Activate()
 		return;
 	}
 	const FVector Location = Character->GetActorLocation();
+	// 바라보기만 하거나 대상과 이미 간격 안이면 지금 자리를 목표로 둬 다가가지 않습니다.
 	WarpGoal = Location;
 	if (Params.Direction == EAgRootMotionDirection::Back)
 	{
 		WarpGoal -= Character->GetActorForwardVector().GetSafeNormal2D() * Params.Distance;
 	}
-	else if (!bFacingOnly && Character->GetHorizontalDistanceTo(Target.Get()) > AgAbility->GetTargetSpacing())
+	else if (!bFacingOnly && Character->GetHorizontalDistanceTo(FacingTarget.Get()) > AgAbility->GetTargetSpacing())
 	{
-		const FVector TargetLocation = Target->GetActorLocation();
+		const FVector TargetLocation = FacingTarget->GetActorLocation();
 		WarpGoal = TargetLocation - (TargetLocation - Location).GetSafeNormal2D() * AgAbility->GetTargetSpacing();
 	}
 	const FVector Direction = GetFacingDirection();
@@ -125,8 +116,8 @@ void UAgAbilityTask_RootMotion::Activate()
 void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 {
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	const FAnimMontageInstance* Instance = FindPlayingInstance(Ability, Character);
-	if (bStopped || !Instance || !Instance->Montage)
+	const FAnimMontageInstance* Instance = Playback.IsValid() ? Playback->GetMontageInstance() : nullptr;
+	if (bStopped || !Character || !Instance || !Instance->Montage)
 	{
 		return;
 	}
@@ -136,7 +127,7 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 
 	if (Params.Direction == EAgRootMotionDirection::Target)
 	{
-		const AActor* Goal = Target.Get();
+		const AActor* Goal = FacingTarget.Get();
 		bStopped = !Goal ||
 		           (!bFacingOnly && !AgTargeting::IsInRange(*Character, *Goal, TargetingRange));
 	}
@@ -197,15 +188,15 @@ void UAgAbilityTask_RootMotion::OnDestroy(bool bInOwnerFinished)
 bool UAgAbilityTask_RootMotion::HasGoal() const
 {
 	return Params.Direction == EAgRootMotionDirection::Back ||
-	       (Params.Direction == EAgRootMotionDirection::Target ? Target.IsValid() : !MoveInputDirection.IsNearlyZero());
+	       (Params.Direction == EAgRootMotionDirection::Target ? FacingTarget.IsValid() : !MoveInputDirection.IsNearlyZero());
 }
 
 FVector UAgAbilityTask_RootMotion::GetFacingDirection() const
 {
 	const AActor* Avatar = GetAvatarActor();
-	if (Params.Direction == EAgRootMotionDirection::Target && Target.IsValid() && Avatar)
+	if (Params.Direction == EAgRootMotionDirection::Target && FacingTarget.IsValid() && Avatar)
 	{
-		return (Target->GetActorLocation() - Avatar->GetActorLocation()).GetSafeNormal2D();
+		return (FacingTarget->GetActorLocation() - Avatar->GetActorLocation()).GetSafeNormal2D();
 	}
 	return MoveInputDirection;
 }

@@ -104,7 +104,7 @@ void UAgHUDWidget::NativeConstruct()
 
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
-		if (UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
+		if (UAgAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
 		{
 			PlayerASC = ASC;
 			BindPlayer(*ASC);
@@ -238,7 +238,7 @@ void UAgHUDWidget::UpdatePlayer()
 
 void UAgHUDWidget::UpdateSkillSlots()
 {
-	const UAbilitySystemComponent* ASC = PlayerASC.Get();
+	const UAgAbilitySystemComponent* ASC = PlayerASC.Get();
 	if (!ASC)
 	{
 		return;
@@ -271,7 +271,7 @@ void UAgHUDWidget::UpdateSkillCooldown()
 	float Remaining = 0.f;
 	float Duration = 0.f;
 	FGameplayAbilitySpecHandle Handle;
-	const UAbilitySystemComponent* ASC = PlayerASC.Get();
+	const UAgAbilitySystemComponent* ASC = PlayerASC.Get();
 	if (const UGameplayAbility* Ability = ASC ? FindAbility(*ASC, AgGameplayTags::Ability_Action_Skill, Handle) : nullptr)
 	{
 		Ability->GetCooldownTimeRemainingAndDuration(Handle, ASC->AbilityActorInfo.Get(), Remaining, Duration);
@@ -290,15 +290,15 @@ void UAgHUDWidget::UpdateSkillCooldown()
 		Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
 	}
 
-	const int32 Tenths = FMath::CeilToInt(Remaining * 10.f);
-	const int32 Key = Remaining >= 1.f ? 1000 + FMath::CeilToInt(Remaining) : Tenths;
-	if (Key != ShownCooldownKey)
+	const bool bWholeSeconds = Remaining >= 1.f;
+	const FIntPoint Shown(bWholeSeconds ? 1 : 0, FMath::CeilToInt(bWholeSeconds ? Remaining : Remaining * 10.f));
+	if (Shown != ShownCooldown)
 	{
-		ShownCooldownKey = Key;
+		ShownCooldown = Shown;
 		FNumberFormattingOptions OneDecimal;
 		OneDecimal.MinimumFractionalDigits = 1;
 		OneDecimal.MaximumFractionalDigits = 1;
-		SkillCooldownText->SetText(Remaining >= 1.f ? FText::AsNumber(FMath::CeilToInt(Remaining)) : FText::AsNumber(Tenths / 10.f, &OneDecimal));
+		SkillCooldownText->SetText(bWholeSeconds ? FText::AsNumber(Shown.Y) : FText::AsNumber(Shown.Y / 10.f, &OneDecimal));
 	}
 	CooldownTimer = TimerManager.SetTimerForNextTick(this, &ThisClass::UpdateSkillCooldown);
 }
@@ -346,10 +346,9 @@ void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& A
 	Bar.SetValue(ASC.GetNumericAttribute(Value), ASC.GetNumericAttribute(MaxValue), bShowDrop);
 }
 
-const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
+const UGameplayAbility* UAgHUDWidget::FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
 {
-	const UAgAbilitySystemComponent* AgASC = Cast<UAgAbilitySystemComponent>(&ASC);
-	const FGameplayAbilitySpec* Spec = AgASC ? AgASC->FindSpecByTag(AbilityTag) : nullptr;
+	const FGameplayAbilitySpec* Spec = ASC.FindSpecByTag(AbilityTag);
 	if (!Spec || !Spec->GetPrimaryInstance())
 	{
 		return nullptr;
@@ -358,7 +357,7 @@ const UGameplayAbility* UAgHUDWidget::FindAbility(const UAbilitySystemComponent&
 	return Spec->GetPrimaryInstance();
 }
 
-bool UAgHUDWidget::CanPayCost(const UAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag)
+bool UAgHUDWidget::CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag)
 {
 	FGameplayAbilitySpecHandle Handle;
 	const UGameplayAbility* Ability = FindAbility(ASC, AbilityTag, Handle);

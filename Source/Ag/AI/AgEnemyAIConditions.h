@@ -103,6 +103,7 @@ struct FAgEnemyAICondition_ResponseReadyInstanceData
 	FName Pattern;
 };
 
+/** 평가할 때마다 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. */
 USTRUCT(meta = (DisplayName = "적: 반응 패턴 발동 조건", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_ResponseReady : public FStateTreeAIConditionBase
 {

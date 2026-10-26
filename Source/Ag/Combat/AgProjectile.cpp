@@ -28,8 +28,9 @@ AAgProjectile::AAgProjectile()
 	Mesh->SetGenerateOverlapEvents(false);
 }
 
-void AAgProjectile::Launch(const FGameplayEffectSpecHandle& InDamageSpec, const FVector& Direction, const FAgProjectileParams& InParams)
+void AAgProjectile::Launch(const FAgDamage& InDamage, const FGameplayEffectSpecHandle& InDamageSpec, const FVector& Direction, const FAgProjectileParams& InParams)
 {
+	Damage = InDamage;
 	DamageSpec = InDamageSpec;
 	Params = InParams;
 	FlightDirection = Direction.GetSafeNormal();
@@ -45,29 +46,14 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	{
 		return;
 	}
-	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(Defender.GetAbilitySystemComponent());
+	UAgAbilitySystemComponent* ASC = Defender.GetAbilitySystemComponent();
 	const FGameplayEffectSpecHandle ReflectedSpec = ASC->MakeEffectSpec(EAgEffect::Damage, DamageSpec.Data->GetLevel(), ASC->MakeEffectContext());
 	if (!ReflectedSpec.IsValid())
 	{
 		return;
 	}
-	FAgDamage Damage;
-	Damage.HPMultiplier = DamageSpec.Data->GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier);
-	const FGameplayTagContainer& AttackTags = DamageSpec.Data->GetDynamicAssetTags();
-	Damage.bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
-	Damage.bFinisher = AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Finisher);
-	if (AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockUp))
-	{
-		Damage.HitReaction = EAgHitReaction::KnockUp;
-	}
-	else if (AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockDown))
-	{
-		Damage.HitReaction = EAgHitReaction::KnockDown;
-	}
-	else if (AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
-	{
-		Damage.HitReaction = EAgHitReaction::Flinch;
-	}
+	// 반사탄 적중의 PP 감소는 Parried 어빌리티가 맡으므로 반사한 피해에는 PP 배율을 싣지 않습니다.
+	Damage.PPMultiplier = 0.f;
 	Damage.AddToSpec(*ReflectedSpec.Data);
 	DamageSpec = ReflectedSpec;
 	Reflector = &Defender;
@@ -80,6 +66,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 
 bool AAgProjectile::IsReflected() const
 {
+	// 반사한 캐릭터가 사라져도 반사됨으로 남아야, 원래 발사자의 피해로 돌아가지 않고 Tick에서 사라집니다.
 	return !Reflector.IsExplicitlyNull();
 }
 

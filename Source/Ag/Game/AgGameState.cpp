@@ -13,11 +13,13 @@ void AAgGameState::SetBoss(AAgBossCharacter* InBoss)
 	}
 }
 
-void AAgGameState::SetStageResult(EAgStageResult InStageResult)
+bool AAgGameState::DecideStageResult(EAgStageResult InStageResult)
 {
-	if (StageResult != InStageResult)
+	if (StageResult != EAgStageResult::None || InStageResult == EAgStageResult::None)
 	{
-		StageResult = InStageResult;
-		OnStageResultChanged.Broadcast();
+		return false;
 	}
+	StageResult = InStageResult;
+	OnStageResultChanged.Broadcast();
+	return true;
 }

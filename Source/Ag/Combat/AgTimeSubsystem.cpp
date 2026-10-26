@@ -36,16 +36,15 @@ void UAgTimeSubsystem::StartSlowMotion(float Speed, float RealDuration)
 	ApplySlowMotion(Speed, RealDuration);
 }
 
-bool UAgTimeSubsystem::StartTimeStop(UObject& Requester, AAgCharacterBase& Exempt)
+void UAgTimeSubsystem::StartTimeStop(AAgCharacterBase& Requester)
 {
 	if (bTimeStopped)
 	{
 		UE_LOG(LogAg, Error, TEXT("Time stop is already owned by %s; rejected %s"), *GetNameSafe(TimeStopRequester.Get()), *Requester.GetName());
-		return false;
+		return;
 	}
-	TimeStopRequester = &Requester;
-	// 정지 중에는 히트스톱 타이머도 멈추므로, 계속 움직일 캐릭터의 기존 히트스톱을 먼저 끝냅니다.
-	Exempt.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_Hitstop));
+	// 정지 중에는 히트스톱 타이머도 멈추므로, 계속 움직일 요청자의 기존 히트스톱을 먼저 끝냅니다.
+	Requester.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_Hitstop));
 	// 시간 정지가 게임 전체 시간 배율을 대신 쥐므로, 도는 슬로우모션은 여기서 끝납니다. 지난 시간 정지에서
 	// 기다리던 슬로우모션도 이 시간 정지의 끝에 남지 않게 지웁니다.
 	GetWorld()->GetTimerManager().ClearTimer(SlowMotionTimer);
@@ -53,24 +52,19 @@ bool UAgTimeSubsystem::StartTimeStop(UObject& Requester, AAgCharacterBase& Exemp
 	PendingSlowMotionDuration = 0.f;
 	GetWorld()->GetWorldSettings()->SetTimeDilation(TimeStopDilation);
 	bTimeStopped = true;
-	TimeStopExempt = &Exempt;
-	Exempt.SetTimeCompensation(GetTimeStopCompensation());
-	UE_LOG(LogAg, Verbose, TEXT("Time stop starts: %s keeps moving"), *Exempt.GetName());
-	return true;
+	TimeStopRequester = &Requester;
+	Requester.SetTimeCompensation(GetTimeStopCompensation());
+	UE_LOG(LogAg, Verbose, TEXT("Time stop starts: %s keeps moving"), *Requester.GetName());
 }
 
-void UAgTimeSubsystem::EndTimeStop(UObject& Requester)
+void UAgTimeSubsystem::EndTimeStop(AAgCharacterBase& Requester)
 {
 	if (!bTimeStopped || TimeStopRequester != &Requester)
 	{
 		return;
 	}
 	bTimeStopped = false;
-	if (AAgCharacterBase* Exempt = TimeStopExempt.Get())
-	{
-		Exempt->SetTimeCompensation(1.f);
-	}
-	TimeStopExempt.Reset();
+	Requester.SetTimeCompensation(1.f);
 	TimeStopRequester.Reset();
 	UE_LOG(LogAg, Verbose, TEXT("Time stop ends"));
 

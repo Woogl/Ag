@@ -18,6 +18,7 @@ class UAgPostProcessComponent : public UActorComponent
 public:
 	UAgPostProcessComponent();
 	bool Start(AActor* Target, float Duration = 0.f);
+	/** 페이드 아웃을 시작했거나 이미 페이드 중이면 true를 돌려주며, 그때는 페이드가 끝난 뒤 OnFinished가 옵니다. */
 	bool Stop();
 	void Reset();
 	bool IsPlaying() const;

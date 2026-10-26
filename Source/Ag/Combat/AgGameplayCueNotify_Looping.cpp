@@ -29,6 +29,7 @@ bool AAgGameplayCueNotify_Looping::Recycle()
 {
 	PostProcess->Reset();
 	ClearRecurringMeshes();
+	// 페이드하는 동안 꺼 둔 즉시 회수를 되돌립니다.
 	bAutoDestroyOnRemove = GetClass()->GetDefaultObject<AAgGameplayCueNotify_Looping>()->bAutoDestroyOnRemove;
 	return Super::Recycle();
 }
@@ -37,13 +38,6 @@ bool AAgGameplayCueNotify_Looping::GameplayCuePendingRemove()
 {
 	// 페이드 중 다시 적용되면 새 큐가 맡도록, 게임 시간 종료 타이머 없이도 회수 예정임을 알립니다.
 	return PostProcess->IsFadingOut() || Super::GameplayCuePendingRemove();
-}
-
-void AAgGameplayCueNotify_Looping::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	PostProcess->Reset();
-	ClearRecurringMeshes();
-	Super::EndPlay(EndPlayReason);
 }
 
 void AAgGameplayCueNotify_Looping::Tick(float DeltaSeconds)
@@ -90,7 +84,8 @@ bool AAgGameplayCueNotify_Looping::OnExecute_Implementation(AActor* Target, cons
 
 bool AAgGameplayCueNotify_Looping::OnRemove_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
-	StopTargetTimeDilation();
+	// 꺼질 때 효과는 대상의 시간 배율을 따르지 않으므로 대상을 먼저 놓습니다.
+	ReleaseCueTarget();
 	if (PostProcess->IsPlaying())
 	{
 		// 엔진의 즉시 회수는 페이드가 끝난 뒤 컴포넌트의 완료 콜백이 대신합니다.
@@ -195,7 +190,7 @@ void AAgGameplayCueNotify_Looping::ApplyTargetTimeDilation(const FGameplayCueNot
 	}
 }
 
-void AAgGameplayCueNotify_Looping::StopTargetTimeDilation()
+void AAgGameplayCueNotify_Looping::ReleaseCueTarget()
 {
 	SetActorTickEnabled(false);
 	if (bUseTargetTimeDilation)

@@ -62,9 +62,15 @@ void AAgGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 엔진은 플레이어 폰을 월드 BeginPlay 전에 스폰하므로, 이 순회가 플레이어도 등록합니다.
+	AAgGameState* StageState = GetGameState<AAgGameState>();
 	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
 	{
-		RegisterCombatant(*It);
+		It->OnDied.AddUObject(this, &ThisClass::HandleCombatantDied);
+		if (AAgBossCharacter* BossCharacter = Cast<AAgBossCharacter>(*It); BossCharacter && StageState)
+		{
+			StageState->SetBoss(BossCharacter);
+		}
 	}
 }
 
@@ -78,31 +84,11 @@ void AAgGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 		{
 			PlayerController->PushScreen(EAgUILayer::Menu, TitleScreenClass);
 		}
+		// HUD는 만들어질 때 폰의 ASC를 한 번 구독하므로, 폰을 스폰하고 빙의시키는 Super 뒤에 엽니다.
 		if (HUDWidgetClass)
 		{
 			PlayerController->PushScreen(EAgUILayer::HUD, HUDWidgetClass);
 		}
-	}
-
-	if (AAgCharacterBase* PlayerCharacter = NewPlayer ? Cast<AAgCharacterBase>(NewPlayer->GetPawn()) : nullptr)
-	{
-		RegisterCombatant(PlayerCharacter);
-	}
-}
-
-void AAgGameMode::RegisterCombatant(AAgCharacterBase* Combatant)
-{
-	if (Combatant && !RegisteredCombatants.Contains(Combatant))
-	{
-		RegisteredCombatants.Add(Combatant);
-		Combatant->OnDied.AddUObject(this, &ThisClass::HandleCombatantDied);
-	}
-
-	AAgBossCharacter* BossCharacter = Cast<AAgBossCharacter>(Combatant);
-	AAgGameState* StageState = GetGameState<AAgGameState>();
-	if (BossCharacter && StageState)
-	{
-		StageState->SetBoss(BossCharacter);
 	}
 }
 
@@ -115,11 +101,10 @@ void AAgGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 	}
 
 	AAgGameState* StageState = GetGameState<AAgGameState>();
-	if (!StageState || StageState->GetStageResult() != EAgStageResult::None)
+	if (!StageState || !StageState->DecideStageResult(bBossDied ? EAgStageResult::Clear : EAgStageResult::GameOver))
 	{
 		return;
 	}
-	StageState->SetStageResult(bBossDied ? EAgStageResult::Clear : EAgStageResult::GameOver);
 
 	if (StageResultPresentationTime > 0.f)
 	{

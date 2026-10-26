@@ -19,6 +19,10 @@ class UAgAnimInstance : public UAnimInstance
 public:
 	bool IsTurningInPlace() const;
 
+	/**
+	 * 이번 프레임에 액터에 적용할 회전량을 꺼냅니다. 모션이 쌓은 회전량에 최대 각도를 넘은 차이를 더하고, 넘었으면 남은
+	 * 모션을 빠르게 재생하도록 표시합니다. IsTurningInPlace()가 참일 때만 부릅니다.
+	 */
 	float ConsumeTurnYaw();
 
 protected:
@@ -85,6 +89,7 @@ private:
 	void AdvanceTurn(float DeltaSeconds);
 	bool CanTurn() const;
 	const TArray<TObjectPtr<UAnimSequence>>& GetTurnAnimations() const;
+	/** 컨트롤러를 읽으므로 CanTurn()이 참일 때만 부릅니다. */
 	float GetTurnOffset() const;
 
 	UPROPERTY(Transient)

@@ -61,6 +61,7 @@ struct FAgTimelineEntry
 	UPROPERTY()
 	TObjectPtr<UAbilityTask> Task;
 
+	/** Params의 Start·End(섹션 기준)와 달리 몽타주 기준 시각입니다. */
 	float Start = 0.f;
 	float End = 0.f;
 	bool bActive = false;
@@ -82,6 +83,9 @@ public:
 
 	void JumpToSection(FName Section);
 	void ReplaySection(FName Section, float BlendTime);
+
+	/** 재생이 바뀌면 구간 Task가 끝나므로, 구간 Task가 켜져 있는 동안은 그 구간의 재생입니다. */
+	const FAnimMontageInstance* GetMontageInstance() const;
 
 private:
 	enum class EAgTimelineMode : uint8
@@ -105,7 +109,7 @@ private:
 	void BeginTimeline(const FAnimMontageInstance& Instance);
 	void EvaluateTimeline(float NewPosition, EAgTimelineMode Mode);
 	void EndTimeline();
-	void StopTimeline();
+	void ResetTimeline();
 	void StartTimelineWindow(int32 Entry);
 	void EndTimelineWindow(int32 Entry);
 
@@ -115,6 +119,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAnimMontage> Montage;
 
+	/**
+	 * 지금 재생의 ID로, 콜백이 이 재생의 것인지 가리고 끝날 때 멈출 재생을 찾습니다. INDEX_NONE이면 전환 요청을
+	 * 받지 않으므로, 끝나는 구간이 요청하는 전환을 거르도록 구간을 끝내기 전에 비웁니다.
+	 */
 	int32 MontageInstanceId = INDEX_NONE;
 
 	UPROPERTY()

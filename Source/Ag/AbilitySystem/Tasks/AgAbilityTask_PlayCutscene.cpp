@@ -85,6 +85,7 @@ void UAgAbilityTask_PlayCutscene::OnDestroy(bool bInOwnerFinished)
 	}
 	if (bTagAdded && AbilitySystemComponent.IsValid())
 	{
+		// 태그를 떼면 Tag Transition이 섹션을 옮기며 이 Task를 다시 끝내므로 먼저 내립니다.
 		bTagAdded = false;
 		AbilitySystemComponent->RemoveLooseGameplayTag(AgGameplayTags::State_Cutscene);
 	}
