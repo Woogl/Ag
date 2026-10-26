@@ -19,14 +19,6 @@ void UAgTitleScreen::NativeOnInitialized()
 	Super::NativeOnInitialized();
 
 	ControlsButton->OnClicked().AddUObject(this, &ThisClass::OpenControls);
-	for (UAgButton* Button : {StartButton.Get(), ControlsButton.Get(), QuitButton.Get()})
-	{
-		Button->SetAllNavigationRules(EUINavigationRule::Stop, NAME_None);
-	}
-	StartButton->SetNavigationRuleExplicit(EUINavigation::Down, ControlsButton);
-	ControlsButton->SetNavigationRuleExplicit(EUINavigation::Up, StartButton);
-	ControlsButton->SetNavigationRuleExplicit(EUINavigation::Down, QuitButton);
-	QuitButton->SetNavigationRuleExplicit(EUINavigation::Up, ControlsButton);
 
 	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
 	{

@@ -7,7 +7,7 @@
 | 항목 | 결정 | 이유 |
 | - | - | - |
 | ASC 위치 | 캐릭터에 둡니다. | 싱글플레이라 PlayerState에 둘 이유가 없습니다. |
-| 게임 모드와 게임 스테이트 | 게임 모드 클래스는 `AAgGameMode` 하나이고, 타이틀(`BP_FrontEndGameMode`)과 스테이지(`BP_StageGameMode`)는 BP 기본값(시작 화면, 스테이지 맵, 폰)으로만 나뉩니다. 스테이지의 보스는 최대 한 명이며, 게임 모드가 등록한 보스를 `AAgGameState`가 들고 HUD는 게임 스테이트를 구독합니다. 플레이어 컨트롤러는 화면을 열고 닫는 UI 명령만 전달합니다. | 게임 모드는 규칙, 게임 스테이트는 UI도 읽는 상태라는 엔진의 역할 구분을 따릅니다. 게임 스테이트는 플레이어 로그인보다 먼저 생기므로, HUD는 로그인과 `BeginPlay`의 순서와 관계없이 현재 보스를 읽고 이후 변경을 구독합니다. |
+| 게임 모드와 게임 스테이트 | 게임 모드 클래스는 `AAgGameMode` 하나이고, 타이틀(`BP_FrontEndGameMode`)과 스테이지(`BP_StageGameMode`)는 BP 기본값(시작 화면, 스테이지 맵, 폰)으로만 나뉩니다. 스테이지의 보스는 최대 한 명이며, 게임 모드가 등록한 보스와 정한 스테이지 결과를 `AAgGameState`가 들고, HUD와 전투 결과 화면은 게임 스테이트를 읽습니다. 플레이어 컨트롤러는 레이어에 화면을 여는 UI 명령만 전달합니다. | 게임 모드는 규칙, 게임 스테이트는 UI도 읽는 상태라는 엔진의 역할 구분을 따릅니다. 게임 스테이트는 플레이어 로그인보다 먼저 생기므로, HUD는 로그인과 `BeginPlay`의 순서와 관계없이 현재 보스를 읽고 이후 변경을 구독합니다. |
 | 진영과 대상 판정 | `AAgCharacterBase`의 `EAgTeam`과 `GetTeamAttitudeTowards`가 진영 태도를 정하고, AI 컨트롤러는 빙의한 캐릭터의 태도를 전달합니다. 적은 중립을 `Neutral`로 보며 대상 선택과 지각은 `Hostile`만 받습니다. 적중은 `Friendly`가 아닌 상대에게 적용하고, 범위 적중용 `Hit` 프리셋은 `bIncludeNeutral`로 중립을 포함합니다. | 공격 대상 선택과 공격 판정에 휘말리는 대상을 구분하면서 진영 태도는 한곳에서 정합니다. |
 | 어트리뷰트 | 세트 하나에 기획서 스탯을 기획서 이름 그대로 둡니다. HP, MaxHP, SP, MaxSP, MP, MaxMP, UP, MaxUP, PP, MaxPP, ATK, DEF, MOV. 보스가 쓰지 않는 SP·MP·UP는 0입니다. 기본값이 바뀌기 전에 범위(0 ~ 최대값)로 고정합니다. PP를 더하기 모디파이어로 줄일 때는 `PreGameplayEffectExecute`에서 감소량의 절댓값을 반올림한 뒤 음수로 적용합니다. 반올림 규칙은 [전투 시스템](<../Design/System/전투 시스템.md>) '대미지'를 따릅니다. | 기획서, 데이터 위치표, 코드의 이름이 같아 대조하기 쉽습니다. 최대값에서 리젠이 더해져도 기본값이 넘치지 않아야 다음 감소가 바로 보입니다. PP 감소량을 적용 직전에 반올림하면 패리도 같은 규칙을 따르고, 리젠으로 생긴 남은 PP의 소수부는 보존됩니다. |
 | 어빌리티 목록 | 캐릭터 데이터(`Characters.json`)의 `Abilities`에 적힌 어빌리티 ID마다 단일 `UAgGameplayAbility`를 독립 스펙으로 부여합니다. 정의는 `Abilities.json`에 있고, 어빌리티 태그와 트리거는 스펙에 넣습니다. | 같은 클래스라도 조건·이벤트·재발동·쿨다운·GE 출처가 어빌리티마다 구분됩니다. |
@@ -89,8 +89,8 @@ classDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 전투원 등록과 보스 기록, 승패와 전투 결과 화면, 맵 이동(타이틀, 스테이지, 다시 시작, 종료) |
-| `AAgGameState` | `AGameStateBase` | 스테이지의 보스와 보스 변경 알림(`OnBossChanged`) |
+| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 전투원 등록과 보스 기록, 승패 판정과 전투 결과 화면 열기, 맵 이동(타이틀, 스테이지, 다시 시작, 종료) |
+| `AAgGameState` | `AGameStateBase` | 스테이지의 보스와 스테이지 결과(`EAgStageResult`), 각각의 변경 알림(`OnBossChanged`, `OnStageResultChanged`) |
 
 ### 피격 상태와 AI 조건
 
@@ -130,9 +130,9 @@ sequenceDiagram
     E->>GM: 플레이어 참가(PostLogin)
     GM->>P: 스폰(데이터 연결),<br>빙의
     P->>P: 무기 컴포넌트 찾기<br>PossessedBy: 입력 매핑,<br>ASC 액터 정보 갱신<br>SetupPlayerInputComponent
-    GM->>H: ShowHUD
+    GM->>H: HUD 레이어에 열기
     H->>P: 스탯·컷신 태그·어빌리티 부여와 커밋 구독
-    H->>H: 게임 스테이트의 보스 변경 구독
+    H->>H: 게임 스테이트의 보스·스테이지 결과 변경 구독
     E->>B: BeginPlay
     E->>P: BeginPlay
     Note over AI: 시야로 플레이어를 알아차리면 전투 진입

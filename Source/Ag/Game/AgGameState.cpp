@@ -12,3 +12,12 @@ void AAgGameState::SetBoss(AAgBossCharacter* InBoss)
 		OnBossChanged.Broadcast();
 	}
 }
+
+void AAgGameState::SetStageResult(EAgStageResult InStageResult)
+{
+	if (StageResult != InStageResult)
+	{
+		StageResult = InStageResult;
+		OnStageResultChanged.Broadcast();
+	}
+}

@@ -19,8 +19,6 @@ class AAgGameMode : public AGameModeBase
 public:
 	AAgGameMode();
 
-	void RegisterCombatant(AAgCharacterBase* Combatant);
-
 	void OpenFrontEnd();
 	void OpenStage();
 	void RestartStage();
@@ -46,11 +44,10 @@ protected:
 	float StageResultPresentationTime = 4.f;
 
 private:
+	void RegisterCombatant(AAgCharacterBase* Combatant);
 	void HandleCombatantDied(AAgCharacterBase* DeadCharacter);
 	void ShowResult();
 
-	bool bResultDecided = false;
-	bool bStageCleared = false;
 	FTimerHandle ResultTimer;
 	TSet<TWeakObjectPtr<AAgCharacterBase>> RegisteredCombatants;
 };

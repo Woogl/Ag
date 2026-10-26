@@ -15,9 +15,6 @@ class UAgBattleResultScreen : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 
-public:
-	void SetResult(bool bStageCleared);
-
 protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;

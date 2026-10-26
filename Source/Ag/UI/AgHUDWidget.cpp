@@ -74,12 +74,6 @@ namespace
 	}
 }
 
-void UAgHUDWidget::HideStatus()
-{
-	bStatusHidden = true;
-	UpdateStatusPanel();
-}
-
 void UAgHUDWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
@@ -129,6 +123,7 @@ void UAgHUDWidget::NativeConstruct()
 	if (AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>())
 	{
 		StageState->OnBossChanged.AddUObject(this, &ThisClass::HandleBossChanged);
+		StageState->OnStageResultChanged.AddUObject(this, &ThisClass::UpdateStatusPanel);
 	}
 	HandleBossChanged();
 
@@ -154,6 +149,7 @@ void UAgHUDWidget::NativeDestruct()
 		if (AAgGameState* StageState = World->GetGameState<AAgGameState>())
 		{
 			StageState->OnBossChanged.RemoveAll(this);
+			StageState->OnStageResultChanged.RemoveAll(this);
 		}
 		World->GetTimerManager().ClearTimer(CooldownTimer);
 		World->GetTimerManager().ClearTimer(BossTimer);
@@ -197,8 +193,11 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 	{
 		ASC.GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, &ThisClass::HandlePlayerAttributeChanged);
 	}
-	ASC.RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
-		.AddWeakLambda(this, [this](const FGameplayTag, int32) { UpdateStatusPanel(); });
+	for (const FGameplayTag& Tag : PlayerTags())
+	{
+		ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
+			.AddWeakLambda(this, [this](const FGameplayTag, int32) { UpdateStatusPanel(); });
+	}
 	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 부여될 때 스킬 슬롯을 다시 그립니다.
 	ASC.AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&) { UpdateSkillSlots(); });
 	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*) { UpdateSkillCooldown(); });
@@ -220,8 +219,10 @@ void UAgHUDWidget::BindBoss(UAbilitySystemComponent& ASC)
 void UAgHUDWidget::UpdateStatusPanel()
 {
 	const UAbilitySystemComponent* ASC = PlayerASC.Get();
+	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
 	const bool bCutscene = ASC && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
-	StatusPanel->SetVisibility(bStatusHidden || bCutscene ? ESlateVisibility::Collapsed : StatusPanelVisibility);
+	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
+	StatusPanel->SetVisibility(bCutscene || bStageEnded ? ESlateVisibility::Collapsed : StatusPanelVisibility);
 }
 
 void UAgHUDWidget::UpdatePlayer()

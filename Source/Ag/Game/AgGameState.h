@@ -8,6 +8,13 @@
 
 class AAgBossCharacter;
 
+enum class EAgStageResult : uint8
+{
+	None,
+	Clear,
+	GameOver
+};
+
 UCLASS()
 class AAgGameState : public AGameStateBase
 {
@@ -21,8 +28,18 @@ public:
 
 	void SetBoss(AAgBossCharacter* InBoss);
 
+	EAgStageResult GetStageResult() const
+	{
+		return StageResult;
+	}
+
+	void SetStageResult(EAgStageResult InStageResult);
+
 	FSimpleMulticastDelegate OnBossChanged;
+	FSimpleMulticastDelegate OnStageResultChanged;
 
 private:
 	TWeakObjectPtr<AAgBossCharacter> Boss;
+
+	EAgStageResult StageResult = EAgStageResult::None;
 };

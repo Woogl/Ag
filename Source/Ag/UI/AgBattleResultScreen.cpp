@@ -5,12 +5,8 @@
 #include "Animation/WidgetAnimation.h"
 #include "CommonTextBlock.h"
 #include "Game/AgGameMode.h"
+#include "Game/AgGameState.h"
 #include "UI/AgButton.h"
-
-void UAgBattleResultScreen::SetResult(bool bStageCleared)
-{
-	TitleText->SetText(bStageCleared ? StageClearTitle : GameOverTitle);
-}
 
 void UAgBattleResultScreen::NativeOnInitialized()
 {
@@ -27,6 +23,10 @@ void UAgBattleResultScreen::NativeOnInitialized()
 void UAgBattleResultScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
+
+	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
+	const bool bStageCleared = StageState && StageState->GetStageResult() == EAgStageResult::Clear;
+	TitleText->SetText(bStageCleared ? StageClearTitle : GameOverTitle);
 
 	// 버튼마다 꺼야 포커스를 받은 버튼도 실행 키(Enter)를 받지 않습니다.
 	// 버튼을 담은 패널만 끄면 마우스만 막힙니다.

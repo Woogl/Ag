@@ -6,8 +6,6 @@
 #include "CommonActivatableWidget.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Game/AgCheatManager.h"
-#include "UI/AgBattleResultScreen.h"
-#include "UI/AgHUDWidget.h"
 #include "UI/AgNavigationConfig.h"
 #include "UI/AgUILayout.h"
 
@@ -20,6 +18,7 @@ void AAgPlayerController::ReceivedPlayer()
 {
 	Super::ReceivedPlayer();
 
+	// 에디터 위젯은 슬레이트가 따로 둔 에디터용 설정을 쓰므로, PIE가 끝나도 되돌릴 필요가 없습니다.
 	if (FSlateApplication::IsInitialized())
 	{
 		FSlateApplication::Get().SetNavigationConfig(MakeShared<FAgNavigationConfig>());
@@ -44,25 +43,4 @@ UCommonActivatableWidget* AAgPlayerController::PushScreen(EAgUILayer Layer, TSub
 		return nullptr;
 	}
 	return UILayout ? UILayout->PushScreen(Layer, ScreenClass) : nullptr;
-}
-
-void AAgPlayerController::ShowHUD(TSubclassOf<UAgHUDWidget> HUDClass)
-{
-	HUDWidget = Cast<UAgHUDWidget>(PushScreen(EAgUILayer::HUD, HUDClass));
-}
-
-void AAgPlayerController::HideHUD()
-{
-	if (HUDWidget)
-	{
-		HUDWidget->HideStatus();
-	}
-}
-
-void AAgPlayerController::ShowResult(TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass, bool bStageCleared)
-{
-	if (UAgBattleResultScreen* BattleResultScreen = Cast<UAgBattleResultScreen>(PushScreen(EAgUILayer::Menu, BattleResultScreenClass)))
-	{
-		BattleResultScreen->SetResult(bStageCleared);
-	}
 }

@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
+#include "UI/AgBattleResultScreen.h"
 #include "UI/AgHUDWidget.h"
 #include "UI/AgTitleScreen.h"
 #include "UI/AgUILayout.h"
@@ -21,22 +22,6 @@ AAgGameMode::AAgGameMode()
 {
 	PlayerControllerClass = AAgPlayerController::StaticClass();
 	GameStateClass = AAgGameState::StaticClass();
-}
-
-void AAgGameMode::RegisterCombatant(AAgCharacterBase* Combatant)
-{
-	if (Combatant && !RegisteredCombatants.Contains(Combatant))
-	{
-		RegisteredCombatants.Add(Combatant);
-		Combatant->OnDied.AddUObject(this, &ThisClass::HandleCombatantDied);
-	}
-
-	AAgBossCharacter* BossCharacter = Cast<AAgBossCharacter>(Combatant);
-	AAgGameState* StageState = GetGameState<AAgGameState>();
-	if (BossCharacter && StageState)
-	{
-		StageState->SetBoss(BossCharacter);
-	}
 }
 
 void AAgGameMode::OpenFrontEnd()
@@ -95,13 +80,29 @@ void AAgGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 		}
 		if (HUDWidgetClass)
 		{
-			PlayerController->ShowHUD(HUDWidgetClass);
+			PlayerController->PushScreen(EAgUILayer::HUD, HUDWidgetClass);
 		}
 	}
 
 	if (AAgCharacterBase* PlayerCharacter = NewPlayer ? Cast<AAgCharacterBase>(NewPlayer->GetPawn()) : nullptr)
 	{
 		RegisterCombatant(PlayerCharacter);
+	}
+}
+
+void AAgGameMode::RegisterCombatant(AAgCharacterBase* Combatant)
+{
+	if (Combatant && !RegisteredCombatants.Contains(Combatant))
+	{
+		RegisteredCombatants.Add(Combatant);
+		Combatant->OnDied.AddUObject(this, &ThisClass::HandleCombatantDied);
+	}
+
+	AAgBossCharacter* BossCharacter = Cast<AAgBossCharacter>(Combatant);
+	AAgGameState* StageState = GetGameState<AAgGameState>();
+	if (BossCharacter && StageState)
+	{
+		StageState->SetBoss(BossCharacter);
 	}
 }
 
@@ -113,17 +114,12 @@ void AAgGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 		return;
 	}
 
-	if (AAgPlayerController* PlayerController = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
-	{
-		PlayerController->HideHUD();
-	}
-
-	if (bResultDecided)
+	AAgGameState* StageState = GetGameState<AAgGameState>();
+	if (!StageState || StageState->GetStageResult() != EAgStageResult::None)
 	{
 		return;
 	}
-	bResultDecided = true;
-	bStageCleared = bBossDied;
+	StageState->SetStageResult(bBossDied ? EAgStageResult::Clear : EAgStageResult::GameOver);
 
 	if (StageResultPresentationTime > 0.f)
 	{
@@ -139,6 +135,6 @@ void AAgGameMode::ShowResult()
 {
 	if (AAgPlayerController* PlayerController = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
 	{
-		PlayerController->ShowResult(BattleResultScreenClass, bStageCleared);
+		PlayerController->PushScreen(EAgUILayer::Menu, BattleResultScreenClass);
 	}
 }

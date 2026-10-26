@@ -23,9 +23,6 @@ class UAgHUDWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 
-public:
-	void HideStatus();
-
 protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeConstruct() override;
@@ -112,8 +109,6 @@ private:
 	TWeakObjectPtr<AAgBossCharacter> Boss;
 
 	TWeakObjectPtr<UAbilitySystemComponent> PlayerASC;
-
-	bool bStatusHidden = false;
 
 	ESlateVisibility StatusPanelVisibility = ESlateVisibility::SelfHitTestInvisible;
 

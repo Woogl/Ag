@@ -7,8 +7,6 @@
 #include "AgPlayerController.generated.h"
 
 class UCommonActivatableWidget;
-class UAgBattleResultScreen;
-class UAgHUDWidget;
 class UAgUILayout;
 enum class EAgUILayer : uint8;
 
@@ -24,11 +22,6 @@ public:
 
 	UCommonActivatableWidget* PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
-	void ShowHUD(TSubclassOf<UAgHUDWidget> HUDClass);
-	void HideHUD();
-
-	void ShowResult(TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass, bool bStageCleared);
-
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgUILayout> UILayoutClass;
@@ -36,7 +29,4 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<UAgUILayout> UILayout;
-
-	UPROPERTY()
-	TObjectPtr<UAgHUDWidget> HUDWidget;
 };
