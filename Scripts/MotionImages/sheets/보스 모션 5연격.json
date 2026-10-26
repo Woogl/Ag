@@ -5,76 +5,48 @@
     "play_rate": 0.8,
     "segments": [
       {
-        "clip": "Halberd/Attack_Dodge",
-        "from": 0.0,
-        "to": 0.1,
-        "rate": 0.3261
-      },
-      {
-        "clip": "Halberd/Attack_Dodge",
-        "from": 0.1,
-        "to": 0.5
-      },
-      {
-        "clip": "Halberd/Attack_Dodge",
-        "from": 0.5,
-        "to": 0.65,
-        "rate": 0.6522
-      },
-      {
-        "clip": "Halberd/Attack_Dodge_to_Combo1",
-        "from": 0.0,
-        "to": 0.18,
-        "rate": 0.6207
-      },
-      {
-        "clip": "Halberd/Attack_Dodge_to_Combo1",
-        "from": 0.18,
-        "to": 0.27
-      },
-      {
         "clip": "Halberd/Attack_Combo2",
         "from": 0.0,
-        "to": 0.47,
-        "rate": 1.4536
-      },
-      {
-        "clip": "Halberd/Attack_Combo2",
-        "from": 0.47,
-        "to": 0.8
-      },
-      {
-        "clip": "Halberd/Attack_Combo2",
-        "from": 0.8,
-        "to": 0.88,
-        "rate": 0.5
+        "to": 0.8833
       },
       {
         "clip": "Halberd/Attack_Combo3",
         "from": 0.0,
-        "to": 0.27,
-        "rate": 0.7714
+        "to": 0.4333
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.5833,
+        "to": 0.8833
       },
       {
         "clip": "Halberd/Attack_Combo3",
-        "from": 0.27,
-        "to": 0.53
+        "from": 0.0,
+        "to": 0.4333
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.5833,
+        "to": 0.8833
       },
       {
         "clip": "Halberd/Attack_Combo3",
-        "from": 0.53,
-        "to": 0.63,
-        "rate": 0.4839
+        "from": 0.0,
+        "to": 0.4333
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.5833,
+        "to": 0.8833
+      },
+      {
+        "clip": "Halberd/Attack_Combo3",
+        "from": 0.0,
+        "to": 0.6333
       },
       {
         "clip": "Halberd/Attack_Combo4",
         "from": 0.0,
-        "to": 0.2,
-        "rate": 0.8
-      },
-      {
-        "clip": "Halberd/Attack_Combo4",
-        "from": 0.2,
         "to": 0.9833
       }
     ]
