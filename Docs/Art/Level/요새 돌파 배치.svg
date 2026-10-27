@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="420" viewBox="0 0 1220 420" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <marker id="arrowFacing" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#FFFFFF"/>
+    </marker>
+  </defs>
+
+  <rect width="1220" height="420" fill="#11151b"/>
+
+  <!-- 1m = 6px. 화면 x = 40 + 6X, 화면 y = 220 - 6Y (오른쪽이 +X, 위쪽이 +Y) -->
+  <text x="40" y="40" font-size="24" font-weight="700" fill="#FFFFFF">LV_FortressBreach · 위에서 본 배치 (오른쪽이 보스 방향)</text>
+
+  <!-- 바닥 (높이 0m) -->
+  <g fill="#2f3742">
+    <rect x="40" y="202" width="150" height="36"/>   <!-- 진입로 -->
+    <rect x="190" y="172" width="120" height="96"/>  <!-- 전초 -->
+    <rect x="310" y="238" width="30" height="30"/>   <!-- 전초-마당 통로 -->
+    <rect x="340" y="148" width="180" height="144"/> <!-- 마당 -->
+    <rect x="520" y="202" width="180" height="36"/>  <!-- 사격 통로 -->
+    <rect x="700" y="148" width="144" height="144"/> <!-- 안뜰 -->
+    <rect x="844" y="202" width="36" height="36"/>   <!-- 통로 -->
+    <rect x="880" y="190" width="60" height="60"/>   <!-- 대기 공간 -->
+    <rect x="940" y="202" width="36" height="36"/>   <!-- 통로 -->
+    <rect x="976" y="121" width="198" height="198"/> <!-- 보스 아레나 -->
+  </g>
+
+  <!-- 경사로 -->
+  <g fill="#3d4652">
+    <rect x="244" y="172" width="36" height="12"/>   <!-- 전초 망대 -->
+    <rect x="352" y="148" width="48" height="18"/>   <!-- 마당 북쪽 성벽 -->
+    <rect x="352" y="274" width="48" height="18"/>   <!-- 마당 남쪽 성벽 -->
+    <rect x="628" y="202" width="48" height="36"/>   <!-- 사격 통로 단상 -->
+    <rect x="784" y="148" width="36" height="12"/>   <!-- 안뜰 북쪽 발코니 -->
+    <rect x="784" y="280" width="36" height="12"/>   <!-- 안뜰 남쪽 발코니 -->
+  </g>
+
+  <!-- 높이 1.5m -->
+  <g fill="#4a5563">
+    <rect x="280" y="172" width="30" height="36"/>   <!-- 망대 -->
+    <rect x="760" y="130" width="24" height="18"/>   <!-- 안뜰 북쪽 발코니 (2차 대기실) -->
+    <rect x="760" y="292" width="24" height="18"/>   <!-- 안뜰 남쪽 발코니 (2차 대기실) -->
+  </g>
+
+  <!-- 높이 3m -->
+  <g fill="#5d6878">
+    <rect x="400" y="148" width="120" height="18"/>  <!-- 북쪽 성벽 위 통로 -->
+    <rect x="400" y="274" width="120" height="18"/>  <!-- 남쪽 성벽 위 통로 -->
+    <rect x="676" y="202" width="24" height="36"/>   <!-- 사격 통로 단상 -->
+  </g>
+
+  <!-- 안뜰 출구 옆 대기실 (높이 0m) -->
+  <rect x="844" y="166" width="21" height="24" fill="#252b34"/>
+
+  <!-- 엄폐물(높이 2m)과 칸막이(벽 높이) -->
+  <g fill="#8a939e">
+    <rect x="220" y="226" width="6" height="18"/>
+    <rect x="247" y="202" width="6" height="18"/>
+    <rect x="265" y="235" width="6" height="18"/>
+    <rect x="388" y="202" width="18" height="6"/>
+    <rect x="418" y="232" width="18" height="6"/>
+    <rect x="454" y="202" width="18" height="6"/>
+    <rect x="478" y="232" width="18" height="6"/>
+  </g>
+  <g fill="#11151b" stroke="#8a939e" stroke-width="1.5">
+    <rect x="550" y="202" width="6" height="18"/>
+    <rect x="580" y="220" width="6" height="18"/>
+    <rect x="610" y="202" width="6" height="18"/>
+  </g>
+
+  <!-- 뛰어내리는 가장자리 -->
+  <line x1="700" y1="202" x2="700" y2="238" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="4 3"/>
+  <text x="706" y="256" font-size="11" fill="#FFFFFF">3m 뛰어내림</text>
+
+  <!-- 대기 공간에서 커스터가 보이는 방향 -->
+  <line x1="898" y1="220" x2="1105" y2="220" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
+
+  <!-- 잠기는 출입구 -->
+  <g stroke="#f0a04b" stroke-width="3" stroke-dasharray="5 4">
+    <line x1="844" y1="202" x2="844" y2="238"/>
+    <line x1="976" y1="202" x2="976" y2="238"/>
+  </g>
+
+  <!-- 2차 웨이브 문 -->
+  <g stroke="#5fc4d6" stroke-width="3" stroke-dasharray="5 4">
+    <line x1="760" y1="148" x2="784" y2="148"/>
+    <line x1="760" y1="292" x2="784" y2="292"/>
+    <line x1="844" y1="166" x2="844" y2="190"/>
+  </g>
+
+  <!-- 구간 이름 -->
+  <g font-size="15" fill="#c9d1d9" text-anchor="middle">
+    <text x="115" y="194">진입로</text>
+    <text x="250" y="164">전초</text>
+    <text x="430" y="140">마당</text>
+    <text x="580" y="194">사격 통로</text>
+    <text x="820" y="140">안뜰</text>
+    <text x="910" y="182">대기 공간</text>
+    <text x="1075" y="140">보스 아레나</text>
+    <text x="1075" y="156" font-size="12" fill="#9aa4b1">33m × 33m</text>
+  </g>
+  <g font-size="11" fill="#c9d1d9" text-anchor="middle">
+    <text x="295" y="220">망대 1.5m</text>
+    <text x="450" y="161">성벽 3m</text>
+    <text x="450" y="287">성벽 3m</text>
+    <text x="688" y="252">단상 3m</text>
+    <text x="376" y="141">경사로</text>
+  </g>
+  <g font-size="11" fill="#5fc4d6">
+    <text x="736" y="141">2차</text>
+    <text x="736" y="306">2차</text>
+    <text x="868" y="162">2차</text>
+  </g>
+
+  <!-- 아레나 입구(G)와 중심(C) -->
+  <text x="976" y="258" font-size="14" fill="#f5c84c" text-anchor="middle">G</text>
+  <circle cx="1075" cy="220" r="3" fill="#9aa4b1"/>
+  <text x="1075" y="240" font-size="14" fill="#9aa4b1" text-anchor="middle">C</text>
+
+  <!-- 바라보는 방향 -->
+  <g stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)">
+    <line x1="62" y1="220" x2="80" y2="220"/>
+    <line x1="285" y1="190" x2="268" y2="190"/>
+    <line x1="414" y1="220" x2="398" y2="220"/>
+    <line x1="481" y1="160" x2="466" y2="166"/>
+    <line x1="481" y1="280" x2="466" y2="274"/>
+    <line x1="678" y1="220" x2="662" y2="220"/>
+    <line x1="762" y1="196" x2="746" y2="196"/>
+    <line x1="762" y1="244" x2="746" y2="244"/>
+    <line x1="772" y1="148" x2="772" y2="162"/>
+    <line x1="772" y1="292" x2="772" y2="278"/>
+    <line x1="846" y1="178" x2="832" y2="178"/>
+    <line x1="1113" y1="220" x2="1095" y2="220"/>
+  </g>
+
+  <!-- 플레이어와 적 -->
+  <g font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">
+    <circle cx="52" cy="220" r="9" fill="#4c9be8"/><text x="52" y="224">P</text>
+    <circle cx="295" cy="190" r="9" fill="#e08a2e"/><text x="295" y="194">원</text>
+    <circle cx="424" cy="220" r="9" fill="#e5534b"/><text x="424" y="224">근</text>
+    <circle cx="490" cy="157" r="9" fill="#e08a2e"/><text x="490" y="161">원</text>
+    <circle cx="490" cy="283" r="9" fill="#e08a2e"/><text x="490" y="287">원</text>
+    <circle cx="688" cy="220" r="9" fill="#e08a2e"/><text x="688" y="224">원</text>
+    <circle cx="772" cy="196" r="9" fill="#e5534b"/><text x="772" y="200">근</text>
+    <circle cx="772" cy="244" r="9" fill="#e5534b"/><text x="772" y="248">근</text>
+    <circle cx="772" cy="139" r="8" fill="#e08a2e"/><text x="772" y="143">원</text>
+    <circle cx="772" cy="301" r="8" fill="#e08a2e"/><text x="772" y="305">원</text>
+    <circle cx="854" cy="178" r="8" fill="#e5534b"/><text x="854" y="182">근</text>
+    <circle cx="1123" cy="220" r="13" fill="#9b6bd6"/><text x="1123" y="224">B</text>
+  </g>
+
+  <!-- 범례 -->
+  <g font-size="12" fill="#c9d1d9">
+    <circle cx="48" cy="360" r="6" fill="#4c9be8"/><text x="58" y="364">플레이어 시작 지점</text>
+    <circle cx="178" cy="360" r="6" fill="#e5534b"/><text x="188" y="364">근거리 일반 적</text>
+    <circle cx="292" cy="360" r="6" fill="#e08a2e"/><text x="302" y="364">원거리 일반 적</text>
+    <circle cx="406" cy="360" r="6" fill="#9b6bd6"/><text x="416" y="364">보스 (커스터)</text>
+    <line x1="506" y1="360" x2="524" y2="360" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/><text x="530" y="364">바라보는 방향</text>
+    <line x1="622" y1="360" x2="642" y2="360" stroke="#f0a04b" stroke-width="3" stroke-dasharray="5 4"/><text x="648" y="364">잠기는 출입구</text>
+    <line x1="740" y1="360" x2="760" y2="360" stroke="#5fc4d6" stroke-width="3" stroke-dasharray="5 4"/><text x="766" y="364">2차 웨이브 문</text>
+
+    <rect x="42" y="384" width="12" height="12" fill="#2f3742"/><text x="58" y="394">바닥 0m</text>
+    <rect x="122" y="384" width="12" height="12" fill="#3d4652"/><text x="138" y="394">경사로</text>
+    <rect x="196" y="384" width="12" height="12" fill="#4a5563"/><text x="212" y="394">1.5m</text>
+    <rect x="256" y="384" width="12" height="12" fill="#5d6878"/><text x="272" y="394">3m</text>
+    <rect x="306" y="384" width="12" height="12" fill="#8a939e"/><text x="322" y="394">엄폐물 (2m)</text>
+    <rect x="406" y="384" width="12" height="12" fill="#11151b" stroke="#8a939e" stroke-width="1.5"/><text x="422" y="394">칸막이 (벽 높이)</text>
+  </g>
+  <line x1="1014" y1="380" x2="1134" y2="380" stroke="#9aa4b1" stroke-width="2"/>
+  <line x1="1014" y1="374" x2="1014" y2="386" stroke="#9aa4b1" stroke-width="2"/>
+  <line x1="1134" y1="374" x2="1134" y2="386" stroke="#9aa4b1" stroke-width="2"/>
+  <text x="1074" y="372" font-size="12" fill="#9aa4b1" text-anchor="middle">20m</text>
+</svg>
