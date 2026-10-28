@@ -16,12 +16,13 @@
 | 순서 | 버튼 이름 | 레벨 | 들어간 뒤의 규칙 |
 | - | - | - | - |
 | 1 | Boss Stage | LV_BossStage | [게임 플로우](<../../Docs/Design/System/게임 플로우.md>)의 'Boss Stage' |
-| 2 | Temp Dungeon 1 | LV_TempDungeon01 | '2.4 미니던전 공통 흐름' |
-| 3 | Temp Dungeon 2 | LV_TempDungeon02 | '2.4 미니던전 공통 흐름' |
+| 2 | Duel Corridor | LV_DuelCorridor | '2.4 미니던전 공통 흐름' |
+| 3 | Fortress Breach | LV_FortressBreach | '2.4 미니던전 공통 흐름' |
 | 4 | Temp Dungeon 3 | LV_TempDungeon03 | '2.4 미니던전 공통 흐름' |
 | 5 | Simulation Room | LV_SimulationRoom | 시뮬레이션 룸 Spec |
 
-- 미니던전의 버튼 이름과 레벨 이름은 임시입니다. 미니던전별 레벨디자인 기획서에서 던전 이름이 정해지면 바꿉니다.
+- 미니던전의 구성은 [결투 회랑](<../../Docs/Design/Level/스테이지 - 미니던전 결투 회랑.md>), [요새 돌파](<../../Docs/Design/Level/스테이지 - 미니던전 요새 돌파.md>) 기획서를 따릅니다.
+- 세 번째 미니던전의 버튼 이름과 레벨 이름은 임시입니다. 레벨디자인 기획서에서 던전 이름이 정해지면 바꿉니다.
 - 잠금이나 해금 조건은 없습니다. 게임을 처음 실행했을 때부터 모든 스테이지를 고를 수 있습니다.
 
 ### 2.2 타이틀 화면의 변경
@@ -56,7 +57,7 @@ LV_FrontEnd에서 Start 버튼으로 여는 화면입니다. Menu 레이어에 �
 
 ### 2.4 미니던전 공통 흐름
 
-LV_TempDungeon01 ~ LV_TempDungeon03에 공통으로 적용하는 흐름입니다.
+LV_DuelCorridor, LV_FortressBreach, LV_TempDungeon03에 공통으로 적용하는 흐름입니다.
 
 **시작**
 
@@ -94,10 +95,10 @@ LV_TempDungeon01 ~ LV_TempDungeon03에 공통으로 적용하는 흐름입니다
 
 ## 3. 완료 조건 (Acceptance Criteria)
 
-- [ ] 시나리오 1: 게임을 실행하면 타이틀 화면이 지금과 같은 배치로 열리고, Start를 실행하면 레벨 전환 없이 스테이지 선택 화면이 열립니다. 제목 'STAGE SELECT' 아래에 Boss Stage, Temp Dungeon 1, Temp Dungeon 2, Temp Dungeon 3, Simulation Room, Back이 위에서부터 놓이고 Boss Stage가 선택되어 있습니다.
+- [ ] 시나리오 1: 게임을 실행하면 타이틀 화면이 지금과 같은 배치로 열리고, Start를 실행하면 레벨 전환 없이 스테이지 선택 화면이 열립니다. 제목 'STAGE SELECT' 아래에 Boss Stage, Duel Corridor, Fortress Breach, Temp Dungeon 3, Simulation Room, Back이 위에서부터 놓이고 Boss Stage가 선택되어 있습니다.
 - [ ] 시나리오 2: 스테이지 선택 화면에서 Back을 실행하거나 Esc를 누르면 타이틀 화면으로 돌아가고 Start가 선택되어 있습니다.
 - [ ] 시나리오 3: Boss Stage를 실행하면 LV_BossStage로 이동해 지금과 같이 보스전이 시작됩니다.
-- [ ] 시나리오 4: Temp Dungeon 1 ~ 3을 각각 실행하면 해당 던전 레벨로 이동하고, 시작 지점에서 바로 조작할 수 있으며 마우스 커서가 숨겨집니다.
+- [ ] 시나리오 4: Duel Corridor, Fortress Breach, Temp Dungeon 3을 각각 실행하면 해당 던전 레벨로 이동하고, 시작 지점에서 바로 조작할 수 있으며 마우스 커서가 숨겨집니다.
 - [ ] 시나리오 5: 던전에서 일반 적이 남아 있는 상태로 보스를 처치하면 스테이지 결과 연출 뒤 Stage Clear UI가 뜨고, Restart를 실행하면 같은 던전이 처음부터 다시 시작됩니다.
 - [ ] 시나리오 6: 던전에서 플레이어가 사망하면 Game Over UI가 뜨고, Return to Title을 실행하면 타이틀 화면으로 돌아오며 스테이지 선택 화면은 닫혀 있습니다.
 - [ ] 시나리오 7: 던전에서 Esc를 누르면 보스전과 같은 일시정지 메뉴가 열리고, Restart는 지금 던전을 다시 시작합니다.

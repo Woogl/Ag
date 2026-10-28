@@ -1,172 +1,169 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="420" viewBox="0 0 1220 420" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="500" viewBox="0 0 1180 500" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
   <defs>
     <marker id="arrowFacing" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
       <path d="M0 0 L10 5 L0 10 Z" fill="#FFFFFF"/>
     </marker>
   </defs>
-
-  <rect width="1220" height="420" fill="#11151b"/>
-
-  <!-- 1m = 6px. 화면 x = 40 + 6X, 화면 y = 220 - 6Y (오른쪽이 +X, 위쪽이 +Y) -->
+  <rect width="1180" height="500" fill="#11151b"/>
+  <!-- 1m = 6px. 화면 x = 40 + 6X, 화면 y = 250 - 6Y (오른쪽이 +X, 위쪽이 +Y) -->
   <text x="40" y="40" font-size="24" font-weight="700" fill="#FFFFFF">LV_FortressBreach · 위에서 본 배치 (오른쪽이 보스 방향)</text>
-
   <!-- 바닥 (높이 0m) -->
-  <g fill="#2f3742">
-    <rect x="40" y="202" width="150" height="36"/>   <!-- 진입로 -->
-    <rect x="190" y="172" width="120" height="96"/>  <!-- 전초 -->
-    <rect x="310" y="238" width="30" height="30"/>   <!-- 전초-마당 통로 -->
-    <rect x="340" y="148" width="180" height="144"/> <!-- 마당 -->
-    <rect x="520" y="202" width="180" height="36"/>  <!-- 사격 통로 -->
-    <rect x="700" y="148" width="144" height="144"/> <!-- 안뜰 -->
-    <rect x="844" y="202" width="36" height="36"/>   <!-- 통로 -->
-    <rect x="880" y="190" width="60" height="60"/>   <!-- 대기 공간 -->
-    <rect x="940" y="202" width="36" height="36"/>   <!-- 통로 -->
-    <rect x="976" y="121" width="198" height="198"/> <!-- 보스 아레나 -->
-  </g>
-
+  <rect x="118.0" y="238.0" width="30.0" height="30.0" fill="#2f3742"/>
+  <rect x="256.0" y="226.0" width="30.0" height="30.0" fill="#2f3742"/>
+  <rect x="286.0" y="178.0" width="180.0" height="144.0" fill="#2f3742"/>
+  <rect x="466.0" y="232.0" width="156.0" height="36.0" fill="#2f3742"/>
+  <rect x="799.6" y="232.0" width="38.4" height="36.0" fill="#2f3742"/>
+  <rect x="898.0" y="235.0" width="36.0" height="30.0" fill="#2f3742"/>
+  <rect x="934.0" y="151.0" width="198.0" height="198.0" fill="#2f3742"/>
+  <polygon points="148.0,202.0 256.0,226.0 256.0,298.0 148.0,298.0" fill="#2f3742"/>  <!-- 전초 (깔때기) -->
+  <circle cx="724" cy="250" r="78" fill="#2f3742"/>  <!-- 안뜰 (원형) -->
+  <!-- 탑 1층 = 대기 공간 -->
+  <rect x="838.0" y="220.0" width="60.0" height="60.0" fill="#2f3742" stroke="#d6b25e" stroke-width="3"/>
+  <!-- 언덕 길 (높이 6m) -->
+  <rect x="40.0" y="136.0" width="108.0" height="30.0" fill="#6f7b8c"/>
   <!-- 경사로 -->
-  <g fill="#3d4652">
-    <rect x="244" y="172" width="36" height="12"/>   <!-- 전초 망대 -->
-    <rect x="352" y="148" width="48" height="18"/>   <!-- 마당 북쪽 성벽 -->
-    <rect x="352" y="274" width="48" height="18"/>   <!-- 마당 남쪽 성벽 -->
-    <rect x="628" y="202" width="48" height="36"/>   <!-- 사격 통로 단상 -->
-    <rect x="784" y="148" width="36" height="12"/>   <!-- 안뜰 북쪽 발코니 -->
-    <rect x="784" y="280" width="36" height="12"/>   <!-- 안뜰 남쪽 발코니 -->
-  </g>
-
+  <rect x="118.0" y="166.0" width="30.0" height="72.0" fill="#3d4652"/>
+  <rect x="190.0" y="286.0" width="36.0" height="12.0" fill="#3d4652"/>
+  <rect x="298.0" y="178.0" width="48.0" height="18.0" fill="#3d4652"/>
+  <rect x="298.0" y="304.0" width="48.0" height="18.0" fill="#3d4652"/>
+  <rect x="574.0" y="232.0" width="48.0" height="36.0" fill="#3d4652"/>
+  <rect x="232.0" y="334.0" width="36.0" height="9.0" fill="#3d4652"/>
+  <path d="M736.2,173.0 A78,78 0 0 1 768.7,186.1 L761.9,195.9 A66,66 0 0 0 734.3,184.8 Z" fill="#3d4652"/>  <!-- 안뜰 북쪽 발코니 경사로 -->
+  <path d="M736.2,327.0 A78,78 0 0 0 768.7,313.9 L761.9,304.1 A66,66 0 0 1 734.3,315.2 Z" fill="#3d4652"/>  <!-- 안뜰 남쪽 발코니 경사로 -->
   <!-- 높이 1.5m -->
-  <g fill="#4a5563">
-    <rect x="280" y="172" width="30" height="36"/>   <!-- 망대 -->
-    <rect x="760" y="130" width="24" height="18"/>   <!-- 안뜰 북쪽 발코니 (2차 대기실) -->
-    <rect x="760" y="292" width="24" height="18"/>   <!-- 안뜰 남쪽 발코니 (2차 대기실) -->
-  </g>
-
+  <rect x="226.0" y="262.0" width="30.0" height="36.0" fill="#4a5563"/>
+  <rect x="232.0" y="298.0" width="9.0" height="36.0" fill="#4a5563"/>
+  <rect x="712.0" y="154.6" width="24.0" height="18.0" fill="#4a5563"/>
+  <rect x="712.0" y="327.4" width="24.0" height="18.0" fill="#4a5563"/>
+  <path d="M711.8,173.0 A78,78 0 0 1 736.2,173.0 L734.3,184.8 A66,66 0 0 0 713.7,184.8 Z" fill="#4a5563"/>
+  <path d="M711.8,327.0 A78,78 0 0 0 736.2,327.0 L734.3,315.2 A66,66 0 0 1 713.7,315.2 Z" fill="#4a5563"/>
   <!-- 높이 3m -->
-  <g fill="#5d6878">
-    <rect x="400" y="148" width="120" height="18"/>  <!-- 북쪽 성벽 위 통로 -->
-    <rect x="400" y="274" width="120" height="18"/>  <!-- 남쪽 성벽 위 통로 -->
-    <rect x="676" y="202" width="24" height="36"/>   <!-- 사격 통로 단상 -->
-  </g>
-
+  <rect x="346.0" y="178.0" width="120.0" height="18.0" fill="#5d6878"/>
+  <rect x="346.0" y="304.0" width="120.0" height="18.0" fill="#5d6878"/>
+  <rect x="268.0" y="334.0" width="198.0" height="9.0" fill="#5d6878"/>
+  <rect x="457.0" y="322.0" width="9.0" height="12.0" fill="#5d6878"/>
+  <rect x="622.0" y="232.0" width="24.0" height="36.0" fill="#5d6878"/>
   <!-- 안뜰 출구 옆 대기실 (높이 0m) -->
-  <rect x="844" y="166" width="21" height="24" fill="#252b34"/>
-
+  <rect x="787.0" y="175.0" width="24.0" height="24.0" fill="#252b34"/>
   <!-- 엄폐물(높이 2m)과 칸막이(벽 높이) -->
-  <g fill="#8a939e">
-    <rect x="220" y="226" width="6" height="18"/>
-    <rect x="247" y="202" width="6" height="18"/>
-    <rect x="265" y="235" width="6" height="18"/>
-    <rect x="388" y="202" width="18" height="6"/>
-    <rect x="418" y="232" width="18" height="6"/>
-    <rect x="454" y="202" width="18" height="6"/>
-    <rect x="478" y="232" width="18" height="6"/>
-  </g>
-  <g fill="#11151b" stroke="#8a939e" stroke-width="1.5">
-    <rect x="550" y="202" width="6" height="18"/>
-    <rect x="580" y="220" width="6" height="18"/>
-    <rect x="610" y="202" width="6" height="18"/>
-  </g>
-
+  <rect x="172.0" y="238.0" width="6.0" height="18.0" fill="#8a939e"/>
+  <rect x="196.0" y="268.0" width="6.0" height="18.0" fill="#8a939e"/>
+  <rect x="214.0" y="232.0" width="6.0" height="18.0" fill="#8a939e"/>
+  <rect x="322.0" y="226.0" width="18.0" height="6.0" fill="#8a939e"/>
+  <rect x="352.0" y="256.0" width="18.0" height="6.0" fill="#8a939e"/>
+  <rect x="388.0" y="226.0" width="18.0" height="6.0" fill="#8a939e"/>
+  <rect x="418.0" y="256.0" width="18.0" height="6.0" fill="#8a939e"/>
+  <rect x="496.0" y="232.0" width="6.0" height="18.0" fill="#11151b" stroke="#8a939e" stroke-width="1.5"/>
+  <rect x="526.0" y="250.0" width="6.0" height="18.0" fill="#11151b" stroke="#8a939e" stroke-width="1.5"/>
+  <rect x="556.0" y="232.0" width="6.0" height="18.0" fill="#11151b" stroke="#8a939e" stroke-width="1.5"/>
   <!-- 뛰어내리는 가장자리 -->
-  <line x1="700" y1="202" x2="700" y2="238" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="4 3"/>
-  <text x="706" y="256" font-size="11" fill="#FFFFFF">3m 뛰어내림</text>
-
-  <!-- 대기 공간에서 커스터가 보이는 방향 -->
-  <line x1="898" y1="220" x2="1105" y2="220" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
-
+  <line x1="646" y1="232" x2="646" y2="268" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="4 3"/>
+  <text x="622" y="283.0" font-size="11" fill="#FFFFFF">3m 뛰어내림</text>
+  <!-- 전망 지점에서 내려다보는 방향, 대기 공간에서 커스터가 보이는 방향 -->
+  <g stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5">
+    <line x1="142" y1="151.0" x2="376" y2="226"/>
+    <line x1="142" y1="151.0" x2="700" y2="214"/>
+    <line x1="142" y1="151.0" x2="868" y2="220"/>
+    <line x1="880" y1="250" x2="1066" y2="250"/>
+  </g>
   <!-- 잠기는 출입구 -->
   <g stroke="#f0a04b" stroke-width="3" stroke-dasharray="5 4">
-    <line x1="844" y1="202" x2="844" y2="238"/>
-    <line x1="976" y1="202" x2="976" y2="238"/>
+    <line x1="802" y1="232" x2="802" y2="268"/>
+    <line x1="934" y1="235.0" x2="934" y2="265.0"/>
   </g>
-
   <!-- 2차 웨이브 문 -->
   <g stroke="#5fc4d6" stroke-width="3" stroke-dasharray="5 4">
-    <line x1="760" y1="148" x2="784" y2="148"/>
-    <line x1="760" y1="292" x2="784" y2="292"/>
-    <line x1="844" y1="166" x2="844" y2="190"/>
+    <line x1="712" y1="172.6" x2="736" y2="172.6"/>
+    <line x1="712" y1="327.4" x2="736" y2="327.4"/>
+    <line x1="787.0" y1="199.0" x2="799.0" y2="199.0"/>
   </g>
-
+  <!-- 샛길 문 -->
+  <line x1="232" y1="298" x2="241.0" y2="298" stroke="#7ed67e" stroke-width="3"/>
   <!-- 구간 이름 -->
   <g font-size="15" fill="#c9d1d9" text-anchor="middle">
-    <text x="115" y="194">진입로</text>
-    <text x="250" y="164">전초</text>
-    <text x="430" y="140">마당</text>
-    <text x="580" y="194">사격 통로</text>
-    <text x="820" y="140">안뜰</text>
-    <text x="910" y="182">대기 공간</text>
-    <text x="1075" y="140">보스 아레나</text>
-    <text x="1075" y="156" font-size="12" fill="#9aa4b1">33m × 33m</text>
+    <text x="94" y="124">진입로 (언덕)</text>
+    <text x="196" y="193">전초</text>
+    <text x="376" y="166">마당</text>
+    <text x="544" y="220">사격 통로</text>
+    <text x="676" y="145">안뜰</text>
+    <text x="1033" y="136">보스 아레나</text>
+    <text x="868" y="205" fill="#d6b25e">탑</text>
+    <text x="1033" y="152" font-size="12" fill="#9aa4b1">33m × 33m</text>
   </g>
   <g font-size="11" fill="#c9d1d9" text-anchor="middle">
-    <text x="295" y="220">망대 1.5m</text>
-    <text x="450" y="161">성벽 3m</text>
-    <text x="450" y="287">성벽 3m</text>
-    <text x="688" y="252">단상 3m</text>
-    <text x="376" y="141">경사로</text>
+    <text x="82" y="181">언덕 6m</text>
+    <text x="178" y="148">전망 지점</text>
+    <text x="133" y="202">내리막</text>
+    <text x="241" y="253">망대 1.5m</text>
+    <text x="400" y="189">성벽 3m</text>
+    <text x="400" y="316">성벽 3m</text>
+    <text x="634" y="225">단상 3m</text>
+    <text x="322" y="171">경사로</text>
+    <text x="352" y="355">샛길 (1.5m → 3m)</text>
+    <text x="868" y="293">대기 공간</text>
+    <text x="724" y="304">지름 26m</text>
   </g>
   <g font-size="11" fill="#5fc4d6">
-    <text x="736" y="141">2차</text>
-    <text x="736" y="306">2차</text>
-    <text x="868" y="162">2차</text>
+    <text x="742" y="151">2차</text>
+    <text x="742" y="355">2차</text>
+    <text x="820" y="196">2차</text>
   </g>
-
   <!-- 아레나 입구(G)와 중심(C) -->
-  <text x="976" y="258" font-size="14" fill="#f5c84c" text-anchor="middle">G</text>
-  <circle cx="1075" cy="220" r="3" fill="#9aa4b1"/>
-  <text x="1075" y="240" font-size="14" fill="#9aa4b1" text-anchor="middle">C</text>
-
+  <text x="934" y="283" font-size="14" fill="#f5c84c" text-anchor="middle">G</text>
+  <circle cx="1033.0" cy="250" r="3" fill="#9aa4b1"/>
+  <text x="1033.0" y="270" font-size="14" fill="#9aa4b1" text-anchor="middle">C</text>
   <!-- 바라보는 방향 -->
   <g stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)">
-    <line x1="62" y1="220" x2="80" y2="220"/>
-    <line x1="285" y1="190" x2="268" y2="190"/>
-    <line x1="414" y1="220" x2="398" y2="220"/>
-    <line x1="481" y1="160" x2="466" y2="166"/>
-    <line x1="481" y1="280" x2="466" y2="274"/>
-    <line x1="678" y1="220" x2="662" y2="220"/>
-    <line x1="762" y1="196" x2="746" y2="196"/>
-    <line x1="762" y1="244" x2="746" y2="244"/>
-    <line x1="772" y1="148" x2="772" y2="162"/>
-    <line x1="772" y1="292" x2="772" y2="278"/>
-    <line x1="846" y1="178" x2="832" y2="178"/>
-    <line x1="1113" y1="220" x2="1095" y2="220"/>
+    <line x1="62.8" y1="151.0" x2="78.4" y2="151.0"/>
+    <line x1="230.2" y1="280.0" x2="214.6" y2="280.0"/>
+    <line x1="359.2" y1="241.0" x2="343.6" y2="241.0"/>
+    <line x1="425.8" y1="190.7" x2="411.2" y2="196.0"/>
+    <line x1="425.8" y1="309.3" x2="411.2" y2="304.0"/>
+    <line x1="623.2" y1="250.0" x2="607.6" y2="250.0"/>
+    <line x1="713.2" y1="226.0" x2="697.6" y2="226.0"/>
+    <line x1="713.2" y1="274.0" x2="697.6" y2="274.0"/>
+    <line x1="724.0" y1="173.4" x2="724.0" y2="189.0"/>
+    <line x1="724.0" y1="326.6" x2="724.0" y2="311.0"/>
+    <line x1="792.1" y1="193.9" x2="781.2" y2="204.8"/>
+    <line x1="1066.2" y1="250.0" x2="1050.6" y2="250.0"/>
   </g>
-
   <!-- 플레이어와 적 -->
   <g font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">
-    <circle cx="52" cy="220" r="9" fill="#4c9be8"/><text x="52" y="224">P</text>
-    <circle cx="295" cy="190" r="9" fill="#e08a2e"/><text x="295" y="194">원</text>
-    <circle cx="424" cy="220" r="9" fill="#e5534b"/><text x="424" y="224">근</text>
-    <circle cx="490" cy="157" r="9" fill="#e08a2e"/><text x="490" y="161">원</text>
-    <circle cx="490" cy="283" r="9" fill="#e08a2e"/><text x="490" y="287">원</text>
-    <circle cx="688" cy="220" r="9" fill="#e08a2e"/><text x="688" y="224">원</text>
-    <circle cx="772" cy="196" r="9" fill="#e5534b"/><text x="772" y="200">근</text>
-    <circle cx="772" cy="244" r="9" fill="#e5534b"/><text x="772" y="248">근</text>
-    <circle cx="772" cy="139" r="8" fill="#e08a2e"/><text x="772" y="143">원</text>
-    <circle cx="772" cy="301" r="8" fill="#e08a2e"/><text x="772" y="305">원</text>
-    <circle cx="854" cy="178" r="8" fill="#e5534b"/><text x="854" y="182">근</text>
-    <circle cx="1123" cy="220" r="13" fill="#9b6bd6"/><text x="1123" y="224">B</text>
+    <circle cx="52.0" cy="151.0" r="9" fill="#4c9be8"/><text x="52.0" y="155.0">P</text>
+    <circle cx="241.0" cy="280.0" r="9" fill="#e08a2e"/><text x="241.0" y="284.0">원</text>
+    <circle cx="370.0" cy="241.0" r="9" fill="#e5534b"/><text x="370.0" y="245.0">근</text>
+    <circle cx="436.0" cy="187.0" r="9" fill="#e08a2e"/><text x="436.0" y="191.0">원</text>
+    <circle cx="436.0" cy="313.0" r="9" fill="#e08a2e"/><text x="436.0" y="317.0">원</text>
+    <circle cx="634.0" cy="250.0" r="9" fill="#e08a2e"/><text x="634.0" y="254.0">원</text>
+    <circle cx="724.0" cy="226.0" r="9" fill="#e5534b"/><text x="724.0" y="230.0">근</text>
+    <circle cx="724.0" cy="274.0" r="9" fill="#e5534b"/><text x="724.0" y="278.0">근</text>
+    <circle cx="724.0" cy="163.6" r="8" fill="#e08a2e"/><text x="724.0" y="167.6">원</text>
+    <circle cx="724.0" cy="336.4" r="8" fill="#e08a2e"/><text x="724.0" y="340.4">원</text>
+    <circle cx="799.0" cy="187.0" r="8" fill="#e5534b"/><text x="799.0" y="191.0">근</text>
+    <circle cx="1081.0" cy="250.0" r="13" fill="#9b6bd6"/><text x="1081.0" y="254.0">B</text>
   </g>
-
   <!-- 범례 -->
   <g font-size="12" fill="#c9d1d9">
-    <circle cx="48" cy="360" r="6" fill="#4c9be8"/><text x="58" y="364">플레이어 시작 지점</text>
-    <circle cx="178" cy="360" r="6" fill="#e5534b"/><text x="188" y="364">근거리 일반 적</text>
-    <circle cx="292" cy="360" r="6" fill="#e08a2e"/><text x="302" y="364">원거리 일반 적</text>
-    <circle cx="406" cy="360" r="6" fill="#9b6bd6"/><text x="416" y="364">보스 (커스터)</text>
-    <line x1="506" y1="360" x2="524" y2="360" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/><text x="530" y="364">바라보는 방향</text>
-    <line x1="622" y1="360" x2="642" y2="360" stroke="#f0a04b" stroke-width="3" stroke-dasharray="5 4"/><text x="648" y="364">잠기는 출입구</text>
-    <line x1="740" y1="360" x2="760" y2="360" stroke="#5fc4d6" stroke-width="3" stroke-dasharray="5 4"/><text x="766" y="364">2차 웨이브 문</text>
-
-    <rect x="42" y="384" width="12" height="12" fill="#2f3742"/><text x="58" y="394">바닥 0m</text>
-    <rect x="122" y="384" width="12" height="12" fill="#3d4652"/><text x="138" y="394">경사로</text>
-    <rect x="196" y="384" width="12" height="12" fill="#4a5563"/><text x="212" y="394">1.5m</text>
-    <rect x="256" y="384" width="12" height="12" fill="#5d6878"/><text x="272" y="394">3m</text>
-    <rect x="306" y="384" width="12" height="12" fill="#8a939e"/><text x="322" y="394">엄폐물 (2m)</text>
-    <rect x="406" y="384" width="12" height="12" fill="#11151b" stroke="#8a939e" stroke-width="1.5"/><text x="422" y="394">칸막이 (벽 높이)</text>
+    <circle cx="48" cy="430" r="6" fill="#4c9be8"/><text x="58" y="434">플레이어 시작 지점</text>
+    <circle cx="178" cy="430" r="6" fill="#e5534b"/><text x="188" y="434">근거리 일반 적</text>
+    <circle cx="292" cy="430" r="6" fill="#e08a2e"/><text x="302" y="434">원거리 일반 적</text>
+    <circle cx="406" cy="430" r="6" fill="#9b6bd6"/><text x="416" y="434">보스 (커스터)</text>
+    <line x1="506" y1="430" x2="524" y2="430" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/><text x="530" y="434">바라보는 방향</text>
+    <line x1="622" y1="430" x2="642" y2="430" stroke="#f0a04b" stroke-width="3" stroke-dasharray="5 4"/><text x="648" y="434">잠기는 출입구</text>
+    <line x1="740" y1="430" x2="760" y2="430" stroke="#5fc4d6" stroke-width="3" stroke-dasharray="5 4"/><text x="766" y="434">2차 웨이브 문</text>
+    <line x1="858" y1="430" x2="878" y2="430" stroke="#7ed67e" stroke-width="3"/><text x="884" y="434">샛길 문</text>
+    <line x1="950" y1="430" x2="970" y2="430" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/><text x="976" y="434">보이는 방향</text>
+    <rect x="42" y="454" width="12" height="12" fill="#2f3742"/><text x="58" y="464">바닥 0m</text>
+    <rect x="122" y="454" width="12" height="12" fill="#3d4652"/><text x="138" y="464">경사로</text>
+    <rect x="196" y="454" width="12" height="12" fill="#4a5563"/><text x="212" y="464">1.5m</text>
+    <rect x="256" y="454" width="12" height="12" fill="#5d6878"/><text x="272" y="464">3m</text>
+    <rect x="306" y="454" width="12" height="12" fill="#6f7b8c"/><text x="322" y="464">6m</text>
+    <rect x="356" y="454" width="12" height="12" fill="#8a939e"/><text x="372" y="464">엄폐물 (2m)</text>
+    <rect x="456" y="454" width="12" height="12" fill="#11151b" stroke="#8a939e" stroke-width="1.5"/><text x="472" y="464">칸막이 (벽 높이)</text>
+    <rect x="576" y="454" width="12" height="12" fill="#2f3742" stroke="#d6b25e" stroke-width="2"/><text x="592" y="464">탑 (높이 약 20m, 1층이 대기 공간)</text>
   </g>
-  <line x1="1014" y1="380" x2="1134" y2="380" stroke="#9aa4b1" stroke-width="2"/>
-  <line x1="1014" y1="374" x2="1014" y2="386" stroke="#9aa4b1" stroke-width="2"/>
-  <line x1="1134" y1="374" x2="1134" y2="386" stroke="#9aa4b1" stroke-width="2"/>
-  <text x="1074" y="372" font-size="12" fill="#9aa4b1" text-anchor="middle">20m</text>
+  <line x1="940" y1="460" x2="1060" y2="460" stroke="#9aa4b1" stroke-width="2"/>
+  <line x1="940" y1="454" x2="940" y2="466" stroke="#9aa4b1" stroke-width="2"/>
+  <line x1="1060" y1="454" x2="1060" y2="466" stroke="#9aa4b1" stroke-width="2"/>
+  <text x="1000" y="452" font-size="12" fill="#9aa4b1" text-anchor="middle">20m</text>
 </svg>
