@@ -11,6 +11,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Camera/AgExecutionCameraModifier.h"
+#include "Camera/AgFieldOfViewCameraModifier.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Character/AgBossCharacter.h"
@@ -107,16 +108,20 @@ void AAgPlayerCharacter::PlayCameraEffect(EAgCameraSituation Situation, const AA
 	{
 		PlayerController->PlayerCameraManager->StartCameraShake(Shake);
 	}
+	if (FieldOfViewCamera)
+	{
+		FieldOfViewCamera->Play(Effect->FieldOfView);
+	}
 	if (Effect->bTurnToOpponent && Opponent)
 	{
 		StartCameraTurn(*Opponent, Effect->TurnAngle);
 	}
 }
 
-void AAgPlayerCharacter::PlayDamageCameraEffects(const FGameplayTagContainer& SpecTags, const AAgCharacterBase& Attacker, const AAgCharacterBase& Target)
+void AAgPlayerCharacter::PlayDamageCameraEffects(const FGameplayTagContainer& SpecTags, const FGameplayTag& Reaction, const AAgCharacterBase& Attacker, const AAgCharacterBase& Target)
 {
-	const bool bHeavy = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockUp) ||
-	                    SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_KnockDown);
+	const bool bHeavy = Reaction == AgGameplayTags::Event_Hit_KnockUp || Reaction == AgGameplayTags::Event_Hit_KnockDown ||
+	                    Reaction == AgGameplayTags::Event_Guard_Pushback;
 	if (&Attacker == this)
 	{
 		if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
@@ -166,6 +171,10 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleSprintFieldOfViewChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::Input_Move, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleSprintFieldOfViewChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
@@ -245,6 +254,10 @@ void AAgPlayerCharacter::NotifyControllerChanged()
 		if (!ExecutionCamera && ExecutionCameraClass && PlayerController->PlayerCameraManager)
 		{
 			ExecutionCamera = Cast<UAgExecutionCameraModifier>(PlayerController->PlayerCameraManager->AddNewCameraModifier(ExecutionCameraClass));
+		}
+		if (!FieldOfViewCamera && PlayerController->PlayerCameraManager)
+		{
+			FieldOfViewCamera = Cast<UAgFieldOfViewCameraModifier>(PlayerController->PlayerCameraManager->AddNewCameraModifier(UAgFieldOfViewCameraModifier::StaticClass()));
 		}
 	}
 }
@@ -786,6 +799,26 @@ void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 Ne
 	UpdateRotationMode();
 }
 
+void AAgPlayerCharacter::HandleSprintFieldOfViewChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// 달리기는 Shift만 누르고 멈춰 있어도 이어지므로, 이동 입력이 있을 때만 넓힙니다.
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const bool bRunning = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) && ASC->HasMatchingGameplayTag(AgGameplayTags::Input_Move);
+	if (!FieldOfViewCamera || bRunning == bSprintFieldOfViewHeld)
+	{
+		return;
+	}
+	bSprintFieldOfViewHeld = bRunning;
+	if (bRunning)
+	{
+		FieldOfViewCamera->Hold(SprintFieldOfView);
+	}
+	else
+	{
+		FieldOfViewCamera->Release(SprintFieldOfView);
+	}
+}
+
 void AAgPlayerCharacter::HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	if (NewCount > 0)
@@ -810,6 +843,10 @@ void AAgPlayerCharacter::HandleTimeStopChanged(const FGameplayTag Tag, int32 New
 			PlayerController && PlayerController->PlayerCameraManager)
 		{
 			PlayerController->PlayerCameraManager->StopAllCameraShakes(true);
+		}
+		if (FieldOfViewCamera)
+		{
+			FieldOfViewCamera->StopAll();
 		}
 		TurnOpponent.Reset();
 	}

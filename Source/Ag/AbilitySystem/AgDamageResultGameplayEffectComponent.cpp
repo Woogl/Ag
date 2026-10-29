@@ -125,38 +125,44 @@ namespace
 		return AgGameplayTags::Event_Hit_Stagger_Body;
 	}
 
-	void StartHitReaction(AActor* Causer, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
+	FGameplayTag StartHitReaction(AActor* Causer, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 		const bool bHasReaction = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) || GetKnockReactionEvent(SpecTags).IsValid();
 		// 처형은 두 캐릭터의 모션을 프레임 단위로 맞물리므로 흔들지도 않습니다.
 		if (!bHasReaction || TargetASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 		{
-			return;
+			return FGameplayTag();
 		}
-		if (const FGameplayTag Event = ResolveHitReactionEvent(*Target, SpecTags); Event.IsValid())
+		FGameplayTag Event = ResolveHitReactionEvent(*Target, SpecTags);
+		if (Event.IsValid())
 		{
-			SendEvent(Target, Event == AgGameplayTags::Event_Hit_Stagger ? ResolveStaggerEvent(*Causer, *Target, Context) : Event, Causer);
+			Event = Event == AgGameplayTags::Event_Hit_Stagger ? ResolveStaggerEvent(*Causer, *Target, Context) : Event;
+			SendEvent(Target, Event, Causer);
 		}
 		Target->GetHitPhysics()->Play(MakePhysicsHit(*Causer, *Target, Context, false));
+		return Event;
 	}
 
-	void StartGuardReaction(AActor* Causer, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
+	FGameplayTag StartGuardReaction(AActor* Causer, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
 		const bool bPushback = GetKnockReactionEvent(SpecTags).IsValid();
 		if (!bPushback && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
 		{
-			return;
+			return FGameplayTag();
 		}
+		FGameplayTag Event;
 		if (bPushback && !Target->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_SuperArmor))
 		{
-			SendEvent(Target, AgGameplayTags::Event_Guard_Pushback, Causer);
+			Event = AgGameplayTags::Event_Guard_Pushback;
+			SendEvent(Target, Event, Causer);
 		}
 		else
 		{
 			Target->PlayAnimMontage(Target->GetCharacterData()->FindMontage(GuardFlinchMontageId));
 		}
 		Target->GetHitPhysics()->Play(MakePhysicsHit(*Causer, *Target, Context, true));
+		return Event;
 	}
 
 	void ApplyHitstop(UAgAbilitySystemComponent& ASC, float Duration)
@@ -228,6 +234,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		TargetStats->GetSP());
 
 	// 사망 판정(어트리뷰트 세트)이 이 처리보다 먼저이므로, 이번 타격으로 죽었으면 반응하지 않습니다.
+	FGameplayTag Reaction;
 	if (!Target->IsDead())
 	{
 		if (bParry)
@@ -237,7 +244,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		}
 		else if (bGuard)
 		{
-			StartGuardReaction(Causer, Target, SpecTags, Context);
+			Reaction = StartGuardReaction(Causer, Target, SpecTags, Context);
 		}
 		else if (bGuardBreak)
 		{
@@ -245,7 +252,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		}
 		else
 		{
-			StartHitReaction(Causer, Target, SpecTags, Context);
+			Reaction = StartHitReaction(Causer, Target, SpecTags, Context);
 		}
 	}
 
@@ -264,7 +271,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
 	if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(Target, 0)))
 	{
-		Player->PlayDamageCameraEffects(SpecTags, *Attacker, *Target);
+		Player->PlayDamageCameraEffects(SpecTags, Reaction, *Attacker, *Target);
 	}
 	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());

@@ -9,6 +9,7 @@
 #include "AgPlayerCharacter.generated.h"
 
 class UAgExecutionCameraModifier;
+class UAgFieldOfViewCameraModifier;
 class UCameraComponent;
 class UCapsuleComponent;
 class UGameplayAbility;
@@ -30,8 +31,8 @@ public:
 
 	void PlayCameraEffect(EAgCameraSituation Situation, const AActor* Opponent);
 
-	/** 플레이어가 공격자이거나 대상인 피격 결과에만 연출을 재생합니다. */
-	void PlayDamageCameraEffects(const FGameplayTagContainer& SpecTags, const AAgCharacterBase& Attacker, const AAgCharacterBase& Target);
+	/** 플레이어가 공격자이거나 대상인 피격 결과에만 연출을 재생합니다. Reaction은 대상에게 실제로 보낸 피격 반응 이벤트입니다. */
+	void PlayDamageCameraEffects(const FGameplayTagContainer& SpecTags, const FGameplayTag& Reaction, const AAgCharacterBase& Attacker, const AAgCharacterBase& Target);
 
 	virtual FVector GetMoveInputDirection() const override
 	{
@@ -98,6 +99,8 @@ private:
 
 	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
+	void HandleSprintFieldOfViewChanged(const FGameplayTag Tag, int32 NewCount);
+
 	void HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount);
@@ -129,11 +132,17 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera|Combat")
 	TMap<EAgCameraSituation, FAgCameraEffect> CameraEffects;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Camera|Sprint")
+	FAgFieldOfViewEffect SprintFieldOfView;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Camera|Execution")
 	TSubclassOf<UAgExecutionCameraModifier> ExecutionCameraClass;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAgExecutionCameraModifier> ExecutionCamera;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAgFieldOfViewCameraModifier> FieldOfViewCamera;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;
@@ -178,6 +187,7 @@ private:
 
 	bool bGuardHeld = false;
 	bool bDodgeHeld = false;
+	bool bSprintFieldOfViewHeld = false;
 
 	TWeakObjectPtr<AAgCharacterBase> LockOnCameraTarget;
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Camera/AgFieldOfViewCameraModifier.h"
 #include "Camera/CameraShakeBase.h"
 #include "AgCameraEffect.generated.h"
 
@@ -31,6 +32,9 @@ struct FAgCameraEffect
 
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<UCameraShakeBase>> CameraShakes;
+
+	UPROPERTY(EditAnywhere)
+	FAgFieldOfViewEffect FieldOfView;
 
 	UPROPERTY(EditAnywhere, meta = (InlineEditConditionToggle))
 	bool bTurnToOpponent = false;
