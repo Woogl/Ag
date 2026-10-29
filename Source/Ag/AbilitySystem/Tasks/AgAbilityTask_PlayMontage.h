@@ -47,6 +47,10 @@ struct FAgPlayMontageParams : public FAgTaskParams
 	UPROPERTY()
 	TOptional<EAgMoveDirection> MoveDirection;
 
+	/** 값이 있으면 어빌리티를 발동시킨 이벤트 태그가 이 태그와 맞을 때만 재생합니다. */
+	UPROPERTY()
+	FGameplayTag EventTag;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

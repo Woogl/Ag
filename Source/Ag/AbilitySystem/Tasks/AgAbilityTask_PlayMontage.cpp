@@ -82,7 +82,8 @@ void UAgAbilityTask_PlayMontage::Activate()
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
 	if (!Character || !ASC || !ASC->HasAllMatchingGameplayTags(Params.RequiredTags) ||
-		ASC->HasAnyMatchingGameplayTags(Params.BlockedTags) || (Params.MoveDirection && !MatchesMoveDirection(*AgAbility, *Character, *Params.MoveDirection)))
+		ASC->HasAnyMatchingGameplayTags(Params.BlockedTags) || (Params.MoveDirection && !MatchesMoveDirection(*AgAbility, *Character, *Params.MoveDirection)) ||
+		(Params.EventTag.IsValid() && !AgAbility->GetTriggerEventTag().MatchesTag(Params.EventTag)))
 	{
 		EndTask();
 		return;

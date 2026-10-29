@@ -55,11 +55,6 @@
       {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "HitReaction": "KnockDown", "bGuardable": true}}
     ]
   },
-  "/Game/Animations/AM_Boss_KnockDown.AM_Boss_KnockDown": {
-    "Default": [
-      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
-    ]
-  },
   "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike": {
     "Attack1": [
       {"Task": "RootMotion", "Start": 0, "End": 0.65, "bWarpTranslation": false},
@@ -124,6 +119,11 @@
       {"Task": "SpawnProjectile", "Start":0.28, "Projectile": "SwordWave"}
     ]
   },
+  "/Game/Animations/AM_KnockDown.AM_KnockDown": {
+    "Default": [
+      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
+    ]
+  },
   "/Game/Animations/AM_KnockUp.AM_KnockUp": {
     "Rise": [
       {"Task": "Transition", "Start": 0, "Event": "Event.Apex", "Section": "Fall", "BlendTime": 0.15},
@@ -134,6 +134,9 @@
     ],
     "Land": [
       {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
+    ],
+    "GetUp": [
+      {"Task": "Transition", "Start": 0.42, "Section": "Stand", "BlendTime": 0.15}
     ]
   },
   "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack": {
@@ -252,11 +255,6 @@
       {"Task": "Transition", "Start": 0, "EndSection": "Fall", "Event": "Event.Landed", "Section": "Land"},
       {"Task": "WeaponHit", "Start": 0.23, "EndSection": "Land", "End": 0.05, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
       {"Task": "Plunge", "Start": 0.3, "EndSection": "Fall", "Speed": 1000}
-    ]
-  },
-  "/Game/Animations/AM_Player_KnockDown.AM_Player_KnockDown": {
-    "Default": [
-      {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
     ]
   },
   "/Game/Animations/AM_Player_Parry.AM_Player_Parry": {

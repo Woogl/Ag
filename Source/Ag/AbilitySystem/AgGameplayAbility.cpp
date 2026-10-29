@@ -173,7 +173,9 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	const TOptional<FAgAbilityTargeting>& Targeting = Definition.Targeting;
 
 	RefreshTarget();
-	if (!Targeting && IsEventTrigger(TriggerEventData))
+	const bool bEventTrigger = IsEventTrigger(TriggerEventData);
+	TriggerEventTag = bEventTrigger ? TriggerEventData->EventTag : FGameplayTag();
+	if (!Targeting && bEventTrigger)
 	{
 		ActionTarget = const_cast<AActor*>(TriggerEventData->Instigator.Get());
 	}

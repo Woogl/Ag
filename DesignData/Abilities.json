@@ -199,7 +199,7 @@
   "Flinch": {
     "Tags": ["Ability.Reaction.HitReaction.Flinch"],
     "Activation": {
-      "BlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+      "BlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Execution", "State.Dead", "State.SuperArmor"],
       "OwnedTags": ["State.HitReaction.Flinch"],
       "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
       "Triggers": [
@@ -208,7 +208,12 @@
       "bAllowRetrigger": true
     },
     "Tasks": [
-      {"Task": "PlayMontage", "Montage": "Flinch"}
+      {"Task": "PlayMontage", "Montage": "FlinchAir", "RequiredTags": ["State.Airborne"]},
+      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "Back", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.Back"},
+      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "Head", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.Head"},
+      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "ArmRight", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.ArmRight"},
+      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "ArmLeft", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.ArmLeft"},
+      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "Body", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.Body"}
     ]
   },
   "KnockDown": {

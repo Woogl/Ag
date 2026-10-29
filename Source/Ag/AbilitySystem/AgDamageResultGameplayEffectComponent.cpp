@@ -12,6 +12,7 @@
 #include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgProjectile.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAbilityData.h"
@@ -57,22 +58,30 @@ namespace
 			return FGameplayTag();
 		}
 
-		const EAgToughness Toughness = Target.GetCharacterData()->Toughness;
-		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch))
+		const bool bGroggy = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+		EAgToughness Toughness = Target.GetCharacterData()->Toughness;
+		if (bGroggy && Toughness != EAgToughness::Small)
 		{
-			if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockUp) && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne))
-			{
-				return AgGameplayTags::Event_Hit_Flinch;
-			}
-			if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
-			{
-				return FGameplayTag();
-			}
-			const bool bOtherReaction = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) &&
-			                            !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
-			return Toughness == EAgToughness::Small && !bOtherReaction ? AgGameplayTags::Event_Hit_Stagger : FGameplayTag();
+			Toughness = static_cast<EAgToughness>(static_cast<uint8>(Toughness) - 1);
 		}
-		return Toughness == EAgToughness::Large ? FGameplayTag() : GetKnockReactionEvent(SpecTags);
+
+		const FGameplayTag KnockEvent = GetKnockReactionEvent(SpecTags);
+		if (KnockEvent.IsValid() && Toughness == EAgToughness::Small)
+		{
+			return KnockEvent;
+		}
+		const bool bFlinch = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) || (KnockEvent.IsValid() && Toughness == EAgToughness::Medium);
+		if (!bFlinch)
+		{
+			return FGameplayTag();
+		}
+		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockUp) && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne))
+		{
+			return AgGameplayTags::Event_Hit_Flinch;
+		}
+		const bool bOtherReaction = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) &&
+		                            !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
+		return (Toughness == EAgToughness::Small || KnockEvent.IsValid()) && !bOtherReaction ? AgGameplayTags::Event_Hit_Stagger : FGameplayTag();
 	}
 
 	FAgPhysicsHit MakePhysicsHit(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context, bool bGuard)
@@ -88,6 +97,34 @@ namespace
 		return Hit;
 	}
 
+	FGameplayTag ResolveStaggerEvent(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context)
+	{
+		const FVector ToCauser = (Causer.GetActorLocation() - Target.GetActorLocation()).GetSafeNormal2D();
+		if (FVector::DotProduct(ToCauser, -Target.GetActorForwardVector().GetSafeNormal2D()) >= UE_HALF_SQRT_2)
+		{
+			return AgGameplayTags::Event_Hit_Stagger_Back;
+		}
+
+		// 사람형 캐릭터가 모두 SK_Mannequin 스켈레톤이라 기준 뼈 이름을 상수로 둡니다.
+		static const TMap<FName, FGameplayTag> ZoneBones = {
+			{TEXT("neck_01"), AgGameplayTags::Event_Hit_Stagger_Head},
+			{TEXT("spine_04"), AgGameplayTags::Event_Hit_Stagger_Head},
+			{TEXT("clavicle_r"), AgGameplayTags::Event_Hit_Stagger_ArmRight},
+			{TEXT("clavicle_l"), AgGameplayTags::Event_Hit_Stagger_ArmLeft},
+			{TEXT("pelvis"), AgGameplayTags::Event_Hit_Stagger_Body},
+		};
+		const FHitResult* Contact = Context.GetHitResult();
+		const USkeletalMeshComponent* Mesh = Target.GetMesh();
+		for (FName Bone = Contact ? Contact->BoneName : NAME_None; !Bone.IsNone(); Bone = Mesh->GetParentBone(Bone))
+		{
+			if (const FGameplayTag* Zone = ZoneBones.Find(Bone))
+			{
+				return *Zone;
+			}
+		}
+		return AgGameplayTags::Event_Hit_Stagger_Body;
+	}
+
 	void StartHitReaction(AActor* Causer, AAgCharacterBase* Target, const FGameplayTagContainer& SpecTags, const FGameplayEffectContextHandle& Context)
 	{
 		const UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
@@ -99,7 +136,7 @@ namespace
 		}
 		if (const FGameplayTag Event = ResolveHitReactionEvent(*Target, SpecTags); Event.IsValid())
 		{
-			SendEvent(Target, Event, Causer);
+			SendEvent(Target, Event == AgGameplayTags::Event_Hit_Stagger ? ResolveStaggerEvent(*Causer, *Target, Context) : Event, Causer);
 		}
 		Target->GetHitPhysics()->Play(MakePhysicsHit(*Causer, *Target, Context, false));
 	}

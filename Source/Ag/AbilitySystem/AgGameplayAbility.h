@@ -41,6 +41,12 @@ public:
 		return Definition.Tags;
 	}
 
+	/** 이벤트로 발동하지 않았으면 비어 있습니다. */
+	const FGameplayTag& GetTriggerEventTag() const
+	{
+		return TriggerEventTag;
+	}
+
 	AActor* GetActionTarget() const
 	{
 		return ActionTarget.Get();
@@ -96,6 +102,8 @@ private:
 	FAgAbilityData Definition;
 
 	TWeakObjectPtr<AActor> ActionTarget;
+
+	FGameplayTag TriggerEventTag;
 
 	bool bStartingTasks = false;
 };
