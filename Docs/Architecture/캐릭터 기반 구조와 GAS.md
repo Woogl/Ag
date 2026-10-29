@@ -105,7 +105,8 @@ classDiagram
 | `GuardBreak` | `State.HitReaction.GuardBreak` |
 
 - 공격 데이터의 `Flinch`는 결과 처리에서 행동 중단용 `Event.Hit.Stagger` 또는 저글용 `Event.Hit.Flinch`로 나뉩니다. 저글은 `State.Airborne`과 넉업 하위 상태를 함께 요구합니다. `Stagger`는 새 공격 반응 종류가 아닌 내부 이벤트입니다.
-- `Flinch`는 기존 `PlayMontage` Task 하나를 사용하고 `bAllowRetrigger`로 다시 시작합니다. 행동 제한은 블렌드아웃 시작이 아닌 몽타주 종료까지 유지합니다. 별도 피격 시간값이나 전용 실행 클래스는 없습니다.
+- 결과 처리는 `Stagger`를 맞은 곳의 하위 태그(`Event.Hit.Stagger.Back`·`Head`·`ArmRight`·`ArmLeft`·`Body`)로 보냅니다. 공격자(투사체면 투사체) 쪽이 피격자 등 쪽 45° 안이면 `Back`, 아니면 이펙트 컨텍스트 HitResult의 뼈에서 부모를 따라 처음 만나는 기준 뼈(`neck_01`·`spine_04` → `Head`, `clavicle_r`·`clavicle_l` → 팔, `pelvis` → `Body`)로 정하고, 뼈가 없으면 `Body`입니다. 사람형 캐릭터가 모두 `SK_Mannequin`이라 기준 뼈는 코드 상수입니다. 엔진은 이벤트 태그의 부모를 따라 트리거를 찾으므로 `Flinch`의 트리거는 `Event.Hit.Stagger` 하나입니다.
+- `Flinch`는 PlayMontage Task를 섹션마다 두고 `bAllowRetrigger`로 다시 시작합니다. 지상 섹션은 `EventTag`(어빌리티를 발동시킨 이벤트 태그와 맞을 때만 재생)로, 공중은 `State.Airborne`으로 고릅니다. 공중 움찔은 별도 몽타주 ID(`FlinchAir`)인데, 루트 모션 시퀀스가 하나라도 든 몽타주는 엔진이 몽타주 전체를 루트 모션으로 다뤄 낙하 중 수평 속도를 덮어쓰기 때문입니다. 행동 제한은 블렌드아웃 시작이 아닌 몽타주 종료까지 유지하고, 별도 피격 시간값이나 전용 실행 클래스는 없습니다.
 - 움찔은 넉업·넉다운·가드 피격 중에 발동하지 않습니다.
 - 그로기 효과는 Groggy 어빌리티가 끝나도 지속 시간 동안 남고(`bRemoveOnEnd: false`), 처형·사망 태그가 붙으면 효과 정의의 `RemovalTags`로 지워집니다. 피격 반응 몽타주가 그로기 몽타주를 끊어 어빌리티가 취소돼도 그로기는 이어지며, 피격 반응 뒤의 그로기 자세는 ABP가 보여 줍니다.
 - 플레이어는 공중 공격의 입력 예외보다 부모 피격 상태를 먼저 확인합니다. 선입력은 상태가 해제된 다음 틱에 재검사해, 재발동 중 태그가 잠시 빠지는 순간에 실행하지 않습니다.

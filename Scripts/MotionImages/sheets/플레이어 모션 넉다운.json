@@ -4,7 +4,7 @@
   "animation": {
     "segments": [
       {
-        "clip": "Samurai/Hit_knockdown",
+        "clip": "Dual_Wield/Hit_knockdown",
         "from": 0.0,
         "to": 1.3167
       }
