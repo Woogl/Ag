@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="540" viewBox="0 0 1300 540" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <!-- 게임 화면 배경 (임시) -->
+  <rect width="1300" height="540" fill="#3a4553"/>
+  <text x="40" y="34" font-size="16" fill="#9aa4b1">게이지 바 스타일 · 위: 플레이어 HP 바를 2배로 확대한 구성 · 아래: 자원별 채움 색 (기준 해상도 크기)</text>
+
+  <!-- 구성 (2배 확대): 400 × 16px → 800 × 32 -->
+  <text x="80" y="80" font-size="20" fill="#FFFFFF">구성 (2배 확대) · 각진 모서리, 테두리 없음</text>
+  <rect x="80" y="110" width="800" height="32" fill="#000000" fill-opacity="0.5"/>
+  <rect x="80" y="110" width="560" height="32" fill="#D94545"/>
+  <rect x="640" y="110" width="80" height="32" fill="#FFFFFF" fill-opacity="0.7"/>
+  <text x="904" y="143" font-size="48" fill="#FFFFFF">850 / 1000</text>
+
+  <!-- 바와 수치 사이 12px (확대해서 24) -->
+  <g stroke="#FFD23F" stroke-width="2">
+    <path d="M880 100 V108 M904 100 V108 M880 104 H904"/>
+  </g>
+  <text x="892" y="94" font-size="14" fill="#FFD23F" text-anchor="middle">12px</text>
+
+  <!-- 설명선 -->
+  <g stroke="#9aa4b1" stroke-width="1.5">
+    <path d="M360 142 V176"/>
+    <path d="M680 142 V226"/>
+    <path d="M800 142 V176"/>
+    <path d="M1030 154 V176"/>
+  </g>
+  <g text-anchor="middle">
+    <text x="360" y="198" font-size="18" font-weight="700" fill="#FFFFFF">채움</text>
+    <text x="360" y="220" font-size="14" fill="#c8d0da">바마다 정한 색 · 왼쪽부터 채우고 오른쪽 끝부터 줄어듦</text>
+    <text x="680" y="248" font-size="18" font-weight="700" fill="#FFFFFF">감소 잔상</text>
+    <text x="680" y="270" font-size="14" fill="#c8d0da">반투명한 흰색 · 채움 바로 오른쪽</text>
+    <text x="800" y="198" font-size="18" font-weight="700" fill="#FFFFFF">배경</text>
+    <text x="800" y="220" font-size="14" fill="#c8d0da">반투명한 검은색 · 바 전체</text>
+    <text x="1030" y="198" font-size="18" font-weight="700" fill="#FFFFFF">수치</text>
+    <text x="1030" y="220" font-size="14" fill="#c8d0da">Medium · 세로 가운데 정렬</text>
+  </g>
+
+  <!-- 바별 채움 색 (기준 해상도 크기) -->
+  <text x="80" y="326" font-size="20" fill="#FFFFFF">자원별 채움 색 (기준 해상도 크기)</text>
+  <g font-size="18" fill="#c8d0da">
+    <text x="80" y="360">플레이어 SP</text>
+    <text x="80" y="398">플레이어 HP</text>
+    <text x="80" y="437">플레이어 MP</text>
+    <text x="80" y="479">보스 HP</text>
+    <text x="80" y="513">보스 PP</text>
+  </g>
+
+  <rect x="260" y="350" width="400" height="8" fill="#000000" fill-opacity="0.5"/>
+  <rect x="260" y="350" width="300" height="8" fill="#4CC38A"/>
+  <rect x="560" y="350" width="30" height="8" fill="#FFFFFF" fill-opacity="0.7"/>
+
+  <rect x="260" y="384" width="400" height="16" fill="#000000" fill-opacity="0.5"/>
+  <rect x="260" y="384" width="340" height="16" fill="#D94545"/>
+  <rect x="600" y="384" width="32" height="16" fill="#FFFFFF" fill-opacity="0.7"/>
+  <text x="672" y="400" font-size="24" fill="#FFFFFF">850 / 1000</text>
+
+  <rect x="260" y="426" width="400" height="10" fill="#000000" fill-opacity="0.5"/>
+  <rect x="260" y="426" width="160" height="10" fill="#3D8BFD"/>
+  <text x="672" y="439" font-size="24" fill="#FFFFFF">40 / 100</text>
+
+  <rect x="260" y="466" width="1000" height="14" fill="#000000" fill-opacity="0.5"/>
+  <rect x="260" y="466" width="620" height="14" fill="#D94545"/>
+  <rect x="880" y="466" width="60" height="14" fill="#FFFFFF" fill-opacity="0.7"/>
+
+  <rect x="260" y="504" width="1000" height="6" fill="#000000" fill-opacity="0.5"/>
+  <rect x="260" y="504" width="450" height="6" fill="#F2A33A"/>
+  <rect x="710" y="504" width="40" height="6" fill="#FFFFFF" fill-opacity="0.7"/>
+</svg>

@@ -40,7 +40,7 @@
   <!-- [3] 보스 상태 -->
   <text x="960" y="78" font-size="32" fill="#FFFFFF" text-anchor="middle">보스 이름</text>
   <rect x="460" y="92" width="1000" height="14" fill="#000000" fill-opacity="0.5"/>
-  <rect x="460" y="92" width="620" height="14" fill="#B3261E"/>
+  <rect x="460" y="92" width="620" height="14" fill="#D94545"/>
   <rect x="1080" y="92" width="60" height="14" fill="#FFFFFF" fill-opacity="0.7"/>
   <rect x="460" y="114" width="1000" height="6" fill="#000000" fill-opacity="0.5"/>
   <rect x="460" y="114" width="450" height="6" fill="#F2A33A"/>
