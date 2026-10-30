@@ -1,8 +1,9 @@
 # Copyright Woogle. All Rights Reserved.
 """테스트 창(게임 프로세스) 안에서 도는 공통 실행기. run.py가 시나리오 뒤에 붙여 보낸다.
 
-시나리오가 정하는 것: TITLE, AI_ON, STEPS, evaluate(ctx). run.py가 정하는 것: OUT(결과 파일 경로).
+시나리오가 정하는 것: TITLE, AI_ON, STEPS, evaluate(ctx), 선택 WATCH_TAGS. run.py가 정하는 것: OUT(결과 파일 경로).
 프레임마다 상태를 기록하고, 단계마다 화면에 안내를 띄우며, 끝나면 판정을 화면과 OUT에 남긴다.
+캐릭터는 키로 가리킨다: "p" 플레이어, "b" 보스, "e0"·"e1"… 보스를 뺀 적(준비할 때 플레이어에 가까운 순서).
 """
 import unreal, json, time, math, builtins, ctypes, os
 from ctypes import wintypes
@@ -22,7 +23,7 @@ def _tag(name):
 
 
 class Ctx:
-    """시나리오 단계 함수가 받는 도우미. 플레이어는 "p", 보스는 "b"로 가리킨다."""
+    """시나리오 단계 함수가 받는 도우미. 캐릭터는 키("p", "b", "e0"…)로 가리킨다."""
 
     def __init__(self):
         self.rows, self.notes, self.fps = [], [], {}
@@ -30,6 +31,7 @@ class Ctx:
         self.step_index = 0
         self.done = False
         self.window_locked = False
+        self.chars, self.asc, self.aset, self.brains = {}, {}, {}, []
 
     # 화면 안내. 줄마다 key가 있고, 같은 key의 글자는 제자리에서 바뀐다. 줄은 처음 띄운 순서대로 위에서부터 쌓인다.
     def banner(self, text, key="note", color=(1, 1, 1), secs=600.0):
@@ -65,21 +67,38 @@ class Ctx:
     # 자원(어트리뷰트). 이 창의 메모리만 바꾸고 DesignData JSON은 건드리지 않는다.
     # 값만 바꾸고 변경 이벤트는 일으키지 않으므로, HP를 0으로 해도 사망하지 않고 HUD도 바뀌지 않는다.
     def attr(self, who, name):
-        return (self.paset if who == "p" else self.baset).get_editor_property(name).current_value
+        return self.aset[who].get_editor_property(name).current_value
 
     def set_attr(self, who, name, value):
-        aset = self.paset if who == "p" else self.baset
+        aset = self.aset[who]
         v = aset.get_editor_property(name)
         v.set_editor_property("base_value", value)
         v.set_editor_property("current_value", value)
         aset.set_editor_property(name, v, NEVER)
 
     def has(self, who, tag):
-        return (self.pasc if who == "p" else self.basc).has_matching_gameplay_tag(_tag(tag))
+        return self.asc[who].has_matching_gameplay_tag(_tag(tag))
 
-    def face_boss(self, dist):
-        """보스에서 dist cm 떨어진 곳(지금 방향 그대로)에 플레이어를 두고, 플레이어와 카메라가 보스를 보게 한다."""
-        b, p = self.boss.get_actor_location(), self.player.get_actor_location()
+    def event(self, who, tag, instigator=None):
+        """who에게 게임플레이 이벤트를 보낸다(공격자 없는 피격 반응 등). instigator는 보낸 쪽 캐릭터 키."""
+        payload = unreal.GameplayEventData()
+        payload.set_editor_property("event_tag", _tag(tag))
+        payload.set_editor_property("target", self.chars[who])
+        if instigator:
+            payload.set_editor_property("instigator", self.chars[instigator])
+        unreal.AbilitySystemLibrary.send_gameplay_event_to_actor(self.chars[who], _tag(tag), payload)
+
+    def ai(self, on):
+        """적 AI를 모두 켜거나 끈다."""
+        for brain in self.brains:
+            if on:
+                brain.start_logic()
+            else:
+                brain.stop_logic("qa")
+
+    def face(self, who, dist):
+        """who에서 dist cm 떨어진 곳(지금 방향 그대로)에 플레이어를 두고, 플레이어와 카메라가 who를 보게 한다."""
+        b, p = self.chars[who].get_actor_location(), self.player.get_actor_location()
         dx, dy = p.x - b.x, p.y - b.y
         n = math.hypot(dx, dy) or 1.0
         loc = unreal.Vector(b.x + dx / n * dist, b.y + dy / n * dist, p.z)
@@ -88,15 +107,45 @@ class Ctx:
         self.player.set_actor_rotation(unreal.Rotator(roll=0, pitch=0, yaw=yaw), True)
         self.pc.set_control_rotation(unreal.Rotator(roll=0, pitch=-12, yaw=yaw))
 
+    def face_boss(self, dist):
+        self.face("b", dist)
+
     def pos(self):
         return self.player.get_actor_location()
 
     def forward(self):
         return self.player.get_actor_forward_vector()
 
+    def fov(self):
+        return self.pc.get_editor_property("player_camera_manager").get_fov_angle()
+
+    # 적의 지각: 적 AI가 플레이어를 바라보는지(포커스), 기억하는지, 지금 보는지, 몸 정면에서 플레이어까지의 각도.
+    # 죽은 적은 컨트롤러가 빙의를 풀어 모두 False가 된다.
+    def focus(self, who):
+        controller = self.chars[who].get_controller()
+        return bool(controller) and controller.get_focus_actor() == self.player
+
+    def known(self, who):
+        perception = self._perception(who)
+        return bool(perception) and self.player in perception.get_known_perceived_actors(None)
+
+    def seen(self, who):
+        perception = self._perception(who)
+        return bool(perception) and self.player in perception.get_currently_perceived_actors(None)
+
+    def angle(self, who):
+        e, p, f = self.chars[who].get_actor_location(), self.player.get_actor_location(), self.chars[who].get_actor_forward_vector()
+        dx, dy = p.x - e.x, p.y - e.y
+        n = math.hypot(dx, dy) or 1.0
+        return math.degrees(math.acos(max(-1.0, min(1.0, (dx * f.x + dy * f.y) / n))))
+
+    def _perception(self, who):
+        controller = self.chars[who].get_controller()
+        return controller.get_component_by_class(unreal.AIPerceptionComponent) if controller else None
+
     def montage(self, who):
         """지금 몽타주 이름. 기본 섹션(Default)이 아닌 섹션이면 "AM_Player_BasicAttack:Attack3"처럼 섹션을 붙인다."""
-        anim = (self.player if who == "p" else self.boss).get_editor_property("mesh").get_anim_instance()
+        anim = self.chars[who].get_editor_property("mesh").get_anim_instance()
         m = anim.get_current_active_montage() if anim else None
         if not m:
             return None
@@ -105,11 +154,29 @@ class Ctx:
 
     def seq(self, who, t_from=0.0, t_to=1e9):
         """t_from~t_to초 사이에 재생된 몽타주 이름(montage와 같은 형식)을 차례로(연속 중복 없이)."""
+        return [m for _, m in self.timeline(who, t_from, t_to) if m]
+
+    def timeline(self, who, t_from=0.0, t_to=1e9):
+        """t_from~t_to초 사이에 몽타주가 바뀐 시각과 이름. 몽타주가 끝나면 이름이 None인 항목이 들어간다."""
         out = []
         for r in self.rows:
-            m = r["pm" if who == "p" else "bm"]
-            if t_from <= r["t"] <= t_to and m and (not out or out[-1] != m):
-                out.append(m)
+            m = r.get(who + "m")
+            if t_from <= r["t"] <= t_to and (not out or out[-1][1] != m):
+                out.append((r["t"], m))
+        return out
+
+    def spans(self, who, tag):
+        """WATCH_TAGS의 태그가 붙어 있던 구간 [(시작, 끝)]. 끝까지 붙어 있으면 끝은 마지막 기록 시각이다."""
+        out, start = [], None
+        for r in self.rows:
+            on = tag in r["tags"].get(who, ())
+            if on and start is None:
+                start = r["t"]
+            elif not on and start is not None:
+                out.append((start, r["t"]))
+                start = None
+        if start is not None:
+            out.append((start, self.rows[-1]["t"]))
         return out
 
 
@@ -146,16 +213,23 @@ def _setup():
         return False
     ctx.world, ctx.pc = world, pc
     ctx.player = pc.get_controlled_pawn()
-    ctx.boss = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.load_class(None, "/Script/Ag.AgBossCharacter"))[0]
-    ctx.pasc = ctx.player.get_component_by_class(unreal.AbilitySystemComponent)
-    ctx.basc = ctx.boss.get_component_by_class(unreal.AbilitySystemComponent)
-    ctx.paset = unreal.find_object(None, ctx.player.get_path_name() + ".AttributeSet")
-    ctx.baset = unreal.find_object(None, ctx.boss.get_path_name() + ".AttributeSet")
-    ctx.brain = ctx.boss.get_controller().get_component_by_class(unreal.BrainComponent)
+    boss_class = unreal.load_class(None, "/Script/Ag.AgBossCharacter")
+    enemies = list(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.load_class(None, "/Script/Ag.AgEnemyCharacter")))
+    bosses = [e for e in enemies if unreal.MathLibrary.class_is_child_of(e.get_class(), boss_class)]
+    others = sorted((e for e in enemies if e not in bosses), key=lambda e: e.get_distance_to(ctx.player))
+    ctx.boss = bosses[0] if bosses else None
+    ctx.chars = {"p": ctx.player}
+    if ctx.boss:
+        ctx.chars["b"] = ctx.boss
+    ctx.chars.update(("e%d" % i, e) for i, e in enumerate(others))
+    for key, actor in ctx.chars.items():
+        ctx.asc[key] = actor.get_component_by_class(unreal.AbilitySystemComponent)
+        ctx.aset[key] = unreal.find_object(None, actor.get_path_name() + ".AttributeSet")
+    ctx.brains = [a.get_controller().get_component_by_class(unreal.BrainComponent) for k, a in ctx.chars.items() if k != "p" and a.get_controller()]
     # 패드처럼 창을 거치지 않는 입력도 막는다. 확인용 입력(DevPressInput 등)은 이 입력 경로를 거치지 않는다.
     ctx.player.disable_input(pc)
-    # 준비: 보스 AI를 멈추고, 맵을 연 직후의 보스 공격이 끝나고 프레임이 안정되기를 기다린다.
-    ctx.brain.stop_logic("qa")
+    # 준비: 적 AI를 멈추고, 맵을 연 직후의 적 공격이 끝나고 프레임이 안정되기를 기다린다.
+    ctx.ai(False)
     # 화면에 제목, 준비, 시험 항목 전체를 한 줄씩 띄운다. 판정은 끝나고 그 아래에 붙는다.
     ctx.banner(TITLE, "title")
     ctx.banner("[진행] 준비: 보스 동작이 끝나고 프레임이 안정되기를 기다림", "warm", YELLOW)
@@ -168,23 +242,44 @@ def _setup():
 def _warmed_up():
     now = time.time()
     w = ctx.warm
-    w["times"] = [x for x in w["times"] + [now] if now - x <= 1.0]
-    idle = ctx.montage("b") is None and ctx.montage("p") is None
-    if (idle and len(w["times"]) >= 50 and now - w["start"] >= 2.0) or now - w["start"] > 20.0:
-        ctx.notes.append("준비 %.1f초, 시작 직전 %d fps" % (now - w["start"], len(w["times"])))
-        ctx.banner("[완료] 준비 (%.1f초, %d fps)" % (now - w["start"], len(w["times"])), "warm", DONE)
+    w["times"] = [x for x in w["times"] + [now] if now - x <= 2.0]
+    fps = sum(1 for x in w["times"] if now - x <= 1.0)
+    # 창마다 프레임 수준이 달라 정해진 fps가 아니라, 직전 1초와 비슷해졌는지로 안정을 본다.
+    steady = now - w["start"] >= 2.0 and abs(fps - (len(w["times"]) - fps)) <= max(2, fps // 10)
+    idle = all(ctx.montage(k) is None for k in ctx.chars)
+    if (idle and steady) or now - w["start"] > 20.0:
+        ctx.notes.append("준비 %.1f초, 시작 직전 %d fps" % (now - w["start"], fps))
+        ctx.banner("[완료] 준비 (%.1f초, %d fps)" % (now - w["start"], fps), "warm", DONE)
         if AI_ON:
-            ctx.brain.start_logic()
+            ctx.ai(True)
         ctx.t0 = now
         return True
     return False
+
+
+def _record(t):
+    """한 프레임의 기록. 플레이어는 p로 시작하는 값, 적은 그 키(b, e0…)로 시작하는 값이다."""
+    velocity = ctx.player.get_velocity()
+    row = {"t": round(t, 3), "pm": ctx.montage("p"), "pHP": ctx.attr("p", "HP"), "pSP": ctx.attr("p", "SP"),
+           "pMP": ctx.attr("p", "MP"), "pUP": ctx.attr("p", "UP"), "guard": ctx.has("p", "State.Guarding"),
+           "pdead": ctx.has("p", "State.Dead"), "pvz": round(velocity.z, 1), "pspeed": round(math.hypot(velocity.x, velocity.y), 1),
+           "fov": round(ctx.fov(), 2)}
+    for k in ctx.chars:
+        if k == "p":
+            continue
+        row.update({k + "m": ctx.montage(k), k + "HP": ctx.attr(k, "HP"), k + "PP": ctx.attr(k, "PP"),
+                    k + "dead": ctx.has(k, "State.Dead"), k + "focus": ctx.focus(k), k + "known": ctx.known(k),
+                    k + "seen": ctx.seen(k), k + "angle": round(ctx.angle(k), 1)})
+    watch = globals().get("WATCH_TAGS", ())
+    row["tags"] = {k: [tag for tag in watch if ctx.has(k, tag)] for k in ctx.chars}
+    return row
 
 
 def _finish(error=None):
     unreal.unregister_slate_post_tick_callback(ctx.handle)
     try:
         ctx.clear_inputs()
-        ctx.brain.stop_logic("qa")  # 판정 뒤에 보스가 계속 공격하지 않게 한다.
+        ctx.ai(False)  # 판정 뒤에 적이 계속 공격하지 않게 한다.
     except Exception:
         pass
     ok, items = False, [(False, "오류: " + error)] if error else []
@@ -210,7 +305,7 @@ def _finish(error=None):
     full = [v for k, v in ctx.fps.items() if k < max(ctx.fps)] if ctx.fps else []
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump({"title": TITLE, "verdict": verdict, "lines": lines, "notes": ctx.notes,
-                   "player_montages": ctx.seq("p"), "boss_montages": ctx.seq("b"),
+                   "montages": {k: ctx.seq(k) for k in ctx.chars},
                    "seconds": ctx.rows[-1]["t"] if ctx.rows else 0, "frames": len(ctx.rows),
                    "fps_min": min(full) if full else 0, "rows": ctx.rows}, f, ensure_ascii=False)
     ctx.done = True
@@ -228,10 +323,7 @@ def _tick(dt):
             return
         t = time.time() - ctx.t0
         ctx.fps[int(t)] = ctx.fps.get(int(t), 0) + 1
-        ctx.rows.append({"t": round(t, 3), "pm": ctx.montage("p"), "bm": ctx.montage("b"),
-                         "pHP": ctx.attr("p", "HP"), "pSP": ctx.attr("p", "SP"), "pMP": ctx.attr("p", "MP"),
-                         "pUP": ctx.attr("p", "UP"), "bHP": ctx.attr("b", "HP"), "bPP": ctx.attr("b", "PP"),
-                         "guard": ctx.has("p", "State.Guarding"), "pdead": ctx.has("p", "State.Dead")})
+        ctx.rows.append(_record(t))
         while ctx.step_index < len(STEPS) and t >= STEPS[ctx.step_index][0]:
             if ctx.step_index > 0:
                 ctx._step_line(ctx.step_index - 1, "done")

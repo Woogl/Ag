@@ -113,11 +113,11 @@ def powershell(script):
                           capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip()
 
 
-def launch(slot, title):
+def launch(slot, title, map_path):
     """게임 창을 WMI로 띄운다. 이 셸의 자식 프로세스가 아니어서 사용자가 쓰는 창의 포커스를 가져가지 않는다."""
     x, y = SLOTS[slot]
     args = [
-        '"%s\\Binaries\\Win64\\UnrealEditor.exe"' % ENGINE, '"%s"' % PROJECT, MAP, "-game", "-windowed",
+        '"%s\\Binaries\\Win64\\UnrealEditor.exe"' % ENGINE, '"%s"' % PROJECT, map_path, "-game", "-windowed",
         "-ResX=800", "-ResY=450", "-WinX=%d" % x, "-WinY=%d" % y, "-nosound", "-NoSplash", "-unattended", "-FORCELOGFLUSH",
         # 낮은 그래픽 품질과 60fps 제한: 여러 창과 에디터가 GPU를 나눠 써도 프레임이 일정해야 타이밍 확인을 믿을 수 있다.
         '"-ExecCmds=scalability 0, t.MaxFPS 60"',
@@ -170,6 +170,7 @@ def main():
     ap.add_argument("scenario")
     ap.add_argument("--hold", type=float, default=10, help="판정을 띄운 채 창을 두는 시간(초)")
     ap.add_argument("--keep", action="store_true", help="창을 닫지 않음. 떠 있는 동안 Build.bat이 실패한다.")
+    ap.add_argument("--map", default=MAP, help="열 맵 경로(기본: 보스 스테이지)")
     a = ap.parse_args()
 
     scenario = open(a.scenario, encoding="utf-8").read()
@@ -196,7 +197,7 @@ def main():
     out = os.path.join(WORK, "slot%d_%s.json" % (slot, time.strftime("%Y%m%d-%H%M%S")))
     pid = 0
     try:
-        pid = launch(slot, title.get("TITLE", os.path.basename(a.scenario)))
+        pid = launch(slot, title.get("TITLE", os.path.basename(a.scenario)), a.map)
         if not pid:
             print("창을 띄우지 못함")
             return 2
@@ -218,8 +219,9 @@ def main():
         print("%s → %s" % (r["title"], r["verdict"]))
         for line in r["lines"]:
             print("  " + line)
-        print("  플레이어:", " → ".join(m.replace("AM_Player_", "") for m in r["player_montages"]))
-        print("  보스:", " → ".join(m.replace("AM_Boss_", "") for m in r["boss_montages"]))
+        for key, montages in r["montages"].items():
+            name = {"p": "플레이어", "b": "보스"}.get(key, key)
+            print("  %s:" % name, " → ".join(re.sub(r"^AM_(Player|Boss)_", "", m) for m in montages))
         print("  %.1f초, 최저 %d fps | %s | 기록: %s" % (r["seconds"], r["fps_min"], " / ".join(r["notes"]), out))
         # 게임 코드의 오류 로그(데이터 파일을 읽지 못함 등)는 판정을 믿을 수 없게 하므로 함께 보여 준다.
         log = open(os.path.join(WORK, "slot%d.log" % slot), encoding="utf-8", errors="replace").read()
