@@ -14,6 +14,7 @@
   <rect x="332.0" y="140.0" width="40.0" height="120.0" fill="#2f3742"/>  <!-- 통로 1 -->
   <rect x="332.0" y="140.0" width="60.0" height="40.0" fill="#2f3742"/>  <!-- 통로 1 -->
   <rect x="392.0" y="96.0" width="128.0" height="128.0" fill="#2f3742"/>  <!-- 결투방 2 -->
+  <rect x="372.0" y="188.0" width="20.0" height="36.0" fill="#2f3742"/>  <!-- 엿보기 난간 앞 -->
   <rect x="520.0" y="140.0" width="60.0" height="40.0" fill="#2f3742"/>  <!-- 통로 2 -->
   <rect x="540.0" y="140.0" width="40.0" height="120.0" fill="#2f3742"/>  <!-- 통로 2 -->
   <rect x="540.0" y="220.0" width="60.0" height="40.0" fill="#2f3742"/>  <!-- 통로 2 -->
@@ -26,13 +27,9 @@
   <rect x="496.0" y="224.0" width="12.0" height="56.0" fill="#2f3742"/>
   <rect x="496.0" y="268.0" width="68.0" height="12.0" fill="#2f3742"/>
   <rect x="552.0" y="260.0" width="12.0" height="8.0" fill="#2f3742"/>
-  <!-- 2차 웨이브 대기실 (4m × 3.5m) -->
-  <rect x="400.0" y="68.0" width="32.0" height="28.0" fill="#252b34"/>
-  <rect x="400.0" y="224.0" width="32.0" height="28.0" fill="#252b34"/>
-  <rect x="632.0" y="296.0" width="32.0" height="28.0" fill="#252b34"/>
-  <!-- 결투방 2의 기둥 (2m × 2m) -->
-  <rect x="424.0" y="180.0" width="16.0" height="16.0" fill="#6b7480"/>
-  <rect x="424.0" y="124.0" width="16.0" height="16.0" fill="#6b7480"/>
+  <!-- 결투방 2의 기둥 (3m × 3m) -->
+  <rect x="420.0" y="180.0" width="24.0" height="24.0" fill="#6b7480"/>
+  <rect x="420.0" y="116.0" width="24.0" height="24.0" fill="#6b7480"/>
   <!-- 결투방 3의 단상(높이 1.5m)과 경사로 -->
   <rect x="728.0" y="184.0" width="48.0" height="48.0" fill="#4a5563"/>
   <rect x="680.0" y="184.0" width="48.0" height="16.0" fill="#3d4652"/>
@@ -40,38 +37,14 @@
     <text x="752" y="245">단상 1.5m</text>
     <text x="704" y="211">경사로</text>
   </g>
-  <!-- 결투방 1의 정찰 경로 -->
-  <line x1="232" y1="252.0" x2="288" y2="252.0" stroke="#e5534b" stroke-width="1.5" stroke-dasharray="3 4"/>
-  <g fill="#e5534b">
-    <rect x="228" y="248.0" width="8" height="8" transform="rotate(45 232 252.0)"/>
-    <rect x="284" y="248.0" width="8" height="8" transform="rotate(45 288 252.0)"/>
-  </g>
-  <text x="260.0" y="272" font-size="11" fill="#c9d1d9" text-anchor="middle">정찰</text>
-  <!-- 엿보기 창 -->
-  <line x1="372.0" y1="212.0" x2="372.0" y2="188.0" stroke="#b48ce0" stroke-width="4"/>
+  <!-- 엿보기 난간 -->
+  <line x1="392.0" y1="224.0" x2="392.0" y2="188.0" stroke="#b48ce0" stroke-width="4"/>
   <g stroke="#b48ce0" stroke-width="1.2" stroke-dasharray="2 4">
-    <line x1="372.0" y1="200" x2="480" y2="192"/>
-    <line x1="372.0" y1="200" x2="480" y2="128"/>
+    <line x1="382.0" y1="210" x2="480" y2="192"/>
+    <line x1="382.0" y1="222" x2="456" y2="128"/>
   </g>
   <!-- 대기 공간에서 커스터가 보이는 방향 -->
   <line x1="848" y1="240" x2="1096" y2="240" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
-  <!-- 잠기는 출입구 -->
-  <g stroke="#f0a04b" stroke-width="3" stroke-dasharray="5 4">
-    <line x1="200" y1="260.0" x2="200" y2="220.0"/>
-    <line x1="312" y1="260.0" x2="312" y2="220.0"/>
-    <line x1="392" y1="180.0" x2="392" y2="140.0"/>
-    <line x1="520" y1="180.0" x2="520" y2="140.0"/>
-    <line x1="496" y1="224" x2="508.0" y2="224"/>
-    <line x1="600" y1="260.0" x2="600" y2="220.0"/>
-    <line x1="776" y1="260.0" x2="776" y2="220.0"/>
-    <line x1="952" y1="260.0" x2="952" y2="220.0"/>
-  </g>
-  <!-- 2차 웨이브 문 -->
-  <g stroke="#5fc4d6" stroke-width="3" stroke-dasharray="5 4">
-    <line x1="400" y1="96" x2="432" y2="96"/>
-    <line x1="400" y1="224" x2="432" y2="224"/>
-    <line x1="632" y1="296" x2="664" y2="296"/>
-  </g>
   <!-- 결투장 아치 (아레나 입구 위) -->
   <path d="M938,204.0 L966,204.0 L966,276.0 L938,276.0" fill="none" stroke="#d6b25e" stroke-width="3"/>
   <!-- 구간 이름 -->
@@ -91,13 +64,8 @@
     <text x="952" y="190" font-size="13" fill="#d6b25e">결투장 아치</text>
   </g>
   <g font-size="11" text-anchor="middle">
-    <text x="328" y="196" fill="#b48ce0">엿보기 창</text>
+    <text x="334" y="196" fill="#b48ce0">엿보기 난간</text>
     <text x="528" y="293" fill="#7ed67e">샛길</text>
-  </g>
-  <g font-size="11" fill="#5fc4d6">
-    <text x="436" y="72">2차</text>
-    <text x="436" y="244">2차</text>
-    <text x="668" y="312">2차</text>
   </g>
   <!-- 아레나 입구(G)와 중심(C) -->
   <text x="952" y="292" font-size="14" fill="#f5c84c" text-anchor="middle">G</text>
@@ -108,13 +76,10 @@
     <line x1="67.6" y1="240.0" x2="85.2" y2="240.0"/>
     <line x1="299.6" y1="252.0" x2="317.2" y2="252.0"/>
     <line x1="468.4" y1="192.0" x2="450.8" y2="192.0"/>
-    <line x1="468.4" y1="128.0" x2="450.8" y2="128.0"/>
-    <line x1="416.0" y1="92.6" x2="416.0" y2="110.2"/>
-    <line x1="416.0" y1="227.4" x2="416.0" y2="209.8"/>
+    <line x1="444.4" y1="128.0" x2="426.8" y2="128.0"/>
     <line x1="560.0" y1="204.4" x2="560.0" y2="186.8"/>
     <line x1="676.4" y1="240.0" x2="658.8" y2="240.0"/>
     <line x1="740.6" y1="210.3" x2="723.4" y2="213.8"/>
-    <line x1="648.0" y1="299.4" x2="648.0" y2="281.8"/>
     <line x1="1132.4" y1="240.0" x2="1114.8" y2="240.0"/>
   </g>
   <!-- 플레이어와 적 -->
@@ -122,13 +87,10 @@
     <circle cx="56.0" cy="240.0" r="10" fill="#4c9be8"/><text x="56.0" y="244.0">P</text>
     <circle cx="288.0" cy="252.0" r="10" fill="#e5534b"/><text x="288.0" y="256.0">근</text>
     <circle cx="480.0" cy="192.0" r="10" fill="#e5534b"/><text x="480.0" y="196.0">근</text>
-    <circle cx="480.0" cy="128.0" r="10" fill="#e5534b"/><text x="480.0" y="132.0">근</text>
-    <circle cx="416.0" cy="82.0" r="9" fill="#e5534b"/><text x="416.0" y="86.0">근</text>
-    <circle cx="416.0" cy="238.0" r="9" fill="#e08a2e"/><text x="416.0" y="242.0">원</text>
+    <circle cx="456.0" cy="128.0" r="10" fill="#e5534b"/><text x="456.0" y="132.0">근</text>
     <circle cx="560.0" cy="216.0" r="10" fill="#e5534b"/><text x="560.0" y="220.0">근</text>
     <circle cx="688.0" cy="240.0" r="10" fill="#e5534b"/><text x="688.0" y="244.0">근</text>
     <circle cx="752.0" cy="208.0" r="10" fill="#e08a2e"/><text x="752.0" y="212.0">원</text>
-    <circle cx="648.0" cy="310.0" r="9" fill="#e5534b"/><text x="648.0" y="314.0">근</text>
     <circle cx="1148.0" cy="240.0" r="14" fill="#9b6bd6"/><text x="1148.0" y="244.0">B</text>
   </g>
   <text x="572.0" y="230" font-size="11" fill="#c9d1d9">매복</text>
@@ -139,15 +101,12 @@
     <circle cx="292" cy="418" r="6" fill="#e08a2e"/><text x="302" y="422">원거리 일반 적</text>
     <circle cx="406" cy="418" r="6" fill="#9b6bd6"/><text x="416" y="422">보스 (커스터)</text>
     <line x1="506" y1="418" x2="524" y2="418" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/><text x="530" y="422">바라보는 방향</text>
-    <line x1="622" y1="418" x2="642" y2="418" stroke="#f0a04b" stroke-width="3" stroke-dasharray="5 4"/><text x="648" y="422">잠기는 출입구</text>
-    <line x1="740" y1="418" x2="760" y2="418" stroke="#5fc4d6" stroke-width="3" stroke-dasharray="5 4"/><text x="766" y="422">2차 웨이브 문</text>
-    <line x1="858" y1="418" x2="878" y2="418" stroke="#b48ce0" stroke-width="4"/><text x="884" y="422">엿보기 창</text>
+    <line x1="622" y1="418" x2="642" y2="418" stroke="#b48ce0" stroke-width="4"/><text x="648" y="422">엿보기 난간</text>
     <rect x="42" y="442" width="12" height="12" fill="#2f3742"/><text x="58" y="452">바닥</text>
     <rect x="102" y="442" width="12" height="12" fill="#3d4652"/><text x="118" y="452">경사로</text>
     <rect x="176" y="442" width="12" height="12" fill="#4a5563"/><text x="192" y="452">1.5m</text>
-    <rect x="236" y="442" width="12" height="12" fill="#252b34"/><text x="252" y="452">2차 대기실</text>
-    <rect x="336" y="442" width="12" height="12" fill="#6b7480"/><text x="352" y="452">기둥</text>
-    <rect x="396" y="442" width="12" height="12" fill="none" stroke="#d6b25e" stroke-width="2"/><text x="412" y="452">결투장 아치 (높이 약 15m)</text>
+    <rect x="236" y="442" width="12" height="12" fill="#6b7480"/><text x="252" y="452">기둥</text>
+    <rect x="296" y="442" width="12" height="12" fill="none" stroke="#d6b25e" stroke-width="2"/><text x="312" y="452">결투장 아치 (높이 약 15m)</text>
   </g>
   <line x1="1016" y1="448" x2="1176" y2="448" stroke="#9aa4b1" stroke-width="2"/>
   <line x1="1016" y1="442" x2="1016" y2="454" stroke="#9aa4b1" stroke-width="2"/>
