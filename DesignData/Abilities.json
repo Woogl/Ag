@@ -112,6 +112,19 @@
       {"Task": "ApplyEffect", "Effect": "GuardMoveSpeed"}
     ]
   },
+  "GuardCounter": {
+    "Tags": ["Ability.Action.GuardCounter"],
+    "Activation": {
+      "RequiredTags": ["State.GuardCounterChance"],
+      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+      "OwnedTags": ["State.Acting"],
+      "CancelTags": ["Ability.Action", "Ability.Sprint"]
+    },
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "GuardCounter"}
+    ]
+  },
   "Parry": {
     "Tags": ["Ability.Action.Parry"],
     "Activation": {

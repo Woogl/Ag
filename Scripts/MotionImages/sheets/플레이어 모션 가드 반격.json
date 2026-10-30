@@ -1,0 +1,13 @@
+{
+  "image": "플레이어 모션 가드 반격",
+  "character": "player",
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Attack_Combo4",
+        "from": 0.0,
+        "to": 1.15
+      }
+    ]
+  }
+}

@@ -99,8 +99,13 @@
   },
   "DodgeCounterChance": {
     "DurationPolicy": "HasDuration",
-    "Duration": 1,
+    "Duration": 0.5,
     "GrantedTags": ["State.DodgeCounterChance"]
+  },
+  "GuardCounterChance": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 0.5,
+    "GrantedTags": ["State.GuardCounterChance"]
   },
   "PerfectDodgeSlowMotion": {
     "SlowMotionSpeed": 0.3,
