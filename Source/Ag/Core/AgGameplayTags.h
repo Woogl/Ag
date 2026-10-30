@@ -21,6 +21,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Dodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_DodgeCounter);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Guard);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_GuardCounter);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Skill);
@@ -61,6 +62,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Guarding);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_ParryWindow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_DodgeCounterChance);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GuardCounterChance);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hitstop);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Sprinting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_LockedOn);

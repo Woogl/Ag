@@ -136,6 +136,10 @@ void AAgPlayerCharacter::PlayDamageCameraEffects(const FGameplayTagContainer& Sp
 			{
 				PlayCameraEffect(EAgCameraSituation::DodgeCounterHit, &Target);
 			}
+			else if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_GuardCounter))
+			{
+				PlayCameraEffect(EAgCameraSituation::GuardCounterHit, &Target);
+			}
 		}
 	}
 	else if (&Target == this)
@@ -451,6 +455,10 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 		{
 			ActivateByTag(AgGameplayTags::Ability_Action_DodgeCounter);
 		}
+		else if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_GuardCounterChance))
+		{
+			ActivateByTag(AgGameplayTags::Ability_Action_GuardCounter);
+		}
 		else if (BasicAttack && BasicAttack->IsActive())
 		{
 			FGameplayEventData Payload;
@@ -649,9 +657,13 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	Enders.AddTag(AgGameplayTags::Ability_Action);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockDown);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockUp);
+	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_GuardBreak);
 	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinitionTags().HasAny(Enders))
 	{
-		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_DodgeCounterChance));
+		FGameplayTagContainer Chances;
+		Chances.AddTag(AgGameplayTags::State_DodgeCounterChance);
+		Chances.AddTag(AgGameplayTags::State_GuardCounterChance);
+		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(Chances);
 	}
 }
 

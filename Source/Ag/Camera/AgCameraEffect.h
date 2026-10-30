@@ -15,6 +15,7 @@ enum class EAgCameraSituation : uint8
 	Parry UMETA(DisplayName = "패리 성공"),
 	PerfectDodge UMETA(DisplayName = "극한 회피"),
 	DodgeCounterHit UMETA(DisplayName = "회피 반격 적중"),
+	GuardCounterHit UMETA(DisplayName = "가드 반격 적중"),
 	PlayerHurt UMETA(DisplayName = "플레이어 피격 (움찔)"),
 	PlayerHurtHeavy UMETA(DisplayName = "플레이어 피격 (넉업·넉다운)"),
 	Guard UMETA(DisplayName = "가드 움찔"),

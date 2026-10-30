@@ -26,6 +26,7 @@
 namespace
 {
 	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
+	const FName GuardCounterChanceEffectId(TEXT("GuardCounterChance"));
 
 	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle())
 	{
@@ -195,6 +196,12 @@ namespace
 		Defender.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
 	}
 
+	void GrantGuardCounterChance(UAbilitySystemComponent& DefenderASC)
+	{
+		DefenderASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(GuardCounterChanceEffectId), 1.f,
+			DefenderASC.MakeEffectContext());
+	}
+
 } // namespace
 
 void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
@@ -253,6 +260,11 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		else
 		{
 			Reaction = StartHitReaction(Causer, Target, SpecTags, Context);
+		}
+		// 패리 어빌리티가 발동하며 남은 기회를 지우므로, 패리 이벤트를 보낸 뒤에 겁니다.
+		if (bParry || bGuard)
+		{
+			GrantGuardCounterChance(*TargetASC);
 		}
 	}
 

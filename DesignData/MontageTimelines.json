@@ -216,10 +216,18 @@
   },
   "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter": {
     "Default": [
-      {"Task": "RootMotion", "Start": 0, "End": 0.15, "TargetingRange": 850, "RotationMethod": "Slerp", "bWarpTranslation": true},
+      {"Task": "RootMotion", "Start": 0, "End": 0.15, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.31, "Effect": "Busy"},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.23, "Effect": "Invincible"},
-      {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 2.5, "PPMultiplier": 5, "HitReaction": "Flinch", "bGuardable": true}}
+      {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
+    ]
+  },
+  "/Game/Animations/AM_Player_GuardCounter.AM_Player_GuardCounter": {
+    "Default": [
+      {"Task": "RootMotion", "Start": 0, "End": 0.43, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.56, "Effect": "Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.48, "Effect": "Invincible"},
+      {"Task": "WeaponHit", "Start": 0.43, "End": 0.48, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
     ]
   },
   "/Game/Animations/AM_Player_PerfectDodge.AM_Player_PerfectDodge": {
