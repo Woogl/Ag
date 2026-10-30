@@ -5,7 +5,7 @@
 
 종료 코드: 0 통과, 1 테스트 실패, 2 실행 실패.
 """
-import argparse, base64, json, os, re, subprocess, sys, time
+import argparse, ast, base64, json, os, re, subprocess, sys, time
 
 # 출력을 파일로 받아 지켜볼 때도 줄마다 바로 보이게 한다.
 sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
@@ -77,6 +77,17 @@ def wait_for_build():
     return False
 
 
+def unbuilt_sources():
+    """게임 모듈 DLL보다 나중에 고친 C++ 파일. 창은 빌드된 DLL을 쓰므로 이 코드는 창에 들어가지 않는다."""
+    root = os.path.dirname(PROJECT)
+    dll = os.path.join(root, "Binaries", "Win64", "UnrealEditor-Ag.dll")
+    if not os.path.exists(dll):
+        return []
+    built = os.path.getmtime(dll)
+    paths = (os.path.join(folder, f) for folder, _, files in os.walk(os.path.join(root, "Source", "Ag")) for f in files)
+    return sorted(p for p in paths if p.endswith((".h", ".cpp")) and os.path.getmtime(p) > built)
+
+
 def start_watchdog(game_pid, slot):
     """run.py가 어떤 이유로든 끝나면 창을 닫는 감시 프로세스를 띄운다. WMI로 띄워 run.py와 함께 끊기지 않게 한다.
     창 PID가 다른 프로세스에 다시 쓰였을 수 있으니, 이 자리의 포트를 쓰는 테스트 창인지 확인하고 닫는다."""
@@ -140,6 +151,20 @@ def send(slot, code):
         rx.stop()
 
 
+def top_level_names(source, with_imports):
+    """모듈 맨 위의 def, class, 대입(과 import)이 묶는 이름."""
+    names = set()
+    for node in ast.parse(source).body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            names.update(n.id for t in targets for n in ast.walk(t) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store))
+        elif with_imports and isinstance(node, (ast.Import, ast.ImportFrom)):
+            names.update((alias.asname or alias.name).split(".")[0] for alias in node.names)
+    return names
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("scenario")
@@ -148,18 +173,27 @@ def main():
     a = ap.parse_args()
 
     scenario = open(a.scenario, encoding="utf-8").read()
+    runner = open(os.path.join(os.path.dirname(__file__), "runner.py"), encoding="utf-8").read()
+    # 시나리오는 실행기와 한 이름 공간에서 돌아, 같은 이름은 오류 없이 실행기 것으로 바뀐다.
+    clash = sorted(top_level_names(scenario, False) & (top_level_names(runner, True) | {"OUT"}))
+    if clash:
+        print("시나리오의 이름이 실행기와 겹침(이름을 바꿀 것): %s" % ", ".join(clash))
+        return 2
     title = {}
     exec(compile("".join(l for l in scenario.splitlines(True) if l.startswith("TITLE")), a.scenario, "exec"), title)
     os.makedirs(WORK, exist_ok=True)
     if not wait_for_build():
         print("빌드가 30분 넘게 끝나지 않음")
         return 2
+    stale = unbuilt_sources()
+    if stale:
+        names = ", ".join(os.path.basename(p) for p in stale[:5]) + (" 외 %d개" % (len(stale) - 5) if len(stale) > 5 else "")
+        print("빌드 뒤에 고친 C++ 파일은 창에 들어가지 않음: %s" % names)
     slot, lock = take_slot()
     if not slot:
         print("빈 창 자리가 없음(최대 %d개)" % len(SLOTS))
         return 2
     out = os.path.join(WORK, "slot%d_%s.json" % (slot, time.strftime("%Y%m%d-%H%M%S")))
-    runner = open(os.path.join(os.path.dirname(__file__), "runner.py"), encoding="utf-8").read()
     pid = 0
     try:
         pid = launch(slot, title.get("TITLE", os.path.basename(a.scenario)))

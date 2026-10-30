@@ -17,4 +17,31 @@ public:
 
 	UFUNCTION(Exec)
 	void AgKillBoss();
+
+	UFUNCTION(Exec)
+	void AgKillEnemies();
+
+	UFUNCTION(Exec)
+	void AgGod();
+
+	UFUNCTION(Exec)
+	void AgFillMPUP();
+
+	UFUNCTION(Exec)
+	void AgGroggy();
+
+	UFUNCTION(Exec)
+	void AgPattern(FName Id);
+
+	UFUNCTION(Exec)
+	void AgSetHP(float Percent);
+
+	UFUNCTION(Exec)
+	void AgStopAI();
+
+	UFUNCTION(Exec)
+	void AgStartAI();
+
+private:
+	bool bGod = false;
 };

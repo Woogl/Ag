@@ -82,8 +82,9 @@ PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Architecture/�
 - PIE는 StopPIE 뒤에도 남을 수 있다. 그동안 에셋 도구는 "Asset does not exist"를 돌려준다. 에셋을 조회하거나 에디터를 닫기 전에 PIE가 돌고 있는지 확인한다.
 - 슬레이트 틱 콜백으로 PIE를 조종하는 스크립트는 끝날 때와 오류가 났을 때 모두 `editor_request_end_play()`를 부른다. 아니면 확인용 입력이 눌린 채 PIE가 남는다.
 - 키 입력은 확인용 입력([개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '확인용 입력')으로 넣는다. 회피 방향(`DevMoveInput`)은 회피 키보다 한 프레임 이상 먼저 넣는다. `DevPressInput`은 다음 원격 호출 전에 끝나므로 몽타주 확인은 `DevMashInput`으로 한다.
-- 보스는 `boss.get_controller().get_component_by_class(unreal.BrainComponent).stop_logic("test")`로 멈춘다. 멈추지 않으면 StateTree가 파이썬으로 실행한 패턴을 끊는다.
-- 행동(보스 패턴 포함)은 모두 같은 클래스 `UAgGameplayAbility`의 스펙이라 태그로 실행되지 않는다. 행동 태그는 스펙 태그에 있고, 엔진 `TryActivateAbilitiesByTag`·`FindAllAbilitiesWithTags`는 어빌리티의 에셋 태그만 본다. `asc.get_all_abilities()`의 핸들은 `Characters.json`에서 그 캐릭터의 `Abilities` 순서이므로, 그 순서로 고른 핸들로 `asc.try_activate_ability(handle, True)`를 부른다.
+- 그로기, 적 패턴, 적 HP, 자원, 무적, 적 AI 멈춤은 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '테스트용 콘솔 명령'으로 만든다. 파이썬에서는 `unreal.SystemLibrary.execute_console_command(PIE 월드, 명령, 플레이어 컨트롤러)`로 부른다. 패턴을 확인할 때는 `AgStopAI`를 먼저 부른다. 적 AI가 돌고 있으면 StateTree가 따로 실행한 패턴을 끊는다.
+- 콘솔 명령은 확인할 동작의 전제만 만든다. 그로기에 빠지는 과정이나 패턴 쿨다운처럼 명령이 건너뛰는 동작을 확인할 때는 쓰지 않는다.
+- 행동(보스 패턴 포함)은 모두 같은 클래스 `UAgGameplayAbility`의 스펙이라 엔진 `TryActivateAbilitiesByTag`·`FindAllAbilitiesWithTags`로 찾지 못한다. 행동 태그는 스펙 태그에 있고, 엔진은 어빌리티의 에셋 태그만 본다.
 - `DesignData` JSON은 저장하면 PIE 중에도 바로 다시 읽힌다(`UAgDataReloadSubsystem`). 테스트 때문에 고칠 때는 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업 수칙'을 따르고, 끝나면 원래 바이트로 되돌린다.
 - 엔진 자동화 테스트를 돌린 뒤에는 남은 컴파일 오류 창이 PIE 시작을 막을 수 있다. 에디터를 다시 켜면 풀린다.
 - 에디터를 다시 켠 직후에는 첫 MCP 호출이 두 번 처리될 수 있다. StartPIE가 'A play session is already running'으로 답하면 방금 보낸 첫 호출이 먼저 처리된 것일 수 있으니 로그의 `Dispatching` 줄부터 본다.
