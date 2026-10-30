@@ -160,3 +160,10 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	Effect->OnGameplayEffectChanged();
 	return Effect;
 }
+
+void AgEffectData::SetResourceAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP)
+{
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_SP, SP);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, MP);
+	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UP);
+}

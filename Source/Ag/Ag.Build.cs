@@ -31,10 +31,10 @@ public class Ag : ModuleRules
 			"GameplayStateTreeModule"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "EngineCameras", "Json", "JsonUtilities", "LevelSequence", "MovieScene", "PhysicsCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "Json", "JsonUtilities", "LevelSequence", "MovieScene", "PhysicsCore" });
 		if (Target.bBuildEditor)
 		{
-			PrivateDependencyModuleNames.AddRange(new string[] { "AssetRegistry", "TargetPlatform" });
+			PrivateDependencyModuleNames.AddRange(new string[] { "TargetPlatform" });
 		}
 
 		// JSON 데이터 파일은 Content 밖에 있어 쿡이 알지 못하므로 따로 넣습니다.

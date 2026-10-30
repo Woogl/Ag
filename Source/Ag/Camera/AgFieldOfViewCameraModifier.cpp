@@ -83,7 +83,8 @@ void UAgFieldOfViewCameraModifier::Start(const FAgFieldOfViewEffect& Effect, flo
 		return;
 	}
 	// 재생 중인 같은 연출은 지금 세기에서 들어가기부터 다시 시작합니다.
-	FActiveEffect* Active = ActiveEffects.FindByPredicate([&Effect](const FActiveEffect& Each) { return Each.Source == &Effect; });
+	FActiveEffect* Active = ActiveEffects.FindByPredicate([&Effect](const FActiveEffect& Each)
+	{ return Each.Source == &Effect; });
 	if (!Active)
 	{
 		Active = &ActiveEffects.AddDefaulted_GetRef();

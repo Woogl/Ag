@@ -27,7 +27,6 @@ public:
 	FAgResourceCost GetCost() const;
 
 	/** 엔진 MakeOutgoingGameplayEffectSpec은 GE 클래스를 받는데 Effects.json의 효과는 GE 객체이므로 직접 만듭니다. */
-	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect) const;
 	FGameplayEffectSpecHandle MakeEffectSpec(const UGameplayEffect& Effect) const;
 	FGameplayEffectSpecHandle MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitRewardState>& Reward) const;
 
@@ -36,9 +35,9 @@ public:
 		return AbilityId;
 	}
 
-	const FGameplayTagContainer& GetDefinitionTags() const
+	const FAgAbilityData& GetDefinition() const
 	{
-		return Definition.Tags;
+		return Definition;
 	}
 
 	/** 이벤트로 발동하지 않았으면 비어 있습니다. */
@@ -75,7 +74,6 @@ public:
 
 protected:
 	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual bool CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const override;
 	virtual bool CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
@@ -83,6 +81,7 @@ protected:
 
 private:
 	const FAgAbilityData* FindDefinition(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const;
+	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect) const;
 	FGameplayEffectSpecHandle MakeEffectSpec(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const UGameplayEffect* Effect) const;
 
 	AActor* FindTargetingTarget(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const;

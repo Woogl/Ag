@@ -121,8 +121,20 @@ bool UAgTargetingFilterTask_Hostile::ShouldFilterTarget(const FTargetingRequestH
 	{
 		return true;
 	}
-	const ETeamAttitude::Type Attitude = FGenericTeamId::GetAttitude(Owner, TargetData.HitResult.GetActor());
-	return bIncludeNeutral ? Attitude == ETeamAttitude::Friendly : Attitude != ETeamAttitude::Hostile;
+	return FGenericTeamId::GetAttitude(Owner, TargetData.HitResult.GetActor()) != ETeamAttitude::Hostile;
+}
+
+UAgTargetingFilterTask_Hittable::UAgTargetingFilterTask_Hittable(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
+bool UAgTargetingFilterTask_Hittable::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+{
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
+	const AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(TargetData.HitResult.GetActor());
+	return !Owner || !Candidate || !Candidate->CanBeHitBy(*Owner);
 }
 
 UAgTargetingFilterTask_TagRequirements::UAgTargetingFilterTask_TagRequirements(const FObjectInitializer& ObjectInitializer)

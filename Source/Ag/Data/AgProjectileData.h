@@ -9,6 +9,18 @@
 class AAgProjectile;
 
 USTRUCT()
+struct FAgProjectileParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float Speed = 0.f;
+
+	UPROPERTY()
+	float Range = 0.f;
+};
+
+USTRUCT()
 struct FAgProjectileDefinition
 {
 	GENERATED_BODY()

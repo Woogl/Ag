@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "AgHitReward.generated.h"
 
+struct FGameplayEffectSpec;
+
 USTRUCT()
 struct FAgHitReward
 {
@@ -15,4 +17,6 @@ struct FAgHitReward
 
 	UPROPERTY()
 	float UP = 0.f;
+
+	void AddToSpec(FGameplayEffectSpec& Spec) const;
 };

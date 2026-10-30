@@ -6,7 +6,7 @@
 #include "UObject/Object.h"
 #include "AgCombatRules.generated.h"
 
-UCLASS(BlueprintType)
+UCLASS()
 class UAgCombatRules : public UObject
 {
 	GENERATED_BODY()

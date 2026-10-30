@@ -2,10 +2,8 @@
 
 #include "AI/AgEnemyAIConditions.h"
 
-#include "Data/AgAbilityData.h"
 #include "AI/AgEnemyAIController.h"
 #include "Character/AgEnemyCharacter.h"
-#include "Data/AgCharacterData.h"
 #include "Kismet/GameplayStatics.h"
 #include "StateTreeExecutionContext.h"
 
@@ -44,18 +42,23 @@ bool FAgEnemyAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecution
 
 bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext& Context) const
 {
-	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const AAgEnemyAIController* Controller = InstanceData.Controller;
+	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
 	const AAgEnemyCharacter* Enemy = Controller->GetEnemy();
-	const FAgAbilityData* Pattern = Controller->GetEnemyData()->FindAbility(InstanceData.Pattern);
-	const FAgPatternSelection* Params = Pattern ? Pattern->PatternSelection.GetPtrOrNull() : nullptr;
 	const AAgCharacterBase* Target = Controller->GetTarget();
-	if (!Params || !Target || !Params->IsAvailable(Enemy->GetHorizontalDistanceTo(Target), Enemy->GetPhase()))
+	if (!Target)
 	{
 		return false;
 	}
 
-	return Enemy->CanActivatePattern(InstanceData.Pattern) && FMath::FRand() < Params->ResponseChance;
+	TArray<TPair<FName, float>> Responses;
+	Enemy->GatherPatterns(Enemy->GetHorizontalDistanceTo(Target), true, Responses);
+	// 반응 태스크가 확률을 가중치로 하나를 다시 고르므로, 각 반응 패턴이 자기 확률로 나오도록 합으로 한 번만 굴립니다.
+	float TotalChance = 0.f;
+	for (const TPair<FName, float>& Response : Responses)
+	{
+		TotalChance += Response.Value;
+	}
+	return FMath::FRand() < TotalChance;
 }
 
 bool FAgEnemyAICondition_TargetNoticed::TestCondition(FStateTreeExecutionContext& Context) const

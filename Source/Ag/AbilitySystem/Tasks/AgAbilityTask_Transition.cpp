@@ -62,7 +62,8 @@ TOptional<float> UAgAbilityTask_Transition::FindTagEndingDelay(const UAbilitySys
 {
 	const FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(Params.Tag));
 	const TArray<float> Times = ASC.GetActiveEffectsTimeRemaining(Query);
-	if (Times.IsEmpty() || Times.ContainsByPredicate([](float Time) { return Time < 0.f; }))
+	if (Times.IsEmpty() || Times.ContainsByPredicate([](float Time)
+	{ return Time < 0.f; }))
 	{
 		return {};
 	}
@@ -110,14 +111,11 @@ void UAgAbilityTask_Transition::RecheckTag()
 
 void UAgAbilityTask_Transition::TryTransition()
 {
-	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
 	if (IsFinished())
 	{
 		return;
 	}
-	const bool bMet =
-		ASC && ASC->HasAllMatchingGameplayTags(Params.RequiredTags) && !ASC->HasAnyMatchingGameplayTags(Params.BlockedTags);
-	if (bMet && Playback.IsValid())
+	if (Playback.IsValid())
 	{
 		if (Params.BlendTime)
 		{
@@ -128,11 +126,7 @@ void UAgAbilityTask_Transition::TryTransition()
 			Playback->JumpToSection(Params.Section);
 		}
 	}
-	// 이벤트를 기다리는 전환만 조건이 맞지 않을 때 다음 이벤트를 기다립니다.
-	if (bMet || !Params.Event.IsValid())
-	{
-		EndTask();
-	}
+	EndTask();
 }
 
 void UAgAbilityTask_Transition::HandleEvent(const FGameplayEventData* Payload)

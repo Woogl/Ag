@@ -40,8 +40,6 @@ class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, publ
 public:
 	AAgCharacterBase(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	static const FName WeaponTag;
-
 	virtual UAgAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	virtual FGenericTeamId GetGenericTeamId() const override
@@ -90,6 +88,9 @@ public:
 
 	bool IsDead() const;
 
+	/** 무기, 투사체, 범위 적중이 모두 이 판정을 써야 맞는 대상이 공격 방식마다 갈리지 않습니다. */
+	bool CanBeHitBy(const AActor& Attacker) const;
+
 	virtual bool CanLosePP() const
 	{
 		return false;
@@ -122,12 +123,12 @@ public:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	virtual void Tick(float DeltaSeconds) override;
 	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void Landed(const FHitResult& Hit) override;
 
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
+	virtual void NotifyJumpApex() override;
 	virtual void MoveBlockedBy(const FHitResult& Impact) override;
 
 	virtual void FellOutOfWorld(const UDamageType& DamageType) override;
@@ -145,8 +146,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))
 	FName CharacterDataId;
-
-	TSubclassOf<UAgCharacterData> CharacterDataClass;
 
 	EAgTeam Team = EAgTeam::Neutral;
 
@@ -174,8 +173,6 @@ private:
 	float TimeCompensation = 1.f;
 
 	FTransform ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds);
-
-	void UpdateApex();
 
 	void DisableRootMotionMontage();
 
@@ -205,8 +202,6 @@ private:
 	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 
 	TEnumAsByte<ECollisionResponse> PawnResponse = ECR_Block;
-
-	float PreviousVelocityZ = 0.f;
 
 	FDelegateHandle DeathEventHandle;
 };

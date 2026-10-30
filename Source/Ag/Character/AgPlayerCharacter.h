@@ -27,8 +27,6 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
-	void UpdateRotationMode();
-
 	void PlayCameraEffect(EAgCameraSituation Situation, const AActor* Opponent);
 
 	/** 플레이어가 공격자이거나 대상인 피격 결과에만 연출을 재생합니다. Reaction은 대상에게 실제로 보낸 피격 반응 이벤트입니다. */
@@ -52,6 +50,8 @@ protected:
 	virtual void ApplyDeathState() override;
 
 private:
+	void UpdateRotationMode();
+
 	void Move(const FInputActionValue& Value);
 
 	void StopLandingMotion();
@@ -104,6 +104,8 @@ private:
 	void HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void HandleCutsceneChanged(const FGameplayTag Tag, int32 NewCount);
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -187,7 +189,6 @@ private:
 
 	bool bGuardHeld = false;
 	bool bDodgeHeld = false;
-	bool bSprintFieldOfViewHeld = false;
 
 	TWeakObjectPtr<AAgCharacterBase> LockOnCameraTarget;
 

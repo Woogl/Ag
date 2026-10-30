@@ -108,4 +108,7 @@ namespace AgEffectData
 	UGameplayEffect* MakeNativeEffect(EAgEffect Id, UObject& Outer);
 
 	UGameplayEffect* MakeEffect(const FAgEffectDefinition& Definition, UObject& Outer);
+
+	/** 넣지 않은 SetByCaller 값은 엔진이 오류로 남기므로, Resource 효과에는 바꾸지 않는 자원도 0을 넣습니다. */
+	void SetResourceAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP);
 }

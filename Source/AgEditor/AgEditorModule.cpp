@@ -1,7 +1,9 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "AgAssetToolset.h"
+#include "AgAnimationToolset.h"
+#include "AgBlueprintToolset.h"
 #include "AgEnemySightVisualizer.h"
+#include "AgStateTreeToolset.h"
 #include "Character/AgEnemySightPreviewComponent.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
@@ -13,7 +15,9 @@ class FAgEditorModule : public IModuleInterface
 public:
 	virtual void StartupModule() override
 	{
-		UToolsetRegistry::RegisterToolsetClass(UAgAssetToolset::StaticClass());
+		UToolsetRegistry::RegisterToolsetClass(UAgAnimationToolset::StaticClass());
+		UToolsetRegistry::RegisterToolsetClass(UAgBlueprintToolset::StaticClass());
+		UToolsetRegistry::RegisterToolsetClass(UAgStateTreeToolset::StaticClass());
 		if (GUnrealEd)
 		{
 			const TSharedPtr<FAgEnemySightVisualizer> Visualizer = MakeShared<FAgEnemySightVisualizer>();
@@ -30,7 +34,9 @@ public:
 		}
 		if (UObjectInitialized())
 		{
-			UToolsetRegistry::UnregisterToolsetClass(UAgAssetToolset::StaticClass());
+			UToolsetRegistry::UnregisterToolsetClass(UAgAnimationToolset::StaticClass());
+			UToolsetRegistry::UnregisterToolsetClass(UAgBlueprintToolset::StaticClass());
+			UToolsetRegistry::UnregisterToolsetClass(UAgStateTreeToolset::StaticClass());
 		}
 	}
 };

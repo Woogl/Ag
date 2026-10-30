@@ -4,10 +4,8 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemComponent.h"
-#include "Character/AgCharacterBase.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 
 namespace
@@ -80,19 +78,17 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(GetCaptures().SP, EvaluateParameters, TargetSP);
 
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
-	const AAgCharacterBase* Target = CastChecked<AAgCharacterBase>(ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor());
-	const UAgPlayerData* DefenderData = Cast<UAgPlayerData>(Target->GetCharacterData());
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
 	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier);
 	const int32 HPDamage = CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant);
 
-	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable && DefenderData)
+	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable)
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Parry);
 		return;
 	}
 
-	if (TargetTags.HasTag(AgGameplayTags::State_Guarding) && bGuardable && DefenderData)
+	if (TargetTags.HasTag(AgGameplayTags::State_Guarding) && bGuardable)
 	{
 		const float GuardSPCost = HPDamage * Rules.GuardSPCostRatio;
 		const bool bGuardBreak = TargetSP < GuardSPCost && !TargetTags.HasTag(AgGameplayTags::State_SuperArmor);

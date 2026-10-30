@@ -54,7 +54,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ## 에셋 다루기
 
-도구는 엔진 MCP 도구 → 에디터 파이썬 → 프로젝트 MCP 도구 `AgEditor.AgAssetToolset` 순서로 고른다. 툴셋이 맡는 일과 도구를 더하는 기준은 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '프로젝트 MCP 도구'를 따른다. 파이썬에서는 `unreal.AgAssetToolset.<함수>`로 부르고, 새 도구는 기존 함수처럼 정적 `UFUNCTION(meta = (AICallable))`으로 만든다. 툴셋이 바꾼 에셋은 저장하지 않은 상태로 남으니 직접 저장한다.
+도구는 엔진 MCP 도구 → 에디터 파이썬 → 프로젝트 MCP 도구(`AgEditor.AgAnimationToolset`·`AgBlueprintToolset`·`AgStateTreeToolset`) 순서로 고른다. 툴셋이 맡는 일과 도구를 더하는 기준은 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '프로젝트 MCP 도구'를 따른다. 파이썬에서는 `unreal.<툴셋>.<함수>`(예: `unreal.AgAnimationToolset.SetMontageSections`)로 부르고, 새 도구는 영역이 맞는 툴셋에 기존 함수처럼 정적 `UFUNCTION(meta = (AICallable))`으로 만든다. 툴셋이 바꾼 에셋은 저장하지 않은 상태로 남으니 직접 저장한다.
 
 에셋 종류별 요령은 해당 작업을 할 때만 이 폴더의 참고 파일에서 읽는다.
 
