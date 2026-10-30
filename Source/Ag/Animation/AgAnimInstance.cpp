@@ -40,30 +40,15 @@ namespace
 	}
 } // namespace
 
-bool UAgAnimInstance::IsTurningInPlace() const
-{
-	// 엔진 회전이 먼저 차이를 줄이면 걸음이 시작되지 않으므로, 걸음을 시작할 차이가 된 프레임부터 엔진 회전을 막습니다.
-	return CanTurn() && (bTurning || FMath::Abs(GetTurnOffset()) > GetSmallestTurnAngle(GetTurnAnimations()));
-}
-
-float UAgAnimInstance::ConsumeTurnYaw()
-{
-	float Yaw = PendingTurnYaw;
-	const float Offset = GetTurnOffset();
-	if (FMath::Abs(Offset) > MaxTurnAngle)
-	{
-		Yaw += Offset - FMath::Sign(Offset) * MaxTurnAngle;
-		bReachedMaxTurnAngle |= bTurning;
-	}
-	PendingTurnYaw = 0.f;
-	return Yaw;
-}
-
 void UAgAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
 	Character = Cast<AAgCharacterBase>(TryGetPawnOwner());
+	if (Character)
+	{
+		LastActorYaw = static_cast<float>(Character->GetActorRotation().Yaw);
+	}
 }
 
 void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -94,14 +79,17 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UAgAnimInstance::UpdateTurnInPlace(float DeltaSeconds)
 {
-	if (CanTurn())
+	const float ActorYaw = static_cast<float>(Character->GetActorRotation().Yaw);
+	const bool bCanTurn = CanTurn();
+	if (bCanTurn)
 	{
+		RootYawOffset = FMath::UnwindDegrees(RootYawOffset - (ActorYaw - LastActorYaw));
 		if (bTurning)
 		{
 			AdvanceTurn(DeltaSeconds);
 		}
 
-		// 가장 작은 모션보다 작은 차이는 걸음을 크게 줄여야 해 다리가 움찔거리므로, 캐릭터 무브먼트의 엔진 회전이 부드럽게 맞춥니다.
+		// 가장 작은 모션보다 작은 차이는 걸음을 크게 줄여야 해 다리가 움찔거리므로, 발을 붙인 채 몸을 그대로 둡니다.
 		const float Offset = GetTurnOffset();
 		if (!bTurning && FMath::Abs(Offset) > GetSmallestTurnAngle(GetTurnAnimations()))
 		{
@@ -112,8 +100,19 @@ void UAgAnimInstance::UpdateTurnInPlace(float DeltaSeconds)
 	{
 		// 멈춘 모션과 시간은 그대로 두어, 비율이 0으로 내려가는 동안 그 자세로 빠집니다.
 		bTurning = false;
-		PendingTurnYaw = 0.f;
+		FMath::ExponentialSmoothingApprox(RootYawOffset, 0.f, DeltaSeconds, RootYawOffsetSmoothingTime);
 	}
+	LastActorYaw = ActorYaw;
+
+	if (FMath::Abs(RootYawOffset) > MaxTurnAngle)
+	{
+		RootYawOffset = FMath::Sign(RootYawOffset) * MaxTurnAngle;
+		bReachedMaxTurnAngle |= bTurning;
+	}
+
+	// 락온 대상을 바꾸면 목표가 한 번에 바뀌므로, 상체가 한 프레임에 돌지 않게 따라가게 합니다.
+	const float TwistGoal = bCanTurn ? FMath::Clamp(GetTurnOffset(), -MaxUpperBodyTwist, MaxUpperBodyTwist) : 0.f;
+	FMath::ExponentialSmoothingApprox(UpperBodyTwist.Yaw, static_cast<double>(TwistGoal), DeltaSeconds, UpperBodyTwistSmoothingTime);
 
 	TurnWeight = FMath::FInterpConstantTo(TurnWeight, bTurning ? 1.f : 0.f, DeltaSeconds, TurnBlendTime > 0.f ? 1.f / TurnBlendTime : 0.f);
 }
@@ -142,10 +141,8 @@ void UAgAnimInstance::StartTurn(float Offset)
 		return;
 	}
 
-	// 배율을 도는 동안 바꾸면 몸이 바라볼 방향을 따라 미끄러지듯 돌아 걸음이 느껴지지 않으므로, 시작할 때 한 번 정합니다.
 	TurnAnimation = Picked;
 	TurnTime = 0.f;
-	TurnScale = Offset / PickedAngle;
 	TurnDirection = FMath::Sign(Offset);
 	bTurning = true;
 	bReachedMaxTurnAngle = false;
@@ -159,7 +156,8 @@ void UAgAnimInstance::AdvanceTurn(float DeltaSeconds)
 
 	const float Length = TurnAnimation->GetPlayLength();
 	const float NewTime = FMath::Min(TurnTime + DeltaSeconds * PlayRate, Length);
-	PendingTurnYaw += FMath::UnwindDegrees(GetRootYaw(*TurnAnimation, NewTime) - GetRootYaw(*TurnAnimation, TurnTime)) * TurnScale;
+	// 회전량을 늘리거나 줄이면 몸이 도는 만큼 걸음이 따라가지 못해 발이 미끄러지므로, 모션의 회전량을 그대로 씁니다.
+	RootYawOffset += FMath::UnwindDegrees(GetRootYaw(*TurnAnimation, NewTime) - GetRootYaw(*TurnAnimation, TurnTime));
 	TurnTime = NewTime;
 	bTurning = TurnTime < Length;
 }
@@ -186,5 +184,5 @@ float UAgAnimInstance::GetTurnOffset() const
 	const AActor* Target = Character->GetLockOnTarget();
 	const double DesiredYaw = Target ? (Target->GetActorLocation() - Character->GetActorLocation()).Rotation().Yaw
 	                                 : Character->GetController()->GetDesiredRotation().Yaw;
-	return static_cast<float>(FRotator::NormalizeAxis(DesiredYaw - Character->GetActorRotation().Yaw - PendingTurnYaw));
+	return static_cast<float>(FRotator::NormalizeAxis(DesiredYaw - Character->GetActorRotation().Yaw - RootYawOffset));
 }

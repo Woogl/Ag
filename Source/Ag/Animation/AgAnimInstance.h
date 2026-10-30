@@ -16,15 +16,6 @@ class UAgAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 
-public:
-	bool IsTurningInPlace() const;
-
-	/**
-	 * 이번 프레임에 액터에 적용할 회전량을 꺼냅니다. 모션이 쌓은 회전량에 최대 각도를 넘은 차이를 더하고, 넘었으면 남은
-	 * 모션을 빠르게 재생하도록 표시합니다. IsTurningInPlace()가 참일 때만 부릅니다.
-	 */
-	float ConsumeTurnYaw();
-
 protected:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
@@ -59,6 +50,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace")
 	float TurnBlendTime = 0.1f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace")
+	float RootYawOffsetSmoothingTime = 0.2f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace")
+	float MaxUpperBodyTwist = 60.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace")
+	float UpperBodyTwistSmoothingTime = 0.15f;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float GroundSpeed = 0.f;
 
@@ -83,6 +83,14 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "TurnInPlace")
 	float TurnWeight = 0.f;
 
+	// 몸과 액터의 Yaw 차이로, 애님 그래프의 Rotate Root Bone이 적용합니다. 엔진 Offset Root Bone은 실험 기능이고 이 차이를
+	// 노드가 가지고 있어, 노드 함수를 연결하지 않으면 C++가 회전 모션을 시작할지 판단할 수 없으므로 쓰지 않습니다.
+	UPROPERTY(BlueprintReadOnly, Category = "TurnInPlace")
+	float RootYawOffset = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "TurnInPlace")
+	FRotator UpperBodyTwist = FRotator::ZeroRotator;
+
 private:
 	void UpdateTurnInPlace(float DeltaSeconds);
 	void StartTurn(float Offset);
@@ -95,9 +103,8 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<AAgCharacterBase> Character;
 
-	float PendingTurnYaw = 0.f;
+	float LastActorYaw = 0.f;
 	float TurnDirection = 0.f;
-	float TurnScale = 1.f;
 	bool bTurning = false;
 	bool bReachedMaxTurnAngle = false;
 };
