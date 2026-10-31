@@ -20,7 +20,7 @@ public:
 
 	virtual void ReceivedPlayer() override;
 
-	UCommonActivatableWidget* PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
+	void PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")

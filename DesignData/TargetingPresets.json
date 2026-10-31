@@ -7,8 +7,8 @@
   ],
   "Hit": [
     {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile", "bIncludeNeutral": true},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}}
+    {"Class": "/Script/Ag.AgTargetingFilterTask_Hittable"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements"}
   ],
   "LockOn": [
     {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},

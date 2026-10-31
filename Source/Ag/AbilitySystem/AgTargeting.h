@@ -39,10 +39,18 @@ public:
 
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
+};
 
-	/** 참이면 노리지는 않는 상대(Neutral)도 통과합니다. 공격 판정이 맞힐 대상을 찾는 프리셋에 씁니다. */
-	UPROPERTY(EditAnywhere, Category = "Target Filter")
-	bool bIncludeNeutral = false;
+UCLASS()
+class UAgTargetingFilterTask_Hittable : public UTargetingFilterTask_BasicFilterTemplate
+{
+	GENERATED_BODY()
+
+public:
+	UAgTargetingFilterTask_Hittable(const FObjectInitializer& ObjectInitializer);
+
+protected:
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
 UCLASS()

@@ -15,7 +15,6 @@ class UAgStatBar : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	// bShowDrop이 false면 줄어든 만큼 잔상 없이 줄입니다.
 	void SetValue(float Value, float MaxValue, bool bShowDrop = true);
 	void SetRatio(float Ratio, bool bShowDrop = true);
 

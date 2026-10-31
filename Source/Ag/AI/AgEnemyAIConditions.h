@@ -91,25 +91,13 @@ struct FAgEnemyAICondition_PhaseTransitionReady : public FStateTreeAIConditionBa
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
-USTRUCT()
-struct FAgEnemyAICondition_ResponseReadyInstanceData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category = "Context")
-	TObjectPtr<AAgEnemyAIController> Controller = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "Parameter")
-	FName Pattern;
-};
-
 /** 평가할 때마다 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. */
 USTRUCT(meta = (DisplayName = "적: 반응 패턴 발동 조건", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_ResponseReady : public FStateTreeAIConditionBase
 {
 	GENERATED_BODY()
 
-	using FInstanceDataType = FAgEnemyAICondition_ResponseReadyInstanceData;
+	using FInstanceDataType = FAgEnemyAIConditionInstanceData;
 	virtual const UStruct* GetInstanceDataType() const override
 	{
 		return FInstanceDataType::StaticStruct();

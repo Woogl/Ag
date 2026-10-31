@@ -317,7 +317,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		{
 			// 자원 변경 콜백이 다시 적중을 일으킬 수 있으므로 적용 전에 지급 기회를 사용합니다.
 			Reward->bGranted = true;
-			AgResource::SetAmounts(*ChargeSpec.Data, 0.f, Reward->Amounts.MP, Reward->Amounts.UP);
+			Reward->Amounts.AddToSpec(*ChargeSpec.Data);
 			AttackerASC->ApplyGameplayEffectSpecToSelf(*ChargeSpec.Data);
 		}
 	}

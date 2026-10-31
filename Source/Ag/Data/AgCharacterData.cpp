@@ -17,7 +17,7 @@ UAnimMontage* UAgCharacterData::FindMontage(FName Id) const
 	UAnimMontage* Montage = Montages.FindRef(Id);
 	if (!Montage)
 	{
-		UE_LOG(LogAg, Error, TEXT("%s has no montage %s in Montages."), *GetName(), *Id.ToString());
+		UE_LOG(LogAg, Error, TEXT("%s has no montage %s in Montages."), *DisplayName.ToString(), *Id.ToString());
 	}
 	return Montage;
 }

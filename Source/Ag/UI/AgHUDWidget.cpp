@@ -72,7 +72,7 @@ namespace
 		ASC->AbilitySpecDirtiedCallbacks.RemoveAll(User);
 		ASC->AbilityCommittedCallbacks.RemoveAll(User);
 	}
-}
+} // namespace
 
 void UAgHUDWidget::NativeOnInitialized()
 {
@@ -196,23 +196,28 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 	for (const FGameplayTag& Tag : PlayerTags())
 	{
 		ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
-			.AddWeakLambda(this, [this](const FGameplayTag, int32) { UpdateStatusPanel(); });
+			.AddWeakLambda(this, [this](const FGameplayTag, int32)
+		{ UpdateStatusPanel(); });
 	}
 	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 부여될 때 스킬 슬롯을 다시 그립니다.
-	ASC.AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&) { UpdateSkillSlots(); });
-	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*) { UpdateSkillCooldown(); });
+	ASC.AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
+	{ UpdateSkillSlots(); });
+	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
+	{ UpdateSkillCooldown(); });
 }
 
 void UAgHUDWidget::BindBoss(UAbilitySystemComponent& ASC)
 {
 	for (const FGameplayAttribute& Attribute : BossAttributes())
 	{
-		ASC.GetGameplayAttributeValueChangeDelegate(Attribute).AddWeakLambda(this, [this](const FOnAttributeChangeData&) { UpdateBoss(); });
+		ASC.GetGameplayAttributeValueChangeDelegate(Attribute).AddWeakLambda(this, [this](const FOnAttributeChangeData&)
+		{ UpdateBoss(); });
 	}
 	for (const FGameplayTag& Tag : BossTags())
 	{
 		ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
-			.AddWeakLambda(this, [this](const FGameplayTag, int32) { UpdateBoss(); });
+			.AddWeakLambda(this, [this](const FGameplayTag, int32)
+		{ UpdateBoss(); });
 	}
 }
 

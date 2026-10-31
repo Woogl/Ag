@@ -113,11 +113,6 @@ FAgResourceCost UAgGameplayAbility::GetCost() const
 	return Data ? Data->Cost : FAgResourceCost();
 }
 
-FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
-{
-	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, UAgAssetManager::Get().GetEffect(Effect));
-}
-
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffect& Effect) const
 {
 	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, &Effect);
@@ -172,6 +167,8 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 	Definition = *Data;
 	const TOptional<FAgAbilityTargeting>& Targeting = Definition.Targeting;
 
+	// 대상 찾기는 락온 대상을 먼저 고르므로, 지난 실행의 대상을 비운 뒤 찾아야 락온 행동이 이전 대상을 다시 고르지 않습니다.
+	ActionTarget.Reset();
 	RefreshTarget();
 	const bool bEventTrigger = IsEventTrigger(TriggerEventData);
 	TriggerEventTag = bEventTrigger ? TriggerEventData->EventTag : FGameplayTag();
@@ -204,17 +201,6 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 		}
 	}
 	FinishIfTasksDone();
-}
-
-void UAgGameplayAbility::EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
-{
-	// 중복 호출과 스코프 락 동안의 지연은 엔진이 가리고 남은 Task는 엔진이 끝내므로, 실제로 끝날 때만 실행 상태를
-	// 내려놓습니다.
-	if (IsEndAbilityValid(Handle, ActorInfo) && ScopeLockCount == 0)
-	{
-		ActionTarget.Reset();
-	}
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
@@ -276,6 +262,11 @@ const FAgAbilityData* UAgGameplayAbility::FindDefinition(FGameplayAbilitySpecHan
 {
 	const AAgCharacterBase* Character = ActorInfo ? Cast<AAgCharacterBase>(ActorInfo->AvatarActor.Get()) : nullptr;
 	return Character ? Character->FindAbility(Handle) : nullptr;
+}
+
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
+{
+	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, UAgAssetManager::Get().GetEffect(Effect));
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const UGameplayEffect* Effect) const

@@ -6,9 +6,9 @@
 #include "Engine/AssetManager.h"
 #include "AgAssetManager.generated.h"
 
-class FJsonValue;
 class UAgAbilitySet;
 class UAgCharacterData;
+class UAgCharacterSet;
 class UAgCombatRules;
 class UAgEffectSet;
 class UAgMontageTimelineData;
@@ -49,7 +49,7 @@ public:
 
 	UAgCharacterData* FindCharacterData(FName Id) const;
 
-	TArray<FName> GetCharacterDataIds(const UClass* DataClass) const;
+	TArray<FName> GetCharacterDataIds() const;
 
 #if WITH_EDITOR
 	AG_API void ReloadJsonData();
@@ -63,12 +63,9 @@ protected:
 private:
 	bool LoadJsonData(bool bInitialLoad);
 
-	bool ReadJson(const FString& Path, TSharedPtr<FJsonValue> Value, const FProperty& Property, void* Out);
-
-	TMap<FName, TSet<FName>> JsonIds;
-
 	bool bJsonLoadFailed = false;
 
+	// JSON 파일을 담는 속성은 .cpp의 JsonFiles 목록이 이름으로 찾아 만들고 채웁니다.
 	UPROPERTY()
 	TObjectPtr<UAgCombatRules> CombatRules;
 
@@ -90,7 +87,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UAgAbilitySet> Abilities;
 
-	/** 항목의 형식을 데이터 클래스가 정하므로 ID와 클래스의 짝은 생성자에 적습니다. */
 	UPROPERTY()
-	TMap<FName, TObjectPtr<UAgCharacterData>> Characters;
+	TObjectPtr<UAgCharacterSet> Characters;
 };

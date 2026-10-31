@@ -60,7 +60,7 @@ namespace
 		Montage.GetSectionStartAndEndTime(SectionIndex, SectionStart, SectionEnd);
 		return Params.End ? SectionStart + *Params.End : SectionEnd;
 	}
-}
+} // namespace
 
 UAbilityTask* FAgPlayMontageParams::MakeTask(const FAgTaskContext& Context) const
 {

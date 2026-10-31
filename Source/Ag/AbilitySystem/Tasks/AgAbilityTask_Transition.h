@@ -32,12 +32,6 @@ struct FAgTransitionParams : public FAgTaskParams
 	UPROPERTY()
 	bool bSectionEndsWithTag = false;
 
-	UPROPERTY()
-	FGameplayTagContainer RequiredTags;
-
-	UPROPERTY()
-	FGameplayTagContainer BlockedTags;
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

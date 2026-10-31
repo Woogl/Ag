@@ -14,9 +14,7 @@
 #include "Camera/AgFieldOfViewCameraModifier.h"
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
-#include "Character/AgBossCharacter.h"
 #include "Combat/AgTimeSubsystem.h"
-#include "Core/AgAssetManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgCollision.h"
@@ -56,8 +54,10 @@ namespace
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
-	CharacterDataClass = UAgPlayerData::StaticClass();
 	Team = EAgTeam::Ally;
+
+	// 락온 카메라와 상대 쪽 회전이 이번 프레임의 이동을 마친 위치를 보도록 이동 뒤에 돕니다.
+	PrimaryActorTick.TickGroup = TG_PostPhysics;
 
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -84,16 +84,6 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	PerfectDodgeCapsule->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
 	PerfectDodgeCapsule->SetGenerateOverlapEvents(false);
 	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
-}
-
-void AAgPlayerCharacter::UpdateRotationMode()
-{
-	// 락온 카메라는 대상을 보므로, 카메라 정면을 바라보면 대상을 바라봅니다.
-	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const bool bSprinting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting);
-	const bool bFaceCamera = (GetLockOnTarget() && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
-	GetCharacterMovement()->bOrientRotationToMovement = !bFaceCamera;
-	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
 
 void AAgPlayerCharacter::PlayCameraEffect(EAgCameraSituation Situation, const AActor* Opponent)
@@ -187,6 +177,8 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandlePerfectDodgeWindowChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_TimeStop, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleTimeStopChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleCutsceneChanged);
 	PerfectDodgeCapsule->SetCapsuleSize(GetCapsuleComponent()->GetUnscaledCapsuleRadius(), GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 	UpdateRotationMode();
 }
@@ -354,6 +346,16 @@ void AAgPlayerCharacter::ApplyDeathState()
 	{
 		DisableInput(PlayerController);
 	}
+}
+
+void AAgPlayerCharacter::UpdateRotationMode()
+{
+	// 락온 카메라는 대상을 보므로, 카메라 정면을 바라보면 대상을 바라봅니다.
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const bool bSprinting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting);
+	const bool bFaceCamera = (GetLockOnTarget() && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
+	GetCharacterMovement()->bOrientRotationToMovement = !bFaceCamera;
+	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
 
 void AAgPlayerCharacter::Move(const FInputActionValue& Value)
@@ -602,7 +604,7 @@ bool AAgPlayerCharacter::CanMove() const
 void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 {
 	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(EndedData.AbilityThatEnded);
-	if (ExecutionCamera && AgAbility && AgAbility->GetDefinitionTags().HasTag(AgGameplayTags::Ability_Action_Execution))
+	if (ExecutionCamera && AgAbility && AgAbility->GetDefinition().Tags.HasTag(AgGameplayTags::Ability_Action_Execution))
 	{
 		ExecutionCamera->Stop();
 	}
@@ -611,7 +613,7 @@ void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 		return;
 	}
 
-	const FGameplayTagContainer& EndedTags = AgAbility->GetDefinitionTags();
+	const FGameplayTagContainer& EndedTags = AgAbility->GetDefinition().Tags;
 	if (!bGuardHeld || EndedTags.HasTag(AgGameplayTags::Ability_Action_Guard) ||
 		(!EndedTags.HasTag(AgGameplayTags::Ability_Action) && !EndedTags.HasTag(AgGameplayTags::Ability_Reaction)))
 	{
@@ -658,7 +660,7 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockDown);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockUp);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_GuardBreak);
-	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinitionTags().HasAny(Enders))
+	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinition().Tags.HasAny(Enders))
 	{
 		FGameplayTagContainer Chances;
 		Chances.AddTag(AgGameplayTags::State_DodgeCounterChance);
@@ -672,7 +674,7 @@ void AAgPlayerCharacter::HandleAbilityCommitted(UGameplayAbility* Ability)
 	// 처형 대상은 발동 중(ActivateAbility)에 정해지므로, 발동 알림이 아니라 커밋 알림에서 읽습니다.
 	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
 	const AActor* Target = AgAbility ? AgAbility->GetActionTarget() : nullptr;
-	if (ExecutionCamera && Target && AgAbility->GetDefinitionTags().HasTag(AgGameplayTags::Ability_Action_Execution))
+	if (ExecutionCamera && Target && AgAbility->GetDefinition().Tags.HasTag(AgGameplayTags::Ability_Action_Execution))
 	{
 		ExecutionCamera->Start(*this, *Target);
 	}
@@ -739,14 +741,10 @@ void AAgPlayerCharacter::UpdateLockOnCamera(const AAgCharacterBase& Target, floa
 		return;
 	}
 
-	const AAgBossCharacter* Boss = Cast<AAgBossCharacter>(&Target);
-	const FVector LockOnPoint = Boss ? Boss->GetLockOnLocation() : Target.GetActorLocation();
-
 	const FVector Pivot = CameraBoom->GetComponentLocation();
-	FRotator Goal = (LockOnPoint - Pivot).Rotation();
+	FRotator Goal = (Target.GetTargetLocation(this) - Pivot).Rotation();
 	Goal.Pitch =
 		FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), LockOnPitchMin, LockOnPitchMax) - LockOnLookDown;
-	Goal.Roll = 0.f;
 
 	const FRotator Current = PlayerController->GetControlRotation();
 	const float CurrentPitch = static_cast<float>(FRotator::NormalizeAxis(Current.Pitch));
@@ -816,11 +814,10 @@ void AAgPlayerCharacter::HandleSprintFieldOfViewChanged(const FGameplayTag Tag, 
 	// 달리기는 Shift만 누르고 멈춰 있어도 이어지므로, 이동 입력이 있을 때만 넓힙니다.
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const bool bRunning = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) && ASC->HasMatchingGameplayTag(AgGameplayTags::Input_Move);
-	if (!FieldOfViewCamera || bRunning == bSprintFieldOfViewHeld)
+	if (!FieldOfViewCamera)
 	{
 		return;
 	}
-	bSprintFieldOfViewHeld = bRunning;
 	if (bRunning)
 	{
 		FieldOfViewCamera->Hold(SprintFieldOfView);
@@ -850,20 +847,28 @@ void AAgPlayerCharacter::HandleTimeStopChanged(const FGameplayTag Tag, int32 New
 	if (NewCount > 0)
 	{
 		TimeSubsystem->StartTimeStop(*this);
-		// 셰이크는 컷신 카메라에도 더해지므로, 진행 중인 연출을 여기서 끝냅니다.
-		if (const APlayerController* PlayerController = Cast<APlayerController>(GetController());
-			PlayerController && PlayerController->PlayerCameraManager)
-		{
-			PlayerController->PlayerCameraManager->StopAllCameraShakes(true);
-		}
-		if (FieldOfViewCamera)
-		{
-			FieldOfViewCamera->StopAll();
-		}
-		TurnOpponent.Reset();
 	}
 	else
 	{
 		TimeSubsystem->EndTimeStop(*this);
 	}
+}
+
+void AAgPlayerCharacter::HandleCutsceneChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// 셰이크는 컷신 카메라에도 더해지므로, 진행 중인 연출을 여기서 끝냅니다.
+	if (NewCount == 0)
+	{
+		return;
+	}
+	if (const APlayerController* PlayerController = Cast<APlayerController>(GetController());
+		PlayerController && PlayerController->PlayerCameraManager)
+	{
+		PlayerController->PlayerCameraManager->StopAllCameraShakes(true);
+	}
+	if (FieldOfViewCamera)
+	{
+		FieldOfViewCamera->StopAll();
+	}
+	TurnOpponent.Reset();
 }

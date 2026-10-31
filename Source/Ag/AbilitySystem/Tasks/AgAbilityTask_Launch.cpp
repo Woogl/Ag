@@ -75,6 +75,9 @@ void UAgAbilityTask_Launch::Activate()
 	FinishSetVelocity = FVector::ZeroVector;
 	SharedInitAndApply();
 
+	// 엔진은 정점을 알리면 이 값을 끄고, 이미 공중이면 이동 모드도 바뀌지 않으므로 공중에서 다시 띄울 때도 켭니다.
+	Character->GetCharacterMovement()->bNotifyApex = true;
+
 	bMontageRootMotionDisabled = true;
 	Character->PushDisableMontageRootMotion();
 	Super::Activate();

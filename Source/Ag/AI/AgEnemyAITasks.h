@@ -3,14 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/AgAbilityData.h"
 #include "GameplayAbilitySpecHandle.h"
-#include "GameplayTagContainer.h"
 #include "Tasks/StateTreeAITask.h"
 #include "AgEnemyAITasks.generated.h"
 
 class AAgEnemyAIController;
-class UAgCharacterData;
 
 USTRUCT()
 struct FAgEnemyAITask_PostPatternDelayInstanceData
@@ -77,8 +74,9 @@ struct FAgEnemyAITask_RunPatternInstanceData
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AAgEnemyAIController> Controller = nullptr;
 
+	/** 가중치(`Weight`) 대신 반응 확률(`ResponseChance`)이 있는 패턴 중에서 고릅니다. */
 	UPROPERTY(EditAnywhere, Category = "Parameter")
-	FName Pattern;
+	bool bResponse = false;
 
 	/** 코드는 읽지 않고, StateTree 디버거에서 고른 패턴을 보려고 둡니다. */
 	UPROPERTY(VisibleAnywhere, Category = "Output")
@@ -100,9 +98,6 @@ struct FAgEnemyAITask_RunPattern : public FStateTreeAITaskBase
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
-
-private:
-	static void GatherCandidates(const UAgCharacterData& Data, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates);
 };
 
 USTRUCT()

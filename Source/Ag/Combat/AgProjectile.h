@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/AgAttackData.h"
+#include "Data/AgProjectileData.h"
 #include "GameFramework/Actor.h"
 #include "GameplayEffectTypes.h"
 #include "AgProjectile.generated.h"

@@ -5,23 +5,35 @@
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Character/AgPlayerCharacter.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/WidgetComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
+#include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 #if WITH_EDITORONLY_DATA
 #include "Character/AgEnemySightPreviewComponent.h"
 #endif
 
+namespace
+{
+	const FName LockOnBone(TEXT("spine_05"));
+	const FName ExecutionPromptBone(TEXT("head"));
+} // namespace
+
 AAgEnemyCharacter::AAgEnemyCharacter()
 {
-	CharacterDataClass = UAgEnemyData::StaticClass();
 	Team = EAgTeam::Enemy;
 	AIControllerClass = AAgEnemyAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -29,6 +41,21 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+
+	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
+	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
+	LockOnMarker->SetupAttachment(GetMesh(), LockOnBone);
+	ExecutionPrompt->SetupAttachment(GetMesh(), ExecutionPromptBone);
+	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get()})
+	{
+		WorldWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		WorldWidget->SetDrawAtDesiredSize(true);
+		WorldWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		WorldWidget->SetGenerateOverlapEvents(false);
+		WorldWidget->SetHiddenInGame(true);
+	}
+
+	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
 
 #if WITH_EDITORONLY_DATA
 	SightPreview = CreateEditorOnlyDefaultSubobject<UAgEnemySightPreviewComponent>(TEXT("SightPreview"));
@@ -41,20 +68,6 @@ bool AAgEnemyCharacter::CanLosePP() const
 	return ASC && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
 	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
 	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Invincible);
-}
-
-int32 AAgEnemyCharacter::GetReachedPhase() const
-{
-	const TArray<float>& TransitionHPRatios = CastChecked<UAgEnemyData>(GetCharacterData())->PhaseTransitionHPRatios;
-	const UAgAttributeSet* Stats = GetAttributeSet();
-	for (int32 Index = TransitionHPRatios.Num() - 1; Index >= 0; --Index)
-	{
-		if (Stats->GetHP() <= Stats->GetMaxHP() * TransitionHPRatios[Index])
-		{
-			return Index + 2;
-		}
-	}
-	return 1;
 }
 
 bool AAgEnemyCharacter::IsPhaseTransitionPending() const
@@ -87,6 +100,23 @@ bool AAgEnemyCharacter::CanActivatePattern(FName Id) const
 	return Ability && Ability->CanActivateAbility(Spec->Handle, GetAbilitySystemComponent()->AbilityActorInfo.Get());
 }
 
+void AAgEnemyCharacter::GatherPatterns(float TargetDistance, bool bResponse, TArray<TPair<FName, float>>& OutCandidates) const
+{
+	OutCandidates.Reset();
+	const UAgCharacterData* Data = GetCharacterData();
+	for (FName Id : Data->Abilities)
+	{
+		const FAgAbilityData* Ability = Data->FindAbility(Id);
+		const FAgPatternSelection* Pattern =
+			Ability && Ability->Tags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
+		const float Weight = Pattern ? (bResponse ? Pattern->ResponseChance : Pattern->Weight) : 0.f;
+		if (Weight > 0.f && Pattern->IsAvailable(TargetDistance, Phase) && CanActivatePattern(Id))
+		{
+			OutCandidates.Emplace(Id, Weight);
+		}
+	}
+}
+
 void AAgEnemyCharacter::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
@@ -100,6 +130,11 @@ void AAgEnemyCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& Ou
 	// 엔진 시야는 눈 위치와 컨트롤러 방향으로 보므로, 기획서의 기준인 캡슐 중심과 몸의 정면을 돌려줍니다.
 	OutLocation = GetActorLocation();
 	OutRotation = GetActorRotation();
+}
+
+FVector AAgEnemyCharacter::GetTargetLocation(AActor* RequestedBy) const
+{
+	return GetMesh()->GetBoneIndex(LockOnBone) != INDEX_NONE ? GetMesh()->GetBoneLocation(LockOnBone) : GetActorLocation();
 }
 
 void AAgEnemyCharacter::BeginPlay()
@@ -125,6 +160,13 @@ void AAgEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void AAgEnemyCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	UpdateWorldWidgets();
+}
+
 void AAgEnemyCharacter::HandleDeathEvent(const FGameplayEventData* Payload)
 {
 	if (IsDead())
@@ -136,8 +178,8 @@ void AAgEnemyCharacter::HandleDeathEvent(const FGameplayEventData* Payload)
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	const UAnimMontage* Playing = AnimInstance ? GetAbilitySystemComponent()->GetCurrentMontage() : nullptr;
 	const UAgGameplayAbility* Animating = Playing ? Cast<UAgGameplayAbility>(GetAbilitySystemComponent()->GetAnimatingAbility()) : nullptr;
-	const FAgAbilityData* AnimatingData = Animating ? GetCharacterData()->FindAbility(Animating->GetAbilityId()) : nullptr;
-	if (UAnimMontage* Death = AnimatingData && !AnimatingData->DeathMontage.IsNone() ? GetCharacterData()->FindMontage(AnimatingData->DeathMontage) : nullptr)
+	const FName DeathMontage = Animating ? Animating->GetDefinition().DeathMontage : NAME_None;
+	if (UAnimMontage* Death = DeathMontage.IsNone() ? nullptr : GetCharacterData()->FindMontage(DeathMontage))
 	{
 		const float Position = AnimInstance ? AnimInstance->Montage_GetPosition(Playing) : 0.f;
 		DieWithDeathMotion(*Death, Position);
@@ -147,13 +189,22 @@ void AAgEnemyCharacter::HandleDeathEvent(const FGameplayEventData* Payload)
 	Super::HandleDeathEvent(Payload);
 }
 
+int32 AAgEnemyCharacter::GetReachedPhase() const
+{
+	const TArray<float>& TransitionHPRatios = GetCharacterData()->PhaseTransitionHPRatios;
+	const UAgAttributeSet* Stats = GetAttributeSet();
+	for (int32 Index = TransitionHPRatios.Num() - 1; Index >= 0; --Index)
+	{
+		if (Stats->GetHP() <= Stats->GetMaxHP() * TransitionHPRatios[Index])
+		{
+			return Index + 2;
+		}
+	}
+	return 1;
+}
+
 void AAgEnemyCharacter::DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition)
 {
-	if (IsDead())
-	{
-		return;
-	}
-
 	ApplyDeathState();
 	OnDied.Broadcast(this);
 
@@ -198,7 +249,7 @@ void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 	{
 		return;
 	}
-	const FGameplayTagContainer& DefinitionTags = Ability->GetDefinitionTags();
+	const FGameplayTagContainer& DefinitionTags = Ability->GetDefinition().Tags;
 	const bool bPhaseTransitionCompleted = !Data.bWasCancelled && DefinitionTags.HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition);
 	if (!DefinitionTags.HasTagExact(AgGameplayTags::Ability_Reaction_Executed) && !bPhaseTransitionCompleted)
 	{
@@ -210,4 +261,26 @@ void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 	{
 		Phase = GetReachedPhase();
 	}
+}
+
+bool AAgEnemyCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
+{
+	const FGameplayAbilitySpec* Spec = Player.GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Execution);
+	const FAgAbilityData* Execution = Spec ? Player.FindAbility(Spec->Handle) : nullptr;
+	return Execution && Execution->Targeting && AgTargeting::FindTarget(*Execution->Targeting, Player) == this;
+}
+
+void AAgEnemyCharacter::UpdateWorldWidgets()
+{
+	// 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
+	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	AAgPlayerCharacter* Player = PlayerController ? Cast<AAgPlayerCharacter>(PlayerController->GetPawn()) : nullptr;
+	const bool bInCombat = Player && !Player->IsDead() && !IsDead() && !PlayerController->bCinematicMode;
+
+	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOnTarget() == this));
+
+	// 지금 하는 행동 때문에 처형 키를 받지 않는 동안에도 표시하므로 발동 가능 여부는 보지 않습니다. 범위 확인은
+	// 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
+	const bool bGroggy = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && IsExecutionTargetOf(*Player)));
 }

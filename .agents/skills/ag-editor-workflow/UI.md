@@ -2,7 +2,7 @@
 
 ## 위젯 편집
 
-- 위젯 애니메이션은 MCP와 파이썬으로 만들 수 없다. `AgAssetToolset.SetFadeAnimation`·`RemoveWidgetAnimation`을 쓴다.
+- 위젯 애니메이션은 MCP와 파이썬으로 만들 수 없다. `AgBlueprintToolset.SetFadeAnimation`·`RemoveWidgetAnimation`을 쓴다.
 - UMG를 MCP로 다룰 때:
   - `OverlaySlot`은 기본이 왼쪽 위 정렬이라 배경 이미지는 채우기로 바꾼다.
   - `ProgressBar`의 기본 스타일은 엔진 텍스처를 쓴다. 단색 막대는 `ResourceName`을 "None", `ImageType`을 NoImage로 둔다.

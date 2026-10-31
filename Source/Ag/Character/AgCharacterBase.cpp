@@ -30,22 +30,17 @@ namespace
 	constexpr float HitstopTimeDilation = 1.e-4f;
 
 	constexpr float DeathPushSpeed = 300.f;
-}
 
-const FName AAgCharacterBase::WeaponTag(TEXT("Weapon"));
+	const FName WeaponTag(TEXT("Weapon"));
+}
 
 AAgCharacterBase::AAgCharacterBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UAgCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
-	// 이동과 물리 갱신 뒤 이동 사건을 처리합니다.
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickGroup = TG_PostPhysics;
-
 	AbilitySystemComponent = CreateDefaultSubobject<UAgAbilitySystemComponent>(TEXT("AbilitySystem"));
 	AttributeSet = CreateDefaultSubobject<UAgAttributeSet>(TEXT("AttributeSet"));
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 	HitPhysics = CreateDefaultSubobject<UAgHitPhysicsComponent>(TEXT("HitPhysics"));
-	CharacterDataClass = UAgCharacterData::StaticClass();
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -103,11 +98,16 @@ bool AAgCharacterBase::IsDead() const
 	return AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Dead);
 }
 
+bool AAgCharacterBase::CanBeHitBy(const AActor& Attacker) const
+{
+	return !IsDead() && FGenericTeamId::GetAttitude(&Attacker, this) != ETeamAttitude::Friendly;
+}
+
 AAgCharacterBase* AAgCharacterBase::GetLockOnTarget() const
 {
 	const FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindSpecByTag(AgGameplayTags::Ability_LockOn);
 	const UAgGameplayAbility* Instance = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
-	return Instance ? Cast<AAgCharacterBase>(Instance->GetActionTarget()) : nullptr;
+	return Instance && Instance->IsActive() ? Cast<AAgCharacterBase>(Instance->GetActionTarget()) : nullptr;
 }
 
 bool AAgCharacterBase::IsFacingFixed() const
@@ -181,9 +181,9 @@ void AAgCharacterBase::PreInitializeComponents()
 	// 적 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 적 데이터를 읽으므로,
 	// 그 전에 연결합니다.
 	CharacterData = UAgAssetManager::Get().FindCharacterData(CharacterDataId);
-	if (!CharacterData || !CharacterData->IsA(CharacterDataClass))
+	if (!CharacterData)
 	{
-		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing or has the wrong type."), *GetName(), *CharacterDataId.ToString());
+		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing."), *GetName(), *CharacterDataId.ToString());
 	}
 }
 
@@ -225,13 +225,6 @@ void AAgCharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void AAgCharacterBase::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	UpdateApex();
-}
-
 void AAgCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -252,9 +245,24 @@ void AAgCharacterBase::OnMovementModeChanged(EMovementMode PrevMovementMode, uin
 {
 	Super::OnMovementModeChanged(PrevMovementMode, PreviousCustomMode);
 
+	// 엔진은 정점을 알린 뒤에만 이 값을 끄므로, 정점 전에 착지한 뒤 다음 낙하에서 잘못 알리지 않도록 착지하면 끕니다.
+	if (!GetCharacterMovement()->IsFalling())
+	{
+		GetCharacterMovement()->bNotifyApex = false;
+	}
 	if (HasActorBegunPlay())
 	{
 		AbilitySystemComponent->SetLooseGameplayTagCount(AgGameplayTags::State_Airborne, GetCharacterMovement()->IsFalling() ? 1 : 0);
+	}
+}
+
+void AAgCharacterBase::NotifyJumpApex()
+{
+	Super::NotifyJumpApex();
+
+	if (!IsDead())
+	{
+		SendEventToSelf(AgGameplayTags::Event_Apex);
 	}
 }
 
@@ -296,11 +304,6 @@ void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
 
 void AAgCharacterBase::DieWithRagdoll(const FVector& PushVelocity)
 {
-	if (IsDead())
-	{
-		return;
-	}
-
 	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
 	{
 		AnimInstance->StopAllMontages(0.f);
@@ -376,7 +379,7 @@ void AAgCharacterBase::ApplyEffects()
 TArray<FString> AAgCharacterBase::GetCharacterDataIds() const
 {
 	TArray<FString> Options;
-	for (FName Id : UAgAssetManager::Get().GetCharacterDataIds(CharacterDataClass))
+	for (FName Id : UAgAssetManager::Get().GetCharacterDataIds())
 	{
 		Options.Add(Id.ToString());
 	}
@@ -454,18 +457,6 @@ FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, 
 	FTransform Clamped = WorldRootMotion;
 	Clamped.SetTranslation(Delta);
 	return Clamped;
-}
-
-void AAgCharacterBase::UpdateApex()
-{
-	// 루트 모션 점프(넉업)도 캐릭터 무브먼트의 속도가 경로를 따릅니다.
-	const UCharacterMovementComponent* Movement = GetCharacterMovement();
-	const float VelocityZ = Movement->IsFalling() ? static_cast<float>(Movement->Velocity.Z) : 0.f;
-	if (PreviousVelocityZ > 0.f && VelocityZ <= 0.f && Movement->IsFalling() && !IsDead())
-	{
-		SendEventToSelf(AgGameplayTags::Event_Apex);
-	}
-	PreviousVelocityZ = VelocityZ;
 }
 
 void AAgCharacterBase::DisableRootMotionMontage()

@@ -8,13 +8,13 @@
 
 struct FGameplayEffectSpec;
 
-UENUM(BlueprintType)
+UENUM()
 enum class EAgHitReaction : uint8
 {
-	None UMETA(DisplayName = "없음"),
-	Flinch UMETA(DisplayName = "움찔"),
-	KnockDown UMETA(DisplayName = "넉다운"),
-	KnockUp UMETA(DisplayName = "넉업"),
+	None,
+	Flinch,
+	KnockDown,
+	KnockUp,
 };
 
 USTRUCT()
@@ -41,16 +41,4 @@ struct FAgDamage
 	bool bAttackerHitstop = true;
 
 	void AddToSpec(FGameplayEffectSpec& Spec) const;
-};
-
-USTRUCT(BlueprintType)
-struct FAgProjectileParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, Category = "Projectile")
-	float Speed = 0.f;
-
-	UPROPERTY(EditAnywhere, Category = "Projectile")
-	float Range = 0.f;
 };

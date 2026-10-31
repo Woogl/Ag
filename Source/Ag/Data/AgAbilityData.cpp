@@ -1,15 +1,7 @@
 // Copyright Woogle. All Rights Reserved.
 
 #include "Data/AgAbilityData.h"
-#include "Core/AgGameplayTags.h"
-#include "GameplayEffect.h"
-
-void AgResource::SetAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP)
-{
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_SP, SP);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, MP);
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UP);
-}
+#include "Data/AgEffectData.h"
 
 bool FAgResourceCost::IsFree() const
 {
@@ -18,7 +10,7 @@ bool FAgResourceCost::IsFree() const
 
 void FAgResourceCost::AddToSpec(FGameplayEffectSpec& Spec) const
 {
-	AgResource::SetAmounts(Spec, -SP, -MP, -UP);
+	AgEffectData::SetResourceAmounts(Spec, -SP, -MP, -UP);
 }
 
 bool FAgPatternSelection::IsAvailable(float TargetDistance, int32 Phase) const

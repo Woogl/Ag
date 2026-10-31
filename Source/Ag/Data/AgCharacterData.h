@@ -9,60 +9,60 @@
 
 class UAnimMontage;
 
-UENUM(BlueprintType)
+UENUM()
 enum class EAgToughness : uint8
 {
-	Small UMETA(DisplayName = "소형"),
-	Medium UMETA(DisplayName = "중형"),
-	Large UMETA(DisplayName = "대형"),
+	Small,
+	Medium,
+	Large,
 };
 
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FAgAttributes
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float HP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float MaxHP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float SP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float MaxSP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float MP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float MaxMP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float UP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float MaxUP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float PP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float MaxPP = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float ATK = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float DEF = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Attributes")
+	UPROPERTY()
 	float MOV = 0.f;
 };
 
-UCLASS(Abstract, BlueprintType)
+UCLASS()
 class UAgCharacterData : public UObject
 {
 	GENERATED_BODY()
@@ -89,20 +89,7 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Assets")
 	TMap<FName, TObjectPtr<UAnimMontage>> Montages;
-};
 
-UCLASS(BlueprintType)
-class UAgPlayerData : public UAgCharacterData
-{
-	GENERATED_BODY()
-};
-
-UCLASS(BlueprintType)
-class UAgEnemyData : public UAgCharacterData
-{
-	GENERATED_BODY()
-
-public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PostPatternDelayTime = FFloatInterval(0.f, 0.f);
 
@@ -114,4 +101,14 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")
 	TArray<float> PhaseTransitionHPRatios;
+};
+
+UCLASS()
+class UAgCharacterSet : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Characters")
+	TMap<FName, TObjectPtr<UAgCharacterData>> Characters;
 };

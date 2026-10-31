@@ -38,7 +38,7 @@ namespace
 EStateTreeRunStatus FAgEnemyAITask_PostPatternDelay::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const FFloatInterval& RecoveryTime = InstanceData.Controller->GetEnemyData()->PostPatternDelayTime;
+	const FFloatInterval& RecoveryTime = InstanceData.Controller->GetEnemy()->GetCharacterData()->PostPatternDelayTime;
 	InstanceData.Duration = FMath::FRandRange(RecoveryTime.Min, RecoveryTime.Max);
 	InstanceData.Elapsed = 0.f;
 	InstanceData.StrafeDirection = FMath::RandBool() ? 1.f : -1.f;
@@ -86,34 +86,24 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 	InstanceData.Handle = FGameplayAbilitySpecHandle();
 
 	AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
-	const UAgEnemyData* Data = InstanceData.Controller->GetEnemyData();
 	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
-
-	FName Pattern = InstanceData.Pattern;
-	if (Pattern.IsNone())
+	const AAgCharacterBase* Target = InstanceData.Controller->GetTarget();
+	if (!Target)
 	{
-		const AAgCharacterBase* Target = InstanceData.Controller->GetTarget();
-		if (!Target)
-		{
-			return EStateTreeRunStatus::Failed;
-		}
-		const float Distance = Enemy->GetHorizontalDistanceTo(Target);
-		const auto IsReady = [Enemy](FName Candidate)
-		{
-			return Enemy->CanActivatePattern(Candidate);
-		};
-		TArray<TPair<FName, float>> Candidates;
-		GatherCandidates(*Data, Distance, Enemy->GetPhase(), IsReady, Candidates);
-
-		// StateTree의 가중치 선택은 패턴마다 상태가 필요해, 패턴 목록을 적 데이터에만 두려고 여기서 고릅니다.
-		const TPair<FName, float>* Picked =
-			Algo::SelectRandomWeightedBy(Candidates, [](const TPair<FName, float>& Candidate) { return Candidate.Value; });
-		if (!Picked)
-		{
-			return EStateTreeRunStatus::Failed;
-		}
-		Pattern = Picked->Key;
+		return EStateTreeRunStatus::Failed;
 	}
+	TArray<TPair<FName, float>> Candidates;
+	Enemy->GatherPatterns(Enemy->GetHorizontalDistanceTo(Target), InstanceData.bResponse, Candidates);
+
+	// StateTree의 가중치 선택은 패턴마다 상태가 필요해, 패턴 목록을 적 데이터에만 두려고 여기서 고릅니다.
+	const TPair<FName, float>* Picked =
+		Algo::SelectRandomWeightedBy(Candidates, [](const TPair<FName, float>& Candidate)
+	{ return Candidate.Value; });
+	if (!Picked)
+	{
+		return EStateTreeRunStatus::Failed;
+	}
+	const FName Pattern = Picked->Key;
 
 	const FGameplayAbilitySpec* Spec = Enemy->FindAbilitySpec(Pattern);
 	const FGameplayAbilitySpecHandle Handle = Spec ? Spec->Handle : FGameplayAbilitySpecHandle();
@@ -134,26 +124,6 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::Tick(FStateTreeExecutionContext& 
 	const UAbilitySystemComponent* ASC = InstanceData.Controller->GetEnemy()->GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(InstanceData.Handle);
 	return Spec && Spec->IsActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
-}
-
-void FAgEnemyAITask_RunPattern::GatherCandidates(const UAgCharacterData& Data, float Distance, int32 Phase, TFunctionRef<bool(FName)> IsReady, TArray<TPair<FName, float>>& OutCandidates)
-{
-	OutCandidates.Reset();
-	for (FName Id : Data.Abilities)
-	{
-		const FAgAbilityData* Ability = Data.FindAbility(Id);
-		const FAgPatternSelection* Pattern =
-			Ability && Ability->Tags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
-		if (!Pattern)
-		{
-			continue;
-		}
-
-		if (Pattern->Weight > 0.f && Pattern->IsAvailable(Distance, Phase) && IsReady(Id))
-		{
-			OutCandidates.Emplace(Id, Pattern->Weight);
-		}
-	}
 }
 
 EStateTreeRunStatus FAgEnemyAITask_PhaseTransition::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
