@@ -19,7 +19,7 @@
       "OwnedTags": ["State.Busy"],
       "CancelTags": ["Ability.Action"],
       "Triggers": [
-        {"Tag": "State.Jumping", "Source": "OwnedTagPresent"}
+        {"Tag": "State.Airborne", "Source": "OwnedTagPresent"}
       ]
     },
     "End": "TriggerTag"
@@ -27,7 +27,7 @@
   "JumpAttack": {
     "Tags": ["Ability.Action.JumpAttack"],
     "Activation": {
-      "RequiredTags": ["State.Jumping"],
+      "RequiredTags": ["State.Airborne"],
       "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
       "OwnedTags": ["State.Acting"],
       "CancelTags": ["Ability.Action", "Ability.Sprint"]

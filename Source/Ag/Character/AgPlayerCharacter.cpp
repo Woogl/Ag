@@ -293,12 +293,8 @@ void AAgPlayerCharacter::OnJumped_Implementation()
 {
 	Super::OnJumped_Implementation();
 
-	// 점프 공격의 시작 조건이라, 점프 행동이 다른 까닭으로 끝나도 착지할 때까지 남깁니다.
-	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	ASC->SetLooseGameplayTagCount(AgGameplayTags::State_Jumping, 1);
-
 	// 키를 누른 뒤 실제 점프 전에 시작한 행동·피격 반응의 모션을 끊지 않도록, 점프 행동이 실행 중일 때만 재생합니다.
-	const FGameplayAbilitySpec* Jump = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
+	const FGameplayAbilitySpec* Jump = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
 	UAnimMontage* JumpMontage = GetCharacterData()->FindMontage(JumpMontageId);
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (Jump && Jump->IsActive() && JumpMontage && AnimInstance && !IsDead())
@@ -312,10 +308,9 @@ void AAgPlayerCharacter::Landed(const FHitResult& Hit)
 	Super::Landed(Hit);
 
 	// 점프 공격이나 피격 반응이 점프 행동을 끝냈으면 그 행동의 모션이 착지를 맡습니다.
-	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const FGameplayAbilitySpec* Jump = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
+	// 엔진은 이동 모드를 바꾸기 전에 알리므로, 공중 태그로 끝나는 점프 행동이 아직 실행 중입니다.
+	const FGameplayAbilitySpec* Jump = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
 	const bool bJumpAbility = Jump && Jump->IsActive();
-	ASC->SetLooseGameplayTagCount(AgGameplayTags::State_Jumping, 0);
 	UAnimMontage* JumpMontage = GetCharacterData()->FindMontage(JumpMontageId);
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (!bJumpAbility || !JumpMontage || !AnimInstance || IsDead())
@@ -449,7 +444,7 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 	if (InputTag == AgGameplayTags::Input_Attack)
 	{
 		const FGameplayAbilitySpec* BasicAttack = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_BasicAttack);
-		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Jumping))
+		if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne))
 		{
 			ActivateByTag(AgGameplayTags::Ability_Action_JumpAttack);
 		}
@@ -540,12 +535,14 @@ void AAgPlayerCharacter::TryJump()
 
 bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) const
 {
-	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
 	{
 		return true;
 	}
-	if (InputTag == AgGameplayTags::Input_Attack && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Jumping))
+	// 점프 행동의 Busy만 점프 공격을 막지 않습니다. 다른 행동 도중 걸어서 떨어졌으면 그 행동의 Busy가 막습니다.
+	const FGameplayAbilitySpec* Jump = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
+	if (InputTag == AgGameplayTags::Input_Attack && Jump && Jump->IsActive())
 	{
 		return false;
 	}
