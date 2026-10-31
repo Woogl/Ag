@@ -109,9 +109,7 @@ public:
 
 	void SetTimeCompensation(float Compensation);
 
-	void NotifyLanded();
-
-	/** 몽타주 루트 모션이 있으면 엔진이 루트 모션 소스를 쓰지 않으므로, 소스로 움직이는 Task가 그동안 끕니다. */
+	/** 몽타주 루트 모션이 있으면 엔진이 루트 모션 소스와 띄운 수평 속도를 덮어쓰므로, 모션 밖에서 움직이는 Task가 그동안 끕니다. */
 	void PushDisableMontageRootMotion();
 	void PopDisableMontageRootMotion();
 
@@ -167,6 +165,8 @@ private:
 	void HandleHitstopChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void HandlePassThroughChanged(const FGameplayTag Tag, int32 NewCount);
+
+	void HandleAirborneKnockUpChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void UpdateTimeDilation();
 

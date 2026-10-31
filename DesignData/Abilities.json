@@ -258,8 +258,9 @@
     },
     "Tasks": [
       {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "KnockUp"},
-      {"Task": "Launch", "Height": 70, "Direction": "Back", "Distance": 50}
+      {"Task": "PlayMontage", "Montage": "KnockUp", "BlockedTags": ["State.Airborne"]},
+      {"Task": "PlayMontage", "Montage": "KnockUp", "Section": "AirHit", "RequiredTags": ["State.Airborne"]},
+      {"Task": "Launch", "Height": 70, "Direction": "Back", "Distance": 190}
     ]
   },
   "Juggle": {
@@ -276,8 +277,8 @@
     },
     "Tasks": [
       {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "KnockUp"},
-      {"Task": "Launch", "Height": 15, "Altitude": 70, "Direction": "Back", "Distance": 10}
+      {"Task": "PlayMontage", "Montage": "KnockUp", "Section": "AirHit"},
+      {"Task": "Launch", "Height": 15, "Altitude": 70, "Direction": "Back", "Distance": 50}
     ]
   },
   "GuardPushback": {
@@ -356,7 +357,7 @@
     "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true, "TargetSpacing": 150},
     "Tasks": [
       {"Task": "PlayMontage", "Montage": "GroundSlam"},
-      {"Task": "Launch", "AirTime": 1.2, "Height": 220, "Direction": "Target", "MaxDistance": 1200}
+      {"Task": "Launch", "AirTime": 1.2, "Direction": "Target", "MaxDistance": 1200}
     ],
     "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 8}
   },

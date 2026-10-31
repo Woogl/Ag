@@ -4,7 +4,6 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
-#include "AbilitySystem/Tasks/AgAbilityTask_Launch.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -20,7 +19,6 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/RootMotionSource.h"
 #include "MotionWarpingComponent.h"
 
 namespace
@@ -136,17 +134,6 @@ void AAgCharacterBase::SetTimeCompensation(float Compensation)
 	UpdateTimeDilation();
 }
 
-void AAgCharacterBase::NotifyLanded()
-{
-	// 엔진은 소스를 즉시 지우지 않고 제거 표시만 하므로, 종료된 Launch는 없는 것으로 봅니다.
-	const TSharedPtr<FRootMotionSource> LaunchSource = GetCharacterMovement()->GetRootMotionSource(UAgAbilityTask_Launch::SourceName);
-	const bool bLaunching = LaunchSource.IsValid() && !LaunchSource->Status.HasFlag(ERootMotionSourceStatusFlags::MarkedForRemoval);
-	if (!IsDead() && !bLaunching)
-	{
-		SendEventToSelf(AgGameplayTags::Event_Landed);
-	}
-}
-
 void AAgCharacterBase::PushDisableMontageRootMotion()
 {
 	UAnimInstance* Anim = GetMesh()->GetAnimInstance();
@@ -204,6 +191,10 @@ void AAgCharacterBase::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleHitstopChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PassThrough, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandlePassThroughChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Airborne, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleAirborneKnockUpChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction_KnockUp, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleAirborneKnockUpChanged);
 	DeathEventHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death)
 	                       .AddUObject(this, &ThisClass::HandleDeathEvent);
 	PawnResponse = GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_Pawn);
@@ -235,10 +226,12 @@ void AAgCharacterBase::PossessedBy(AController* NewController)
 
 void AAgCharacterBase::Landed(const FHitResult& Hit)
 {
-	// 엔진 착지 처리가 Launch를 먼저 끝내야, 착지 알림이 끝난 Launch를 건너뛰고 착지 이벤트를 보냅니다.
 	Super::Landed(Hit);
 
-	NotifyLanded();
+	if (!IsDead())
+	{
+		SendEventToSelf(AgGameplayTags::Event_Landed);
+	}
 }
 
 void AAgCharacterBase::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
@@ -427,6 +420,15 @@ void AAgCharacterBase::HandlePassThroughChanged(const FGameplayTag Tag, int32 Ne
 	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, NewCount > 0 ? ECR_Ignore : PawnResponse.GetValue());
 	}
+}
+
+void AAgCharacterBase::HandleAirborneKnockUpChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// 떠 있는 동안 공중 피격 모션이 몸을 뒤집고 저글이 높이를 올려 무기가 피직스 바디를 비껴가므로,
+	// 캡슐도 무기에 맞습니다.
+	const bool bAirborneKnockUp = AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Airborne) &&
+	                              AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockUp);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_AgWeapon, bAirborneKnockUp ? ECR_Overlap : ECR_Ignore);
 }
 
 void AAgCharacterBase::UpdateTimeDilation()

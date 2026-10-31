@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Abilities/Tasks/AbilityTask_ApplyRootMotionJumpForce.h"
+#include "Abilities/Tasks/AbilityTask.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_Launch.generated.h"
+
+struct FGameplayEventData;
 
 UENUM()
 enum class EAgLaunchDirection : uint8
@@ -42,22 +44,21 @@ struct FAgLaunchParams : public FAgTaskParams
 };
 
 UCLASS()
-class UAgAbilityTask_Launch : public UAbilityTask_ApplyRootMotionJumpForce
+class UAgAbilityTask_Launch : public UAbilityTask
 {
 	GENERATED_BODY()
 	friend struct FAgLaunchParams;
 
 public:
-	static const FName SourceName;
-
 	virtual void Activate() override;
-	virtual void TickTask(float DeltaTime) override;
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
+	void HandleLanded(const FGameplayEventData* Payload);
+
 	UPROPERTY()
 	FAgLaunchParams Params;
 
+	FDelegateHandle LandedHandle;
 	bool bMontageRootMotionDisabled = false;
-	bool bArcEnded = false;
 };

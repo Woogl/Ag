@@ -132,6 +132,12 @@
     "Fall": [
       {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Section": "Land"}
     ],
+    "AirHit": [
+      {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Section": "Land", "BlendTime": 0.2}
+    ],
+    "AirFall": [
+      {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "Section": "Land", "BlendTime": 0.2}
+    ],
     "Land": [
       {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
     ],
