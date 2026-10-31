@@ -8,7 +8,8 @@
     },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
     "Tasks": [
-      {"Task": "PlayMontage", "Montage": "BasicAttack"}
+      {"Task": "PlayMontage", "Montage": "BasicAttack", "Section": "Attack2", "RequiredTags": ["State.GuardCounterRecovery"]},
+      {"Task": "PlayMontage", "Montage": "BasicAttack", "BlockedTags": ["State.GuardCounterRecovery"]}
     ]
   },
   "Jump": {
@@ -48,16 +49,8 @@
     "Cost": {"SP": 20},
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "PerfectDodgeWindow"},
-      {"Task": "RootMotion", "Direction": "MoveInput", "BlockedTags": ["State.LockedOn"]},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move"], "BlockedTags": ["State.LockedOn"]},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Forward"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "ForwardRight", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "ForwardRight"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Right", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Right"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "BackwardRight", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "BackwardRight"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Backward", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Backward"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "BackwardLeft", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "BackwardLeft"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Left", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "Left"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "ForwardLeft", "RequiredTags": ["Input.Move", "State.LockedOn"], "MoveDirection": "ForwardLeft"},
+      {"Task": "RootMotion", "Direction": "MoveInput"},
+      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move"]},
       {"Task": "PlayMontage", "Montage": "Dodge", "BlockedTags": ["Input.Move"]}
     ]
   },
@@ -178,7 +171,7 @@
       "Preset": "Enemy",
       "Range": 300,
       "TargetRequiredTags": ["State.Groggy"],
-      "TargetBlockedTags": ["State.Execution", "State.Airborne"],
+      "TargetBlockedTags": ["State.Execution"],
       "bRequired": true,
       "TargetSpacing": 95
     },

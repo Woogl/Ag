@@ -342,10 +342,10 @@ void AAgPlayerCharacter::ApplyDeathState()
 {
 	Super::ApplyDeathState();
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-	{
-		DisableInput(PlayerController);
-	}
+	MoveReleased();
+	bGuardHeld = false;
+	bDodgeHeld = false;
+	BufferedInput = FGameplayTag();
 }
 
 void AAgPlayerCharacter::UpdateRotationMode()
@@ -360,12 +360,12 @@ void AAgPlayerCharacter::UpdateRotationMode()
 
 void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 {
-	if (!Controller)
+	if (!Controller || IsDead())
 	{
 		return;
 	}
 
-	// 회피가 누른 키 쪽으로 구르고 Input.Move로 구르기 섹션을 고르므로, 이동을 무시할 때도 방향과 태그는 정합니다.
+	// 회피가 누른 키 쪽으로 미끄러지고 Input.Move로 회피 섹션을 고르므로, 이동을 무시할 때도 방향과 태그는 정합니다.
 	const FVector2D Input = Value.Get<FVector2D>();
 	const FRotationMatrix YawMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f));
 	const FVector Forward = YawMatrix.GetUnitAxis(EAxis::X);
@@ -662,10 +662,15 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_GuardBreak);
 	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinition().Tags.HasAny(Enders))
 	{
-		FGameplayTagContainer Chances;
-		Chances.AddTag(AgGameplayTags::State_DodgeCounterChance);
-		Chances.AddTag(AgGameplayTags::State_GuardCounterChance);
-		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(Chances);
+		FGameplayTagContainer Removed;
+		Removed.AddTag(AgGameplayTags::State_DodgeCounterChance);
+		Removed.AddTag(AgGameplayTags::State_GuardCounterChance);
+		// 기본 공격은 발동한 뒤에 이 태그를 보고 시작할 타를 고르므로 남겨 둡니다.
+		if (!AgAbility->GetDefinition().Tags.HasTag(AgGameplayTags::Ability_Action_BasicAttack))
+		{
+			Removed.AddTag(AgGameplayTags::State_GuardCounterRecovery);
+		}
+		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(Removed);
 	}
 }
 
@@ -695,7 +700,9 @@ void AAgPlayerCharacter::UpdateSprint()
 	}
 
 	const FGameplayAbilitySpec* Dodge = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Dodge);
-	if (bWantsSprint && !MoveInputDirection.IsNearlyZero() && !bGuardHeld && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && Dodge && Dodge->IsActive())
+	const FGameplayAbilitySpec* PerfectDodge = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_PerfectDodge);
+	const bool bDodging = (Dodge && Dodge->IsActive()) || (PerfectDodge && PerfectDodge->IsActive());
+	if (bWantsSprint && !MoveInputDirection.IsNearlyZero() && !bGuardHeld && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && bDodging)
 	{
 		ActivateByTag(AgGameplayTags::Ability_Sprint);
 	}

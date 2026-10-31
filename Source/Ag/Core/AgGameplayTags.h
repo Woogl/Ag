@@ -63,6 +63,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_ParryWindow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_DodgeCounterChance);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GuardCounterChance);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GuardCounterRecovery);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hitstop);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Sprinting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_LockedOn);

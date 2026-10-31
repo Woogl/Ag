@@ -1,0 +1,14 @@
+{
+  "image": "플레이어 모션 미끄러지기",
+  "character": "player",
+  "animation": {
+    "play_rate": 0.8,
+    "segments": [
+      {
+        "clip": "ACS2ComboSkill/Step_Slide_F",
+        "from": 0.0,
+        "to": 0.6667
+      }
+    ]
+  }
+}

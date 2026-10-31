@@ -176,10 +176,10 @@
     ],
     "Attack5": [
       {"Task": "SendGameplayEvent", "Start":0, "Event": "Event.BasicAttackStarted"},
-      {"Task": "RootMotion", "Start": 0, "End": 0.2, "TargetingRange": 230, "bWarpTranslation": true},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.9166667, "Effect": "Busy"},
-      {"Task": "WeaponHit", "Start": 0.3, "End": 0.35, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.9166667, "Event": "Input.Attack", "Section": "Attack1", "BlendTime": 0.25}
+      {"Task": "RootMotion", "Start": 0, "End": 0.21, "TargetingRange": 270, "bWarpTranslation": true},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.93, "Effect": "Busy"},
+      {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
+      {"Task": "Transition", "Start": 0.93, "Event": "Input.Attack", "Section": "Attack1", "BlendTime": 0.25}
     ]
   },
   "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge": {
@@ -188,34 +188,7 @@
       {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
     ],
     "Forward": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
-    ],
-    "ForwardRight": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
-    ],
-    "Right": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
-    ],
-    "BackwardRight": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
-    ],
-    "Backward": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
-    ],
-    "BackwardLeft": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
-    ],
-    "Left": [
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
-    ],
-    "ForwardLeft": [
+      {"Task": "RootMotion", "Start": 0, "Direction": "MoveInput", "Distance": 400},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
     ]
@@ -233,7 +206,8 @@
       {"Task": "RootMotion", "Start": 0, "End": 0.43, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.56, "Effect": "Busy"},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.48, "Effect": "Invincible"},
-      {"Task": "WeaponHit", "Start": 0.43, "End": 0.48, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
+      {"Task": "WeaponHit", "Start": 0.43, "End": 0.48, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
+      {"Task": "ApplyEffect", "Start": 0.56, "Effect": "GuardCounterRecovery", "bRemoveOnEnd": false}
     ]
   },
   "/Game/Animations/AM_Player_PerfectDodge.AM_Player_PerfectDodge": {
