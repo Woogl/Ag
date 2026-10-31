@@ -5,8 +5,8 @@
   <!-- 바닥 (높이 0m) -->
   <rect x="64" y="76" width="30" height="174" fill="#2f3742"/>  <!-- 외곽 길 -->
   <rect x="100" y="106" width="144" height="144" fill="#2f3742"/>  <!-- 마당 -->
-  <rect x="172" y="250" width="30" height="48" fill="#2f3742"/>  <!-- 출구 통로 (남쪽) -->
-  <rect x="172" y="268" width="240" height="30" fill="#2f3742"/>  <!-- 출구 통로 (동쪽) -->
+  <rect x="154" y="250" width="30" height="48" fill="#2f3742"/>  <!-- 출구 통로 (남쪽) -->
+  <rect x="154" y="268" width="258" height="30" fill="#2f3742"/>  <!-- 출구 통로 (동쪽) -->
   <rect x="472" y="268" width="36" height="30" fill="#2f3742"/>  <!-- 대기 공간 - 아레나 통로 -->
   <rect x="508" y="184" width="198" height="198" fill="#2f3742"/>  <!-- 보스 아레나 -->
   <!-- 대기 공간 -->
@@ -26,15 +26,21 @@
   <rect x="244" y="76" width="24" height="24" fill="#5e6a7a"/>  <!-- 비탈길 끝 모서리 -->
   <rect x="244" y="106" width="24" height="144" fill="#5e6a7a"/>  <!-- 성벽 위 통로 -->
   <rect x="244" y="100" width="24" height="6" fill="#5e6a7a"/>
+  <!-- 엄폐물 (3m x 1m, 높이 2m) -->
+  <rect x="202" y="187" width="18" height="6" fill="#8a939e"/>
+  <rect x="163" y="208" width="18" height="6" fill="#8a939e"/>
+  <rect x="145" y="163" width="6" height="18" fill="#8a939e"/>
   <!-- 낮은 담 (높이 1m) -->
   <line x1="97" y1="142" x2="97" y2="202" stroke="#e8c36a" stroke-width="4"/>
   <text x="104" y="176" font-size="11" fill="#e8c36a">낮은 담</text>
+  <line x1="64" y1="74" x2="94" y2="74" stroke="#e8c36a" stroke-width="4"/>
+  <text x="64" y="64" font-size="11" fill="#e8c36a">낮은 담</text>
   <!-- 구간 이름 -->
   <g font-size="12" fill="#c9d1db">
     <text x="104" y="68">비탈길</text>
     <text x="70" y="268" fill="#c9d1db">외곽 길</text>
     <text x="150" y="198">마당</text>
-    <text x="246" y="270" font-size="11">성벽 위 통로</text>
+    <text x="272" y="180" font-size="11">성벽 위 통로</text>
     <text x="300" y="262">출구 통로</text>
     <text x="414" y="248">대기</text>
     <text x="570" y="410" fill="#c9d1db">보스 아레나</text>
@@ -58,5 +64,6 @@
     <rect x="90" y="384" width="14" height="10" fill="#4a5563"/><text x="108" y="393">1.5m</text>
     <rect x="150" y="384" width="14" height="10" fill="#5e6a7a"/><text x="168" y="393">3m</text>
     <rect x="200" y="384" width="14" height="10" fill="#3d4652"/><text x="218" y="393">경사로</text>
+    <rect x="260" y="384" width="14" height="10" fill="#8a939e"/><text x="278" y="393">엄폐물 2m</text>
   </g>
 </svg>

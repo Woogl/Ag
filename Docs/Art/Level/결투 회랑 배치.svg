@@ -31,11 +31,11 @@
   <rect x="420.0" y="180.0" width="24.0" height="24.0" fill="#6b7480"/>
   <rect x="420.0" y="116.0" width="24.0" height="24.0" fill="#6b7480"/>
   <!-- 결투방 3의 단상(높이 1.5m)과 경사로 -->
-  <rect x="728.0" y="184.0" width="48.0" height="48.0" fill="#4a5563"/>
-  <rect x="680.0" y="184.0" width="48.0" height="16.0" fill="#3d4652"/>
+  <rect x="712.0" y="184.0" width="48.0" height="48.0" fill="#4a5563"/>
+  <rect x="664.0" y="184.0" width="48.0" height="16.0" fill="#3d4652"/>
   <g font-size="11" fill="#c9d1d9" text-anchor="middle">
-    <text x="752" y="245">단상 1.5m</text>
-    <text x="704" y="211">경사로</text>
+    <text x="736" y="245">단상 1.5m</text>
+    <text x="688" y="211">경사로</text>
   </g>
   <!-- 엿보기 난간 -->
   <line x1="392.0" y1="224.0" x2="392.0" y2="188.0" stroke="#b48ce0" stroke-width="4"/>
@@ -74,23 +74,23 @@
   <!-- 바라보는 방향 -->
   <g stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)">
     <line x1="67.6" y1="240.0" x2="85.2" y2="240.0"/>
-    <line x1="299.6" y1="252.0" x2="317.2" y2="252.0"/>
+    <line x1="256.0" y1="211.6" x2="256.0" y2="229.2"/>
     <line x1="468.4" y1="192.0" x2="450.8" y2="192.0"/>
     <line x1="444.4" y1="128.0" x2="426.8" y2="128.0"/>
     <line x1="560.0" y1="204.4" x2="560.0" y2="186.8"/>
     <line x1="676.4" y1="240.0" x2="658.8" y2="240.0"/>
-    <line x1="740.6" y1="210.3" x2="723.4" y2="213.8"/>
+    <line x1="724.6" y1="210.3" x2="707.4" y2="213.8"/>
     <line x1="1132.4" y1="240.0" x2="1114.8" y2="240.0"/>
   </g>
   <!-- 플레이어와 적 -->
   <g font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">
     <circle cx="56.0" cy="240.0" r="10" fill="#4c9be8"/><text x="56.0" y="244.0">P</text>
-    <circle cx="288.0" cy="252.0" r="10" fill="#e5534b"/><text x="288.0" y="256.0">근</text>
+    <circle cx="256.0" cy="200.0" r="10" fill="#e5534b"/><text x="256.0" y="204.0">근</text>
     <circle cx="480.0" cy="192.0" r="10" fill="#e5534b"/><text x="480.0" y="196.0">근</text>
     <circle cx="456.0" cy="128.0" r="10" fill="#e5534b"/><text x="456.0" y="132.0">근</text>
     <circle cx="560.0" cy="216.0" r="10" fill="#e5534b"/><text x="560.0" y="220.0">근</text>
     <circle cx="688.0" cy="240.0" r="10" fill="#e5534b"/><text x="688.0" y="244.0">근</text>
-    <circle cx="752.0" cy="208.0" r="10" fill="#e08a2e"/><text x="752.0" y="212.0">원</text>
+    <circle cx="736.0" cy="208.0" r="10" fill="#e08a2e"/><text x="736.0" y="212.0">원</text>
     <circle cx="1148.0" cy="240.0" r="14" fill="#9b6bd6"/><text x="1148.0" y="244.0">B</text>
   </g>
   <text x="572.0" y="230" font-size="11" fill="#c9d1d9">매복</text>
