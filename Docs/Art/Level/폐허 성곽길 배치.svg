@@ -30,6 +30,9 @@
   <rect x="202" y="187" width="18" height="6" fill="#8a939e"/>
   <rect x="163" y="208" width="18" height="6" fill="#8a939e"/>
   <rect x="145" y="163" width="6" height="18" fill="#8a939e"/>
+  <!-- 통로 남쪽 끝에서 마당 단으로 뛰어내리는 가장자리 (1.5m) -->
+  <line x1="244" y1="226" x2="244" y2="250" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="4 3"/>
+  <text x="272" y="240" font-size="11" fill="#FFFFFF">1.5m 뛰어내림</text>
   <!-- 낮은 담 (높이 1m) -->
   <line x1="97" y1="142" x2="97" y2="202" stroke="#e8c36a" stroke-width="4"/>
   <text x="104" y="176" font-size="11" fill="#e8c36a">낮은 담</text>
