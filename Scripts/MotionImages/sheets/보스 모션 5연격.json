@@ -2,52 +2,64 @@
   "image": "보스 모션 5연격",
   "character": "boss",
   "animation": {
-    "play_rate": 0.8,
+    "play_rate": 0.7777777777777778,
     "segments": [
       {
         "clip": "Halberd/Attack_Combo2",
         "from": 0.0,
-        "to": 0.8
-      },
-      {
-        "clip": "Halberd/Attack_Combo3",
-        "from": 0.0,
-        "to": 0.4333
+        "to": 0.7,
+        "rate": 0.9
       },
       {
         "clip": "Halberd/Attack_Combo2",
-        "from": 0.5833,
-        "to": 0.8
+        "from": 0.7,
+        "to": 0.85
       },
       {
         "clip": "Halberd/Attack_Combo3",
         "from": 0.0,
-        "to": 0.4333
+        "to": 0.43333
       },
       {
         "clip": "Halberd/Attack_Combo2",
-        "from": 0.5833,
-        "to": 0.8
+        "from": 0.58333,
+        "to": 0.85
       },
       {
         "clip": "Halberd/Attack_Combo3",
         "from": 0.0,
-        "to": 0.4333
+        "to": 0.43333
       },
       {
         "clip": "Halberd/Attack_Combo2",
-        "from": 0.5833,
-        "to": 0.8833
+        "from": 0.58333,
+        "to": 0.85
       },
       {
         "clip": "Halberd/Attack_Combo3",
         "from": 0.0,
-        "to": 0.6333
+        "to": 0.43333
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.58333,
+        "to": 0.88333
+      },
+      {
+        "clip": "Halberd/Attack_Combo3",
+        "from": 0.0,
+        "to": 0.63333
       },
       {
         "clip": "Halberd/Attack_Combo4",
         "from": 0.0,
-        "to": 0.9833
+        "to": 0.4
+      },
+      {
+        "clip": "Halberd/Attack_Combo4",
+        "from": 0.4,
+        "to": 0.983333,
+        "rate": 0.9
       }
     ]
   }

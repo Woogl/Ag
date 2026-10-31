@@ -41,7 +41,7 @@
   "/Game/Animations/AM_Boss_GroundSlam.AM_Boss_GroundSlam": {
     "Start": [
       {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
-      {"Task": "Transition", "Start": 0, "EndSection": "Loop", "Event": "Event.Landed", "Section": "End", "BlendTime": 0.1},
+      {"Task": "Transition", "Start": 0, "EndSection": "Loop", "Event": "Event.Landed", "Section": "End", "BlendTime": 0.02},
       {"Task": "Transition", "Start": 0.36667, "Section": "Loop", "BlendTime": 0.2}
     ],
     "End": [
@@ -62,40 +62,40 @@
   },
   "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike": {
     "Attack1": [
-      {"Task": "RootMotion", "Start": 0, "End": 0.65, "bWarpTranslation": false},
-      {"Task": "WeaponHit", "Start": 0.7, "End": 0.8, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.85, "Section": "Windup2", "BlendTime": 0.2}
+      {"Task": "RootMotion", "Start": 0, "End": 0.722222, "bWarpTranslation": false},
+      {"Task": "WeaponHit", "Start": 0.777778, "End": 0.877778, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+      {"Task": "Transition", "Start": 0.927778, "Section": "Windup2", "BlendTime": 0.12}
     ],
     "Windup2": [
       {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
-      {"Task": "Transition", "Start": 0.43333, "Section": "Attack2", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.43333, "Section": "Attack2", "BlendTime": 0.12}
     ],
     "Attack2": [
       {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
       {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.26667, "Section": "Windup3", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.26667, "Section": "Windup3", "BlendTime": 0.12}
     ],
     "Windup3": [
       {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
-      {"Task": "Transition", "Start": 0.43333, "Section": "Attack3", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.43333, "Section": "Attack3", "BlendTime": 0.12}
     ],
     "Attack3": [
       {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
       {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.26667, "Section": "Windup4", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.26667, "Section": "Windup4", "BlendTime": 0.12}
     ],
     "Windup4": [
       {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
-      {"Task": "Transition", "Start": 0.43333, "Section": "Attack4", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.43333, "Section": "Attack4", "BlendTime": 0.12}
     ],
     "Attack4": [
       {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
       {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.3, "Section": "Windup5", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.3, "Section": "Windup5", "BlendTime": 0.12}
     ],
     "Windup5": [
       {"Task": "RootMotion", "Start": 0, "End": 0.63333, "bWarpTranslation": false},
-      {"Task": "Transition", "Start": 0.63333, "Section": "Attack5", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.63333, "Section": "Attack5", "BlendTime": 0.12}
     ],
     "Attack5": [
       {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
@@ -182,9 +182,9 @@
     "Attack5": [
       {"Task": "SendGameplayEvent", "Start":0, "Event": "Event.BasicAttackStarted"},
       {"Task": "RootMotion", "Start": 0, "End": 0.21, "TargetingRange": 270, "bWarpTranslation": true},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.88, "Effect": "Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.83, "Effect": "Busy"},
       {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.88, "Event": "Input.Attack", "Section": "Attack1", "BlendTime": 0.25}
+      {"Task": "Transition", "Start": 0.83, "Event": "Input.Attack", "Section": "Attack1", "BlendTime": 0.25}
     ]
   },
   "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge": {
@@ -201,7 +201,7 @@
   "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter": {
     "Default": [
       {"Task": "RootMotion", "Start": 0, "End": 0.15, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.31, "Effect": "Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.51, "Effect": "Busy"},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.23, "Effect": "Invincible"},
       {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
     ]
@@ -209,10 +209,10 @@
   "/Game/Animations/AM_Player_GuardCounter.AM_Player_GuardCounter": {
     "Default": [
       {"Task": "RootMotion", "Start": 0, "End": 0.43, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.56, "Effect": "Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.76, "Effect": "Busy"},
       {"Task": "ApplyEffect", "Start": 0, "End": 0.48, "Effect": "Invincible"},
       {"Task": "WeaponHit", "Start": 0.43, "End": 0.48, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "ApplyEffect", "Start": 0.56, "Effect": "GuardCounterRecovery", "bRemoveOnEnd": false}
+      {"Task": "ApplyEffect", "Start": 0.76, "Effect": "GuardCounterRecovery", "bRemoveOnEnd": false}
     ]
   },
   "/Game/Animations/AM_Player_PerfectDodge.AM_Player_PerfectDodge": {

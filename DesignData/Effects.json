@@ -109,7 +109,7 @@
   },
   "GuardCounterRecovery": {
     "DurationPolicy": "HasDuration",
-    "Duration": 0.59,
+    "Duration": 0.39,
     "GrantedTags": ["State.GuardCounterRecovery"]
   },
   "PerfectDodgeSlowMotion": {
