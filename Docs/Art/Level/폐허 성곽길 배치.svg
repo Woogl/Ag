@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="420" viewBox="0 0 780 420" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <rect width="780" height="420" fill="#11151b"/>
+  <!-- 1m = 6px. 화면 x = 40 + 6X, 화면 y = 250 - 6Y (오른쪽이 +X, 위쪽이 +Y) -->
+  <text x="40" y="36" font-size="22" font-weight="700" fill="#FFFFFF">LV_TempDungeon03 · 위에서 본 배치 (오른쪽이 보스 방향)</text>
+  <!-- 바닥 (높이 0m) -->
+  <rect x="64" y="76" width="30" height="174" fill="#2f3742"/>  <!-- 외곽 길 -->
+  <rect x="100" y="106" width="144" height="144" fill="#2f3742"/>  <!-- 마당 -->
+  <rect x="172" y="250" width="30" height="48" fill="#2f3742"/>  <!-- 출구 통로 (남쪽) -->
+  <rect x="172" y="268" width="240" height="30" fill="#2f3742"/>  <!-- 출구 통로 (동쪽) -->
+  <rect x="472" y="268" width="36" height="30" fill="#2f3742"/>  <!-- 대기 공간 - 아레나 통로 -->
+  <rect x="508" y="184" width="198" height="198" fill="#2f3742"/>  <!-- 보스 아레나 -->
+  <!-- 대기 공간 -->
+  <rect x="412" y="253" width="60" height="60" fill="#2f3742"/>
+  <!-- 종탑 (아레나 입구 반대편 벽 바깥) -->
+  <rect x="712" y="253" width="60" height="60" fill="#2f3742" stroke="#d6b25e" stroke-width="3"/>
+  <text x="742" y="247" fill="#d6b25e" font-size="12" text-anchor="middle">종탑</text>
+  <!-- 경사로 -->
+  <rect x="94" y="76" width="60" height="24" fill="#3d4652"/>  <!-- 비탈길 첫 오르막 -->
+  <rect x="178" y="76" width="66" height="24" fill="#3d4652"/>  <!-- 비탈길 둘째 오르막 -->
+  <rect x="226" y="130" width="18" height="48" fill="#3d4652"/>  <!-- 성벽 위 통로 경사로 -->
+  <rect x="214" y="190" width="12" height="36" fill="#3d4652"/>  <!-- 마당 단 경사로 -->
+  <!-- 높이 1.5m -->
+  <rect x="154" y="76" width="24" height="24" fill="#4a5563"/>  <!-- 쉼터 -->
+  <rect x="208" y="226" width="36" height="24" fill="#4a5563"/>  <!-- 마당 단 -->
+  <!-- 높이 3m -->
+  <rect x="244" y="76" width="24" height="24" fill="#5e6a7a"/>  <!-- 비탈길 끝 모서리 -->
+  <rect x="244" y="106" width="24" height="144" fill="#5e6a7a"/>  <!-- 성벽 위 통로 -->
+  <rect x="244" y="100" width="24" height="6" fill="#5e6a7a"/>
+  <!-- 낮은 담 (높이 1m) -->
+  <line x1="97" y1="142" x2="97" y2="202" stroke="#e8c36a" stroke-width="4"/>
+  <text x="104" y="176" font-size="11" fill="#e8c36a">낮은 담</text>
+  <!-- 구간 이름 -->
+  <g font-size="12" fill="#c9d1db">
+    <text x="104" y="68">비탈길</text>
+    <text x="70" y="268" fill="#c9d1db">외곽 길</text>
+    <text x="150" y="198">마당</text>
+    <text x="246" y="270" font-size="11">성벽 위 통로</text>
+    <text x="300" y="262">출구 통로</text>
+    <text x="414" y="248">대기</text>
+    <text x="570" y="410" fill="#c9d1db">보스 아레나</text>
+  </g>
+  <!-- 마커 -->
+  <circle cx="76" cy="238" r="8" fill="#FFFFFF"/><text x="72" y="242" font-size="11" font-weight="700" fill="#11151b">P</text>
+  <g font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">
+    <circle cx="112" cy="88" r="9" fill="#c0453a"/><text x="112" y="92">근</text>
+    <circle cx="226" cy="88" r="9" fill="#c0453a"/><text x="226" y="92">근</text>
+    <circle cx="256" cy="142" r="9" fill="#c0453a"/><text x="256" y="146">근</text>
+    <circle cx="184" cy="178" r="9" fill="#c0453a"/><text x="184" y="182">근</text>
+    <circle cx="256" cy="232" r="9" fill="#3a78c0"/><text x="256" y="236">원</text>
+    <circle cx="226" cy="238" r="9" fill="#3a78c0"/><text x="226" y="242">원</text>
+    <circle cx="508" cy="283" r="6" fill="#6fbf73"/><text x="508" y="272" fill="#6fbf73">G</text>
+    <circle cx="607" cy="283" r="6" fill="#d6b25e"/><text x="607" y="272" fill="#d6b25e">C</text>
+    <circle cx="655" cy="283" r="9" fill="#a24bd1"/><text x="655" y="287">B</text>
+  </g>
+  <!-- 범례 -->
+  <g font-size="11" fill="#c9d1db">
+    <rect x="40" y="384" width="14" height="10" fill="#2f3742"/><text x="58" y="393">0m</text>
+    <rect x="90" y="384" width="14" height="10" fill="#4a5563"/><text x="108" y="393">1.5m</text>
+    <rect x="150" y="384" width="14" height="10" fill="#5e6a7a"/><text x="168" y="393">3m</text>
+    <rect x="200" y="384" width="14" height="10" fill="#3d4652"/><text x="218" y="393">경사로</text>
+  </g>
+</svg>
