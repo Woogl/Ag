@@ -21,7 +21,6 @@ public:
 	void CancelAbilitiesWithSpecTags(const FGameplayTagContainer& Tags, UGameplayAbility* Ignore = nullptr);
 
 	/** 엔진 TryActivateAbilitiesByTag는 클래스 태그를 보므로 쓰지 않고 스펙 태그로 찾습니다. */
-	FGameplayAbilitySpec* FindSpecByTag(const FGameplayTag& Tag);
 	const FGameplayAbilitySpec* FindSpecByTag(const FGameplayTag& Tag) const;
 
 	/** 엔진 PlayMontage는 블렌드 인 시간을 정할 수 없으므로 같은 기록을 남기며 직접 재생합니다. */

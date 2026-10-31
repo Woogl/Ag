@@ -4,13 +4,12 @@
 
 #include "Character/AgEnemySightPreviewComponent.h"
 #include "Engine/World.h"
-#include "GameFramework/Actor.h"
 #include "SceneManagement.h"
 
 void FAgEnemySightVisualizer::DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI)
 {
 	const UAgEnemySightPreviewComponent* Preview = Cast<UAgEnemySightPreviewComponent>(Component);
-	if (!Preview || !Preview->GetWorld() || Preview->GetWorld()->WorldType != EWorldType::Editor || !Preview->GetOwner()->IsSelected())
+	if (!Preview || !Preview->GetWorld() || Preview->GetWorld()->WorldType != EWorldType::Editor)
 	{
 		return;
 	}

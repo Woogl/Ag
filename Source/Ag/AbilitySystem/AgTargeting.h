@@ -24,8 +24,6 @@ class UAgTargetingSelectionTask_Sphere : public UTargetingTask
 	GENERATED_BODY()
 
 public:
-	UAgTargetingSelectionTask_Sphere(const FObjectInitializer& ObjectInitializer);
-
 	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
 };
 
@@ -33,9 +31,6 @@ UCLASS()
 class UAgTargetingFilterTask_Hostile : public UTargetingFilterTask_BasicFilterTemplate
 {
 	GENERATED_BODY()
-
-public:
-	UAgTargetingFilterTask_Hostile(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
@@ -46,9 +41,6 @@ class UAgTargetingFilterTask_Hittable : public UTargetingFilterTask_BasicFilterT
 {
 	GENERATED_BODY()
 
-public:
-	UAgTargetingFilterTask_Hittable(const FObjectInitializer& ObjectInitializer);
-
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
@@ -57,9 +49,6 @@ UCLASS()
 class UAgTargetingFilterTask_TagRequirements : public UTargetingFilterTask_BasicFilterTemplate
 {
 	GENERATED_BODY()
-
-public:
-	UAgTargetingFilterTask_TagRequirements(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
@@ -73,9 +62,6 @@ class UAgTargetingFilterTask_OnScreen : public UTargetingFilterTask_BasicFilterT
 {
 	GENERATED_BODY()
 
-public:
-	UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer);
-
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
@@ -84,9 +70,6 @@ UCLASS()
 class UAgTargetingSortTask_ScreenCenter : public UTargetingSortTask_Base
 {
 	GENERATED_BODY()
-
-public:
-	UAgTargetingSortTask_ScreenCenter(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	virtual float GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;

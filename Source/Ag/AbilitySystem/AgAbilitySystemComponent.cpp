@@ -32,11 +32,6 @@ void UAgAbilitySystemComponent::CancelAbilitiesWithSpecTags(const FGameplayTagCo
 	}
 }
 
-FGameplayAbilitySpec* UAgAbilitySystemComponent::FindSpecByTag(const FGameplayTag& Tag)
-{
-	return const_cast<FGameplayAbilitySpec*>(std::as_const(*this).FindSpecByTag(Tag));
-}
-
 const FGameplayAbilitySpec* UAgAbilitySystemComponent::FindSpecByTag(const FGameplayTag& Tag) const
 {
 	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())

@@ -32,10 +32,6 @@ public class Ag : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "Json", "JsonUtilities", "LevelSequence", "MovieScene", "PhysicsCore" });
-		if (Target.bBuildEditor)
-		{
-			PrivateDependencyModuleNames.AddRange(new string[] { "TargetPlatform" });
-		}
 
 		// JSON 데이터 파일은 Content 밖에 있어 쿡이 알지 못하므로 따로 넣습니다.
 		RuntimeDependencies.Add("$(ProjectDir)/DesignData/*.json", StagedFileType.UFS);

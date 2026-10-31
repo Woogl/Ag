@@ -44,7 +44,6 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	virtual void OnJumped_Implementation() override;
-
 	virtual void Landed(const FHitResult& Hit) override;
 
 	virtual void ApplyDeathState() override;

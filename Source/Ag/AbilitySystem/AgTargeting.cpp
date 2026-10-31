@@ -67,11 +67,6 @@ bool AgTargeting::IsInRange(const AActor& Source, const AActor& Target, float Ra
 	return Range > 0.f && Collision && Collision->OverlapComponent(Source.GetActorLocation(), FQuat::Identity, FCollisionShape::MakeSphere(Range));
 }
 
-UAgTargetingSelectionTask_Sphere::UAgTargetingSelectionTask_Sphere(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
 void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& TargetingHandle) const
 {
 	Super::Execute(TargetingHandle);
@@ -108,11 +103,6 @@ void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& Ta
 	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
 }
 
-UAgTargetingFilterTask_Hostile::UAgTargetingFilterTask_Hostile(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
 bool UAgTargetingFilterTask_Hostile::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
@@ -124,22 +114,12 @@ bool UAgTargetingFilterTask_Hostile::ShouldFilterTarget(const FTargetingRequestH
 	return FGenericTeamId::GetAttitude(Owner, TargetData.HitResult.GetActor()) != ETeamAttitude::Hostile;
 }
 
-UAgTargetingFilterTask_Hittable::UAgTargetingFilterTask_Hittable(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
-}
-
 bool UAgTargetingFilterTask_Hittable::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
 	const AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(TargetData.HitResult.GetActor());
 	return !Owner || !Candidate || !Candidate->CanBeHitBy(*Owner);
-}
-
-UAgTargetingFilterTask_TagRequirements::UAgTargetingFilterTask_TagRequirements(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
 }
 
 bool UAgTargetingFilterTask_TagRequirements::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
@@ -152,11 +132,6 @@ bool UAgTargetingFilterTask_TagRequirements::ShouldFilterTarget(const FTargeting
 	const FGameplayTagContainer& Tags = ASC->GetOwnedGameplayTags();
 	const FAgTargetingRequest* Request = UE::TargetingSystem::TTargetingDataStore<FAgTargetingRequest>::Find(TargetingHandle);
 	return !Requirements.RequirementsMet(Tags) || (Request && (!Tags.HasAll(Request->TargetRequiredTags) || Tags.HasAny(Request->TargetBlockedTags)));
-}
-
-UAgTargetingFilterTask_OnScreen::UAgTargetingFilterTask_OnScreen(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
 }
 
 bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
@@ -177,11 +152,6 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 	                       ScreenPosition.X >= 0.f && ScreenPosition.Y >= 0.f && ScreenPosition.X <= ViewportWidth &&
 	                       ScreenPosition.Y <= ViewportHeight;
 	return !bOnScreen;
-}
-
-UAgTargetingSortTask_ScreenCenter::UAgTargetingSortTask_ScreenCenter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
-{
 }
 
 float UAgTargetingSortTask_ScreenCenter::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
