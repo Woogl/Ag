@@ -7,7 +7,7 @@
       {
         "clip": "Halberd/Attack_Combo2",
         "from": 0.0,
-        "to": 0.8833
+        "to": 0.8
       },
       {
         "clip": "Halberd/Attack_Combo3",
@@ -17,7 +17,7 @@
       {
         "clip": "Halberd/Attack_Combo2",
         "from": 0.5833,
-        "to": 0.8833
+        "to": 0.8
       },
       {
         "clip": "Halberd/Attack_Combo3",
@@ -27,7 +27,7 @@
       {
         "clip": "Halberd/Attack_Combo2",
         "from": 0.5833,
-        "to": 0.8833
+        "to": 0.8
       },
       {
         "clip": "Halberd/Attack_Combo3",

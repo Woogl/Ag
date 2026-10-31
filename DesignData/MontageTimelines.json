@@ -55,11 +55,16 @@
       {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "HitReaction": "KnockDown", "bGuardable": true}}
     ]
   },
+  "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition": {
+    "Default": [
+      {"Task": "AreaHit", "Start": 0.58, "Damage": {"HPMultiplier": 0, "HitReaction": "KnockDown", "bGuardable": false, "bAttackerHitstop": false}, "Area": {"Preset": "Hit", "Range": 400}}
+    ]
+  },
   "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike": {
     "Attack1": [
       {"Task": "RootMotion", "Start": 0, "End": 0.65, "bWarpTranslation": false},
       {"Task": "WeaponHit", "Start": 0.7, "End": 0.8, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.88333, "Section": "Windup2", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.85, "Section": "Windup2", "BlendTime": 0.2}
     ],
     "Windup2": [
       {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
@@ -68,7 +73,7 @@
     "Attack2": [
       {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
       {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.3, "Section": "Windup3", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.26667, "Section": "Windup3", "BlendTime": 0.2}
     ],
     "Windup3": [
       {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
@@ -77,7 +82,7 @@
     "Attack3": [
       {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
       {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.3, "Section": "Windup4", "BlendTime": 0.2}
+      {"Task": "Transition", "Start": 0.26667, "Section": "Windup4", "BlendTime": 0.2}
     ],
     "Windup4": [
       {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
