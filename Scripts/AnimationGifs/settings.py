@@ -32,4 +32,6 @@ def output_relative(path):
         return Path("Dodge_and_Evade") / (path.rsplit("/", 1)[-1] + ".gif")
     if "/Fab/Dodge_Animations/" in path:
         return Path("Dodge_Animations") / (path.rsplit("/", 1)[-1] + ".gif")
+    if "/Fab/ACS2ComboSkill/" in path:
+        return Path("ACS2ComboSkill") / (path.rsplit("/", 1)[-1] + ".gif")
     return Path("Base") / Path(path.removeprefix("/Game/")).with_suffix(".gif")

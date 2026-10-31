@@ -40,7 +40,7 @@ def compose_sequence(sequence_dir):
         draw = ImageDraw.Draw(canvas)
         draw.text((6, 4), name, font=name_font, fill="white")
         label = "%.2f / %.2f s | 1x | %d fps" % (moment, meta["length"], FPS)
-        if "/Fab/" not in meta["path"]:
+        if not meta.get("weapon", "/Fab/" in meta["path"]):
             label += " | body motion (no weapon)"
         draw.text((6, 30), label, font=font, fill=(170, 190, 210))
         frames.append(canvas)

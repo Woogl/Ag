@@ -157,7 +157,8 @@ class Capture:
             raise RuntimeError("Not an AnimSequence: " + self.path)
         self.length = unreal.AnimationLibrary.get_sequence_length(self.animation)
         self.times = [min(i / FPS, self.length) for i in range(math.ceil(self.length * FPS) + 1)]
-        player = "ARPG_Samurai" in self.path or "/Dodge_and_Evade_Anims/" in self.path or "/Fab/Dodge_Animations/" in self.path
+        player = ("ARPG_Samurai" in self.path or "/Dodge_and_Evade_Anims/" in self.path or "/Fab/Dodge_Animations/" in self.path
+                  or "/Fab/ACS2ComboSkill/" in self.path)
         self.character_name = "player" if player else "boss"
         self.actor, self.mesh, equipment = self.character(self.character_name)
         visible = [self.actor]
@@ -166,6 +167,7 @@ class Capture:
             component.set_visibility(enabled, True)
             if enabled:
                 visible.append(weapon)
+        self.weapon_visible = len(visible) > 1
         self.capture.clear_show_only_components()
         self.mask_capture.clear_show_only_components()
         for visible_actor in visible:
@@ -251,7 +253,7 @@ class Capture:
                     atomic_json(self.sequence_dir / "ready.json", {
                         "path": self.path, "output": self.jobs["sequences"][self.sequence_index]["output"],
                         "length": self.length, "times": self.times, "capture_size": [WIDTH * RENDER_SCALE, HEIGHT * RENDER_SCALE],
-                        "mask": "inverse_opacity",
+                        "mask": "inverse_opacity", "weapon": self.weapon_visible,
                         "capture_seconds": time.perf_counter() - self.sequence_started})
                     self.sequence_index += 1
                     self.phase = "sequence"
