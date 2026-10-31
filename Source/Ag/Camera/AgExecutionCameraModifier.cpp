@@ -17,16 +17,28 @@ UAgExecutionCameraModifier::UAgExecutionCameraModifier(const FObjectInitializer&
 
 void UAgExecutionCameraModifier::Start(const AActor& InPlayer, const AActor& InTarget)
 {
-	Player = &InPlayer;
-	Target = &InTarget;
-	TargetStartLocation = InTarget.GetActorLocation();
 	Elapsed = 0.f;
 
-	// 구도의 방향은 처형을 시작할 때 정하고, 오른쪽이 막혔으면 좌우를 뒤집습니다.
-	const float FacingYaw = (InTarget.GetActorLocation() - InPlayer.GetActorLocation()).GetSafeNormal2D().Rotation().Yaw;
-	bool bBlocked = false;
-	SweepCameraLocation(GetLookAtLocation(), FacingYaw + Yaw, bBlocked);
-	CompositionYaw = bBlocked ? FacingYaw - Yaw : FacingYaw + Yaw;
+	// 카메라 자리는 처형을 시작할 때 정하고, 오른쪽만 막혔으면 좌우를 뒤집습니다. 양쪽 모두 막히면 오른쪽에 남습니다.
+	const FVector PlayerLocation = InPlayer.GetActorLocation();
+	const FVector TargetLocation = InTarget.GetActorLocation();
+	const float FacingYaw = (TargetLocation - PlayerLocation).GetSafeNormal2D().Rotation().Yaw;
+	const FVector LookAt = (PlayerLocation + TargetLocation) * 0.5 + FVector(0., 0., Height);
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(ExecutionCamera), false);
+	Params.AddIgnoredActor(&InPlayer);
+	Params.AddIgnoredActor(&InTarget);
+	bool bRightBlocked = false;
+	CameraLocation = SweepCameraLocation(LookAt, FacingYaw + Yaw, Params, bRightBlocked);
+	if (bRightBlocked)
+	{
+		bool bLeftBlocked = false;
+		const FVector LeftLocation = SweepCameraLocation(LookAt, FacingYaw - Yaw, Params, bLeftBlocked);
+		if (!bLeftBlocked)
+		{
+			CameraLocation = LeftLocation;
+		}
+	}
+	CameraRotation = (LookAt - CameraLocation).Rotation();
 
 	EnableModifier();
 }
@@ -43,15 +55,7 @@ void UAgExecutionCameraModifier::ModifyCamera(float DeltaTime, FVector ViewLocat
 	{
 		Stop();
 	}
-	if (!Player.IsValid() || !Target.IsValid())
-	{
-		return;
-	}
 
-	const FVector LookAt = GetLookAtLocation();
-	bool bBlocked = false;
-	const FVector CameraLocation = SweepCameraLocation(LookAt, CompositionYaw, bBlocked);
-	const FRotator CameraRotation = (LookAt - CameraLocation).Rotation();
 	const float ZoomAlpha = ZoomDuration > 0.f ? FMath::Min(Elapsed / ZoomDuration, 1.f) : 1.f;
 	const float CompositionFOV = FMath::Lerp(FieldOfView, ZoomFieldOfView, FMath::InterpEaseOut(0.f, 1.f, ZoomAlpha, 2.f));
 
@@ -62,17 +66,9 @@ void UAgExecutionCameraModifier::ModifyCamera(float DeltaTime, FVector ViewLocat
 	NewFOV = FMath::Lerp(FOV, CompositionFOV, Weight);
 }
 
-FVector UAgExecutionCameraModifier::GetLookAtLocation() const
-{
-	return (Player->GetActorLocation() + TargetStartLocation) * 0.5 + FVector(0., 0., Height);
-}
-
-FVector UAgExecutionCameraModifier::SweepCameraLocation(const FVector& LookAt, float CameraYaw, bool& bOutBlocked) const
+FVector UAgExecutionCameraModifier::SweepCameraLocation(const FVector& LookAt, float CameraYaw, const FCollisionQueryParams& Params, bool& bOutBlocked) const
 {
 	const FVector Desired = LookAt + FRotator(0., CameraYaw, 0.).Vector() * Distance + FVector(0., 0., CameraHeight);
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(ExecutionCamera), false);
-	Params.AddIgnoredActor(Player.Get());
-	Params.AddIgnoredActor(Target.Get());
 	FHitResult Hit;
 	bOutBlocked = GetWorld()->SweepSingleByChannel(Hit, LookAt, Desired, FQuat::Identity, ECC_Camera, FCollisionShape::MakeSphere(ProbeSize), Params);
 	return bOutBlocked ? Hit.Location : Desired;

@@ -6,6 +6,8 @@
 #include "Camera/CameraModifier.h"
 #include "AgExecutionCameraModifier.generated.h"
 
+struct FCollisionQueryParams;
+
 /**
  * 처형하는 플레이어와 대상을 옆에서 비추는 구도로 게임 카메라를 덮습니다. 컨트롤 회전은 건드리지 않으므로, 끄면 그동안의
  * 게임 카메라(자유 시점 또는 락온 카메라)로 돌아갑니다.
@@ -26,10 +28,8 @@ protected:
 	virtual void ModifyCamera(float DeltaTime, FVector ViewLocation, FRotator ViewRotation, float FOV, FVector& NewViewLocation, FRotator& NewViewRotation, float& NewFOV) override;
 
 private:
-	FVector GetLookAtLocation() const;
-
 	/** 바라보는 지점에서 카메라 자리까지 지형에 막히면 막힌 곳을 돌려줍니다. */
-	FVector SweepCameraLocation(const FVector& LookAt, float CameraYaw, bool& bOutBlocked) const;
+	FVector SweepCameraLocation(const FVector& LookAt, float CameraYaw, const FCollisionQueryParams& Params, bool& bOutBlocked) const;
 
 	/** 플레이어가 대상을 바라보는 방향에서 오른쪽으로 잰 카메라 방향입니다. 180이면 플레이어 바로 뒤입니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Composition")
@@ -43,7 +43,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Composition")
 	float CameraHeight = 0.f;
 
-	/** 플레이어와 처형을 시작할 때 대상의 캡슐 중심 사이 가운데에서 바라보는 지점까지의 높이입니다. */
+	/** 처형을 시작할 때 플레이어와 대상의 캡슐 중심 사이 가운데에서 바라보는 지점까지의 높이입니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Composition")
 	float Height = 30.f;
 
@@ -68,10 +68,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Collision", meta = (ClampMin = "0"))
 	float ProbeSize = 12.f;
 
-	TWeakObjectPtr<const AActor> Player;
-	TWeakObjectPtr<const AActor> Target;
-	/** 걷어차여 밀려나는 대상을 카메라가 따라가지 않도록 처형을 시작할 때의 위치를 씁니다. */
-	FVector TargetStartLocation = FVector::ZeroVector;
-	float CompositionYaw = 0.f;
+	FVector CameraLocation = FVector::ZeroVector;
+	FRotator CameraRotation = FRotator::ZeroRotator;
 	float Elapsed = 0.f;
 };
