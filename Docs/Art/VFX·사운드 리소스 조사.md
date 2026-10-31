@@ -20,11 +20,14 @@ Starter Content는 설치되어 있지 않습니다.
 
 | 에셋 | 위치 | 지금 쓰는 곳 |
 | - | - | - |
-| `NS_Damage` | `/Game/Variant_Combat/VFX` | 피격 VFX(피격·가드), 패리, 궁극기 마무리 |
+| `NS_Damage` | `/Game/Variant_Combat/VFX` | 피격 VFX, 궁극기 마무리 |
+| `NS_Guard` | `/Game/VFX` | 가드. NS_Parry를 복제해 불꽃을 작고 짧은 황백색으로 바꾸고 접촉 섬광을 약하게 조정한 효과입니다. |
+| `NS_Parry` | `/Game/VFX` | 패리 성공. NS_Damage를 복제해 파티클을 노란색으로 바꾸고 짧은 금빛 섬광을 더한 변형입니다. |
 | `NS_Jump_Trail` | `/Game/Variant_Platforming/VFX` | 없음. 무기 궤적(`NS_WeaponTrail`)은 이 리본을 복제해 고친 것입니다. |
 | `NS_JumpPad` | `/Game/LevelPrototyping/Interactable/JumpPad/Assets` | 없음 |
 
-- 타격에 쓸 만한 템플릿 VFX가 `NS_Damage` 하나뿐이라, 피격·패리·궁극기 마무리는 같은 VFX를 크기로 구분합니다.
+- 피격·궁극기 마무리는 `NS_Damage`를 크기로 구분하며, 패리 성공은 전용 `NS_Parry`를 씁니다.
+- 패리 표현은 [세키로 공식 Gameplay Overview](https://www.youtube.com/watch?v=3ZyEEvEamSI)의 금속 충돌을 참고합니다. 적용 방향은 원본 타격 파티클에 금빛 섬광과 노란색 변형을 더하는 것이며, 정확한 프레임 수나 파티클 수를 복제하지 않습니다.
 - 검기와 궁극기 베기 선은 Niagara가 아니라 템플릿의 프로토타입 메시와 `M_SimpleGlow` 계열 머티리얼을 조합한 것입니다.
 
 ## 엔진 사운드
