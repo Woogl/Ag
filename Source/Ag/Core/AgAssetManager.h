@@ -7,6 +7,7 @@
 #include "AgAssetManager.generated.h"
 
 class UAgAbilitySet;
+class UAgCameraData;
 class UAgCharacterData;
 class UAgCharacterSet;
 class UAgCombatRules;
@@ -33,6 +34,8 @@ public:
 	AG_API static FString GetJsonFolder();
 
 	const UAgCombatRules& GetCombatRules() const;
+
+	const UAgCameraData& GetCameraData() const;
 
 	const UAgMontageTimelineData& GetMontageTimelines() const;
 
@@ -68,6 +71,9 @@ private:
 	// JSON 파일을 담는 속성은 .cpp의 JsonFiles 목록이 이름으로 찾아 만들고 채웁니다.
 	UPROPERTY()
 	TObjectPtr<UAgCombatRules> CombatRules;
+
+	UPROPERTY()
+	TObjectPtr<UAgCameraData> Camera;
 
 	UPROPERTY()
 	TObjectPtr<UAgEffectSet> Effects;

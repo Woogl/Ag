@@ -3,6 +3,7 @@
 #include "Game/AgPlayerController.h"
 
 #include "Ag.h"
+#include "Camera/AgPlayerCameraManager.h"
 #include "CommonActivatableWidget.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Game/AgCheatManager.h"
@@ -12,6 +13,7 @@
 AAgPlayerController::AAgPlayerController()
 {
 	CheatClass = UAgCheatManager::StaticClass();
+	PlayerCameraManagerClass = AAgPlayerCameraManager::StaticClass();
 }
 
 void AAgPlayerController::ReceivedPlayer()

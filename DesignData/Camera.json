@@ -1,0 +1,131 @@
+{
+  "LockOn": {
+    "PitchMin": -10.0,
+    "PitchMax": 35.0,
+    "LookDown": 15.0,
+    "RotationSpeed": 360.0,
+    "SmoothingTime": 0.2
+  },
+  "ReactionsBySituation": {
+    "PlayerHit": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Small.CS_Small_C"
+      ]
+    },
+    "PlayerHitHeavy": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Medium.CS_Medium_C"
+      ]
+    },
+    "Parry": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Medium.CS_Medium_C"
+      ],
+      "FieldOfView": {
+        "Offset": -9.0,
+        "BlendInTime": 0.05,
+        "HoldTime": 0.25,
+        "BlendOutTime": 0.5
+      }
+    },
+    "PerfectDodge": {
+      "FieldOfView": {
+        "Offset": -8.0,
+        "BlendInTime": 0.03,
+        "HoldTime": 0.12,
+        "BlendOutTime": 0.3
+      },
+      "bTurnToOpponent": true,
+      "TurnAngle": 0.0
+    },
+    "DodgeCounterHit": {
+      "FieldOfView": {
+        "Offset": -6.0,
+        "BlendInTime": 0.04,
+        "HoldTime": 0.08,
+        "BlendOutTime": 0.25
+      }
+    },
+    "PlayerHurt": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Small.CS_Small_C"
+      ]
+    },
+    "PlayerHurtHeavy": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Large.CS_Large_C"
+      ]
+    },
+    "Guard": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Small.CS_Small_C"
+      ]
+    },
+    "GuardPushback": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Medium.CS_Medium_C"
+      ]
+    },
+    "GuardBreak": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Large.CS_Large_C"
+      ]
+    },
+    "ExecutionStab": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Small.CS_Small_C"
+      ],
+      "FieldOfView": {
+        "Offset": -3.0,
+        "BlendInTime": 0.05,
+        "HoldTime": 0.1,
+        "BlendOutTime": 0.3
+      }
+    },
+    "ExecutionBlow": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Large.CS_Large_C"
+      ],
+      "FieldOfView": {
+        "Offset": -6.0,
+        "BlendInTime": 0.05,
+        "HoldTime": 0.2,
+        "BlendOutTime": 0.5
+      }
+    },
+    "BossKill": {
+      "FieldOfView": {
+        "Offset": -12.0,
+        "BlendInTime": 0.2,
+        "HoldTime": 0.5,
+        "BlendOutTime": 0.8
+      }
+    },
+    "GuardCounterHit": {
+      "FieldOfView": {
+        "Offset": -6.0,
+        "BlendInTime": 0.04,
+        "HoldTime": 0.08,
+        "BlendOutTime": 0.25
+      }
+    }
+  },
+  "SprintFieldOfView": {
+    "Offset": 6.0,
+    "BlendInTime": 0.6,
+    "BlendOutTime": 0.5
+  },
+  "Execution": {
+    "Yaw": 135.0,
+    "Distance": 480.0,
+    "CameraHeight": 0.0,
+    "Height": 0.0,
+    "FieldOfView": 50.0,
+    "ZoomFieldOfView": 40.0,
+    "ZoomDuration": 1.8,
+    "ReturnTime": 1.53,
+    "ProbeSize": 12.0,
+    "AlphaInTime": 0.8,
+    "AlphaOutTime": 0.8
+  }
+}

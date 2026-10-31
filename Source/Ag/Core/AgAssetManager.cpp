@@ -4,6 +4,7 @@
 
 #include "Core/AgJsonReader.h"
 #include "Data/AgAbilityData.h"
+#include "Data/AgCameraData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
@@ -37,6 +38,7 @@ namespace
 	const FAgJsonFile JsonFiles[] = {
 		{TEXT("Effects.json"), TEXT("Effects"), TEXT("Definitions")},
 		{TEXT("CombatRules.json"), TEXT("CombatRules"), nullptr},
+		{TEXT("Camera.json"), TEXT("Camera"), nullptr},
 		{TEXT("Projectiles.json"), TEXT("Projectiles"), TEXT("Projectiles")},
 		{TEXT("TargetingPresets.json"), TEXT("TargetingPresets"), TEXT("Definitions")},
 		{TEXT("Abilities.json"), TEXT("Abilities"), TEXT("Abilities")},
@@ -96,6 +98,11 @@ FString UAgAssetManager::GetJsonFolder()
 const UAgCombatRules& UAgAssetManager::GetCombatRules() const
 {
 	return *CombatRules;
+}
+
+const UAgCameraData& UAgAssetManager::GetCameraData() const
+{
+	return *Camera;
 }
 
 const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const

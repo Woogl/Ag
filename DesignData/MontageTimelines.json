@@ -182,9 +182,9 @@
     "Attack5": [
       {"Task": "SendGameplayEvent", "Start":0, "Event": "Event.BasicAttackStarted"},
       {"Task": "RootMotion", "Start": 0, "End": 0.21, "TargetingRange": 270, "bWarpTranslation": true},
-      {"Task": "ApplyEffect", "Start": 0, "End": 0.93, "Effect": "Busy"},
+      {"Task": "ApplyEffect", "Start": 0, "End": 0.88, "Effect": "Busy"},
       {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
-      {"Task": "Transition", "Start": 0.93, "Event": "Input.Attack", "Section": "Attack1", "BlendTime": 0.25}
+      {"Task": "Transition", "Start": 0.88, "Event": "Input.Attack", "Section": "Attack1", "BlendTime": 0.25}
     ]
   },
   "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge": {

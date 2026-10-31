@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Camera/AgFieldOfViewCameraModifier.h"
 #include "Camera/CameraShakeBase.h"
-#include "AgCameraEffect.generated.h"
+#include "AgCameraReactionSettings.generated.h"
 
 UENUM()
 enum class EAgCameraSituation : uint8
@@ -27,7 +27,7 @@ enum class EAgCameraSituation : uint8
 };
 
 USTRUCT()
-struct FAgCameraEffect
+struct FAgCameraReactionSettings
 {
 	GENERATED_BODY()
 

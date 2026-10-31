@@ -6,6 +6,7 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
+#include "Camera/AgPlayerCameraManager.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "EngineUtils.h"
 #include "Game/AgGameState.h"
@@ -113,7 +114,10 @@ void AAgGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 		GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(DeadBoss->GetKillSlowMotionSpeed(), DeadBoss->GetKillSlowMotionDuration());
 		if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
 		{
-			Player->PlayCameraEffect(EAgCameraSituation::BossKill, DeadCharacter);
+			if (AAgPlayerCameraManager* CameraManager = Player->GetPlayerCameraManager())
+			{
+				CameraManager->PlayCameraReaction(EAgCameraSituation::BossKill, DeadCharacter);
+			}
 		}
 	}
 

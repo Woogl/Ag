@@ -5,6 +5,7 @@
 #include "Ag.h"
 #include "Camera/AgPostProcessComponent.h"
 #include "Combat/AgTimeSubsystem.h"
+#include "Combat/AgGameplayCueNotify_Burst.h"
 #include "Engine/World.h"
 
 #if WITH_EDITOR
@@ -24,6 +25,27 @@ bool AAgGameplayCueNotify_BurstLatent::Recycle()
 }
 
 bool AAgGameplayCueNotify_BurstLatent::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
+{
+	const bool bResult = ExecuteBurst(Target, Parameters);
+	UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(Target, Parameters);
+	return bResult;
+}
+
+#if WITH_EDITOR
+EDataValidationResult AAgGameplayCueNotify_BurstLatent::IsDataValid(FDataValidationContext& Context) const
+{
+	const EDataValidationResult Result = Super::IsDataValid(Context);
+	FString Error;
+	if (!PostProcess->ValidateSettings(Error))
+	{
+		Context.AddError(FText::FromString(Error));
+		return EDataValidationResult::Invalid;
+	}
+	return Result;
+}
+#endif
+
+bool AAgGameplayCueNotify_BurstLatent::ExecuteBurst(AActor* Target, const FGameplayCueParameters& Parameters)
 {
 	PostProcess->Reset();
 	SetActorHiddenInGame(false);
@@ -57,17 +79,3 @@ bool AAgGameplayCueNotify_BurstLatent::OnExecute_Implementation(AActor* Target, 
 	OnBurst(Target, Parameters, BurstSpawnResults);
 	return false;
 }
-
-#if WITH_EDITOR
-EDataValidationResult AAgGameplayCueNotify_BurstLatent::IsDataValid(FDataValidationContext& Context) const
-{
-	const EDataValidationResult Result = Super::IsDataValid(Context);
-	FString Error;
-	if (!PostProcess->ValidateSettings(Error))
-	{
-		Context.AddError(FText::FromString(Error));
-		return EDataValidationResult::Invalid;
-	}
-	return Result;
-}
-#endif

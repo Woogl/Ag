@@ -29,7 +29,10 @@
 | - | - | - |
 | `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정)과 적중 가능 판정(`CanBeHitBy`), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, Launch가 띄울 때마다 켜는 엔진 정점 알림으로 보내는 `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 넉업으로 떠 있는 동안 캡슐도 무기에 맞음), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
 | `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 플레이어와 보스의 회전. 엔진 회전을 쓰고, 사망·방향 고정 중에는 돌지 않습니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. |
-| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라와 락온 카메라, 입력 매핑, 입력 계층(어빌리티 태그로 스펙 찾기, 가드·달리기·락온의 발동과 취소, 이동 입력 태그, 선입력, 점프와 점프 모션), 극한 회피 구간의 회피를 시작한 자리 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 시야를 제외한 캐릭터 입력 차단, 전투 카메라 연출(상황별 연출 재생, 상대 쪽 회전, 처형 카메라 모디파이어의 시작·끝, 시야각 연출 모디파이어 `UAgFieldOfViewCameraModifier` 붙이기, 달리기 시야각) |
+| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑·눌림 상태·선입력·입력 제한 검사, 가드·달리기·락온 발동과 취소, 몸 회전, 점프와 착지, 극한 회피 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 시야를 제외한 입력 차단. 자동 가드는 선입력 처리 후 현재 입력 제한을 재검사합니다. |
+| `AAgPlayerCameraManager` | `APlayerCameraManager` | BP 파생 클래스 없이 생성합니다. 락온 보간·시야 입력·상대 쪽 회전·요청받은 상황의 연출 재생·달리기 시야각·처형 카메라 시작과 종료·컷신 진입 정리를 맡고, 설정은 `UAgCameraData`에서 읽습니다. 엔진 점유 알림으로 플레이어 ASC에 연결합니다. 기본 모디파이어 클래스는 C++ 생성자의 `DefaultModifiers`에서 지정하고 엔진이 생성합니다. |
+| `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
+| `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
 | `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(시작한 전환의 기록 포함), 패턴 발동 가능 여부(`CanActivatePattern`)와 지금 고를 수 있는 패턴 모으기(`GatherPatterns`), PP 감소 허용 여부(`CanLosePP`), 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 처형 피격 중 전용 사망 모션, 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 처형 안내) |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 보스 처치 슬로우모션 값 |
 | `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`)과 움찔(`IsEnemyFlinching`) 조회, AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 팀 태도 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달 |
@@ -57,6 +60,7 @@ classDiagram
         UInputMappingContext InputMapping
         UInputAction MoveAction 등
     }
+    class AAgPlayerCameraManager
     class AAgEnemyCharacter {
         UWidgetComponent LockOnMarker
         UWidgetComponent ExecutionPrompt
@@ -72,6 +76,13 @@ classDiagram
     IAbilitySystemInterface <|.. AAgCharacterBase
     IGenericTeamAgentInterface <|.. AAgCharacterBase
     AAgCharacterBase <|-- AAgPlayerCharacter
+    APlayerCameraManager <|-- AAgPlayerCameraManager
+    AAgPlayerController *-- AAgPlayerCameraManager : PlayerCameraManager
+    AAgPlayerCharacter ..> AAgPlayerCameraManager : 시야 입력·회전 갱신
+    AAgPlayerCameraManager ..> UAgAbilitySystemComponent : 현재 플레이어 구독
+    AAgPlayerCameraManager --> UAgCameraData : 카메라 설정
+    AAgPlayerCameraManager *-- UAgExecutionCameraModifier
+    AAgPlayerCameraManager *-- UAgFieldOfViewCameraModifier
     AAgCharacterBase <|-- AAgEnemyCharacter
     AAgEnemyCharacter <|-- AAgBossCharacter
 
@@ -198,7 +209,8 @@ sequenceDiagram
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `UAgDamageExecution` | `UGameplayEffectExecutionCalculation` | 피해·가드 자원 계산과 결과 태그 생성. 슈퍼아머 가드에서는 SP 부족과 가드 브레이크를 구분하고, SP 소모를 보유량 이내로 제한합니다. |
-| `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 연출·히트스톱·적중 보상. 반응 억제와 다른 적중 처리를 분리합니다. |
+| `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 전투 결과와 실제 반응의 GameplayCue 전달·히트스톱·적중 보상. 반응 억제와 다른 적중 처리를 분리합니다. |
+| `UAgGameplayCueNotify_Burst` | `UGameplayCueNotify_Burst` | 일회성 효과 재생 뒤 전투 카메라 연출을 요청합니다. 공통 정적 함수는 네 전투 태그만 처리하며 BurstLatent에서도 호출합니다. |
 | `UAgRegenDelayGameplayEffectComponent` | `UGameplayEffectComponent` | 회복 효과의 `RegenDelay`([데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'). 효과가 걸릴 때 회복하는 어트리뷰트의 변경을 구독하고 지워질 때 풉니다(엔진의 대상 태그 조건 컴포넌트가 태그 변경을 구독하는 방식). |
 | `UAgSlowMotionGameplayEffectComponent` | `UGameplayEffectComponent` | 효과의 `SlowMotionSpeed`·`SlowMotionDuration`. 효과가 실행될 때 시간 서브시스템에 슬로우모션을 겁니다. |
 
@@ -218,9 +230,15 @@ classDiagram
     UAgGameplayAbility ..> UAgAbilitySystemComponent : MakeEffectSpec(비용, 쿨다운, ApplyEffect)
     UAgDamageResultGameplayEffectComponent ..> UAgAbilitySystemComponent : MakeEffectSpec(히트스톱, 적중 충전)
     UAgDamageResultGameplayEffectComponent ..> UAgGameplayAbility : 패리·극한 회피·패리당함 이벤트
+    UGameplayCueNotify_Burst <|-- UAgGameplayCueNotify_Burst
+    UAgDamageResultGameplayEffectComponent ..> UAgGameplayCueNotify_Burst : 엔진 GameplayCue 전달
+    AAgGameplayCueNotify_BurstLatent ..> UAgGameplayCueNotify_Burst : PlayCombatCameraReactions
+    UAgGameplayCueNotify_Burst ..> AAgPlayerCameraManager : PlayCameraReaction
     AAgEnemyCharacter ..> UGameplayEffect : PPRefill(그로기·처형 피격 끝, 페이즈 전환 끝)
     AAgCharacterBase ..> UGameplayEffect : 시작 효과, Kill
 ```
+
+전투 연출은 `GameplayCue.Hit`·`GameplayCue.Guard`·`GameplayCue.Parry`·`GameplayCue.PerfectDodge`로 전달합니다. `GC_Hit`·`GC_Guard`·`GC_PerfectDodge`는 `UAgGameplayCueNotify_Burst`, `GC_Parry`는 `AAgGameplayCueNotify_BurstLatent`를 사용합니다. 각 Cue가 기존 이펙트·소리·포스트프로세스 실행 뒤 공통 `PlayCombatCameraReactions`를 호출하고, `OriginalTag`로 결과를 구분합니다. `IsOverride=true`이며 부모 Cue 전파는 사용하지 않습니다. 스펙 태그는 `AggregatedSourceTags`, 이번 타격의 실제 반응은 `AggregatedTargetTags`로 전달해 이전 타격의 상태와 구별합니다. 카메라 수치와 셰이크 참조는 `Camera.json`에서 읽습니다.
 
 #### 코드가 효과를 쓰는 방법
 

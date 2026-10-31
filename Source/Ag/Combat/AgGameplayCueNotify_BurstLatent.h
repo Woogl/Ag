@@ -24,6 +24,10 @@ protected:
 	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 #endif
 
+private:
+	bool ExecuteBurst(AActor* Target, const FGameplayCueParameters& Parameters);
+
+protected:
 	UPROPERTY(VisibleAnywhere, Category = "Screen Effect")
 	TObjectPtr<UAgPostProcessComponent> PostProcess;
 

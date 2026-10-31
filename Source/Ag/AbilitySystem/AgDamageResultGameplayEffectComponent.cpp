@@ -10,7 +10,6 @@
 #include "Ag.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgHitPhysicsComponent.h"
-#include "Character/AgPlayerCharacter.h"
 #include "Combat/AgProjectile.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
@@ -20,7 +19,6 @@
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
 #include "GameplayEffect.h"
-#include "Kismet/GameplayStatics.h"
 #include "Perception/AISense_Damage.h"
 
 namespace
@@ -185,10 +183,10 @@ namespace
 			return;
 		}
 		SendEvent(&Dodger, AgGameplayTags::Event_PerfectDodge, &Attacker);
-		if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(&Dodger))
-		{
-			Player->PlayCameraEffect(EAgCameraSituation::PerfectDodge, &Attacker);
-		}
+		FGameplayCueParameters Parameters;
+		Parameters.Instigator = &Attacker;
+		Parameters.Location = Dodger.GetActorLocation();
+		Dodger.GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_PerfectDodge, Parameters);
 	}
 
 	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker, bool bProjectile)
@@ -281,14 +279,16 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	CueParameters.Location = Context.GetOrigin();
 	CueParameters.Instigator = Attacker;
 	CueParameters.EffectCauser = Causer;
+	CueParameters.AggregatedSourceTags = SpecTags;
+	// 이전 타격의 상태가 남아 있어도 이번에 실제로 발생한 반응만 연출에 전달합니다.
+	if (Reaction.IsValid())
+	{
+		CueParameters.AggregatedTargetTags.AddTag(Reaction);
+	}
 	const FGameplayTag ResultCue = bParry                    ? AgGameplayTags::GameplayCue_Parry
 	                               : (bGuard || bGuardBreak) ? AgGameplayTags::GameplayCue_Guard
 	                                                         : AgGameplayTags::GameplayCue_Hit;
 	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
-	if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(Target, 0)))
-	{
-		Player->PlayDamageCameraEffects(SpecTags, Reaction, *Attacker, *Target);
-	}
 	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
