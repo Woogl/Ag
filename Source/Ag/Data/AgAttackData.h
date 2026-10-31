@@ -32,6 +32,9 @@ struct FAgDamage
 	EAgHitReaction HitReaction = EAgHitReaction::None;
 
 	UPROPERTY()
+	bool bIgnoreToughness = false;
+
+	UPROPERTY()
 	bool bGuardable = true;
 
 	UPROPERTY()

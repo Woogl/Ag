@@ -111,6 +111,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Reaction_KnockDown);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_IgnoreToughness);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Unblockable);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Finisher);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_NoAttackerHitstop);

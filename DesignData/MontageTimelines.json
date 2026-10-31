@@ -272,7 +272,7 @@
       {"Task": "Transition", "Start": 0, "Tag": "State.Cutscene", "Section": "Judgment"}
     ],
     "Draw": [
-      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
+      {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bIgnoreToughness": true, "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
       {"Task": "ApplyEffect", "Start":0, "Effect": "UltimateSlowMotion"}
     ]
   }

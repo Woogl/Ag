@@ -115,6 +115,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_Flinch, "Effect.Damage.Reaction.Flinch", "피격 반응 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockUp, "Effect.Damage.Reaction.KnockUp", "피격 반응 넉업");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockDown, "Effect.Damage.Reaction.KnockDown", "피격 반응 넉다운");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_IgnoreToughness, "Effect.Damage.IgnoreToughness", "강인도와 관계없이 지정된 피격 반응을 그대로 적용하는 공격 (궁극기 마무리)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unblockable, "Effect.Damage.Unblockable", "가드와 패리로 막을 수 없는 공격 (가드 불가)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Finisher, "Effect.Damage.Finisher", "마지막 일격 (처형의 마지막 일격, 궁극기 마무리)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_NoAttackerHitstop, "Effect.Damage.NoAttackerHitstop", "적중해도 공격자는 히트스톱으로 멈추지 않는 공격 (보스 GroundSlam 착지 충격파)");

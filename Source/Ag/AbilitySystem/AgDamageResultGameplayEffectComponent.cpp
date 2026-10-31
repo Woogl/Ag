@@ -59,9 +59,12 @@ namespace
 			return FGameplayTag();
 		}
 
-		const bool bGroggy = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 		EAgToughness Toughness = Target.GetCharacterData()->Toughness;
-		if (bGroggy && Toughness != EAgToughness::Small)
+		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_IgnoreToughness))
+		{
+			Toughness = EAgToughness::Small;
+		}
+		else if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) && Toughness != EAgToughness::Small)
 		{
 			Toughness = static_cast<EAgToughness>(static_cast<uint8>(Toughness) - 1);
 		}
@@ -71,7 +74,8 @@ namespace
 		{
 			return KnockEvent;
 		}
-		const bool bFlinch = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) || (KnockEvent.IsValid() && Toughness == EAgToughness::Medium);
+		const bool bFlinch = (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Reaction_Flinch) && Toughness == EAgToughness::Small) ||
+		                     (KnockEvent.IsValid() && Toughness == EAgToughness::Medium);
 		if (!bFlinch)
 		{
 			return FGameplayTag();
@@ -82,7 +86,7 @@ namespace
 		}
 		const bool bOtherReaction = ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) &&
 		                            !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
-		return (Toughness == EAgToughness::Small || KnockEvent.IsValid()) && !bOtherReaction ? AgGameplayTags::Event_Hit_Stagger : FGameplayTag();
+		return bOtherReaction ? FGameplayTag() : AgGameplayTags::Event_Hit_Stagger;
 	}
 
 	FAgPhysicsHit MakePhysicsHit(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context, bool bGuard)
