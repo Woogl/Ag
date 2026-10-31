@@ -41,14 +41,14 @@ bool AAgGameplayCueNotify_BurstLatent::OnExecute_Implementation(AActor* Target, 
 		GameplayCueFinishedCallback();
 		return false;
 	}
-	const float Duration = GetWorld()->GetSubsystem<UAgTimeSubsystem>()->GetSlowMotionDuration();
-	if (Duration <= 0.f)
+	const float PlaybackDuration = Duration > 0.f ? Duration : GetWorld()->GetSubsystem<UAgTimeSubsystem>()->GetSlowMotionDuration();
+	if (PlaybackDuration <= 0.f)
 	{
-		UE_LOG(LogAg, Error, TEXT("%s: screen effect needs a running slow motion for its duration"), *GetName());
+		UE_LOG(LogAg, Error, TEXT("%s: screen effect needs a duration or a running slow motion"), *GetName());
 		GameplayCueFinishedCallback();
 		return false;
 	}
-	if (!PostProcess->Start(Target, Duration))
+	if (!PostProcess->Start(Target, PlaybackDuration))
 	{
 		GameplayCueFinishedCallback();
 		return false;

@@ -7,7 +7,7 @@
 
 class UAgPostProcessComponent;
 
-/** 포스트프로세스 머티리얼이 있으면 실행 중인 슬로우모션의 길이만큼 재생하므로, 슬로우모션 효과를 건 뒤에 실행합니다. */
+/** 포스트프로세스 머티리얼이 있으면 Duration만큼, Duration이 0이면 실행 중인 슬로우모션의 길이만큼 재생하므로 그때는 슬로우모션 효과를 건 뒤에 실행합니다. */
 UCLASS(Abstract)
 class AAgGameplayCueNotify_BurstLatent : public AGameplayCueNotify_BurstLatent
 {
@@ -26,4 +26,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Screen Effect")
 	TObjectPtr<UAgPostProcessComponent> PostProcess;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Screen Effect", meta = (ClampMin = "0"))
+	float Duration = 0.f;
 };
