@@ -21,6 +21,7 @@
 #include "Input/CommonUIInputTypes.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "TimerManager.h"
+#include "UI/AgNameplateWidget.h"
 #include "UI/AgPauseMenu.h"
 #include "UI/AgStatBar.h"
 #include "UI/AgUILayout.h"
@@ -36,12 +37,6 @@ namespace
 			UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute()};
 	}
 
-	TArray<FGameplayAttribute> BossAttributes()
-	{
-		return {UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute(), UAgAttributeSet::GetPPAttribute(),
-			UAgAttributeSet::GetMaxPPAttribute()};
-	}
-
 	const TArray<FGameplayTag>& PlayerTags()
 	{
 		static const TArray<FGameplayTag> Tags = {AgGameplayTags::State_Cutscene};
@@ -50,8 +45,7 @@ namespace
 
 	const TArray<FGameplayTag>& BossTags()
 	{
-		static const TArray<FGameplayTag> Tags = {AgGameplayTags::State_NonCombat, AgGameplayTags::State_Groggy,
-			AgGameplayTags::State_Execution};
+		static const TArray<FGameplayTag> Tags = {AgGameplayTags::State_NonCombat};
 		return Tags;
 	}
 
@@ -138,7 +132,7 @@ void UAgHUDWidget::NativeDestruct()
 	PlayerASC.Reset();
 	if (const AAgBossCharacter* BossCharacter = Boss.Get())
 	{
-		Unbind(BossCharacter->GetAbilitySystemComponent(), this, BossAttributes(), BossTags());
+		Unbind(BossCharacter->GetAbilitySystemComponent(), this, {}, BossTags());
 	}
 	Boss.Reset();
 #if WITH_EDITOR
@@ -152,7 +146,6 @@ void UAgHUDWidget::NativeDestruct()
 			StageState->OnStageResultChanged.RemoveAll(this);
 		}
 		World->GetTimerManager().ClearTimer(CooldownTimer);
-		World->GetTimerManager().ClearTimer(BossTimer);
 	}
 
 	Super::NativeDestruct();
@@ -176,14 +169,16 @@ void UAgHUDWidget::HandleBossChanged()
 {
 	if (const AAgBossCharacter* OldBoss = Boss.Get())
 	{
-		Unbind(OldBoss->GetAbilitySystemComponent(), this, BossAttributes(), BossTags());
+		Unbind(OldBoss->GetAbilitySystemComponent(), this, {}, BossTags());
 	}
 	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
 	Boss = StageState ? StageState->GetBoss() : nullptr;
-	if (const AAgBossCharacter* NewBoss = Boss.Get())
+	const AAgBossCharacter* NewBoss = Boss.Get();
+	if (NewBoss)
 	{
 		BindBoss(*NewBoss->GetAbilitySystemComponent());
 	}
+	BossStatus->SetAbilitySystem(NewBoss ? NewBoss->GetAbilitySystemComponent() : nullptr);
 	UpdateBoss();
 }
 
@@ -208,11 +203,6 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 
 void UAgHUDWidget::BindBoss(UAbilitySystemComponent& ASC)
 {
-	for (const FGameplayAttribute& Attribute : BossAttributes())
-	{
-		ASC.GetGameplayAttributeValueChangeDelegate(Attribute).AddWeakLambda(this, [this](const FOnAttributeChangeData&)
-		{ UpdateBoss(); });
-	}
 	for (const FGameplayTag& Tag : BossTags())
 	{
 		ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
@@ -310,40 +300,14 @@ void UAgHUDWidget::UpdateSkillCooldown()
 
 void UAgHUDWidget::UpdateBoss()
 {
-	GetWorld()->GetTimerManager().ClearTimer(BossTimer);
-
 	const AAgBossCharacter* BossCharacter = Boss.Get();
 	const UAbilitySystemComponent* BossASC = BossCharacter ? BossCharacter->GetAbilitySystemComponent() : nullptr;
 	const bool bBossInCombat = BossASC && !BossASC->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
 	BossStatusPanel->SetVisibility(bBossInCombat ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
-	if (!bBossInCombat)
+	if (bBossInCombat)
 	{
-		return;
+		BossNameText->SetText(BossCharacter->GetCharacterData()->DisplayName);
 	}
-
-	BossNameText->SetText(BossCharacter->GetCharacterData()->DisplayName);
-	SetBarValue(*BossHPBar, *BossASC, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute());
-
-	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
-	{
-		return;
-	}
-
-	const float MaxPP = BossASC->GetNumericAttribute(UAgAttributeSet::GetMaxPPAttribute());
-	float PPBarRatio = MaxPP > 0.f ? BossASC->GetNumericAttribute(UAgAttributeSet::GetPPAttribute()) / MaxPP : 0.f;
-	if (BossASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
-	{
-		const FGameplayEffectQuery Query =
-			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_Groggy));
-		const TArray<TPair<float, float>> Times = BossASC->GetActiveEffectsTimeRemainingAndDuration(Query);
-		if (!Times.IsEmpty() && Times[0].Value > 0.f)
-		{
-			PPBarRatio = FMath::Clamp(1.f - Times[0].Key / Times[0].Value, 0.f, 1.f);
-		}
-		// 그로기 동안은 남은 시간으로 PP 바를 다시 채우므로 프레임마다 그립니다.
-		BossTimer = GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::UpdateBoss);
-	}
-	BossPPBar->SetRatio(PPBarRatio);
 }
 
 void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop)

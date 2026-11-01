@@ -17,6 +17,7 @@ class UAgStatBar : public UCommonUserWidget
 public:
 	void SetValue(float Value, float MaxValue, bool bShowDrop = true);
 	void SetRatio(float Ratio, bool bShowDrop = true);
+	void ClearTrail();
 
 protected:
 	virtual void NativePreConstruct() override;

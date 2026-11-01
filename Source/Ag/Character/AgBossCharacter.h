@@ -17,6 +17,12 @@ public:
 		return false;
 	}
 
+	/** 보스의 HP·PP는 HUD의 보스 상태가 보여 줍니다. */
+	virtual bool HasNameplate() const override
+	{
+		return false;
+	}
+
 	float GetKillSlowMotionSpeed() const
 	{
 		return KillSlowMotionSpeed;

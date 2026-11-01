@@ -8,9 +8,11 @@
 #include "AgEnemyCharacter.generated.h"
 
 class AAgPlayerCharacter;
+class APlayerController;
 class ATargetPoint;
 class UAnimMontage;
 class UAgEnemySightPreviewComponent;
+class UAgNameplateComponent;
 class UStateTree;
 class UWidgetComponent;
 struct FAbilityEndedData;
@@ -39,6 +41,17 @@ public:
 	void GatherPatterns(float TargetDistance, bool bResponse, TArray<TPair<FName, float>>& OutCandidates) const;
 
 	virtual bool CanReturnToNonCombat() const
+	{
+		return true;
+	}
+
+	virtual bool HasNameplate() const
+	{
+		return true;
+	}
+
+	/** 플레이어와 전투 중인 것만으로 네임플레이트를 표시합니다. */
+	virtual bool ShowsNameplateInCombat() const
 	{
 		return true;
 	}
@@ -84,6 +97,9 @@ private:
 
 	void UpdateWorldWidgets();
 
+	/** 네임플레이트 기준점이 화면 안에 있고, 카메라에서 몸 중심까지 벽·지형에 가리지 않았습니다. */
+	bool IsNameplateInView(const APlayerController& PlayerController) const;
+
 	UPROPERTY(EditInstanceOnly, Category = "AI")
 	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
 
@@ -92,6 +108,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> ExecutionPrompt;
+
+	UPROPERTY(VisibleAnywhere, Category = "UI")
+	TObjectPtr<UAgNameplateComponent> Nameplate;
 
 	FTransform HomeTransform;
 

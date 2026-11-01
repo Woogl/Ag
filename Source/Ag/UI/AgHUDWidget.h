@@ -9,6 +9,7 @@
 class AAgBossCharacter;
 class UAbilitySystemComponent;
 class UAgAbilitySystemComponent;
+class UAgNameplateWidget;
 class UAgPauseMenu;
 class UAgStatBar;
 class UGameplayAbility;
@@ -77,10 +78,7 @@ protected:
 	TObjectPtr<UTextBlock> BossNameText;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgStatBar> BossHPBar;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgStatBar> BossPPBar;
+	TObjectPtr<UAgNameplateWidget> BossStatus;
 
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledSlotOpacity = 1.f;
@@ -122,5 +120,4 @@ private:
 	FIntPoint ShownCooldown = FIntPoint(INDEX_NONE, INDEX_NONE);
 
 	FTimerHandle CooldownTimer;
-	FTimerHandle BossTimer;
 };

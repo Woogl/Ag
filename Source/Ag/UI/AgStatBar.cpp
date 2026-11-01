@@ -55,6 +55,12 @@ void UAgStatBar::SetRatio(float Ratio, bool bShowDrop)
 	}
 }
 
+void UAgStatBar::ClearTrail()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TrailTimer);
+	SetTrailRatio(FMath::Max(BarRatio, 0.f));
+}
+
 void UAgStatBar::NativePreConstruct()
 {
 	Super::NativePreConstruct();

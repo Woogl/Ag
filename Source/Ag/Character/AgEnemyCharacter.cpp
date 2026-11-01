@@ -18,9 +18,13 @@
 #include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
+#include "Engine/World.h"
+#include "Game/AgGameState.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/AgNameplateComponent.h"
+#include "UI/AgNameplateWidget.h"
 
 #if WITH_EDITORONLY_DATA
 #include "Character/AgEnemySightPreviewComponent.h"
@@ -29,7 +33,9 @@
 namespace
 {
 	const FName LockOnBone(TEXT("spine_05"));
-	const FName ExecutionPromptBone(TEXT("head"));
+	const FName NameplateBone(TEXT("head"));
+	/** 마네킹의 머리 뼈 기준 +X가 정수리 쪽이며, 정수리까지 약 18cm입니다. */
+	const FVector NameplateOffset(18.f, 0.f, 0.f);
 } // namespace
 
 AAgEnemyCharacter::AAgEnemyCharacter()
@@ -44,9 +50,12 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
+	Nameplate = CreateDefaultSubobject<UAgNameplateComponent>(TEXT("Nameplate"));
 	LockOnMarker->SetupAttachment(GetMesh(), LockOnBone);
-	ExecutionPrompt->SetupAttachment(GetMesh(), ExecutionPromptBone);
-	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get()})
+	ExecutionPrompt->SetupAttachment(GetMesh(), LockOnBone);
+	Nameplate->SetupAttachment(GetMesh(), NameplateBone);
+	Nameplate->SetRelativeLocation(NameplateOffset);
+	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get(), static_cast<UWidgetComponent*>(Nameplate.Get())})
 	{
 		WorldWidget->SetWidgetSpace(EWidgetSpace::Screen);
 		WorldWidget->SetDrawAtDesiredSize(true);
@@ -55,7 +64,8 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 		WorldWidget->SetHiddenInGame(true);
 	}
 
-	ExecutionPrompt->SetPivot(FVector2D(0.5f, 1.f));
+	ExecutionPrompt->SetPivot(FVector2D(0.f, 0.5f));
+	Nameplate->SetPivot(FVector2D(0.5f, 1.f));
 
 #if WITH_EDITORONLY_DATA
 	SightPreview = CreateEditorOnlyDefaultSubobject<UAgEnemySightPreviewComponent>(TEXT("SightPreview"));
@@ -145,6 +155,12 @@ void AAgEnemyCharacter::BeginPlay()
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
+
+	UAgNameplateWidget* NameplateWidget = Cast<UAgNameplateWidget>(Nameplate->GetUserWidgetObject());
+	if (NameplateWidget && HasNameplate())
+	{
+		NameplateWidget->SetAbilitySystem(ASC);
+	}
 }
 
 void AAgEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -275,12 +291,45 @@ void AAgEnemyCharacter::UpdateWorldWidgets()
 	// 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
 	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	AAgPlayerCharacter* Player = PlayerController ? Cast<AAgPlayerCharacter>(PlayerController->GetPawn()) : nullptr;
-	const bool bInCombat = Player && !Player->IsDead() && !IsDead() && !PlayerController->bCinematicMode;
+	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
+	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
+	const bool bShown = Player && !Player->IsDead() && !IsDead() && !PlayerController->bCinematicMode && !bStageEnded;
 
-	LockOnMarker->SetHiddenInGame(!(bInCombat && Player->GetLockOnTarget() == this));
+	const bool bLockOnTarget = bShown && Player->GetLockOnTarget() == this;
+	LockOnMarker->SetHiddenInGame(!bLockOnTarget);
 
 	// 지금 하는 행동 때문에 처형 키를 받지 않는 동안에도 표시하므로 발동 가능 여부는 보지 않습니다. 범위 확인은
 	// 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
-	const bool bGroggy = GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
-	ExecutionPrompt->SetHiddenInGame(!(bInCombat && bGroggy && IsExecutionTargetOf(*Player)));
+	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const bool bGroggy = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	ExecutionPrompt->SetHiddenInGame(!(bShown && bGroggy && IsExecutionTargetOf(*Player)));
+
+	UAgNameplateWidget* NameplateWidget = Cast<UAgNameplateWidget>(Nameplate->GetUserWidgetObject());
+	if (!NameplateWidget || !HasNameplate())
+	{
+		return;
+	}
+	const bool bAllowed = bShown && IsNameplateInView(*PlayerController);
+	const bool bInCombat = ShowsNameplateInCombat() && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
+	Nameplate->SetFrontmost(bLockOnTarget);
+	Nameplate->SetHiddenInGame(!NameplateWidget->Update(bAllowed, bLockOnTarget || bInCombat));
+}
+
+bool AAgEnemyCharacter::IsNameplateInView(const APlayerController& PlayerController) const
+{
+	int32 ViewportWidth = 0;
+	int32 ViewportHeight = 0;
+	PlayerController.GetViewportSize(ViewportWidth, ViewportHeight);
+	FVector2D ScreenLocation;
+	if (!PlayerController.ProjectWorldLocationToScreen(Nameplate->GetComponentLocation(), ScreenLocation) ||
+		ScreenLocation.X < 0.0 || ScreenLocation.Y < 0.0 || ScreenLocation.X > ViewportWidth || ScreenLocation.Y > ViewportHeight)
+	{
+		return false;
+	}
+
+	// 캐릭터는 WorldStatic이 아니므로 다른 캐릭터가 앞을 지나가도 가린 것으로 보지 않습니다.
+	FVector ViewLocation;
+	FRotator ViewRotation;
+	PlayerController.GetPlayerViewPoint(ViewLocation, ViewRotation);
+	return !GetWorld()->LineTraceTestByObjectType(ViewLocation, GetActorLocation(), FCollisionObjectQueryParams(ECC_WorldStatic));
 }
