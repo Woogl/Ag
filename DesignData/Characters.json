@@ -113,5 +113,66 @@
       "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath",
       "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition"
     }
+  },
+  "Sandbag": {
+    "DisplayName": "샌드백",
+    "Toughness": "Small",
+    "Attributes": {
+      "HP": 10000,
+      "MaxHP": 10000,
+      "PP": 1000,
+      "MaxPP": 1000,
+      "ATK": 100
+    },
+    "Abilities": [
+      "Flinch",
+      "KnockDown",
+      "KnockUp",
+      "Juggle",
+      "Groggy",
+      "Executed"
+    ],
+    "Effects": ["SandbagPPRegen"],
+    "Montages": {
+      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
+      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
+      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed"
+    }
+  },
+  "AttackSandbag": {
+    "DisplayName": "공격 샌드백",
+    "Toughness": "Small",
+    "Attributes": {
+      "HP": 10000,
+      "MaxHP": 10000,
+      "PP": 1000,
+      "MaxPP": 1000,
+      "ATK": 100
+    },
+    "Abilities": [
+      "SandbagSlam",
+      "Flinch",
+      "KnockDown",
+      "KnockUp",
+      "Juggle",
+      "Groggy",
+      "Executed",
+      "Parried",
+      "EnemyLockOn"
+    ],
+    "PostPatternDelayTime": {"Min": 2, "Max": 2},
+    "Effects": ["SandbagPPRegen"],
+    "Montages": {
+      "SandbagSlam": "/Game/Animations/AM_Sandbag_Slam.AM_Sandbag_Slam",
+      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
+      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
+      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed"
+    }
   }
 }

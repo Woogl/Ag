@@ -69,8 +69,10 @@ ETeamAttitude::Type AAgCharacterBase::GetTeamAttitudeTowards(const AActor& Other
 	{
 		return ETeamAttitude::Friendly;
 	}
-	// 적군은 중립을 노리지 않습니다. 적중은 Friendly가 아니면 맞으므로, 공격 판정에 들어온 중립은 맞습니다.
-	const bool bIgnored = Team == EAgTeam::Enemy && OtherTeam == FGenericTeamId(static_cast<uint8>(EAgTeam::Neutral));
+	// 적군과 중립은 서로 노리지 않습니다. 적중은 Friendly가 아니면 맞으므로, 공격 판정에 들어온 상대는 맞습니다.
+	const FGenericTeamId EnemyTeam(static_cast<uint8>(EAgTeam::Enemy));
+	const FGenericTeamId NeutralTeam(static_cast<uint8>(EAgTeam::Neutral));
+	const bool bIgnored = (Team == EAgTeam::Enemy && OtherTeam == NeutralTeam) || (Team == EAgTeam::Neutral && OtherTeam == EnemyTeam);
 	return bIgnored ? ETeamAttitude::Neutral : ETeamAttitude::Hostile;
 }
 

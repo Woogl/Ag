@@ -401,6 +401,17 @@
     ],
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 400}, "ResponseChance": 0.3}
   },
+  "SandbagSlam": {
+    "Tags": ["Ability.Enemy.Pattern"],
+    "Activation": {
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
+    },
+    "Targeting": {"Preset": "Enemy", "Range": 300},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "SandbagSlam"}
+    ],
+    "PatternSelection": {"Distance": {"Min": 0, "Max": 150}, "Weight": 1}
+  },
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {

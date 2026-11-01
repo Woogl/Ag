@@ -30,6 +30,14 @@
     "Duration": 6,
     "GrantedTags": ["State.Regen.PPDelay"]
   },
+  "SandbagPPRegen": {
+    "DurationPolicy": "Infinite",
+    "Modifiers": [
+      {"Attribute": "PP", "PerSecond": 100}
+    ],
+    "OngoingIgnoredTags": ["State.Regen.PPDelay"],
+    "RegenDelay": {"Effect": "PPRegenDelay"}
+  },
   "Busy": {
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.Busy"]

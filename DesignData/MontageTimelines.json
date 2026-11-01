@@ -275,5 +275,11 @@
       {"Task": "AreaHit", "Start":0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bIgnoreToughness": true, "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
       {"Task": "ApplyEffect", "Start":0, "Effect": "UltimateSlowMotion"}
     ]
+  },
+  "/Game/Animations/AM_Sandbag_Slam.AM_Sandbag_Slam": {
+    "Default": [
+      {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": false},
+      {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+    ]
   }
 }

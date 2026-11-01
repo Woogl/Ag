@@ -103,6 +103,9 @@ UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 		case EAgEffect::PPRefill:
 			AddModifier(*Effect, UAgAttributeSet::GetPPAttribute(), EGameplayModOp::Override, MakeTargetAttribute(UAgAttributeSet::GetMaxPPAttribute(), 1.f));
 			break;
+		case EAgEffect::HPRefill:
+			AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::Override, MakeTargetAttribute(UAgAttributeSet::GetMaxHPAttribute(), 1.f));
+			break;
 	}
 
 	// 에셋은 PostLoad가 부르는 함수로, 컴포넌트의 태그를 GE에 모읍니다.
