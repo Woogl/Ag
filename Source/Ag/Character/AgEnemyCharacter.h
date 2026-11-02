@@ -50,18 +50,6 @@ public:
 		return true;
 	}
 
-	/** 플레이어와 전투 중인 것만으로 네임플레이트를 표시합니다. */
-	virtual bool ShowsNameplateInCombat() const
-	{
-		return true;
-	}
-
-	/** 플레이어의 공격에 맞았을 때 대미지 숫자를 띄웁니다. */
-	virtual bool ShowsDamageNumbers() const
-	{
-		return false;
-	}
-
 	const TArray<TObjectPtr<ATargetPoint>>& GetPatrolPoints() const
 	{
 		return PatrolPoints;

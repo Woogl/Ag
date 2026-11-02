@@ -693,6 +693,7 @@
       "Asset": "/Game/Animations/AM_Sandbag_Slam.AM_Sandbag_Slam",
       "Sections": {
         "Default": [
+          {"Task": "DisableRootMotion", "Start": 0},
           {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ]

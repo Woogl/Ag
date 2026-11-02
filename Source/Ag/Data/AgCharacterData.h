@@ -15,6 +15,14 @@ enum class EAgToughness : uint8
 	Large,
 };
 
+UENUM()
+enum class EAgTeam : uint8
+{
+	Player,
+	Enemy,
+	Neutral
+};
+
 USTRUCT()
 struct FAgAttributes
 {
@@ -70,6 +78,9 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
 	FText DisplayName;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Combat")
+	EAgTeam Team = EAgTeam::Enemy;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Combat")
 	EAgToughness Toughness = EAgToughness::Medium;

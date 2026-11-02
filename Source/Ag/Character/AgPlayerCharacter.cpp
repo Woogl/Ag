@@ -33,8 +33,6 @@ namespace
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
-	Team = EAgTeam::Ally;
-
 	// 락온 카메라와 상대 쪽 회전이 이번 프레임의 이동을 마친 위치를 보도록 이동 뒤에 돕니다.
 	PrimaryActorTick.TickGroup = TG_PostPhysics;
 

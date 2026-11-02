@@ -73,7 +73,6 @@
     "DurationPolicy": "HasDuration",
     "Duration": 5,
     "GrantedTags": ["State.Groggy"],
-    "ApplicationIgnoredTags": ["State.NonCombat"],
     "RemovalTags": ["State.Execution", "State.Dead"]
   },
   "SprintDrain": {

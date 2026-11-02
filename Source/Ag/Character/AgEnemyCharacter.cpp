@@ -41,7 +41,6 @@ namespace
 
 AAgEnemyCharacter::AAgEnemyCharacter()
 {
-	Team = EAgTeam::Enemy;
 	AIControllerClass = AAgEnemyAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
@@ -318,7 +317,7 @@ void AAgEnemyCharacter::UpdateWorldWidgets()
 		return;
 	}
 	const bool bAllowed = bShown && IsNameplateInView(*PlayerController);
-	const bool bInCombat = ShowsNameplateInCombat() && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
+	const bool bInCombat = !ASC->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
 	Nameplate->SetFrontmost(bLockOnTarget);
 	Nameplate->SetHiddenInGame(!NameplateWidget->Update(bAllowed, bLockOnTarget || bInCombat));
 }

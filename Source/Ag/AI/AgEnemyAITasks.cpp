@@ -11,6 +11,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Engine/TargetPoint.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "StateTreeExecutionContext.h"
 
@@ -266,8 +267,13 @@ EStateTreeRunStatus FAgEnemyAITask_Patrol::Tick(FStateTreeExecutionContext& Cont
 	if (!InstanceData.bMoveRequested)
 	{
 		InstanceData.bMoveRequested = true;
-		RequestPatrolMove(Controller, GetPatrolDestination(*Enemy, InstanceData.PointIndex));
-		return EStateTreeRunStatus::Running;
+		// MOV가 0이면 이동은 진행되지 않고 목적지 쪽으로 몸만 돌리므로, 요청하지 않고 처음 방향만 봅니다.
+		if (Enemy->GetCharacterMovement()->MaxWalkSpeed > 0.f)
+		{
+			RequestPatrolMove(Controller, GetPatrolDestination(*Enemy, InstanceData.PointIndex));
+			return EStateTreeRunStatus::Running;
+		}
+		InstanceData.PointIndex = INDEX_NONE;
 	}
 
 	const int32 PointCount = Enemy->GetPatrolPoints().Num();

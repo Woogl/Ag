@@ -16,7 +16,6 @@ enum class EAgEffect : uint8
 	Kill,
 	Hitstop,
 	PPRefill,
-	HPRefill,
 };
 
 USTRUCT()
@@ -74,9 +73,6 @@ struct FAgEffectDefinition
 
 	UPROPERTY()
 	FGameplayTagContainer GrantedTags;
-
-	UPROPERTY()
-	FGameplayTagContainer ApplicationIgnoredTags;
 
 	UPROPERTY()
 	FGameplayTagContainer OngoingIgnoredTags;

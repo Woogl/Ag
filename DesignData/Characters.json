@@ -1,6 +1,7 @@
 {
   "Player": {
     "DisplayName": "린",
+    "Team": "Player",
     "Toughness": "Small",
     "Attributes": {
       "HP": 1000,
@@ -42,6 +43,7 @@
   },
   "Boss": {
     "DisplayName": "커스터",
+    "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
       "HP": 3000,
@@ -80,6 +82,7 @@
   },
   "Sandbag": {
     "DisplayName": "샌드백",
+    "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
       "HP": 10000,
@@ -97,10 +100,13 @@
       "Groggy",
       "Executed"
     ],
+    "SightDistance": 1200,
+    "SightAngle": 120,
     "Effects": ["SandbagPPRegen"]
   },
   "AttackSandbag": {
     "DisplayName": "공격 샌드백",
+    "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
       "HP": 10000,
@@ -122,10 +128,13 @@
       "EnemyLockOn"
     ],
     "PostPatternDelayTime": {"Min": 2, "Max": 2},
+    "SightDistance": 1200,
+    "SightAngle": 120,
     "Effects": ["SandbagPPRegen"]
   },
   "Cutter": {
     "DisplayName": "절단자",
+    "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
       "HP": 600,
@@ -156,6 +165,7 @@
   },
   "Gunner": {
     "DisplayName": "경비 사수",
+    "Team": "Enemy",
     "Toughness": "Small",
     "Attributes": {
       "HP": 300,

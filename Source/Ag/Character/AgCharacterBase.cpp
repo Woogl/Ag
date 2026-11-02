@@ -57,6 +57,12 @@ UAgAbilitySystemComponent* AAgCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+FGenericTeamId AAgCharacterBase::GetGenericTeamId() const
+{
+	// 편집 중인 월드의 캐릭터는 데이터를 연결하지 않습니다.
+	return CharacterData ? FGenericTeamId(static_cast<uint8>(CharacterData->Team)) : FGenericTeamId::NoTeam;
+}
+
 ETeamAttitude::Type AAgCharacterBase::GetTeamAttitudeTowards(const AActor& Other) const
 {
 	const IGenericTeamAgentInterface* OtherAgent = Cast<const IGenericTeamAgentInterface>(&Other);
@@ -64,15 +70,16 @@ ETeamAttitude::Type AAgCharacterBase::GetTeamAttitudeTowards(const AActor& Other
 	{
 		return ETeamAttitude::Neutral;
 	}
+	const FGenericTeamId Team = GetGenericTeamId();
 	const FGenericTeamId OtherTeam = OtherAgent->GetGenericTeamId();
-	if (OtherTeam == GetGenericTeamId())
+	if (OtherTeam == Team)
 	{
 		return ETeamAttitude::Friendly;
 	}
-	// 적군과 중립은 서로 노리지 않습니다. 적중은 Friendly가 아니면 맞으므로, 공격 판정에 들어온 상대는 맞습니다.
+	// 적 팀과 중립 팀은 서로 노리지 않습니다. 적중은 Friendly가 아니면 맞으므로, 공격 판정에 들어온 상대는 맞습니다.
 	const FGenericTeamId EnemyTeam(static_cast<uint8>(EAgTeam::Enemy));
 	const FGenericTeamId NeutralTeam(static_cast<uint8>(EAgTeam::Neutral));
-	const bool bIgnored = (Team == EAgTeam::Enemy && OtherTeam == NeutralTeam) || (Team == EAgTeam::Neutral && OtherTeam == EnemyTeam);
+	const bool bIgnored = (Team == EnemyTeam && OtherTeam == NeutralTeam) || (Team == NeutralTeam && OtherTeam == EnemyTeam);
 	return bIgnored ? ETeamAttitude::Neutral : ETeamAttitude::Hostile;
 }
 

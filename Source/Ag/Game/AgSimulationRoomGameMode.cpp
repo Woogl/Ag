@@ -8,6 +8,7 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
+#include "Data/AgCharacterData.h"
 #include "EngineUtils.h"
 #include "Game/AgEnemySpawnPoint.h"
 #include "Game/AgPlayerController.h"
@@ -162,11 +163,7 @@ void AAgSimulationRoomGameMode::SpawnLineup(AActor& Player)
 		const FVector Location = SpawnPoints[Index]->GetActorLocation() + FVector(0., 0., EnemyDefaults->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 		const FRotator Rotation = (Player.GetActorLocation() - Location).GetSafeNormal2D().Rotation();
 		AAgCharacterBase* Enemy = GetWorld()->SpawnActor<AAgCharacterBase>(Lineup[Index], Location, Rotation, SpawnParameters);
-		if (!Enemy || !IsEnemyTeam(*Enemy))
-		{
-			continue;
-		}
-		if (AAgEnemyAIController* Controller = Cast<AAgEnemyAIController>(Enemy->GetController()))
+		if (AAgEnemyAIController* Controller = Enemy ? Cast<AAgEnemyAIController>(Enemy->GetController()) : nullptr)
 		{
 			Controller->NoticeTarget(Player);
 		}
