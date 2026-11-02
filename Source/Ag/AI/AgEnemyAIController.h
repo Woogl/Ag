@@ -31,6 +31,9 @@ public:
 
 	bool IsTargetNoticed() const;
 
+	/** 시야와 관계없이 그 상대를 알아차리게 합니다. 그 상대에게 맞은 것과 같은 자극이라 놓친 시간도 이 순간부터 셉니다. */
+	void NoticeTarget(AActor& Target);
+
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
