@@ -97,6 +97,8 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Airborne, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_PerfectDodgeWindow, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandlePerfectDodgeWindowChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_TimeStop, EGameplayTagEventType::NewOrRemoved)
@@ -437,17 +439,13 @@ void AAgPlayerCharacter::TryJump()
 bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) const
 {
 	const UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction))
+	if (ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy))
 	{
 		return true;
 	}
-	// 점프 행동의 Busy만 점프 공격을 막지 않습니다. 다른 행동 도중 걸어서 떨어졌으면 그 행동의 Busy가 막습니다.
-	const FGameplayAbilitySpec* Jump = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
-	if (InputTag == AgGameplayTags::Input_Attack && Jump && Jump->IsActive())
-	{
-		return false;
-	}
-	return ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy);
+	// 점프 행동은 공중 태그가 붙는 순간에만 발동을 시도해 다른 행동·피격 반응 도중 뜨면 실행되지 않으므로,
+	// 공중 입력 제한은 점프 행동이 아니라 공중 태그로 봅니다.
+	return InputTag != AgGameplayTags::Input_Attack && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Airborne);
 }
 
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
@@ -458,7 +456,7 @@ void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 N
 	{
 		return;
 	}
-	if (Tag == AgGameplayTags::State_Busy && IsHoldingReleaseInput())
+	if ((Tag == AgGameplayTags::State_Busy || Tag == AgGameplayTags::State_Airborne) && IsHoldingReleaseInput())
 	{
 		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunPendingInput);
 	}

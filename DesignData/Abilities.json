@@ -54,7 +54,6 @@
   "Jump": {
     "AbilityTags": ["Ability.Action.Jump"],
     "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-    "ActivationOwnedTags": ["State.Busy"],
     "CancelAbilitiesWithTag": ["Ability.Action"],
     "AbilityTriggers": [
       {"TriggerTag": "State.Airborne", "TriggerSource": "OwnedTagPresent"}
@@ -65,7 +64,7 @@
     "AbilityTags": ["Ability.Action.JumpAttack"],
     "InputTag": "Input.Attack",
     "ActivationRequiredTags": ["State.Airborne"],
-    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
     "ActivationOwnedTags": ["State.Acting"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
