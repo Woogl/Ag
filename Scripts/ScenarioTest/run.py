@@ -222,7 +222,7 @@ def main():
         for key, montages in r["montages"].items():
             name = {"p": "플레이어", "b": "보스"}.get(key, key)
             print("  %s:" % name, " → ".join(re.sub(r"^AM_(Player|Boss)_", "", m) for m in montages))
-        print("  %.1f초, 최저 %d fps | %s | 기록: %s" % (r["seconds"], r["fps_min"], " / ".join(r["notes"]), out))
+        print("  %.1f초, 최저 %d fps | %s | 기록: %s" % (r["seconds"], r["fps_min"], " / ".join(map(str, r["notes"])), out))
         # 게임 코드의 오류 로그(데이터 파일을 읽지 못함 등)는 판정을 믿을 수 없게 하므로 함께 보여 준다.
         log = open(os.path.join(WORK, "slot%d.log" % slot), encoding="utf-8", errors="replace").read()
         for line in sorted(set(re.findall(r"LogAg: Error: [^\r\n]*", log))):

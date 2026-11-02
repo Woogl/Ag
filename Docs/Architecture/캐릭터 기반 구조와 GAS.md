@@ -29,12 +29,12 @@
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정)과 적중 가능 판정(`CanBeHitBy`), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, Launch가 띄울 때마다 켜는 엔진 정점 알림으로 보내는 `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 넉업으로 떠 있는 동안 캡슐도 무기에 맞음), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 가드 움찔 몽타주(`GuardFlinchMontage`), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
-| `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 플레이어와 보스의 회전. 엔진 회전을 쓰고, 사망·방향 고정 중에는 돌지 않습니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. |
+| `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 모든 캐릭터의 회전. 엔진 회전을 쓰고, 사망·방향 고정 중에는 돌지 않습니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. |
 | `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소와 다시 발동), 달리기·락온 발동과 취소, 몸 회전, 점프와 착지(`JumpMontage`), 극한 회피 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 시야를 제외한 입력 차단. 누르고 있던 키의 다시 발동은 선입력 처리 뒤 현재 입력 제한을 다시 검사합니다. |
 | `AAgPlayerCameraManager` | `APlayerCameraManager` | BP 파생 클래스 없이 생성합니다. 락온 보간·시야 입력·상대 쪽 회전·요청받은 상황의 연출 재생·달리기 시야각·처형 카메라 시작과 종료·컷신 진입 정리를 맡고, 설정은 `UAgCameraData`에서 읽습니다. 엔진 점유 알림으로 플레이어 ASC에 연결합니다. 기본 모디파이어 클래스는 C++ 생성자의 `DefaultModifiers`에서 지정하고 엔진이 생성합니다. |
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
 | `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
-| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(시작한 전환의 기록 포함), 패턴 발동 가능 여부(`CanActivatePattern`)와 지금 고를 수 있는 패턴 모으기(`GatherPatterns`), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 처형 안내). 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 따로 클래스 없이 이 클래스와 `ST_Enemy`를 씁니다. 샌드백은 패턴이 없거나 하나뿐이고 MOV가 0인 데이터일 뿐이며, 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
+| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(시작한 전환의 기록 포함), 패턴 발동 가능 여부(`CanActivatePattern`)와 지금 고를 수 있는 패턴 모으기(`GatherPatterns`), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 처형 안내). 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 보스 처치 슬로우모션 값 |
 | `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`)과 움찔(`IsEnemyFlinching`) 조회, AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 팀 태도 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달, 시야와 관계없이 상대를 알아차리게 하는 `NoticeTarget`(그 상대가 대미지 0으로 친 대미지 감각 자극이라 기존 전투 진입 조건이 그대로 판단) |
 | `FAgEnemyAICondition_Flinching` | `FStateTreeAIConditionBase` | 공통 조건 인스턴스 데이터의 Controller로 `IsEnemyFlinching`을 조회합니다. `bInvert`로 반대 조건을 표현합니다. |
@@ -145,7 +145,7 @@ classDiagram
 - 지상 움찔 `Flinch`와 공중 움찔 `FlinchAir`는 태그와 트리거가 같고 `State.Airborne`으로 발동이 갈리며, `bAllowRetrigger`로 다시 시작합니다. 지상 움찔은 `StartSections`의 `EventTag`(어빌리티를 발동시킨 이벤트 태그와 맞을 때만 그 섹션)로 섹션을 고릅니다. 공중 움찔은 루트 모션이 없는 몽타주라 어빌리티를 나눕니다([데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '몽타주 관리'). 루트 모션 몽타주로는 낙하 중 수평 속도를 덮어씁니다. 행동 제한은 블렌드아웃 시작이 아닌 몽타주 종료까지 유지하고, 별도 피격 시간값이나 전용 실행 클래스는 없습니다.
 - 움찔은 넉업·넉다운·가드 피격 중에 발동하지 않습니다.
 - 그로기 효과는 Groggy 어빌리티와 따로 지속 시간 동안 남고, 처형·사망 태그가 붙으면 효과 정의의 `RemovalTags`로 지워집니다. Groggy 어빌리티는 움찔을 끊고 그로기 모션을 재생하지만, 다른 피격 반응(넉다운·넉업·가드 밀림·가드 브레이크) 중에는 발동이 막히고 엔진은 막혔던 태그 트리거를 다시 시도하지 않습니다. 이때와 피격 반응 몽타주가 그로기 몽타주를 끊어 어빌리티가 취소된 때에도 그로기는 이어지며, 피격 반응 뒤의 그로기 자세는 ABP가 보여 줍니다.
-- 플레이어는 공중 공격의 입력 예외보다 부모 피격 상태를 먼저 확인합니다. 선입력은 상태가 해제된 다음 틱에 재검사해, 재발동 중 태그가 잠시 빠지는 순간에 실행하지 않습니다.
+- 플레이어 입력은 부모 피격 상태가 있으면 공중의 기본 공격까지 막습니다. 선입력은 상태가 해제된 다음 틱에 재검사해, 재발동 중 태그가 잠시 빠지는 순간에 실행하지 않습니다.
 - `ST_Enemy`는 전체 반응보다 움찔 전환을 먼저 검사하고, 두 상태 모두 기존 `WaitReaction` Task로 종료를 기다립니다. 움찔만 끝나면 패턴 실행으로, `Reacting && !Flinching`이면 기존 피격 반응 상태로 전환합니다. 페이즈 전환 조건은 패턴 실행보다 먼저 확인합니다.
 
 ### 레벨 시작에서 BeginPlay까지
