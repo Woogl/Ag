@@ -8,6 +8,7 @@
 
 class UAgButton;
 class UAgControlsPopup;
+class UAgStageSelectScreen;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgTitleScreen : public UCommonActivatableWidget
@@ -23,6 +24,9 @@ protected:
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgStageSelectScreen> StageSelectScreenClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgControlsPopup> ControlsPopupClass;
 
 	UPROPERTY(meta = (BindWidget))
@@ -35,5 +39,6 @@ protected:
 	TObjectPtr<UAgButton> QuitButton;
 
 private:
+	void OpenStageSelect();
 	void OpenControls();
 };

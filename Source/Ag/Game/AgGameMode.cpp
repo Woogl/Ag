@@ -14,6 +14,7 @@
 #include "GameMapsSettings.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Misc/PackageName.h"
 #include "TimerManager.h"
 #include "UI/AgBattleResultScreen.h"
 #include "UI/AgHUDWidget.h"
@@ -24,6 +25,15 @@ AAgGameMode::AAgGameMode()
 {
 	PlayerControllerClass = AAgPlayerController::StaticClass();
 	GameStateClass = AAgGameState::StaticClass();
+}
+
+bool AAgGameMode::IsStageAvailable(int32 StageIndex) const
+{
+	if (!Stages.IsValidIndex(StageIndex) || Stages[StageIndex].Map.IsNull())
+	{
+		return false;
+	}
+	return FPackageName::DoesPackageExist(Stages[StageIndex].Map.GetLongPackageName());
 }
 
 void AAgGameMode::OpenFrontEnd()
@@ -37,14 +47,14 @@ void AAgGameMode::OpenFrontEnd()
 	UGameplayStatics::OpenLevelBySoftObjectPtr(this, TSoftObjectPtr<UWorld>(Map));
 }
 
-void AAgGameMode::OpenStage()
+void AAgGameMode::OpenStage(int32 StageIndex)
 {
-	if (StageMap.IsNull())
+	if (!IsStageAvailable(StageIndex))
 	{
-		UE_LOG(LogAg, Error, TEXT("StageMap is not set (BP_FrontEndGameMode)."));
+		UE_LOG(LogAg, Error, TEXT("OpenStage: stage %d has no map in the game (BP_FrontEndGameMode Stages)."), StageIndex);
 		return;
 	}
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, StageMap);
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, Stages[StageIndex].Map);
 }
 
 void AAgGameMode::RestartStage()

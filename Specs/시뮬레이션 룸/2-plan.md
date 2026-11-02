@@ -14,7 +14,7 @@
 | `UAgEnemyOptionWidget` | 신규 위젯 클래스 | 드롭다운 항목 하나의 모양. 캐릭터 데이터 ID를 받아 이름(없으면 Empty 글자)을 표시합니다. |
 | `AAgEnemyAIController` | 변경 | 시야와 관계없이 상대를 알아차리게 하는 `NoticeTarget`을 더합니다. |
 | 에셋 | 신규 | `BP_SimulationRoomGameMode`, `LV_SimulationRoom`(2026-10-25 보관본 `refs/parked/simulation-room`을 되살려 후보 목록과 자리 번호를 지금 Spec에 맞춤), `WBP_EnemySelect`(드롭다운 줄로 다시 구성), `WBP_EnemySlot`, `WBP_EnemyOption` |
-| `Config/DefaultGame.ini` | 변경 | `MapsToCook`에 `LV_SimulationRoom` 추가 |
+| 쿡 | 변경 없음 | `LV_SimulationRoom`은 스테이지 선택 목록의 참조로 쿡됩니다([스테이지 선택 Plan](<../스테이지 선택/2-plan.md>)의 '쿡할 맵'). |
 
 - 바꾸지 않는 것: 일시정지 메뉴와 전투 결과 화면은 `AAgGameMode`에 버튼을 잇고, Restart는 `RestartLevel`(상대 이동)이라 주소 옵션이 그대로 남아 같은 구성으로 다시 시작합니다. 전투 HUD는 게임 스테이트의 보스 변경을 구독하므로 배치한 보스도 그대로 표시합니다.
 
@@ -82,7 +82,6 @@ sequenceDiagram
 | - | - |
 | [캐릭터 기반 구조와 GAS](<../../Docs/Architecture/캐릭터 기반 구조와 GAS.md>) | '게임 모드와 게임 스테이트': 시뮬레이션 룸 게임 모드 하위 클래스와 그 이유, `AAgGameMode` 역할의 클리어 조건과 보스 처치 연출 조건, 클래스 표와 그림에 `AAgSimulationRoomGameMode`·`AAgEnemySpawnPoint`·`UAgEnemySelectScreen`·`UAgEnemySlotWidget`·`UAgEnemyOptionWidget`. `AAgEnemyAIController` 역할에 `NoticeTarget` |
 | [데이터 로딩과 스키마](<../../Docs/Architecture/데이터 로딩과 스키마.md>) 'JSON 외부 데이터 위치' | 새 행: 시뮬레이션 룸 후보(`BP_SimulationRoomGameMode`의 `EnemyClasses`), 배치 자리(`LV_SimulationRoom`의 `AAgEnemySpawnPoint` 위치와 `Slot`), 적 선택 화면 흐린 버튼(`WBP_EnemySelect`의 `LockedButtonOpacity`) |
-| [기본 방침](<../../Docs/Architecture/기본 방침.md>) | 쿡하는 게임 맵 목록에 `LV_SimulationRoom` |
 
 ## 2. GAS 및 데이터 설계
 

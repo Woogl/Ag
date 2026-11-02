@@ -6,6 +6,7 @@
 #include "Game/AgPlayerController.h"
 #include "UI/AgButton.h"
 #include "UI/AgControlsPopup.h"
+#include "UI/AgStageSelectScreen.h"
 #include "UI/AgUILayout.h"
 
 UAgTitleScreen::UAgTitleScreen(const FObjectInitializer& ObjectInitializer)
@@ -18,11 +19,11 @@ void UAgTitleScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
+	StartButton->OnClicked().AddUObject(this, &ThisClass::OpenStageSelect);
 	ControlsButton->OnClicked().AddUObject(this, &ThisClass::OpenControls);
 
 	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
 	{
-		StartButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenStage);
 		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
 	}
 }
@@ -35,6 +36,14 @@ UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
 TOptional<FUIInputConfig> UAgTitleScreen::GetDesiredInputConfig() const
 {
 	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
+}
+
+void UAgTitleScreen::OpenStageSelect()
+{
+	if (AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>())
+	{
+		PlayerController->PushScreen(EAgUILayer::Menu, StageSelectScreenClass);
+	}
 }
 
 void UAgTitleScreen::OpenControls()
