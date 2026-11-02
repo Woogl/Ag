@@ -36,6 +36,7 @@ namespace
 	const FName NameplateBone(TEXT("head"));
 	/** 마네킹의 머리 뼈 기준 +X가 정수리 쪽이며, 정수리까지 약 18cm입니다. */
 	const FVector NameplateOffset(18.f, 0.f, 0.f);
+	const FName GroggyEffectId(TEXT("Groggy"));
 } // namespace
 
 AAgEnemyCharacter::AAgEnemyCharacter()
@@ -118,7 +119,7 @@ void AAgEnemyCharacter::GatherPatterns(float TargetDistance, bool bResponse, TAr
 	{
 		const FAgAbilityData* Ability = Data->FindAbility(Id);
 		const FAgPatternSelection* Pattern =
-			Ability && Ability->Tags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
+			Ability && Ability->AbilityTags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
 		const float Weight = Pattern ? (bResponse ? Pattern->ResponseChance : Pattern->Weight) : 0.f;
 		if (Weight > 0.f && Pattern->IsAvailable(TargetDistance, Phase) && CanActivatePattern(Id))
 		{
@@ -154,6 +155,7 @@ void AAgEnemyCharacter::BeginPlay()
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Groggy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
+	GroggyEventHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Groggy).AddUObject(this, &ThisClass::HandleGroggyEvent);
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 
 	UAgNameplateWidget* NameplateWidget = Cast<UAgNameplateWidget>(Nameplate->GetUserWidgetObject());
@@ -172,6 +174,7 @@ void AAgEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		DeathMotion->OnMontageBlendingOutStarted.Unbind();
 	}
+	GetAbilitySystemComponent()->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Groggy).Remove(GroggyEventHandle);
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -194,8 +197,7 @@ void AAgEnemyCharacter::HandleDeathEvent(const FGameplayEventData* Payload)
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	const UAnimMontage* Playing = AnimInstance ? GetAbilitySystemComponent()->GetCurrentMontage() : nullptr;
 	const UAgGameplayAbility* Animating = Playing ? Cast<UAgGameplayAbility>(GetAbilitySystemComponent()->GetAnimatingAbility()) : nullptr;
-	const FName DeathMontage = Animating ? Animating->GetDefinition().DeathMontage : NAME_None;
-	if (UAnimMontage* Death = DeathMontage.IsNone() ? nullptr : GetCharacterData()->FindMontage(DeathMontage))
+	if (UAnimMontage* Death = Animating ? Animating->GetDefinition().DeathMontage.Get() : nullptr)
 	{
 		const float Position = AnimInstance ? AnimInstance->Montage_GetPosition(Playing) : 0.f;
 		DieWithDeathMotion(*Death, Position);
@@ -255,7 +257,13 @@ void AAgEnemyCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCou
 	{
 		ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 	}
-	ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Reaction_Groggy));
+}
+
+void AAgEnemyCharacter::HandleGroggyEvent(const FGameplayEventData* Payload)
+{
+	// 그로기 모션은 이 효과의 태그로 발동하는 어빌리티가 맡고, 태그가 빠지면 엔진이 끝냅니다.
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(GroggyEffectId), 1.f, ASC->MakeEffectContext());
 }
 
 void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
@@ -265,7 +273,7 @@ void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 	{
 		return;
 	}
-	const FGameplayTagContainer& DefinitionTags = Ability->GetDefinition().Tags;
+	const FGameplayTagContainer& DefinitionTags = Ability->GetDefinition().AbilityTags;
 	const bool bPhaseTransitionCompleted = !Data.bWasCancelled && DefinitionTags.HasTagExact(AgGameplayTags::Ability_Reaction_PhaseTransition);
 	if (!DefinitionTags.HasTagExact(AgGameplayTags::Ability_Reaction_Executed) && !bPhaseTransitionCompleted)
 	{

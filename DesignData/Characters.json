@@ -31,33 +31,14 @@
       "Sprint",
       "LockOn",
       "Flinch",
+      "FlinchAir",
       "KnockDown",
       "KnockUp",
       "Juggle",
       "GuardPushback",
       "GuardBreak"
     ],
-    "Effects": ["SPRegen"],
-    "Montages": {
-      "BasicAttack": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
-      "Jump": "/Game/Animations/AM_Player_Jump.AM_Player_Jump",
-      "JumpAttack": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
-      "Dodge": "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge",
-      "DodgeCounter": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
-      "PerfectDodge": "/Game/Animations/AM_Player_PerfectDodge.AM_Player_PerfectDodge",
-      "GuardFlinch": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch",
-      "GuardCounter": "/Game/Animations/AM_Player_GuardCounter.AM_Player_GuardCounter",
-      "Parry": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
-      "Skill": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
-      "Ultimate": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
-      "Execution": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
-      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
-      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "GuardPushback": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
-      "GuardBreak": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak"
-    }
+    "Effects": ["SPRegen"]
   },
   "Boss": {
     "DisplayName": "커스터",
@@ -81,6 +62,7 @@
       "JumpCleave",
       "Backstep",
       "Flinch",
+      "FlinchAir",
       "KnockDown",
       "KnockUp",
       "Juggle",
@@ -94,25 +76,7 @@
     "SightDistance": 2000,
     "SightAngle": 120,
     "PhaseTransitionHPRatios": [0.5],
-    "Effects": ["PPRegen"],
-    "Montages": {
-      "DoubleStrike": "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike",
-      "Sweep": "/Game/Animations/AM_Boss_Sweep.AM_Boss_Sweep",
-      "DashThrust": "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust",
-      "GroundSlam": "/Game/Animations/AM_Boss_GroundSlam.AM_Boss_GroundSlam",
-      "QuintupleStrike": "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike",
-      "SwordWave": "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave",
-      "JumpCleave": "/Game/Animations/AM_Boss_JumpCleave.AM_Boss_JumpCleave",
-      "Backstep": "/Game/Animations/AM_Boss_Backstep.AM_Boss_Backstep",
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
-      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
-      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
-      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
-      "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath",
-      "PhaseTransition": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition"
-    }
+    "Effects": ["PPRegen"]
   },
   "Sandbag": {
     "DisplayName": "샌드백",
@@ -126,21 +90,14 @@
     },
     "Abilities": [
       "Flinch",
+      "FlinchAir",
       "KnockDown",
       "KnockUp",
       "Juggle",
       "Groggy",
       "Executed"
     ],
-    "Effects": ["SandbagPPRegen"],
-    "Montages": {
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
-      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
-      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
-      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed"
-    }
+    "Effects": ["SandbagPPRegen"]
   },
   "AttackSandbag": {
     "DisplayName": "공격 샌드백",
@@ -155,6 +112,7 @@
     "Abilities": [
       "SandbagSlam",
       "Flinch",
+      "FlinchAir",
       "KnockDown",
       "KnockUp",
       "Juggle",
@@ -164,16 +122,7 @@
       "EnemyLockOn"
     ],
     "PostPatternDelayTime": {"Min": 2, "Max": 2},
-    "Effects": ["SandbagPPRegen"],
-    "Montages": {
-      "SandbagSlam": "/Game/Animations/AM_Sandbag_Slam.AM_Sandbag_Slam",
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
-      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
-      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
-      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed"
-    }
+    "Effects": ["SandbagPPRegen"]
   },
   "Cutter": {
     "DisplayName": "절단자",
@@ -191,6 +140,7 @@
       "DoubleSlash",
       "HeavyCleave",
       "Flinch",
+      "FlinchAir",
       "KnockDown",
       "KnockUp",
       "Juggle",
@@ -202,19 +152,7 @@
     "PostPatternDelayTime": {"Min": 0.6, "Max": 1.0},
     "SightDistance": 1200,
     "SightAngle": 120,
-    "Effects": ["CutterPPRegen"],
-    "Montages": {
-      "SingleSlash": "/Game/Animations/AM_Cutter_SingleSlash.AM_Cutter_SingleSlash",
-      "DoubleSlash": "/Game/Animations/AM_Cutter_DoubleSlash.AM_Cutter_DoubleSlash",
-      "HeavyCleave": "/Game/Animations/AM_Cutter_HeavyCleave.AM_Cutter_HeavyCleave",
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
-      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
-      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
-      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
-      "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath"
-    }
+    "Effects": ["CutterPPRegen"]
   },
   "Gunner": {
     "DisplayName": "경비 사수",
@@ -230,6 +168,7 @@
     "Abilities": [
       "PistolShot",
       "Flinch",
+      "FlinchAir",
       "KnockDown",
       "KnockUp",
       "Juggle",
@@ -241,16 +180,6 @@
     "PostPatternDelayTime": {"Min": 2, "Max": 4},
     "SightDistance": 2000,
     "SightAngle": 120,
-    "Effects": ["GunnerPPRegen"],
-    "Montages": {
-      "PistolShot": "/Game/Animations/AM_Gunner_PistolShot.AM_Gunner_PistolShot",
-      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
-      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
-      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
-      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
-      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
-      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
-      "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath"
-    }
+    "Effects": ["GunnerPPRegen"]
   }
 }

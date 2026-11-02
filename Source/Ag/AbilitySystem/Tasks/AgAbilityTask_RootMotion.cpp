@@ -55,7 +55,7 @@ void UAgAbilityTask_RootMotion::Activate()
 		bFacingOnly = Params.Distance <= 0.f;
 	}
 
-	// 구간이 없는 발동 Task는 즉시 돕니다. 함께 시작하는 PlayMontage보다 먼저 시작할 수 있어 몽타주를 찾기 전에 돕니다.
+	// 구간이 없는 발동 Task는 즉시 돕니다. 발동 Task는 몽타주 재생보다 먼저 시작하므로 몽타주를 찾기 전에 돕니다.
 	if (!Window)
 	{
 		const FVector Direction = GetFacingDirection();

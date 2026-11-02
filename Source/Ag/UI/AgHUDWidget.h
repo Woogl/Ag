@@ -101,9 +101,9 @@ private:
 
 	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop = true);
 
-	static const UGameplayAbility* FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle);
+	static const UGameplayAbility* FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag, FGameplayAbilitySpecHandle& OutHandle);
 
-	static bool CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag);
+	static bool CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag);
 
 	void SetSlotUsable(UWidget& SlotWidget, bool bUsable) const;
 

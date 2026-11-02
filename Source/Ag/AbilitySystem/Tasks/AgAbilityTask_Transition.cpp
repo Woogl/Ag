@@ -26,7 +26,7 @@ void UAgAbilityTask_Transition::Activate()
 		EventHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(Params.Event).AddUObject(this, &ThisClass::HandleEvent);
 		return;
 	}
-	if (ASC && Params.Tag.IsValid())
+	if (ASC && Params.TagRemoved.IsValid())
 	{
 		// 같은 시각에 시작한 항목이 아직 태그를 붙이지 않았을 수 있어, 없으면 다음 틱에 다시 봅니다.
 		if (!WaitForTag())
@@ -48,7 +48,7 @@ void UAgAbilityTask_Transition::OnDestroy(bool bInOwnerFinished)
 		}
 		if (TagHandle.IsValid())
 		{
-			ASC->RegisterGameplayTagEvent(Params.Tag, EGameplayTagEventType::NewOrRemoved).Remove(TagHandle);
+			ASC->RegisterGameplayTagEvent(Params.TagRemoved, EGameplayTagEventType::NewOrRemoved).Remove(TagHandle);
 		}
 	}
 	if (const UWorld* World = GetWorld())
@@ -60,7 +60,7 @@ void UAgAbilityTask_Transition::OnDestroy(bool bInOwnerFinished)
 
 TOptional<float> UAgAbilityTask_Transition::FindTagEndingDelay(const UAbilitySystemComponent& ASC) const
 {
-	const FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(Params.Tag));
+	const FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(Params.TagRemoved));
 	const TArray<float> Times = ASC.GetActiveEffectsTimeRemaining(Query);
 	if (Times.IsEmpty() || Times.ContainsByPredicate([](float Time)
 	{ return Time < 0.f; }))
@@ -69,7 +69,7 @@ TOptional<float> UAgAbilityTask_Transition::FindTagEndingDelay(const UAbilitySys
 	}
 	const FAnimMontageInstance* Instance = Playback.IsValid() ? Playback->GetMontageInstance() : nullptr;
 	const UAnimMontage* Montage = Instance ? Instance->Montage.Get() : nullptr;
-	const int32 SectionIndex = Montage ? Montage->GetSectionIndex(Params.Section) : INDEX_NONE;
+	const int32 SectionIndex = Montage ? Montage->GetSectionIndex(Params.ToSection) : INDEX_NONE;
 	// 섹션 길이는 몽타주 시간이라, 재생 배율(Rate Scale × 재생 속도)로 나눠 효과의 지속 시간과 같은 월드 시간으로
 	// 맞춥니다.
 	const float SectionLength = SectionIndex == INDEX_NONE ? 0.f : Montage->GetSectionLength(SectionIndex);
@@ -80,11 +80,11 @@ TOptional<float> UAgAbilityTask_Transition::FindTagEndingDelay(const UAbilitySys
 bool UAgAbilityTask_Transition::WaitForTag()
 {
 	UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
-	if (!ASC || !ASC->HasMatchingGameplayTag(Params.Tag))
+	if (!ASC || !ASC->HasMatchingGameplayTag(Params.TagRemoved))
 	{
 		return false;
 	}
-	TagHandle = ASC->RegisterGameplayTagEvent(Params.Tag, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleTagChanged);
+	TagHandle = ASC->RegisterGameplayTagEvent(Params.TagRemoved, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ThisClass::HandleTagChanged);
 	const TOptional<float> Delay = Params.bSectionEndsWithTag ? FindTagEndingDelay(*ASC) : NullOpt;
 	if (Delay)
 	{
@@ -119,11 +119,11 @@ void UAgAbilityTask_Transition::TryTransition()
 	{
 		if (Params.BlendTime)
 		{
-			Playback->ReplaySection(Params.Section, *Params.BlendTime);
+			Playback->ReplaySection(Params.ToSection, *Params.BlendTime);
 		}
 		else
 		{
-			Playback->JumpToSection(Params.Section);
+			Playback->JumpToSection(Params.ToSection);
 		}
 	}
 	EndTask();

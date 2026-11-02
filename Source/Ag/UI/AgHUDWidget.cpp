@@ -239,8 +239,8 @@ void UAgHUDWidget::UpdateSkillSlots()
 		return;
 	}
 
-	SetSlotUsable(*SkillSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Skill));
-	SetSlotUsable(*UltimateSlot, CanPayCost(*ASC, AgGameplayTags::Ability_Action_Ultimate));
+	SetSlotUsable(*SkillSlot, CanPayCost(*ASC, AgGameplayTags::Input_Skill));
+	SetSlotUsable(*UltimateSlot, CanPayCost(*ASC, AgGameplayTags::Input_Ultimate));
 
 	if (UMaterialInstanceDynamic* Gauge = UPGauge->GetDynamicMaterial())
 	{
@@ -249,7 +249,7 @@ void UAgHUDWidget::UpdateSkillSlots()
 	}
 
 	FGameplayAbilitySpecHandle SkillHandle;
-	const UAgGameplayAbility* Skill = Cast<UAgGameplayAbility>(FindAbility(*ASC, AgGameplayTags::Ability_Action_Skill, SkillHandle));
+	const UAgGameplayAbility* Skill = Cast<UAgGameplayAbility>(FindAbility(*ASC, AgGameplayTags::Input_Skill, SkillHandle));
 	const int32 SkillCost = Skill ? FMath::RoundToInt(Skill->GetCost().MP) : 0;
 	if (SkillCost != ShownSkillCost)
 	{
@@ -267,7 +267,7 @@ void UAgHUDWidget::UpdateSkillCooldown()
 	float Duration = 0.f;
 	FGameplayAbilitySpecHandle Handle;
 	const UAgAbilitySystemComponent* ASC = PlayerASC.Get();
-	if (const UGameplayAbility* Ability = ASC ? FindAbility(*ASC, AgGameplayTags::Ability_Action_Skill, Handle) : nullptr)
+	if (const UGameplayAbility* Ability = ASC ? FindAbility(*ASC, AgGameplayTags::Input_Skill, Handle) : nullptr)
 	{
 		Ability->GetCooldownTimeRemainingAndDuration(Handle, ASC->AbilityActorInfo.Get(), Remaining, Duration);
 	}
@@ -315,9 +315,15 @@ void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& A
 	Bar.SetValue(ASC.GetNumericAttribute(Value), ASC.GetNumericAttribute(MaxValue), bShowDrop);
 }
 
-const UGameplayAbility* UAgHUDWidget::FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag, FGameplayAbilitySpecHandle& OutHandle)
+const UGameplayAbility* UAgHUDWidget::FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag, FGameplayAbilitySpecHandle& OutHandle)
 {
-	const FGameplayAbilitySpec* Spec = ASC.FindSpecByTag(AbilityTag);
+	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(ASC.GetAvatarActor());
+	TArray<FGameplayAbilitySpecHandle> Handles;
+	if (Player)
+	{
+		Player->FindInputAbilities(InputTag, Handles);
+	}
+	const FGameplayAbilitySpec* Spec = Handles.IsEmpty() ? nullptr : ASC.FindAbilitySpecFromHandle(Handles[0]);
 	if (!Spec || !Spec->GetPrimaryInstance())
 	{
 		return nullptr;
@@ -326,10 +332,10 @@ const UGameplayAbility* UAgHUDWidget::FindAbility(const UAgAbilitySystemComponen
 	return Spec->GetPrimaryInstance();
 }
 
-bool UAgHUDWidget::CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& AbilityTag)
+bool UAgHUDWidget::CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag)
 {
 	FGameplayAbilitySpecHandle Handle;
-	const UGameplayAbility* Ability = FindAbility(ASC, AbilityTag, Handle);
+	const UGameplayAbility* Ability = FindAbility(ASC, InputTag, Handle);
 	return Ability && Ability->CheckCost(Handle, ASC.AbilityActorInfo.Get());
 }
 

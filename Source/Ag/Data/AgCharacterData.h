@@ -7,8 +7,6 @@
 #include "Math/Interval.h"
 #include "AgCharacterData.generated.h"
 
-class UAnimMontage;
-
 UENUM()
 enum class EAgToughness : uint8
 {
@@ -70,8 +68,6 @@ class UAgCharacterData : public UObject
 public:
 	const FAgAbilityData* FindAbility(FName Id) const;
 
-	UAnimMontage* FindMontage(FName Id) const;
-
 	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
 	FText DisplayName;
 
@@ -86,9 +82,6 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Effects"))
 	TArray<FName> Effects;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Assets")
-	TMap<FName, TObjectPtr<UAnimMontage>> Montages;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	FFloatInterval PostPatternDelayTime = FFloatInterval(0.f, 0.f);

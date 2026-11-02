@@ -45,11 +45,11 @@ void UAgGameplayAbility::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInf
 		if (const FAgAbilityData* Data = FindDefinition(Spec.Handle, ActorInfo))
 		{
 			Definition = *Data;
-			ActivationRequiredTags = Data->Activation.RequiredTags;
-			ActivationBlockedTags = Data->Activation.BlockedTags;
-			ActivationOwnedTags = Data->Activation.OwnedTags;
-			BlockAbilitiesWithTag = Data->Activation.BlockTags;
-			CancelAbilitiesWithTag = Data->Activation.CancelTags;
+			ActivationRequiredTags = Data->ActivationRequiredTags;
+			ActivationBlockedTags = Data->ActivationBlockedTags;
+			ActivationOwnedTags = Data->ActivationOwnedTags;
+			BlockAbilitiesWithTag = Data->BlockAbilitiesWithTag;
+			CancelAbilitiesWithTag = Data->CancelAbilitiesWithTag;
 		}
 	}
 	Super::OnGiveAbility(ActorInfo, Spec);
@@ -69,7 +69,7 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 			Instance ? *Instance->GetAbilityId().ToString() : TEXT("None"));
 		return false;
 	}
-	if (Spec->IsActive() && !Data->Activation.bAllowRetrigger)
+	if (Spec->IsActive() && !Data->bAllowRetrigger)
 	{
 		return false;
 	}
@@ -84,7 +84,7 @@ bool UAgGameplayAbility::CanActivateAbility(FGameplayAbilitySpecHandle Handle, c
 bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	// 엔진의 차단 검사는 클래스의 어빌리티 태그를 보므로, 스펙에 둔 행동 태그의 차단도 확인합니다.
-	return !ASC.AreAbilityTagsBlocked(Definition.Tags) &&
+	return !ASC.AreAbilityTagsBlocked(Definition.AbilityTags) &&
 	       Super::DoesAbilitySatisfyTagRequirements(ASC, SourceTags, TargetTags, OptionalRelevantTags);
 }
 
@@ -186,9 +186,10 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 
 	// Task를 시작하는 중에 행동이 끝나고 다시 발동하면 사본이 바뀌므로 목록을 복사해 돕니다.
 	{
-		// End가 Tasks인 행동이 첫 Task가 끝나는 순간 끝나지 않도록, 발동 Task를 모두 시작한 뒤부터 봅니다.
+		// End가 Tasks인 행동이 첫 Task가 끝나는 순간 끝나지 않도록, 발동 Task와 몽타주를 모두 시작한 뒤부터 봅니다.
 		TGuardValue<bool> StartingTasks(bStartingTasks, true);
 		const TArray<TInstancedStruct<FAgTaskParams>> Tasks = Definition.Tasks;
+		const TOptional<FAgAbilityMontage> Montage = Definition.Montage;
 		for (const TInstancedStruct<FAgTaskParams>& Item : Tasks)
 		{
 			if (!IsActive())
@@ -199,6 +200,14 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 			{
 				Task->ReadyForActivation();
 			}
+		}
+		if (!IsActive())
+		{
+			return;
+		}
+		if (Montage)
+		{
+			Montage->MakeTask(*this)->ReadyForActivation();
 		}
 	}
 	FinishIfTasksDone();
@@ -294,10 +303,10 @@ AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data, cons
 bool UAgGameplayAbility::IsEventTrigger(const FGameplayEventData* TriggerEventData) const
 {
 	// 엔진은 이벤트 트리거를 부모 태그까지 맞춰 발동합니다. 태그 트리거로 발동해도 실행 정보가 오므로 출처를 가립니다.
-	return TriggerEventData && Definition.Activation.Triggers.ContainsByPredicate([TriggerEventData](const FAgAbilityTrigger& Trigger)
+	return TriggerEventData && Definition.AbilityTriggers.ContainsByPredicate([TriggerEventData](const FAbilityTriggerData& Trigger)
 	{
-		return Trigger.Source == EAgTriggerSource::GameplayEvent &&
-		       TriggerEventData->EventTag.MatchesTag(Trigger.Tag);
+		return Trigger.TriggerSource == EGameplayAbilityTriggerSource::GameplayEvent &&
+		       TriggerEventData->EventTag.MatchesTag(Trigger.TriggerTag);
 	});
 }
 

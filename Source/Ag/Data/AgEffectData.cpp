@@ -139,6 +139,11 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	{
 		AddGrantedTags(*Effect, Definition.GrantedTags);
 	}
+	if (!Definition.ApplicationIgnoredTags.IsEmpty())
+	{
+		Effect->FindOrAddComponent<UTargetTagRequirementsGameplayEffectComponent>().ApplicationTagRequirements.IgnoreTags =
+			Definition.ApplicationIgnoredTags;
+	}
 	if (!Definition.OngoingIgnoredTags.IsEmpty())
 	{
 		Effect->FindOrAddComponent<UTargetTagRequirementsGameplayEffectComponent>().OngoingTagRequirements.IgnoreTags = Definition.OngoingIgnoredTags;

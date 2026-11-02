@@ -259,7 +259,7 @@ void AAgPlayerCameraManager::HandleAbilityCommitted(UGameplayAbility* Ability)
 	const AAgPlayerCharacter* Player = GetPlayerCharacter();
 	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
 	const AActor* Target = AgAbility ? AgAbility->GetActionTarget() : nullptr;
-	if (Player && Target && AgAbility->GetDefinition().Tags.HasTag(AgGameplayTags::Ability_Action_Execution))
+	if (Player && Target && AgAbility->GetDefinition().AbilityTags.HasTag(AgGameplayTags::Ability_Action_Execution))
 	{
 		ExecutionCamera->Start(*Player, *Target);
 	}
@@ -268,7 +268,7 @@ void AAgPlayerCameraManager::HandleAbilityCommitted(UGameplayAbility* Ability)
 void AAgPlayerCameraManager::HandleAbilityEnded(const FAbilityEndedData& EndedData)
 {
 	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(EndedData.AbilityThatEnded);
-	if (AgAbility && AgAbility->GetDefinition().Tags.HasTag(AgGameplayTags::Ability_Action_Execution))
+	if (AgAbility && AgAbility->GetDefinition().AbilityTags.HasTag(AgGameplayTags::Ability_Action_Execution))
 	{
 		ExecutionCamera->Stop();
 	}

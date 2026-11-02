@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Abilities/GameplayAbilityTriggerType.h"
 #include "Data/AgTaskParams.h"
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
 #include "AgAbilityData.generated.h"
 
+class UAbilityTask;
+class UAgGameplayAbility;
+class UAnimMontage;
 struct FGameplayEffectSpec;
 
 USTRUCT()
@@ -27,52 +31,6 @@ struct FAgResourceCost
 	bool IsFree() const;
 
 	void AddToSpec(FGameplayEffectSpec& Spec) const;
-};
-
-UENUM()
-enum class EAgTriggerSource : uint8
-{
-	GameplayEvent,
-	OwnedTagPresent
-};
-
-USTRUCT()
-struct FAgAbilityTrigger
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FGameplayTag Tag;
-
-	UPROPERTY()
-	EAgTriggerSource Source = EAgTriggerSource::GameplayEvent;
-};
-
-USTRUCT()
-struct FAgAbilityActivation
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FGameplayTagContainer RequiredTags;
-
-	UPROPERTY()
-	FGameplayTagContainer BlockedTags;
-
-	UPROPERTY()
-	FGameplayTagContainer OwnedTags;
-
-	UPROPERTY()
-	FGameplayTagContainer BlockTags;
-
-	UPROPERTY()
-	FGameplayTagContainer CancelTags;
-
-	UPROPERTY()
-	TArray<FAgAbilityTrigger> Triggers;
-
-	UPROPERTY()
-	bool bAllowRetrigger = false;
 };
 
 USTRUCT()
@@ -129,7 +87,71 @@ UENUM()
 enum class EAgAbilityEnd : uint8
 {
 	Tasks,
-	TriggerTag
+	TriggerTag,
+	InputReleased
+};
+
+// 정면에서 시계 방향으로 45°씩이며, 값의 순서가 곧 각도입니다.
+UENUM()
+enum class EAgMoveDirection : uint8
+{
+	Forward,
+	ForwardRight,
+	Right,
+	BackwardRight,
+	Backward,
+	BackwardLeft,
+	Left,
+	ForwardLeft
+};
+
+USTRUCT()
+struct FAgTimelineSection
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<TInstancedStruct<FAgTaskParams>> Tasks;
+};
+
+USTRUCT()
+struct FAgMontageStart
+{
+	GENERATED_BODY()
+
+	/** 비어 있으면 몽타주의 첫 섹션입니다. */
+	UPROPERTY()
+	FName Section;
+
+	UPROPERTY()
+	FGameplayTagContainer RequiredTags;
+
+	UPROPERTY()
+	FGameplayTagContainer BlockedTags;
+
+	UPROPERTY()
+	TOptional<EAgMoveDirection> MoveDirection;
+
+	/** 값이 있으면 어빌리티를 발동시킨 이벤트 태그가 이 태그와 맞을 때만 고릅니다. */
+	UPROPERTY()
+	FGameplayTag EventTag;
+};
+
+USTRUCT()
+struct FAgAbilityMontage
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> Asset;
+
+	UPROPERTY()
+	TArray<FAgMontageStart> StartSections;
+
+	UPROPERTY()
+	TMap<FName, FAgTimelineSection> Sections;
+
+	UAbilityTask* MakeTask(UAgGameplayAbility& Ability) const;
 };
 
 USTRUCT()
@@ -138,16 +160,37 @@ struct FAgAbilityData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FGameplayTagContainer Tags;
+	FGameplayTagContainer AbilityTags;
 
 	UPROPERTY()
-	float Cooldown = 0.f;
+	FGameplayTag InputTag;
 
 	UPROPERTY()
-	FAgAbilityActivation Activation;
+	FGameplayTagContainer ActivationRequiredTags;
+
+	UPROPERTY()
+	FGameplayTagContainer ActivationBlockedTags;
+
+	UPROPERTY()
+	FGameplayTagContainer ActivationOwnedTags;
+
+	UPROPERTY()
+	FGameplayTagContainer BlockAbilitiesWithTag;
+
+	UPROPERTY()
+	FGameplayTagContainer CancelAbilitiesWithTag;
+
+	UPROPERTY()
+	TArray<FAbilityTriggerData> AbilityTriggers;
+
+	UPROPERTY()
+	bool bAllowRetrigger = false;
 
 	UPROPERTY()
 	FAgResourceCost Cost;
+
+	UPROPERTY()
+	float Cooldown = 0.f;
 
 	UPROPERTY()
 	TOptional<FAgAbilityTargeting> Targeting;
@@ -159,7 +202,10 @@ struct FAgAbilityData
 	TArray<TInstancedStruct<FAgTaskParams>> Tasks;
 
 	UPROPERTY()
-	FName DeathMontage;
+	TOptional<FAgAbilityMontage> Montage;
+
+	UPROPERTY()
+	TObjectPtr<UAnimMontage> DeathMontage;
 
 	UPROPERTY()
 	TOptional<FAgPatternSelection> PatternSelection;

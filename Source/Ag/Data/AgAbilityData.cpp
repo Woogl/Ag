@@ -20,5 +20,20 @@ bool FAgPatternSelection::IsAvailable(float TargetDistance, int32 Phase) const
 
 bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const
 {
-	return Tags == Other.Tags && FAgAbilityActivation::StaticStruct()->CompareScriptStruct(&Activation, &Other.Activation, 0);
+	if (AbilityTags != Other.AbilityTags || ActivationRequiredTags != Other.ActivationRequiredTags ||
+		ActivationBlockedTags != Other.ActivationBlockedTags || ActivationOwnedTags != Other.ActivationOwnedTags ||
+		BlockAbilitiesWithTag != Other.BlockAbilitiesWithTag || CancelAbilitiesWithTag != Other.CancelAbilitiesWithTag ||
+		bAllowRetrigger != Other.bAllowRetrigger || AbilityTriggers.Num() != Other.AbilityTriggers.Num())
+	{
+		return false;
+	}
+	for (int32 Index = 0; Index < AbilityTriggers.Num(); ++Index)
+	{
+		if (AbilityTriggers[Index].TriggerTag != Other.AbilityTriggers[Index].TriggerTag ||
+			AbilityTriggers[Index].TriggerSource != Other.AbilityTriggers[Index].TriggerSource)
+		{
+			return false;
+		}
+	}
+	return true;
 }

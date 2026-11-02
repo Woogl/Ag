@@ -76,6 +76,9 @@ struct FAgEffectDefinition
 	FGameplayTagContainer GrantedTags;
 
 	UPROPERTY()
+	FGameplayTagContainer ApplicationIgnoredTags;
+
+	UPROPERTY()
 	FGameplayTagContainer OngoingIgnoredTags;
 
 	UPROPERTY()

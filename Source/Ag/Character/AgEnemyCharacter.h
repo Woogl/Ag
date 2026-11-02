@@ -97,6 +97,8 @@ private:
 	/** 처형 시작으로 그로기가 끝나면 PP 회복은 처형 피격 종료까지 미룹니다. */
 	void HandleGroggyChanged(const FGameplayTag Tag, int32 NewCount);
 
+	void HandleGroggyEvent(const FGameplayEventData* Payload);
+
 	void HandleAbilityEnded(const FAbilityEndedData& Data);
 
 	bool IsExecutionTargetOf(AAgPlayerCharacter& Player) const;
@@ -129,4 +131,6 @@ private:
 	int32 StartedTransitionPhase = 1;
 
 	int32 DeathMotionInstanceId = INDEX_NONE;
+
+	FDelegateHandle GroggyEventHandle;
 };

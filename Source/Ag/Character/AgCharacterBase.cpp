@@ -356,14 +356,8 @@ void AAgCharacterBase::GrantAbilities()
 		FGameplayAbilitySpec Spec(UAgGameplayAbility::StaticClass());
 		// GiveAbility 안의 OnGiveAbility가 이 ID로 정의를 찾으므로 먼저 연결합니다.
 		AbilityIds.Add(Spec.Handle, AbilityId);
-		Spec.GetDynamicSpecSourceTags() = Ability.Tags;
-		for (const FAgAbilityTrigger& Trigger : Ability.Activation.Triggers)
-		{
-			FAbilityTriggerData& Data = Spec.DynamicAbilityTriggers.AddDefaulted_GetRef();
-			Data.TriggerTag = Trigger.Tag;
-			Data.TriggerSource = Trigger.Source == EAgTriggerSource::OwnedTagPresent ? EGameplayAbilityTriggerSource::OwnedTagPresent
-			                                                                         : EGameplayAbilityTriggerSource::GameplayEvent;
-		}
+		Spec.GetDynamicSpecSourceTags() = Ability.AbilityTags;
+		Spec.DynamicAbilityTriggers = Ability.AbilityTriggers;
 		if (!AbilitySystemComponent->GiveAbility(Spec).IsValid())
 		{
 			AbilityIds.Remove(Spec.Handle);

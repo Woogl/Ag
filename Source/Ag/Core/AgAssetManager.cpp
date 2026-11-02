@@ -8,7 +8,6 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
-#include "Data/AgMontageTimeline.h"
 #include "Data/AgProjectileData.h"
 #include "Data/AgTargetingPresetData.h"
 #include "Engine/Engine.h"
@@ -42,7 +41,6 @@ namespace
 		{TEXT("Projectiles.json"), TEXT("Projectiles"), TEXT("Projectiles")},
 		{TEXT("TargetingPresets.json"), TEXT("TargetingPresets"), TEXT("Definitions")},
 		{TEXT("Abilities.json"), TEXT("Abilities"), TEXT("Abilities")},
-		{TEXT("MontageTimelines.json"), TEXT("MontageTimelines"), TEXT("Timelines")},
 		{TEXT("Characters.json"), TEXT("Characters"), TEXT("Characters")},
 	};
 
@@ -103,11 +101,6 @@ const UAgCombatRules& UAgAssetManager::GetCombatRules() const
 const UAgCameraData& UAgAssetManager::GetCameraData() const
 {
 	return *Camera;
-}
-
-const UAgMontageTimelineData& UAgAssetManager::GetMontageTimelines() const
-{
-	return *MontageTimelines;
 }
 
 const UTargetingPreset* UAgAssetManager::FindTargetingPreset(FName Id) const

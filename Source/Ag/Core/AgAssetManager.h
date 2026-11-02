@@ -12,7 +12,6 @@ class UAgCharacterData;
 class UAgCharacterSet;
 class UAgCombatRules;
 class UAgEffectSet;
-class UAgMontageTimelineData;
 class UAgProjectileSet;
 class UAgTargetingPresetSet;
 class UGameplayEffect;
@@ -36,8 +35,6 @@ public:
 	const UAgCombatRules& GetCombatRules() const;
 
 	const UAgCameraData& GetCameraData() const;
-
-	const UAgMontageTimelineData& GetMontageTimelines() const;
 
 	const UTargetingPreset* FindTargetingPreset(FName Id) const;
 
@@ -83,9 +80,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAgProjectileSet> Projectiles;
-
-	UPROPERTY()
-	TObjectPtr<UAgMontageTimelineData> MontageTimelines;
 
 	UPROPERTY()
 	TObjectPtr<UAgTargetingPresetSet> TargetingPresets;

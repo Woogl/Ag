@@ -7,9 +7,6 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
-#include "Core/AgAssetManager.h"
-#include "Data/AgCharacterData.h"
-#include "Data/AgMontageTimeline.h"
 #include "Ag.h"
 
 namespace
@@ -33,6 +30,13 @@ namespace
 		const double BaseYaw = ToTarget.IsNearlyZero() ? Character.GetActorRotation().Yaw : ToTarget.Rotation().Yaw;
 		const float Delta = FMath::FindDeltaAngleDegrees(static_cast<float>(BaseYaw), static_cast<float>(Input.Rotation().Yaw));
 		return (FMath::RoundToInt(Delta / 45.f) & 7) == static_cast<int32>(Direction);
+	}
+
+	bool MatchesStart(const FAgMontageStart& Start, const UAgGameplayAbility& Ability, const AAgCharacterBase& Character, const UAbilitySystemComponent& ASC)
+	{
+		return ASC.HasAllMatchingGameplayTags(Start.RequiredTags) && !ASC.HasAnyMatchingGameplayTags(Start.BlockedTags) &&
+		       (!Start.MoveDirection || MatchesMoveDirection(Ability, Character, *Start.MoveDirection)) &&
+		       (!Start.EventTag.IsValid() || Ability.GetTriggerEventTag().MatchesTag(Start.EventTag));
 	}
 
 	TOptional<float> GetStartTime(const UAnimMontage& Montage, FName Section, const FAgTaskParams& Params)
@@ -62,9 +66,9 @@ namespace
 	}
 } // namespace
 
-UAbilityTask* FAgPlayMontageParams::MakeTask(const FAgTaskContext& Context) const
+UAbilityTask* FAgAbilityMontage::MakeTask(UAgGameplayAbility& Ability) const
 {
-	UAgAbilityTask_PlayMontage* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_PlayMontage>(&Context.Ability);
+	UAgAbilityTask_PlayMontage* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_PlayMontage>(&Ability);
 	Task->Params = *this;
 	return Task;
 }
@@ -78,25 +82,35 @@ UAgAbilityTask_PlayMontage::UAgAbilityTask_PlayMontage()
 
 void UAgAbilityTask_PlayMontage::Activate()
 {
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
 	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
-	if (!Character || !ASC || !ASC->HasAllMatchingGameplayTags(Params.RequiredTags) ||
-		ASC->HasAnyMatchingGameplayTags(Params.BlockedTags) || (Params.MoveDirection && !MatchesMoveDirection(*AgAbility, *Character, *Params.MoveDirection)) ||
-		(Params.EventTag.IsValid() && !AgAbility->GetTriggerEventTag().MatchesTag(Params.EventTag)))
+	if (!Character || !ASC)
 	{
 		EndTask();
 		return;
 	}
-	Montage = Character->GetCharacterData()->FindMontage(Params.Montage);
-	if (!Montage)
+	// 읽지 못한 몽타주는 데이터를 읽을 때 오류로 알렸습니다.
+	if (!Params.Asset)
 	{
-		UE_LOG(LogAg, Error, TEXT("Abilities.%s: montage %s is missing in the character's Montages"), *AgAbility->GetAbilityId().ToString(),
-			*Params.Montage.ToString());
 		CancelAbility();
 		return;
 	}
-	Play(Params.Section, -1.f);
+	FName Section;
+	if (!Params.StartSections.IsEmpty())
+	{
+		const UAgGameplayAbility& AgAbility = *CastChecked<UAgGameplayAbility>(Ability);
+		const FAgMontageStart* Start = Params.StartSections.FindByPredicate([&AgAbility, Character, ASC](const FAgMontageStart& Candidate)
+		{
+			return MatchesStart(Candidate, AgAbility, *Character, *ASC);
+		});
+		if (!Start)
+		{
+			EndTask();
+			return;
+		}
+		Section = Start->Section;
+	}
+	Play(Section, -1.f);
 }
 
 void UAgAbilityTask_PlayMontage::TickTask(float DeltaTime)
@@ -195,7 +209,7 @@ void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
 	{
 		return;
 	}
-	FAnimMontageInstance* Instance = ASC->PlayMontageWithBlendIn(*Ability, *Montage, BlendTime, Section);
+	FAnimMontageInstance* Instance = ASC->PlayMontageWithBlendIn(*Ability, *Params.Asset, BlendTime, Section);
 	if (IsFinished())
 	{
 		// 이전 재생이 끊기며 부른 콜백이 이 행동을 끝냈습니다. 새 재생은 ASC가 멈췄습니다.
@@ -203,7 +217,7 @@ void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
 	}
 	if (!Instance)
 	{
-		UE_LOG(LogAg, Error, TEXT("PlayMontage: failed to play %s (section %s)"), *Montage->GetName(), *Section.ToString());
+		UE_LOG(LogAg, Error, TEXT("PlayMontage: failed to play %s (section %s)"), *Params.Asset->GetName(), *Section.ToString());
 		// 이전 재생이 남아 있으면 Task가 끝날 때 멈추도록 다시 맡습니다.
 		MontageInstanceId = PreviousInstanceId;
 		CancelAbility();
@@ -260,14 +274,7 @@ void UAgAbilityTask_PlayMontage::FinishPlayback(bool bInterrupted)
 void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Instance)
 {
 	UAnimMontage* PlayedMontage = Instance.Montage;
-	const FAgMontageTimeline* Timeline = UAgAssetManager::Get().GetMontageTimelines().Find(PlayedMontage);
-	if (!Timeline)
-	{
-		return;
-	}
-
-	// 데이터를 다시 읽어도 이 재생이 끝날 때까지 같은 항목을 쓰도록 복사합니다.
-	for (const TPair<FName, FAgTimelineSection>& Section : Timeline->Sections)
+	for (const TPair<FName, FAgTimelineSection>& Section : Params.Sections)
 	{
 		for (const TInstancedStruct<FAgTaskParams>& Item : Section.Value.Tasks)
 		{

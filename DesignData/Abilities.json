@@ -1,172 +1,293 @@
 {
   "BasicAttack": {
-    "Tags": ["Ability.Action.BasicAttack"],
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.BasicAttack"],
+    "InputTag": "Input.Attack",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne", "State.DodgeCounterChance", "State.GuardCounterChance"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "BasicAttack", "Section": "Attack2", "RequiredTags": ["State.GuardCounterRecovery"]},
-      {"Task": "PlayMontage", "Montage": "BasicAttack", "BlockedTags": ["State.GuardCounterRecovery"]}
-    ]
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
+      "StartSections": [
+        {"Section": "Attack2", "RequiredTags": ["State.GuardCounterRecovery"]},
+        {"BlockedTags": ["State.GuardCounterRecovery"]}
+      ],
+      "Sections": {
+        "Attack1": [
+          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.17, "TargetingRange": 170, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.38, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.27, "End": 0.3, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.38, "Event": "Input.Attack", "ToSection": "Attack2", "BlendTime": 0.25}
+        ],
+        "Attack2": [
+          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.18, "TargetingRange": 220, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.4, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.28, "End": 0.32, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.4, "Event": "Input.Attack", "ToSection": "Attack3", "BlendTime": 0.25}
+        ],
+        "Attack3": [
+          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.15, "TargetingRange": 220, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.38, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.25, "End": 0.3, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.38, "Event": "Input.Attack", "ToSection": "Attack4", "BlendTime": 0.25}
+        ],
+        "Attack4": [
+          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.17, "TargetingRange": 230, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.41, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.27, "End": 0.33, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.41, "Event": "Input.Attack", "ToSection": "Attack5", "BlendTime": 0.25}
+        ],
+        "Attack5": [
+          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.21, "TargetingRange": 270, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.83, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.83, "Event": "Input.Attack", "ToSection": "Attack1", "BlendTime": 0.25}
+        ]
+      }
+    }
   },
   "Jump": {
-    "Tags": ["Ability.Action.Jump"],
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Busy"],
-      "CancelTags": ["Ability.Action"],
-      "Triggers": [
-        {"Tag": "State.Airborne", "Source": "OwnedTagPresent"}
-      ]
-    },
+    "AbilityTags": ["Ability.Action.Jump"],
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Busy"],
+    "CancelAbilitiesWithTag": ["Ability.Action"],
+    "AbilityTriggers": [
+      {"TriggerTag": "State.Airborne", "TriggerSource": "OwnedTagPresent"}
+    ],
     "End": "TriggerTag"
   },
   "JumpAttack": {
-    "Tags": ["Ability.Action.JumpAttack"],
-    "Activation": {
-      "RequiredTags": ["State.Airborne"],
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.JumpAttack"],
+    "InputTag": "Input.Attack",
+    "ActivationRequiredTags": ["State.Airborne"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "JumpAttack"}
-    ]
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_JumpAttack.AM_Player_JumpAttack",
+      "Sections": {
+        "Start": [
+          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.13, "TargetingRange": 300, "bWarpTranslation": false},
+          {"Task": "ApplyEffect", "Start": 0, "EndSection": "Land", "End": 0.13, "Effect": "Busy"},
+          {"Task": "Transition", "Start": 0, "EndSection": "Fall", "Event": "Event.Landed", "ToSection": "Land"},
+          {"Task": "WeaponHit", "Start": 0.23, "EndSection": "Land", "End": 0.05, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Plunge", "Start": 0.3, "EndSection": "Fall", "Speed": 1000}
+        ]
+      }
+    }
   },
   "Dodge": {
-    "Tags": ["Ability.Action.Dodge"],
-    "Cooldown": 0.4,
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"],
-      "bAllowRetrigger": true
-    },
+    "AbilityTags": ["Ability.Action.Dodge"],
+    "InputTag": "Input.Dodge",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
+    "bAllowRetrigger": true,
     "Cost": {"SP": 20},
+    "Cooldown": 0.4,
     "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "PerfectDodgeWindow"},
-      {"Task": "RootMotion", "Direction": "MoveInput"},
-      {"Task": "PlayMontage", "Montage": "Dodge", "Section": "Forward", "RequiredTags": ["Input.Move"]},
-      {"Task": "PlayMontage", "Montage": "Dodge", "BlockedTags": ["Input.Move"]}
-    ]
+      {"Task": "RootMotion", "Direction": "MoveInput"}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Dodge.AM_Player_Dodge",
+      "StartSections": [
+        {"Section": "Forward", "RequiredTags": ["Input.Move"]},
+        {"BlockedTags": ["Input.Move"]}
+      ],
+      "Sections": {
+        "Backstep": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.2, "Effect": "PerfectDodgeWindow"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.4, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
+        ],
+        "Forward": [
+          {"Task": "RootMotion", "Start": 0, "Direction": "MoveInput", "Distance": 400},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.2, "Effect": "PerfectDodgeWindow"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
+        ]
+      }
+    }
   },
   "DodgeCounter": {
-    "Tags": ["Ability.Action.DodgeCounter"],
-    "Activation": {
-      "RequiredTags": ["State.DodgeCounterChance"],
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.DodgeCounter"],
+    "InputTag": "Input.Attack",
+    "ActivationRequiredTags": ["State.DodgeCounterChance"],
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "DodgeCounter"}
-    ]
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_DodgeCounter.AM_Player_DodgeCounter",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.15, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.51, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.23, "Effect": "Invincible"},
+          {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
+        ]
+      }
+    }
   },
   "PerfectDodge": {
-    "Tags": ["Ability.Action.PerfectDodge"],
-    "Activation": {
-      "BlockedTags": ["State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"],
-      "Triggers": [
-        {"Tag": "Event.PerfectDodge"}
-      ]
-    },
+    "AbilityTags": ["Ability.Action.PerfectDodge"],
+    "ActivationBlockedTags": ["State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.PerfectDodge"}
+    ],
     "Tasks": [
       {"Task": "RootMotion"},
       {"Task": "ApplyEffect", "Effect": "PerfectDodgeReward"},
       {"Task": "ApplyEffect", "Effect": "DodgeCounterChance", "bRemoveOnEnd": false},
-      {"Task": "ApplyEffect", "Effect": "PerfectDodgeSlowMotion"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Forward", "MoveDirection": "Forward"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Right", "MoveDirection": "ForwardRight"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Right", "MoveDirection": "Right"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Right", "MoveDirection": "BackwardRight"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Backward", "MoveDirection": "Backward"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "MoveDirection": "BackwardLeft"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "MoveDirection": "Left"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "MoveDirection": "ForwardLeft"},
-      {"Task": "PlayMontage", "Montage": "PerfectDodge", "Section": "Backward", "BlockedTags": ["Input.Move"]}
-    ]
+      {"Task": "ApplyEffect", "Effect": "PerfectDodgeSlowMotion"}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_PerfectDodge.AM_Player_PerfectDodge",
+      "StartSections": [
+        {"Section": "Forward", "MoveDirection": "Forward"},
+        {"Section": "Right", "MoveDirection": "ForwardRight"},
+        {"Section": "Right", "MoveDirection": "Right"},
+        {"Section": "Right", "MoveDirection": "BackwardRight"},
+        {"Section": "Backward", "MoveDirection": "Backward"},
+        {"MoveDirection": "BackwardLeft"},
+        {"MoveDirection": "Left"},
+        {"MoveDirection": "ForwardLeft"},
+        {"Section": "Backward", "BlockedTags": ["Input.Move"]}
+      ],
+      "Sections": {
+        "Left": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.43, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.43, "Effect": "Invincible"}
+        ],
+        "Right": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.43, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.43, "Effect": "Invincible"}
+        ],
+        "Forward": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "Invincible"}
+        ],
+        "Backward": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "Invincible"}
+        ]
+      }
+    }
   },
   "Guard": {
-    "Tags": ["Ability.Action.Guard"],
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Guarding"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.Guard"],
+    "InputTag": "Input.Guard",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Guarding"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
+    "End": "InputReleased",
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "ParryWindow"},
       {"Task": "ApplyEffect", "Effect": "GuardMoveSpeed"}
     ]
   },
   "GuardCounter": {
-    "Tags": ["Ability.Action.GuardCounter"],
-    "Activation": {
-      "RequiredTags": ["State.GuardCounterChance"],
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.GuardCounter"],
+    "InputTag": "Input.Attack",
+    "ActivationRequiredTags": ["State.GuardCounterChance"],
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne", "State.DodgeCounterChance"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "GuardCounter"}
-    ]
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_GuardCounter.AM_Player_GuardCounter",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.43, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.76, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.48, "Effect": "Invincible"},
+          {"Task": "WeaponHit", "Start": 0.43, "End": 0.48, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "ApplyEffect", "Start": 0.76, "Effect": "GuardCounterRecovery", "bRemoveOnEnd": false}
+        ]
+      }
+    }
   },
   "Parry": {
-    "Tags": ["Ability.Action.Parry"],
-    "Activation": {
-      "BlockedTags": ["State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "Triggers": [
-        {"Tag": "Event.Parry"}
-      ]
-    },
+    "AbilityTags": ["Ability.Action.Parry"],
+    "ActivationBlockedTags": ["State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Parry"}
+    ],
     "Tasks": [
       {"Task": "RootMotion"},
       {"Task": "ApplyEffect", "Effect": "ParryReward"},
-      {"Task": "ApplyEffect", "Effect": "SPRegenDelay", "bRemoveOnEnd": false},
-      {"Task": "PlayMontage", "Montage": "Parry"}
-    ]
+      {"Task": "ApplyEffect", "Effect": "SPRegenDelay", "bRemoveOnEnd": false}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
+      "Sections": {
+        "Default": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.25, "Effect": "Busy"}
+        ]
+      }
+    }
   },
   "Skill": {
-    "Tags": ["Ability.Action.Skill"],
-    "Cooldown": 3,
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.Skill"],
+    "InputTag": "Input.Skill",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Cost": {"MP": 40},
+    "Cooldown": 3,
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "Skill"}
-    ]
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.3167, "TargetingRange": 290, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5633, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "HitReward": {"UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2.5, "HitReaction": "KnockUp", "bGuardable": true}}
+        ]
+      }
+    }
   },
   "Ultimate": {
-    "Tags": ["Ability.Action.Ultimate"],
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Invincible", "State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.Ultimate"],
+    "InputTag": "Input.Ultimate",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Invincible", "State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Cost": {"UP": 100},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "Ultimate"}
-    ]
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Ultimate.AM_Player_Ultimate",
+      "Sections": {
+        "Start": [
+          {"Task": "ApplyEffect", "Start": 0, "EndSection": "Judgment", "Effect": "TimeStop"},
+          {"Task": "ApplyEffect", "Start": 0, "EndSection": "Draw", "End": 0.08, "Effect": "Busy"},
+          {"Task": "PlayCutscene", "Start": 0, "EndSection": "Hold", "Sequence": "/Game/Cinematics/LS_UltimateCutscene.LS_UltimateCutscene"}
+        ],
+        "Hold": [
+          {"Task": "Transition", "Start": 0, "TagRemoved": "State.Cutscene", "ToSection": "Judgment"}
+        ],
+        "Draw": [
+          {"Task": "AreaHit", "Start": 0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bIgnoreToughness": true, "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
+          {"Task": "ApplyEffect", "Start": 0, "Effect": "UltimateSlowMotion"}
+        ]
+      }
+    }
   },
   "Execution": {
-    "Tags": ["Ability.Action.Execution"],
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Execution", "State.Invincible", "State.Busy", "State.Acting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Action.Execution"],
+    "InputTag": "Input.Execute",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Execution", "State.Invincible", "State.Busy", "State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Targeting": {
       "Preset": "Enemy",
       "Range": 300,
@@ -176,351 +297,557 @@
       "TargetSpacing": 95
     },
     "Tasks": [
-      {"Task": "PlayMontage", "Montage": "Execution"},
       {"Task": "SendGameplayEvent", "Event": "Event.Executed"}
-    ]
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Execute.AM_Player_Execute",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.3333333, "RotationMethod": "Slerp", "bWarpTranslation": true},
+          {"Task": "WeaponHit", "Start": 0.3333333, "End": 0.8, "Damage": {"HPMultiplier": 1.5, "bGuardable": true}},
+          {"Task": "AreaHit", "Start": 0.8, "Damage": {"HPMultiplier": 4.5, "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 150, "TargetRequiredTags": ["State.Execution"]}}
+        ]
+      }
+    }
   },
   "Sprint": {
-    "Tags": ["Ability.Sprint"],
-    "Activation": {
-      "BlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-      "OwnedTags": ["State.Sprinting"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint"]
-    },
+    "AbilityTags": ["Ability.Sprint"],
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Sprinting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "SprintDrain"},
       {"Task": "ApplyEffect", "Effect": "SprintSpeed"}
     ]
   },
   "LockOn": {
-    "Tags": ["Ability.LockOn"],
-    "Activation": {
-      "OwnedTags": ["State.LockedOn"]
-    },
+    "AbilityTags": ["Ability.LockOn"],
+    "ActivationOwnedTags": ["State.LockedOn"],
     "Targeting": {"Preset": "LockOn", "Range": 2000, "bRequired": true},
     "Tasks": [
       {"Task": "WaitTargetLost", "ReleaseRange": 3000}
     ]
   },
   "Flinch": {
-    "Tags": ["Ability.Reaction.HitReaction.Flinch"],
-    "Activation": {
-      "BlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Execution", "State.Dead", "State.SuperArmor"],
-      "OwnedTags": ["State.HitReaction.Flinch"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
-      "Triggers": [
-        {"Tag": "Event.Hit.Stagger"}
-      ],
-      "bAllowRetrigger": true
-    },
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "FlinchAir", "RequiredTags": ["State.Airborne"]},
-      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "Back", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.Back"},
-      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "Head", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.Head"},
-      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "ArmRight", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.ArmRight"},
-      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "ArmLeft", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.ArmLeft"},
-      {"Task": "PlayMontage", "Montage": "Flinch", "Section": "Body", "BlockedTags": ["State.Airborne"], "EventTag": "Event.Hit.Stagger.Body"}
-    ]
+    "AbilityTags": ["Ability.Reaction.HitReaction.Flinch"],
+    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Execution", "State.Dead", "State.SuperArmor", "State.Airborne"],
+    "ActivationOwnedTags": ["State.HitReaction.Flinch"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Hit.Stagger"}
+    ],
+    "bAllowRetrigger": true,
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Flinch.AM_Flinch",
+      "StartSections": [
+        {"Section": "Back", "EventTag": "Event.Hit.Stagger.Back"},
+        {"Section": "Head", "EventTag": "Event.Hit.Stagger.Head"},
+        {"Section": "ArmRight", "EventTag": "Event.Hit.Stagger.ArmRight"},
+        {"Section": "ArmLeft", "EventTag": "Event.Hit.Stagger.ArmLeft"},
+        {"Section": "Body", "EventTag": "Event.Hit.Stagger.Body"}
+      ]
+    }
+  },
+  "FlinchAir": {
+    "AbilityTags": ["Ability.Reaction.HitReaction.Flinch"],
+    "ActivationRequiredTags": ["State.Airborne"],
+    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Execution", "State.Dead", "State.SuperArmor"],
+    "ActivationOwnedTags": ["State.HitReaction.Flinch"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Hit.Stagger"}
+    ],
+    "bAllowRetrigger": true,
+    "Montage": {
+      "Asset": "/Game/Animations/AM_FlinchAir.AM_FlinchAir"
+    }
   },
   "KnockDown": {
-    "Tags": ["Ability.Reaction.HitReaction.KnockDown"],
-    "Activation": {
-      "BlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
-      "OwnedTags": ["State.HitReaction.KnockDown"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
-      "Triggers": [
-        {"Tag": "Event.Hit.KnockDown"}
-      ],
-      "bAllowRetrigger": true
-    },
+    "AbilityTags": ["Ability.Reaction.HitReaction.KnockDown"],
+    "ActivationBlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
+    "ActivationOwnedTags": ["State.HitReaction.KnockDown"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Hit.KnockDown"}
+    ],
+    "bAllowRetrigger": true,
     "Tasks": [
-      {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "KnockDown"}
-    ]
+      {"Task": "RootMotion"}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_KnockDown.AM_KnockDown",
+      "Sections": {
+        "Default": [
+          {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
+        ]
+      }
+    }
   },
   "KnockUp": {
-    "Tags": ["Ability.Reaction.HitReaction.KnockUp"],
-    "Activation": {
-      "BlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
-      "OwnedTags": ["State.HitReaction.KnockUp"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
-      "Triggers": [
-        {"Tag": "Event.Hit.KnockUp"}
-      ],
-      "bAllowRetrigger": true
-    },
+    "AbilityTags": ["Ability.Reaction.HitReaction.KnockUp"],
+    "ActivationBlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
+    "ActivationOwnedTags": ["State.HitReaction.KnockUp"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Hit.KnockUp"}
+    ],
+    "bAllowRetrigger": true,
     "Tasks": [
       {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "KnockUp", "BlockedTags": ["State.Airborne"]},
-      {"Task": "PlayMontage", "Montage": "KnockUp", "Section": "AirHit", "RequiredTags": ["State.Airborne"]},
       {"Task": "Launch", "Height": 70, "Direction": "Back", "Distance": 190}
-    ]
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "StartSections": [
+        {"BlockedTags": ["State.Airborne"]},
+        {"Section": "AirHit", "RequiredTags": ["State.Airborne"]}
+      ],
+      "Sections": {
+        "Rise": [
+          {"Task": "Transition", "Start": 0, "Event": "Event.Apex", "ToSection": "Fall", "BlendTime": 0.15},
+          {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "ToSection": "Land", "BlendTime": 0.2}
+        ],
+        "Fall": [
+          {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "ToSection": "Land"}
+        ],
+        "AirHit": [
+          {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "ToSection": "Land", "BlendTime": 0.2}
+        ],
+        "AirFall": [
+          {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "ToSection": "Land", "BlendTime": 0.2}
+        ],
+        "Land": [
+          {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
+        ],
+        "GetUp": [
+          {"Task": "Transition", "Start": 0.42, "ToSection": "Stand", "BlendTime": 0.15}
+        ]
+      }
+    }
   },
   "Juggle": {
-    "Tags": ["Ability.Reaction.HitReaction.Juggle"],
-    "Activation": {
-      "RequiredTags": ["State.Airborne", "State.HitReaction.KnockUp"],
-      "BlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
-      "OwnedTags": ["State.HitReaction.KnockUp"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
-      "Triggers": [
-        {"Tag": "Event.Hit.Flinch"}
-      ],
-      "bAllowRetrigger": true
-    },
+    "AbilityTags": ["Ability.Reaction.HitReaction.Juggle"],
+    "ActivationRequiredTags": ["State.Airborne", "State.HitReaction.KnockUp"],
+    "ActivationBlockedTags": ["State.Execution", "State.Dead", "State.SuperArmor"],
+    "ActivationOwnedTags": ["State.HitReaction.KnockUp"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Hit.Flinch"}
+    ],
+    "bAllowRetrigger": true,
     "Tasks": [
       {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "KnockUp", "Section": "AirHit"},
       {"Task": "Launch", "Height": 15, "Altitude": 70, "Direction": "Back", "Distance": 50}
-    ]
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "StartSections": [
+        {"Section": "AirHit"}
+      ],
+      "Sections": {
+        "AirHit": [
+          {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "ToSection": "Land", "BlendTime": 0.2}
+        ],
+        "AirFall": [
+          {"Task": "Transition", "Start": 0, "Event": "Event.Landed", "ToSection": "Land", "BlendTime": 0.2}
+        ],
+        "Land": [
+          {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}
+        ],
+        "GetUp": [
+          {"Task": "Transition", "Start": 0.42, "ToSection": "Stand", "BlendTime": 0.15}
+        ]
+      }
+    }
   },
   "GuardPushback": {
-    "Tags": ["Ability.Reaction.HitReaction.GuardPushback"],
-    "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
-      "OwnedTags": ["State.HitReaction.GuardPushback", "State.Guarding"],
-      "CancelTags": ["Ability.Action.Parry", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
-      "Triggers": [
-        {"Tag": "Event.Guard.Pushback"}
-      ],
-      "bAllowRetrigger": true
-    },
+    "AbilityTags": ["Ability.Reaction.HitReaction.GuardPushback"],
+    "ActivationBlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+    "ActivationOwnedTags": ["State.HitReaction.GuardPushback", "State.Guarding"],
+    "CancelAbilitiesWithTag": ["Ability.Action.Parry", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Guard.Pushback"}
+    ],
+    "bAllowRetrigger": true,
     "Tasks": [
-      {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "GuardPushback"}
-    ]
+      {"Task": "RootMotion"}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback"
+    }
   },
   "GuardBreak": {
-    "Tags": ["Ability.Reaction.HitReaction.GuardBreak"],
-    "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
-      "OwnedTags": ["State.HitReaction.GuardBreak"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
-      "Triggers": [
-        {"Tag": "Event.Guard.Break"}
-      ],
-      "bAllowRetrigger": true
-    },
+    "AbilityTags": ["Ability.Reaction.HitReaction.GuardBreak"],
+    "ActivationBlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
+    "ActivationOwnedTags": ["State.HitReaction.GuardBreak"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Guard.Break"}
+    ],
+    "bAllowRetrigger": true,
     "Tasks": [
-      {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "GuardBreak"}
-    ]
+      {"Task": "RootMotion"}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak"
+    }
   },
   "DoubleStrike": {
-    "Tags": ["Ability.Enemy.Pattern"],
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "DoubleStrike"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike",
+      "Sections": {
+        "Attack1": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.386, "bWarpTranslation": true},
+          {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.52, "ToSection": "Attack2", "BlendTime": 0.2}
+        ],
+        "Attack2": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1.4, "HitReaction": "KnockDown", "bGuardable": true}}
+        ]
+      }
+    },
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 300}, "Weight": 4}
   },
   "Sweep": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 5,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "Sweep"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_Sweep.AM_Boss_Sweep",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.37, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.46, "End": 0.62, "Damage": {"HPMultiplier": 1.5, "HitReaction": "KnockUp", "bGuardable": true}}
+        ]
+      }
+    },
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 300}, "Weight": 3}
   },
   "DashThrust": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 10,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "DashThrust"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_DashThrust.AM_Boss_DashThrust",
+      "Sections": {
+        "Start": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.81667, "bWarpTranslation": false},
+          {"Task": "Transition", "Start": 0.81667, "ToSection": "Dash", "BlendTime": 0.2}
+        ],
+        "Dash": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.08333, "bWarpTranslation": false},
+          {"Task": "Dash", "Start": 0.1, "EndSection": "Hold", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000},
+          {"Task": "WeaponHit", "Start": 0.1, "EndSection": "Hold", "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": true}},
+          {"Task": "ApplyEffect", "Start": 0.1, "EndSection": "Hold", "Effect": "PassThrough"}
+        ],
+        "Hold": [
+          {"Task": "Transition", "Start": 0, "TagRemoved": "State.Dashing", "ToSection": "Recover", "BlendTime": 0.1}
+        ]
+      }
+    },
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 4}
   },
   "GroundSlam": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 12,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true, "TargetSpacing": 150},
     "Tasks": [
-      {"Task": "PlayMontage", "Montage": "GroundSlam"},
       {"Task": "Launch", "AirTime": 1.2, "Direction": "Target", "MaxDistance": 1200}
     ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_GroundSlam.AM_Boss_GroundSlam",
+      "Sections": {
+        "Start": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
+          {"Task": "Transition", "Start": 0, "EndSection": "Loop", "Event": "Event.Landed", "ToSection": "End", "BlendTime": 0.02},
+          {"Task": "Transition", "Start": 0.36667, "ToSection": "Loop", "BlendTime": 0.2}
+        ],
+        "End": [
+          {"Task": "AreaHit", "Start": 0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false, "bAttackerHitstop": false}, "Area": {"Preset": "Hit", "Range": 5000, "TargetBlockedTags": ["State.Airborne"]}}
+        ]
+      }
+    },
     "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 5000}, "Weight": 8}
   },
   "QuintupleStrike": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 8,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "QuintupleStrike"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike",
+      "Sections": {
+        "Attack1": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.722222, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.777778, "End": 0.877778, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.927778, "ToSection": "Windup2", "BlendTime": 0.12}
+        ],
+        "Windup2": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
+          {"Task": "Transition", "Start": 0.43333, "ToSection": "Attack2", "BlendTime": 0.12}
+        ],
+        "Attack2": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.26667, "ToSection": "Windup3", "BlendTime": 0.12}
+        ],
+        "Windup3": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
+          {"Task": "Transition", "Start": 0.43333, "ToSection": "Attack3", "BlendTime": 0.12}
+        ],
+        "Attack3": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.26667, "ToSection": "Windup4", "BlendTime": 0.12}
+        ],
+        "Windup4": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.43333, "bWarpTranslation": false},
+          {"Task": "Transition", "Start": 0.43333, "ToSection": "Attack4", "BlendTime": 0.12}
+        ],
+        "Attack4": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.3, "ToSection": "Windup5", "BlendTime": 0.12}
+        ],
+        "Windup5": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.63333, "bWarpTranslation": false},
+          {"Task": "Transition", "Start": 0.63333, "ToSection": "Attack5", "BlendTime": 0.12}
+        ],
+        "Attack5": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.2, "End": 0.4, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}}
+        ]
+      }
+    },
     "PatternSelection": {"Phases": [2], "Distance": {"Min": 0, "Max": 300}, "Weight": 8}
   },
   "SwordWave": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 10,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "SwordWave"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave",
+      "Sections": {
+        "Attack1": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.65, "bWarpTranslation": false},
+          {"Task": "SpawnProjectile", "Start": 0.75, "Projectile": "SwordWave"},
+          {"Task": "Transition", "Start": 0.88, "ToSection": "Attack2", "BlendTime": 0.2}
+        ],
+        "Attack2": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.25, "bWarpTranslation": false},
+          {"Task": "SpawnProjectile", "Start": 0.5, "Projectile": "SwordWave"},
+          {"Task": "Transition", "Start": 0.63, "ToSection": "Attack3", "BlendTime": 0.2}
+        ],
+        "Attack3": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
+          {"Task": "SpawnProjectile", "Start": 0.28, "Projectile": "SwordWave"}
+        ]
+      }
+    },
     "PatternSelection": {"Phases": [2], "Distance": {"Min": 300, "Max": 2000}, "Weight": 8}
   },
   "JumpCleave": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 6,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "JumpCleave"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_JumpCleave.AM_Boss_JumpCleave",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.274, "bWarpTranslation": true},
+          {"Task": "RootMotion", "Start": 0.274, "End": 0.4, "bWarpTranslation": true},
+          {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "HitReaction": "KnockDown", "bGuardable": true}}
+        ]
+      }
+    },
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 1000}, "Weight": 3}
   },
   "Backstep": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 4,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_Backstep.AM_Boss_Backstep",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Direction": "Back", "Start": 0, "Distance": 500}
+        ]
+      }
     },
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "Backstep"}
-    ],
     "PatternSelection": {"Phases": [1, 2], "Distance": {"Min": 0, "Max": 400}, "ResponseChance": 0.3}
   },
   "SandbagSlam": {
-    "Tags": ["Ability.Enemy.Pattern"],
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Targeting": {"Preset": "Enemy", "Range": 300},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "SandbagSlam"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Sandbag_Slam.AM_Sandbag_Slam",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+        ]
+      }
+    },
     "PatternSelection": {"Distance": {"Min": 0, "Max": 150}, "Weight": 1}
   },
   "SingleSlash": {
-    "Tags": ["Ability.Enemy.Pattern"],
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Targeting": {"Preset": "Enemy", "Range": 1200, "TargetSpacing": 120},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "SingleSlash"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Cutter_SingleSlash.AM_Cutter_SingleSlash",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.5133},
+          {"Task": "RootMotion", "Direction": "Back", "Start": 0.5133, "End": 1.23, "Distance": 0},
+          {"Task": "WeaponHit", "Start": 0.6633, "End": 0.7833, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+        ]
+      }
+    },
     "PatternSelection": {"Distance": {"Min": 0, "Max": 200}, "Weight": 6}
   },
   "DoubleSlash": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 4,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 1200, "TargetSpacing": 120},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "DoubleSlash"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Cutter_DoubleSlash.AM_Cutter_DoubleSlash",
+      "Sections": {
+        "Attack1": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.615},
+          {"Task": "RootMotion", "Direction": "Back", "Start": 0.615, "End": 0.875, "Distance": 0},
+          {"Task": "WeaponHit", "Start": 0.765, "End": 0.865, "Damage": {"HPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.875, "ToSection": "Attack2", "BlendTime": 0.2}
+        ],
+        "Attack2": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.4155},
+          {"Task": "RootMotion", "Direction": "Back", "Start": 0.4155, "End": 1.32, "Distance": 0},
+          {"Task": "WeaponHit", "Start": 0.5655, "End": 0.6655, "Damage": {"HPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}}
+        ]
+      }
+    },
     "PatternSelection": {"Distance": {"Min": 0, "Max": 200}, "Weight": 3}
   },
   "HeavyCleave": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 8,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Enemy", "Range": 1200, "TargetSpacing": 120},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "HeavyCleave"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Cutter_HeavyCleave.AM_Cutter_HeavyCleave",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.9455},
+          {"Task": "RootMotion", "Direction": "Back", "Start": 0.9455, "End": 2.05, "Distance": 0},
+          {"Task": "WeaponHit", "Start": 1.0955, "End": 1.1855, "Damage": {"HPMultiplier": 1.5, "HitReaction": "KnockDown", "bGuardable": false}}
+        ]
+      }
+    },
     "PatternSelection": {"Distance": {"Min": 0, "Max": 230}, "Weight": 1}
   },
   "PistolShot": {
-    "Tags": ["Ability.Enemy.Pattern"],
+    "AbilityTags": ["Ability.Enemy.Pattern"],
+    "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 6,
-    "Activation": {
-      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
-    },
     "Targeting": {"Preset": "Shooting", "Range": 2000, "bRequired": true},
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "PistolShot"}
-    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Gunner_PistolShot.AM_Gunner_PistolShot",
+      "Sections": {
+        "Aim": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 1.2, "Effect": "Aiming"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.85, "bWarpTranslation": false},
+          {"Task": "Aim", "Start": 0, "End": 0.85},
+          {"Task": "Transition", "Start": 1.2, "ToSection": "Fire", "BlendTime": 0.1}
+        ],
+        "Fire": [
+          {"Task": "SpawnProjectile", "Start": 0, "Projectile": "PistolBullet", "SocketName": "Muzzle"},
+          {"Task": "Transition", "Start": 0.8, "ToSection": "Reload", "BlendTime": 0.2}
+        ],
+        "Reload": [
+          {"Task": "RootMotion", "Start": 0, "End": 2.0, "bWarpTranslation": false}
+        ]
+      }
+    },
     "PatternSelection": {"Distance": {"Min": 0, "Max": 2000}, "Weight": 1}
   },
   "Groggy": {
-    "Tags": ["Ability.Reaction.Groggy"],
-    "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
-      "CancelTags": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
-      "Triggers": [
-        {"Tag": "Event.Groggy"}
-      ]
-    },
-    "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "Groggy", "bRemoveOnEnd": false},
-      {"Task": "PlayMontage", "Montage": "Groggy", "BlockedTags": ["State.HitReaction"]}
-    ]
+    "AbilityTags": ["Ability.Reaction.Groggy"],
+    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
+    "AbilityTriggers": [
+      {"TriggerTag": "State.Groggy", "TriggerSource": "OwnedTagPresent"}
+    ],
+    "End": "TriggerTag",
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
+      "Sections": {
+        "Fall": [
+          {"Task": "Transition", "Start": 0, "TagRemoved": "State.Airborne", "ToSection": "Start", "BlendTime": 0.25}
+        ],
+        "Loop": [
+          {"Task": "Transition", "Start": 0, "TagRemoved": "State.Groggy", "bSectionEndsWithTag": true, "ToSection": "End"}
+        ]
+      }
+    }
   },
   "Executed": {
-    "Tags": ["Ability.Reaction.Executed"],
-    "Activation": {
-      "RequiredTags": ["State.Groggy"],
-      "BlockedTags": ["State.Dead"],
-      "OwnedTags": ["State.Execution", "State.PassThrough"],
-      "CancelTags": ["Ability.Reaction.Groggy", "Ability.Reaction.HitReaction"],
-      "Triggers": [
-        {"Tag": "Event.Executed"}
-      ]
-    },
-    "Tasks": [
-      {"Task": "RootMotion"},
-      {"Task": "PlayMontage", "Montage": "Executed"}
+    "AbilityTags": ["Ability.Reaction.Executed"],
+    "ActivationRequiredTags": ["State.Groggy"],
+    "ActivationBlockedTags": ["State.Dead"],
+    "ActivationOwnedTags": ["State.Execution", "State.PassThrough"],
+    "CancelAbilitiesWithTag": ["Ability.Reaction.Groggy", "Ability.Reaction.HitReaction"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Executed"}
     ],
-    "DeathMontage": "ExecutedDeath"
+    "Tasks": [
+      {"Task": "RootMotion"}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed"
+    },
+    "DeathMontage": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath"
   },
   "PhaseTransition": {
-    "Tags": ["Ability.Reaction.PhaseTransition"],
-    "Activation": {
-      "BlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
-      "OwnedTags": ["State.Invincible"],
-      "CancelTags": ["Ability.Enemy.Pattern"],
-      "Triggers": [
-        {"Tag": "Event.PhaseTransition"}
-      ]
-    },
-    "Tasks": [
-      {"Task": "PlayMontage", "Montage": "PhaseTransition"}
-    ]
+    "AbilityTags": ["Ability.Reaction.PhaseTransition"],
+    "ActivationBlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
+    "ActivationOwnedTags": ["State.Invincible"],
+    "CancelAbilitiesWithTag": ["Ability.Enemy.Pattern"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.PhaseTransition"}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
+      "Sections": {
+        "Default": [
+          {"Task": "AreaHit", "Start": 0.58, "Damage": {"HPMultiplier": 0, "HitReaction": "KnockDown", "bGuardable": false, "bAttackerHitstop": false}, "Area": {"Preset": "Hit", "Range": 400}}
+        ]
+      }
+    }
   },
   "Parried": {
-    "Tags": ["Ability.Reaction.Parried"],
-    "Activation": {
-      "BlockedTags": ["State.Dead"],
-      "Triggers": [
-        {"Tag": "Event.Parried"}
-      ]
-    },
+    "AbilityTags": ["Ability.Reaction.Parried"],
+    "ActivationBlockedTags": ["State.Dead"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Parried"}
+    ],
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "ParryPPLoss"}
     ]
   },
   "EnemyLockOn": {
-    "Tags": ["Ability.LockOn"],
-    "Activation": {
-      "BlockedTags": ["State.Dead"]
-    },
+    "AbilityTags": ["Ability.LockOn"],
+    "ActivationBlockedTags": ["State.Dead"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
     "Tasks": [
       {"Task": "WaitTargetLost"}

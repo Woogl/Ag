@@ -86,6 +86,11 @@ public:
 		return WeaponComponent;
 	}
 
+	UAnimMontage* GetGuardFlinchMontage() const
+	{
+		return GuardFlinchMontage;
+	}
+
 	bool IsDead() const;
 
 	/** 무기, 투사체, 범위 적중이 모두 이 판정을 써야 맞는 대상이 공격 방식마다 갈리지 않습니다. */
@@ -198,6 +203,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Animation")
 	TObjectPtr<UAgHitPhysicsComponent> HitPhysics;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> GuardFlinchMontage;
 
 	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 

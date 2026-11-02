@@ -4,55 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
-#include "Data/AgTaskParams.h"
-#include "GameplayTagContainer.h"
+#include "Data/AgAbilityData.h"
 #include "StructUtils/InstancedStruct.h"
 #include "AgAbilityTask_PlayMontage.generated.h"
 
 class UAnimMontage;
 class UAgGameplayAbility;
 struct FAnimMontageInstance;
-
-// 정면에서 시계 방향으로 45°씩이며, 값의 순서가 곧 각도입니다.
-UENUM()
-enum class EAgMoveDirection : uint8
-{
-	Forward,
-	ForwardRight,
-	Right,
-	BackwardRight,
-	Backward,
-	BackwardLeft,
-	Left,
-	ForwardLeft
-};
-
-USTRUCT()
-struct FAgPlayMontageParams : public FAgTaskParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FName Montage;
-
-	UPROPERTY()
-	FName Section;
-
-	UPROPERTY()
-	FGameplayTagContainer RequiredTags;
-
-	UPROPERTY()
-	FGameplayTagContainer BlockedTags;
-
-	UPROPERTY()
-	TOptional<EAgMoveDirection> MoveDirection;
-
-	/** 값이 있으면 어빌리티를 발동시킨 이벤트 태그가 이 태그와 맞을 때만 재생합니다. */
-	UPROPERTY()
-	FGameplayTag EventTag;
-
-	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
-};
 
 USTRUCT()
 struct FAgTimelineEntry
@@ -76,7 +34,7 @@ UCLASS()
 class UAgAbilityTask_PlayMontage : public UAbilityTask
 {
 	GENERATED_BODY()
-	friend struct FAgPlayMontageParams;
+	friend struct FAgAbilityMontage;
 
 public:
 	UAgAbilityTask_PlayMontage();
@@ -117,11 +75,9 @@ private:
 	void StartTimelineWindow(int32 Entry);
 	void EndTimelineWindow(int32 Entry);
 
+	/** 어빌리티가 발동할 때 복사한 정의의 사본이라, 데이터를 다시 읽어도 이 발동은 같은 몽타주와 타임라인을 씁니다. */
 	UPROPERTY()
-	FAgPlayMontageParams Params;
-
-	UPROPERTY()
-	TObjectPtr<UAnimMontage> Montage;
+	FAgAbilityMontage Params;
 
 	/**
 	 * 지금 재생의 ID로, 콜백이 이 재생의 것인지 가리고 끝날 때 멈출 재생을 찾습니다. INDEX_NONE이면 전환 요청을

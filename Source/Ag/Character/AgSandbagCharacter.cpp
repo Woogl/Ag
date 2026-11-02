@@ -14,7 +14,7 @@ namespace
 	bool IsPattern(const UGameplayAbility* Ability)
 	{
 		const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability);
-		return AgAbility && AgAbility->GetDefinition().Tags.HasTag(AgGameplayTags::Ability_Enemy_Pattern);
+		return AgAbility && AgAbility->GetDefinition().AbilityTags.HasTag(AgGameplayTags::Ability_Enemy_Pattern);
 	}
 } // namespace
 

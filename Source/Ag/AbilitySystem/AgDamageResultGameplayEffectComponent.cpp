@@ -23,7 +23,6 @@
 
 namespace
 {
-	const FName GuardFlinchMontageId(TEXT("GuardFlinch"));
 	const FName GuardCounterChanceEffectId(TEXT("GuardCounterChance"));
 
 	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle())
@@ -162,7 +161,7 @@ namespace
 		}
 		else
 		{
-			Target->PlayAnimMontage(Target->GetCharacterData()->FindMontage(GuardFlinchMontageId));
+			Target->PlayAnimMontage(Target->GetGuardFlinchMontage());
 		}
 		Target->GetHitPhysics()->Play(MakePhysicsHit(*Causer, *Target, Context, true));
 		return Event;

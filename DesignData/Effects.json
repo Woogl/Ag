@@ -66,14 +66,14 @@
     ]
   },
   "PerfectDodgeWindow": {
-    "DurationPolicy": "HasDuration",
-    "Duration": 0.2,
+    "DurationPolicy": "Infinite",
     "GrantedTags": ["State.PerfectDodgeWindow"]
   },
   "Groggy": {
     "DurationPolicy": "HasDuration",
     "Duration": 5,
     "GrantedTags": ["State.Groggy"],
+    "ApplicationIgnoredTags": ["State.NonCombat"],
     "RemovalTags": ["State.Execution", "State.Dead"]
   },
   "SprintDrain": {

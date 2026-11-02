@@ -18,7 +18,7 @@ struct FAgTransitionParams : public FAgTaskParams
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FName Section;
+	FName ToSection;
 
 	UPROPERTY()
 	TOptional<float> BlendTime;
@@ -27,7 +27,7 @@ struct FAgTransitionParams : public FAgTaskParams
 	FGameplayTag Event;
 
 	UPROPERTY()
-	FGameplayTag Tag;
+	FGameplayTag TagRemoved;
 
 	UPROPERTY()
 	bool bSectionEndsWithTag = false;
