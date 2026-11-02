@@ -101,7 +101,7 @@
       "Groggy",
       "Executed"
     ],
-    "SightDistance": 1200,
+    "SightDistance": 500,
     "SightAngle": 120,
     "Effects": ["SandbagPPRegen"]
   },
@@ -129,7 +129,7 @@
       "EnemyLockOn"
     ],
     "PostPatternDelayTime": {"Min": 2, "Max": 2},
-    "SightDistance": 1200,
+    "SightDistance": 500,
     "SightAngle": 120,
     "Effects": ["SandbagPPRegen"]
   },
