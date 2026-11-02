@@ -43,6 +43,18 @@
 | D4 | 통과 | LV_DuelCorridor, 플레이어 빙의, HUD 활성, 커서 꺼짐. Game Over 뒤 Return to Title → 타이틀만 활성 |
 | D8 | 통과 | LV_SimulationRoom, 적 선택 화면 활성, Start 잠김·투명도 0.50 |
 
+### 3차 실행 (드롭다운 공용화 뒤, 2026-11-03)
+
+- 빌드: AgEditor Development 성공.
+- 판정: 통과 (D1·D2·D8). D3·D4는 바뀐 코드가 없어 다시 돌리지 않았습니다.
+- 로그: 실행 중 `LogAg` 오류·경고 없음.
+
+| 확인 | 결과 | 기록 |
+| - | - | - |
+| D1 | 통과 | 스테이지 선택 활성·타이틀 비활성. 항목 키 0·1·4, 고른 항목 0, 닫힌 칸 'Boss Stage', 처음 선택 대상은 드롭다운의 콤보 상자. 화면 캡처에서 드롭다운 너비가 아래 버튼 줄과 같음 |
+| D2 | 통과 | Duel Corridor를 고르고(닫힌 칸 'Duel Corridor') Back → 타이틀 활성. 다시 열면 항목 0·1·4, 고른 항목 0, 닫힌 칸 'Boss Stage' |
+| D8 | 통과 | LV_SimulationRoom, 적 선택 화면 활성, Start 잠김·투명도 0.50 |
+
 ## 3. 회귀 확인
 
 - 확인한 기존 기능과 결과: 시뮬레이션 룸 Start 흐림(D8 통과), 보스전·던전의 결과 화면과 Return to Title(통과).

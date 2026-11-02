@@ -17,6 +17,8 @@
 - [x] 15. 에셋: `WBP_EnemyOption`, `WBP_EnemySlot`(드롭다운 스타일), `WBP_EnemySelect` 다시 구성, `LV_SimulationRoom` 배치 지점 `Slot`을 왼쪽부터 1 ~ 5로, 목록 버튼 때문에 바꿨던 `WBP_Button`·`WBP_PauseMenu`·`WBP_BattleResult`를 되돌림
 - [x] 16. PIE 확인(완료 조건 1 ~ 6·9, 첫 프레임 배치, 화면 캡처), `4-test.md` 갱신
 - [x] 17. 프로그래머 플레이 확인
-- [ ] 18. 기획자 확인 뒤 4단계: 기획서(`1-spec.md` '2.6')·구현 문서(`2-plan.md` '4단계 구현 문서 반영') 반영, 인덱스 갱신, `Specs/시뮬레이션 룸/` 삭제
+- [x] 18. 드롭다운 공용화(스테이지 선택과 함께): `UAgEnemySlotWidget`·`UAgEnemyOptionWidget`을 `UAgDropdown`·`UAgDropdownOptionWidget`으로, `WBP_EnemySlot`·`WBP_StageOption`을 `WBP_Dropdown`·`WBP_DropdownOption`으로 이름 변경, `WBP_EnemyOption` 삭제, 빈 자리 글자를 `WBP_EnemySelect`의 `EmptyText`로
+- [x] 19. 공용화 뒤 드롭다운 PIE 확인(완료 조건 1 ~ 4, `4-test.md`)
+- [ ] 20. 기획자 확인 뒤 4단계: 기획서(`1-spec.md` '2.6')·구현 문서(`2-plan.md` '4단계 구현 문서 반영') 반영, 인덱스 갱신, `Specs/시뮬레이션 룸/` 삭제
 
 - 타이틀에서 들어오는 버튼은 스테이지 선택 Spec 작업입니다.

@@ -9,11 +9,11 @@
 | `AAgGameMode` | 변경 | Stage Clear 조건을 가상 함수 `IsStageCleared`로 나눕니다. 기본은 지금처럼 '죽은 캐릭터가 보스'입니다. 보스 처치 슬로우모션·카메라 연출은 '보스 처치로 결과가 정해질 때'에서 '결과가 정해지기 전에 보스가 죽을 때'로 바꿉니다. 보스전은 두 조건이 같아 동작이 바뀌지 않습니다. |
 | `AAgSimulationRoomGameMode` | 신규 (`AAgGameMode` 상속) | 후보 클래스 목록, 레벨의 배치 지점 수집, 레벨 주소 옵션으로 받은 자리별 구성의 배치와 전투 진입, 구성이 비었을 때 적 선택 화면 열기, 구성으로 다시 시작. Stage Clear 조건은 '적군 진영 캐릭터가 모두 사망'입니다. |
 | `AAgEnemySpawnPoint` | 신규 | `ATargetPoint`를 상속한 배치 자리 표시. 레벨에 놓으며 자리 번호 `Slot`만 가집니다. |
-| `UAgEnemySelectScreen` | 신규 위젯 클래스 | 적 선택 화면. 배치 자리 수만큼 자리 위젯을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록(보스 제외)과 Start 잠금을 갱신합니다. Start는 게임 모드에 구성을 넘기고, Return to Title은 타이틀로 갑니다. |
-| `UAgEnemySlotWidget` | 신규 위젯 클래스 | 배치 자리 하나의 적 드롭다운(엔진 `UComboBoxKey`). 목록 항목과 닫힌 칸의 내용을 `UAgEnemyOptionWidget`으로 만들고, 사람이 바꾼 선택만 화면에 알립니다. |
-| `UAgEnemyOptionWidget` | 신규 위젯 클래스 | 드롭다운 항목 하나의 모양. 캐릭터 데이터 ID를 받아 이름(없으면 Empty 글자)을 표시합니다. |
+| `UAgEnemySelectScreen` | 신규 위젯 클래스 | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록(보스 제외, 캐릭터 데이터 이름)과 Start 잠금을 갱신합니다. Start는 게임 모드에 구성을 넘기고, Return to Title은 타이틀로 갑니다. |
+| `UAgDropdown` | 신규 위젯 클래스 | 메뉴 화면이 함께 쓰는 드롭다운(엔진 `UComboBoxKey`). 화면이 키와 표시 글자로 목록을 채우고, 닫힌 칸과 목록 항목을 `UAgDropdownOptionWidget`으로 그리며, 사람이 바꾼 선택만 화면에 알립니다. 스테이지 선택 화면도 씁니다. |
+| `UAgDropdownOptionWidget` | 신규 위젯 클래스 | 드롭다운 항목 하나의 모양. 받은 글자를 표시합니다. |
 | `AAgEnemyAIController` | 변경 | 시야와 관계없이 상대를 알아차리게 하는 `NoticeTarget`을 더합니다. |
-| 에셋 | 신규 | `BP_SimulationRoomGameMode`, `LV_SimulationRoom`(2026-10-25 보관본 `refs/parked/simulation-room`을 되살려 후보 목록과 자리 번호를 지금 Spec에 맞춤), `WBP_EnemySelect`(드롭다운 줄로 다시 구성), `WBP_EnemySlot`, `WBP_EnemyOption` |
+| 에셋 | 신규 | `BP_SimulationRoomGameMode`, `LV_SimulationRoom`(2026-10-25 보관본 `refs/parked/simulation-room`을 되살려 후보 목록과 자리 번호를 지금 Spec에 맞춤), `WBP_EnemySelect`(드롭다운 줄로 다시 구성), `WBP_Dropdown`, `WBP_DropdownOption` |
 | 쿡 | 변경 없음 | `LV_SimulationRoom`은 스테이지 선택 목록의 참조로 쿡됩니다([스테이지 선택 Plan](<../스테이지 선택/2-plan.md>)의 '쿡할 맵'). |
 
 - 바꾸지 않는 것: 일시정지 메뉴와 전투 결과 화면은 `AAgGameMode`에 버튼을 잇고, Restart는 `RestartLevel`(상대 이동)이라 주소 옵션이 그대로 남아 같은 구성으로 다시 시작합니다. 전투 HUD는 게임 스테이트의 보스 변경을 구독하므로 배치한 보스도 그대로 표시합니다.
@@ -29,9 +29,9 @@ classDiagram
     AAgSimulationRoomGameMode ..> UAgEnemySelectScreen : EnemySelectScreenClass
     AAgSimulationRoomGameMode ..> AAgEnemyAIController : NoticeTarget
     UAgEnemySelectScreen ..> AAgSimulationRoomGameMode : CanPlace, StartLineup, OpenFrontEnd
-    UAgEnemySelectScreen *-- UAgEnemySlotWidget : SlotList 항목
-    UAgEnemySlotWidget *-- UComboBoxKey : EnemyComboBox
-    UAgEnemySlotWidget ..> UAgEnemyOptionWidget : OptionWidgetClass
+    UAgEnemySelectScreen *-- UAgDropdown : SlotList 항목
+    UAgDropdown *-- UComboBoxKey : ComboBox
+    UAgDropdown ..> UAgDropdownOptionWidget : OptionWidgetClass
 ```
 
 ### 흐름
@@ -68,8 +68,8 @@ sequenceDiagram
 | 배치 시점과 등록 | 플레이어 참가 처리(`HandleStartingNewPlayer`)에서 플레이어 폰이 생긴 뒤 스폰합니다. 엔진은 이를 월드 BeginPlay 전에 부르므로, `AAgGameMode::BeginPlay`의 기존 순회가 레벨에 놓인 적과 같이 사망 알림을 구독하고 보스를 게임 스테이트에 기록합니다. | 등록 경로를 하나로 둡니다. 플레이어를 바라보는 방향에 폰이 필요합니다. |
 | 전투 진입 | 적군 진영인 적만 스폰 직후 `AAgEnemyAIController::NoticeTarget(플레이어)`를 부릅니다. 엔진 대미지 감각에 그 상대가 대미지 0으로 친 자극을 남기고, 기존 전투 진입 조건(`IsTargetNoticed`, 지각한 적대 상대가 있음)이 전투로 넘깁니다. | [적 시스템](<../../Docs/Design/System/적 시스템.md>)의 '플레이어 공격에 맞으면 시야와 관계없이 전투에 들어가고, 마지막으로 맞은 순간부터 놓친 시간을 셈'과 같은 결과라 지각 시스템의 기존 판정을 그대로 씁니다. 별도의 '알아차린 시각' 상태를 두면 엔진 지각과 두 곳에서 같은 것을 셉니다. 샌드백은 [샌드백](<../../Docs/Design/Content/샌드백.md>)을 따르므로 부르지 않습니다. |
 | 화면과 일시정지 | 적 선택 화면은 활성화될 때 `SetPause(true)`를 부르고, 스스로 닫히지 않으며 두 버튼 모두 레벨 이동으로 끝납니다. Esc 동작은 등록하지 않습니다(타이틀 화면과 같음). 열린 드롭다운 목록은 Slate 메뉴가 Esc로 닫습니다. | 일시정지 메뉴와 같이 멈춤의 주인이 화면입니다. 레벨 이동이 멈춤을 함께 풀므로 비활성화 처리는 두지 않습니다. HUD의 Esc(일시정지 메뉴)는 위 레이어 화면이 입력을 가져가 열리지 않습니다. |
-| 드롭다운 | 자리마다 UMG `UComboBoxKey` 하나를 둡니다. 항목 키는 캐릭터 데이터 ID이고, 빈 자리는 파일 안 상수 키 `Empty`입니다. 닫힌 칸(`OnGenerateContentWidget`)과 목록 항목(`OnGenerateItemWidget`)은 모두 `WBP_EnemyOption`으로 그립니다. 드롭다운 모양(`FComboBoxStyle`·항목 줄 스타일)은 `WBP_EnemySlot`의 기본값입니다. | CommonUI에는 드롭다운이 없고, 엔진 드롭다운 가운데 항목을 위젯으로 그리는 것이 `UComboBoxKey`입니다(`UComboBoxString`은 글자만). 나중에 초상화가 생기면 `WBP_EnemyOption`·`WBP_EnemySlot` 에셋과 그 데이터만 바꿔 카드 모양으로 넓힐 수 있습니다. 엔진 목록은 None을 빈 항목으로 다뤄 선택할 수 없으므로 Empty에 별도 키가 필요합니다. |
-| 목록 갱신 | 자리 위젯은 `UDynamicEntryBox`(가로)의 항목으로 화면을 만들 때 한 번 만듭니다. 한 자리의 선택이 바뀌면 화면이 모든 자리의 목록을 다시 채웁니다: Empty와 `EnemyClasses` 가운데 게임 모드의 `CanPlace`가 허락하는 것. 자리 위젯은 코드가 선택을 되돌려 놓을 때 나는 변경(`ESelectInfo::Direct`)은 화면에 알리지 않습니다. 어느 적을 어느 자리에 둘 수 있는지는 `CanPlace` 하나가 정하고, 목록과 주소 옵션 검사가 함께 씁니다. | 자리 수는 레벨의 배치 지점 수를 따르고 위젯에 따로 두지 않습니다. 목록을 다시 채울 때 엔진이 선택을 비우므로 다시 설정하는데, 그 변경을 사람의 선택으로 받으면 갱신이 되풀이됩니다. 목록 화면이 이것 하나라 MVVM은 쓰지 않습니다. |
+| 드롭다운 | 자리마다 공용 드롭다운 `UAgDropdown`(`WBP_Dropdown`, 안에 UMG `UComboBoxKey`) 하나를 둡니다. 화면은 항목을 키와 표시 글자로 넘기고, 드롭다운은 닫힌 칸(`OnGenerateContentWidget`)과 목록 항목(`OnGenerateItemWidget`)을 모두 그 글자를 받은 `WBP_DropdownOption`으로 그립니다. 항목 키는 캐릭터 데이터 ID이고, 빈 자리는 파일 안 상수 키 `Empty`(표시 글자는 `WBP_EnemySelect`의 `EmptyText`)입니다. 드롭다운 모양(`FComboBoxStyle`·항목 줄 스타일)과 기본 크기는 `WBP_Dropdown`의 기본값이고, 다른 크기가 필요한 화면은 바깥 `SizeBox`로 정합니다. | CommonUI에는 드롭다운이 없고, 엔진 드롭다운 가운데 항목을 위젯으로 그리는 것이 `UComboBoxKey`입니다(`UComboBoxString`은 글자만). 드롭다운을 쓰는 화면(적 선택, 스테이지 선택)이 모양을 한 에셋에서 가져가므로 모양을 고칠 곳이 한 곳입니다. 항목 위젯은 글자만 받아 하나로 충분하고, 무엇을 표시할지는 목록을 아는 화면이 정합니다. 나중에 초상화가 생기면 항목에 그림을 더하고 `WBP_DropdownOption`을 바꿉니다. 엔진 목록은 None을 빈 항목으로 다뤄 선택할 수 없으므로 Empty에 별도 키가 필요합니다. |
+| 목록 갱신 | 자리 드롭다운은 `UDynamicEntryBox`(가로)의 항목으로 화면을 만들 때 한 번 만듭니다. 한 자리의 선택이 바뀌면 화면이 모든 자리의 목록을 그 자리의 지금 선택과 함께 다시 채웁니다: Empty와 `EnemyClasses` 가운데 게임 모드의 `CanPlace`가 허락하는 것. 드롭다운은 넘겨받은 선택이 새 목록에 있으면 그대로 고르고, 없으면 첫 항목(Empty)을 고릅니다. 코드가 선택을 되돌려 놓을 때 나는 변경(`ESelectInfo::Direct`)은 화면에 알리지 않습니다. 어느 적을 어느 자리에 둘 수 있는지는 `CanPlace` 하나가 정하고, 목록과 주소 옵션 검사가 함께 씁니다. | 자리 수는 레벨의 배치 지점 수를 따르고 위젯에 따로 두지 않습니다. 목록을 다시 채울 때 엔진이 선택을 비우므로 다시 설정하는데, 그 변경을 사람의 선택으로 받으면 갱신이 되풀이됩니다. 목록 화면이 이것 하나라 MVVM은 쓰지 않습니다. |
 | Start 흐림 | CommonUI 버튼 잠금(`SetIsLocked`)을 쓰고, 흐린 모양은 화면이 `LockedButtonOpacity`(WBP 기본값)로 투명도를 줍니다. | 엔진의 잠금이 '선택은 되지만 실행되지 않음'이라는 Spec과 맞고, CommonUI 버튼 스타일에는 잠금 모양이 없습니다(소리만 있음). |
 | 방향키 | 위젯마다 탐색 규칙을 정하지 않고 Slate 기본 기하 탐색(그 방향에서 가장 가까운 위젯, 끝에서 멈춤)을 씁니다. 열린 목록 안의 ↑·↓·Enter는 엔진 드롭다운의 동작입니다. | 드롭다운 줄과 아래 버튼 줄을 규칙 없이 오갑니다. |
 | 레벨 | 보관본 `LV_SimulationRoom`(LV_BossStage 복제, 보스 삭제, 게임 모드 재정의, 배치 지점 5개)을 되살립니다. 보관 뒤 LV_BossStage의 변경은 게임 모드 통합(10-26) 하나이며, 이 레벨은 게임 모드를 따로 재정의합니다. 타이틀에서 들어오는 버튼은 스테이지 선택 Spec의 몫이라 이번 확인은 이 맵을 직접 엽니다. | 아레나 조건이 보스전과 같습니다. |
@@ -80,7 +80,7 @@ sequenceDiagram
 
 | 문서 | 반영 |
 | - | - |
-| [캐릭터 기반 구조와 GAS](<../../Docs/Architecture/캐릭터 기반 구조와 GAS.md>) | '게임 모드와 게임 스테이트': 시뮬레이션 룸 게임 모드 하위 클래스와 그 이유, `AAgGameMode` 역할의 클리어 조건과 보스 처치 연출 조건, 클래스 표와 그림에 `AAgSimulationRoomGameMode`·`AAgEnemySpawnPoint`·`UAgEnemySelectScreen`·`UAgEnemySlotWidget`·`UAgEnemyOptionWidget`. `AAgEnemyAIController` 역할에 `NoticeTarget` |
+| [캐릭터 기반 구조와 GAS](<../../Docs/Architecture/캐릭터 기반 구조와 GAS.md>) | '게임 모드와 게임 스테이트': 시뮬레이션 룸 게임 모드 하위 클래스와 그 이유, `AAgGameMode` 역할의 클리어 조건과 보스 처치 연출 조건, 클래스 표와 그림에 `AAgSimulationRoomGameMode`·`AAgEnemySpawnPoint`·`UAgEnemySelectScreen`·`UAgDropdown`·`UAgDropdownOptionWidget`. `AAgEnemyAIController` 역할에 `NoticeTarget` |
 | [데이터 로딩과 스키마](<../../Docs/Architecture/데이터 로딩과 스키마.md>) 'JSON 외부 데이터 위치' | 새 행: 시뮬레이션 룸 후보(`BP_SimulationRoomGameMode`의 `EnemyClasses`), 배치 자리(`LV_SimulationRoom`의 `AAgEnemySpawnPoint` 위치와 `Slot`), 적 선택 화면 흐린 버튼(`WBP_EnemySelect`의 `LockedButtonOpacity`) |
 
 ## 2. GAS 및 데이터 설계
@@ -161,6 +161,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "UI", meta = (ClampMin = 0, ClampMax = 1))
 	float LockedButtonOpacity = 1.f;
 
+	UPROPERTY(EditAnywhere, Category = "UI")
+	FText EmptyText;
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UDynamicEntryBox> SlotList;
 
@@ -176,31 +179,37 @@ private:
 	void StartLineup();
 
 	UPROPERTY()
-	TArray<TObjectPtr<UAgEnemySlotWidget>> Slots;
+	TArray<TObjectPtr<UAgDropdown>> SlotDropdowns;
 };
 
-// UI/AgEnemySlotWidget.h
+// UI/AgDropdown.h
+struct FAgDropdownOption
+{
+	FName Key;
+	FText Label;
+};
+
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgEnemySlotWidget : public UCommonUserWidget
+class UAgDropdown : public UCommonUserWidget
 {
 public:
-	/** Empty와 그 적들로 목록을 다시 채우고, 고른 적이 목록에 있으면 그대로 둡니다. */
-	void SetOptions(const TArray<FName>& CharacterDataIds);
+	/** 목록을 다시 채우고 SelectedKey를 고릅니다. 목록에 없으면 첫 항목을 고릅니다. */
+	void SetOptions(const TArray<FAgDropdownOption>& Options, FName SelectedKey = NAME_None);
 
-	/** 비어 있으면 None입니다. */
-	FName GetSelectedEnemy() const;
+	/** 목록이 비어 있으면 None입니다. */
+	FName GetSelectedOption() const;
 
 	/** 사람이 목록에서 고른 때만 알립니다. */
-	FSimpleMulticastDelegate OnSelectedEnemyChanged;
+	FSimpleMulticastDelegate OnSelectionChanged;
 
 protected:
 	virtual void NativeOnInitialized() override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UAgEnemyOptionWidget> OptionWidgetClass;
+	TSubclassOf<UAgDropdownOptionWidget> OptionWidgetClass;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UComboBoxKey> EnemyComboBox;
+	TObjectPtr<UComboBoxKey> ComboBox;
 
 private:
 	UFUNCTION()
@@ -208,20 +217,18 @@ private:
 
 	UFUNCTION()
 	void HandleSelectionChanged(FName SelectedItem, ESelectInfo::Type SelectionType);
+
+	TMap<FName, FText> Labels;
 };
 
-// UI/AgEnemyOptionWidget.h
+// UI/AgDropdownOptionWidget.h
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgEnemyOptionWidget : public UCommonUserWidget
+class UAgDropdownOptionWidget : public UCommonUserWidget
 {
 public:
-	/** None이면 EmptyText를 표시합니다. */
-	void SetEnemy(FName CharacterDataId);
+	void SetLabel(const FText& Label);
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "UI")
-	FText EmptyText;
-
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> NameText;
 };

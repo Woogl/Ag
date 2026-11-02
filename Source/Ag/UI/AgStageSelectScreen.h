@@ -7,8 +7,7 @@
 #include "AgStageSelectScreen.generated.h"
 
 class UAgButton;
-class UAgStageOptionWidget;
-class UComboBoxKey;
+class UAgDropdown;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgStageSelectScreen : public UCommonActivatableWidget
@@ -21,11 +20,8 @@ protected:
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UAgStageOptionWidget> OptionWidgetClass;
-
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UComboBoxKey> StageComboBox;
+	TObjectPtr<UAgDropdown> StageDropdown;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> StartButton;
@@ -34,8 +30,5 @@ protected:
 	TObjectPtr<UAgButton> BackButton;
 
 private:
-	UFUNCTION()
-	UWidget* GenerateOptionWidget(FName Option);
-
 	void OpenSelectedStage();
 };

@@ -4,10 +4,18 @@
 
 #include "Character/AgCharacterBase.h"
 #include "Components/DynamicEntryBox.h"
+#include "Core/AgAssetManager.h"
+#include "Data/AgCharacterData.h"
 #include "Game/AgSimulationRoomGameMode.h"
 #include "GameFramework/PlayerController.h"
 #include "UI/AgButton.h"
-#include "UI/AgEnemySlotWidget.h"
+#include "UI/AgDropdown.h"
+
+namespace
+{
+	/** 엔진 목록은 None을 빈 항목으로 다뤄 고를 수 없으므로, 빈 자리에 따로 키를 둡니다. */
+	const FName EmptyOption(TEXT("Empty"));
+} // namespace
 
 void UAgEnemySelectScreen::NativeOnInitialized()
 {
@@ -21,9 +29,9 @@ void UAgEnemySelectScreen::NativeOnInitialized()
 
 	for (int32 Index = 0; Index < GameMode->GetSlotCount(); ++Index)
 	{
-		UAgEnemySlotWidget* EnemySlot = SlotList->CreateEntry<UAgEnemySlotWidget>();
-		EnemySlot->OnSelectedEnemyChanged.AddUObject(this, &ThisClass::RefreshSlots);
-		EnemySlots.Add(EnemySlot);
+		UAgDropdown* SlotDropdown = SlotList->CreateEntry<UAgDropdown>();
+		SlotDropdown->OnSelectionChanged.AddUObject(this, &ThisClass::RefreshSlots);
+		SlotDropdowns.Add(SlotDropdown);
 	}
 
 	StartButton->OnClicked().AddUObject(this, &ThisClass::StartLineup);
@@ -43,7 +51,7 @@ void UAgEnemySelectScreen::NativeOnActivated()
 
 UWidget* UAgEnemySelectScreen::NativeGetDesiredFocusTarget() const
 {
-	return EnemySlots.IsEmpty() ? ReturnToTitleButton.Get() : EnemySlots[0]->GetDesiredFocusWidget();
+	return SlotDropdowns.IsEmpty() ? ReturnToTitleButton.Get() : SlotDropdowns[0]->GetDesiredFocusWidget();
 }
 
 TOptional<FUIInputConfig> UAgEnemySelectScreen::GetDesiredInputConfig() const
@@ -55,9 +63,10 @@ TArray<TSubclassOf<AAgCharacterBase>> UAgEnemySelectScreen::GetLineup() const
 {
 	const AAgSimulationRoomGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgSimulationRoomGameMode>();
 	TArray<TSubclassOf<AAgCharacterBase>> Lineup;
-	for (const UAgEnemySlotWidget* EnemySlot : EnemySlots)
+	for (const UAgDropdown* SlotDropdown : SlotDropdowns)
 	{
-		Lineup.Add(GameMode->FindEnemyClass(EnemySlot->GetSelectedEnemy()));
+		const FName Selected = SlotDropdown->GetSelectedOption();
+		Lineup.Add(GameMode->FindEnemyClass(Selected == EmptyOption ? NAME_None : Selected));
 	}
 	return Lineup;
 }
@@ -66,17 +75,19 @@ void UAgEnemySelectScreen::RefreshSlots()
 {
 	const AAgSimulationRoomGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgSimulationRoomGameMode>();
 	const TArray<TSubclassOf<AAgCharacterBase>> Lineup = GetLineup();
-	for (int32 Index = 0; Index < EnemySlots.Num(); ++Index)
+	for (int32 Index = 0; Index < SlotDropdowns.Num(); ++Index)
 	{
-		TArray<FName> Ids;
+		TArray<FAgDropdownOption> Options = {{EmptyOption, EmptyText}};
 		for (const TSubclassOf<AAgCharacterBase>& EnemyClass : GameMode->GetEnemyClasses())
 		{
 			if (GameMode->CanPlace(Lineup, Index, EnemyClass))
 			{
-				Ids.Add(EnemyClass->GetDefaultObject<AAgCharacterBase>()->GetCharacterDataId());
+				const FName Id = EnemyClass->GetDefaultObject<AAgCharacterBase>()->GetCharacterDataId();
+				const UAgCharacterData* Data = UAgAssetManager::Get().FindCharacterData(Id);
+				Options.Add({Id, Data ? Data->DisplayName : FText::FromName(Id)});
 			}
 		}
-		EnemySlots[Index]->SetOptions(Ids);
+		SlotDropdowns[Index]->SetOptions(Options, SlotDropdowns[Index]->GetSelectedOption());
 	}
 
 	// 비활성화하면 포커스를 받을 수 없어, 잠금으로 실행만 막습니다.

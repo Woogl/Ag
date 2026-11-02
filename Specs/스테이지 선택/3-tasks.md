@@ -8,3 +8,5 @@
 - [x] 6. C++ 빌드와 에디터 재시작
 - [x] 7. 에셋: `WBP_StageSelect`를 드롭다운 + Start·Back 줄로 다시 구성(드롭다운 모양은 `WBP_EnemySlot`에서 옮김), `WBP_StageOption`(`WBP_EnemyOption`과 같은 모양)
 - [x] 8. 검증: PIE로 D1·D2·D3·D4·D8 통과(`4-test.md`). Esc·방향키·마우스는 사람이 확인
+- [x] 9. 드롭다운 공용화(시뮬레이션 룸 태스크 18): `WBP_StageSelect`의 드롭다운을 `WBP_Dropdown`(`StageDropdown`)으로, `UAgStageOptionWidget`·`WBP_StageOption` 삭제
+- [x] 10. 공용화 뒤 드롭다운 PIE 확인(D1·D2·D8, `4-test.md`)

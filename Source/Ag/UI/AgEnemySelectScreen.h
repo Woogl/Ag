@@ -8,7 +8,7 @@
 
 class AAgCharacterBase;
 class UAgButton;
-class UAgEnemySlotWidget;
+class UAgDropdown;
 class UDynamicEntryBox;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
@@ -24,6 +24,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "UI", meta = (ClampMin = 0, ClampMax = 1))
 	float LockedButtonOpacity = 1.f;
+
+	UPROPERTY(EditAnywhere, Category = "UI")
+	FText EmptyText;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UDynamicEntryBox> SlotList;
@@ -41,5 +44,5 @@ private:
 	void StartLineup();
 
 	UPROPERTY()
-	TArray<TObjectPtr<UAgEnemySlotWidget>> EnemySlots;
+	TArray<TObjectPtr<UAgDropdown>> SlotDropdowns;
 };

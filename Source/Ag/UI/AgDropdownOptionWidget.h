@@ -4,18 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "CommonUserWidget.h"
-#include "AgStageOptionWidget.generated.h"
+#include "AgDropdownOptionWidget.generated.h"
 
 class UCommonTextBlock;
-struct FAgStage;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgStageOptionWidget : public UCommonUserWidget
+class UAgDropdownOptionWidget : public UCommonUserWidget
 {
 	GENERATED_BODY()
 
 public:
-	void SetStage(const FAgStage& Stage);
+	void SetLabel(const FText& Label);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
