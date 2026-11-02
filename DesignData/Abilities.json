@@ -412,6 +412,53 @@
     ],
     "PatternSelection": {"Distance": {"Min": 0, "Max": 150}, "Weight": 1}
   },
+  "SingleSlash": {
+    "Tags": ["Ability.Enemy.Pattern"],
+    "Activation": {
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
+    },
+    "Targeting": {"Preset": "Enemy", "Range": 1200, "TargetSpacing": 120},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "SingleSlash"}
+    ],
+    "PatternSelection": {"Distance": {"Min": 0, "Max": 200}, "Weight": 6}
+  },
+  "DoubleSlash": {
+    "Tags": ["Ability.Enemy.Pattern"],
+    "Cooldown": 4,
+    "Activation": {
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
+    },
+    "Targeting": {"Preset": "Enemy", "Range": 1200, "TargetSpacing": 120},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "DoubleSlash"}
+    ],
+    "PatternSelection": {"Distance": {"Min": 0, "Max": 200}, "Weight": 3}
+  },
+  "HeavyCleave": {
+    "Tags": ["Ability.Enemy.Pattern"],
+    "Cooldown": 8,
+    "Activation": {
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
+    },
+    "Targeting": {"Preset": "Enemy", "Range": 1200, "TargetSpacing": 120},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "HeavyCleave"}
+    ],
+    "PatternSelection": {"Distance": {"Min": 0, "Max": 230}, "Weight": 1}
+  },
+  "PistolShot": {
+    "Tags": ["Ability.Enemy.Pattern"],
+    "Cooldown": 6,
+    "Activation": {
+      "BlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"]
+    },
+    "Targeting": {"Preset": "Shooting", "Range": 2000, "bRequired": true},
+    "Tasks": [
+      {"Task": "PlayMontage", "Montage": "PistolShot"}
+    ],
+    "PatternSelection": {"Distance": {"Min": 0, "Max": 2000}, "Weight": 1}
+  },
   "Groggy": {
     "Tags": ["Ability.Reaction.Groggy"],
     "Activation": {

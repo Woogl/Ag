@@ -73,6 +73,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dashing, "State.Dashing", "돌진 중 (Dash Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Cutscene, "State.Cutscene", "컷신 재생 중 (PlayCutscene Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "적이 전투 중이 아님 (비전투 상태, 플레이어 사망 뒤 대기)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Aiming, "State.Aiming", "적이 조준 중. 사격 조건이 깨지면 StateTree가 패턴을 취소함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_PPDelay, "State.Regen.PPDelay", "PP 리젠 대기");
 

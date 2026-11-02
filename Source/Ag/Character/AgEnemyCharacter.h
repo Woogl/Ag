@@ -56,6 +56,12 @@ public:
 		return true;
 	}
 
+	/** 플레이어의 공격에 맞았을 때 대미지 숫자를 띄웁니다. */
+	virtual bool ShowsDamageNumbers() const
+	{
+		return false;
+	}
+
 	const TArray<TObjectPtr<ATargetPoint>>& GetPatrolPoints() const
 	{
 		return PatrolPoints;

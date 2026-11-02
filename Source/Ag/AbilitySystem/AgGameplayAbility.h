@@ -69,6 +69,17 @@ public:
 	/** 기본 공격처럼 다시 재생할 때마다 대상을 고르는 행동을 위해 재생 Task가 부릅니다. */
 	void RefreshTarget();
 
+	/** Aim Task가 정하며, 정하지 않았으면 비어 있습니다. */
+	const TOptional<FVector>& GetAimLocation() const
+	{
+		return AimLocation;
+	}
+
+	void SetAimLocation(const FVector& Location)
+	{
+		AimLocation = Location;
+	}
+
 	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
 
@@ -101,6 +112,7 @@ private:
 	FAgAbilityData Definition;
 
 	TWeakObjectPtr<AActor> ActionTarget;
+	TOptional<FVector> AimLocation;
 
 	FGameplayTag TriggerEventTag;
 

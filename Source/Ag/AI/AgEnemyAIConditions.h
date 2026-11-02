@@ -120,6 +120,33 @@ struct FAgEnemyAICondition_TargetNoticed : public FStateTreeAIConditionBase
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
+USTRUCT()
+struct FAgEnemyAICondition_AimLostInstanceData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Context")
+	TObjectPtr<AAgEnemyAIController> Controller = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Parameter")
+	FName MuzzleSocket;
+};
+
+/** 조준 중(`State.Aiming`)인데 대상이 보이지 않거나, 캡슐 중심에서 총구를 거쳐 조준점까지 벽·지형에 막혔습니다. */
+USTRUCT(meta = (DisplayName = "적: 조준 대상 놓침", Category = "Ag|Enemy AI"))
+struct FAgEnemyAICondition_AimLost : public FStateTreeAIConditionBase
+{
+	GENERATED_BODY()
+
+	using FInstanceDataType = FAgEnemyAICondition_AimLostInstanceData;
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
+
+	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
+};
+
 USTRUCT(meta = (DisplayName = "적: 대상을 놓침", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_TargetLost : public FStateTreeAIConditionBase
 {

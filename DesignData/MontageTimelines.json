@@ -124,6 +124,48 @@
       {"Task": "SpawnProjectile", "Start":0.28, "Projectile": "SwordWave"}
     ]
   },
+  "/Game/Animations/AM_Cutter_DoubleSlash.AM_Cutter_DoubleSlash": {
+    "Attack1": [
+      {"Task": "RootMotion", "Start": 0, "End": 0.615},
+      {"Task": "RootMotion", "Direction": "Back", "Start": 0.615, "End": 0.875},
+      {"Task": "WeaponHit", "Start": 0.765, "End": 0.865, "Damage": {"HPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}},
+      {"Task": "Transition", "Start": 0.875, "Section": "Attack2", "BlendTime": 0.2}
+    ],
+    "Attack2": [
+      {"Task": "RootMotion", "Start": 0, "End": 0.4155},
+      {"Task": "RootMotion", "Direction": "Back", "Start": 0.4155, "End": 1.32},
+      {"Task": "WeaponHit", "Start": 0.5655, "End": 0.6655, "Damage": {"HPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}}
+    ]
+  },
+  "/Game/Animations/AM_Cutter_HeavyCleave.AM_Cutter_HeavyCleave": {
+    "Default": [
+      {"Task": "RootMotion", "Start": 0, "End": 0.9455},
+      {"Task": "RootMotion", "Direction": "Back", "Start": 0.9455, "End": 2.05},
+      {"Task": "WeaponHit", "Start": 1.0955, "End": 1.1855, "Damage": {"HPMultiplier": 1.5, "HitReaction": "KnockDown", "bGuardable": false}}
+    ]
+  },
+  "/Game/Animations/AM_Cutter_SingleSlash.AM_Cutter_SingleSlash": {
+    "Default": [
+      {"Task": "RootMotion", "Start": 0, "End": 0.5133},
+      {"Task": "RootMotion", "Direction": "Back", "Start": 0.5133, "End": 1.23},
+      {"Task": "WeaponHit", "Start": 0.6633, "End": 0.7833, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+    ]
+  },
+  "/Game/Animations/AM_Gunner_PistolShot.AM_Gunner_PistolShot": {
+    "Aim": [
+      {"Task": "ApplyEffect", "Start": 0, "End": 1.2, "Effect": "Aiming"},
+      {"Task": "RootMotion", "Start": 0, "End": 0.85, "bWarpTranslation": false},
+      {"Task": "Aim", "Start": 0, "End": 0.85},
+      {"Task": "Transition", "Start": 1.2, "Section": "Fire", "BlendTime": 0.1}
+    ],
+    "Fire": [
+      {"Task": "SpawnProjectile", "Start": 0, "Projectile": "PistolBullet", "SocketName": "Muzzle"},
+      {"Task": "Transition", "Start": 0.8, "Section": "Reload", "BlendTime": 0.2}
+    ],
+    "Reload": [
+      {"Task": "RootMotion", "Start": 0, "End": 2.0, "bWarpTranslation": false}
+    ]
+  },
   "/Game/Animations/AM_KnockDown.AM_KnockDown": {
     "Default": [
       {"Task": "ApplyEffect", "Start": 0.1, "End": 0.7, "Effect": "Invincible"}

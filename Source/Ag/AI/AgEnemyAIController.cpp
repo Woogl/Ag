@@ -130,10 +130,12 @@ void AAgEnemyAIController::ConfigurePerception(const UAgCharacterData& Data)
 	const float TargetLostTime = UAgAssetManager::Get().GetCombatRules().TargetLostTime;
 	SightConfig->SetMaxAge(TargetLostTime);
 	DamageConfig->SetMaxAge(TargetLostTime);
-	// 다시 등록해야 바뀐 값과 빙의한 적의 팀으로 감각 검사를 새로 만듭니다.
+	// 엔진 ConfigureSense는 감각 값만 다시 읽고 청취자의 팀은 등록할 때 값 그대로 둡니다. 게임 도중 생긴 적은 빙의 전에
+	// 청취자로 등록돼 팀이 비어 있으므로, 청취자도 다시 읽게 해야 빙의한 적의 팀으로 대상을 봅니다.
 	UAIPerceptionComponent* Perception = GetAIPerceptionComponent();
 	Perception->ConfigureSense(*SightConfig);
 	Perception->ConfigureSense(*DamageConfig);
+	Perception->RequestStimuliListenerUpdate();
 }
 
 void AAgEnemyAIController::HandleTargetBasicAttack(const FGameplayEventData* Payload)

@@ -8,10 +8,10 @@
 #include "GameplayEffectTypes.h"
 #include "AgProjectile.generated.h"
 
-class UBoxComponent;
-class UStaticMeshComponent;
+class UShapeComponent;
 class AAgCharacterBase;
 
+/** 판정 모양은 BP에 둔 모양 컴포넌트(상자 또는 캡슐) 하나입니다. */
 UCLASS(Abstract)
 class AAgProjectile : public AActor
 {
@@ -25,16 +25,14 @@ public:
 	bool IsReflected() const;
 
 protected:
+	virtual void PostInitializeComponents() override;
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
 	void ApplyHit(AAgCharacterBase& Target, const FVector& HitLocation);
 
-	UPROPERTY(VisibleAnywhere, Category = "Projectile")
-	TObjectPtr<UBoxComponent> HitBox;
-
-	UPROPERTY(VisibleAnywhere, Category = "Projectile")
-	TObjectPtr<UStaticMeshComponent> Mesh;
+	UPROPERTY()
+	TObjectPtr<UShapeComponent> HitShape;
 
 	TArray<TWeakObjectPtr<AActor>> TouchedActors;
 	TWeakObjectPtr<AAgCharacterBase> Reflector;

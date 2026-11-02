@@ -127,5 +127,25 @@
   "UltimateSlowMotion": {
     "SlowMotionSpeed": 0.3,
     "SlowMotionDuration": 0.8
+  },
+  "CutterPPRegen": {
+    "DurationPolicy": "Infinite",
+    "Modifiers": [
+      {"Attribute": "PP", "PerSecond": 25}
+    ],
+    "OngoingIgnoredTags": ["State.Regen.PPDelay"],
+    "RegenDelay": {"Effect": "PPRegenDelay"}
+  },
+  "GunnerPPRegen": {
+    "DurationPolicy": "Infinite",
+    "Modifiers": [
+      {"Attribute": "PP", "PerSecond": 15}
+    ],
+    "OngoingIgnoredTags": ["State.Regen.PPDelay"],
+    "RegenDelay": {"Effect": "PPRegenDelay"}
+  },
+  "Aiming": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": ["State.Aiming"]
   }
 }

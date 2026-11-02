@@ -5,27 +5,16 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
-#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/ShapeComponent.h"
 #include "Engine/World.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgEffectData.h"
+#include "Ag.h"
 
 AAgProjectile::AAgProjectile()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	// 상자는 매 틱 코드에서 직접 검사하므로 자체 충돌이 필요 없습니다.
-	HitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
-	HitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	HitBox->SetGenerateOverlapEvents(false);
-	RootComponent = HitBox;
-
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(HitBox);
-	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Mesh->SetGenerateOverlapEvents(false);
 }
 
 void AAgProjectile::Launch(const FAgDamage& InDamage, const FGameplayEffectSpecHandle& InDamageSpec, const FVector& Direction, const FAgProjectileParams& InParams)
@@ -70,22 +59,39 @@ bool AAgProjectile::IsReflected() const
 	return !Reflector.IsExplicitlyNull();
 }
 
+void AAgProjectile::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	HitShape = FindComponentByClass<UShapeComponent>();
+	if (!HitShape)
+	{
+		UE_LOG(LogAg, Error, TEXT("%s: no shape component for hits"), *GetClass()->GetName());
+		return;
+	}
+	// 판정 모양은 매 틱 코드에서 직접 검사하므로 자체 충돌이 필요 없습니다.
+	HitShape->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HitShape->SetGenerateOverlapEvents(false);
+}
+
 void AAgProjectile::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
 	AAgCharacterBase* ShooterCharacter = GetInstigator<AAgCharacterBase>();
 	AAgCharacterBase* DamageSource = IsReflected() ? Reflector.Get() : ShooterCharacter;
-	if (!IsValid(ShooterCharacter) || !IsValid(DamageSource) || !DamageSpec.IsValid())
+	if (!HitShape || !IsValid(ShooterCharacter) || !IsValid(DamageSource) || !DamageSpec.IsValid())
 	{
 		Destroy();
 		return;
 	}
 
-	// 벽은 상자 가운데 높이의 선으로 찾아, 상자가 스치는 바닥이나 낮은 턱을 벽으로 치지 않습니다.
+	// 판정은 모양 컴포넌트의 자리와 방향으로 쓸고 액터는 판정이 간 만큼 옮깁니다. 벽은 판정 모양 가운데의 선으로 찾아,
+	// 판정이 스치는 바닥이나 낮은 턱을 벽으로 치지 않습니다.
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgProjectile), false, this);
 	QueryParams.AddIgnoredActor(DamageSource);
-	const FVector Start = GetActorLocation();
+	const FVector ActorStart = GetActorLocation();
+	const FVector Start = HitShape->GetComponentLocation();
 	const float Step = FMath::Min(Params.Speed * DeltaSeconds, Params.Range - Traveled);
 	FVector End = Start + FlightDirection * Step;
 	FHitResult WallHit;
@@ -97,8 +103,8 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	}
 
 	TArray<FHitResult> Reached;
-	const FCollisionShape Box = FCollisionShape::MakeBox(HitBox->GetScaledBoxExtent());
-	GetWorld()->SweepMultiByObjectType(Reached, Start, End, GetActorQuat(), FCollisionObjectQueryParams(ECC_Pawn), Box, QueryParams);
+	GetWorld()->SweepMultiByObjectType(Reached, Start, End, HitShape->GetComponentQuat(), FCollisionObjectQueryParams(ECC_Pawn),
+		HitShape->GetCollisionShape(), QueryParams);
 	for (const FHitResult& Contact : Reached)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
@@ -108,7 +114,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		}
 		TouchedActors.Add(Target);
 		const bool bWasReflected = IsReflected();
-		SetActorLocation(Contact.Location);
+		SetActorLocation(ActorStart + (Contact.Location - Start));
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
 		ApplyHit(*Target, HitLocation);
 		if (IsActorBeingDestroyed() || !IsValid(ShooterCharacter))
@@ -128,7 +134,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		Destroy();
 		return;
 	}
-	SetActorLocation(End);
+	SetActorLocation(ActorStart + (End - Start));
 	Traveled += Step;
 	if (Traveled >= Params.Range)
 	{

@@ -10,5 +10,17 @@
       "HitReaction": "Flinch",
       "bGuardable": true
     }
+  },
+  "PistolBullet": {
+    "ProjectileClass": "/Game/Projectiles/BP_PistolBullet.BP_PistolBullet_C",
+    "Params": {
+      "Speed": 2000,
+      "Range": 3000
+    },
+    "Damage": {
+      "HPMultiplier": 1,
+      "HitReaction": "Flinch",
+      "bGuardable": true
+    }
   }
 }

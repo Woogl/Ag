@@ -2,8 +2,14 @@
 
 #include "AI/AgEnemyAIConditions.h"
 
+#include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgTargeting.h"
+#include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
 #include "Character/AgEnemyCharacter.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Core/AgGameplayTags.h"
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "StateTreeExecutionContext.h"
 
@@ -59,6 +65,38 @@ bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext
 		TotalChance += Response.Value;
 	}
 	return FMath::FRand() < TotalChance;
+}
+
+bool FAgEnemyAICondition_AimLost::TestCondition(FStateTreeExecutionContext& Context) const
+{
+	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	const AAgEnemyAIController* Controller = InstanceData.Controller;
+	const AAgEnemyCharacter* Enemy = Controller->GetEnemy();
+	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
+	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_Aiming))
+	{
+		return false;
+	}
+	const FName MuzzleSocket = InstanceData.MuzzleSocket;
+	const AAgCharacterBase* Target = Controller->GetTarget();
+	if (!Target || !AgTargeting::IsVisible(*Enemy, *Target, MuzzleSocket))
+	{
+		return true;
+	}
+
+	// 고정한 조준점은 대상이 움직인 뒤의 자리와 달라 따로 봅니다.
+	const UAgGameplayAbility* Aiming = Cast<UAgGameplayAbility>(ASC->GetAnimatingAbility());
+	const TOptional<FVector> AimLocation = Aiming ? Aiming->GetAimLocation() : TOptional<FVector>();
+	if (!AimLocation)
+	{
+		return false;
+	}
+	const FVector Muzzle = Enemy->GetMesh()->GetSocketLocation(MuzzleSocket);
+	const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgAimLost), false, Enemy);
+	const FCollisionObjectQueryParams Walls(ECC_WorldStatic);
+	const UWorld* World = Enemy->GetWorld();
+	return World->LineTraceTestByObjectType(Enemy->GetActorLocation(), Muzzle, Walls, QueryParams) ||
+	       World->LineTraceTestByObjectType(Muzzle, *AimLocation, Walls, QueryParams);
 }
 
 bool FAgEnemyAICondition_TargetNoticed::TestCondition(FStateTreeExecutionContext& Context) const

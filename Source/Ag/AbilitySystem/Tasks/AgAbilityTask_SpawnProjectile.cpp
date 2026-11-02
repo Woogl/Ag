@@ -41,8 +41,9 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 		EndTask();
 		return;
 	}
-	const FVector Direction = Character->GetActorForwardVector().GetSafeNormal2D();
 	const FVector Location = Params.SocketName.IsNone() ? Character->GetActorLocation() : Mesh->GetSocketLocation(Params.SocketName);
+	const TOptional<FVector>& AimLocation = AgAbility->GetAimLocation();
+	const FVector Direction = AimLocation ? (*AimLocation - Location).GetSafeNormal() : Character->GetActorForwardVector().GetSafeNormal2D();
 	const FTransform Transform(Direction.Rotation(), Location);
 	if (AAgProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAgProjectile>(Definition->ProjectileClass, Transform, Character, Character, ESpawnActorCollisionHandlingMethod::AlwaysSpawn))
 	{

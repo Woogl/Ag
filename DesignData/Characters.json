@@ -174,5 +174,83 @@
       "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
       "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed"
     }
+  },
+  "Cutter": {
+    "DisplayName": "절단자",
+    "Toughness": "Medium",
+    "Attributes": {
+      "HP": 600,
+      "MaxHP": 600,
+      "PP": 400,
+      "MaxPP": 400,
+      "ATK": 120,
+      "MOV": 250
+    },
+    "Abilities": [
+      "SingleSlash",
+      "DoubleSlash",
+      "HeavyCleave",
+      "Flinch",
+      "KnockDown",
+      "KnockUp",
+      "Juggle",
+      "Groggy",
+      "Executed",
+      "Parried",
+      "EnemyLockOn"
+    ],
+    "PostPatternDelayTime": {"Min": 0.6, "Max": 1.0},
+    "SightDistance": 1200,
+    "SightAngle": 120,
+    "Effects": ["CutterPPRegen"],
+    "Montages": {
+      "SingleSlash": "/Game/Animations/AM_Cutter_SingleSlash.AM_Cutter_SingleSlash",
+      "DoubleSlash": "/Game/Animations/AM_Cutter_DoubleSlash.AM_Cutter_DoubleSlash",
+      "HeavyCleave": "/Game/Animations/AM_Cutter_HeavyCleave.AM_Cutter_HeavyCleave",
+      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
+      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
+      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
+      "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath"
+    }
+  },
+  "Gunner": {
+    "DisplayName": "경비 사수",
+    "Toughness": "Small",
+    "Attributes": {
+      "HP": 300,
+      "MaxHP": 300,
+      "PP": 200,
+      "MaxPP": 200,
+      "ATK": 90,
+      "MOV": 200
+    },
+    "Abilities": [
+      "PistolShot",
+      "Flinch",
+      "KnockDown",
+      "KnockUp",
+      "Juggle",
+      "Groggy",
+      "Executed",
+      "Parried",
+      "EnemyLockOn"
+    ],
+    "PostPatternDelayTime": {"Min": 2, "Max": 4},
+    "SightDistance": 2000,
+    "SightAngle": 120,
+    "Effects": ["GunnerPPRegen"],
+    "Montages": {
+      "PistolShot": "/Game/Animations/AM_Gunner_PistolShot.AM_Gunner_PistolShot",
+      "Flinch": "/Game/Animations/AM_Flinch.AM_Flinch",
+      "FlinchAir": "/Game/Animations/AM_FlinchAir.AM_FlinchAir",
+      "KnockDown": "/Game/Animations/AM_KnockDown.AM_KnockDown",
+      "KnockUp": "/Game/Animations/AM_KnockUp.AM_KnockUp",
+      "Groggy": "/Game/Animations/AM_Boss_Groggy.AM_Boss_Groggy",
+      "Executed": "/Game/Animations/AM_Boss_Executed.AM_Boss_Executed",
+      "ExecutedDeath": "/Game/Animations/AM_Boss_ExecutedDeath.AM_Boss_ExecutedDeath"
+    }
   }
 }

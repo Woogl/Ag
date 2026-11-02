@@ -4,15 +4,19 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "AIController.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PrimitiveComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "GenericTeamAgentInterface.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISense_Sight.h"
 #include "TargetingSystem/TargetingPreset.h"
 #include "TargetingSystem/TargetingSubsystem.h"
 #include "Types/TargetingSystemDataStores.h"
@@ -65,6 +69,31 @@ bool AgTargeting::IsInRange(const AActor& Source, const AActor& Target, float Ra
 	// 찾자마자 풀리기를 되풀이합니다.
 	const UPrimitiveComponent* Collision = Cast<UPrimitiveComponent>(Target.GetRootComponent());
 	return Range > 0.f && Collision && Collision->OverlapComponent(Source.GetActorLocation(), FQuat::Identity, FCollisionShape::MakeSphere(Range));
+}
+
+bool AgTargeting::IsVisible(const AActor& Source, const AActor& Target, FName Socket)
+{
+	const APawn* Pawn = Cast<APawn>(&Source);
+	AAIController* AIController = Pawn ? Cast<AAIController>(Pawn->GetController()) : nullptr;
+	const UAIPerceptionComponent* Perception = AIController ? AIController->GetPerceptionComponent() : nullptr;
+	if (Perception && !Perception->HasActiveStimulus(Target, UAISense::GetSenseID<UAISense_Sight>()))
+	{
+		return false;
+	}
+	if (Socket.IsNone())
+	{
+		return true;
+	}
+	const ACharacter* Character = Cast<ACharacter>(&Source);
+	const USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
+	if (!Mesh || !Mesh->DoesSocketExist(Socket))
+	{
+		return false;
+	}
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgVisible), false, &Source);
+	QueryParams.AddIgnoredActor(&Target);
+	return !Source.GetWorld()->LineTraceTestByObjectType(Mesh->GetSocketLocation(Socket), Target.GetActorLocation(),
+		FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
 }
 
 void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& TargetingHandle) const
@@ -152,6 +181,13 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 	                       ScreenPosition.X >= 0.f && ScreenPosition.Y >= 0.f && ScreenPosition.X <= ViewportWidth &&
 	                       ScreenPosition.Y <= ViewportHeight;
 	return !bOnScreen;
+}
+
+bool UAgTargetingFilterTask_Visible::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+{
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const AActor* Candidate = TargetData.HitResult.GetActor();
+	return !Source || !Source->SourceActor || !Candidate || !AgTargeting::IsVisible(*Source->SourceActor, *Candidate, Socket);
 }
 
 float UAgTargetingSortTask_ScreenCenter::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const

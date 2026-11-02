@@ -23,6 +23,11 @@ public:
 		return false;
 	}
 
+	virtual bool ShowsDamageNumbers() const override
+	{
+		return true;
+	}
+
 protected:
 	virtual void BeginPlay() override;
 

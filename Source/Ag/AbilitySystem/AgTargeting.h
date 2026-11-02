@@ -16,6 +16,9 @@ namespace AgTargeting
 	TArray<AActor*> FindTargets(const FAgTargetingRequest& Request, AActor& Source);
 	AActor* FindTarget(const FAgTargetingRequest& Request, AActor& Source);
 	bool IsInRange(const AActor& Source, const AActor& Target, float Range);
+
+	/** 출처가 AI면 지각의 시야가 대상을 지금 감지하고, Socket이 있으면 출처 메시의 그 소켓에서 대상 캡슐 중심까지 WorldStatic이 가리지 않습니다. */
+	bool IsVisible(const AActor& Source, const AActor& Target, FName Socket);
 }
 
 UCLASS()
@@ -64,6 +67,18 @@ class UAgTargetingFilterTask_OnScreen : public UTargetingFilterTask_BasicFilterT
 
 protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
+};
+
+UCLASS()
+class UAgTargetingFilterTask_Visible : public UTargetingFilterTask_BasicFilterTemplate
+{
+	GENERATED_BODY()
+
+protected:
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
+
+	UPROPERTY(EditAnywhere, Category = "Target Filter")
+	FName Socket;
 };
 
 UCLASS()
