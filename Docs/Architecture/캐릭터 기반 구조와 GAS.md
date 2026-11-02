@@ -7,7 +7,7 @@
 | 항목 | 결정 | 이유 |
 | - | - | - |
 | ASC 위치 | 캐릭터에 둡니다. | 싱글플레이라 PlayerState에 둘 이유가 없습니다. |
-| 게임 모드와 게임 스테이트 | 게임 모드 클래스는 `AAgGameMode` 하나이고, 타이틀(`BP_FrontEndGameMode`)과 스테이지(`BP_StageGameMode`)는 BP 기본값(시작 화면, 스테이지 맵, 폰)으로만 나뉩니다. 스테이지의 보스는 최대 한 명이며, 게임 모드가 등록한 보스와 정한 스테이지 결과를 `AAgGameState`가 들고, HUD와 전투 결과 화면은 게임 스테이트를 읽습니다. 플레이어 컨트롤러는 레이어에 화면을 여는 UI 명령만 전달합니다. | 게임 모드는 규칙, 게임 스테이트는 UI도 읽는 상태라는 엔진의 역할 구분을 따릅니다. 게임 스테이트는 플레이어 로그인보다 먼저 생기므로, HUD는 로그인과 `BeginPlay`의 순서와 관계없이 현재 보스를 읽고 이후 변경을 구독합니다. |
+| 게임 모드와 게임 스테이트 | 게임 모드 클래스는 `AAgGameMode`이고, 타이틀(`BP_FrontEndGameMode`)과 스테이지(`BP_StageGameMode`)는 BP 기본값(시작 화면, 스테이지 목록, 폰)으로만 나뉩니다. 시뮬레이션 룸만 하위 클래스 `AAgSimulationRoomGameMode`를 두고, `LV_SimulationRoom`의 월드 설정에서 게임 모드를 `BP_SimulationRoomGameMode`로 재정의합니다. 스테이지의 보스는 최대 한 명이며, 게임 모드가 등록한 보스와 정한 스테이지 결과를 `AAgGameState`가 들고, HUD와 전투 결과 화면은 게임 스테이트를 읽습니다. 플레이어 컨트롤러는 레이어에 화면을 여는 UI 명령만 전달합니다. | 게임 모드는 규칙, 게임 스테이트는 UI도 읽는 상태라는 엔진의 역할 구분을 따릅니다. 게임 스테이트는 플레이어 로그인보다 먼저 생기므로, HUD는 로그인과 `BeginPlay`의 순서와 관계없이 현재 보스를 읽고 이후 변경을 구독합니다. 시뮬레이션 룸은 배치, 선택 화면, 클리어 조건이 달라 레벨마다 규칙을 바꾸는 엔진의 방식(게임 모드 재정의)을 씁니다. |
 | 진영과 대상 판정 | `AAgCharacterBase`의 `EAgTeam`과 `GetTeamAttitudeTowards`가 진영 태도를 정하고, AI 컨트롤러는 빙의한 캐릭터의 태도를 전달합니다. 적군과 중립(샌드백)은 서로를 `Neutral`로 보며 대상 선택과 지각은 `Hostile`만 받습니다. 적중은 죽지 않았고 `Friendly`가 아닌 상대에게 적용하며, 이 판정은 `AAgCharacterBase::CanBeHitBy` 하나를 무기·투사체와 범위 적중용 `Hit` 프리셋(`AgTargetingFilterTask_Hittable`)이 함께 씁니다. | 공격 대상 선택과 공격 판정에 휘말리는 대상을 구분하면서 진영 태도는 한곳에서 정합니다. 맞는 대상이 공격 방식마다 갈리지 않습니다. |
 | 어트리뷰트 | 세트 하나에 기획서 스탯을 기획서 이름 그대로 둡니다. HP, MaxHP, SP, MaxSP, MP, MaxMP, UP, MaxUP, PP, MaxPP, ATK, DEF, MOV. 보스가 쓰지 않는 SP·MP·UP는 0입니다. 기본값이 바뀌기 전에 범위(0 ~ 최대값)로 고정합니다. PP를 더하기 모디파이어로 줄일 때는 `PreGameplayEffectExecute`에서 감소량의 절댓값을 반올림한 뒤 음수로 적용합니다. 반올림 규칙은 [전투 시스템](<../Design/System/전투 시스템.md>) '대미지'를 따릅니다. | 기획서, 데이터 위치표, 코드의 이름이 같아 대조하기 쉽습니다. 최대값에서 리젠이 더해져도 기본값이 넘치지 않아야 다음 감소가 바로 보입니다. PP 감소량을 적용 직전에 반올림하면 패리도 같은 규칙을 따르고, 리젠으로 생긴 남은 PP의 소수부는 보존됩니다. |
 | 어빌리티 목록 | 캐릭터 데이터(`Characters.json`)의 `Abilities`에 적힌 어빌리티 ID마다 단일 `UAgGameplayAbility`를 독립 스펙으로 부여합니다. 정의는 `Abilities.json`에 있고, 어빌리티 태그와 트리거는 스펙에 넣습니다. | 같은 클래스라도 조건·이벤트·재발동·쿨다운·GE 출처가 어빌리티마다 구분됩니다. |
@@ -36,7 +36,7 @@
 | `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(시작한 전환의 기록 포함), 패턴 발동 가능 여부(`CanActivatePattern`)와 지금 고를 수 있는 패턴 모으기(`GatherPatterns`), PP 감소 허용 여부(`CanLosePP`), 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 처형 피격 중 전용 사망 모션, 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 처형 안내) |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 보스 처치 슬로우모션 값 |
 | `AAgSandbagCharacter` | `AAgEnemyCharacter` | 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`). 중립 진영, 사망 이벤트를 받으면 사망 처리 대신 `HPRefill`, 자기 공격(`Ability.Enemy.Pattern`) 중에는 엔진 `SetAnimRootMotionTranslationScale(0)`으로 모션의 이동만 끔. 공격 샌드백만 `ST_Sandbag`(전투 아래 공격 대기·공격·피격 반응 대기와 플레이어 사망 대기, 기존 적 Task·조건만 씀)을 씁니다. |
-| `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`)과 움찔(`IsEnemyFlinching`) 조회, AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 팀 태도 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달 |
+| `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`)과 움찔(`IsEnemyFlinching`) 조회, AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 팀 태도 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달, 시야와 관계없이 상대를 알아차리게 하는 `NoticeTarget`(그 상대가 대미지 0으로 친 대미지 감각 자극이라 기존 전투 진입 조건이 그대로 판단) |
 | `FAgEnemyAICondition_Flinching` | `FStateTreeAIConditionBase` | 공통 조건 인스턴스 데이터의 Controller로 `IsEnemyFlinching`을 조회합니다. `bInvert`로 반대 조건을 표현합니다. |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, PP 감소량 반올림과 감소 허용 조건 적용, 사망·그로기 판정 |
 
@@ -107,8 +107,30 @@ classDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 전투원 등록과 보스 기록, 승패 판정과 전투 결과 화면 열기, 보스 처치로 승리가 정해질 때 죽은 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 맵 이동(타이틀, 스테이지, 다시 시작, 종료) |
+| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 전투원 등록과 보스 기록, 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록(`Stages`: 이름과 레벨)과 레벨이 게임에 있는지 확인(`IsStageAvailable`), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료) |
 | `AAgGameState` | `AGameStateBase` | 스테이지의 보스와 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함), 각각의 변경 알림(`OnBossChanged`, `OnStageResultChanged`) |
+| `AAgSimulationRoomGameMode` | `AAgGameMode` | 후보 적 클래스(`EnemyClasses`), 레벨의 배치 지점을 `Slot` 순으로 수집, 레벨 주소 옵션 `Enemies`(자리 번호 순서의 캐릭터 데이터 ID)로 받은 구성을 플레이어 참가 처리에서 배치하고 적군은 `NoticeTarget`으로 전투 진입, 구성이 비었으면 적 선택 화면 열기, 어느 적을 어느 자리에 둘 수 있는지(`CanPlace`), 같은 맵을 구성 옵션으로 다시 열기. Stage Clear 조건은 적군 진영 캐릭터가 모두 사망 |
+| `AAgEnemySpawnPoint` | `ATargetPoint` | 레벨에 놓는 배치 자리 표시. 자리 번호 `Slot`만 가짐 |
+| `UAgEnemySelectScreen` | `UCommonActivatableWidget` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
+| `UAgDropdown` | `UCommonUserWidget` | 메뉴 화면(적 선택, 스테이지 선택)이 함께 쓰는 드롭다운. 엔진 `UComboBoxKey`를 감싸 모양을 `WBP_Dropdown` 하나에 두고, 화면이 키와 표시 글자로 목록을 채우며, 사람이 고른 변경만 알림 |
+| `UAgDropdownOptionWidget` | `UCommonUserWidget` | 드롭다운의 닫힌 칸과 목록 항목 하나. 받은 글자를 표시 |
+
+- 구성은 같은 맵을 주소 옵션으로 다시 여는 엔진의 기본 경로로 전합니다. `RestartLevel`은 상대 이동이라 옵션이 남아 Restart가 같은 구성을 유지하고, 타이틀 이동은 절대 이동이라 옵션이 버려집니다.
+- `UComboBoxKey`를 상속하지 않고 사용자 위젯으로 감싼 것은 모양을 위젯 블루프린트 기본값에 두고, 사용자 위젯만 받는 `UDynamicEntryBox`(적 선택 화면의 자리 줄)의 항목으로 만들기 위해서입니다. CommonUI 버튼이 엔진 버튼을 감싸는 것과 같은 구조입니다.
+
+```mermaid
+classDiagram
+    AGameModeBase <|-- AAgGameMode
+    AAgGameMode <|-- AAgSimulationRoomGameMode
+    AAgSimulationRoomGameMode --> AAgCharacterBase : EnemyClasses
+    ATargetPoint <|-- AAgEnemySpawnPoint
+    AAgSimulationRoomGameMode ..> AAgEnemySpawnPoint : Slot 순으로 수집
+    AAgSimulationRoomGameMode ..> UAgEnemySelectScreen : EnemySelectScreenClass
+    AAgSimulationRoomGameMode ..> AAgEnemyAIController : NoticeTarget
+    UAgEnemySelectScreen *-- UAgDropdown : SlotList 항목
+    UAgDropdown *-- UComboBoxKey : ComboBox
+    UAgDropdown ..> UAgDropdownOptionWidget : OptionWidgetClass
+```
 
 ### 피격 상태와 AI 조건
 
