@@ -13,7 +13,7 @@
       "MaxUP": 100,
       "ATK": 100,
       "DEF": 50,
-      "MOV": 400
+      "MOV": 375
     },
     "Abilities": [
       "BasicAttack",

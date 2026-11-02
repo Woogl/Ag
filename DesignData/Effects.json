@@ -85,7 +85,7 @@
   "SprintSpeed": {
     "DurationPolicy": "Infinite",
     "Modifiers": [
-      {"Attribute": "MOV", "Multiplier": 1.5}
+      {"Attribute": "MOV", "Multiplier": 1.6}
     ]
   },
   "ParryReward": {
