@@ -10,9 +10,11 @@
 - 슬레이트는 틴트 알파가 0인 박스를 그리지 않는다. 채움이 투명한 둥근 박스는 외곽선도 보이지 않는다.
 - `FKey::GetDisplayName()`은 에디터 언어를 따른다(한국어 에디터에서 '왼쪽 Shift').
 - CommonUI에서 위 화면은 포커스와 키 입력만 가져가고 클릭은 뒤 화면에 닿는다. 팝업은 화면 전체를 덮는 배경으로 클릭을 막는다.
+- 위젯 상태 알림(`RegisterPostStateListener`)의 잠금 비트(`UWidgetLockedStateRegistration::Bit`)는 이 프로젝트에서 비어 있어, 잠긴 버튼에서도 꺼진 것으로 읽힌다. 등록 클래스는 CommonUI에 있고 UMG의 위젯 상태 설정이 그보다 먼저 만들어지는 것으로 보인다. 잠금 여부는 `GetLocked()`로 읽는다.
 
 ## PIE에서 확인
 
 - PIE에서는 Esc가 PIE를 끝낸다. CommonUI가 에디터의 PIE 종료 단축키와 같은 키를 일부러 넘긴다. Esc 동작은 Standalone Game으로 확인하고, 에디터 단축키는 사용자 설정이라 바꾸지 않는다.
 - CommonUI는 에디터에서 PIE 뷰포트가 포커스를 가질 때만 입력 설정과 첫 포커스를 적용한다. 뒤에 있는 PIE에서 버튼 선택이 보이지 않으면 버그로 보기 전에 포커스부터 확인한다. 사람의 마우스가 떠 있는 PIE 창을 지나가도 버튼이 선택되니, 선택이 이상하면 `is_hovered()`와 커서 위치를 본다.
 - CommonUI 버튼은 `<화면>.WidgetTree_0.<버튼>.WidgetTree_0.InternalRootButtonBase`의 `on_clicked.broadcast()`로 누른다. 화면은 `is_activated()`로 고른다. 이전 월드의 화면이 GameInstance에 남아 있다.
+- 에디터 파이썬에 `unreal.WidgetBlueprintLibrary`·`unreal.SlateBlueprintLibrary`가 없다. 화면은 `unreal.ObjectIterator(<위젯 클래스>)`를 `get_world()`가 PIE 월드인 것으로 걸러 찾는다. 뒤에 있는 PIE에서는 위젯의 캐시된 지오메트리가 0이라 배치는 `shot showui` 캡처로 본다.
