@@ -167,12 +167,21 @@ void AAgCharacterBase::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
 
+	// 편집 중인 월드(에디터, 블루프린트 미리 보기)에서는 데이터를 쓰는 플레이 코드가 돌지 않으므로 연결하지 않습니다.
+	// 데이터를 아직 적지 않은 캐릭터를 놓거나 띄워도 에디터가 멈추지 않습니다.
+	if (!GetWorld()->IsGameWorld())
+	{
+		return;
+	}
+
 	// 적 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 적 데이터를 읽으므로,
 	// 그 전에 연결합니다.
 	CharacterData = UAgAssetManager::Get().FindCharacterData(CharacterDataId);
 	if (!CharacterData)
 	{
-		UE_LOG(LogAg, Fatal, TEXT("%s cannot start: character data '%s' is missing."), *GetName(), *CharacterDataId.ToString());
+		// 엔진은 여기서 지운 액터의 컴포넌트 초기화와 BeginPlay를 건너뛰므로, 데이터가 있다고 보는 코드에 닿지 않습니다.
+		UE_LOG(LogAg, Error, TEXT("%s was removed: character data '%s' is missing."), *GetName(), *CharacterDataId.ToString());
+		Destroy();
 	}
 }
 
