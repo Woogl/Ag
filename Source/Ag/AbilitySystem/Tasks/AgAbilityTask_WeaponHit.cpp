@@ -91,7 +91,7 @@ void UAgAbilityTask_WeaponHit::Activate()
 		EndTask();
 		return;
 	}
-	HitReward = FAgHitRewardState::Make(Params.HitReward);
+	HitState = MakeShared<FAgHitState>();
 	TArray<UCapsuleComponent*> Capsules;
 	Character->GetComponents(Capsules);
 	for (UCapsuleComponent* Capsule : Capsules)
@@ -219,7 +219,7 @@ bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Loca
 		return true;
 	}
 	TouchedActors.Add(&Target);
-	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeDamageSpec(Params.Damage, HitReward);
+	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeDamageSpec(Params.Damage, HitState);
 	if (Spec.IsValid())
 	{
 		// 엔진은 Origin이 없으면 HitResult의 TraceStart를 Origin으로 넣으므로, 맞은 위치를 먼저 넣습니다.

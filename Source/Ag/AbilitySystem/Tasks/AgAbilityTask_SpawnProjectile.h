@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
-#include "Data/AgHitReward.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_SpawnProjectile.generated.h"
 
@@ -18,9 +17,6 @@ struct FAgSpawnProjectileParams : public FAgTaskParams
 
 	UPROPERTY()
 	FName SocketName;
-
-	UPROPERTY()
-	TOptional<FAgHitReward> HitReward;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

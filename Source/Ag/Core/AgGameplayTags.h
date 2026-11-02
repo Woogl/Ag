@@ -31,6 +31,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_JumpAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LockOn);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_HitReward);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Flinch);
@@ -96,6 +97,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parried);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BasicAttackStarted);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackHit);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackBlocked);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Landed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Apex);

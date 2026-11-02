@@ -21,11 +21,11 @@ void UAgAbilityTask_AreaHit::Activate()
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	if (Character)
 	{
-		const TSharedPtr<FAgHitRewardState> HitReward = FAgHitRewardState::Make(Params.HitReward);
+		const TSharedPtr<FAgHitState> HitState = MakeShared<FAgHitState>();
 		for (AActor* Target : AgTargeting::FindTargets(Params.Area, *Character))
 		{
 			UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-			const FGameplayEffectSpecHandle Spec = AgAbility->MakeDamageSpec(Params.Damage, HitReward);
+			const FGameplayEffectSpecHandle Spec = AgAbility->MakeDamageSpec(Params.Damage, HitState);
 			if (TargetASC && Spec.IsValid())
 			{
 				Spec.Data->GetContext().AddOrigin(Target->GetActorLocation());

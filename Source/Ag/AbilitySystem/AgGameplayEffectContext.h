@@ -3,19 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/AgHitReward.h"
 #include "GameplayEffectTypes.h"
 #include "AgGameplayEffectContext.generated.h"
 
-struct FAgHitRewardState
+/** 피해 Task 하나(한 타)가 만든 피해가 모두 함께 가리킵니다. */
+struct FAgHitState
 {
-	FAgHitReward Amounts;
-	bool bGranted = false;
-
-	static TSharedPtr<FAgHitRewardState> Make(const TOptional<FAgHitReward>& Reward)
-	{
-		return Reward ? MakeShared<FAgHitRewardState>(FAgHitRewardState{*Reward}) : TSharedPtr<FAgHitRewardState>();
-	}
+	bool bLanded = false;
 };
 
 USTRUCT()
@@ -26,10 +20,10 @@ struct FAgGameplayEffectContext : public FGameplayEffectContext
 	virtual UScriptStruct* GetScriptStruct() const override;
 	virtual FAgGameplayEffectContext* Duplicate() const override;
 
-	static TSharedPtr<FAgHitRewardState> GetHitReward(const FGameplayEffectContextHandle& Context);
+	static TSharedPtr<FAgHitState> GetHitState(const FGameplayEffectContextHandle& Context);
 
-	// 이전 공격의 지연 적중과 대상별 컨텍스트 복제도 원래 충전 단위의 지급 여부를 공유합니다.
-	TSharedPtr<FAgHitRewardState> HitReward;
+	// 이전 공격의 지연 적중과 대상별 컨텍스트 복제도 같은 타의 첫 적중 여부를 공유합니다.
+	TSharedPtr<FAgHitState> HitState;
 };
 
 template <>

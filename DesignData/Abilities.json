@@ -17,35 +17,35 @@
           {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
           {"Task": "RootMotion", "Start": 0, "End": 0.17, "TargetingRange": 170, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.38, "Effect": "Busy"},
-          {"Task": "WeaponHit", "Start": 0.27, "End": 0.3, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.27, "End": 0.3, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.38, "Event": "Input.Attack", "ToSection": "Attack2", "BlendTime": 0.25}
         ],
         "Attack2": [
           {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
           {"Task": "RootMotion", "Start": 0, "End": 0.18, "TargetingRange": 220, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.4, "Effect": "Busy"},
-          {"Task": "WeaponHit", "Start": 0.28, "End": 0.32, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.28, "End": 0.32, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.4, "Event": "Input.Attack", "ToSection": "Attack3", "BlendTime": 0.25}
         ],
         "Attack3": [
           {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
           {"Task": "RootMotion", "Start": 0, "End": 0.15, "TargetingRange": 220, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.38, "Effect": "Busy"},
-          {"Task": "WeaponHit", "Start": 0.25, "End": 0.3, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.25, "End": 0.3, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.38, "Event": "Input.Attack", "ToSection": "Attack4", "BlendTime": 0.25}
         ],
         "Attack4": [
           {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
           {"Task": "RootMotion", "Start": 0, "End": 0.17, "TargetingRange": 230, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.41, "Effect": "Busy"},
-          {"Task": "WeaponHit", "Start": 0.27, "End": 0.33, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.27, "End": 0.33, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.41, "Event": "Input.Attack", "ToSection": "Attack5", "BlendTime": 0.25}
         ],
         "Attack5": [
           {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
           {"Task": "RootMotion", "Start": 0, "End": 0.21, "TargetingRange": 270, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.83, "Effect": "Busy"},
-          {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "HitReward": {"MP": 4, "UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.83, "Event": "Input.Attack", "ToSection": "Attack1", "BlendTime": 0.25}
         ]
       }
@@ -76,7 +76,7 @@
           {"Task": "RootMotion", "Start": 0, "End": 0.13, "TargetingRange": 300, "bWarpTranslation": false},
           {"Task": "ApplyEffect", "Start": 0, "EndSection": "Land", "End": 0.13, "Effect": "Busy"},
           {"Task": "Transition", "Start": 0, "EndSection": "Fall", "Event": "Event.Landed", "ToSection": "Land"},
-          {"Task": "WeaponHit", "Start": 0.23, "EndSection": "Land", "End": 0.05, "HitReward": {"MP": 4}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.23, "EndSection": "Land", "End": 0.05, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Plunge", "Start": 0.3, "EndSection": "Fall", "Speed": 1000}
         ]
       }
@@ -130,7 +130,7 @@
           {"Task": "RootMotion", "Start": 0, "End": 0.15, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.51, "Effect": "Busy"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.23, "Effect": "Invincible"},
-          {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
         ]
       }
     }
@@ -209,7 +209,7 @@
           {"Task": "RootMotion", "Start": 0, "End": 0.43, "TargetingRange": 800, "RotationMethod": "Slerp", "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.76, "Effect": "Busy"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.48, "Effect": "Invincible"},
-          {"Task": "WeaponHit", "Start": 0.43, "End": 0.48, "HitReward": {"MP": 8}, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.43, "End": 0.48, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "ApplyEffect", "Start": 0.76, "Effect": "GuardCounterRecovery", "bRemoveOnEnd": false}
         ]
       }
@@ -251,7 +251,7 @@
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.3167, "TargetingRange": 290, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.5633, "Effect": "Busy"},
-          {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "HitReward": {"UP": 15}, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2.5, "HitReaction": "KnockUp", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2.5, "HitReaction": "KnockUp", "bGuardable": true}}
         ]
       }
     }
@@ -325,6 +325,22 @@
     "Targeting": {"Preset": "LockOn", "Range": 2000, "bRequired": true},
     "Tasks": [
       {"Task": "WaitTargetLost", "ReleaseRange": 3000}
+    ]
+  },
+  "HitReward": {
+    "AbilityTags": ["Ability.HitReward"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.AttackHit"}
+    ],
+    "Tasks": [
+      {"Task": "HitReward", "Rewards": [
+        {"AbilityTag": "Ability.Action.BasicAttack", "MP": 4},
+        {"AbilityTag": "Ability.Action.BasicAttack", "Section": "Attack5", "UP": 15},
+        {"AbilityTag": "Ability.Action.JumpAttack", "MP": 4},
+        {"AbilityTag": "Ability.Action.DodgeCounter", "MP": 8},
+        {"AbilityTag": "Ability.Action.GuardCounter", "MP": 8},
+        {"AbilityTag": "Ability.Action.Skill", "UP": 15}
+      ]}
     ]
   },
   "Flinch": {

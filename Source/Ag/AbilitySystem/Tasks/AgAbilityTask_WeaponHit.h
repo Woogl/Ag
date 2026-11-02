@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Data/AgAttackData.h"
-#include "Data/AgHitReward.h"
 #include "Data/AgTaskParams.h"
 #include "Engine/EngineBaseTypes.h"
 #include "AgAbilityTask_WeaponHit.generated.h"
@@ -13,7 +12,7 @@
 class AAgCharacterBase;
 class UCapsuleComponent;
 struct FHitResult;
-struct FAgHitRewardState;
+struct FAgHitState;
 
 USTRUCT()
 struct FAgWeaponHitParams : public FAgTaskParams
@@ -25,9 +24,6 @@ struct FAgWeaponHitParams : public FAgTaskParams
 
 	UPROPERTY()
 	FName ComponentTag = TEXT("WeaponCollision");
-
-	UPROPERTY()
-	TOptional<FAgHitReward> HitReward;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
@@ -68,7 +64,7 @@ private:
 	UPROPERTY()
 	FAgWeaponHitParams Params;
 
-	TSharedPtr<FAgHitRewardState> HitReward;
+	TSharedPtr<FAgHitState> HitState;
 	TArray<FAgWeaponEdge> Edges;
 	TSet<TWeakObjectPtr<AActor>> TouchedActors;
 	FAgSweepTickFunction SweepTick;

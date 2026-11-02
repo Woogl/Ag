@@ -10,7 +10,7 @@
 class UGameplayEffect;
 enum class EAgEffect : uint8;
 struct FAgDamage;
-struct FAgHitRewardState;
+struct FAgHitState;
 
 UCLASS()
 class UAgGameplayAbility : public UGameplayAbility
@@ -28,7 +28,7 @@ public:
 
 	/** 엔진 MakeOutgoingGameplayEffectSpec은 GE 클래스를 받는데 Effects.json의 효과는 GE 객체이므로 직접 만듭니다. */
 	FGameplayEffectSpecHandle MakeEffectSpec(const UGameplayEffect& Effect) const;
-	FGameplayEffectSpecHandle MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitRewardState>& Reward) const;
+	FGameplayEffectSpecHandle MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitState>& HitState) const;
 
 	FName GetAbilityId() const
 	{

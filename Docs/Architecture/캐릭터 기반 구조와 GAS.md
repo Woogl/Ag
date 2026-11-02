@@ -16,7 +16,7 @@
 | 상태 | 움찔·넉업과 저글·넉다운·가드 밀림·가드 브레이크, 처형 피격, 페이즈 전환은 이벤트로 발동하는 어빌리티(GameplayEvent 트리거)로, 그로기 모션은 그로기 태그로 발동하는 어빌리티(OwnedTagPresent 트리거)로 만듭니다. 발동·중단 관계는 태그로 나타내며, 기획 규칙은 [전투 시스템](<../Design/System/전투 시스템.md>)을 따릅니다. 공통 피격 어빌리티는 `Ability.Reaction.HitReaction` 아래에 두어 상위 상태가 부모 태그 하나로 취소합니다. 세부 상태 구분은 아래 '피격 상태와 AI 조건'을 따릅니다. 사망은 어빌리티가 아니라 캐릭터가 사망 이벤트를 받아 처리합니다. 그로기는 적 캐릭터가 `Event.Groggy`를 받아 거는 지속 효과(`Groggy`)가 상태 태그를 부여하고, 그로기 어빌리티는 그 태그가 붙으면 발동하고 떨어지면 엔진이 끝내며(`End: TriggerTag`) 모션만 맡습니다. 그로기 몽타주는 반복 섹션에서 끝 섹션으로 미리 넘어가(Transition의 `bSectionEndsWithTag`), 효과가 끝나는 때에 끝 섹션을 마칩니다. 그로기 어빌리티의 OwnedTags에는 `State.Groggy`를 넣지 않습니다(넣으면 효과가 끝나도 태그가 남아 그로기가 끝나지 않습니다). 그 밖에 어빌리티가 붙이는 상태 태그는, 어빌리티 내내 붙으면 ActivationOwnedTags에 두고, 일부 구간에만 붙으면(회피의 무적 구간, 후딜 전의 Busy 등) 시간표의 ApplyEffect 구간으로 그 태그를 주는 효과를 겁니다. | 어빌리티와 같은 방식이라 규칙이 한곳에 모입니다. 두 방식 모두 어빌리티가 끝나면 태그가 떨어지므로, 어빌리티마다 태그를 떼는 코드를 두지 않습니다. 그로기의 시작(효과)과 끝(PP 회복)은 PP·그로기 규칙의 주인인 적 캐릭터가 맡고, 그로기 어빌리티가 끝나는 때는 엔진 트리거가 정합니다. |
 | 강인도·슈퍼아머 | 강인도는 `UAgCharacterData::Toughness`이며 어트리뷰트로 만들지 않습니다. 슈퍼아머는 JSON 효과 `SuperArmor`가 `State.SuperArmor`를 부여합니다. 반응 선택은 대미지 결과 처리 컴포넌트, 가드의 SP 부족 결과는 대미지 실행 계산이 맡습니다. | 캐릭터 등급과 일시적인 상태를 구분하고, 반응 억제가 피해량·적중 연출·보상 전체를 건너뛰지 않게 합니다. |
 | 쿨다운 | 어빌리티(플레이어 액션, 보스 패턴)의 쿨다운은 쿨다운 효과(`Cooldown`) 하나로 셉니다. 어빌리티마다 태그를 두지 않고, 효과의 에셋 태그(`Effect.Cooldown`)와 걸 때 넣은 출처(그 스펙의 어빌리티 인스턴스)로 어빌리티를 구분합니다. 시간은 어빌리티 항목의 `Cooldown`이며 0이면 쿨다운이 없습니다. 플레이어와 보스가 이 길 하나를 씁니다. | 엔진의 쿨다운 GE는 클래스(`CooldownGameplayEffectClass`)로만 받아, 코드에서 만든 GE 객체로 쿨다운을 확인·적용하는 함수를 재정의합니다. 시간은 어빌리티 정의에 두고, 공통 효과의 구성은 아래 '코드가 효과를 쓰는 방법'을 따릅니다. 어빌리티마다 태그를 두지 않아 어빌리티를 더해도 태그가 늘지 않습니다. 쿨다운 유무를 시간 하나로 정해, 쿨다운 효과가 있는지와 시간이 어긋나지 않습니다. |
-| 자원 변화 | 자원이 바뀌는 일마다 그 규칙을 가진 효과를 적용합니다. 어빌리티 비용은 GAS의 비용 흐름(`CheckCost`·`ApplyCost`)에서 자원 효과(`Resource`)를 음수로 걸어 치르고, 적중의 MP·UP 충전도 같은 자원 효과에 얻는 양을 넣습니다. 적중 보상은 `HitReward`가 있는 피해 Task마다 첫 적중에 한 번만 줍니다. 달리기의 지속 소모는 주기 효과(`SprintDrain`)로, PP 회복(그로기·처형 피격이 끝날 때, 페이즈 전환)은 PP를 최대로 덮어쓰는 효과(`PPRefill`)로, 패리로 공격자가 잃는 PP는 공격자의 MaxPP에 비율을 곱하는 효과(`ParryPPLoss`)로 처리합니다. | 자원 변경은 GameplayEffect로 적용하고 고정 기획 값은 JSON을 사용합니다. 엔진의 비용 GE는 클래스(`CostGameplayEffectClass`)로만 받아 쓰지 않고, 비용과 얻기가 자원 효과 하나를 함께 씁니다. |
+| 자원 변화 | 자원이 바뀌는 일마다 그 규칙을 가진 효과를 적용합니다. 어빌리티 비용은 GAS의 비용 흐름(`CheckCost`·`ApplyCost`)에서 자원 효과(`Resource`)를 음수로 걸어 치르고, 적중의 MP·UP 충전도 같은 자원 효과에 얻는 양을 넣습니다. 적중 보상은 피해 Task마다 첫 적중에 한 번, 피격 결과 처리가 공격자에게 보내는 `Event.AttackHit`으로 발동하는 적중 보상 어빌리티(`HitReward`)가 주며, 충전량은 이 어빌리티가 공격한 어빌리티의 태그와 섹션으로 고릅니다. 달리기의 지속 소모는 주기 효과(`SprintDrain`)로, PP 회복(그로기·처형 피격이 끝날 때, 페이즈 전환)은 PP를 최대로 덮어쓰는 효과(`PPRefill`)로, 패리로 공격자가 잃는 PP는 공격자의 MaxPP에 비율을 곱하는 효과(`ParryPPLoss`)로 처리합니다. | 자원 변경은 GameplayEffect로 적용하고 고정 기획 값은 JSON을 사용합니다. 엔진의 비용 GE는 클래스(`CostGameplayEffectClass`)로만 받아 쓰지 않고, 비용과 얻기가 자원 효과 하나를 함께 씁니다. |
 | 리젠 | SP·PP 리젠은 자원마다 회복 효과 하나(`SPRegen`, `PPRegen`)로 처리합니다. 회복은 주기 효과입니다([데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'). 리젠 대기는 태그를 주는 지속 효과(`SPRegenDelay`, `PPRegenDelay`)이고, 회복 효과는 대기 태그가 있는 동안 멈춥니다. 회복 효과의 `RegenDelay`가 자원이 줄 때마다 대기 효과를 다시 걸어 처음부터 다시 셉니다. 회복 효과는 캐릭터 데이터의 시작 효과 목록(`Effects`)에 두어 캐릭터가 시작할 때 겁니다. | 자원 변화를 모두 GameplayEffect로 처리하는 GAS 표준 방식입니다. 회복량, 대기 시간, 대기를 다시 거는 규칙이 효과 정의에 있어 한곳에서 고칩니다. GameplayEffect 타이머는 게임 시간으로 흘러, 히트스톱 중에도 리젠이 계속되는 기획서 규칙과 맞습니다. |
 | PP 감소와 그로기 | PP를 잃을 수 있는지(`CanLosePP`)는 적 캐릭터가 정합니다. 적이 아닌 캐릭터(플레이어)는 PP를 잃지 않고, 적은 `State.Groggy`, `State.Execution`, `State.Invincible` 중 하나가 있으면 잃지 않습니다. PP 감소는 어트리뷰트 세트가 기본값이 바뀌기 전에 이 조건으로 막고, 그로기 판정도 같은 조건을 봅니다. | PP와 그로기는 적의 규칙이라 적 캐릭터에 둡니다. 그로기·처형·무적 중에 PP를 잃지 않는 규칙을 한곳에서 확인하고, PP를 줄이는 효과(대미지, 패리로 잃는 PP)마다 조건을 두지 않아 새 효과도 이 규칙을 따릅니다. |
 
@@ -229,12 +229,12 @@ sequenceDiagram
 
 ### GameplayEffect
 
-효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가 맡습니다. 어빌리티 비용·쿨다운은 어빌리티가, 어빌리티가 거는 효과(패리 구간, 극한 회피 구간, 달리기 소모, 패리·극한 회피의 보상과 회피 반격 기회, 패리로 잃는 PP)는 ApplyEffect가, 히트스톱·적중 충전과 가드 반격 기회(가드·패리 결과)는 피격 결과 처리 컴포넌트가, 그로기 효과와 PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과와 Kill은 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
+효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가 맡습니다. 어빌리티 비용·쿨다운은 어빌리티가, 어빌리티가 거는 효과(패리 구간, 극한 회피 구간, 달리기 소모, 패리·극한 회피의 보상과 회피 반격 기회, 패리로 잃는 PP)는 ApplyEffect가, 적중 충전은 HitReward Task가, 히트스톱과 가드 반격 기회(가드·패리 결과)는 피격 결과 처리 컴포넌트가, 그로기 효과와 PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과와 Kill은 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `UAgDamageExecution` | `UGameplayEffectExecutionCalculation` | 피해·가드 자원 계산과 결과 태그 생성. 슈퍼아머 가드에서는 SP 부족과 가드 브레이크를 구분하고, SP 소모를 보유량 이내로 제한합니다. |
-| `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 전투 결과와 실제 반응의 GameplayCue 전달·히트스톱·적중 보상. 반응 억제와 다른 적중 처리를 분리합니다. |
+| `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 전투 결과와 실제 반응의 GameplayCue 전달·히트스톱·타의 첫 적중 알림(`Event.AttackHit`). 반응 억제와 다른 적중 처리를 분리합니다. |
 | `UAgGameplayCueNotify_Burst` | `UGameplayCueNotify_Burst` | 일회성 효과 재생 뒤 전투 카메라 연출을 요청합니다. 공통 정적 함수는 네 전투 태그만 처리하며 BurstLatent에서도 호출합니다. |
 | `UAgRegenDelayGameplayEffectComponent` | `UGameplayEffectComponent` | 회복 효과의 `RegenDelay`([데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'). 효과가 걸릴 때 회복하는 어트리뷰트의 변경을 구독하고 지워질 때 풉니다(엔진의 대상 태그 조건 컴포넌트가 태그 변경을 구독하는 방식). |
 | `UAgSlowMotionGameplayEffectComponent` | `UGameplayEffectComponent` | 효과의 `SlowMotionSpeed`·`SlowMotionDuration`. 효과가 실행될 때 시간 서브시스템에 슬로우모션을 겁니다. |
@@ -252,9 +252,9 @@ classDiagram
     UGameplayEffectComponent <|-- UAgSlowMotionGameplayEffectComponent
     UGameplayEffect *-- UAgSlowMotionGameplayEffectComponent : GEComponents(SlowMotionDuration)
     UAgAbilitySystemComponent ..> UAgAssetManager : GetEffect
-    UAgGameplayAbility ..> UAgAbilitySystemComponent : MakeEffectSpec(비용, 쿨다운, ApplyEffect)
-    UAgDamageResultGameplayEffectComponent ..> UAgAbilitySystemComponent : MakeEffectSpec(히트스톱, 적중 충전)
-    UAgDamageResultGameplayEffectComponent ..> UAgGameplayAbility : 패리·극한 회피·패리당함 이벤트
+    UAgGameplayAbility ..> UAgAbilitySystemComponent : MakeEffectSpec(비용, 쿨다운, ApplyEffect, 적중 충전)
+    UAgDamageResultGameplayEffectComponent ..> UAgAbilitySystemComponent : MakeEffectSpec(히트스톱)
+    UAgDamageResultGameplayEffectComponent ..> UAgGameplayAbility : 패리·극한 회피·패리당함·첫 적중 이벤트
     UGameplayCueNotify_Burst <|-- UAgGameplayCueNotify_Burst
     UAgDamageResultGameplayEffectComponent ..> UAgGameplayCueNotify_Burst : 엔진 GameplayCue 전달
     AAgGameplayCueNotify_BurstLatent ..> UAgGameplayCueNotify_Burst : PlayCombatCameraReactions
@@ -281,7 +281,7 @@ classDiagram
 | `Hitstop` | 지속 효과와 `State.Hitstop` 부여. 지속 시간은 `CombatRules.json`의 `HitstopDuration`을 적용할 스펙에 지정 |
 | `PPRefill` | 즉시 효과. 대상의 MaxPP를 스냅샷 없이 읽어 PP에 덮어씀 |
 
-- 걸 효과의 수와 종류를 데이터가 정하는 자리는 데이터의 효과 ID 목록으로 둡니다. 거는 때를 코드가 정하면, 코드는 그때 이벤트를 보내고 그 이벤트로 발동하는 어빌리티의 `ApplyEffect`가 겁니다(패리 보상은 Parry, 극한 회피 보상은 PerfectDodge, 패리로 잃는 PP는 Parried). 그로기 효과는 PP·그로기 규칙의 주인인 적 캐릭터가 `Event.Groggy`를 받아 직접 겁니다.
+- 걸 효과의 수와 종류를 데이터가 정하는 자리는 데이터의 효과 ID 목록으로 둡니다. 거는 때를 코드가 정하면, 코드는 그때 이벤트를 보내고 그 이벤트로 발동하는 어빌리티의 `ApplyEffect`가 겁니다(패리 보상은 Parry, 극한 회피 보상은 PerfectDodge, 패리로 잃는 PP는 Parried). 적중 보상은 충전량을 공격마다 골라야 해서, HitReward 어빌리티의 HitReward Task가 고른 양을 자원 효과에 넣어 겁니다. 그로기 효과는 PP·그로기 규칙의 주인인 적 캐릭터가 `Event.Groggy`를 받아 직접 겁니다.
 - 걸 효과를 GE 클래스로만 받는 엔진 기능(추가 효과 컴포넌트, 실행의 조건부 효과)은 쓰지 않고 효과 ID 필드로 대신합니다. 엔진의 다른 효과 지우기 컴포넌트는 자기 자신을 GE 클래스의 기본 객체와 비교해 가려 내 실행 중에 만든 GE에서는 자기 자신을 가려 내지 못하고, 스택 방식은 정하는 함수가 에디터 전용이라, 리젠 대기는 걸린 대기 효과를 태그로 지우고 다시 겁니다.
 - 데이터가 거는 효과(어빌리티 정의와 시간표의 ApplyEffect)는 효과 ID로 적습니다. 구간에 두는 효과는 `Infinite`입니다. 구간의 길이는 시간표가 정하기 때문입니다.
 - `SuperArmor`는 `Infinite`와 `State.SuperArmor`만 가진 JSON 효과입니다. 현재 캐릭터의 시작 효과나 스킬·패턴에는 연결하지 않습니다. 여러 효과가 같은 상태를 부여할 때는 태그를 직접 지우지 않고 각각의 효과 핸들을 제거해 나머지 효과의 보호를 유지합니다.

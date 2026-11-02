@@ -17,10 +17,10 @@ FAgGameplayEffectContext* FAgGameplayEffectContext::Duplicate() const
 	return Copy;
 }
 
-TSharedPtr<FAgHitRewardState> FAgGameplayEffectContext::GetHitReward(const FGameplayEffectContextHandle& Context)
+TSharedPtr<FAgHitState> FAgGameplayEffectContext::GetHitState(const FGameplayEffectContextHandle& Context)
 {
 	const FGameplayEffectContext* Data = Context.Get();
 	return Data && Data->GetScriptStruct()->IsChildOf(StaticStruct())
-	           ? static_cast<const FAgGameplayEffectContext*>(Data)->HitReward
+	           ? static_cast<const FAgGameplayEffectContext*>(Data)->HitState
 	           : nullptr;
 }

@@ -118,14 +118,14 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffe
 	return MakeEffectSpec(CurrentSpecHandle, CurrentActorInfo, &Effect);
 }
 
-FGameplayEffectSpecHandle UAgGameplayAbility::MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitRewardState>& Reward) const
+FGameplayEffectSpecHandle UAgGameplayAbility::MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitState>& HitState) const
 {
 	const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::Damage);
 	if (Spec.IsValid())
 	{
 		FAgGameplayEffectContext* Context = new FAgGameplayEffectContext();
 		static_cast<FGameplayEffectContext&>(*Context) = *Spec.Data->GetContext().Get();
-		Context->HitReward = Reward;
+		Context->HitState = HitState;
 		Spec.Data->SetContext(FGameplayEffectContextHandle(Context));
 		Damage.AddToSpec(*Spec.Data);
 	}
@@ -196,7 +196,7 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 			{
 				return;
 			}
-			if (UAbilityTask* Task = Item.Get().MakeTask(FAgTaskContext{*this}))
+			if (UAbilityTask* Task = Item.Get().MakeTask(FAgTaskContext{*this, {}, nullptr, bEventTrigger ? TriggerEventData : nullptr}))
 			{
 				Task->ReadyForActivation();
 			}

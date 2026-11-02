@@ -25,13 +25,14 @@ namespace
 {
 	const FName GuardCounterChanceEffectId(TEXT("GuardCounterChance"));
 
-	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle())
+	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle(), const FGameplayTagContainer& InstigatorTags = FGameplayTagContainer::EmptyContainer)
 	{
 		FGameplayEventData Payload;
 		Payload.EventTag = EventTag;
 		Payload.Instigator = Instigator;
 		Payload.Target = Target;
 		Payload.ContextHandle = Context;
+		Payload.InstigatorTags = InstigatorTags;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Target, EventTag, Payload);
 	}
 
@@ -311,18 +312,12 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		}
 	}
 
-	const TSharedPtr<FAgHitRewardState> Reward = FAgGameplayEffectContext::GetHitReward(Context);
-	if (bHit && Reward && !Reward->bGranted)
+	const TSharedPtr<FAgHitState> HitState = FAgGameplayEffectContext::GetHitState(Context);
+	if (bHit && HitState && !HitState->bLanded)
 	{
-		UAgAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
-		const FGameplayEffectSpecHandle ChargeSpec = AttackerASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
-		if (ChargeSpec.IsValid())
-		{
-			// 자원 변경 콜백이 다시 적중을 일으킬 수 있으므로 적용 전에 지급 기회를 사용합니다.
-			Reward->bGranted = true;
-			Reward->Amounts.AddToSpec(*ChargeSpec.Data);
-			AttackerASC->ApplyGameplayEffectSpecToSelf(*ChargeSpec.Data);
-		}
+		// 이 이벤트로 발동한 어빌리티가 다시 적중을 일으킬 수 있으므로 보내기 전에 표시합니다.
+		HitState->bLanded = true;
+		SendEvent(Attacker, AgGameplayTags::Event_AttackHit, Target, Context, SpecTags);
 	}
 	if (bParry && IsValid(Projectile) && !Target->IsDead())
 	{

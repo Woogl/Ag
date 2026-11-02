@@ -47,7 +47,7 @@ void UAgAbilityTask_SpawnProjectile::Activate()
 	const FTransform Transform(Direction.Rotation(), Location);
 	if (AAgProjectile* Projectile = GetWorld()->SpawnActorDeferred<AAgProjectile>(Definition->ProjectileClass, Transform, Character, Character, ESpawnActorCollisionHandlingMethod::AlwaysSpawn))
 	{
-		Projectile->Launch(Definition->Damage, AgAbility->MakeDamageSpec(Definition->Damage, FAgHitRewardState::Make(Params.HitReward)), Direction,
+		Projectile->Launch(Definition->Damage, AgAbility->MakeDamageSpec(Definition->Damage, MakeShared<FAgHitState>()), Direction,
 			Definition->Params);
 		Projectile->FinishSpawning(Transform);
 	}

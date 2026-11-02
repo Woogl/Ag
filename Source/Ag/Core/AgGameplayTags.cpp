@@ -29,6 +29,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_JumpAttack, "Ability.Action.JumpAttack");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Sprint, "Ability.Sprint", "달리기. 이동이라 일반 행동(Ability.Action)에 넣지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_LockOn, "Ability.LockOn", "락온. 행동이 아니라 행동 상태의 제한과 취소를 받지 않음");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_HitReward, "Ability.HitReward", "공격 적중에 의한 MP·UP 충전 (Event.AttackHit으로 발동)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction, "Ability.Reaction", "이벤트로 발동하는 상태 어빌리티");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction, "Ability.Reaction.HitReaction",
 		"상태 우선순위 4의 피격 반응: 움찔 경직, 넉업(저글 포함), 넉다운, 가드 밀림, 가드 브레이크");
@@ -99,6 +100,8 @@ namespace AgGameplayTags
 		"극한 회피함 (피격 처리가 피한 쪽에 보냄, Instigator는 공격한 캐릭터, 극한 회피 모션을 시작함)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted",
 		"플레이어가 기본 공격의 한 타나 점프 공격을 시작함 (Backstep 검사)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackHit, "Event.AttackHit",
+		"내 공격의 한 타가 처음 적중함. 그 피해의 효과 컨텍스트와 스펙 태그(InstigatorTags)를 실음 (적중 보상)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked",
 		"내 공격이 가드·가드 브레이크·패리로 막힘. 그 피해의 효과 컨텍스트를 실음 (DashThrust의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Landed, "Event.Landed", "캐릭터가 착지함 (캐릭터가 자기에게 보냄)");
