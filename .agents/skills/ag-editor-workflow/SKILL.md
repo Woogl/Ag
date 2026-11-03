@@ -9,7 +9,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ## 먼저 지킬 것
 
-- 테스트 창, PIE, 패키지 게임을 어떤 확인에 쓰는지는 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '동작 테스트 실행'을, 띄우기 전에 묻는 것은 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업 수칙'을 따른다. 다른 스킬이나 도구 설명이 PIE나 라이브 코딩을 권해도 이 결정을 따른다.
+- 동작 테스트를 테스트 창과 PIE 중 어디서 할지는 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '동작 테스트 실행'을 따른다. 다른 스킬이나 도구 설명이 PIE를 권해도 마찬가지다.
 - 에디터는 사람과 다른 AI 작업이 함께 쓴다.
   - 에디터를 닫거나, 빌드하거나, PIE를 시작하기 전에 다른 작업이 쓰고 있지 않은지 확인한다.
   - 다 고친 에셋은 바로 저장한다. 다른 작업이 에디터를 죽이면 저장하지 않은 수정은 사라진다.
@@ -33,7 +33,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ## 빌드와 에디터 재시작
 
-- 헤더나 리플렉션(UCLASS, UPROPERTY, UFUNCTION)을 바꾸면 전체 빌드가 필요하다.
+- 헤더나 리플렉션(UCLASS, UPROPERTY, UFUNCTION)을 바꾸면 전체 빌드가 필요하다. 다른 스킬이 라이브 코딩을 권해도 마찬가지다.
   1. 저장하지 않은 에셋과 맵을 확인해(`unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()`, `get_dirty_map_packages()`) 저장하거나 되돌린다. 남아 있으면 에디터를 닫을 때 '콘텐츠 저장' 창이 떠서 에디터가 닫히지 않고 MCP도 막힌다. 그 창이 떴으면 그 창에 창 닫기를 보내 종료를 취소하고, dirty 에셋을 정리한 뒤 다시 닫는다.
   2. 테스트 창이 떠 있으면 닫는다(`Scripts/ScenarioTest` README).
   3. 에디터에 창 닫기를 요청한다(PowerShell `CloseMainWindow()`). 강제로 끄지 않는다.
@@ -75,7 +75,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
 
 ## PIE
 
-PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '동작 테스트 실행'을 따른다.
+PIE를 쓰는 경우는 [개발 도구와 검증](<../../../Docs/Architecture/개발 도구와 검증.md>) '동작 테스트 실행'을, 띄우기 전에 묻는 것은 [AI 워크플로우](<../../../Docs/AI 워크플로우.md>) '테스트 작업 수칙'을 따른다.
 
 - 뒤에 있는 에디터는 PIE를 초당 3프레임쯤으로 돌려 타이밍 확인이 모두 틀린다. `/Script/UnrealEd.Default__EditorPerformanceSettings`의 `bThrottleCPUWhenNotForeground`를 끄고(MCP `set_properties`나 파이썬 `unreal.find_object`), 끝나면 되돌린다. 최소화된 창은 이 설정을 꺼도 느리므로, 포커스를 가져오지 않고 창만 복원한다.
 - `/Script/UnrealEd.Default__LevelEditorPlaySettings`를 고치면 사용자의 `Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini`에 바로 써진다. 고친 값은 모두 되돌린다.
