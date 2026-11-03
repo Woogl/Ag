@@ -30,17 +30,27 @@ void UAgDropdown::NativeOnInitialized()
 	Super::NativeOnInitialized();
 
 	SetDesiredFocusWidget(ComboBox);
-	ComboBox->OnGenerateContentWidget.BindDynamic(this, &ThisClass::GenerateOptionWidget);
+	ComboBox->OnGenerateContentWidget.BindDynamic(this, &ThisClass::GenerateSelectedWidget);
 	ComboBox->OnGenerateItemWidget.BindDynamic(this, &ThisClass::GenerateOptionWidget);
 	ComboBox->OnSelectionChanged.AddDynamic(this, &ThisClass::HandleSelectionChanged);
 }
 
+UWidget* UAgDropdown::GenerateSelectedWidget(FName Option)
+{
+	return CreateOptionWidget(SelectedWidgetClass ? SelectedWidgetClass : OptionWidgetClass, Option);
+}
+
 UWidget* UAgDropdown::GenerateOptionWidget(FName Option)
 {
-	UAgDropdownOptionWidget* OptionWidget = CreateWidget<UAgDropdownOptionWidget>(this, OptionWidgetClass);
+	return CreateOptionWidget(OptionWidgetClass, Option);
+}
+
+UAgDropdownOptionWidget* UAgDropdown::CreateOptionWidget(TSubclassOf<UAgDropdownOptionWidget> WidgetClass, FName Option)
+{
+	UAgDropdownOptionWidget* OptionWidget = CreateWidget<UAgDropdownOptionWidget>(this, WidgetClass);
 	if (OptionWidget)
 	{
-		OptionWidget->SetLabel(Labels.FindRef(Option));
+		OptionWidget->SetOption(Option, Labels.FindRef(Option));
 	}
 	return OptionWidget;
 }

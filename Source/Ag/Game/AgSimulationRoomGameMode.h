@@ -7,8 +7,10 @@
 #include "AgSimulationRoomGameMode.generated.h"
 
 class AAgCharacterBase;
+class AAgCharacterPreview;
 class AAgEnemySpawnPoint;
 class UAgEnemySelectScreen;
+class UTextureRenderTarget2D;
 
 UCLASS(Abstract)
 class AAgSimulationRoomGameMode : public AAgGameMode
@@ -34,6 +36,9 @@ public:
 
 	void StartLineup(const TArray<TSubclassOf<AAgCharacterBase>>& NewLineup);
 
+	/** 후보 적의 모습을 그리는 렌더 타깃입니다. 처음 부를 때 그 적의 표시 액터를 띄웁니다. 후보가 아니면 nullptr입니다. */
+	UTextureRenderTarget2D* GetEnemyPreview(TSubclassOf<AAgCharacterBase> EnemyClass);
+
 protected:
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
@@ -45,6 +50,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgEnemySelectScreen> EnemySelectScreenClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<AAgCharacterPreview> EnemyPreviewClass;
+
 private:
 	void CollectSpawnPoints();
 	void SpawnLineup(AActor& Player);
@@ -54,4 +62,7 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<AAgEnemySpawnPoint>> SpawnPoints;
+
+	UPROPERTY()
+	TMap<TSubclassOf<AAgCharacterBase>, TObjectPtr<AAgCharacterPreview>> EnemyPreviews;
 };

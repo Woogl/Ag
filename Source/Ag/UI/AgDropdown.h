@@ -37,12 +37,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgDropdownOptionWidget> OptionWidgetClass;
 
+	/** 닫힌 칸의 위젯입니다. 비워 두면 OptionWidgetClass를 씁니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgDropdownOptionWidget> SelectedWidgetClass;
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UComboBoxKey> ComboBox;
 
 private:
 	UFUNCTION()
+	UWidget* GenerateSelectedWidget(FName Option);
+
+	UFUNCTION()
 	UWidget* GenerateOptionWidget(FName Option);
+
+	UAgDropdownOptionWidget* CreateOptionWidget(TSubclassOf<UAgDropdownOptionWidget> WidgetClass, FName Option);
 
 	UFUNCTION()
 	void HandleSelectionChanged(FName SelectedItem, ESelectInfo::Type SelectionType);

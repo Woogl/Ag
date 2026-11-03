@@ -14,7 +14,7 @@ class UAgDropdownOptionWidget : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetLabel(const FText& Label);
+	virtual void SetOption(FName Key, const FText& Label);
 
 protected:
 	UPROPERTY(meta = (BindWidget))

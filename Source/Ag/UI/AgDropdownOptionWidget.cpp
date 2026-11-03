@@ -4,7 +4,7 @@
 
 #include "CommonTextBlock.h"
 
-void UAgDropdownOptionWidget::SetLabel(const FText& Label)
+void UAgDropdownOptionWidget::SetOption(FName Key, const FText& Label)
 {
 	NameText->SetText(Label);
 }

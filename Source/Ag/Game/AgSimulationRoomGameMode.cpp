@@ -13,6 +13,7 @@
 #include "Game/AgEnemySpawnPoint.h"
 #include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/AgCharacterPreview.h"
 #include "UI/AgEnemySelectScreen.h"
 #include "UI/AgUILayout.h"
 #include "UObject/Package.h"
@@ -20,6 +21,10 @@
 namespace
 {
 	const TCHAR* LineupOption = TEXT("Enemies");
+
+	// 표시 액터는 레벨 위 높은 곳에 적 종류마다 떨어뜨려 띄워, 레벨의 KillZ와 원거리 차폐, 서로의 조명이 닿지 않게 합니다.
+	const FVector PreviewOrigin(0., 0., 100000.);
+	const double PreviewSpacing = 2000.;
 
 	bool IsBossClass(const TSubclassOf<AAgCharacterBase>& EnemyClass)
 	{
@@ -70,6 +75,23 @@ void AAgSimulationRoomGameMode::StartLineup(const TArray<TSubclassOf<AAgCharacte
 	// PIE의 월드 패키지 이름에는 PIE 접두사가 붙어 있어, 떼어 낸 이름으로 같은 맵을 엽니다.
 	const FString MapName = UWorld::RemovePIEPrefix(GetWorld()->GetPackage()->GetName());
 	UGameplayStatics::OpenLevel(this, FName(MapName), true, FString::Printf(TEXT("%s=%s"), LineupOption, *FString::Join(Ids, TEXT(","))));
+}
+
+UTextureRenderTarget2D* AAgSimulationRoomGameMode::GetEnemyPreview(TSubclassOf<AAgCharacterBase> EnemyClass)
+{
+	const int32 CandidateIndex = EnemyClasses.IndexOfByKey(EnemyClass);
+	if (!EnemyClass || !EnemyPreviewClass || CandidateIndex == INDEX_NONE)
+	{
+		return nullptr;
+	}
+
+	TObjectPtr<AAgCharacterPreview>& Preview = EnemyPreviews.FindOrAdd(EnemyClass);
+	if (!Preview)
+	{
+		Preview = GetWorld()->SpawnActor<AAgCharacterPreview>(EnemyPreviewClass, PreviewOrigin + FVector(0., CandidateIndex * PreviewSpacing, 0.), FRotator::ZeroRotator);
+		Preview->ShowCharacter(EnemyClass);
+	}
+	return Preview->GetRenderTarget();
 }
 
 void AAgSimulationRoomGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
