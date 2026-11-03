@@ -77,7 +77,11 @@ EStateTreeRunStatus FAgEnemyAITask_Approach::Tick(FStateTreeExecutionContext& Co
 
 void FAgEnemyAITask_Approach::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	Context.GetInstanceData(*this).Controller->StopMovement();
+	// 다가가기는 재시도 간격마다 패턴 실행을 거쳐 다시 들어오므로, StopMovement처럼 속도를 0으로 만들면 걸음이 그때마다
+	// 끊깁니다. 경로만 끊고 남은 속도는 이동 컴포넌트의 감속에 맡깁니다.
+	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
+	Controller.GetPathFollowingComponent()->AbortMove(Controller, FPathFollowingResultFlags::ForcedScript, FAIRequestID::CurrentRequest,
+		EPathFollowingVelocityMode::Keep);
 }
 
 EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const

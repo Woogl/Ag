@@ -8,6 +8,7 @@
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/BlendSpace.h"
 #include "Character/AgCharacterBase.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Core/AgGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
@@ -61,7 +62,8 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	const FVector Velocity = Character->GetVelocity();
-	GroundSpeed = Velocity.Size2D();
+	// 블렌드 스페이스의 샘플 속도는 메시 배율 1 기준이고 엔진이 배율을 반영하지 않아, 메시 배율로 나눠 걸음을 바닥에 맞춥니다.
+	GroundSpeed = Velocity.Size2D() / GetSkelMeshComponent()->GetComponentScale().X;
 	if (GroundSpeed > UE_KINDA_SMALL_NUMBER)
 	{
 		// 서 있을 때는 마지막 방향을 유지해 블렌드가 튀지 않게 합니다.

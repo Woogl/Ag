@@ -37,7 +37,7 @@
 | 공용 재사용 | 그로기 `AM_Boss_Groggy`(이미 Samurai `Collide_To_Stun` → `Stun` → `Stun_To_Idle1`), 피격 `AM_Flinch`·`AM_FlinchAir`·`AM_KnockDown`·`AM_KnockUp`, 처형 피격·사망 `AM_Boss_Executed`·`AM_Boss_ExecutedDeath`(Spec이 고른 Warrior 처형 쌍) |
 | `BS_CutterMove` | `BS_BossMove`를 복제해 Halberd 모션을 같은 이름의 Samurai 모션(`Idle1`, 8방향 `Walk_*_IPC`, 2.53m/s)으로 바꾼 이동 블렌드 스페이스. |
 | `ABP_Cutter` | `ABP_Character`의 자식. 이동 `BS_CutterMove`, 제자리 회전 Samurai `Turn_45`·`Turn_90`(플레이어와 같음), 그로기 자세 Samurai `Stun`, 공중 자세 `MM_Fall_Loop`(플레이어와 같음). 그래프는 바꾸지 않습니다. |
-| `BP_Cutter` | 부모 `AAgEnemyCharacter`. `SKM_Manny_Simple`, 메시 배율 1.05(애니메이션에서 Manny와 린(Quinn)의 머리 높이가 같아 1.05배가 됨, 캡슐은 보스처럼 기본 크기). 무기는 `BP_Player`의 카타나 구성(`Weapon` 태그 메시, `WeaponCollision`)을 옮깁니다. `ABP_Cutter`, 캐릭터 데이터 ID `Cutter`, `AIStateTree` `ST_Enemy`, 회전 속도 360°, 락온 마커·처형 안내·네임플레이트 위젯 클래스는 `BP_Boss`·`BP_Sandbag`과 같습니다. |
+| `BP_Cutter` | 부모 `AAgEnemyCharacter`. `SKM_Manny_Simple`, 메시 배율 1.0(애니메이션에서 Manny와 린(Quinn)의 머리 높이가 같아 린과 같은 직립 신장, 캡슐은 보스처럼 기본 크기). 무기는 `BP_Player`의 카타나 구성(`Weapon` 태그 메시, `WeaponCollision`)을 옮깁니다. `ABP_Cutter`, 캐릭터 데이터 ID `Cutter`, `AIStateTree` `ST_Enemy`, 회전 속도 360°, 락온 마커·처형 안내·네임플레이트 위젯 클래스는 `BP_Boss`·`BP_Sandbag`과 같습니다. |
 
 ### 모션 맞춤
 

@@ -59,7 +59,7 @@
 | `AM_Gunner_PistolShot` | `Aim`은 `MF_Pistol_Idle_ADS`, `Fire`는 `MM_Pistol_Fire`를 0.8초에 맞춘 재생 속도, `Reload`는 `MM_Pistol_Reload`(2.0초). `MM_Pistol_Fire`는 애디티브라 몽타주 슬롯에서 그대로 쓸 수 없으므로 애디티브 설정만 끈 복제본을 씁니다. 원본 데이터가 전신 자세가 아니면 `Fire`에도 조준 자세를 쓰고 알려 드립니다. 세 시퀀스의 루트 모션을 켭니다. 대기(총 내림)에서 겨누는 연결은 몽타주 블렌드 인으로 보여 줍니다. |
 | 공용 재사용 | 피격 `AM_Flinch`·`AM_FlinchAir`·`AM_KnockDown`·`AM_KnockUp`, 그로기 `AM_Boss_Groggy`, 처형 피격·사망 `AM_Boss_Executed`·`AM_Boss_ExecutedDeath` |
 | `BS_GunnerMove` | 맨손 대기 `MM_Idle`과 맨손 걷기 `MF_Unarmed_Walk_*` 8방향. 대기와 걷기에서 총을 내린 자세가 됩니다. |
-| `ABP_Gunner` | `ABP_Character`의 자식. 이동 `BS_GunnerMove`, 그로기 자세는 보스와 같음. 맨손 제자리 회전 모션이 없어 제자리 회전 모션은 비웁니다(발을 붙인 채 몸만 돎). 그래프는 바꾸지 않습니다. |
+| `ABP_Gunner` | `ABP_Character`의 자식. 이동 `BS_GunnerMove`, 그로기 자세는 보스와 같음. 맨손 제자리 회전 모션이 없어, 서 있는 자세 `MM_Idle`과 다리 차이가 가장 작은 Warrior `Turn_45`(13.5cm)·Halberd `Turn_90`(9.0cm)을 씁니다(보스와 같음, Samurai는 26.4cm). 그래프는 바꾸지 않습니다. |
 | `BP_Gunner` | 부모 `AAgEnemyCharacter`. `SKM_Manny_Simple`, 린과 같은 직립 신장, 권총 대용을 `hand_r`에 붙이고 `Weapon` 태그(예고 VFX가 붙는 곳). `ABP_Gunner`, 캐릭터 데이터 ID `Gunner`, `ST_Enemy`, 회전 속도 360°, 월드 위젯은 `BP_Cutter`와 같습니다. |
 
 ### 결정한 항목
