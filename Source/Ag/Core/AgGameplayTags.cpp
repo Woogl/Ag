@@ -62,6 +62,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_PerfectDodgeWindow, "State.PerfectDodgeWindow", "극한 회피 구간");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Guarding, "State.Guarding", "가드 중");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_ParryWindow, "State.ParryWindow", "패리 구간");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_MoveLocked, "State.MoveLocked", "이동 입력을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_DodgeCounterChance, "State.DodgeCounterChance", "회피 반격 기회");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GuardCounterChance, "State.GuardCounterChance", "가드 반격 기회");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GuardCounterRecovery, "State.GuardCounterRecovery", "가드 반격 후딜. 이때 시작한 기본 공격은 2타부터");

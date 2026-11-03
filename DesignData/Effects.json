@@ -59,6 +59,11 @@
     "Duration": 0.3,
     "GrantedTags": ["State.ParryWindow"]
   },
+  "MoveLock": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 0.5,
+    "GrantedTags": ["State.MoveLocked"]
+  },
   "GuardMoveSpeed": {
     "DurationPolicy": "Infinite",
     "Modifiers": [

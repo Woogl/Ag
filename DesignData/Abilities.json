@@ -191,6 +191,7 @@
     "End": "InputReleased",
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "ParryWindow"},
+      {"Task": "ApplyEffect", "Effect": "MoveLock"},
       {"Task": "ApplyEffect", "Effect": "GuardMoveSpeed"}
     ]
   },

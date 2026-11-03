@@ -90,6 +90,8 @@ private:
 
 	void HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount);
 
+	void HandleGuardingChanged(const FGameplayTag Tag, int32 NewCount);
+
 	void HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount);

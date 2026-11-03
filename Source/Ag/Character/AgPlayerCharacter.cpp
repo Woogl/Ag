@@ -90,7 +90,7 @@ void AAgPlayerCharacter::BeginPlay()
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
+		.AddUObject(this, &ThisClass::HandleGuardingChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved)
@@ -489,7 +489,7 @@ bool AAgPlayerCharacter::CanMove() const
 {
 	FGameplayTagContainer Blockers;
 	Blockers.AddTag(AgGameplayTags::State_Acting);
-	Blockers.AddTag(AgGameplayTags::State_ParryWindow);
+	Blockers.AddTag(AgGameplayTags::State_MoveLocked);
 	Blockers.AddTag(AgGameplayTags::State_HitReaction);
 	Blockers.AddTag(AgGameplayTags::State_Groggy);
 	Blockers.AddTag(AgGameplayTags::State_Execution);
@@ -613,6 +613,16 @@ void AAgPlayerCharacter::ToggleLockOn()
 
 void AAgPlayerCharacter::HandleMoveStateChanged(const FGameplayTag Tag, int32 NewCount)
 {
+	UpdateRotationMode();
+}
+
+void AAgPlayerCharacter::HandleGuardingChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// 가드로 막아 건 이동 제한은 가드 어빌리티가 걸지 않아 가드가 끝나도 남으므로 여기서 함께 끝냅니다.
+	if (NewCount == 0)
+	{
+		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_MoveLocked));
+	}
 	UpdateRotationMode();
 }
 

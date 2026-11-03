@@ -24,6 +24,7 @@
 namespace
 {
 	const FName GuardCounterChanceEffectId(TEXT("GuardCounterChance"));
+	const FName MoveLockEffectId(TEXT("MoveLock"));
 
 	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle(), const FGameplayTagContainer& InstigatorTags = FGameplayTagContainer::EmptyContainer)
 	{
@@ -204,6 +205,11 @@ namespace
 			DefenderASC.MakeEffectContext());
 	}
 
+	void LockMove(UAbilitySystemComponent& DefenderASC)
+	{
+		DefenderASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(MoveLockEffectId), 1.f, DefenderASC.MakeEffectContext());
+	}
+
 } // namespace
 
 void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
@@ -254,6 +260,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		else if (bGuard)
 		{
 			Reaction = StartGuardReaction(Causer, Target, SpecTags, Context);
+			LockMove(*TargetASC);
 		}
 		else if (bGuardBreak)
 		{
