@@ -3,7 +3,9 @@
 #include "AgAnimationToolset.h"
 #include "AgBlueprintToolset.h"
 #include "AgEnemySightVisualizer.h"
+#include "AgPatrolVisualizer.h"
 #include "AgStateTreeToolset.h"
+#include "AI/AgPatrolPreviewComponent.h"
 #include "Character/AgEnemySightPreviewComponent.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
@@ -20,9 +22,12 @@ public:
 		UToolsetRegistry::RegisterToolsetClass(UAgStateTreeToolset::StaticClass());
 		if (GUnrealEd)
 		{
-			const TSharedPtr<FAgEnemySightVisualizer> Visualizer = MakeShared<FAgEnemySightVisualizer>();
-			GUnrealEd->RegisterComponentVisualizer(UAgEnemySightPreviewComponent::StaticClass()->GetFName(), Visualizer);
-			Visualizer->OnRegister();
+			const TSharedPtr<FAgEnemySightVisualizer> SightVisualizer = MakeShared<FAgEnemySightVisualizer>();
+			GUnrealEd->RegisterComponentVisualizer(UAgEnemySightPreviewComponent::StaticClass()->GetFName(), SightVisualizer);
+			SightVisualizer->OnRegister();
+			const TSharedPtr<FAgPatrolVisualizer> PatrolVisualizer = MakeShared<FAgPatrolVisualizer>();
+			GUnrealEd->RegisterComponentVisualizer(UAgPatrolPreviewComponent::StaticClass()->GetFName(), PatrolVisualizer);
+			PatrolVisualizer->OnRegister();
 		}
 	}
 
@@ -31,6 +36,7 @@ public:
 		if (GUnrealEd)
 		{
 			GUnrealEd->UnregisterComponentVisualizer(UAgEnemySightPreviewComponent::StaticClass()->GetFName());
+			GUnrealEd->UnregisterComponentVisualizer(UAgPatrolPreviewComponent::StaticClass()->GetFName());
 		}
 		if (UObjectInitialized())
 		{

@@ -213,12 +213,14 @@ struct FAgEnemyAITask_PatrolInstanceData
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AAgEnemyAIController> Controller = nullptr;
 
-	/** 정찰 지점의 순서입니다. 정찰 지점이 없으면 처음 자리로 갑니다. */
+	/** 정찰 지점의 순서입니다. 정찰 지점이 없거나 모두 갈 수 없으면 처음 자리로 갑니다. */
 	int32 PointIndex = INDEX_NONE;
+	/** 도착한 뒤로 연달아 이동 요청에 실패한 정찰 지점 수입니다. */
+	int32 FailedCount = 0;
 	bool bMoveRequested = false;
 };
 
-/** 정찰 지점을 순서대로 돕니다. 정찰 지점이 없으면 처음 자리로 돌아가 처음 방향을 바라봅니다. */
+/** 정찰 지점을 순서대로 돌고, 갈 수 없는 지점은 건너뜁니다. 정찰 지점이 없거나 모두 갈 수 없으면 처음 자리로 돌아가 처음 방향을 바라봅니다. */
 USTRUCT(meta = (DisplayName = "적: 정찰", Category = "Ag|Enemy AI"))
 struct FAgEnemyAITask_Patrol : public FStateTreeAITaskBase
 {

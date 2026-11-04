@@ -5,12 +5,13 @@
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
+#include "Ag.h"
 #include "AI/AgEnemyAIController.h"
+#include "AI/AgPatrolRoute.h"
 #include "Algo/SelectRandomWeighted.h"
 #include "Character/AgEnemyCharacter.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
-#include "Engine/TargetPoint.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "StateTreeExecutionContext.h"
@@ -21,17 +22,30 @@ namespace
 
 	constexpr float HomeFacingDistance = 100.f;
 
-	FVector GetPatrolDestination(const AAgEnemyCharacter& Enemy, int32 PointIndex)
-	{
-		const TArray<TObjectPtr<ATargetPoint>>& Points = Enemy.GetPatrolPoints();
-		const ATargetPoint* Point = Points.IsValidIndex(PointIndex) ? Points[PointIndex].Get() : nullptr;
-		return Point ? Point->GetActorLocation() : Enemy.GetHomeTransform().GetLocation();
-	}
-
-	void RequestPatrolMove(AAgEnemyAIController& Controller, const FVector& Destination)
+	bool RequestPatrolMove(AAgEnemyAIController& Controller, const FVector& Destination)
 	{
 		Controller.ClearFocus(EAIFocusPriority::Gameplay);
-		Controller.MoveToLocation(Destination, -1.f, true, true, true, false);
+		// 부분 경로를 허용하면 갈 수 없는 곳으로도 요청이 성공해 가까운 데까지 걸어가므로, 실패로 받아 건너뜁니다.
+		return Controller.MoveToLocation(Destination, -1.f, true, true, true, false, {}, false) != EPathFollowingRequestResult::Failed;
+	}
+
+	/** 지금 순서부터 걸어서 갈 수 있는 정찰 지점으로 이동을 요청합니다. 연달아 모든 지점에 실패하면 처음 자리로 갑니다. */
+	void RequestReachablePointMove(AAgEnemyAIController& Controller, const AAgEnemyCharacter& Enemy, FAgEnemyAITask_PatrolInstanceData& InstanceData)
+	{
+		const AAgPatrolRoute& Route = *Enemy.GetPatrolRoute();
+		const int32 PointCount = Route.GetPointCount();
+		while (InstanceData.FailedCount < PointCount)
+		{
+			if (RequestPatrolMove(Controller, Route.GetPointLocation(InstanceData.PointIndex)))
+			{
+				return;
+			}
+			UE_LOG(LogAg, Warning, TEXT("%s cannot walk to patrol point %d of %s."), *Enemy.GetName(), InstanceData.PointIndex + 1, *Route.GetName());
+			++InstanceData.FailedCount;
+			InstanceData.PointIndex = (InstanceData.PointIndex + 1) % PointCount;
+		}
+		InstanceData.PointIndex = INDEX_NONE;
+		RequestPatrolMove(Controller, Enemy.GetHomeTransform().GetLocation());
 	}
 
 } // namespace
@@ -240,19 +254,10 @@ EStateTreeRunStatus FAgEnemyAITask_Patrol::EnterState(FStateTreeExecutionContext
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	const AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
-	const TArray<TObjectPtr<ATargetPoint>>& Points = Enemy->GetPatrolPoints();
+	const AAgPatrolRoute* Route = Enemy->GetPatrolRoute();
 
-	InstanceData.PointIndex = INDEX_NONE;
-	double NearestDistanceSq = TNumericLimits<double>::Max();
-	for (int32 Index = 0; Index < Points.Num(); ++Index)
-	{
-		const double DistanceSq = Points[Index] ? FVector::DistSquared2D(Points[Index]->GetActorLocation(), Enemy->GetActorLocation()) : NearestDistanceSq;
-		if (DistanceSq < NearestDistanceSq)
-		{
-			NearestDistanceSq = DistanceSq;
-			InstanceData.PointIndex = Index;
-		}
-	}
+	InstanceData.PointIndex = Route ? Route->FindNearestPoint(Enemy->GetActorLocation()) : INDEX_NONE;
+	InstanceData.FailedCount = 0;
 	// StateTree는 빙의할 때(BeginPlay 전) 시작하므로, 이동 요청은 첫 틱에서 보냅니다.
 	InstanceData.bMoveRequested = false;
 	return EStateTreeRunStatus::Running;
@@ -274,21 +279,28 @@ EStateTreeRunStatus FAgEnemyAITask_Patrol::Tick(FStateTreeExecutionContext& Cont
 		// MOV가 0이면 이동은 진행되지 않고 목적지 쪽으로 몸만 돌리므로, 요청하지 않고 처음 방향만 봅니다.
 		if (Enemy->GetCharacterMovement()->MaxWalkSpeed > 0.f)
 		{
-			RequestPatrolMove(Controller, GetPatrolDestination(*Enemy, InstanceData.PointIndex));
+			if (InstanceData.PointIndex != INDEX_NONE)
+			{
+				RequestReachablePointMove(Controller, *Enemy, InstanceData);
+			}
+			else
+			{
+				RequestPatrolMove(Controller, Enemy->GetHomeTransform().GetLocation());
+			}
 			return EStateTreeRunStatus::Running;
 		}
 		InstanceData.PointIndex = INDEX_NONE;
 	}
 
-	const int32 PointCount = Enemy->GetPatrolPoints().Num();
 	if (InstanceData.PointIndex == INDEX_NONE)
 	{
 		const FTransform& Home = Enemy->GetHomeTransform();
 		Controller.SetFocalPoint(Enemy->GetActorLocation() + Home.GetRotation().GetForwardVector() * HomeFacingDistance);
 		return EStateTreeRunStatus::Running;
 	}
-	InstanceData.PointIndex = (InstanceData.PointIndex + 1) % PointCount;
-	RequestPatrolMove(Controller, GetPatrolDestination(*Enemy, InstanceData.PointIndex));
+	InstanceData.FailedCount = 0;
+	InstanceData.PointIndex = (InstanceData.PointIndex + 1) % Enemy->GetPatrolRoute()->GetPointCount();
+	RequestReachablePointMove(Controller, *Enemy, InstanceData);
 	return EStateTreeRunStatus::Running;
 }
 

@@ -3,16 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AI/AgPatrolRoute.h"
 #include "Character/AgCharacterBase.h"
 #include "GameplayTagContainer.h"
 #include "AgEnemyCharacter.generated.h"
 
 class AAgPlayerCharacter;
 class APlayerController;
-class ATargetPoint;
+class FTokenizedMessage;
 class UAnimMontage;
 class UAgEnemySightPreviewComponent;
 class UAgNameplateComponent;
+class UAgPatrolPreviewComponent;
 class UStateTree;
 class UWidgetComponent;
 struct FAbilityEndedData;
@@ -50,9 +52,9 @@ public:
 		return true;
 	}
 
-	const TArray<TObjectPtr<ATargetPoint>>& GetPatrolPoints() const
+	AAgPatrolRoute* GetPatrolRoute() const
 	{
-		return PatrolPoints;
+		return PatrolRoute;
 	}
 
 	const FTransform& GetHomeTransform() const
@@ -65,6 +67,12 @@ public:
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 
 	virtual FVector GetTargetLocation(AActor* RequestedBy = nullptr) const override;
+
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditMove(bool bFinished) override;
+	virtual void CheckForErrors() override;
+#endif
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TObjectPtr<UStateTree> AIStateTree;
@@ -96,8 +104,13 @@ private:
 	/** 네임플레이트 기준점이 화면 안에 있고, 카메라에서 몸 중심까지 벽·지형에 가리지 않았습니다. */
 	bool IsNameplateInView(const APlayerController& PlayerController) const;
 
+#if WITH_EDITOR
+	/** 정찰 경로를 쓸 수 없는 MOV와, 처음 자리에서 가장 가까운 정찰 지점까지 걸어서 갈 수 없는 배치를 모읍니다. */
+	void CollectPatrolProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const;
+#endif
+
 	UPROPERTY(EditInstanceOnly, Category = "AI")
-	TArray<TObjectPtr<ATargetPoint>> PatrolPoints;
+	TObjectPtr<AAgPatrolRoute> PatrolRoute;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> LockOnMarker;
@@ -113,6 +126,9 @@ private:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY()
 	TObjectPtr<UAgEnemySightPreviewComponent> SightPreview;
+
+	UPROPERTY()
+	TObjectPtr<UAgPatrolPreviewComponent> PatrolPreview;
 #endif
 
 	int32 Phase = 1;

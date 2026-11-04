@@ -31,7 +31,7 @@ public class Ag : ModuleRules
 			"GameplayStateTreeModule"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "Json", "JsonUtilities", "LevelSequence", "MovieScene", "PhysicsCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "EngineSettings", "Json", "JsonUtilities", "LevelSequence", "MovieScene", "NavigationSystem", "PhysicsCore" });
 
 		// JSON 데이터 파일은 Content 밖에 있어 쿡이 알지 못하므로 따로 넣습니다.
 		RuntimeDependencies.Add("$(ProjectDir)/DesignData/*.json", StagedFileType.UFS);
