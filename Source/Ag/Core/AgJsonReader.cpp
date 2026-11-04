@@ -8,6 +8,7 @@
 #include "Data/AgTaskParams.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
+#include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "JsonObjectConverter.h"
 #include "Misc/FileHelper.h"
@@ -258,7 +259,10 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		}
 		if (!Object && !Class->HasAnyClassFlags(CLASS_Abstract))
 		{
-			Object = NewObject<UObject>(&Outer, Class);
+			// 액터는 월드 밖에서 엔진 스폰 템플릿(FActorSpawnParameters::Template)으로만 쓰므로 엔진의 자식 액터 템플릿처럼
+			// 아키타입으로 만듭니다.
+			const EObjectFlags Flags = Class->IsChildOf<AActor>() ? RF_ArchetypeObject : RF_NoFlags;
+			Object = NewObject<UObject>(&Outer, Class, NAME_None, Flags);
 			ObjectProperty->SetObjectPropertyValue(Out, Object);
 		}
 		if (!Object)

@@ -11,14 +11,14 @@ class UAgCameraData;
 class UAgCharacterData;
 class UAgCharacterSet;
 class UAgCombatRules;
+class AActor;
 class UAgEffectSet;
-class UAgProjectileSet;
+class UAgSpawnActorSet;
 class UAgTargetingPresetSet;
 class UGameplayEffect;
 class UTargetingPreset;
 enum class EAgEffect : uint8;
 struct FAgAbilityData;
-struct FAgProjectileDefinition;
 
 UCLASS()
 class UAgAssetManager : public UAssetManager
@@ -41,7 +41,8 @@ public:
 	/** 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다. */
 	const FAgAbilityData* FindAbility(FName Id) const;
 
-	const TMap<FName, FAgProjectileDefinition>& GetProjectiles() const;
+	/** 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다. */
+	AActor* FindSpawnActor(FName Id) const;
 
 	const UGameplayEffect* FindEffect(FName Id) const;
 
@@ -79,7 +80,7 @@ private:
 	TMap<EAgEffect, TObjectPtr<UGameplayEffect>> NativeEffects;
 
 	UPROPERTY()
-	TObjectPtr<UAgProjectileSet> Projectiles;
+	TObjectPtr<UAgSpawnActorSet> SpawnActors;
 
 	UPROPERTY()
 	TObjectPtr<UAgTargetingPresetSet> TargetingPresets;

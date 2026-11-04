@@ -1,0 +1,33 @@
+{
+  "SwordWave": {
+    "Class": "/Game/Projectiles/BP_SwordWave.BP_SwordWave_C",
+    "Speed": 1500,
+    "Range": 2000,
+    "Damage": {
+      "HPMultiplier": 1.2,
+      "HitReaction": "Flinch",
+      "bGuardable": true
+    }
+  },
+  "PistolBullet": {
+    "Class": "/Game/Projectiles/BP_PistolBullet.BP_PistolBullet_C",
+    "Speed": 2000,
+    "Range": 3000,
+    "Damage": {
+      "HPMultiplier": 1,
+      "HitReaction": "Flinch",
+      "bGuardable": true
+    }
+  },
+  "GroundSlamShockwave": {
+    "Class": "/Game/Projectiles/BP_GroundSlamShockwave.BP_GroundSlamShockwave_C",
+    "Speed": 1500,
+    "MaxRadius": 1500,
+    "Height": 10,
+    "Damage": {
+      "HPMultiplier": 2,
+      "HitReaction": "KnockUp",
+      "bGuardable": false
+    }
+  }
+}

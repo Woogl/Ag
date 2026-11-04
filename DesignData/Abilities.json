@@ -586,7 +586,7 @@
           {"Task": "Transition", "Start": 0.36667, "ToSection": "Loop", "BlendTime": 0.2}
         ],
         "End": [
-          {"Task": "AreaHit", "Start": 0, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false, "bAttackerHitstop": false}, "Area": {"Preset": "Hit", "Range": 5000, "TargetBlockedTags": ["State.Airborne"]}}
+          {"Task": "SpawnActor", "Start": 0, "Actor": "GroundSlamShockwave"}
         ]
       }
     },
@@ -654,17 +654,17 @@
       "Sections": {
         "Attack1": [
           {"Task": "RootMotion", "Start": 0, "End": 0.65, "bWarpTranslation": false},
-          {"Task": "SpawnProjectile", "Start": 0.75, "Projectile": "SwordWave"},
+          {"Task": "SpawnActor", "Start": 0.75, "Actor": "SwordWave"},
           {"Task": "Transition", "Start": 0.88, "ToSection": "Attack2", "BlendTime": 0.2}
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.25, "bWarpTranslation": false},
-          {"Task": "SpawnProjectile", "Start": 0.5, "Projectile": "SwordWave"},
+          {"Task": "SpawnActor", "Start": 0.5, "Actor": "SwordWave"},
           {"Task": "Transition", "Start": 0.63, "ToSection": "Attack3", "BlendTime": 0.2}
         ],
         "Attack3": [
           {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
-          {"Task": "SpawnProjectile", "Start": 0.28, "Projectile": "SwordWave"}
+          {"Task": "SpawnActor", "Start": 0.28, "Actor": "SwordWave"}
         ]
       }
     },
@@ -788,7 +788,7 @@
           {"Task": "Transition", "Start": 1.2, "ToSection": "Fire", "BlendTime": 0.1}
         ],
         "Fire": [
-          {"Task": "SpawnProjectile", "Start": 0, "Projectile": "PistolBullet", "SocketName": "Muzzle"},
+          {"Task": "SpawnActor", "Start": 0, "Actor": "PistolBullet", "SocketName": "Muzzle"},
           {"Task": "Transition", "Start": 0.8, "ToSection": "Reload", "BlendTime": 0.2}
         ],
         "Reload": [

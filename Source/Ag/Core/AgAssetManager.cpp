@@ -8,10 +8,11 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
-#include "Data/AgProjectileData.h"
+#include "Data/AgSpawnActorData.h"
 #include "Data/AgTargetingPresetData.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "GameFramework/Actor.h"
 #include "Misc/Paths.h"
 #include "TargetingSystem/TargetingPreset.h"
 #include "UObject/GCObjectScopeGuard.h"
@@ -38,7 +39,7 @@ namespace
 		{TEXT("Effects.json"), TEXT("Effects"), TEXT("Definitions")},
 		{TEXT("CombatRules.json"), TEXT("CombatRules"), nullptr},
 		{TEXT("Camera.json"), TEXT("Camera"), nullptr},
-		{TEXT("Projectiles.json"), TEXT("Projectiles"), TEXT("Projectiles")},
+		{TEXT("SpawnActors.json"), TEXT("SpawnActors"), TEXT("SpawnActors")},
 		{TEXT("TargetingPresets.json"), TEXT("TargetingPresets"), TEXT("Definitions")},
 		{TEXT("Abilities.json"), TEXT("Abilities"), TEXT("Abilities")},
 		{TEXT("Characters.json"), TEXT("Characters"), TEXT("Characters")},
@@ -114,9 +115,10 @@ const FAgAbilityData* UAgAssetManager::FindAbility(FName Id) const
 	return Abilities->Abilities.Find(Id);
 }
 
-const TMap<FName, FAgProjectileDefinition>& UAgAssetManager::GetProjectiles() const
+AActor* UAgAssetManager::FindSpawnActor(FName Id) const
 {
-	return Projectiles->Projectiles;
+	const TObjectPtr<AActor>* Found = SpawnActors->SpawnActors.Find(Id);
+	return Found ? Found->Get() : nullptr;
 }
 
 const UGameplayEffect* UAgAssetManager::FindEffect(FName Id) const
@@ -222,6 +224,19 @@ void UAgAssetManager::StartInitialLoading()
 		if (bJsonLoadFailed && World->IsGameWorld())
 		{
 			LoadJsonData(false);
+		}
+	});
+	// 엔진은 블루프린트를 다시 컴파일할 때 템플릿(아키타입)은 새 클래스로 바꾸지 않으므로, 옛 클래스로 남은 생성 액터
+	// 템플릿은 다시 읽어 새로 만듭니다.
+	FCoreUObjectDelegates::OnObjectsReinstanced.AddWeakLambda(this, [this](const FCoreUObjectDelegates::FReplacementObjectMap&)
+	{
+		for (const TPair<FName, TObjectPtr<AActor>>& Pair : SpawnActors->SpawnActors)
+		{
+			if (Pair.Value && Pair.Value->GetClass()->HasAnyClassFlags(CLASS_NewerVersionExists))
+			{
+				LoadJsonData(false);
+				return;
+			}
 		}
 	});
 #endif

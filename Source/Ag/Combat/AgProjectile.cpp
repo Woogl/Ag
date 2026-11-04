@@ -4,6 +4,8 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
+#include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgGameplayEffectContext.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/ShapeComponent.h"
@@ -17,15 +19,9 @@ AAgProjectile::AAgProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AAgProjectile::Launch(const FAgDamage& InDamage, const FGameplayEffectSpecHandle& InDamageSpec, const FVector& Direction, const FAgProjectileParams& InParams)
+void AAgProjectile::OnSpawnedByAbility(const UAgGameplayAbility& Ability)
 {
-	Damage = InDamage;
-	DamageSpec = InDamageSpec;
-	Params = InParams;
-	FlightDirection = Direction.GetSafeNormal();
-	Traveled = 0.f;
-	Reflector.Reset();
-	TouchedActors.Reset();
+	DamageSpec = Ability.MakeDamageSpec(Damage, MakeShared<FAgHitState>());
 }
 
 void AAgProjectile::Reflect(AAgCharacterBase& Defender)
@@ -74,6 +70,13 @@ void AAgProjectile::PostInitializeComponents()
 	HitShape->SetGenerateOverlapEvents(false);
 }
 
+void AAgProjectile::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FlightDirection = GetActorForwardVector();
+}
+
 void AAgProjectile::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -92,7 +95,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	QueryParams.AddIgnoredActor(DamageSource);
 	const FVector ActorStart = GetActorLocation();
 	const FVector Start = HitShape->GetComponentLocation();
-	const float Step = FMath::Min(Params.Speed * DeltaSeconds, Params.Range - Traveled);
+	const float Step = FMath::Min(Speed * DeltaSeconds, Range - Traveled);
 	FVector End = Start + FlightDirection * Step;
 	FHitResult WallHit;
 	const bool bHitWall =
@@ -136,7 +139,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	}
 	SetActorLocation(ActorStart + (End - Start));
 	Traveled += Step;
-	if (Traveled >= Params.Range)
+	if (Traveled >= Range)
 	{
 		Destroy();
 	}
