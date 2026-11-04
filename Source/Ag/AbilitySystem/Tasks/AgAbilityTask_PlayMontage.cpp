@@ -75,8 +75,8 @@ UAbilityTask* FAgAbilityMontage::MakeTask(UAgGameplayAbility& Ability) const
 
 UAgAbilityTask_PlayMontage::UAgAbilityTask_PlayMontage()
 {
-	// ASC는 Task를 TG_DuringPhysics에 틱하므로, 몽타주가 진행된 뒤(TG_PrePhysics의 이동·메시 틱) 판정해 같은 프레임의
-	// 공격 판정(TG_PostPhysics)보다 먼저 구간을 엽니다.
+	// ASC는 Task를 TG_DuringPhysics에 틱하므로, 같은 프레임의 공격 판정(TG_PostPhysics)보다 먼저 구간을 엽니다. 몽타주가
+	// 나아가고 포즈가 갱신된 뒤에 판정하는 것은 캐릭터가 ASC를 메시 틱 다음에 묶어 보장합니다.
 	bTickingTask = true;
 }
 

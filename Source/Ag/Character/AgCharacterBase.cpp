@@ -197,6 +197,11 @@ void AAgCharacterBase::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	WeaponComponent = FindComponentByTag<USceneComponent>(WeaponTag);
+
+	// 몽타주 타임라인은 몽타주가 나아가고 포즈가 갱신된 뒤에 판정해야 무기 판정 구간의 자세와 위치가 맞습니다.
+	// 메시는 포즈 평가를 물리 뒤까지 미뤄 끝내기도 하므로(tick.AnimationDelaysEndGroup), TG_DuringPhysics에 틱하는
+	// ASC가 그 전에 판정하지 않게 묶습니다.
+	AbilitySystemComponent->PrimaryComponentTick.AddPrerequisite(GetMesh(), GetMesh()->PrimaryComponentTick);
 }
 
 void AAgCharacterBase::BeginPlay()

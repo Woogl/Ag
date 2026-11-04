@@ -10,6 +10,7 @@
 #include "AgAbilityTask_WeaponHit.generated.h"
 
 class AAgCharacterBase;
+class UAgAbilityTask_PlayMontage;
 class UCapsuleComponent;
 struct FHitResult;
 struct FAgHitState;
@@ -57,15 +58,20 @@ private:
 		FVector LastEnd = FVector::ZeroVector;
 	};
 
-	void SweepEdges();
-	bool Sweep(FAgWeaponEdge& Edge);
+	void SweepEdges(float AlphaEnd = 1.f);
+	bool Sweep(FAgWeaponEdge& Edge, float AlphaEnd);
 	bool Hit(AAgCharacterBase& Target, const FVector& Location, const FHitResult& Contact);
+	bool GetPreviousEdge(const FAgWeaponEdge& Edge, FVector& OutStart, FVector& OutEnd) const;
 
 	UPROPERTY()
 	FAgWeaponHitParams Params;
 
+	TOptional<FFloatInterval> Window;
+	TWeakObjectPtr<UAgAbilityTask_PlayMontage> Playback;
 	TSharedPtr<FAgHitState> HitState;
 	TArray<FAgWeaponEdge> Edges;
 	TSet<TWeakObjectPtr<AActor>> TouchedActors;
 	FAgSweepTickFunction SweepTick;
+	float LastPosition = 0.f;
+	bool bSweeping = false;
 };

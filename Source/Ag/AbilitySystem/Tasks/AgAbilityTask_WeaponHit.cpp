@@ -3,7 +3,9 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_WeaponHit.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgGameplayEffectContext.h"
+#include "AbilitySystem/Tasks/AgAbilityTask_PlayMontage.h"
 #include "AbilitySystemComponent.h"
+#include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -41,16 +43,20 @@ namespace
 		return FVector(Center.X + Radius * FMath::Cos(Angle), Center.Y + Radius * FMath::Sin(Angle), FMath::Lerp(A.Z, B.Z, Alpha));
 	}
 
+	void MakeEdge(const FTransform& Transform, float HalfSegment, FVector& OutStart, FVector& OutEnd)
+	{
+		const FVector Offset = Transform.GetUnitAxis(EAxis::Z) * HalfSegment;
+		OutStart = Transform.GetLocation() + Offset;
+		OutEnd = Transform.GetLocation() - Offset;
+	}
+
 	bool GetEdge(const UCapsuleComponent* Capsule, FVector& OutStart, FVector& OutEnd)
 	{
 		if (!Capsule)
 		{
 			return false;
 		}
-		const FVector Center = Capsule->GetComponentLocation();
-		const FVector HalfSegment = Capsule->GetUpVector() * Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere();
-		OutStart = Center + HalfSegment;
-		OutEnd = Center - HalfSegment;
+		MakeEdge(Capsule->GetComponentTransform(), Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere(), OutStart, OutEnd);
 		return true;
 	}
 
@@ -65,12 +71,25 @@ namespace
 		}
 		return NAME_None;
 	}
+
+	const FAnimMontageInstance* GetMontageInstance(const TWeakObjectPtr<UAgAbilityTask_PlayMontage>& Playback)
+	{
+		return Playback.IsValid() ? Playback->GetMontageInstance() : nullptr;
+	}
+
+	/** 몽타주 위치를 옮겨도 메시 자세는 다음 포즈 갱신까지 옮기기 전 위치의 것입니다. */
+	float GetPosePosition(const FAnimMontageInstance& Instance)
+	{
+		return Instance.GetPreviousPosition() + Instance.GetDeltaMoved();
+	}
 } // namespace
 
 UAbilityTask* FAgWeaponHitParams::MakeTask(const FAgTaskContext& Context) const
 {
 	UAgAbilityTask_WeaponHit* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_WeaponHit>(&Context.Ability);
 	Task->Params = *this;
+	Task->Window = Context.Window;
+	Task->Playback = Context.Playback;
 	return Task;
 }
 
@@ -110,6 +129,28 @@ void UAgAbilityTask_WeaponHit::Activate()
 		EndTask();
 		return;
 	}
+	if (const FAnimMontageInstance* Instance = GetMontageInstance(Playback))
+	{
+		LastPosition = GetPosePosition(*Instance);
+		// 구간에 들어선 프레임의 자세는 이미 Start를 지났으므로, 앞 프레임 자세와의 사이에서 Start의 자세를 잡아
+		// 거기서부터 스윕합니다.
+		const float Previous = Instance->GetPreviousPosition();
+		if (Window && Previous < Window->Min && Window->Min <= LastPosition)
+		{
+			const float Alpha = (Window->Min - Previous) / (LastPosition - Previous);
+			const FVector Center = Character->GetActorLocation();
+			for (FAgWeaponEdge& Edge : Edges)
+			{
+				FVector PreviousStart, PreviousEnd;
+				if (GetPreviousEdge(Edge, PreviousStart, PreviousEnd))
+				{
+					Edge.LastStart = ArcLerp(Center, PreviousStart, Edge.LastStart, Alpha);
+					Edge.LastEnd = ArcLerp(Center, PreviousEnd, Edge.LastEnd, Alpha);
+				}
+			}
+			LastPosition = Window->Min;
+		}
+	}
 	// 같은 때에 시작한 Task(막힘을 기다리는 Dash)가 모두 시작한 뒤에 피해 결과가 나도록, 첫 스윕도 이 프레임의 물리
 	// 갱신 뒤 틱에서 합니다.
 	SweepTick.AddPrerequisite(Character->GetMesh(), Character->GetMesh()->PrimaryComponentTick);
@@ -120,6 +161,22 @@ void UAgAbilityTask_WeaponHit::OnDestroy(bool bInOwnerFinished)
 {
 	SweepTick.SetTickFunctionEnable(false);
 	SweepTick.UnRegisterTickFunction();
+	// End를 지난 프레임에는 재생 Task가 물리 갱신 뒤의 스윕보다 먼저 이 Task를 끝내므로, 앞 스윕 자세에서 End까지 남은
+	// 움직임을 여기서 스윕합니다. 행동이 끝났거나 재생이 바뀌었으면 하지 않고, 스윕 중 피해가 구간을 끝냈으면 다시 하지 않습니다.
+	const FAnimMontageInstance* Instance = GetMontageInstance(Playback);
+	if (!bInOwnerFinished && !bSweeping && Window && Instance)
+	{
+		const float Position = GetPosePosition(*Instance);
+		if (Instance->GetPreviousPosition() <= LastPosition && LastPosition < FMath::Min(Position, Window->Max))
+		{
+			SweepEdges(FMath::Min((Window->Max - LastPosition) / (Position - LastPosition), 1.f));
+			// 이 스윕의 피해가 행동을 끝냈으면 엔진이 이 Task를 이미 끝냈습니다.
+			if (IsFinished())
+			{
+				return;
+			}
+		}
+	}
 	Super::OnDestroy(bInOwnerFinished);
 }
 
@@ -136,19 +193,24 @@ FString UAgAbilityTask_WeaponHit::FAgSweepTickFunction::DiagnosticMessage()
 	return Target->GetFullName() + TEXT("[SweepTick]");
 }
 
-void UAgAbilityTask_WeaponHit::SweepEdges()
+void UAgAbilityTask_WeaponHit::SweepEdges(float AlphaEnd)
 {
+	TGuardValue<bool> SweepingGuard(bSweeping, true);
 	for (FAgWeaponEdge& Edge : Edges)
 	{
 		// 피해가 행동을 끝냈으면 이 Task도 끝났으므로 남은 날은 보지 않습니다.
-		if (!Sweep(Edge))
+		if (!Sweep(Edge, AlphaEnd))
 		{
 			return;
 		}
 	}
+	if (const FAnimMontageInstance* Instance = GetMontageInstance(Playback))
+	{
+		LastPosition = GetPosePosition(*Instance);
+	}
 }
 
-bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge)
+bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge, float AlphaEnd)
 {
 	const UCapsuleComponent* Capsule = Edge.Capsule.Get();
 	FVector EdgeStart, EdgeEnd;
@@ -157,7 +219,7 @@ bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge)
 		return true;
 	}
 	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
-	const float Travel = FMath::Max(FVector::Dist(EdgeStart, Edge.LastStart), FVector::Dist(EdgeEnd, Edge.LastEnd));
+	const float Travel = FMath::Max(FVector::Dist(EdgeStart, Edge.LastStart), FVector::Dist(EdgeEnd, Edge.LastEnd)) * AlphaEnd;
 	const int32 Steps = FMath::Clamp(FMath::CeilToInt(Travel / SweepStepLength), 1, MaxSweepSteps);
 	const FCollisionShape Shape = FCollisionShape::MakeSphere(Capsule->GetScaledCapsuleRadius());
 	const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgWeaponSweep), false, Character);
@@ -168,7 +230,7 @@ bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge)
 	FVector LastTo = Edge.LastEnd;
 	for (int32 Step = 1; Step <= Steps; ++Step)
 	{
-		const float Alpha = static_cast<float>(Step) / Steps;
+		const float Alpha = AlphaEnd * Step / Steps;
 		const FVector From = ArcLerp(Center, Edge.LastStart, EdgeStart, Alpha);
 		const FVector To = ArcLerp(Center, Edge.LastEnd, EdgeEnd, Alpha);
 		Touches.Reset();
@@ -229,4 +291,24 @@ bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Loca
 	}
 	// 피해가 행동이나 이 구간을 끝냈으면 엔진이나 재생 Task가 이 Task도 끝냈습니다.
 	return IsActive();
+}
+
+bool UAgAbilityTask_WeaponHit::GetPreviousEdge(const FAgWeaponEdge& Edge, FVector& OutStart, FVector& OutEnd) const
+{
+	const UCapsuleComponent* Capsule = Edge.Capsule.Get();
+	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
+	const USkeletalMeshComponent* Mesh = Character->GetMesh();
+	const int32 Bone = Mesh->GetBoneIndex(Edge.HandBone);
+	const TArray<FTransform>& Previous = Mesh->GetPreviousComponentTransformsArray();
+	const TArray<FTransform>& Current = Mesh->GetComponentSpaceTransforms();
+	if (!Capsule || !Previous.IsValidIndex(Bone) || !Current.IsValidIndex(Bone))
+	{
+		return false;
+	}
+	// 엔진은 앞 프레임의 메시 위치를 남기지 않으므로, 이번 프레임에 캐릭터가 움직인 만큼 되돌린 자리로 봅니다.
+	FTransform PreviousMesh = Mesh->GetComponentTransform();
+	PreviousMesh.AddToTranslation(-Character->GetVelocity() * GetWorld()->GetDeltaSeconds() * Character->CustomTimeDilation);
+	const FTransform CapsuleToBone = Capsule->GetComponentTransform().GetRelativeTransform(Current[Bone] * Mesh->GetComponentTransform());
+	MakeEdge(CapsuleToBone * Previous[Bone] * PreviousMesh, Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere(), OutStart, OutEnd);
+	return true;
 }
