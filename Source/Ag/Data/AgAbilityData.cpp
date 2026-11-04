@@ -15,7 +15,12 @@ void FAgResourceCost::AddToSpec(FGameplayEffectSpec& Spec) const
 
 bool FAgPatternSelection::IsAvailable(float TargetDistance, int32 Phase) const
 {
-	return Distance.Contains(TargetDistance) && (Phases.IsEmpty() || Phases.Contains(Phase));
+	return Distance.Contains(TargetDistance) && IsInPhase(Phase);
+}
+
+bool FAgPatternSelection::IsInPhase(int32 Phase) const
+{
+	return Phases.IsEmpty() || Phases.Contains(Phase);
 }
 
 bool FAgAbilityData::HasSameGrantSettings(const FAgAbilityData& Other) const

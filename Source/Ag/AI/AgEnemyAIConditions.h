@@ -59,24 +59,7 @@ struct FAgEnemyAICondition_Reacting : public FStateTreeAIConditionBase
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
-USTRUCT(meta = (DisplayName = "적: 움찔 경직 중", Category = "Ag|Enemy AI"))
-struct FAgEnemyAICondition_Flinching : public FStateTreeAIConditionBase
-{
-	GENERATED_BODY()
-
-	using FInstanceDataType = FAgEnemyAIConditionInstanceData;
-	virtual const UStruct* GetInstanceDataType() const override
-	{
-		return FInstanceDataType::StaticStruct();
-	}
-
-	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
-
-	UPROPERTY(EditAnywhere, Category = "Condition")
-	bool bInvert = false;
-};
-
-/** 패턴 실행 중인지는 이 조건을 둔 상태(패턴 후딜레이, 다가가기, Backstep이 끝난 뒤)가 정하므로 보지 않습니다. */
+/** 패턴 실행 중인지는 이 조건을 둔 상태(간격 지키기, 반응형 패턴이 끝난 뒤)가 정하므로 보지 않습니다. */
 USTRUCT(meta = (DisplayName = "적: 페이즈 전환 시작 조건", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_PhaseTransitionReady : public FStateTreeAIConditionBase
 {
@@ -91,8 +74,8 @@ struct FAgEnemyAICondition_PhaseTransitionReady : public FStateTreeAIConditionBa
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
-/** 평가할 때마다 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. */
-USTRUCT(meta = (DisplayName = "적: 반응 패턴 발동 조건", Category = "Ag|Enemy AI"))
+/** 패턴 후딜레이 중에만 참입니다. 평가할 때마다 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. */
+USTRUCT(meta = (DisplayName = "적: 반응형 패턴 발동 조건", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_ResponseReady : public FStateTreeAIConditionBase
 {
 	GENERATED_BODY()

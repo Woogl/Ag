@@ -81,6 +81,7 @@ struct FAgPatternSelection
 	float ResponseChance = 0.f;
 
 	bool IsAvailable(float TargetDistance, int32 Phase) const;
+	bool IsInPhase(int32 Phase) const;
 };
 
 UENUM()

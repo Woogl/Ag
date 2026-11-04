@@ -8,10 +8,10 @@
 
 class AAgCharacterBase;
 class AAgEnemyCharacter;
-class UAgCharacterData;
 class UAISenseConfig_Damage;
 class UAISenseConfig_Sight;
 class UStateTreeAIComponent;
+struct FAgEnemyAIData;
 struct FGameplayEventData;
 
 UCLASS()
@@ -34,6 +34,11 @@ public:
 	/** 시야와 관계없이 그 상대를 알아차리게 합니다. 그 상대에게 맞은 것과 같은 자극이라 놓친 시간도 이 순간부터 셉니다. */
 	void NoticeTarget(AActor& Target);
 
+	/** 캐릭터 데이터의 범위에서 무작위로 정한 길이로 패턴 후딜레이를 겁니다. 걸려 있으면 새 길이로 처음부터 셉니다. */
+	void StartPostPatternDelay();
+	void ClearPostPatternDelay();
+	bool IsInPostPatternDelay() const;
+
 	virtual FGenericTeamId GetGenericTeamId() const override;
 	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
@@ -42,7 +47,7 @@ protected:
 	virtual void OnUnPossess() override;
 
 private:
-	void ConfigurePerception(const UAgCharacterData& Data);
+	void ConfigurePerception(const FAgEnemyAIData& AI);
 
 	void HandleTargetBasicAttack(const FGameplayEventData* Payload);
 
@@ -56,4 +61,7 @@ private:
 	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
 
 	FDelegateHandle BasicAttackHandle;
+
+	/** 패턴 후딜레이가 끝나는 월드 시각입니다. 움찔이나 상태 이동과 관계없이 흐르도록 StateTree 상태가 아니라 여기에 둡니다. */
+	double PostPatternDelayEndTime = 0.0;
 };

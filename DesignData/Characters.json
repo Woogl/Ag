@@ -75,9 +75,12 @@
       "Parried",
       "EnemyLockOn"
     ],
-    "PostPatternDelayTime": {"Min": 0.5, "Max": 1.2},
-    "SightDistance": 2000,
-    "SightAngle": 120,
+    "AI": {
+      "PostPatternDelayTime": {"Min": 0.5, "Max": 1.2},
+      "PreferredDistance": {"Min": 0, "Max": 1000},
+      "SightDistance": 2000,
+      "SightAngle": 120
+    },
     "PhaseTransitionHPRatios": [0.5],
     "Effects": ["PPRegen"]
   },
@@ -101,8 +104,12 @@
       "Groggy",
       "Executed"
     ],
-    "SightDistance": 500,
-    "SightAngle": 120,
+    "AI": {
+      "PreferredDistance": {"Min": 0, "Max": 150},
+      "WaitMovement": "Stand",
+      "SightDistance": 500,
+      "SightAngle": 120
+    },
     "Effects": ["SandbagPPRegen"]
   },
   "AttackSandbag": {
@@ -128,9 +135,13 @@
       "Parried",
       "EnemyLockOn"
     ],
-    "PostPatternDelayTime": {"Min": 1, "Max": 1},
-    "SightDistance": 500,
-    "SightAngle": 120,
+    "AI": {
+      "PostPatternDelayTime": {"Min": 1, "Max": 1},
+      "PreferredDistance": {"Min": 0, "Max": 150},
+      "WaitMovement": "Stand",
+      "SightDistance": 500,
+      "SightAngle": 120
+    },
     "Effects": ["SandbagPPRegen"]
   },
   "Cutter": {
@@ -159,9 +170,12 @@
       "Parried",
       "EnemyLockOn"
     ],
-    "PostPatternDelayTime": {"Min": 0.6, "Max": 1.0},
-    "SightDistance": 1200,
-    "SightAngle": 120,
+    "AI": {
+      "PostPatternDelayTime": {"Min": 0.6, "Max": 1.0},
+      "PreferredDistance": {"Min": 200, "Max": 400},
+      "SightDistance": 1200,
+      "SightAngle": 120
+    },
     "Effects": ["CutterPPRegen"]
   },
   "Gunner": {
@@ -188,9 +202,13 @@
       "Parried",
       "EnemyLockOn"
     ],
-    "PostPatternDelayTime": {"Min": 2, "Max": 4},
-    "SightDistance": 2000,
-    "SightAngle": 120,
+    "AI": {
+      "PostPatternDelayTime": {"Min": 2, "Max": 4},
+      "PreferredDistance": {"Min": 800, "Max": 3000},
+      "WaitMovement": "Stand",
+      "SightDistance": 3000,
+      "SightAngle": 180
+    },
     "Effects": ["GunnerPPRegen"]
   }
 }

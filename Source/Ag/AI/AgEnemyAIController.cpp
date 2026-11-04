@@ -82,6 +82,27 @@ void AAgEnemyAIController::NoticeTarget(AActor& Target)
 	UAISense_Damage::ReportDamageEvent(this, GetPawn(), &Target, 0.f, TargetLocation, TargetLocation);
 }
 
+void AAgEnemyAIController::StartPostPatternDelay()
+{
+	const AAgEnemyCharacter* Enemy = GetEnemy();
+	if (!Enemy)
+	{
+		return;
+	}
+	const FFloatInterval& DelayTime = Enemy->GetCharacterData()->AI.PostPatternDelayTime;
+	PostPatternDelayEndTime = GetWorld()->GetTimeSeconds() + FMath::FRandRange(DelayTime.Min, DelayTime.Max);
+}
+
+void AAgEnemyAIController::ClearPostPatternDelay()
+{
+	PostPatternDelayEndTime = 0.0;
+}
+
+bool AAgEnemyAIController::IsInPostPatternDelay() const
+{
+	return GetWorld()->GetTimeSeconds() < PostPatternDelayEndTime;
+}
+
 FGenericTeamId AAgEnemyAIController::GetGenericTeamId() const
 {
 	const AAgEnemyCharacter* Enemy = GetEnemy();
@@ -104,7 +125,7 @@ void AAgEnemyAIController::OnPossess(APawn* InPawn)
 		return;
 	}
 
-	ConfigurePerception(*Enemy->GetCharacterData());
+	ConfigurePerception(Enemy->GetCharacterData()->AI);
 	// 플레이어 타임라인이 기본 공격 시작 이벤트를 공격 대상에게 보내므로 자기 캐릭터에서 받습니다.
 	BasicAttackHandle = Enemy->GetAbilitySystemComponent()->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).AddUObject(this, &ThisClass::HandleTargetBasicAttack);
 
@@ -129,11 +150,11 @@ void AAgEnemyAIController::OnUnPossess()
 	Super::OnUnPossess();
 }
 
-void AAgEnemyAIController::ConfigurePerception(const UAgCharacterData& Data)
+void AAgEnemyAIController::ConfigurePerception(const FAgEnemyAIData& AI)
 {
-	SightConfig->SightRadius = Data.SightDistance;
-	SightConfig->LoseSightRadius = Data.SightDistance;
-	SightConfig->PeripheralVisionAngleDegrees = Data.SightAngle * 0.5f;
+	SightConfig->SightRadius = AI.SightDistance;
+	SightConfig->LoseSightRadius = AI.SightDistance;
+	SightConfig->PeripheralVisionAngleDegrees = AI.SightAngle * 0.5f;
 	const float TargetLostTime = UAgAssetManager::Get().GetCombatRules().TargetLostTime;
 	SightConfig->SetMaxAge(TargetLostTime);
 	DamageConfig->SetMaxAge(TargetLostTime);

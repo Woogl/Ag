@@ -2,7 +2,7 @@
 
 #include "Combat/AgShockwave.h"
 
-#include "AbilitySystemComponent.h"
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgGameplayEffectContext.h"
 #include "Character/AgCharacterBase.h"
@@ -26,6 +26,10 @@ AAgShockwave::AAgShockwave()
 void AAgShockwave::OnSpawnedByAbility(const UAgGameplayAbility& Ability)
 {
 	DamageSpec = Ability.MakeDamageSpec(Damage, MakeShared<FAgHitState>());
+	if (DamageSpec.IsValid())
+	{
+		DamageSpec.Data->GetContext().AddInstigator(GetInstigator(), this);
+	}
 }
 
 void AAgShockwave::BeginPlay()
@@ -77,27 +81,15 @@ void AAgShockwave::Tick(float DeltaSeconds)
 		}
 		TouchedActors.Add(Target);
 		const FVector ToTarget = ((Target->GetActorLocation() - Center) * FVector(1.f, 1.f, 0.f)).GetSafeNormal();
-		ApplyHit(*Target, Target->GetActorLocation() - ToTarget * Target->GetCapsuleComponent()->GetScaledCapsuleRadius());
+		const FVector HitLocation = Target->GetActorLocation() - ToTarget * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
+		DamageSpec.Data->GetContext().AddOrigin(HitLocation);
+		Shooter->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*DamageSpec.Data, Target->GetAbilitySystemComponent());
 	}
 
 	UpdateScale();
 	if (Radius >= MaxRadius)
 	{
 		Destroy();
-	}
-}
-
-void AAgShockwave::ApplyHit(AAgCharacterBase& Target, const FVector& HitLocation)
-{
-	FGameplayEffectSpec Spec(*DamageSpec.Data);
-	FGameplayEffectContextHandle Context = Spec.GetContext().Duplicate();
-	Context.AddInstigator(GetInstigator(), this);
-	Context.AddOrigin(HitLocation);
-	// SetContext는 출처 태그와 어트리뷰트를 다시 캡처하므로 적중 시점의 ATK를 씁니다.
-	Spec.SetContext(Context);
-	if (UAbilitySystemComponent* InstigatorASC = Context.GetInstigatorAbilitySystemComponent())
-	{
-		InstigatorASC->ApplyGameplayEffectSpecToTarget(Spec, Target.GetAbilitySystemComponent());
 	}
 }
 

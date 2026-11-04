@@ -53,6 +53,7 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->bCanWalkOffLedges = false;
 
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
@@ -130,6 +131,25 @@ void AAgEnemyCharacter::GatherPatterns(float TargetDistance, bool bResponse, TAr
 		if (Weight > 0.f && Pattern->IsAvailable(TargetDistance, Phase) && CanActivatePattern(Id))
 		{
 			OutCandidates.Emplace(Id, Weight);
+		}
+	}
+}
+
+void AAgEnemyCharacter::GatherReadyPatternRanges(TArray<FFloatInterval>& OutRanges) const
+{
+	OutRanges.Reset();
+	const UAgCharacterData* Data = GetCharacterData();
+	const FGameplayAbilityActorInfo* ActorInfo = GetAbilitySystemComponent()->AbilityActorInfo.Get();
+	for (FName Id : Data->Abilities)
+	{
+		const FAgAbilityData* Ability = Data->FindAbility(Id);
+		const FAgPatternSelection* Pattern =
+			Ability && Ability->AbilityTags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
+		const FGameplayAbilitySpec* Spec = Pattern && Pattern->Weight > 0.f && Pattern->IsInPhase(Phase) ? FindAbilitySpec(Id) : nullptr;
+		const UGameplayAbility* Instance = Spec ? Spec->GetPrimaryInstance() : nullptr;
+		if (Instance && Instance->CheckCooldown(Spec->Handle, ActorInfo))
+		{
+			OutRanges.Add(Pattern->Distance);
 		}
 	}
 }

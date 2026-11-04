@@ -22,6 +22,34 @@ namespace
 
 	constexpr float HomeFacingDistance = 100.f;
 
+	void StopPathMove(AAgEnemyAIController& Controller)
+	{
+		// 간격 지키기에서는 다가가기와 물러나기·좌우 걷기가 번갈아 바뀌므로, StopMovement처럼 속도를 0으로 만들면 걸음이
+		// 그때마다 끊깁니다. 경로만 끊고 남은 속도는 이동 컴포넌트의 감속에 맡깁니다.
+		Controller.GetPathFollowingComponent()->AbortMove(Controller, FPathFollowingResultFlags::ForcedScript, FAIRequestID::CurrentRequest,
+			EPathFollowingVelocityMode::Keep);
+	}
+
+	/** 거리가 들어 있는 범위가 있으면 그 범위, 없으면 가장 조금 움직여 닿는 범위입니다. 차이가 같으면 다가가는 쪽입니다. */
+	FFloatInterval PickNearestRange(const TArray<FFloatInterval>& Ranges, float Distance)
+	{
+		FFloatInterval Picked = Ranges[0];
+		float PickedGap = TNumericLimits<float>::Max();
+		bool bPickedApproach = false;
+		for (const FFloatInterval& Range : Ranges)
+		{
+			const bool bApproach = Distance > Range.Max;
+			const float Gap = bApproach ? Distance - Range.Max : FMath::Max(Range.Min - Distance, 0.f);
+			if (Gap < PickedGap || (Gap == PickedGap && bApproach && !bPickedApproach))
+			{
+				Picked = Range;
+				PickedGap = Gap;
+				bPickedApproach = bApproach;
+			}
+		}
+		return Picked;
+	}
+
 	bool RequestPatrolMove(AAgEnemyAIController& Controller, const FVector& Destination)
 	{
 		Controller.ClearFocus(EAIFocusPriority::Gameplay);
@@ -50,52 +78,93 @@ namespace
 
 } // namespace
 
-EStateTreeRunStatus FAgEnemyAITask_PostPatternDelay::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+EStateTreeRunStatus FAgEnemyAITask_KeepDistance::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const FFloatInterval& RecoveryTime = InstanceData.Controller->GetEnemy()->GetCharacterData()->PostPatternDelayTime;
-	InstanceData.Duration = FMath::FRandRange(RecoveryTime.Min, RecoveryTime.Max);
-	InstanceData.Elapsed = 0.f;
 	InstanceData.StrafeDirection = FMath::RandBool() ? 1.f : -1.f;
-	return InstanceData.Duration > 0.f ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	InstanceData.bApproaching = false;
+	InstanceData.bWasDelaying = InstanceData.Controller->IsInPostPatternDelay();
+	// 움찔이 끝나고 들어왔을 때처럼 쓸 수 있는 패턴이 이미 있으면 첫 틱에 바로 끝나도록 합니다.
+	InstanceData.CheckElapsed = RetryInterval;
+	InstanceData.TargetRange = InstanceData.Controller->GetEnemy()->GetCharacterData()->AI.PreferredDistance;
+	return EStateTreeRunStatus::Running;
 }
 
-EStateTreeRunStatus FAgEnemyAITask_PostPatternDelay::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
+EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
-
-	// 적은 스스로 플레이어를 향해 돌므로, 옆으로 걸으면 플레이어 주위를 돕니다.
-	Enemy->AddMovementInput(Enemy->GetActorRightVector(), InstanceData.StrafeDirection);
-	InstanceData.Elapsed += DeltaTime;
-	return InstanceData.Elapsed >= InstanceData.Duration ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
-}
-
-EStateTreeRunStatus FAgEnemyAITask_Approach::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
-{
-	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	InstanceData.Elapsed = 0.f;
-	if (AAgCharacterBase* Target = InstanceData.Controller->GetTarget())
+	AAgEnemyAIController& Controller = *InstanceData.Controller;
+	AAgEnemyCharacter* Enemy = Controller.GetEnemy();
+	AAgCharacterBase* Target = Controller.GetTarget();
+	if (!Target)
 	{
-		InstanceData.Controller->MoveToActor(Target);
+		return EStateTreeRunStatus::Running;
+	}
+	const float Distance = Enemy->GetHorizontalDistanceTo(Target);
+	const bool bDelaying = Controller.IsInPostPatternDelay();
+	const bool bDelayEnded = InstanceData.bWasDelaying && !bDelaying;
+	InstanceData.bWasDelaying = bDelaying;
+	InstanceData.CheckElapsed += DeltaTime;
+
+	if (InstanceData.CheckElapsed >= RetryInterval || bDelayEnded)
+	{
+		InstanceData.CheckElapsed = 0.f;
+		bool bAttackTurn = false;
+		if (!bDelaying)
+		{
+			TArray<TPair<FName, float>> Usable;
+			Enemy->GatherPatterns(Distance, false, Usable);
+			if (!Usable.IsEmpty())
+			{
+				return EStateTreeRunStatus::Succeeded;
+			}
+			TArray<FFloatInterval> ReadyRanges;
+			Enemy->GatherReadyPatternRanges(ReadyRanges);
+			bAttackTurn = !ReadyRanges.IsEmpty();
+			InstanceData.TargetRange = bAttackTurn ? PickNearestRange(ReadyRanges, Distance) : Enemy->GetCharacterData()->AI.PreferredDistance;
+		}
+		else
+		{
+			InstanceData.TargetRange = Enemy->GetCharacterData()->AI.PreferredDistance;
+		}
+
+		// 공격할 차례인데 목표 거리 안이면 거리는 닿지만 시야 같은 조건이 맞지 않은 것이라, 보이는 곳을 찾아 다가갑니다.
+		const bool bApproach = Distance > InstanceData.TargetRange.Max || (bAttackTurn && Distance >= InstanceData.TargetRange.Min);
+		// 엔진의 막힘 감지나 부분 경로의 끝에 닿아 경로 이동이 도착 전에 끝날 수 있으므로, 멈춰 있으면 다시 요청합니다.
+		if (bApproach && Controller.GetMoveStatus() == EPathFollowingStatus::Idle)
+		{
+			Controller.MoveToActor(Target);
+		}
+		else if (!bApproach && InstanceData.bApproaching)
+		{
+			StopPathMove(Controller);
+		}
+		InstanceData.bApproaching = bApproach;
+	}
+
+	if (InstanceData.bApproaching)
+	{
+		return EStateTreeRunStatus::Running;
+	}
+	// 적은 스스로 대상을 향해 돌므로, 반대쪽으로 걸으면 바라본 채 물러나고 옆으로 걸으면 대상 주위를 돕니다.
+	if (Distance < InstanceData.TargetRange.Min)
+	{
+		Enemy->AddMovementInput((Enemy->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal2D());
+	}
+	else if (Enemy->GetCharacterData()->AI.WaitMovement == EAgWaitMovement::Strafe)
+	{
+		Enemy->AddMovementInput(Enemy->GetActorRightVector(), InstanceData.StrafeDirection);
 	}
 	return EStateTreeRunStatus::Running;
 }
 
-EStateTreeRunStatus FAgEnemyAITask_Approach::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
+void FAgEnemyAITask_KeepDistance::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	InstanceData.Elapsed += DeltaTime;
-	return InstanceData.Elapsed >= RetryInterval ? EStateTreeRunStatus::Succeeded : EStateTreeRunStatus::Running;
-}
-
-void FAgEnemyAITask_Approach::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
-{
-	// 다가가기는 재시도 간격마다 패턴 실행을 거쳐 다시 들어오므로, StopMovement처럼 속도를 0으로 만들면 걸음이 그때마다
-	// 끊깁니다. 경로만 끊고 남은 속도는 이동 컴포넌트의 감속에 맡깁니다.
-	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
-	Controller.GetPathFollowingComponent()->AbortMove(Controller, FPathFollowingResultFlags::ForcedScript, FAIRequestID::CurrentRequest,
-		EPathFollowingVelocityMode::Keep);
+	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	if (InstanceData.bApproaching)
+	{
+		StopPathMove(*InstanceData.Controller);
+	}
 }
 
 EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
@@ -107,7 +176,8 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 	AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
 	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
 	const AAgCharacterBase* Target = InstanceData.Controller->GetTarget();
-	if (!Target)
+	// 반응형 패턴만 패턴 후딜레이 중에 나옵니다.
+	if (!Target || (!InstanceData.bResponse && InstanceData.Controller->IsInPostPatternDelay()))
 	{
 		return EStateTreeRunStatus::Failed;
 	}
@@ -137,24 +207,47 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 
 EStateTreeRunStatus FAgEnemyAITask_RunPattern::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	// 패턴이 넉다운이나 그로기로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이
-	// 먼저 적용됩니다.
+	// 패턴이 피격 반응으로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이 먼저 적용되고,
+	// 후딜레이는 그 반응이 끝날 때 정합니다.
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const UAbilitySystemComponent* ASC = InstanceData.Controller->GetEnemy()->GetAbilitySystemComponent();
+	AAgEnemyAIController& Controller = *InstanceData.Controller;
+	const UAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(InstanceData.Handle);
-	return Spec && Spec->IsActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	if (Spec && Spec->IsActive())
+	{
+		return EStateTreeRunStatus::Running;
+	}
+	if (Controller.IsEnemyReacting())
+	{
+		return EStateTreeRunStatus::Succeeded;
+	}
+	// 반응형 패턴(Backstep)은 끝까지 마치면 남은 후딜레이 없이 바로 다음 패턴을 고릅니다.
+	if (InstanceData.bResponse)
+	{
+		Controller.ClearPostPatternDelay();
+	}
+	else
+	{
+		Controller.StartPostPatternDelay();
+	}
+	return EStateTreeRunStatus::Succeeded;
 }
 
 void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	// 조준 대상 놓침처럼 패턴이 끝나기 전에 다른 상태로 가면 패턴을 멈춥니다.
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
+	AAgEnemyAIController& Controller = *InstanceData.Controller;
+	AAgEnemyCharacter* Enemy = Controller.GetEnemy();
 	UAbilitySystemComponent* ASC = Enemy ? Enemy->GetAbilitySystemComponent() : nullptr;
 	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindAbilitySpecFromHandle(InstanceData.Handle) : nullptr;
+	// 조준 대상 놓침처럼 패턴이 끝나기 전에 다른 상태로 가면 패턴을 멈추고 후딜레이를 겁니다.
 	if (Spec && Spec->IsActive())
 	{
 		ASC->CancelAbilityHandle(InstanceData.Handle);
+		if (!InstanceData.bResponse)
+		{
+			Controller.StartPostPatternDelay();
+		}
 	}
 }
 
@@ -167,19 +260,41 @@ EStateTreeRunStatus FAgEnemyAITask_PhaseTransition::EnterState(FStateTreeExecuti
 EStateTreeRunStatus FAgEnemyAITask_PhaseTransition::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return InstanceData.Controller->GetEnemy()->IsPhaseTransitionActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	if (InstanceData.Controller->GetEnemy()->IsPhaseTransitionActive())
+	{
+		return EStateTreeRunStatus::Running;
+	}
+	InstanceData.Controller->StartPostPatternDelay();
+	return EStateTreeRunStatus::Succeeded;
 }
 
 EStateTreeRunStatus FAgEnemyAITask_WaitReaction::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return InstanceData.Controller->IsEnemyReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	InstanceData.bHeavyReaction = false;
+	return Tick(Context, 0.f);
 }
 
 EStateTreeRunStatus FAgEnemyAITask_WaitReaction::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
+	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	const AAgEnemyAIController& Controller = *InstanceData.Controller;
+	if (!Controller.IsEnemyReacting())
+	{
+		return EStateTreeRunStatus::Succeeded;
+	}
+	// 움찔 도중 넉다운으로 바뀌는 것처럼 반응이 이어질 수 있어, 머무는 동안 한 번이라도 있었는지 기록합니다.
+	InstanceData.bHeavyReaction |= !Controller.IsEnemyFlinching();
+	return EStateTreeRunStatus::Running;
+}
+
+void FAgEnemyAITask_WaitReaction::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
+{
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return InstanceData.Controller->IsEnemyReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	if (InstanceData.bHeavyReaction)
+	{
+		InstanceData.Controller->StartPostPatternDelay();
+	}
 }
 
 FAgEnemyAITask_NonCombat::FAgEnemyAITask_NonCombat()
@@ -211,7 +326,9 @@ FAgEnemyAITask_Combat::FAgEnemyAITask_Combat()
 
 EStateTreeRunStatus FAgEnemyAITask_Combat::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	UpdateTarget(*Context.GetInstanceData(*this).Controller);
+	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
+	UpdateTarget(Controller);
+	Controller.StartPostPatternDelay();
 	return EStateTreeRunStatus::Running;
 }
 

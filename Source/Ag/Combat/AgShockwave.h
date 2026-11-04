@@ -27,7 +27,6 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	void ApplyHit(AAgCharacterBase& Target, const FVector& HitLocation);
 	void UpdateScale();
 
 	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
@@ -44,7 +43,7 @@ private:
 	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
 	FAgDamage Damage;
 
-	/** 여러 대상에 다시 쓰므로, 대상별 결과와 적중 위치는 이 스펙의 복사본에만 기록합니다. */
+	/** 엔진이 적용할 때 스펙을 복사해 실행하므로, 적중마다 적중 위치만 바꿔 다시 씁니다. */
 	UPROPERTY()
 	FGameplayEffectSpecHandle DamageSpec;
 

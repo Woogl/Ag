@@ -23,6 +23,13 @@ enum class EAgTeam : uint8
 	Neutral
 };
 
+UENUM()
+enum class EAgWaitMovement : uint8
+{
+	Strafe,
+	Stand
+};
+
 USTRUCT()
 struct FAgAttributes
 {
@@ -68,6 +75,29 @@ struct FAgAttributes
 	float MOV = 0.f;
 };
 
+USTRUCT()
+struct FAgEnemyAIData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FFloatInterval PostPatternDelayTime = FFloatInterval(0.f, 0.f);
+
+	/** 기다리는 동안 지키는 대상과의 거리(캡슐 중심 수평, cm)입니다. */
+	UPROPERTY()
+	FFloatInterval PreferredDistance = FFloatInterval(0.f, 0.f);
+
+	/** 기다리는 동안 적정 거리 안에서의 움직임입니다. */
+	UPROPERTY()
+	EAgWaitMovement WaitMovement = EAgWaitMovement::Strafe;
+
+	UPROPERTY()
+	float SightDistance = 0.f;
+
+	UPROPERTY()
+	float SightAngle = 0.f;
+};
+
 UCLASS()
 class UAgCharacterData : public UObject
 {
@@ -94,14 +124,8 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities", meta = (DataId = "Effects"))
 	TArray<FName> Effects;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	FFloatInterval PostPatternDelayTime = FFloatInterval(0.f, 0.f);
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	float SightDistance = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
-	float SightAngle = 0.f;
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI", meta = (ShowOnlyInnerProperties))
+	FAgEnemyAIData AI;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Phase")
 	TArray<float> PhaseTransitionHPRatios;

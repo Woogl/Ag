@@ -39,8 +39,11 @@ public:
 
 	bool CanActivatePattern(FName Id) const;
 
-	/** 대상과의 거리와 현재 페이즈에서 지금 발동할 수 있는 패턴을 가중치와 함께 모읍니다. 반응 패턴은 반응 확률이 가중치입니다. */
+	/** 대상과의 거리와 현재 페이즈에서 지금 발동할 수 있는 패턴을 가중치와 함께 모읍니다. 반응형 패턴은 반응 확률이 가중치입니다. */
 	void GatherPatterns(float TargetDistance, bool bResponse, TArray<TPair<FName, float>>& OutCandidates) const;
+
+	/** 현재 페이즈에서 쓰고 쿨다운이 끝난 패턴(반응형 패턴 제외)의 발동 가능 거리를 모읍니다. 거리와 대상 찾기는 보지 않습니다. */
+	void GatherReadyPatternRanges(TArray<FFloatInterval>& OutRanges) const;
 
 	virtual bool CanReturnToNonCombat() const
 	{

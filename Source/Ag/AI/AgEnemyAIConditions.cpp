@@ -2,7 +2,6 @@
 
 #include "AI/AgEnemyAIConditions.h"
 
-#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
@@ -33,12 +32,6 @@ bool FAgEnemyAICondition_Reacting::TestCondition(FStateTreeExecutionContext& Con
 	return Controller->IsEnemyReacting();
 }
 
-bool FAgEnemyAICondition_Flinching::TestCondition(FStateTreeExecutionContext& Context) const
-{
-	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
-	return Controller->IsEnemyFlinching() != bInvert;
-}
-
 bool FAgEnemyAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
@@ -51,14 +44,14 @@ bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
 	const AAgEnemyCharacter* Enemy = Controller->GetEnemy();
 	const AAgCharacterBase* Target = Controller->GetTarget();
-	if (!Target)
+	if (!Target || !Controller->IsInPostPatternDelay())
 	{
 		return false;
 	}
 
 	TArray<TPair<FName, float>> Responses;
 	Enemy->GatherPatterns(Enemy->GetHorizontalDistanceTo(Target), true, Responses);
-	// 반응 태스크가 확률을 가중치로 하나를 다시 고르므로, 각 반응 패턴이 자기 확률로 나오도록 합으로 한 번만 굴립니다.
+	// 반응 태스크가 확률을 가중치로 하나를 다시 고르므로, 각 반응형 패턴이 자기 확률로 나오도록 합으로 한 번만 굴립니다.
 	float TotalChance = 0.f;
 	for (const TPair<FName, float>& Response : Responses)
 	{
@@ -84,19 +77,10 @@ bool FAgEnemyAICondition_AimLost::TestCondition(FStateTreeExecutionContext& Cont
 		return true;
 	}
 
-	// 고정한 조준점은 대상이 움직인 뒤의 자리와 달라 따로 봅니다.
-	const UAgGameplayAbility* Aiming = Cast<UAgGameplayAbility>(ASC->GetAnimatingAbility());
-	const TOptional<FVector> AimLocation = Aiming ? Aiming->GetAimLocation() : TOptional<FVector>();
-	if (!AimLocation)
-	{
-		return false;
-	}
-	const FVector Muzzle = Enemy->GetMesh()->GetSocketLocation(MuzzleSocket);
+	// 벽에 붙어 총구만 벽 너머로 나가면 총구에서는 대상이 보이므로, 몸에서 총구까지도 봅니다.
 	const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgAimLost), false, Enemy);
-	const FCollisionObjectQueryParams Walls(ECC_WorldStatic);
-	const UWorld* World = Enemy->GetWorld();
-	return World->LineTraceTestByObjectType(Enemy->GetActorLocation(), Muzzle, Walls, QueryParams) ||
-	       World->LineTraceTestByObjectType(Muzzle, *AimLocation, Walls, QueryParams);
+	return Enemy->GetWorld()->LineTraceTestByObjectType(Enemy->GetActorLocation(), Enemy->GetMesh()->GetSocketLocation(MuzzleSocket),
+		FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
 }
 
 bool FAgEnemyAICondition_TargetNoticed::TestCondition(FStateTreeExecutionContext& Context) const

@@ -12,7 +12,10 @@
 class UShapeComponent;
 class AAgCharacterBase;
 
-/** 판정 모양은 BP에 둔 모양 컴포넌트(상자 또는 캡슐) 하나입니다. 생성 방향으로 날아갑니다. */
+/**
+ * 판정 모양은 BP에 둔 모양 컴포넌트(상자·캡슐) 전부이며 섞어 둘 수 있습니다. 생성되는 순간 어빌리티의 행동 대상이 지금 속도로 움직인다고 보고
+ * 닿을 위치(예측 지점)를 향해 날아가며, 대상이 없으면 생성 방향으로 날아갑니다.
+ */
 UCLASS(Abstract)
 class AAgProjectile : public AActor, public IAgAbilitySpawnedActor
 {
@@ -24,6 +27,8 @@ public:
 	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability) override;
 	void Reflect(AAgCharacterBase& Defender);
 	bool IsReflected() const;
+	/** 적중·가드·가드 브레이크로 피해를 준 뒤 불립니다. */
+	void OnDamageApplied();
 
 protected:
 	virtual void PostInitializeComponents() override;
@@ -31,8 +36,6 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	void ApplyHit(AAgCharacterBase& Target, const FVector& HitLocation);
-
 	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
 	float Speed = 0.f;
@@ -43,13 +46,18 @@ private:
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
 	FAgDamage Damage;
 
-	UPROPERTY()
-	TObjectPtr<UShapeComponent> HitShape;
+	/** 꺼져 있으면 피해를 준 대상을 뚫고 지나갑니다. */
+	UPROPERTY(EditInstanceOnly, Category = "Projectile")
+	bool bDestroyOnHit = false;
 
+	UPROPERTY()
+	TArray<TObjectPtr<UShapeComponent>> HitShapes;
+
+	TWeakObjectPtr<AActor> AimTarget;
 	TArray<TWeakObjectPtr<AActor>> TouchedActors;
 	TWeakObjectPtr<AAgCharacterBase> Reflector;
 
-	/** 여러 대상에 다시 쓰므로, 대상별 결과와 적중 위치는 이 스펙의 복사본에만 기록합니다. */
+	/** 엔진이 적용할 때 스펙을 복사해 실행하므로, 적중마다 적중 위치만 바꿔 다시 씁니다. */
 	UPROPERTY()
 	FGameplayEffectSpecHandle DamageSpec;
 	FVector FlightDirection = FVector::ForwardVector;

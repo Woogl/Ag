@@ -23,15 +23,20 @@ bool UAgEnemySightPreviewComponent::GetSightPreview(FVector& OutOrigin, FQuat& O
 	}
 	// CharacterData는 플레이 시작 때 연결되므로 편집 중에는 ID로 정본 데이터를 조회합니다.
 	const UAgCharacterData* Data = UAgAssetManager::Get().FindCharacterData(Enemy->GetCharacterDataId());
-	if (!Data || !FMath::IsFinite(Data->SightDistance) || !FMath::IsFinite(Data->SightAngle) || Data->SightDistance <= 0.f || Data->SightAngle <= 0.f || Data->SightAngle > 360.f)
+	if (!Data)
+	{
+		return false;
+	}
+	const FAgEnemyAIData& AI = Data->AI;
+	if (!FMath::IsFinite(AI.SightDistance) || !FMath::IsFinite(AI.SightAngle) || AI.SightDistance <= 0.f || AI.SightAngle <= 0.f || AI.SightAngle > 360.f)
 	{
 		return false;
 	}
 	FRotator EyesRotation;
 	Enemy->GetActorEyesViewPoint(OutOrigin, EyesRotation);
 	OutRotation = EyesRotation.Quaternion();
-	OutDistance = Data->SightDistance;
-	OutAngle = Data->SightAngle;
+	OutDistance = AI.SightDistance;
+	OutAngle = AI.SightAngle;
 	return true;
 }
 #endif

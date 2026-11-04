@@ -335,4 +335,8 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		Projectile->Reflect(*Target);
 	}
+	if (!bParry && IsValid(Projectile))
+	{
+		Projectile->OnDamageApplied();
+	}
 }

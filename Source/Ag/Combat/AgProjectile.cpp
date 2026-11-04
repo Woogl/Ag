@@ -14,6 +14,22 @@
 #include "Data/AgEffectData.h"
 #include "Ag.h"
 
+namespace
+{
+	/** From에서 Speed로 곧게 날아간 투사체가 수평 속도 Velocity로 움직이는 대상에 닿는 위치입니다. */
+	FVector PredictLocation(const FVector& From, const FVector& TargetLocation, const FVector& Velocity, float Speed)
+	{
+		// |Offset + Velocity × T| = Speed × T의 양의 근입니다. 대상이 투사체보다 빠르면 근이 없을 수 있어 지금 거리로 셉니다.
+		const FVector Offset = TargetLocation - From;
+		const double A = Velocity.SizeSquared() - FMath::Square(Speed);
+		const double B = 2.0 * FVector::DotProduct(Offset, Velocity);
+		const double C = Offset.SizeSquared();
+		const double Time = A < 0.0 ? (-B - FMath::Sqrt(B * B - 4.0 * A * C)) / (2.0 * A) : Offset.Size() / Speed;
+		return TargetLocation + Velocity * Time;
+	}
+
+} // namespace
+
 AAgProjectile::AAgProjectile()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -22,6 +38,11 @@ AAgProjectile::AAgProjectile()
 void AAgProjectile::OnSpawnedByAbility(const UAgGameplayAbility& Ability)
 {
 	DamageSpec = Ability.MakeDamageSpec(Damage, MakeShared<FAgHitState>());
+	if (DamageSpec.IsValid())
+	{
+		DamageSpec.Data->GetContext().AddInstigator(GetInstigator(), this);
+	}
+	AimTarget = Ability.GetActionTarget();
 }
 
 void AAgProjectile::Reflect(AAgCharacterBase& Defender)
@@ -40,6 +61,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	// 반사탄 적중의 PP 감소는 Parried 어빌리티가 맡으므로 반사한 피해에는 PP 배율을 싣지 않습니다.
 	Damage.PPMultiplier = 0.f;
 	Damage.AddToSpec(*ReflectedSpec.Data);
+	ReflectedSpec.Data->GetContext().AddInstigator(&Defender, this);
 	DamageSpec = ReflectedSpec;
 	Reflector = &Defender;
 	const FVector ReturnDirection = (Shooter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
@@ -55,19 +77,30 @@ bool AAgProjectile::IsReflected() const
 	return !Reflector.IsExplicitlyNull();
 }
 
+void AAgProjectile::OnDamageApplied()
+{
+	if (bDestroyOnHit)
+	{
+		Destroy();
+	}
+}
+
 void AAgProjectile::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	HitShape = FindComponentByClass<UShapeComponent>();
-	if (!HitShape)
+	GetComponents(HitShapes);
+	if (HitShapes.IsEmpty())
 	{
 		UE_LOG(LogAg, Error, TEXT("%s: no shape component for hits"), *GetClass()->GetName());
 		return;
 	}
 	// 판정 모양은 매 틱 코드에서 직접 검사하므로 자체 충돌이 필요 없습니다.
-	HitShape->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	HitShape->SetGenerateOverlapEvents(false);
+	for (UShapeComponent* Shape : HitShapes)
+	{
+		Shape->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Shape->SetGenerateOverlapEvents(false);
+	}
 }
 
 void AAgProjectile::BeginPlay()
@@ -75,6 +108,20 @@ void AAgProjectile::BeginPlay()
 	Super::BeginPlay();
 
 	FlightDirection = GetActorForwardVector();
+	// 판정 모양과 루트가 BP 컴포넌트라, 생성을 마친 이때부터 발사 위치를 읽을 수 있습니다.
+	const AActor* Target = AimTarget.Get();
+	if (!Target || Speed <= 0.f)
+	{
+		return;
+	}
+	const FVector From = GetActorLocation();
+	const FVector AimLocation = PredictLocation(From, Target->GetActorLocation(),Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed);
+	const FVector AimDirection = (AimLocation - From).GetSafeNormal();
+	if (!AimDirection.IsNearlyZero())
+	{
+		FlightDirection = AimDirection;
+		SetActorRotation(FlightDirection.Rotation());
+	}
 }
 
 void AAgProjectile::Tick(float DeltaSeconds)
@@ -83,31 +130,44 @@ void AAgProjectile::Tick(float DeltaSeconds)
 
 	AAgCharacterBase* ShooterCharacter = GetInstigator<AAgCharacterBase>();
 	AAgCharacterBase* DamageSource = IsReflected() ? Reflector.Get() : ShooterCharacter;
-	if (!HitShape || !IsValid(ShooterCharacter) || !IsValid(DamageSource) || !DamageSpec.IsValid())
+	if (HitShapes.IsEmpty() || !IsValid(ShooterCharacter) || !IsValid(DamageSource) || !DamageSpec.IsValid())
 	{
 		Destroy();
 		return;
 	}
 
-	// 판정은 모양 컴포넌트의 자리와 방향으로 쓸고 액터는 판정이 간 만큼 옮깁니다. 벽은 판정 모양 가운데의 선으로 찾아,
-	// 판정이 스치는 바닥이나 낮은 턱을 벽으로 치지 않습니다.
+	// 판정은 모양 컴포넌트마다 제 자리와 방향으로 쓸고 액터는 판정이 간 만큼 옮깁니다. 벽은 각 판정 모양 가운데의 선으로 찾아,
+	// 판정이 스치는 바닥이나 낮은 턱을 벽으로 치지 않고, 가장 먼저 벽에 닿는 모양까지만 갑니다.
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgProjectile), false, this);
 	QueryParams.AddIgnoredActor(DamageSource);
 	const FVector ActorStart = GetActorLocation();
-	const FVector Start = HitShape->GetComponentLocation();
 	const float Step = FMath::Min(Speed * DeltaSeconds, Range - Traveled);
-	FVector End = Start + FlightDirection * Step;
-	FHitResult WallHit;
-	const bool bHitWall =
-		GetWorld()->LineTraceSingleByObjectType(WallHit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
-	if (bHitWall)
+	float MoveDistance = Step;
+	bool bHitWall = false;
+	for (const UShapeComponent* Shape : HitShapes)
 	{
-		End = WallHit.Location;
+		const FVector Start = Shape->GetComponentLocation();
+		FHitResult WallHit;
+		if (GetWorld()->LineTraceSingleByObjectType(WallHit, Start, Start + FlightDirection * MoveDistance,
+				FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams))
+		{
+			MoveDistance = WallHit.Distance;
+			bHitWall = true;
+		}
 	}
 
+	const FVector Move = FlightDirection * MoveDistance;
 	TArray<FHitResult> Reached;
-	GetWorld()->SweepMultiByObjectType(Reached, Start, End, HitShape->GetComponentQuat(), FCollisionObjectQueryParams(ECC_Pawn),
-		HitShape->GetCollisionShape(), QueryParams);
+	for (const UShapeComponent* Shape : HitShapes)
+	{
+		const FVector Start = Shape->GetComponentLocation();
+		TArray<FHitResult> ShapeReached;
+		GetWorld()->SweepMultiByObjectType(ShapeReached, Start, Start + Move, Shape->GetComponentQuat(),
+			FCollisionObjectQueryParams(ECC_Pawn), Shape->GetCollisionShape(), QueryParams);
+		Reached.Append(ShapeReached);
+	}
+	// 모든 모양이 같은 거리를 쓸므로 Time이 곧 이동 거리의 비율이고, 여러 모양의 충돌을 닿은 순서로 맞힙니다.
+	Reached.StableSort([](const FHitResult& A, const FHitResult& B) { return A.Time < B.Time; });
 	for (const FHitResult& Contact : Reached)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
@@ -117,9 +177,12 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		}
 		TouchedActors.Add(Target);
 		const bool bWasReflected = IsReflected();
-		SetActorLocation(ActorStart + (Contact.Location - Start));
+		SetActorLocation(ActorStart + Move * Contact.Time);
 		const FVector HitLocation = Target->GetActorLocation() - FlightDirection * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
-		ApplyHit(*Target, HitLocation);
+		// 패리로 반사하면 적용하는 도중에 DamageSpec이 바뀌므로, 적용이 끝날 때까지 쓰던 스펙을 붙잡아 둡니다.
+		const FGameplayEffectSpecHandle Spec = DamageSpec;
+		Spec.Data->GetContext().AddOrigin(HitLocation);
+		DamageSource->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
 		if (IsActorBeingDestroyed() || !IsValid(ShooterCharacter))
 		{
 			Destroy();
@@ -137,24 +200,10 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		Destroy();
 		return;
 	}
-	SetActorLocation(ActorStart + (End - Start));
+	SetActorLocation(ActorStart + Move);
 	Traveled += Step;
 	if (Traveled >= Range)
 	{
 		Destroy();
-	}
-}
-
-void AAgProjectile::ApplyHit(AAgCharacterBase& Target, const FVector& HitLocation)
-{
-	FGameplayEffectSpec Spec(*DamageSpec.Data);
-	FGameplayEffectContextHandle Context = Spec.GetContext().Duplicate();
-	Context.AddInstigator(IsReflected() ? Reflector.Get() : GetInstigator(), this);
-	Context.AddOrigin(HitLocation);
-	// SetContext는 출처 태그와 어트리뷰트를 다시 캡처하므로 적중 시점의 ATK를 씁니다.
-	Spec.SetContext(Context);
-	if (UAbilitySystemComponent* InstigatorASC = Context.GetInstigatorAbilitySystemComponent())
-	{
-		InstigatorASC->ApplyGameplayEffectSpecToTarget(Spec, Target.GetAbilitySystemComponent());
 	}
 }

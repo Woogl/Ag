@@ -778,14 +778,13 @@
     "AbilityTags": ["Ability.Enemy.Pattern"],
     "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "Cooldown": 6,
-    "Targeting": {"Preset": "Shooting", "Range": 2000, "bRequired": true},
+    "Targeting": {"Preset": "Shooting", "Range": 3000, "bRequired": true},
     "Montage": {
       "Asset": "/Game/Animations/AM_Gunner_PistolShot.AM_Gunner_PistolShot",
       "Sections": {
         "Aim": [
           {"Task": "ApplyEffect", "Start": 0, "End": 1.2, "Effect": "Aiming"},
-          {"Task": "RootMotion", "Start": 0, "End": 0.85, "bWarpTranslation": false},
-          {"Task": "Aim", "Start": 0, "End": 0.85},
+          {"Task": "RootMotion", "Start": 0, "End": 1.2, "bWarpTranslation": false},
           {"Task": "Transition", "Start": 1.2, "ToSection": "Fire", "BlendTime": 0.1}
         ],
         "Fire": [
@@ -797,7 +796,7 @@
         ]
       }
     },
-    "PatternSelection": {"Distance": {"Min": 0, "Max": 2000}, "Weight": 1}
+    "PatternSelection": {"Distance": {"Min": 0, "Max": 3000}, "Weight": 1}
   },
   "Groggy": {
     "AbilityTags": ["Ability.Reaction.Groggy"],

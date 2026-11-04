@@ -174,7 +174,6 @@ void UAgGameplayAbility::ActivateAbility(FGameplayAbilitySpecHandle Handle, cons
 
 	// 대상 찾기는 락온 대상을 먼저 고르므로, 지난 실행의 대상을 비운 뒤 찾아야 락온 행동이 이전 대상을 다시 고르지 않습니다.
 	ActionTarget.Reset();
-	AimLocation.Reset();
 	RefreshTarget();
 	const bool bEventTrigger = IsEventTrigger(TriggerEventData);
 	TriggerEventTag = bEventTrigger ? TriggerEventData->EventTag : FGameplayTag();
