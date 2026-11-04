@@ -87,7 +87,6 @@ void AAgPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
 	ASC->AbilityActivatedCallbacks.AddUObject(this, &ThisClass::HandleAbilityActivated);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Guarding, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleGuardingChanged);
@@ -372,8 +371,6 @@ bool AAgPlayerCharacter::ActivateInputAbilities(const FGameplayTag& InputTag)
 
 void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 {
-	// 키를 누르는 동안 이어지는 행동(가드)은 엔진 태그 트리거(OwnedTagPresent) 대신 직접 발동·취소합니다. 태그 트리거는
-	// 태그가 붙는 순간 막혀 있으면 다시 시도하지 않아, 태그를 실행 상태와 맞추는 코드가 따로 필요해집니다.
 	if (HeldInputs.Remove(InputTag) > 0)
 	{
 		TArray<FGameplayAbilitySpecHandle> Handles;
@@ -402,18 +399,6 @@ bool AAgPlayerCharacter::IsReleaseInput(const FGameplayTag& InputTag) const
 		const FAgAbilityData* Ability = FindAbility(Handle);
 		return Ability && Ability->End == EAgAbilityEnd::InputReleased;
 	});
-}
-
-bool AAgPlayerCharacter::IsHoldingReleaseInput() const
-{
-	for (const FGameplayTag& InputTag : HeldInputs)
-	{
-		if (IsReleaseInput(InputTag))
-		{
-			return true;
-		}
-	}
-	return false;
 }
 
 void AAgPlayerCharacter::ActivateByTag(const FGameplayTag& AbilityTag)
@@ -456,7 +441,8 @@ void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 N
 	{
 		return;
 	}
-	if ((Tag == AgGameplayTags::State_Busy || Tag == AgGameplayTags::State_Airborne) && IsHoldingReleaseInput())
+	const FGameplayAbilitySpec* Guard = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Guard);
+	if (Tag == AgGameplayTags::State_Busy && Guard && Guard->IsActive())
 	{
 		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunPendingInput);
 	}
@@ -497,57 +483,16 @@ bool AAgPlayerCharacter::CanMove() const
 	return !GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Blockers);
 }
 
-void AAgPlayerCharacter::HandleAbilityEnded(const FAbilityEndedData& EndedData)
-{
-	const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(EndedData.AbilityThatEnded);
-	if (IsDead() || !AgAbility)
-	{
-		return;
-	}
-
-	const FGameplayTagContainer& EndedTags = AgAbility->GetDefinition().AbilityTags;
-	if (!IsHoldingReleaseInput() || AgAbility->GetDefinition().End == EAgAbilityEnd::InputReleased ||
-		(!EndedTags.HasTag(AgGameplayTags::Ability_Action) && !EndedTags.HasTag(AgGameplayTags::Ability_Reaction)))
-	{
-		return;
-	}
-
-	// 이 행동을 취소한 행동이 시작된 뒤에 보도록 타이머 처리(TG_PostPhysics 뒤)에서 확인합니다.
-	GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunPendingInput);
-}
-
 void AAgPlayerCharacter::TryRunPendingInput()
 {
-	// 기억한 입력은 누르고 있는 키보다 나중에 누른 것이므로 먼저 처리합니다.
+	// 기억한 입력이 가드 자세로 돌아오는 것보다 우선합니다.
 	TryRunBufferedInput();
-	if (IsDead())
-	{
-		return;
-	}
-
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	for (const FGameplayTag& InputTag : HeldInputs.Array())
+	const FGameplayAbilitySpec* Guard = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Guard);
+	if (!IsDead() && Guard && Guard->IsActive() && !IsActionInputBlocked(AgGameplayTags::Input_Guard))
 	{
-		if (!IsReleaseInput(InputTag) || IsActionInputBlocked(InputTag))
-		{
-			continue;
-		}
-		TArray<FGameplayAbilitySpecHandle> Handles;
-		FindInputAbilities(InputTag, Handles);
-		const bool bActive = Handles.ContainsByPredicate([ASC](FGameplayAbilitySpecHandle Handle)
-		{
-			const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(Handle);
-			return Spec && Spec->IsActive();
-		});
-		if (!bActive)
-		{
-			ActivateInputAbilities(InputTag);
-		}
-		else if (InputTag == AgGameplayTags::Input_Guard)
-		{
-			// 패리 모션은 가드를 끝내지 않으므로, 가드 중이면 후딜에 든 패리 모션만 끝내 가드 자세로 돌아옵니다.
-			ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Parry));
-		}
+		// 패리 모션은 가드를 끝내지 않으므로, 가드 중이면 후딜에 든 패리 모션만 끝내 가드 자세로 돌아옵니다.
+		ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Parry));
 	}
 }
 
@@ -590,8 +535,7 @@ void AAgPlayerCharacter::UpdateSprint()
 	const FGameplayAbilitySpec* Dodge = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Dodge);
 	const FGameplayAbilitySpec* PerfectDodge = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_PerfectDodge);
 	const bool bDodging = (Dodge && Dodge->IsActive()) || (PerfectDodge && PerfectDodge->IsActive());
-	if (bWantsSprint && !MoveInputDirection.IsNearlyZero() && !HeldInputs.Contains(AgGameplayTags::Input_Guard) &&
-		!ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && bDodging)
+	if (bWantsSprint && !MoveInputDirection.IsNearlyZero() && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && bDodging)
 	{
 		ActivateByTag(AgGameplayTags::Ability_Sprint);
 	}

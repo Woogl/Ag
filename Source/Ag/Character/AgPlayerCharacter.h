@@ -14,7 +14,6 @@ class UGameplayAbility;
 class UInputAction;
 class UInputMappingContext;
 class USpringArmComponent;
-struct FAbilityEndedData;
 struct FInputActionValue;
 
 UCLASS(Abstract)
@@ -65,8 +64,6 @@ private:
 	/** 이 입력에 키를 떼면 끝나는 어빌리티가 묶여 있습니다. */
 	bool IsReleaseInput(const FGameplayTag& InputTag) const;
 
-	bool IsHoldingReleaseInput() const;
-
 	void ActivateByTag(const FGameplayTag& AbilityTag);
 
 	void TryJump();
@@ -77,8 +74,6 @@ private:
 	void TryRunBufferedInput();
 
 	bool CanMove() const;
-
-	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
 
 	void TryRunPendingInput();
 
