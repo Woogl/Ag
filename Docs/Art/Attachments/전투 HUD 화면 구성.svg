@@ -28,6 +28,15 @@
   </g>
   <text x="960" y="790" font-size="16" fill="#7b8696" text-anchor="middle">보스 (월드)</text>
 
+  <!-- 월드 참고용 실루엣: 일반 적 (보스보다 멀리) -->
+  <g fill="#4b5563">
+    <circle cx="1400" cy="430" r="18"/>
+    <rect x="1365" y="452" width="70" height="132" rx="114"/>
+    <rect x="1371" y="578" width="26" height="90" rx="109"/>
+    <rect x="1403" y="578" width="26" height="90" rx="109"/>
+  </g>
+  <text x="1400" y="698" font-size="16" fill="#7b8696" text-anchor="middle">일반 적 (월드)</text>
+
   <!-- 월드 참고용 실루엣: 플레이어 (뒷모습) -->
   <g fill="#3f4753">
     <circle cx="820" cy="660" r="34"/>
@@ -50,10 +59,18 @@
   <circle cx="960" cy="470" r="16" fill="none" stroke="#FFFFFF" stroke-width="3"/>
   <circle cx="960" cy="470" r="3" fill="#FFFFFF"/>
 
-  <!-- [5] 처형 안내 -->
-  <rect x="836" y="280" width="248" height="46" rx="23" fill="#000000" fill-opacity="0.55"/>
-  <text x="960" y="314" font-size="32" fill="#FFFFFF" text-anchor="middle">[F] 처형</text>
-  <text x="1128" y="336" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
+  <!-- [5] 처형 안내: 락온 마커 오른쪽 가장자리에서 12px -->
+  <rect x="988" y="447" width="248" height="46" rx="23" fill="#000000" fill-opacity="0.55"/>
+  <text x="1112" y="481" font-size="32" fill="#FFFFFF" text-anchor="middle">[F] 처형</text>
+  <text x="988" y="512" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
+
+  <!-- [7] 적 네임플레이트: 머리 위 16px, HP 118 × 10px, 간격 6px, PP 118 × 4px -->
+  <rect x="1341" y="376" width="118" height="10" fill="#000000" fill-opacity="0.5"/>
+  <rect x="1341" y="376" width="70" height="10" fill="#D94545"/>
+  <rect x="1411" y="376" width="14" height="10" fill="#FFFFFF" fill-opacity="0.7"/>
+  <rect x="1341" y="392" width="118" height="4" fill="#000000" fill-opacity="0.5"/>
+  <rect x="1341" y="392" width="84" height="4" fill="#F2A33A"/>
+  <text x="1400" y="362" font-size="14" fill="#9aa4b1" text-anchor="middle">(전투·락온·최근 피해 시)</text>
 
   <!-- [1] 플레이어 상태: SP / HP / MP -->
   <rect x="48" y="974" width="400" height="8" fill="#000000" fill-opacity="0.5"/>
@@ -109,11 +126,13 @@
     <text x="1644" y="918">2</text>
     <circle cx="436" cy="99" r="16" fill="#FFD23F"/>
     <text x="436" y="105">3</text>
-    <circle cx="1000" cy="450" r="16" fill="#FFD23F"/>
-    <text x="1000" y="456">4</text>
-    <circle cx="1108" cy="303" r="16" fill="#FFD23F"/>
-    <text x="1108" y="309">5</text>
+    <circle cx="920" cy="450" r="16" fill="#FFD23F"/>
+    <text x="920" y="456">4</text>
+    <circle cx="1260" cy="470" r="16" fill="#FFD23F"/>
+    <text x="1260" y="476">5</text>
     <circle cx="1536" cy="540" r="16" fill="#FFD23F"/>
     <text x="1536" y="546">6</text>
+    <circle cx="1317" cy="386" r="16" fill="#FFD23F"/>
+    <text x="1317" y="392">7</text>
   </g>
 </svg>
