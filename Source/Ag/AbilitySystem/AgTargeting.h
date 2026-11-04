@@ -19,6 +19,9 @@ namespace AgTargeting
 
 	/** 출처가 AI면 지각의 시야가 대상을 지금 감지하고, Socket이 있으면 출처 메시의 그 소켓에서 대상 캡슐 중심까지 WorldStatic이 가리지 않습니다. */
 	bool IsVisible(const AActor& Source, const AActor& Target, FName Socket);
+
+	/** Source가 Target 정면의 등 쪽 90°(바로 뒤에서 좌우 45°) 안에 있습니다. */
+	bool IsBehind(const AActor& Target, const AActor& Source);
 }
 
 UCLASS()

@@ -30,6 +30,10 @@ struct FAgRootMotionParams : public FAgTaskParams
 	UPROPERTY()
 	bool bWarpTranslation = true;
 
+	/** Target 방향에서 대상이 등 쪽 90° 안이면 돌지 않습니다. */
+	UPROPERTY()
+	bool bKeepBack = false;
+
 	UPROPERTY()
 	TOptional<float> TargetingRange;
 

@@ -200,6 +200,10 @@ FVector UAgAbilityTask_RootMotion::GetFacingDirection() const
 	const AActor* Avatar = GetAvatarActor();
 	if (Params.Direction == EAgRootMotionDirection::Target && FacingTarget.IsValid() && Avatar)
 	{
+		if (Params.bKeepBack && AgTargeting::IsBehind(*Avatar, *FacingTarget))
+		{
+			return FVector::ZeroVector;
+		}
 		return (FacingTarget->GetActorLocation() - Avatar->GetActorLocation()).GetSafeNormal2D();
 	}
 	return MoveInputDirection;

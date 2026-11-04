@@ -109,7 +109,7 @@
         "Forward": [
           {"Task": "RootMotion", "Start": 0, "Direction": "MoveInput", "Distance": 400},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.2, "Effect": "PerfectDodgeWindow"},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.6, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.45, "Effect": "Busy"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
         ]
       }
@@ -409,7 +409,7 @@
     ],
     "bAllowRetrigger": true,
     "Tasks": [
-      {"Task": "RootMotion"},
+      {"Task": "RootMotion", "bKeepBack": true},
       {"Task": "Launch", "Height": 70, "Direction": "Back", "Distance": 190}
     ],
     "Montage": {
@@ -452,7 +452,6 @@
     ],
     "bAllowRetrigger": true,
     "Tasks": [
-      {"Task": "RootMotion"},
       {"Task": "Launch", "Height": 15, "Altitude": 70, "Direction": "Back", "Distance": 50}
     ],
     "Montage": {

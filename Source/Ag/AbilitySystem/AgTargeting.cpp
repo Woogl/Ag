@@ -96,6 +96,12 @@ bool AgTargeting::IsVisible(const AActor& Source, const AActor& Target, FName So
 		FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
 }
 
+bool AgTargeting::IsBehind(const AActor& Target, const AActor& Source)
+{
+	const FVector ToSource = (Source.GetActorLocation() - Target.GetActorLocation()).GetSafeNormal2D();
+	return FVector::DotProduct(ToSource, -Target.GetActorForwardVector().GetSafeNormal2D()) >= UE_HALF_SQRT_2;
+}
+
 void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& TargetingHandle) const
 {
 	Super::Execute(TargetingHandle);

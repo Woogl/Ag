@@ -5,6 +5,7 @@
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -103,8 +104,7 @@ namespace
 
 	FGameplayTag ResolveStaggerEvent(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context)
 	{
-		const FVector ToCauser = (Causer.GetActorLocation() - Target.GetActorLocation()).GetSafeNormal2D();
-		if (FVector::DotProduct(ToCauser, -Target.GetActorForwardVector().GetSafeNormal2D()) >= UE_HALF_SQRT_2)
+		if (AgTargeting::IsBehind(Target, Causer))
 		{
 			return AgGameplayTags::Event_Hit_Stagger_Back;
 		}
