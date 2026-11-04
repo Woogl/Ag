@@ -193,6 +193,9 @@ struct FAgAbilityData
 	float Cooldown = 0.f;
 
 	UPROPERTY()
+	int32 MaxCharges = 1;
+
+	UPROPERTY()
 	TOptional<FAgAbilityTargeting> Targeting;
 
 	UPROPERTY()
