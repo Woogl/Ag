@@ -10,6 +10,7 @@
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "KismetAnimationLibrary.h"
 #include "MotionWarpingComponent.h"
 #include "RootMotionModifier_SkewWarp.h"
 
@@ -200,11 +201,12 @@ FVector UAgAbilityTask_RootMotion::GetFacingDirection() const
 	const AActor* Avatar = GetAvatarActor();
 	if (Params.Direction == EAgRootMotionDirection::Target && FacingTarget.IsValid() && Avatar)
 	{
-		if (Params.bKeepBack && AgTargeting::IsBehind(*Avatar, *FacingTarget))
+		const FVector ToTarget = FacingTarget->GetActorLocation() - Avatar->GetActorLocation();
+		if (Params.bKeepBack && FMath::Abs(UKismetAnimationLibrary::CalculateDirection(ToTarget, Avatar->GetActorRotation())) >= 135.f)
 		{
 			return FVector::ZeroVector;
 		}
-		return (FacingTarget->GetActorLocation() - Avatar->GetActorLocation()).GetSafeNormal2D();
+		return ToTarget.GetSafeNormal2D();
 	}
 	return MoveInputDirection;
 }

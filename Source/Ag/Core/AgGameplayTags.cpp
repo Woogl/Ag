@@ -84,6 +84,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Flinch, "Event.Hit.Flinch");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Stagger, "Event.Hit.Stagger");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_Back, "Event.Hit.Stagger.Back", "등 쪽에서 맞은 움찔");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_Left, "Event.Hit.Stagger.Left", "왼쪽 옆에서 맞은 움찔");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_Right, "Event.Hit.Stagger.Right", "오른쪽 옆에서 맞은 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_Head, "Event.Hit.Stagger.Head", "머리·가슴에 맞은 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_ArmRight, "Event.Hit.Stagger.ArmRight", "오른쪽 어깨·팔에 맞은 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_ArmLeft, "Event.Hit.Stagger.ArmLeft", "왼쪽 어깨·팔에 맞은 움찔");

@@ -357,6 +357,8 @@
       "Asset": "/Game/Animations/AM_Flinch.AM_Flinch",
       "StartSections": [
         {"Section": "Back", "EventTag": "Event.Hit.Stagger.Back"},
+        {"Section": "Left", "EventTag": "Event.Hit.Stagger.Left"},
+        {"Section": "Right", "EventTag": "Event.Hit.Stagger.Right"},
         {"Section": "Head", "EventTag": "Event.Hit.Stagger.Head"},
         {"Section": "ArmRight", "EventTag": "Event.Hit.Stagger.ArmRight"},
         {"Section": "ArmLeft", "EventTag": "Event.Hit.Stagger.ArmLeft"},

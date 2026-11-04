@@ -84,6 +84,8 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_Back);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_Left);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_Right);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_Head);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_ArmRight);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_ArmLeft);

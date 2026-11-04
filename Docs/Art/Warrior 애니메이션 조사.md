@@ -46,7 +46,7 @@
 - `Attack_Heavy1_Start`는 뒤로 물러나는 준비 구간이고 `Attack_Heavy1`은 전진하는 발동 구간입니다. `Attack_Heavy_Mid`와 그 회전 변형은 별도 시퀀스이므로 유지 시간은 해당 동작의 기획에서 정합니다.
 - 공중 공격에는 Start·Mid·End 외에 `Attack_Airborne`과 `Attack_Airborne_Landing`이 있습니다. 점프·낙하·착지 동작과 함께 비교할 수 있습니다.
 - 처형 공격자는 `Execute`, `Execute_B`, `Execute_B2`, 피해자는 `Executed`, `Executed_B`, `Executed_B_2`, `Executed_Death`입니다. 이름에 같은 B가 있어도 대응 상대·시작 위치·동기화 시각은 시각적으로 맞춰 확인해야 합니다.
-- 현재 루트 모션을 켠 시퀀스는 `Execute`, `Executed`, `Executed_Death`입니다. `Turn_45L`·`45R`·`90L`·`90R`은 강제 루트 고정 상태입니다.
+- 현재 루트 모션을 켠 시퀀스는 `Execute`, `Executed`, `Executed_Death`와 모든 캐릭터의 옆 움찔에 쓰는 `Hit9`·`Hit10`입니다([아트 표현 사양](<아트 표현 사양.md#피격-모션>)). `Turn_45L`·`45R`·`90L`·`90R`은 강제 루트 고정 상태입니다.
 
 ## 처형·기상 자세
 
@@ -214,7 +214,7 @@
 | [Getup2_Idle1](<GIF/Warrior/ARPG_Warrior_Anim_UE_Getup2_Idle1.gif>) | 0.650 | 39 | 0.20 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Getup2_Idle2](<GIF/Warrior/ARPG_Warrior_Anim_UE_Getup2_Idle2.gif>) | 0.650 | 39 | 0.20 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Hit1](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit1.gif>) | 0.817 | 49 | -0.50 | 0.00 | 0.00 | 0.00 | 0.0 | — |
-| [Hit10](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit10.gif>) | 0.817 | 49 | 0.00 | -0.50 | 0.00 | 0.00 | 0.0 | — |
+| [Hit10](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit10.gif>) | 0.817 | 49 | 0.00 | -0.50 | 0.00 | 0.00 | 0.0 | RM |
 | [Hit11](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit11.gif>) | 1.150 | 69 | 0.99 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Hit12](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit12.gif>) | 1.150 | 69 | 0.00 | 0.99 | 0.00 | 0.00 | 0.0 | — |
 | [Hit13](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit13.gif>) | 1.150 | 69 | 0.00 | -0.99 | 0.00 | 0.00 | 0.0 | — |
@@ -226,7 +226,7 @@
 | [Hit6](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit6.gif>) | 1.150 | 69 | -0.99 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Hit7](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit7.gif>) | 1.150 | 69 | -0.99 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Hit8](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit8.gif>) | 1.150 | 69 | -0.99 | 0.00 | 0.00 | 0.00 | 0.0 | — |
-| [Hit9](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit9.gif>) | 0.817 | 49 | 0.00 | 0.50 | 0.00 | 0.00 | 0.0 | — |
+| [Hit9](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit9.gif>) | 0.817 | 49 | 0.00 | 0.50 | 0.00 | 0.00 | 0.0 | RM |
 | [Hit_Air](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit_Air.gif>) | 0.983 | 59 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Hit_Air_B](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit_Air_B.gif>) | 0.983 | 59 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Hit_Air_B_Down](<GIF/Warrior/ARPG_Warrior_Anim_UE_Hit_Air_B_Down.gif>) | 0.983 | 59 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0 | — |

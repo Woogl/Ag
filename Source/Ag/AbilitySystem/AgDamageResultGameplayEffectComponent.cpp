@@ -5,7 +5,6 @@
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -20,6 +19,7 @@
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
 #include "GameplayEffect.h"
+#include "KismetAnimationLibrary.h"
 #include "Perception/AISense_Damage.h"
 
 namespace
@@ -104,9 +104,14 @@ namespace
 
 	FGameplayTag ResolveStaggerEvent(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context)
 	{
-		if (AgTargeting::IsBehind(Target, Causer))
+		const float Angle = UKismetAnimationLibrary::CalculateDirection(Causer.GetActorLocation() - Target.GetActorLocation(), Target.GetActorRotation());
+		if (FMath::Abs(Angle) >= 135.f)
 		{
 			return AgGameplayTags::Event_Hit_Stagger_Back;
+		}
+		if (FMath::Abs(Angle) > 45.f)
+		{
+			return Angle > 0.f ? AgGameplayTags::Event_Hit_Stagger_Right : AgGameplayTags::Event_Hit_Stagger_Left;
 		}
 
 		// 사람형 캐릭터가 모두 SK_Mannequin 스켈레톤이라 기준 뼈 이름을 상수로 둡니다.
