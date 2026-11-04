@@ -32,6 +32,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> GroggyAnimation;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
+	TObjectPtr<UBlendSpace> AimOffset;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Assets")
 	TArray<TObjectPtr<UAnimSequence>> TurnAnimations;
 
@@ -73,6 +76,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsGroggy = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Aim")
+	float AimPitch = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "TurnInPlace")
 	TObjectPtr<UAnimSequence> TurnAnimation;

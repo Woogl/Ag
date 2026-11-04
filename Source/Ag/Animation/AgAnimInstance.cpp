@@ -76,6 +76,15 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsGuarding = GuardMoveBlendSpace && AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
 	bIsGroggy = GroggyAnimation && AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 
+	// 발사부터 반동이 끝날 때까지 발사 순간의 높이를 유지하므로, 조준 중에만 갱신합니다.
+	const AActor* AimTarget = AimOffset ? Character->GetLockOnTarget() : nullptr;
+	if (AimTarget && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Aiming))
+	{
+		const FVector ToTarget = AimTarget->GetActorLocation() - Character->GetPawnViewLocation();
+		// 템플릿 Aim Offset은 위아래 90°의 끝 자세를 축 값 ±1에 둡니다.
+		AimPitch = static_cast<float>(FMath::RadiansToDegrees(FMath::Atan2(ToTarget.Z, ToTarget.Size2D())) / 90.0);
+	}
+
 	UpdateTurnInPlace(DeltaSeconds);
 }
 

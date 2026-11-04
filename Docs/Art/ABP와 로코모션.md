@@ -2,7 +2,7 @@
 
 > 출처: 언리얼 에디터에서 ABP 기본값, 애님 그래프, 블렌드 스페이스, 시퀀스 설정을 읽고 루트 본을 평가 (읽기 전용)
 
-플레이어와 적(보스·절단자·경비 사수), 샌드백이 몽타주 밖에서 재생하는 모션(대기, 이동, 가드 이동, 제자리 회전, 공중)과 그 위에 겹치는 반응(가드 움찔, 피격 흔들림)의 에셋 구성과 선택 근거를 정리합니다. 값을 고치는 위치는 [데이터 로딩과 스키마](<../Architecture/데이터 로딩과 스키마.md>)를 따릅니다. 행동 몽타주에 쓰는 모션은 [Samurai 애니메이션 조사](<Samurai 애니메이션 조사.md>) '행동별 모션'과 [Halberd 애니메이션 조사](<Halberd 애니메이션 조사.md>) '보스 모션'을 따릅니다.
+플레이어와 적(보스·절단자·경비 사수), 샌드백이 몽타주 밖에서 재생하는 모션(대기, 이동, 가드 이동, 제자리 회전, 공중)과 그 위에 겹치는 반응(가드 움찔, 피격 흔들림), 경비 사수의 상하 조준의 에셋 구성과 선택 근거를 정리합니다. 값을 고치는 위치는 [데이터 로딩과 스키마](<../Architecture/데이터 로딩과 스키마.md>)를 따릅니다. 행동 몽타주에 쓰는 모션은 [Samurai 애니메이션 조사](<Samurai 애니메이션 조사.md>) '행동별 모션'과 [Halberd 애니메이션 조사](<Halberd 애니메이션 조사.md>) '보스 모션'을 따릅니다.
 
 ## 요약
 
@@ -25,10 +25,12 @@
 | 6 | 그로기 전환: 그로기 중이면 그로기 반복 모션 | 없음 | Samurai `Stun` |
 | 7 | 공중 전환: 떨어지는 중이면 공중 반복 모션 | 템플릿 `MM_Fall_Loop` | Halberd `Airborne` |
 | 8 | `DefaultSlot`: 행동 몽타주 | 행동별 몽타주 | 패턴·피격 몽타주 |
-| 9 | `AdditiveSlot`: 덧입힘 몽타주 | `AM_GuardFlinch` | 없음 |
-| 10 | `CinematicSlot`: 레벨 시퀀스의 자세 | 궁극기 컷신 `LS_UltimateCutscene` | 없음 |
+| 9 | 상하 조준: 목표 높이를 향한 상하 덧입힘 (`Aim Offset`) | 없음 | 없음 |
+| 10 | `AdditiveSlot`: 덧입힘 몽타주 | `AM_GuardFlinch` | 없음 |
+| 11 | `CinematicSlot`: 레벨 시퀀스의 자세 | 궁극기 컷신 `LS_UltimateCutscene` | 없음 |
 
-- 일반 적은 보스와 같은 층 구성이고 넣는 에셋만 다릅니다. 절단자(`ABP_Cutter`)는 이동 `BS_CutterMove`, 제자리 회전 Samurai `Turn_*`, 그로기 Samurai `Stun`, 공중 템플릿 `MM_Fall_Loop`입니다. 경비 사수(`ABP_Gunner`)는 이동 `BS_GunnerMove`, 제자리 회전 Warrior `Turn_45*`·Halberd `Turn_90*`, 그로기 Samurai `Stun`, 공중 템플릿 `MM_Fall_Loop`입니다.
+- 일반 적은 보스와 같은 층 구성이고 넣는 에셋만 다릅니다. 절단자(`ABP_Cutter`)는 이동 `BS_CutterMove`, 제자리 회전 Samurai `Turn_*`, 그로기 Samurai `Stun`, 공중 템플릿 `MM_Fall_Loop`입니다. 경비 사수(`ABP_Gunner`)는 이동 `BS_GunnerMove`, 제자리 회전 Warrior `Turn_45*`·Halberd `Turn_90*`, 그로기 Samurai `Stun`, 공중 템플릿 `MM_Fall_Loop`, 상하 조준 `AO_Pistol`입니다.
+- 상하 조준 층은 경비 사수만 씁니다. 행동 슬롯 뒤에 있어 사격 몽타주의 자세 위에 더해지며, 섞는 구간은 [일반 적 아트 구성](<일반 적 아트 구성.md#경비-사수-사격-모션>)을 따릅니다. 다른 캐릭터는 에셋이 비어 있고 섞지 않습니다.
 - 두 샌드백(`ABP_Sandbag`)은 이동만 템플릿 `BS_Idle_Walk_Run`이고 나머지는 경비 사수와 같습니다. 공격 샌드백도 할버드를 든 채 이 맨손 대기 자세로 섭니다.
 - 보스와 일반 적은 가드 이동 블렌드 스페이스가 비어 있어 가드 전환이 늘 일반 이동입니다.
 - 회전 모션 목록은 자식 ABP의 기본값이고(공통 `ABP_Character`의 목록은 비어 있음), 가드 중 목록은 `ABP_Player`에만 있습니다.
