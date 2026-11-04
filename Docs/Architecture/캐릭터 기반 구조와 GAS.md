@@ -34,11 +34,13 @@
 | `AAgPlayerCameraManager` | `APlayerCameraManager` | BP 파생 클래스 없이 생성합니다. 락온 보간·시야 입력·상대 쪽 회전·요청받은 상황의 연출 재생·달리기 시야각·처형 카메라 시작과 종료·컷신 진입 정리를 맡고, 설정은 `UAgCameraData`에서 읽습니다. 엔진 점유 알림으로 플레이어 ASC에 연결합니다. 기본 모디파이어 클래스는 C++ 생성자의 `DefaultModifiers`에서 지정하고 엔진이 생성합니다. |
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
 | `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
-| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 지점·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(시작한 전환의 기록 포함), 패턴 발동 가능 여부(`CanActivatePattern`)와 지금 고를 수 있는 패턴 모으기(`GatherPatterns`), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 락온 지점 오른쪽의 처형 안내, 머리 위 네임플레이트)와 그 표시 조건(생존·화면 안·`WorldStatic` 가림·락온·전투, 최근 감소는 위젯이 더함). 보스 예외는 가상 함수 `HasNameplate`. 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
+| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 경로(`PatrolRoute`, 레벨 인스턴스 값)·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(시작한 전환의 기록 포함), 패턴 발동 가능 여부(`CanActivatePattern`)와 지금 고를 수 있는 패턴 모으기(`GatherPatterns`), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 락온 지점 오른쪽의 처형 안내, 머리 위 네임플레이트)와 그 표시 조건(생존·화면 안·`WorldStatic` 가림·락온·전투, 최근 감소는 위젯이 더함). 보스 예외는 가상 함수 `HasNameplate`. 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 머리 위 네임플레이트 없음(`HasNameplate`, HUD 보스 상태로 표시), 보스 처치 슬로우모션 값 |
 | `UAgNameplateComponent` | `UWidgetComponent` | 적 머리 위 네임플레이트(화면 공간 위젯, `head` 뼈). 락온 대상일 때 엔진 화면 레이어를 바로 위 레이어로 바꿔 다시 등록(`SetFrontmost`) |
 | `UAgNameplateWidget` | `UCommonUserWidget` | HP·PP 바 묶음(`WBP_Nameplate`, HUD 보스 상태 `WBP_BossStatus`가 함께 씀). 대상 ASC 구독, 그로기 중 남은 시간으로 PP 바 채우기·처형 피격 중 정지, 최대 PP 0이면 PP 영역 접기, 네임플레이트의 최근 감소 표시 시간과 다시 표시할 때 잔상 정리(`Update`) |
 | `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`)과 움찔(`IsEnemyFlinching`) 조회, AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 팀 태도 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달, 시야와 관계없이 상대를 알아차리게 하는 `NoticeTarget`(그 상대가 대미지 0으로 친 대미지 감각 자극이라 기존 전투 진입 조건이 그대로 판단) |
+| `AAgPatrolRoute` | `AActor` | 레벨에 놓는 정찰 경로. 정찰 지점은 루트 스플라인(`Spline`, 닫힌 고리, 직선 점)의 점이고, 게임에서는 점 개수·월드 위치와 수평 거리로 가장 가까운 점(`FindNearestPoint`)만 제공합니다. 여러 적이 하나를 함께 쓰고, 적을 옮겨도 경로는 그대로입니다. 에디터 기능(바닥 스냅, 경로 확인과 경고, `SetPointLocations`)은 [개발 도구와 검증](<개발 도구와 검증.md>) '정찰 경로 미리 보기'를 따릅니다. |
+| `FAgEnemyAITask_Patrol` | `FStateTreeAITaskBase` | 가장 가까운 정찰 지점부터 순서대로 이동을 요청합니다. 부분 경로를 허용하지 않아 요청이 실패한 점은 갈 수 없는 점으로 보고 경고 로그를 남긴 뒤 같은 틱에 다음 점을 요청하며, 연달아 모든 점에 실패하면 처음 자리로 갑니다. |
 | `FAgEnemyAICondition_Flinching` | `FStateTreeAIConditionBase` | 공통 조건 인스턴스 데이터의 Controller로 `IsEnemyFlinching`을 조회합니다. `bInvert`로 반대 조건을 표현합니다. |
 | `FAgEnemyAICondition_AimLost` | `FStateTreeAIConditionBase` | `State.Aiming` 동안 현재 대상의 시야·총구 가림과 몸→총구·총구→고정 조준점의 `WorldStatic` 가림을 검사합니다. 총구 소켓은 조건 인스턴스 데이터의 `MuzzleSocket`입니다. |
 | `FAgEnemyAITask_RunPattern` | `FStateTreeAITaskBase` | 후보 패턴을 가중치로 선택해 실행하고 종료를 기다립니다. 상태를 나갈 때 실행 중인 어빌리티 핸들을 취소하여, 조준 취소 등의 전환 뒤에도 패턴이 계속되지 않게 합니다. |
@@ -70,12 +72,17 @@ classDiagram
     }
     class AAgPlayerCameraManager
     class AAgEnemyCharacter {
+        UAgPatrolPreviewComponent PatrolPreview 에디터 전용
         UWidgetComponent LockOnMarker
         UWidgetComponent ExecutionPrompt
         UAgNameplateComponent Nameplate
     }
     class AAgBossCharacter {
         <<BP_Boss>>
+    }
+    class AAgPatrolRoute {
+        USplineComponent Spline
+        UAgPatrolPreviewComponent PatrolPreview 에디터 전용
     }
     class AAgEnemyAIController {
         UAIPerceptionComponent Perception
@@ -99,7 +106,8 @@ classDiagram
     UAttributeSet <|-- UAgAttributeSet
     AAgCharacterBase --> UAgCharacterData : CharacterData
     AAgEnemyCharacter ..> AAgEnemyAIController : AIControllerClass
-    AAgEnemyCharacter --> ATargetPoint : PatrolPoints
+    AActor <|-- AAgPatrolRoute
+    AAgEnemyCharacter --> AAgPatrolRoute : PatrolRoute
     AAgEnemyCharacter *-- UAgEnemySightPreviewComponent : 에디터 전용
     UWidgetComponent <|-- UAgNameplateComponent
     AAgEnemyCharacter *-- UAgNameplateComponent : Nameplate
