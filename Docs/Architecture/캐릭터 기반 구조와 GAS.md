@@ -38,7 +38,12 @@
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 보스 처치 슬로우모션 값 |
 | `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`)과 움찔(`IsEnemyFlinching`) 조회, AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 팀 태도 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달, 시야와 관계없이 상대를 알아차리게 하는 `NoticeTarget`(그 상대가 대미지 0으로 친 대미지 감각 자극이라 기존 전투 진입 조건이 그대로 판단) |
 | `FAgEnemyAICondition_Flinching` | `FStateTreeAIConditionBase` | 공통 조건 인스턴스 데이터의 Controller로 `IsEnemyFlinching`을 조회합니다. `bInvert`로 반대 조건을 표현합니다. |
+| `FAgEnemyAICondition_AimLost` | `FStateTreeAIConditionBase` | `State.Aiming` 동안 현재 대상의 시야·총구 가림과 몸→총구·총구→고정 조준점의 `WorldStatic` 가림을 검사합니다. 총구 소켓은 조건 인스턴스 데이터의 `MuzzleSocket`입니다. |
+| `FAgEnemyAITask_RunPattern` | `FStateTreeAITaskBase` | 후보 패턴을 가중치로 선택해 실행하고 종료를 기다립니다. 상태를 나갈 때 실행 중인 어빌리티 핸들을 취소하여, 조준 취소 등의 전환 뒤에도 패턴이 계속되지 않게 합니다. |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, PP 감소량 반올림과 감소 허용 조건 적용, 사망·그로기 판정 |
+
+- 일반 적 `BP_Cutter`·`BP_Gunner`는 `AAgEnemyCharacter`를 바로 상속하고 `ST_Enemy`를 공유합니다. 캐릭터별 스탯·시야·후딜레이·어빌리티 구성은 `Characters.json`의 `Cutter`·`Gunner`로 선택하며, 전용 C++ 캐릭터 클래스는 없습니다.
+- AI 빙의 시 감각 설정 뒤 `RequestStimuliListenerUpdate`로 청취자의 팀을 다시 읽습니다. 레벨에 놓인 적과 실행 중 생성한 적 모두 현재 캐릭터의 팀으로 지각합니다.
 
 ```mermaid
 classDiagram
@@ -97,6 +102,10 @@ classDiagram
     AAgEnemyAIController ..> AAgEnemyCharacter : GetEnemy
     FStateTreeAIConditionBase <|-- FAgEnemyAICondition_Flinching
     FAgEnemyAICondition_Flinching ..> AAgEnemyAIController : IsEnemyFlinching
+    FStateTreeAIConditionBase <|-- FAgEnemyAICondition_AimLost
+    FAgEnemyAICondition_AimLost ..> AAgEnemyAIController : 조준 대상 조회
+    FStateTreeAITaskBase <|-- FAgEnemyAITask_RunPattern
+    FAgEnemyAITask_RunPattern ..> UAgGameplayAbility : 실행·상태 종료 시 취소
 ```
 
 ### 게임 모드와 게임 스테이트
