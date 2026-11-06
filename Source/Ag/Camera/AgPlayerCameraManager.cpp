@@ -9,10 +9,16 @@
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCameraData.h"
+#include "GameFramework/InputSettings.h"
 #include "GameFramework/PlayerController.h"
 
 namespace
 {
+	// 기획에서 자주 고칠 값이 아니라 데이터 대신 코드에 둡니다.
+	constexpr double LockOnFlickTime = 0.1;
+	constexpr float LockOnFlickAngle = 30.f;
+	constexpr float LockOnFlickRestAngle = 5.f;
+
 	/**
 	 * CriticallyDampedSmoothing은 한 스텝이 SmoothingTime의 절반보다 짧을 때만 정확하므로 긴 프레임은 나눠 계산합니다.
 	 */
@@ -71,8 +77,20 @@ void AAgPlayerCameraManager::UpdateGameplayRotation(const AAgPlayerCharacter& Pl
 
 void AAgPlayerCameraManager::ApplyLookInput(const FVector2D& Input)
 {
-	const AAgPlayerCharacter* Player = GetPlayerCharacter();
-	if (!Player || !PCOwner || !PCOwner->IsLocalPlayerController() || Player->GetLockOnTarget() || IsExecutionCameraActive())
+	AAgPlayerCharacter* Player = GetPlayerCharacter();
+	if (!Player || !PCOwner || !PCOwner->IsLocalPlayerController())
+	{
+		return;
+	}
+	const bool bCutscene = Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
+	if (Player->GetLockOnTarget() && !IsExecutionCameraActive() && !bCutscene)
+	{
+		UpdateLockOnFlick(*Player, Input.X);
+		return;
+	}
+	FlickSamples.Reset();
+	FlickDirection = 0.f;
+	if (Player->GetLockOnTarget() || IsExecutionCameraActive())
 	{
 		return;
 	}
@@ -168,6 +186,8 @@ void AAgPlayerCameraManager::ResetCameraState()
 	FieldOfViewCamera->StopAll();
 	PreviousLockOnTarget.Reset();
 	TurnOpponent.Reset();
+	FlickSamples.Reset();
+	FlickDirection = 0.f;
 }
 
 void AAgPlayerCameraManager::HandlePossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
@@ -197,6 +217,34 @@ void AAgPlayerCameraManager::UpdateLockOnCamera(const AAgCharacterBase& Target, 
 	const float Yaw =
 		SpringToward(CurrentYaw, LockOnYawRate, GoalYaw, DeltaTime, Settings.SmoothingTime, Settings.RotationSpeed);
 	PCOwner->SetControlRotation(FRotator(Pitch, Yaw, 0.f));
+}
+
+void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float YawInput)
+{
+	// 자유 시점이었다면 돌았을 각도로 봅니다. 엔진 AddYawInput과 같은 배율입니다.
+	PRAGMA_DISABLE_DEPRECATION_WARNINGS
+	const float YawScale = GetDefault<UInputSettings>()->bEnableLegacyInputScales ? PCOwner->GetDeprecatedInputYawScale() : 1.f;
+	PRAGMA_ENABLE_DEPRECATION_WARNINGS
+	const double Now = GetWorld()->GetRealTimeSeconds();
+	FlickSamples.RemoveAll([Now](const TPair<double, float>& Sample) { return Now - Sample.Key > LockOnFlickTime; });
+	float Angle = 0.f;
+	for (const TPair<double, float>& Sample : FlickSamples)
+	{
+		Angle += Sample.Value;
+	}
+	// 판정 각도 아래로만 내려가도 다시 받으면 한 번 튕기는 도중 속도가 출렁일 때 두 번 바뀌므로, 거의 멈추거나 반대로
+	// 움직여야 다시 받습니다. 새 입력을 더하기 전에 보아야 멈췄다가 다시 튕긴 첫 입력부터 판정합니다.
+	if (Angle * FlickDirection < LockOnFlickRestAngle)
+	{
+		FlickDirection = 0.f;
+	}
+	FlickSamples.Emplace(Now, YawInput * YawScale);
+	Angle += YawInput * YawScale;
+	if (FlickDirection == 0.f && FMath::Abs(Angle) >= LockOnFlickAngle)
+	{
+		FlickDirection = FMath::Sign(Angle);
+		Player.SwitchLockOnTarget(FlickDirection);
+	}
 }
 
 void AAgPlayerCameraManager::StartCameraTurn(const AActor& Opponent, float Angle)

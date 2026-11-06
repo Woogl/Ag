@@ -5,6 +5,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
@@ -79,6 +80,21 @@ void AAgPlayerCharacter::FindInputAbilities(const FGameplayTag& InputTag, TArray
 		{
 			OutHandles.Add(Spec.Handle);
 		}
+	}
+}
+
+void AAgPlayerCharacter::SwitchLockOnTarget(float Direction)
+{
+	const FGameplayAbilitySpec* Spec = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_LockOn);
+	UAgGameplayAbility* LockOn = Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
+	const AActor* Current = LockOn && LockOn->IsActive() ? LockOn->GetActionTarget() : nullptr;
+	if (!Current || !LockOn->GetDefinition().Targeting)
+	{
+		return;
+	}
+	if (AActor* Next = AgTargeting::FindSideTarget(*LockOn->GetDefinition().Targeting, *this, *Current, Direction))
+	{
+		LockOn->SetActionTarget(Next);
 	}
 }
 
@@ -159,6 +175,10 @@ void AAgPlayerCharacter::Tick(float DeltaSeconds)
 	{
 		bDevMoving = false;
 		MoveReleased();
+	}
+	if (!DevLookInput.IsZero())
+	{
+		Look(FInputActionValue(DevLookInput));
 	}
 #endif
 }

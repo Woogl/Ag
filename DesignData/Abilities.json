@@ -349,7 +349,7 @@
     "ActivationOwnedTags": ["State.LockedOn"],
     "Targeting": {"Preset": "LockOn", "Range": 2000, "bRequired": true},
     "Tasks": [
-      {"Task": "WaitTargetLost", "ReleaseRange": 3000}
+      {"Task": "TrackTarget", "ReleaseRange": 3000}
     ]
   },
   "HitReward": {
@@ -882,7 +882,7 @@
     "ActivationBlockedTags": ["State.Dead"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true},
     "Tasks": [
-      {"Task": "WaitTargetLost"}
+      {"Task": "TrackTarget"}
     ]
   }
 }

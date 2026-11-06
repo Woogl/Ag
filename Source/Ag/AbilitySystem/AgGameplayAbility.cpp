@@ -145,6 +145,14 @@ void UAgGameplayAbility::RefreshTarget()
 	}
 }
 
+void UAgGameplayAbility::SetActionTarget(AActor* NewTarget)
+{
+	if (IsActive())
+	{
+		ActionTarget = NewTarget;
+	}
+}
+
 void UAgGameplayAbility::OnGameplayTaskActivated(UGameplayTask& Task)
 {
 	Super::OnGameplayTaskActivated(Task);

@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "AIController.h"
+#include "Camera/CameraComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PrimitiveComponent.h"
@@ -12,11 +13,13 @@
 #include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
 #include "Engine/OverlapResult.h"
+#include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "GenericTeamAgentInterface.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "SceneView.h"
 #include "TargetingSystem/TargetingPreset.h"
 #include "TargetingSystem/TargetingSubsystem.h"
 #include "Types/TargetingSystemDataStores.h"
@@ -94,6 +97,68 @@ bool AgTargeting::IsVisible(const AActor& Source, const AActor& Target, FName So
 	QueryParams.AddIgnoredActor(&Target);
 	return !Source.GetWorld()->LineTraceTestByObjectType(Mesh->GetSocketLocation(Socket), Target.GetActorLocation(),
 		FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
+}
+
+bool AgTargeting::ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition)
+{
+	const APlayerController* Controller = Cast<APlayerController>(Pawn.GetController());
+	const ULocalPlayer* LocalPlayer = Controller ? Controller->GetLocalPlayer() : nullptr;
+	const UCameraComponent* Camera = Pawn.FindComponentByClass<UCameraComponent>();
+	int32 ViewportWidth = 0;
+	int32 ViewportHeight = 0;
+	if (Controller)
+	{
+		Controller->GetViewportSize(ViewportWidth, ViewportHeight);
+	}
+	if (!LocalPlayer || !Camera || ViewportWidth <= 0 || ViewportHeight <= 0)
+	{
+		return false;
+	}
+
+	// 엔진 투영(ULocalPlayer::GetProjectionData)은 카메라 매니저의 최종 시야를 쓰므로, 같은 계산을 카메라 컴포넌트의
+	// 시야로 합니다. 컴포넌트의 GetCameraView는 회전을 고치는 부작용이 있어 값을 직접 읽습니다.
+	FMinimalViewInfo View;
+	View.Location = Camera->GetComponentLocation();
+	View.Rotation = Camera->GetComponentRotation();
+	View.FOV = Camera->FieldOfView;
+	View.AspectRatio = Camera->AspectRatio;
+	View.bConstrainAspectRatio = Camera->bConstrainAspectRatio;
+	View.ProjectionMode = Camera->ProjectionMode;
+	const FIntRect ViewRect(0, 0, ViewportWidth, ViewportHeight);
+	FSceneViewProjectionData Projection;
+	Projection.SetViewRectangle(ViewRect);
+	Projection.ViewOrigin = View.Location;
+	Projection.ViewRotationMatrix = FInverseRotationMatrix(View.Rotation) *
+	                                FMatrix(FPlane(0, 0, 1, 0), FPlane(1, 0, 0, 0), FPlane(0, 1, 0, 0), FPlane(0, 0, 0, 1));
+	FMinimalViewInfo::CalculateProjectionMatrixGivenViewRectangle(View, LocalPlayer->AspectRatioAxisConstraint, ViewRect, Projection);
+	return FSceneView::ProjectWorldToScreen(WorldLocation, Projection.GetConstrainedViewRect(), Projection.ComputeViewProjectionMatrix(),
+		OutScreenPosition);
+}
+
+AActor* AgTargeting::FindSideTarget(const FAgTargetingRequest& Request, APawn& Source, const AActor& Current, float Direction)
+{
+	FVector2D CurrentPosition;
+	if (!ProjectToGameScreen(Source, Current.GetActorLocation(), CurrentPosition))
+	{
+		return nullptr;
+	}
+	AActor* Nearest = nullptr;
+	double NearestOffset = TNumericLimits<double>::Max();
+	for (AActor* Candidate : FindTargets(Request, Source))
+	{
+		FVector2D Position;
+		if (Candidate == &Current || !ProjectToGameScreen(Source, Candidate->GetActorLocation(), Position))
+		{
+			continue;
+		}
+		const double Offset = (Position.X - CurrentPosition.X) * FMath::Sign(Direction);
+		if (Offset > 0.0 && Offset < NearestOffset)
+		{
+			Nearest = Candidate;
+			NearestOffset = Offset;
+		}
+	}
+	return Nearest;
 }
 
 void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& TargetingHandle) const
@@ -177,7 +242,7 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 	int32 ViewportHeight = 0;
 	Controller->GetViewportSize(ViewportWidth, ViewportHeight);
 	FVector2D ScreenPosition;
-	const bool bOnScreen = Controller->ProjectWorldLocationToScreen(Candidate->GetActorLocation(), ScreenPosition) &&
+	const bool bOnScreen = AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition) &&
 	                       ScreenPosition.X >= 0.f && ScreenPosition.Y >= 0.f && ScreenPosition.X <= ViewportWidth &&
 	                       ScreenPosition.Y <= ViewportHeight;
 	return !bOnScreen;
@@ -208,7 +273,7 @@ float UAgTargetingSortTask_ScreenCenter::GetScoreForTarget(const FTargetingReque
 		return TNumericLimits<float>::Max();
 	}
 	FVector2D ScreenPosition;
-	if (!Controller->ProjectWorldLocationToScreen(Candidate->GetActorLocation(), ScreenPosition))
+	if (!AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition))
 	{
 		return TNumericLimits<float>::Max();
 	}

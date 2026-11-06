@@ -43,6 +43,7 @@ private:
 	void HandlePossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
 
 	void UpdateLockOnCamera(const AAgCharacterBase& Target, const FVector& PivotLocation, float DeltaTime);
+	void UpdateLockOnFlick(AAgPlayerCharacter& Player, float YawInput);
 	void StartCameraTurn(const AActor& Opponent, float Angle);
 	void UpdateCameraTurn(const FVector& PivotLocation, float DeltaTime);
 	bool IsExecutionCameraActive() const;
@@ -65,6 +66,9 @@ private:
 	TWeakObjectPtr<AAgCharacterBase> PreviousLockOnTarget;
 	float LockOnPitchRate = 0.f;
 	float LockOnYawRate = 0.f;
+	TArray<TPair<double, float>> FlickSamples;
+	/** 마지막으로 바꾼 쪽(+1 오른쪽, −1 왼쪽). 0이면 다음 전환을 받습니다. */
+	float FlickDirection = 0.f;
 	TWeakObjectPtr<const AActor> TurnOpponent;
 	float TurnAngle = 0.f;
 	float TurnYawRate = 0.f;
