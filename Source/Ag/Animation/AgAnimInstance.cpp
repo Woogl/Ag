@@ -2,6 +2,7 @@
 
 #include "Animation/AgAnimInstance.h"
 
+#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequence.h"
@@ -9,7 +10,9 @@
 #include "Animation/BlendSpace.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
+#include "Data/AgCombatRules.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "KismetAnimationLibrary.h"
@@ -86,6 +89,7 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 
 	UpdateTurnInPlace(DeltaSeconds);
+	UpdateLookAt(DeltaSeconds);
 }
 
 void UAgAnimInstance::UpdateTurnInPlace(float DeltaSeconds)
@@ -196,4 +200,54 @@ float UAgAnimInstance::GetTurnOffset() const
 	const double DesiredYaw = Target ? (Target->GetActorLocation() - Character->GetActorLocation()).Rotation().Yaw
 	                                 : Character->GetController()->GetDesiredRotation().Yaw;
 	return static_cast<float>(FRotator::NormalizeAxis(DesiredYaw - Character->GetActorRotation().Yaw - RootYawOffset));
+}
+
+void UAgAnimInstance::UpdateLookAt(float DeltaSeconds)
+{
+	static const FName HeadBone(TEXT("head"));
+
+	const AAgCharacterBase* Target = IsLookAtBlocked() ? nullptr : FindLookAtTarget();
+	bool bLooking = false;
+	if (Target)
+	{
+		const USkeletalMeshComponent* TargetMesh = Target->GetMesh();
+		const FVector TargetLocation =
+			TargetMesh->GetBoneIndex(HeadBone) != INDEX_NONE ? TargetMesh->GetBoneLocation(HeadBone) : Target->GetPawnViewLocation();
+		const double TargetYaw = (TargetLocation - Character->GetActorLocation()).Rotation().Yaw;
+		const double BodyYaw = Character->GetActorRotation().Yaw + RootYawOffset;
+		bLooking = FMath::Abs(FRotator::NormalizeAxis(TargetYaw - BodyYaw)) <= LookAtBackAngle;
+		if (bLooking && LookAtAlpha <= 0.f)
+		{
+			// 쳐다보지 않던 동안의 지점은 낡았으므로, 그곳에서 쓸어 오지 않고 대상 자리에서 시작합니다.
+			LookAtLocation = TargetLocation;
+		}
+		else if (bLooking)
+		{
+			FMath::ExponentialSmoothingApprox(LookAtLocation, TargetLocation, DeltaSeconds, LookAtSmoothingTime);
+		}
+	}
+
+	LookAtAlpha =
+		FMath::FInterpConstantTo(LookAtAlpha, bLooking ? 1.f : 0.f, DeltaSeconds, LookAtSmoothingTime > 0.f ? 1.f / LookAtSmoothingTime : 0.f);
+}
+
+AAgCharacterBase* UAgAnimInstance::FindLookAtTarget() const
+{
+	if (AAgCharacterBase* LockOnTarget = Character->GetLockOnTarget())
+	{
+		return LockOnTarget;
+	}
+	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
+	if (!AbilitySystem || AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat))
+	{
+		return nullptr;
+	}
+	return Cast<AAgCharacterBase>(AgTargeting::FindTarget(UAgAssetManager::Get().GetCombatRules().LookAtTargeting, *Character));
+}
+
+bool UAgAnimInstance::IsLookAtBlocked() const
+{
+	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
+	return !AbilitySystem || bIsInAir || Character->IsFacingFixed() || AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Dead) ||
+	       AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
 }

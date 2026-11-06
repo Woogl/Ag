@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/AgAbilityData.h"
 #include "UObject/Object.h"
 #include "AgCombatRules.generated.h"
 
@@ -38,4 +39,8 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	float TargetLostTime = 0.f;
+
+	/** 락온 대상이 없는 캐릭터가 쳐다볼 상대를 찾는 조건입니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "LookAt")
+	FAgTargetingRequest LookAtTargeting;
 };

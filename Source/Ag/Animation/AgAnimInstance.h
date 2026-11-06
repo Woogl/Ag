@@ -62,6 +62,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace")
 	float UpperBodyTwistSmoothingTime = 0.15f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "LookAt")
+	float LookAtBackAngle = 110.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "LookAt")
+	float LookAtSmoothingTime = 0.2f;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	float GroundSpeed = 0.f;
 
@@ -97,6 +103,13 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "TurnInPlace")
 	FRotator UpperBodyTwist = FRotator::ZeroRotator;
 
+	/** 애님 그래프의 Look At 노드가 목과 머리를 향하게 하는 월드 위치입니다. */
+	UPROPERTY(BlueprintReadOnly, Category = "LookAt")
+	FVector LookAtLocation = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadOnly, Category = "LookAt")
+	float LookAtAlpha = 0.f;
+
 private:
 	void UpdateTurnInPlace(float DeltaSeconds);
 	void StartTurn(float Offset);
@@ -105,6 +118,9 @@ private:
 	const TArray<TObjectPtr<UAnimSequence>>& GetTurnAnimations() const;
 	/** 컨트롤러를 읽으므로 CanTurn()이 참일 때만 부릅니다. */
 	float GetTurnOffset() const;
+	void UpdateLookAt(float DeltaSeconds);
+	AAgCharacterBase* FindLookAtTarget() const;
+	bool IsLookAtBlocked() const;
 
 	UPROPERTY(Transient)
 	TObjectPtr<AAgCharacterBase> Character;

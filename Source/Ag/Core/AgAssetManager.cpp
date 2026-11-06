@@ -37,10 +37,10 @@ namespace
 	// 먼저 읽습니다.
 	const FAgJsonFile JsonFiles[] = {
 		{TEXT("Effects.json"), TEXT("Effects"), TEXT("Definitions")},
-		{TEXT("CombatRules.json"), TEXT("CombatRules"), nullptr},
 		{TEXT("Camera.json"), TEXT("Camera"), nullptr},
 		{TEXT("SpawnActors.json"), TEXT("SpawnActors"), TEXT("SpawnActors")},
 		{TEXT("TargetingPresets.json"), TEXT("TargetingPresets"), TEXT("Definitions")},
+		{TEXT("CombatRules.json"), TEXT("CombatRules"), nullptr},
 		{TEXT("Abilities.json"), TEXT("Abilities"), TEXT("Abilities")},
 		{TEXT("Characters.json"), TEXT("Characters"), TEXT("Characters")},
 	};
