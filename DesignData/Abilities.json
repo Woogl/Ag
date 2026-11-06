@@ -2,15 +2,15 @@
   "BasicAttack": {
     "AbilityTags": ["Ability.Action.BasicAttack"],
     "InputTag": "Input.Attack",
-    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne", "State.DodgeCounterChance", "State.GuardCounterChance"],
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne", "State.DodgeCounterChance", "State.GuardCounterChance", "State.DashAttackReady"],
     "ActivationOwnedTags": ["State.Acting"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
     "Montage": {
       "Asset": "/Game/Animations/AM_Player_BasicAttack.AM_Player_BasicAttack",
       "StartSections": [
-        {"Section": "Attack2", "RequiredTags": ["State.GuardCounterRecovery"]},
-        {"BlockedTags": ["State.GuardCounterRecovery"]}
+        {"Section": "Attack2", "RequiredTags": ["State.NextAttack2"]},
+        {"BlockedTags": ["State.NextAttack2"]}
       ],
       "Sections": {
         "Attack1": [
@@ -47,6 +47,27 @@
           {"Task": "ApplyEffect", "Start": 0, "End": 0.83, "Effect": "Busy"},
           {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.83, "Event": "Input.Attack", "ToSection": "Attack1", "BlendTime": 0.25}
+        ]
+      }
+    }
+  },
+  "DashAttack": {
+    "AbilityTags": ["Ability.Action.DashAttack"],
+    "InputTag": "Input.Attack",
+    "ActivationRequiredTags": ["State.DashAttackReady"],
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne", "State.DodgeCounterChance", "State.GuardCounterChance"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_DashAttack.AM_Player_DashAttack",
+      "Sections": {
+        "Default": [
+          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted"},
+          {"Task": "RootMotion", "Start": 0, "End": 0.25, "TargetingRange": 350, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.35, "End": 0.38, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "ApplyEffect", "Start": 0.5, "Effect": "DashAttackRecovery", "bRemoveOnEnd": false}
         ]
       }
     }
@@ -104,13 +125,15 @@
         "Backstep": [
           {"Task": "ApplyEffect", "Start": 0, "End": 0.2, "Effect": "PerfectDodgeWindow"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.4, "Effect": "Busy"},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"},
+          {"Task": "ApplyEffect", "Start": 0.4, "Effect": "DashAttackReady"}
         ],
         "Forward": [
           {"Task": "RootMotion", "Start": 0, "Direction": "MoveInput", "Distance": 400},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.2, "Effect": "PerfectDodgeWindow"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.45, "Effect": "Busy"},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"}
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"},
+          {"Task": "ApplyEffect", "Start": 0.45, "Effect": "DashAttackReady"}
         ]
       }
     }
@@ -317,7 +340,8 @@
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Tasks": [
       {"Task": "ApplyEffect", "Effect": "SprintDrain"},
-      {"Task": "ApplyEffect", "Effect": "SprintSpeed"}
+      {"Task": "ApplyEffect", "Effect": "SprintSpeed"},
+      {"Task": "ApplyEffect", "Effect": "DashAttackReady"}
     ]
   },
   "LockOn": {
@@ -337,6 +361,7 @@
       {"Task": "HitReward", "Rewards": [
         {"AbilityTag": "Ability.Action.BasicAttack", "MP": 4},
         {"AbilityTag": "Ability.Action.BasicAttack", "Section": "Attack5", "UP": 15},
+        {"AbilityTag": "Ability.Action.DashAttack", "MP": 4},
         {"AbilityTag": "Ability.Action.JumpAttack", "MP": 4},
         {"AbilityTag": "Ability.Action.DodgeCounter", "MP": 8},
         {"AbilityTag": "Ability.Action.GuardCounter", "MP": 8},

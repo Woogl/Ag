@@ -20,6 +20,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_BasicAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Dodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_DodgeCounter);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_DashAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Guard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_GuardCounter);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Parry);
@@ -64,7 +65,8 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_MoveLocked);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_DodgeCounterChance);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GuardCounterChance);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_GuardCounterRecovery);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_NextAttack2);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_DashAttackReady);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hitstop);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Sprinting);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_LockedOn);

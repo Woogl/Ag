@@ -117,7 +117,16 @@
   "GuardCounterRecovery": {
     "DurationPolicy": "HasDuration",
     "Duration": 0.39,
-    "GrantedTags": ["State.GuardCounterRecovery"]
+    "GrantedTags": ["State.NextAttack2"]
+  },
+  "DashAttackRecovery": {
+    "DurationPolicy": "HasDuration",
+    "Duration": 0.48,
+    "GrantedTags": ["State.NextAttack2"]
+  },
+  "DashAttackReady": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": ["State.DashAttackReady"]
   },
   "PerfectDodgeSlowMotion": {
     "SlowMotionSpeed": 0.3,

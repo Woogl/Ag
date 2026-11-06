@@ -512,7 +512,7 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 		// 기본 공격은 발동한 뒤에 이 태그를 보고 시작할 타를 고르므로 남겨 둡니다.
 		if (!AgAbility->GetDefinition().AbilityTags.HasTag(AgGameplayTags::Ability_Action_BasicAttack))
 		{
-			Removed.AddTag(AgGameplayTags::State_GuardCounterRecovery);
+			Removed.AddTag(AgGameplayTags::State_NextAttack2);
 		}
 		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(Removed);
 	}

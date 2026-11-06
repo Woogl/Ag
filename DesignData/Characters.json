@@ -18,6 +18,7 @@
     },
     "Abilities": [
       "BasicAttack",
+      "DashAttack",
       "Jump",
       "JumpAttack",
       "Dodge",

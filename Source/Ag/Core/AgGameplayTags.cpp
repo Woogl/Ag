@@ -18,6 +18,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_BasicAttack, "Ability.Action.BasicAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Dodge, "Ability.Action.Dodge");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_DodgeCounter, "Ability.Action.DodgeCounter");
+	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_DashAttack, "Ability.Action.DashAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Guard, "Ability.Action.Guard");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_GuardCounter, "Ability.Action.GuardCounter");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_Parry, "Ability.Action.Parry", "패리 모션 (패리 이벤트로 발동, 가드를 끝내지 않음)");
@@ -64,7 +65,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_MoveLocked, "State.MoveLocked", "이동 입력을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_DodgeCounterChance, "State.DodgeCounterChance", "회피 반격 기회");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GuardCounterChance, "State.GuardCounterChance", "가드 반격 기회");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GuardCounterRecovery, "State.GuardCounterRecovery", "가드 반격 후딜. 이때 시작한 기본 공격은 2타부터");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NextAttack2, "State.NextAttack2", "가드 반격·대시 공격 후딜. 이때 시작한 기본 공격은 2타부터");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_DashAttackReady, "State.DashAttackReady", "회피 후딜이나 달리기 중. 이때 기본 공격 키는 대시 공격");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Hitstop, "State.Hitstop", "히트스톱. 캐릭터의 모션과 이동이 멈춤");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Sprinting, "State.Sprinting", "달리는 중");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_LockedOn, "State.LockedOn", "락온 중 (락온 어빌리티가 도는 동안)");
@@ -99,7 +101,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodge, "Event.PerfectDodge",
 		"극한 회피함 (피격 처리가 피한 쪽에 보냄, Instigator는 공격한 캐릭터, 극한 회피 모션을 시작함)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted",
-		"플레이어가 기본 공격의 한 타나 점프 공격을 시작함 (Backstep 검사)");
+		"플레이어가 기본 공격의 한 타, 대시 공격, 점프 공격을 시작함 (Backstep 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackHit, "Event.AttackHit",
 		"내 공격의 한 타가 처음 적중함. 그 피해의 효과 컨텍스트와 스펙 태그(InstigatorTags)를 실음 (적중 보상)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked",
