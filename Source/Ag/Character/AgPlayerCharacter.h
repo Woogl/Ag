@@ -79,7 +79,9 @@ private:
 
 	void HandleAbilityActivated(UGameplayAbility* Ability);
 
+	bool WantsSprint() const;
 	void UpdateSprint();
+	void TryMoveCancel();
 
 	void ToggleLockOn();
 

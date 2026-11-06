@@ -67,6 +67,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_GuardCounterChance, "State.GuardCounterChance", "가드 반격 기회");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NextAttack2, "State.NextAttack2", "가드 반격·대시 공격 후딜. 이때 시작한 기본 공격은 2타부터");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_DashAttackReady, "State.DashAttackReady", "회피 후딜이나 달리기 중. 이때 기본 공격 키는 대시 공격");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_MoveCancel, "State.MoveCancel", "이 행동은 후딜에 이동 입력이 있으면 끝나고 이동함 (Shift를 누르고 있으면 달리기)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Hitstop, "State.Hitstop", "히트스톱. 캐릭터의 모션과 이동이 멈춤");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Sprinting, "State.Sprinting", "달리는 중");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_LockedOn, "State.LockedOn", "락온 중 (락온 어빌리티가 도는 동안)");

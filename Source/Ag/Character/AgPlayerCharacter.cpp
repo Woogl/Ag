@@ -111,6 +111,7 @@ void AAgPlayerCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	UpdateSprint();
+	TryMoveCancel();
 	UpdateRotationMode();
 	if (AAgPlayerCameraManager* CameraManager = GetPlayerCameraManager())
 	{
@@ -518,26 +519,37 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	}
 }
 
+bool AAgPlayerCharacter::WantsSprint() const
+{
+	return HeldInputs.Contains(AgGameplayTags::Input_Dodge) && GetAttributeSet()->GetSP() > 0.f;
+}
+
 void AAgPlayerCharacter::UpdateSprint()
 {
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const bool bWantsSprint = HeldInputs.Contains(AgGameplayTags::Input_Dodge) && GetAttributeSet()->GetSP() > 0.f;
 	const FGameplayAbilitySpec* Sprint = ASC->FindSpecByTag(AgGameplayTags::Ability_Sprint);
-	if (Sprint && Sprint->IsActive())
+	if (Sprint && Sprint->IsActive() && !WantsSprint())
 	{
-		if (!bWantsSprint)
-		{
-			ASC->CancelAbilityHandle(Sprint->Handle);
-		}
+		ASC->CancelAbilityHandle(Sprint->Handle);
+	}
+}
+
+void AAgPlayerCharacter::TryMoveCancel()
+{
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	// 기억한 입력은 후딜이 시작된 뒤 타이머에서 실행되므로, 남아 있는 동안 기다려 그 입력이 먼저 나가게 합니다.
+	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_MoveCancel) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) ||
+		MoveInputDirection.IsNearlyZero() || BufferedInput.IsValid())
+	{
 		return;
 	}
-
-	const FGameplayAbilitySpec* Dodge = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Dodge);
-	const FGameplayAbilitySpec* PerfectDodge = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_PerfectDodge);
-	const bool bDodging = (Dodge && Dodge->IsActive()) || (PerfectDodge && PerfectDodge->IsActive());
-	if (bWantsSprint && !MoveInputDirection.IsNearlyZero() && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) && bDodging)
+	if (WantsSprint())
 	{
 		ActivateByTag(AgGameplayTags::Ability_Sprint);
+	}
+	else
+	{
+		ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Action));
 	}
 }
 

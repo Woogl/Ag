@@ -107,7 +107,7 @@
     "AbilityTags": ["Ability.Action.Dodge"],
     "InputTag": "Input.Dodge",
     "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
-    "ActivationOwnedTags": ["State.Acting"],
+    "ActivationOwnedTags": ["State.Acting", "State.MoveCancel"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "bAllowRetrigger": true,
     "Cost": {"SP": 20},
@@ -161,7 +161,7 @@
   "PerfectDodge": {
     "AbilityTags": ["Ability.Action.PerfectDodge"],
     "ActivationBlockedTags": ["State.Dead"],
-    "ActivationOwnedTags": ["State.Acting"],
+    "ActivationOwnedTags": ["State.Acting", "State.MoveCancel"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "AbilityTriggers": [
       {"TriggerTag": "Event.PerfectDodge"}
