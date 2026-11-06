@@ -9,8 +9,13 @@
 #include "Character/AgEnemyCharacter.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgGameplayTags.h"
+#include "Engine/GameViewportClient.h"
+#include "Engine/LocalPlayer.h"
 #include "EngineUtils.h"
 #include "GameplayEffect.h"
+#include "GenericPlatform/GenericPlatformInputDeviceMapper.h"
+#include "InputCoreTypes.h"
+#include "InputKeyEventArgs.h"
 
 namespace
 {
@@ -81,6 +86,26 @@ namespace
 				Brain->StopLogic(TEXT("Cheat"));
 			}
 		}
+	}
+
+	/** 뷰포트가 장치 입력을 넘기는 컨트롤러에 넣어, 키 매핑·트리거·바인딩과 처리 순서를 사람의 입력과 같게 합니다. */
+	void InjectKey(const UCheatManager& Cheats, const FKey& Key, EInputEvent Event, float Value)
+	{
+		APlayerController* PlayerController = Cheats.GetOuterAPlayerController();
+		const FInputDeviceId Device =
+			IPlatformInputDeviceMapper::Get().GetPrimaryInputDeviceForUser(PlayerController->GetPlatformUserId());
+		PlayerController->InputKey(FInputKeyEventArgs::CreateSimulated(Key, Event, Value, -1, Device));
+	}
+
+	void InjectNamedKey(const UCheatManager& Cheats, const TCHAR* Command, FName KeyName, EInputEvent Event, float Value)
+	{
+		const FKey Key(KeyName);
+		if (!Key.IsValid())
+		{
+			Report(Cheats, FString::Printf(TEXT("%s: no key '%s'"), Command, *KeyName.ToString()));
+			return;
+		}
+		InjectKey(Cheats, Key, Event, Value);
 	}
 } // namespace
 
@@ -202,4 +227,37 @@ void UAgCheatManager::AgStopAI()
 void UAgCheatManager::AgStartAI()
 {
 	SetEnemyAIRunning(GetWorld(), true);
+}
+
+void UAgCheatManager::AgIgnoreDeviceInput()
+{
+	const ULocalPlayer* LocalPlayer = GetOuterAPlayerController()->GetLocalPlayer();
+	UGameViewportClient* ViewportClient = LocalPlayer ? LocalPlayer->ViewportClient.Get() : nullptr;
+	if (!ViewportClient)
+	{
+		Report(*this, TEXT("AgIgnoreDeviceInput: no game viewport"));
+		return;
+	}
+
+	// 엔진 'UI 전용' 입력 모드처럼 뷰포트에서 장치 입력을 버립니다. 콘솔은 계속 받고, 키 입력 명령은 뷰포트를 거치지
+	// 않아 그대로 들어갑니다.
+	const bool bIgnore = !ViewportClient->IgnoreInput();
+	ViewportClient->SetIgnoreInput(bIgnore);
+	Report(*this, bIgnore ? TEXT("AgIgnoreDeviceInput: on") : TEXT("AgIgnoreDeviceInput: off"));
+}
+
+void UAgCheatManager::AgPressKey(FName KeyName)
+{
+	InjectNamedKey(*this, TEXT("AgPressKey"), KeyName, IE_Pressed, 1.f);
+}
+
+void UAgCheatManager::AgReleaseKey(FName KeyName)
+{
+	InjectNamedKey(*this, TEXT("AgReleaseKey"), KeyName, IE_Released, 0.f);
+}
+
+void UAgCheatManager::AgMoveMouse(float X, float Y)
+{
+	InjectKey(*this, EKeys::MouseX, IE_Axis, X);
+	InjectKey(*this, EKeys::MouseY, IE_Axis, Y);
 }

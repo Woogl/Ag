@@ -22,6 +22,12 @@ def _tag(name):
     return t
 
 
+# 사람이 누르는 키(IMC_Default). 시나리오는 입력 태그 이름으로 누르고, 키 매핑이 바뀌면 이 표도 바꾼다.
+KEYS = {"Input.Attack": "LeftMouseButton", "Input.Guard": "RightMouseButton", "Input.Dodge": "LeftShift",
+        "Input.Jump": "SpaceBar", "Input.Skill": "E", "Input.Ultimate": "Q", "Input.Execute": "F",
+        "Input.LockOn": "MiddleMouseButton"}
+
+
 class Ctx:
     """시나리오 단계 함수가 받는 도우미. 캐릭터는 키("p", "b", "e0"…)로 가리킨다."""
 
@@ -32,6 +38,9 @@ class Ctx:
         self.done = False
         self.window_locked = False
         self.chars, self.asc, self.aset, self.brains = {}, {}, {}, []
+        self.down, self.move_keys, self.taps = set(), set(), []
+        self.mashing = self.holding = None
+        self.mouse = (0.0, 0.0)
 
     # 화면 안내. 줄마다 key가 있고, 같은 key의 글자는 제자리에서 바뀐다. 줄은 처음 띄운 순서대로 위에서부터 쌓인다.
     def banner(self, text, key="note", color=(1, 1, 1), secs=600.0):
@@ -41,24 +50,63 @@ class Ctx:
         prefix, color = {"wait": ("[대기]", GRAY), "run": ("[진행]", YELLOW), "done": ("[완료]", DONE)}[state]
         self.banner("%s %d. %s" % (prefix, i + 1, STEPS[i][1]), "step%d" % i, color)
 
-    # 입력: 플레이어의 개발용 입력 속성(DevPressInput 등)에 넣는다.
+    # 입력: 사람이 누르는 키와 마우스를 테스트용 콘솔 명령(AgPressKey 등)으로 넣는다. 넣은 입력은 다음 프레임에 처리된다.
     def press(self, name):
-        self.player.set_editor_property("DevPressInput", _tag(name), NEVER)
+        """키를 누르고 다음 프레임에 뗀다."""
+        self._key(KEYS[name], True)
+        self.taps.append(KEYS[name])
 
     def mash(self, name=None):
-        self.player.set_editor_property("DevMashInput", _tag(name) if name else unreal.GameplayTag(), NEVER)
+        """프레임마다 누름과 뗌을 번갈아 넣는다. 이름 없이 부르면 멈춘다."""
+        if self.mashing in self.down:
+            self._key(self.mashing, False)
+        self.mashing = KEYS[name] if name else None
+        if self.mashing:
+            self._key(self.mashing, True)
 
     def hold(self, name=None):
-        self.player.set_editor_property("DevHoldInput", _tag(name) if name else unreal.GameplayTag(), NEVER)
+        """키를 누른 채 둔다. 이름 없이 부르면 뗀다."""
+        if self.holding:
+            self._key(self.holding, False)
+        self.holding = KEYS[name] if name else None
+        if self.holding:
+            self._key(self.holding, True)
 
     def move(self, x, y):
-        """x 오른쪽, y 앞. 회피 방향은 회피 키보다 한 프레임 이상 먼저 넣는다."""
-        self.player.set_editor_property("DevMoveInput", unreal.Vector2D(x, y), NEVER)
+        """x 오른쪽, y 앞(WASD라 -1, 0, 1). 회피 방향은 회피 키보다 한 프레임 이상 먼저 넣는다."""
+        keys = {k for k, on in (("D", x > 0), ("A", x < 0), ("W", y > 0), ("S", y < 0)) if on}
+        for k in self.move_keys - keys:
+            self._key(k, False)
+        for k in keys - self.move_keys:
+            self._key(k, True)
+        self.move_keys = keys
+
+    def look(self, x, y=0.0):
+        """마우스를 프레임마다 x만큼 오른쪽, y만큼 위로 움직인다. look(0)이면 멈춘다."""
+        self.mouse = (x, y)
 
     def clear_inputs(self):
         self.mash()
         self.hold()
         self.move(0, 0)
+        self.look(0)
+        for k in list(self.down):
+            self._key(k, False)
+        self.taps = []
+
+    def _key(self, key, down):
+        self.console(("AgPressKey " if down else "AgReleaseKey ") + key)
+        (self.down.add if down else self.down.discard)(key)
+
+    def _pump(self):
+        """프레임마다 단계보다 먼저: 지난 프레임에 press로 누른 키를 떼고, 연타 키를 번갈아 넣고, 마우스를 움직인다."""
+        for k in self.taps:
+            self._key(k, False)
+        self.taps = []
+        if self.mashing:
+            self._key(self.mashing, self.mashing not in self.down)
+        if self.mouse != (0, 0):
+            self.console("AgMoveMouse %g %g" % self.mouse)
 
     def console(self, command):
         """콘솔 명령을 실행한다(예: 테스트용 콘솔 명령 AgKillBoss)."""
@@ -226,8 +274,8 @@ def _setup():
         ctx.asc[key] = actor.get_component_by_class(unreal.AbilitySystemComponent)
         ctx.aset[key] = unreal.find_object(None, actor.get_path_name() + ".AttributeSet")
     ctx.brains = [a.get_controller().get_component_by_class(unreal.BrainComponent) for k, a in ctx.chars.items() if k != "p" and a.get_controller()]
-    # 패드처럼 창을 거치지 않는 입력도 막는다. 확인용 입력(DevPressInput 등)은 이 입력 경로를 거치지 않는다.
-    ctx.player.disable_input(pc)
+    # 패드처럼 창을 거치지 않는 입력도 뷰포트에서 버린다. 키 입력 명령(AgPressKey 등)은 뷰포트를 거치지 않는다.
+    ctx.console("AgIgnoreDeviceInput")
     # 준비: 적 AI를 멈추고, 맵을 연 직후의 적 공격이 끝나고 프레임이 안정되기를 기다린다.
     ctx.ai(False)
     # 화면에 제목, 준비, 시험 항목 전체를 한 줄씩 띄운다. 판정은 끝나고 그 아래에 붙는다.
@@ -323,6 +371,7 @@ def _tick(dt):
             return
         t = time.time() - ctx.t0
         ctx.fps[int(t)] = ctx.fps.get(int(t), 0) + 1
+        ctx._pump()
         ctx.rows.append(_record(t))
         while ctx.step_index < len(STEPS) and t >= STEPS[ctx.step_index][0]:
             if ctx.step_index > 0:

@@ -42,6 +42,18 @@ public:
 	UFUNCTION(Exec)
 	void AgStartAI();
 
+	UFUNCTION(Exec)
+	void AgIgnoreDeviceInput();
+
+	UFUNCTION(Exec)
+	void AgPressKey(FName KeyName);
+
+	UFUNCTION(Exec)
+	void AgReleaseKey(FName KeyName);
+
+	UFUNCTION(Exec)
+	void AgMoveMouse(float X, float Y);
+
 private:
 	bool bGod = false;
 };

@@ -134,53 +134,6 @@ void AAgPlayerCharacter::Tick(float DeltaSeconds)
 		// 카메라는 캐릭터 히트스톱의 영향을 받지 않도록 월드 시간으로 갱신합니다.
 		CameraManager->UpdateGameplayRotation(*this, CameraBoom->GetComponentLocation(), GetWorld()->GetDeltaSeconds());
 	}
-
-#if WITH_EDITORONLY_DATA
-	// 누른 키는 다음 프레임에 뗍니다. 같은 프레임에 떼면 점프 키는 엔진 점프가 시작되기 전에 StopJumping이
-	// 누름을 지웁니다.
-	if (DevReleaseInput.IsValid())
-	{
-		const FGameplayTag InputTag = DevReleaseInput;
-		DevReleaseInput = FGameplayTag();
-		HandleInputReleased(InputTag);
-	}
-	if (DevPressInput.IsValid())
-	{
-		DevReleaseInput = DevPressInput;
-		DevPressInput = FGameplayTag();
-		HandleInputPressed(DevReleaseInput);
-	}
-	if (DevMashInput.IsValid())
-	{
-		HandleInputPressed(DevMashInput);
-	}
-	if (DevHoldInput != DevHeldInput)
-	{
-		if (DevHeldInput.IsValid())
-		{
-			HandleInputReleased(DevHeldInput);
-		}
-		DevHeldInput = DevHoldInput;
-		if (DevHeldInput.IsValid())
-		{
-			HandleInputPressed(DevHeldInput);
-		}
-	}
-	if (!DevMoveInput.IsZero())
-	{
-		bDevMoving = true;
-		Move(FInputActionValue(DevMoveInput));
-	}
-	else if (bDevMoving)
-	{
-		bDevMoving = false;
-		MoveReleased();
-	}
-	if (!DevLookInput.IsZero())
-	{
-		Look(FInputActionValue(DevLookInput));
-	}
-#endif
 }
 
 void AAgPlayerCharacter::NotifyControllerChanged()

@@ -150,26 +150,4 @@ private:
 	double BufferedInputTime = 0.0;
 
 	TSet<FGameplayTag> HeldInputs;
-
-#if WITH_EDITORONLY_DATA
-	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev", meta = (Categories = "Input"))
-	FGameplayTag DevPressInput;
-
-	FGameplayTag DevReleaseInput;
-
-	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev", meta = (Categories = "Input"))
-	FGameplayTag DevMashInput;
-
-	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev", meta = (Categories = "Input"))
-	FGameplayTag DevHoldInput;
-
-	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev")
-	FVector2D DevMoveInput = FVector2D::ZeroVector;
-
-	UPROPERTY(EditInstanceOnly, Transient, Category = "Dev")
-	FVector2D DevLookInput = FVector2D::ZeroVector;
-
-	FGameplayTag DevHeldInput;
-	bool bDevMoving = false;
-#endif
 };
