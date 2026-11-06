@@ -60,9 +60,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	{
 		return;
 	}
-	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
-	Damage.HPMultiplier = Rules.ParryHPMultiplier;
-	Damage.PPMultiplier = Rules.ParryPPMultiplier;
+	Damage.PPMultiplier = UAgAssetManager::Get().GetCombatRules().ParryPPMultiplier;
 	Damage.AddToSpec(*ReflectedSpec.Data);
 	ReflectedSpec.Data->GetContext().AddInstigator(&Defender, this);
 	DamageSpec = ReflectedSpec;

@@ -3,7 +3,7 @@
   "DefenseConstant": 100,
   "HitstopDuration": 0.12,
   "GuardSPCostRatio": 0.25,
-  "ParryHPMultiplier": 1,
+  "ParryHPMultiplier": 0,
   "ParryPPMultiplier": 1,
   "FallDamageStartHeight": 1000,
   "FallDeathHeight": 2000,
