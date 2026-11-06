@@ -111,7 +111,7 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 	{
 		InstanceData.CheckElapsed = 0.f;
 		bool bAttackTurn = false;
-		if (!bDelaying && Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->HasAttackTurn(*Enemy))
+		if (Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->CanStartPattern(*Enemy, false))
 		{
 			TArray<TPair<FName, float>> Usable;
 			Enemy->GatherPatterns(Distance, false, Usable);
@@ -178,9 +178,8 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
 	const AAgCharacterBase* Target = InstanceData.Controller->GetTarget();
 	UAgCombatSubsystem* CombatSubsystem = Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>();
-	// 반응형 패턴만 패턴 후딜레이 중에 나오고 차례와 관계없습니다. 반응형 패턴이 끝나면 간격 지키기를 거치지 않고 이 상태로
-	// 오므로, 차례도 여기서 확인합니다.
-	if (!Target || (!InstanceData.bResponse && (InstanceData.Controller->IsInPostPatternDelay() || !CombatSubsystem->HasAttackTurn(*Enemy))))
+	// 반응형 패턴이 끝나면 간격 지키기를 거치지 않고 이 상태로 오므로, 시작해도 되는지 여기서도 묻습니다.
+	if (!Target || !CombatSubsystem->CanStartPattern(*Enemy, InstanceData.bResponse))
 	{
 		return EStateTreeRunStatus::Failed;
 	}
@@ -214,30 +213,10 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 
 EStateTreeRunStatus FAgEnemyAITask_RunPattern::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	// 패턴이 피격 반응으로 끊겨도 여기서는 끝난 것으로 봅니다. 그때는 우선순위가 높은 피격 반응 전환이 먼저 적용되고,
-	// 후딜레이는 그 반응이 끝날 때 정합니다.
-	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	AAgEnemyAIController& Controller = *InstanceData.Controller;
-	const UAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
+	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+	const UAbilitySystemComponent* ASC = InstanceData.Controller->GetEnemy()->GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(InstanceData.Handle);
-	if (Spec && Spec->IsActive())
-	{
-		return EStateTreeRunStatus::Running;
-	}
-	if (Controller.IsEnemyReacting())
-	{
-		return EStateTreeRunStatus::Succeeded;
-	}
-	// 반응형 패턴(Backstep)은 끝까지 마치면 남은 후딜레이 없이 바로 다음 패턴을 고릅니다.
-	if (InstanceData.bResponse)
-	{
-		Controller.ClearPostPatternDelay();
-	}
-	else
-	{
-		Controller.StartPostPatternDelay();
-	}
-	return EStateTreeRunStatus::Succeeded;
+	return Spec && Spec->IsActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
@@ -245,14 +224,31 @@ void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, c
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	AAgEnemyAIController& Controller = *InstanceData.Controller;
 	AAgEnemyCharacter* Enemy = Controller.GetEnemy();
-	UAbilitySystemComponent* ASC = Enemy ? Enemy->GetAbilitySystemComponent() : nullptr;
-	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindAbilitySpecFromHandle(InstanceData.Handle) : nullptr;
-	// 플레이어 사망처럼 패턴이 끝나기 전에 다른 상태로 가면 패턴을 멈춥니다.
+	if (!Enemy || !InstanceData.Handle.IsValid())
+	{
+		return;
+	}
+	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
+	const FGameplayAbilitySpec* Spec = ASC->FindAbilitySpecFromHandle(InstanceData.Handle);
+	// 패턴 금지나 플레이어 사망처럼 패턴이 끝나기 전에 다른 상태로 가면 패턴을 멈춥니다.
 	if (Spec && Spec->IsActive())
 	{
 		ASC->CancelAbilityHandle(InstanceData.Handle);
 	}
-	if (Enemy && !InstanceData.bResponse && InstanceData.Handle.IsValid())
+	// 피격 반응으로 끊겼으면 후딜레이는 그 반응이 끝날 때 정하고, 그 밖에는 멈춘 패턴도 끝까지 마친 것으로 봅니다.
+	if (!Controller.IsEnemyReacting())
+	{
+		// 반응형 패턴(Backstep)은 끝까지 마치면 남은 후딜레이 없이 바로 다음 패턴을 고릅니다.
+		if (InstanceData.bResponse)
+		{
+			Controller.ClearPostPatternDelay();
+		}
+		else
+		{
+			Controller.StartPostPatternDelay();
+		}
+	}
+	if (!InstanceData.bResponse)
 	{
 		Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->EndAttack(*Enemy);
 	}

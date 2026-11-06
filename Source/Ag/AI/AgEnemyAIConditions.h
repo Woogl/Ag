@@ -59,6 +59,21 @@ struct FAgEnemyAICondition_Reacting : public FStateTreeAIConditionBase
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
+/** 전투 서브시스템이 패턴을 막은 동안(플레이어가 처형하는 동안) 참입니다. 패턴 실행 상태에서 빠져나가 패턴을 멈출 때 씁니다. */
+USTRUCT(meta = (DisplayName = "적: 패턴 금지", Category = "Ag|Enemy AI"))
+struct FAgEnemyAICondition_PatternsBlocked : public FStateTreeAIConditionBase
+{
+	GENERATED_BODY()
+
+	using FInstanceDataType = FAgEnemyAIConditionInstanceData;
+	virtual const UStruct* GetInstanceDataType() const override
+	{
+		return FInstanceDataType::StaticStruct();
+	}
+
+	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
+};
+
 /** 패턴 실행 중인지는 이 조건을 둔 상태(간격 지키기, 반응형 패턴이 끝난 뒤)가 정하므로 보지 않습니다. */
 USTRUCT(meta = (DisplayName = "적: 페이즈 전환 시작 조건", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_PhaseTransitionReady : public FStateTreeAIConditionBase

@@ -4,6 +4,7 @@
 
 #include "AI/AgEnemyAIController.h"
 #include "Character/AgEnemyCharacter.h"
+#include "Combat/AgCombatSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "StateTreeExecutionContext.h"
 
@@ -25,6 +26,12 @@ bool FAgEnemyAICondition_Reacting::TestCondition(FStateTreeExecutionContext& Con
 {
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
 	return Controller->IsEnemyReacting();
+}
+
+bool FAgEnemyAICondition_PatternsBlocked::TestCondition(FStateTreeExecutionContext& Context) const
+{
+	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
+	return Controller->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->ArePatternsBlocked();
 }
 
 bool FAgEnemyAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecutionContext& Context) const

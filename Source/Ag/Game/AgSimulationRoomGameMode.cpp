@@ -2,7 +2,6 @@
 
 #include "Game/AgSimulationRoomGameMode.h"
 
-#include "AI/AgEnemyAIController.h"
 #include "Ag.h"
 #include "Algo/Sort.h"
 #include "Character/AgBossCharacter.h"
@@ -13,6 +12,7 @@
 #include "Game/AgEnemySpawnPoint.h"
 #include "Game/AgPlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Perception/AISense_Damage.h"
 #include "UI/AgCharacterPreview.h"
 #include "UI/AgEnemySelectScreen.h"
 #include "UI/AgUILayout.h"
@@ -185,9 +185,12 @@ void AAgSimulationRoomGameMode::SpawnLineup(AActor& Player)
 		const FVector Location = SpawnPoints[Index]->GetActorLocation() + FVector(0., 0., EnemyDefaults->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 		const FRotator Rotation = (Player.GetActorLocation() - Location).GetSafeNormal2D().Rotation();
 		AAgCharacterBase* Enemy = GetWorld()->SpawnActor<AAgCharacterBase>(Lineup[Index], Location, Rotation, SpawnParameters);
-		if (AAgEnemyAIController* Controller = Enemy ? Cast<AAgEnemyAIController>(Enemy->GetController()) : nullptr)
+		if (Enemy)
 		{
-			Controller->NoticeTarget(Player);
+			// 시야와 관계없이 전투에 들어가도록 플레이어에게 맞은 것과 같은 자극을 줍니다. 엔진은 Strength가 0인 자극을 일어나지
+			// 않은 것으로 보아 기억에 넣지 않으므로, 공격에 맞았을 때와 같은 1로 보냅니다.
+			const FVector PlayerLocation = Player.GetActorLocation();
+			UAISense_Damage::ReportDamageEvent(this, Enemy, &Player, 1.f, PlayerLocation, PlayerLocation);
 		}
 	}
 }

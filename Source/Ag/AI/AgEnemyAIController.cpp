@@ -12,7 +12,6 @@
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISenseConfig_Sight.h"
-#include "Perception/AISense_Damage.h"
 
 AAgEnemyAIController::AAgEnemyAIController()
 {
@@ -74,12 +73,6 @@ bool AAgEnemyAIController::IsTargetNoticed() const
 	TArray<AActor*> Hostiles;
 	GetAIPerceptionComponent()->GetHostileActors(Hostiles);
 	return !Hostiles.IsEmpty();
-}
-
-void AAgEnemyAIController::NoticeTarget(AActor& Target)
-{
-	const FVector TargetLocation = Target.GetActorLocation();
-	UAISense_Damage::ReportDamageEvent(this, GetPawn(), &Target, 0.f, TargetLocation, TargetLocation);
 }
 
 void AAgEnemyAIController::StartPostPatternDelay()

@@ -31,9 +31,6 @@ public:
 
 	bool IsTargetNoticed() const;
 
-	/** 시야와 관계없이 그 상대를 알아차리게 합니다. 그 상대에게 맞은 것과 같은 자극이라 놓친 시간도 이 순간부터 셉니다. */
-	void NoticeTarget(AActor& Target);
-
 	/** 캐릭터 데이터의 범위에서 무작위로 정한 길이로 패턴 후딜레이를 겁니다. 걸려 있으면 새 길이로 처음부터 셉니다. */
 	void StartPostPatternDelay();
 	void ClearPostPatternDelay();

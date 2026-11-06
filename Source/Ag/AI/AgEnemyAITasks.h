@@ -26,8 +26,8 @@ struct FAgEnemyAITask_KeepDistanceInstanceData
 };
 
 /**
- * 쓸 수 있는 패턴이 생길 때까지 목표 거리 안으로 움직이고, 생기면 끝납니다. 공격할 차례(후딜레이가 없고, 동시 공격 수에서 차례를
- * 받았고, 쿨다운이 끝난 패턴이 있음)면 그 패턴들의 발동 가능 거리, 아니면 적정 거리가 목표입니다.
+ * 쓸 수 있는 패턴이 생길 때까지 목표 거리 안으로 움직이고, 생기면 끝납니다. 공격할 차례(전투 서브시스템이 패턴 시작을 허가하고,
+ * 쿨다운이 끝난 패턴이 있음)면 그 패턴들의 발동 가능 거리, 아니면 적정 거리가 목표입니다.
  */
 USTRUCT(meta = (DisplayName = "적: 간격 지키기", Category = "Ag|Enemy AI"))
 struct FAgEnemyAITask_KeepDistance : public FStateTreeAITaskBase

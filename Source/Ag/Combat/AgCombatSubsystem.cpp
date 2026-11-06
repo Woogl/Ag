@@ -2,12 +2,15 @@
 
 #include "Combat/AgCombatSubsystem.h"
 
+#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgEnemyCharacter.h"
 #include "Core/AgAssetManager.h"
+#include "Core/AgGameplayTags.h"
 #include "Data/AgCombatRules.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 namespace
 {
@@ -57,6 +60,44 @@ AAgBossCharacter* UAgCombatSubsystem::FindBoss() const
 	return nullptr;
 }
 
+bool UAgCombatSubsystem::ArePatternsBlocked() const
+{
+	// 플레이어는 처형당하지 않으므로, 플레이어의 처형 상태는 처형하는 중입니다.
+	const AAgCharacterBase* Player = Cast<AAgCharacterBase>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	return Player && Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Execution);
+}
+
+bool UAgCombatSubsystem::CanStartPattern(const AAgEnemyCharacter& Enemy, bool bResponse) const
+{
+	if (ArePatternsBlocked())
+	{
+		return false;
+	}
+	if (bResponse)
+	{
+		return true;
+	}
+	const AAgEnemyAIController* Controller = Cast<AAgEnemyAIController>(Enemy.GetController());
+	return Controller && !Controller->IsInPostPatternDelay() && HasAttackTurn(Enemy);
+}
+
+void UAgCombatSubsystem::StartAttack(const AAgEnemyCharacter& Enemy)
+{
+	if (FCombatant* Combatant = FindCombatant(Enemy))
+	{
+		Combatant->bAttacking = true;
+	}
+}
+
+void UAgCombatSubsystem::EndAttack(const AAgEnemyCharacter& Enemy)
+{
+	if (FCombatant* Combatant = FindCombatant(Enemy))
+	{
+		Combatant->bAttacking = false;
+		Combatant->ReattackWaitEndTime = GetWorld()->GetTimeSeconds() + UAgAssetManager::Get().GetCombatRules().ReattackWaitTime;
+	}
+}
+
 bool UAgCombatSubsystem::HasAttackTurn(const AAgEnemyCharacter& Enemy) const
 {
 	const FCombatant* Self = FindCombatant(Enemy);
@@ -90,23 +131,6 @@ bool UAgCombatSubsystem::HasAttackTurn(const AAgEnemyCharacter& Enemy) const
 		}
 	}
 	return TakenTurns < UAgAssetManager::Get().GetCombatRules().MaxAttackers;
-}
-
-void UAgCombatSubsystem::StartAttack(const AAgEnemyCharacter& Enemy)
-{
-	if (FCombatant* Combatant = FindCombatant(Enemy))
-	{
-		Combatant->bAttacking = true;
-	}
-}
-
-void UAgCombatSubsystem::EndAttack(const AAgEnemyCharacter& Enemy)
-{
-	if (FCombatant* Combatant = FindCombatant(Enemy))
-	{
-		Combatant->bAttacking = false;
-		Combatant->ReattackWaitEndTime = GetWorld()->GetTimeSeconds() + UAgAssetManager::Get().GetCombatRules().ReattackWaitTime;
-	}
 }
 
 UAgCombatSubsystem::FCombatant* UAgCombatSubsystem::FindCombatant(const AAgEnemyCharacter& Enemy)
