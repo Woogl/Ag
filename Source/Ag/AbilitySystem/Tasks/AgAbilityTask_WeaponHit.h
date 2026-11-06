@@ -42,7 +42,10 @@ public:
 	virtual void OnDestroy(bool bInOwnerFinished) override;
 
 private:
-	/** ASC가 돌리는 Task 틱과 달리 물리·포즈 갱신 뒤에 판정하도록 틱을 따로 둡니다. */
+	/**
+	 * 엔진 Task 틱(ASC 틱) 대신 틱을 따로 둡니다. Task 틱으로 스윕하면 이번 프레임에 열린 구간의 첫 피해가 다음 프레임으로
+	 * 밀리고, 같은 프레임에 끝나는 상대의 무적·극한 회피 구간이 반영될지가 캐릭터의 틱 순서에 달립니다.
+	 */
 	struct FAgSweepTickFunction : public FTickFunction
 	{
 		UAgAbilityTask_WeaponHit* Target = nullptr;
