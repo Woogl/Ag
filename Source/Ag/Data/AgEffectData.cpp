@@ -5,6 +5,7 @@
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgDamageExecution.h"
 #include "AbilitySystem/AgDamageResultGameplayEffectComponent.h"
+#include "AbilitySystem/AgFallDamageMagnitude.h"
 #include "AbilitySystem/AgRegenDelayGameplayEffectComponent.h"
 #include "AbilitySystem/AgSlowMotionGameplayEffectComponent.h"
 #include "Core/AgGameplayTags.h"
@@ -38,6 +39,13 @@ namespace
 		FSetByCallerFloat SetByCaller;
 		SetByCaller.DataTag = Tag;
 		return SetByCaller;
+	}
+
+	FCustomCalculationBasedFloat MakeCustomCalculation(TSubclassOf<UGameplayModMagnitudeCalculation> CalculationClass)
+	{
+		FCustomCalculationBasedFloat CustomCalculation;
+		CustomCalculation.CalculationClassMagnitude = CalculationClass;
+		return CustomCalculation;
 	}
 
 	FGameplayEffectModifierMagnitude MakeMagnitude(const FAgEffectModifier& Modifier)
@@ -102,6 +110,10 @@ UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 			break;
 		case EAgEffect::PPRefill:
 			AddModifier(*Effect, UAgAttributeSet::GetPPAttribute(), EGameplayModOp::Override, MakeTargetAttribute(UAgAttributeSet::GetMaxPPAttribute(), 1.f));
+			break;
+		case EAgEffect::FallDamage:
+			Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>().ApplicationTagRequirements.IgnoreTags.AddTag(AgGameplayTags::State_Dead);
+			AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::AddBase, MakeCustomCalculation(UAgFallDamageMagnitude::StaticClass()));
 			break;
 	}
 

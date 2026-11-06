@@ -5,5 +5,7 @@
   "GuardSPCostRatio": 0.25,
   "ParryHPMultiplier": 1,
   "ParryPPMultiplier": 1,
+  "FallDamageStartHeight": 1000,
+  "FallDeathHeight": 2000,
   "TargetLostTime": 5
 }

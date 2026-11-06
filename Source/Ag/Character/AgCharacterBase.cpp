@@ -251,6 +251,12 @@ void AAgCharacterBase::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
+	const FGameplayEffectSpecHandle Spec =
+		AbilitySystemComponent->MakeEffectSpec(EAgEffect::FallDamage, 1.f, AbilitySystemComponent->MakeEffectContext());
+	Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_FallHeight,
+		CastChecked<UAgCharacterMovementComponent>(GetCharacterMovement())->GetFallHeight(Hit));
+	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+
 	if (!IsDead())
 	{
 		SendEventToSelf(AgGameplayTags::Event_Landed);

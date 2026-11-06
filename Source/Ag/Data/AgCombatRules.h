@@ -30,6 +30,12 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Parry")
 	float ParryPPMultiplier = 0.f;
 
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Fall")
+	float FallDamageStartHeight = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Fall")
+	float FallDeathHeight = 0.f;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	float TargetLostTime = 0.f;
 };

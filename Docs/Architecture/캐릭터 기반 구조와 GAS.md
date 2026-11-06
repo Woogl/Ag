@@ -29,7 +29,7 @@
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정)과 적중 가능 판정(`CanBeHitBy`), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, Launch가 띄울 때마다 켜는 엔진 정점 알림으로 보내는 `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 넉업으로 떠 있는 동안 캡슐도 무기에 맞음), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 가드 움찔 몽타주(`GuardFlinchMontage`), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
-| `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 모든 캐릭터의 회전. 엔진 회전을 쓰고, 사망·방향 고정 중에는 돌지 않습니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. |
+| `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 모든 캐릭터의 회전과 낙하 높이. 엔진 회전을 쓰고, 사망·방향 고정 중에는 돌지 않습니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. 낙하 높이는 공중에서 마지막으로 발이 가장 높았던 지점(걸어 나가 떨어지면 딛고 있던 바닥)부터 착지한 바닥까지 잽니다. |
 | `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소), 달리기·락온 발동과 취소, 몸 회전, 점프와 착지(`JumpMontage`), 극한 회피 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 시야를 제외한 입력 차단. |
 | `AAgPlayerCameraManager` | `APlayerCameraManager` | BP 파생 클래스 없이 생성합니다. 락온 보간·시야 입력·상대 쪽 회전·요청받은 상황의 연출 재생·달리기 시야각·처형 카메라 시작과 종료·컷신 진입 정리를 맡고, 설정은 `UAgCameraData`에서 읽습니다. 엔진 점유 알림으로 플레이어 ASC에 연결합니다. 기본 모디파이어 클래스는 C++ 생성자의 `DefaultModifiers`에서 지정하고 엔진이 생성합니다. |
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
@@ -274,11 +274,12 @@ sequenceDiagram
 
 ### GameplayEffect
 
-효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가 맡습니다. 어빌리티 비용·쿨다운은 어빌리티가, 어빌리티가 거는 효과(패리 구간, 극한 회피 구간, 달리기 소모, 패리·극한 회피의 보상과 회피 반격 기회)는 ApplyEffect가, 적중 충전은 HitReward Task가, 히트스톱, 가드 반격 기회(가드·패리 결과)와 패리 대미지는 피격 결과 처리 컴포넌트가, 그로기 효과와 PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과와 Kill은 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
+효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가, 낙하 대미지 계산은 `UAgFallDamageMagnitude`가 맡습니다. 어빌리티 비용·쿨다운은 어빌리티가, 어빌리티가 거는 효과(패리 구간, 극한 회피 구간, 달리기 소모, 패리·극한 회피의 보상과 회피 반격 기회)는 ApplyEffect가, 적중 충전은 HitReward Task가, 히트스톱, 가드 반격 기회(가드·패리 결과)와 패리 대미지는 피격 결과 처리 컴포넌트가, 그로기 효과와 PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과, Kill과 낙하 대미지는 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
 | `UAgDamageExecution` | `UGameplayEffectExecutionCalculation` | 피해·가드 자원 계산과 결과 태그 생성. 슈퍼아머 가드에서는 SP 부족과 가드 브레이크를 구분하고, SP 소모를 보유량 이내로 제한합니다. |
+| `UAgFallDamageMagnitude` | `UGameplayModMagnitudeCalculation` | 스펙의 떨어진 높이, `CombatRules.json`의 두 높이, 대상의 MaxHP로 낙하 대미지의 HP 감소량을 계산합니다. |
 | `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 전투 결과와 실제 반응의 GameplayCue 전달·히트스톱·타의 첫 적중 알림(`Event.AttackHit`), 패리한 공격자에게 패리 대미지(`CombatRules.json`의 배율로 만든 `Damage` 스펙, 연출은 대미지 숫자만). 반응 억제와 다른 적중 처리를 분리합니다. |
 | `UAgGameplayCueNotify_Burst` | `UGameplayCueNotify_Burst` | 일회성 효과 재생 뒤 전투 카메라 연출을 요청합니다. 공통 정적 함수는 네 전투 태그만 처리하며 BurstLatent에서도 호출합니다. |
 | `UAgRegenDelayGameplayEffectComponent` | `UGameplayEffectComponent` | 회복 효과의 `RegenDelay`([데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'). 효과가 걸릴 때 회복하는 어트리뷰트의 변경을 구독하고 지워질 때 풉니다(엔진의 대상 태그 조건 컴포넌트가 태그 변경을 구독하는 방식). |
@@ -291,6 +292,10 @@ classDiagram
         <<코드 전용 효과와 JSON 효과>>
     }
     UAgAssetManager ..> UGameplayEffect : GetEffect(EAgEffect)<br>FindEffect(효과 ID)
+    UGameplayEffectExecutionCalculation <|-- UAgDamageExecution
+    UGameplayModMagnitudeCalculation <|-- UAgFallDamageMagnitude
+    UGameplayEffect ..> UAgDamageExecution : Executions(Damage)
+    UGameplayEffect ..> UAgFallDamageMagnitude : Modifiers(FallDamage의 HP)
     UGameplayEffectComponent <|-- UAgRegenDelayGameplayEffectComponent
     UGameplayEffect *-- UAgRegenDelayGameplayEffectComponent : GEComponents(RegenDelay)
     UAgRegenDelayGameplayEffectComponent ..> UGameplayEffect : 대기 효과
@@ -305,14 +310,14 @@ classDiagram
     AAgGameplayCueNotify_BurstLatent ..> UAgGameplayCueNotify_Burst : PlayCombatCameraReactions
     UAgGameplayCueNotify_Burst ..> AAgPlayerCameraManager : PlayCameraReaction
     AAgEnemyCharacter ..> UGameplayEffect : Groggy(Event.Groggy),<br>PPRefill(그로기·처형 피격 끝, 페이즈 전환 끝)
-    AAgCharacterBase ..> UGameplayEffect : 시작 효과, Kill
+    AAgCharacterBase ..> UGameplayEffect : 시작 효과, Kill, FallDamage
 ```
 
 전투 연출은 `GameplayCue.Hit`·`GameplayCue.Guard`·`GameplayCue.Parry`·`GameplayCue.PerfectDodge`로 전달합니다. `GC_Hit`·`GC_Guard`·`GC_PerfectDodge`는 `UAgGameplayCueNotify_Burst`, `GC_Parry`는 `AAgGameplayCueNotify_BurstLatent`를 사용합니다. 각 Cue가 기존 이펙트·소리·포스트프로세스 실행 뒤 공통 `PlayCombatCameraReactions`를 호출하고, `OriginalTag`로 결과를 구분합니다. `IsOverride=true`이며 부모 Cue 전파는 사용하지 않습니다. 스펙 태그는 `AggregatedSourceTags`, 이번 타격의 실제 반응은 `AggregatedTargetTags`로 전달해 이전 타격의 상태와 구별합니다. 카메라 수치와 셰이크 참조는 `Camera.json`에서 읽습니다.
 
 #### 코드가 효과를 쓰는 방법
 
-- `EAgEffect`는 코드가 지정해 사용하는 효과(`Damage`, `Resource`, `Cooldown`, `Kill`, `Hitstop`, `PPRefill`)입니다. 에셋 매니저가 `StartInitialLoading`에서 값마다 `AgEffectData::MakeNativeEffect`로 한 번 만들어 `NativeEffects`에 UPROPERTY로 보관하며, JSON 재로딩 대상에서 제외합니다. 효과별 GE 클래스는 만들지 않습니다.
+- `EAgEffect`는 코드가 지정해 사용하는 효과(`Damage`, `Resource`, `Cooldown`, `Kill`, `Hitstop`, `PPRefill`, `FallDamage`)입니다. 에셋 매니저가 `StartInitialLoading`에서 값마다 `AgEffectData::MakeNativeEffect`로 한 번 만들어 `NativeEffects`에 UPROPERTY로 보관하며, JSON 재로딩 대상에서 제외합니다. 효과별 GE 클래스는 만들지 않습니다.
 - `GetEffect(EAgEffect)`는 `NativeEffects`에서 찾습니다.
 - `FindEffect(FName)`와 `DataId = "Effects"` 검증은 JSON 효과만 대상으로 합니다. 두 저장소는 서로 덮어쓰지 않습니다. 어빌리티가 아닌 코드가 JSON 효과를 거는 곳(피격 결과 처리 컴포넌트의 `GuardCounterChance`, 적 캐릭터의 `Groggy`)은 효과 ID를 그 파일의 상수로 둡니다.
 - 코드 전용 효과의 구성은 아래 표를 따릅니다. 구성 뒤 `OnGameplayEffectChanged`로 컴포넌트의 태그를 모읍니다. 적용할 때마다 새 스펙을 만들고, 스펙에만 공격 값·비용·쿨다운 시간·히트스톱 시간을 넣습니다.
@@ -325,6 +330,7 @@ classDiagram
 | `Kill` | 즉시 효과. HP를 0으로 덮어씀 |
 | `Hitstop` | 지속 효과와 `State.Hitstop` 부여. 지속 시간은 `CombatRules.json`의 `HitstopDuration`을 적용할 스펙에 지정 |
 | `PPRefill` | 즉시 효과. 대상의 MaxPP를 스냅샷 없이 읽어 PP에 덮어씀 |
+| `FallDamage` | 즉시 효과. `State.Dead` 대상 제외, HP에 `UAgFallDamageMagnitude`가 계산한 값을 더함. 캐릭터가 착지할 때마다 무브먼트 컴포넌트가 잰 떨어진 높이를 스펙에 넣어 겁니다 |
 
 - 걸 효과의 수와 종류를 데이터가 정하는 자리는 데이터의 효과 ID 목록으로 둡니다. 거는 때를 코드가 정하면, 코드는 그때 이벤트를 보내고 그 이벤트로 발동하는 어빌리티의 `ApplyEffect`가 겁니다(패리 보상은 Parry, 극한 회피 보상은 PerfectDodge). 적중 보상은 충전량을 공격마다 골라야 해서, HitReward 어빌리티의 HitReward Task가 고른 양을 자원 효과에 넣어 겁니다. 그로기 효과는 PP·그로기 규칙의 주인인 적 캐릭터가 `Event.Groggy`를 받아 직접 겁니다.
 - 걸 효과를 GE 클래스로만 받는 엔진 기능(추가 효과 컴포넌트, 실행의 조건부 효과)은 쓰지 않고 효과 ID 필드로 대신합니다. 엔진의 다른 효과 지우기 컴포넌트는 자기 자신을 GE 클래스의 기본 객체와 비교해 가려 내 실행 중에 만든 GE에서는 자기 자신을 가려 내지 못하고, 스택 방식은 정하는 함수가 에디터 전용이라, 리젠 대기는 걸린 대기 효과를 태그로 지우고 다시 겁니다.

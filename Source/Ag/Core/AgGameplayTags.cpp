@@ -113,6 +113,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_UP, "SetByCaller.UP");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_HPMultiplier, "SetByCaller.HPMultiplier", "공격의 HP 배율");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_PPMultiplier, "SetByCaller.PPMultiplier", "공격의 PP 배율");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_FallHeight, "SetByCaller.FallHeight", "착지할 때 떨어진 높이 (cm)");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage, "Effect.Damage", "대미지 효과");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Cooldown, "Effect.Cooldown", "행동 쿨다운 효과");

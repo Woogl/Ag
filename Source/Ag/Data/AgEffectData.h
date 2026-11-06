@@ -16,6 +16,7 @@ enum class EAgEffect : uint8
 	Kill,
 	Hitstop,
 	PPRefill,
+	FallDamage,
 };
 
 USTRUCT()
