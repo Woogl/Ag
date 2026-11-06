@@ -23,5 +23,11 @@
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/Ag.AgTargetingFilterTask_OnScreen"},
     {"Class": "/Script/Ag.AgTargetingSortTask_ScreenCenter"}
+  ],
+  "LookAt": [
+    {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead", "State.NonCombat"]}},
+    {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ]
 }

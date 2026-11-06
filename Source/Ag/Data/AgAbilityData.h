@@ -38,16 +38,17 @@ struct FAgTargetingRequest
 {
 	GENERATED_BODY()
 
-	UPROPERTY(meta = (DataId = "TargetingPresets"))
+	// 애님 블루프린트 기본값(대상 바라보기)에서도 고치므로 편집 가능하게 둡니다. JSON은 구조체 멤버를 플래그와 관계없이 읽습니다.
+	UPROPERTY(EditAnywhere, meta = (DataId = "TargetingPresets"))
 	FName Preset;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	float Range = 0.f;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer TargetRequiredTags;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	FGameplayTagContainer TargetBlockedTags;
 };
 

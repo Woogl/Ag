@@ -7,6 +7,5 @@
   "ParryPPMultiplier": 1,
   "FallDamageStartHeight": 1000,
   "FallDeathHeight": 2000,
-  "TargetLostTime": 5,
-  "LookAtTargeting": {"Preset": "Enemy", "Range": 2000, "TargetBlockedTags": ["State.NonCombat"]}
+  "TargetLostTime": 5
 }

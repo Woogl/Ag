@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include "Data/AgAbilityData.h"
 #include "AgAnimInstance.generated.h"
 
 class AAgCharacterBase;
@@ -61,6 +62,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "TurnInPlace")
 	float UpperBodyTwistSmoothingTime = 0.15f;
+
+	/** 락온 대상이 없을 때 쳐다볼 상대를 찾는 조건입니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "LookAt")
+	FAgTargetingRequest LookAtTargeting;
 
 	UPROPERTY(EditDefaultsOnly, Category = "LookAt")
 	float LookAtBackAngle = 110.f;

@@ -10,9 +10,7 @@
 #include "Animation/BlendSpace.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Data/AgCombatRules.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "KismetAnimationLibrary.h"
@@ -242,7 +240,7 @@ AAgCharacterBase* UAgAnimInstance::FindLookAtTarget() const
 	{
 		return nullptr;
 	}
-	return Cast<AAgCharacterBase>(AgTargeting::FindTarget(UAgAssetManager::Get().GetCombatRules().LookAtTargeting, *Character));
+	return Cast<AAgCharacterBase>(AgTargeting::FindTarget(LookAtTargeting, *Character));
 }
 
 bool UAgAnimInstance::IsLookAtBlocked() const
