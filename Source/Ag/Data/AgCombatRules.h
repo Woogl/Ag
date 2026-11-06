@@ -38,4 +38,10 @@ public:
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	float TargetLostTime = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
+	int32 MaxAttackers = 0;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
+	float ReattackWaitTime = 0.f;
 };

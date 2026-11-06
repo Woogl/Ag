@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
+#include "Combat/AgCombatSubsystem.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Core/AgAssetManager.h"
@@ -40,12 +41,6 @@ namespace
 	const TArray<FGameplayTag>& PlayerTags()
 	{
 		static const TArray<FGameplayTag> Tags = {AgGameplayTags::State_Cutscene};
-		return Tags;
-	}
-
-	const TArray<FGameplayTag>& BossTags()
-	{
-		static const TArray<FGameplayTag> Tags = {AgGameplayTags::State_NonCombat};
 		return Tags;
 	}
 
@@ -114,12 +109,12 @@ void UAgHUDWidget::NativeConstruct()
 	});
 #endif
 
+	GetWorld()->GetSubsystem<UAgCombatSubsystem>()->OnCombatantsChanged.AddUObject(this, &ThisClass::HandleCombatantsChanged);
 	if (AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>())
 	{
-		StageState->OnBossChanged.AddUObject(this, &ThisClass::HandleBossChanged);
 		StageState->OnStageResultChanged.AddUObject(this, &ThisClass::UpdateStatusPanel);
 	}
-	HandleBossChanged();
+	HandleCombatantsChanged();
 
 	UpdateStatusPanel();
 	UpdatePlayer();
@@ -130,19 +125,18 @@ void UAgHUDWidget::NativeDestruct()
 {
 	Unbind(PlayerASC.Get(), this, PlayerAttributes(), PlayerTags());
 	PlayerASC.Reset();
-	if (const AAgBossCharacter* BossCharacter = Boss.Get())
-	{
-		Unbind(BossCharacter->GetAbilitySystemComponent(), this, {}, BossTags());
-	}
 	Boss.Reset();
 #if WITH_EDITOR
 	UAgAssetManager::Get().OnJsonDataReloaded.RemoveAll(this);
 #endif
 	if (const UWorld* World = GetWorld())
 	{
+		if (UAgCombatSubsystem* CombatSubsystem = World->GetSubsystem<UAgCombatSubsystem>())
+		{
+			CombatSubsystem->OnCombatantsChanged.RemoveAll(this);
+		}
 		if (AAgGameState* StageState = World->GetGameState<AAgGameState>())
 		{
-			StageState->OnBossChanged.RemoveAll(this);
 			StageState->OnStageResultChanged.RemoveAll(this);
 		}
 		World->GetTimerManager().ClearTimer(CooldownTimer);
@@ -165,20 +159,15 @@ void UAgHUDWidget::OpenPauseMenu()
 	}
 }
 
-void UAgHUDWidget::HandleBossChanged()
+void UAgHUDWidget::HandleCombatantsChanged()
 {
-	if (const AAgBossCharacter* OldBoss = Boss.Get())
+	// 보스 상태에 남은 대미지 흔적이 다른 적의 전투 진입으로 지워지지 않도록, 보스가 바뀔 때만 다시 연결합니다.
+	AAgBossCharacter* NewBoss = GetWorld()->GetSubsystem<UAgCombatSubsystem>()->FindBoss();
+	if (Boss.Get() != NewBoss)
 	{
-		Unbind(OldBoss->GetAbilitySystemComponent(), this, {}, BossTags());
+		Boss = NewBoss;
+		BossStatus->SetAbilitySystem(NewBoss ? NewBoss->GetAbilitySystemComponent() : nullptr);
 	}
-	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
-	Boss = StageState ? StageState->GetBoss() : nullptr;
-	const AAgBossCharacter* NewBoss = Boss.Get();
-	if (NewBoss)
-	{
-		BindBoss(*NewBoss->GetAbilitySystemComponent());
-	}
-	BossStatus->SetAbilitySystem(NewBoss ? NewBoss->GetAbilitySystemComponent() : nullptr);
 	UpdateBoss();
 }
 
@@ -199,16 +188,6 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 	{ UpdateSkillSlots(); });
 	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
 	{ UpdateSkillCooldown(); });
-}
-
-void UAgHUDWidget::BindBoss(UAbilitySystemComponent& ASC)
-{
-	for (const FGameplayTag& Tag : BossTags())
-	{
-		ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
-			.AddWeakLambda(this, [this](const FGameplayTag, int32)
-		{ UpdateBoss(); });
-	}
 }
 
 void UAgHUDWidget::UpdateStatusPanel()
@@ -301,10 +280,8 @@ void UAgHUDWidget::UpdateSkillCooldown()
 void UAgHUDWidget::UpdateBoss()
 {
 	const AAgBossCharacter* BossCharacter = Boss.Get();
-	const UAbilitySystemComponent* BossASC = BossCharacter ? BossCharacter->GetAbilitySystemComponent() : nullptr;
-	const bool bBossInCombat = BossASC && !BossASC->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
-	BossStatusPanel->SetVisibility(bBossInCombat ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
-	if (bBossInCombat)
+	BossStatusPanel->SetVisibility(BossCharacter ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	if (BossCharacter)
 	{
 		BossNameText->SetText(BossCharacter->GetCharacterData()->DisplayName);
 	}

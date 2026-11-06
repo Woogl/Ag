@@ -75,14 +75,9 @@ void AAgGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	// 엔진은 플레이어 폰을 월드 BeginPlay 전에 스폰하므로, 이 순회가 플레이어도 등록합니다.
-	AAgGameState* StageState = GetGameState<AAgGameState>();
 	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
 	{
 		It->OnDied.AddUObject(this, &ThisClass::HandleCombatantDied);
-		if (AAgBossCharacter* BossCharacter = Cast<AAgBossCharacter>(*It); BossCharacter && StageState)
-		{
-			StageState->SetBoss(BossCharacter);
-		}
 	}
 }
 

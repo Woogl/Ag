@@ -88,10 +88,9 @@ protected:
 
 private:
 	void OpenPauseMenu();
-	void HandleBossChanged();
+	void HandleCombatantsChanged();
 
 	void BindPlayer(UAbilitySystemComponent& ASC);
-	void BindBoss(UAbilitySystemComponent& ASC);
 
 	void UpdateStatusPanel();
 	void UpdatePlayer();

@@ -10,6 +10,7 @@
 #include "AI/AgPatrolRoute.h"
 #include "Algo/SelectRandomWeighted.h"
 #include "Character/AgEnemyCharacter.h"
+#include "Combat/AgCombatSubsystem.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -110,7 +111,7 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 	{
 		InstanceData.CheckElapsed = 0.f;
 		bool bAttackTurn = false;
-		if (!bDelaying)
+		if (!bDelaying && Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->HasAttackTurn(*Enemy))
 		{
 			TArray<TPair<FName, float>> Usable;
 			Enemy->GatherPatterns(Distance, false, Usable);
@@ -176,8 +177,10 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 	AAgEnemyCharacter* Enemy = InstanceData.Controller->GetEnemy();
 	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
 	const AAgCharacterBase* Target = InstanceData.Controller->GetTarget();
-	// 반응형 패턴만 패턴 후딜레이 중에 나옵니다.
-	if (!Target || (!InstanceData.bResponse && InstanceData.Controller->IsInPostPatternDelay()))
+	UAgCombatSubsystem* CombatSubsystem = Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>();
+	// 반응형 패턴만 패턴 후딜레이 중에 나오고 차례와 관계없습니다. 반응형 패턴이 끝나면 간격 지키기를 거치지 않고 이 상태로
+	// 오므로, 차례도 여기서 확인합니다.
+	if (!Target || (!InstanceData.bResponse && (InstanceData.Controller->IsInPostPatternDelay() || !CombatSubsystem->HasAttackTurn(*Enemy))))
 	{
 		return EStateTreeRunStatus::Failed;
 	}
@@ -202,6 +205,10 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 	}
 	InstanceData.Handle = Handle;
 	InstanceData.RunningPattern = Pattern;
+	if (!InstanceData.bResponse)
+	{
+		CombatSubsystem->StartAttack(*Enemy);
+	}
 	return EStateTreeRunStatus::Running;
 }
 
@@ -248,6 +255,10 @@ void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, c
 		{
 			Controller.StartPostPatternDelay();
 		}
+	}
+	if (Enemy && !InstanceData.bResponse && InstanceData.Handle.IsValid())
+	{
+		Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->EndAttack(*Enemy);
 	}
 }
 
@@ -329,6 +340,7 @@ EStateTreeRunStatus FAgEnemyAITask_Combat::EnterState(FStateTreeExecutionContext
 	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
 	UpdateTarget(Controller);
 	Controller.StartPostPatternDelay();
+	Controller.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->AddCombatant(*Controller.GetEnemy());
 	return EStateTreeRunStatus::Running;
 }
 
@@ -347,6 +359,7 @@ void FAgEnemyAITask_Combat::ExitState(FStateTreeExecutionContext& Context, const
 	{
 		ASC->CancelAbilityHandle(LockOn->Handle);
 	}
+	Controller.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->RemoveCombatant(*Controller.GetEnemy());
 }
 
 void FAgEnemyAITask_Combat::UpdateTarget(AAgEnemyAIController& Controller)
