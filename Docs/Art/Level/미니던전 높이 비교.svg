@@ -17,8 +17,8 @@
 <rect x="60.0" y="229.0" width="835.0" height="4.0" fill="#2f3742"/>
 <polygon points="60.0,229.0 60.0,193.0 730.0,193.0 730.0,229.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
 <text x="70.0" y="189.0" font-size="10.5" fill="#d7dee8">벽 4m (모든 구간)</text>
-<polygon points="347.5,229.0 347.5,193.0 362.5,193.0 362.5,229.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
-<text x="355.0" y="179.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">기둥 4m</text>
+<polygon points="347.5,229.0 347.5,175.0 362.5,175.0 362.5,229.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="355.0" y="161.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">기둥 6m</text>
 <polygon points="290.0,229.0 290.0,218.2 320.0,218.2 320.0,229.0" fill="#e8c36a" fill-opacity="0.45" stroke="#e8c36a" stroke-width="1.2" stroke-dasharray="4 3"/>
 <text x="305.0" y="204.2" font-size="10.5" fill="#d7dee8" text-anchor="middle">엿보기 난간 1.2m</text>
 <polygon points="560.0,229.0 560.0,229.0 590.0,215.5 590.0,229.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
@@ -87,9 +87,9 @@
 <polygon points="245.0,523.0 245.0,523.0 275.0,509.5 275.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
 <polygon points="275.0,523.0 275.0,509.5 300.0,509.5 300.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
 <text x="287.5" y="479.5" font-size="10.5" fill="#d7dee8" text-anchor="middle">망대 1.5m</text>
-<polygon points="335.0,523.0 335.0,523.0 375.0,496.0 375.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
-<polygon points="375.0,523.0 375.0,496.0 475.0,496.0 475.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
-<text x="425.0" y="466.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">성벽 위 통로 3m</text>
+<polygon points="405.0,523.0 405.0,523.0 435.0,496.0 435.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<polygon points="435.0,523.0 435.0,496.0 475.0,496.0 475.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="440.0" y="466.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">성벽 위 통로 3m</text>
 <polygon points="502.5,523.0 502.5,487.0 507.5,487.0 507.5,523.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
 <polygon points="527.5,523.0 527.5,487.0 532.5,487.0 532.5,523.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
 <polygon points="552.5,523.0 552.5,487.0 557.5,487.0 557.5,523.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
