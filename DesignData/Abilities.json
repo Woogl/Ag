@@ -852,16 +852,6 @@
       }
     }
   },
-  "Parried": {
-    "AbilityTags": ["Ability.Reaction.Parried"],
-    "ActivationBlockedTags": ["State.Dead"],
-    "AbilityTriggers": [
-      {"TriggerTag": "Event.Parried"}
-    ],
-    "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "ParryPPLoss"}
-    ]
-  },
   "EnemyLockOn": {
     "AbilityTags": ["Ability.LockOn"],
     "ActivationBlockedTags": ["State.Dead"],

@@ -10,7 +10,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/ShapeComponent.h"
 #include "Engine/World.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
+#include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
 #include "Ag.h"
 
@@ -58,8 +60,9 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	{
 		return;
 	}
-	// 반사탄 적중의 PP 감소는 Parried 어빌리티가 맡으므로 반사한 피해에는 PP 배율을 싣지 않습니다.
-	Damage.PPMultiplier = 0.f;
+	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
+	Damage.HPMultiplier = Rules.ParryHPMultiplier;
+	Damage.PPMultiplier = Rules.ParryPPMultiplier;
 	Damage.AddToSpec(*ReflectedSpec.Data);
 	ReflectedSpec.Data->GetContext().AddInstigator(&Defender, this);
 	DamageSpec = ReflectedSpec;

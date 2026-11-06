@@ -43,7 +43,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Groggy, "Ability.Reaction.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_Executed, "Ability.Reaction.Executed", "처형 피격 (그로기를 종료하고 처형 상태로 전환)");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
-	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Parried, "Ability.Reaction.Parried");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Enemy_Pattern, "Ability.Enemy.Pattern", "적 패턴 어빌리티 (패턴을 한꺼번에 취소할 때 씀)");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dead, "State.Dead", "상태 우선순위 1: 사망");
@@ -97,8 +96,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
 	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition, "Event.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Parry, "Event.Parry", "패리함 (피격 처리가 막은 쪽에 보냄, 패리 모션을 시작함)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Parried, "Event.Parried",
-		"패리당함 (피격 처리가 근접 공격을 패리당한 공격자와 반사탄에 맞은 대상에 보냄, Instigator는 패리한 캐릭터)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodge, "Event.PerfectDodge",
 		"극한 회피함 (피격 처리가 피한 쪽에 보냄, Instigator는 공격한 캐릭터, 극한 회피 모션을 시작함)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted",
@@ -126,6 +123,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unblockable, "Effect.Damage.Unblockable", "가드와 패리로 막을 수 없는 공격 (가드 불가)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Finisher, "Effect.Damage.Finisher", "마지막 일격 (처형의 마지막 일격, 궁극기 마무리)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_NoAttackerHitstop, "Effect.Damage.NoAttackerHitstop", "적중해도 공격자는 히트스톱으로 멈추지 않는 공격 (보스 GroundSlam 착지 충격파)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Parry, "Effect.Damage.Parry", "패리한 공격자에게 주는 패리 대미지 (패리 연출이 대신하므로 대미지 숫자만 표시)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_PerfectDodge, "Effect.Damage.Result.PerfectDodge", "피격 결과 극한 회피");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Parry, "Effect.Damage.Result.Parry", "피격 결과 패리");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Guard, "Effect.Damage.Result.Guard", "피격 결과 가드");

@@ -24,6 +24,12 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
 	float GuardSPCostRatio = 0.f;
 
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Parry")
+	float ParryHPMultiplier = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Parry")
+	float ParryPPMultiplier = 0.f;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "AI")
 	float TargetLostTime = 0.f;
 };

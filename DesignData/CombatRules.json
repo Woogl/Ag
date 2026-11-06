@@ -3,5 +3,7 @@
   "DefenseConstant": 100,
   "HitstopDuration": 0.12,
   "GuardSPCostRatio": 0.25,
+  "ParryHPMultiplier": 1,
+  "ParryPPMultiplier": 1,
   "TargetLostTime": 5
 }

@@ -98,11 +98,6 @@
       {"Attribute": "UP", "Value": 10}
     ]
   },
-  "ParryPPLoss": {
-    "Modifiers": [
-      {"Attribute": "PP", "FromAttribute": "MaxPP", "Coefficient": -0.08}
-    ]
-  },
   "PerfectDodgeReward": {
     "Modifiers": [
       {"Attribute": "MP", "Value": 10},

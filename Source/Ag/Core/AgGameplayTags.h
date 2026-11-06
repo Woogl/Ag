@@ -43,7 +43,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Executed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_PhaseTransition);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Parried);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Enemy_Pattern);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
@@ -97,7 +96,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Death);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PhaseTransition);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parry);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Parried);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_BasicAttackStarted);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_AttackHit);
@@ -121,6 +119,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Unblockable);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Finisher);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_NoAttackerHitstop);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Guard);

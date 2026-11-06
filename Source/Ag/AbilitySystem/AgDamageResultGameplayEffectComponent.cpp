@@ -15,6 +15,7 @@
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAbilityData.h"
+#include "Data/AgAttackData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
@@ -195,13 +196,21 @@ namespace
 		Dodger.GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_PerfectDodge, Parameters);
 	}
 
-	void ApplyParry(AAgCharacterBase& Defender, AAgCharacterBase& Attacker, bool bProjectile)
+	void DamageParriedAttacker(UAgAbilitySystemComponent& DefenderASC, AAgCharacterBase& Attacker)
 	{
-		if (!bProjectile)
+		const FGameplayEffectSpecHandle Spec = DefenderASC.MakeEffectSpec(EAgEffect::Damage, 1.f, DefenderASC.MakeEffectContext());
+		if (!Spec.IsValid())
 		{
-			SendEvent(&Attacker, AgGameplayTags::Event_Parried, &Defender);
+			return;
 		}
-		Defender.GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
+		const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
+		FAgDamage Damage;
+		Damage.HPMultiplier = Rules.ParryHPMultiplier;
+		Damage.PPMultiplier = Rules.ParryPPMultiplier;
+		Damage.AddToSpec(*Spec.Data);
+		Spec.Data->AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Parry);
+		Spec.Data->GetContext().AddOrigin(Attacker.GetActorLocation());
+		DefenderASC.ApplyGameplayEffectSpecToTarget(*Spec.Data, Attacker.GetAbilitySystemComponent());
 	}
 
 	void GrantGuardCounterChance(UAbilitySystemComponent& DefenderASC)
@@ -243,11 +252,6 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		return;
 	}
 	UAISense_Damage::ReportDamageEvent(Target, Target, Attacker, 1.f, Attacker->GetActorLocation(), Context.GetOrigin());
-	// 반사탄 적중은 패리당한 것으로 보아 Parried 어빌리티가 PP를 줄이므로, 반사한 피해에는 PP 배율이 없습니다.
-	if (bHit && Projectile && Projectile->IsReflected() && !Target->IsDead())
-	{
-		SendEvent(Target, AgGameplayTags::Event_Parried, Attacker);
-	}
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, parry %d, guard %d, guard break %d, HP now %.0f, PP now %.0f, SP now %.0f"),
 		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, bGuardBreak, TargetStats->GetHP(), TargetStats->GetPP(),
@@ -259,7 +263,11 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		if (bParry)
 		{
-			ApplyParry(*Target, *Attacker, Projectile != nullptr);
+			TargetASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
+			if (!Projectile)
+			{
+				DamageParriedAttacker(*Target->GetAbilitySystemComponent(), *Attacker);
+			}
 			SendEvent(Target, AgGameplayTags::Event_Parry, Causer, Context);
 		}
 		else if (bGuard)
@@ -297,10 +305,15 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		CueParameters.AggregatedTargetTags.AddTag(Reaction);
 	}
-	const FGameplayTag ResultCue = bParry                    ? AgGameplayTags::GameplayCue_Parry
-	                               : (bGuard || bGuardBreak) ? AgGameplayTags::GameplayCue_Guard
-	                                                         : AgGameplayTags::GameplayCue_Hit;
-	TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
+	// 패리 대미지는 패리가 막은 쪽에서 낸 연출과 히트스톱이 대신하므로 대미지 숫자만 보여 줍니다.
+	const bool bParryDamage = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Parry);
+	if (!bParryDamage)
+	{
+		const FGameplayTag ResultCue = bParry                    ? AgGameplayTags::GameplayCue_Parry
+		                               : (bGuard || bGuardBreak) ? AgGameplayTags::GameplayCue_Guard
+		                                                         : AgGameplayTags::GameplayCue_Hit;
+		TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
+	}
 	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
 		HPChange && HPChange->TotalMagnitude < 0.f)
@@ -314,7 +327,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageFloater, NumberParameters);
 	}
 
-	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
+	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution) && !bParryDamage)
 	{
 		const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
 		ApplyHitstop(*Target->GetAbilitySystemComponent(), HitstopDuration);
