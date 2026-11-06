@@ -44,8 +44,7 @@
 | `FAgEnemyAITask_Patrol` | `FStateTreeAITaskBase` | 가장 가까운 정찰 지점부터 순서대로 이동을 요청합니다. 부분 경로를 허용하지 않아 요청이 실패한 점은 갈 수 없는 점으로 보고 경고 로그를 남긴 뒤 같은 틱에 다음 점을 요청하며, 연달아 모든 점에 실패하면 처음 자리로 갑니다. |
 | `FAgEnemyAITask_KeepDistance` | `FStateTreeAITaskBase` | '간격 지키기'. 첫 틱, 패턴 후딜레이가 끝난 틱, 그 뒤 0.5초마다 차례(`UAgCombatSubsystem::HasAttackTurn`)가 있으면 쓸 수 있는 패턴을 찾고, 있으면 완료해 패턴 실행으로 넘깁니다. 없는 동안은 목표 거리(공격할 차례면 `GatherReadyPatternRanges`, 기다리는 중이면 `AI.PreferredDistance`)에 따라 경로 이동·뒤로 걷기·좌우 걷기·제자리를 고릅니다. 나갈 때 경로만 끊고 속도는 감속에 맡깁니다. |
 | `FAgEnemyAICondition_ResponseReady` | `FStateTreeAIConditionBase` | 패턴 후딜레이 중에만 참입니다. 평가할 때마다 반응형 패턴의 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. |
-| `FAgEnemyAICondition_AimLost` | `FStateTreeAIConditionBase` | `State.Aiming` 동안 현재 대상의 시야·총구 가림과 몸→총구의 `WorldStatic` 가림을 검사합니다. 총구 소켓은 조건 인스턴스 데이터의 `MuzzleSocket`입니다. |
-| `FAgEnemyAITask_RunPattern` | `FStateTreeAITaskBase` | 후보 패턴을 가중치로 선택해 실행하고 종료를 기다립니다. 반응형 패턴이 아니면 패턴 후딜레이 중이거나 차례가 없을 때 실패하고(반응형 패턴 상태가 끝나면 간격 지키기를 거치지 않고 이리로 옵니다), 발동하면 공격 시작을, 상태를 나갈 때 공격 끝을 서브시스템에 알립니다. 상태를 나갈 때 실행 중인 어빌리티 핸들을 취소하여, 조준 취소 등의 전환 뒤에도 패턴이 계속되지 않게 합니다. |
+| `FAgEnemyAITask_RunPattern` | `FStateTreeAITaskBase` | 후보 패턴을 가중치로 선택해 실행하고 종료를 기다립니다. 반응형 패턴이 아니면 패턴 후딜레이 중이거나 차례가 없을 때 실패하고(반응형 패턴 상태가 끝나면 간격 지키기를 거치지 않고 이리로 옵니다), 발동하면 공격 시작을, 상태를 나갈 때 공격 끝을 서브시스템에 알립니다. 상태를 나갈 때 실행 중인 어빌리티 핸들을 취소하여, 플레이어 사망 등의 전환 뒤에도 패턴이 계속되지 않게 합니다. |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, PP 감소량 반올림과 감소 허용 조건 적용, 사망·그로기 판정 |
 
 - 일반 적 `BP_Cutter`·`BP_Gunner`는 `AAgEnemyCharacter`를 바로 상속하고 `ST_Enemy`를 공유합니다. 캐릭터별 스탯·시야·후딜레이·적정 거리·어빌리티 구성은 `Characters.json`의 `Cutter`·`Gunner`로 선택하며, 전용 C++ 캐릭터 클래스는 없습니다.
@@ -55,7 +54,6 @@
 | - | - |
 | 전투에 들어갈 때 | `FAgEnemyAITask_Combat` 들어갈 때 |
 | 공격 패턴을 끝까지 마쳤을 때 | `FAgEnemyAITask_RunPattern`. 어빌리티가 끝난 틱에 피격 반응 중이 아니면 겁니다. 피격 반응으로 끊겼으면 그 반응이 맡습니다. |
-| 조준을 취소할 때 | `FAgEnemyAITask_RunPattern` 나갈 때. 어빌리티가 아직 돌고 있는데 트리가 끊는 경우(조준 대상 놓침 전환)입니다. |
 | 넉업·넉다운·그로기·처형 피격이 끝날 때 | `FAgEnemyAITask_WaitReaction` 나갈 때. 머무는 동안 움찔이 아닌 반응이 한 번이라도 있었으면 겁니다. |
 | 페이즈 전환이 끝날 때 | `FAgEnemyAITask_PhaseTransition` |
 | (지움) 반응형 패턴을 끝까지 마쳤을 때 | 반응형 `FAgEnemyAITask_RunPattern`. 어빌리티가 끝난 틱에 피격 반응 중이 아니면 지웁니다. |
@@ -130,8 +128,6 @@ classDiagram
     AAgEnemyAIController ..> AAgEnemyCharacter : GetEnemy
     FStateTreeAITaskBase <|-- FAgEnemyAITask_KeepDistance
     AAgEnemyAIController <.. FAgEnemyAITask_KeepDistance : 후딜레이·이동 요청
-    FStateTreeAIConditionBase <|-- FAgEnemyAICondition_AimLost
-    FAgEnemyAICondition_AimLost ..> AAgEnemyAIController : 조준 대상 조회
     FStateTreeAITaskBase <|-- FAgEnemyAITask_RunPattern
     FAgEnemyAITask_RunPattern ..> UAgGameplayAbility : 실행·상태 종료 시 취소
 ```

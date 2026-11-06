@@ -2,13 +2,8 @@
 
 #include "AI/AgEnemyAIConditions.h"
 
-#include "AbilitySystem/AgTargeting.h"
-#include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
 #include "Character/AgEnemyCharacter.h"
-#include "Components/SkeletalMeshComponent.h"
-#include "Core/AgGameplayTags.h"
-#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "StateTreeExecutionContext.h"
 
@@ -58,29 +53,6 @@ bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext
 		TotalChance += Response.Value;
 	}
 	return FMath::FRand() < TotalChance;
-}
-
-bool FAgEnemyAICondition_AimLost::TestCondition(FStateTreeExecutionContext& Context) const
-{
-	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const AAgEnemyAIController* Controller = InstanceData.Controller;
-	const AAgEnemyCharacter* Enemy = Controller->GetEnemy();
-	UAbilitySystemComponent* ASC = Enemy->GetAbilitySystemComponent();
-	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_Aiming))
-	{
-		return false;
-	}
-	const FName MuzzleSocket = InstanceData.MuzzleSocket;
-	const AAgCharacterBase* Target = Controller->GetTarget();
-	if (!Target || !AgTargeting::IsVisible(*Enemy, *Target, MuzzleSocket))
-	{
-		return true;
-	}
-
-	// 벽에 붙어 총구만 벽 너머로 나가면 총구에서는 대상이 보이므로, 몸에서 총구까지도 봅니다.
-	const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgAimLost), false, Enemy);
-	return Enemy->GetWorld()->LineTraceTestByObjectType(Enemy->GetActorLocation(), Enemy->GetMesh()->GetSocketLocation(MuzzleSocket),
-		FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
 }
 
 bool FAgEnemyAICondition_TargetNoticed::TestCondition(FStateTreeExecutionContext& Context) const

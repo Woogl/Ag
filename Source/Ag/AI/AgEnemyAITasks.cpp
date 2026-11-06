@@ -247,14 +247,10 @@ void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, c
 	AAgEnemyCharacter* Enemy = Controller.GetEnemy();
 	UAbilitySystemComponent* ASC = Enemy ? Enemy->GetAbilitySystemComponent() : nullptr;
 	const FGameplayAbilitySpec* Spec = ASC ? ASC->FindAbilitySpecFromHandle(InstanceData.Handle) : nullptr;
-	// 조준 대상 놓침처럼 패턴이 끝나기 전에 다른 상태로 가면 패턴을 멈추고 후딜레이를 겁니다.
+	// 플레이어 사망처럼 패턴이 끝나기 전에 다른 상태로 가면 패턴을 멈춥니다.
 	if (Spec && Spec->IsActive())
 	{
 		ASC->CancelAbilityHandle(InstanceData.Handle);
-		if (!InstanceData.bResponse)
-		{
-			Controller.StartPostPatternDelay();
-		}
 	}
 	if (Enemy && !InstanceData.bResponse && InstanceData.Handle.IsValid())
 	{
