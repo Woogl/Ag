@@ -279,7 +279,7 @@ sequenceDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `UAgDamageExecution` | `UGameplayEffectExecutionCalculation` | 피해·가드 자원 계산과 결과 태그 생성. 슈퍼아머 가드에서는 SP 부족과 가드 브레이크를 구분하고, SP 소모를 보유량 이내로 제한합니다. |
+| `UAgDamageExecution` | `UGameplayEffectExecutionCalculation` | 피해(보너스 대미지 포함)·가드 자원 계산과 결과 태그 생성. 슈퍼아머 가드에서는 SP 부족과 가드 브레이크를 구분하고, SP 소모를 보유량 이내로 제한합니다. |
 | `UAgFallDamageMagnitude` | `UGameplayModMagnitudeCalculation` | 스펙의 떨어진 높이, `CombatRules.json`의 두 높이, 대상의 MaxHP로 낙하 대미지의 HP 감소량을 계산합니다. |
 | `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 전투 결과와 실제 반응의 GameplayCue 전달·히트스톱·타의 첫 적중 알림(`Event.AttackHit`), 패리한 공격자에게 패리 대미지(`CombatRules.json`의 배율로 만든 `Damage` 스펙, 결과 연출과 대미지 숫자 없음), 가드한 쪽의 이동 잠금(`MoveLock`). 반응 억제와 다른 적중 처리를 분리합니다. |
 | `UAgGameplayCueNotify_Burst` | `UGameplayCueNotify_Burst` | 일회성 효과 재생 뒤 전투 카메라 연출을 요청합니다. 공통 정적 함수는 네 전투 태그만 처리하며 BurstLatent에서도 호출합니다. |
