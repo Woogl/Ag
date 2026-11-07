@@ -21,6 +21,15 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit")
 	float HitstopDuration = 0.f;
 
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Bonus Damage")
+	float GroggyBonusDamage = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Bonus Damage")
+	float BackAttackBonusDamage = 0.f;
+
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Bonus Damage")
+	float AerialBonusDamage = 0.f;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Guard")
 	float GuardSPCostRatio = 0.f;
 

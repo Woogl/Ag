@@ -4,9 +4,12 @@
 
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemComponent.h"
+#include "Character/AgCharacterBase.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
+#include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "KismetAnimationLibrary.h"
 
 namespace
 {
@@ -41,6 +44,33 @@ namespace
 	int32 CalculateDamage(float SourceATK, float Multiplier, float TargetDEF, float DefenseConstant, float Reduction = 1.f)
 	{
 		return FMath::RoundToInt(SourceATK * Multiplier * (DefenseConstant / (DefenseConstant + TargetDEF)) * Reduction);
+	}
+
+	float GetBonusDamageRatio(const FGameplayEffectSpec& Spec, const AActor& Target, const FGameplayTagContainer& TargetTags, const UAgCombatRules& Rules)
+	{
+		const AAgCharacterBase* Attacker = Cast<AAgCharacterBase>(Spec.GetContext().GetInstigator());
+		const AActor* Causer = Spec.GetContext().GetEffectCauser();
+		if (!Attacker || !Causer || Attacker->GetCharacterData()->Team != EAgTeam::Player ||
+			Spec.GetDynamicAssetTags().HasTagExact(AgGameplayTags::Effect_Damage_Parry) || TargetTags.HasTag(AgGameplayTags::State_Execution))
+		{
+			return 1.f;
+		}
+
+		float Bonus = 0.f;
+		if (TargetTags.HasTag(AgGameplayTags::State_Groggy))
+		{
+			Bonus += Rules.GroggyBonusDamage;
+		}
+		if (TargetTags.HasTag(AgGameplayTags::State_Airborne))
+		{
+			Bonus += Rules.AerialBonusDamage;
+		}
+		const float Angle = UKismetAnimationLibrary::CalculateDirection(Causer->GetActorLocation() - Target.GetActorLocation(), Target.GetActorRotation());
+		if (FMath::Abs(Angle) >= 135.f)
+		{
+			Bonus += Rules.BackAttackBonusDamage;
+		}
+		return 1.f + Bonus;
 	}
 }
 
@@ -79,7 +109,8 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
-	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier);
+	const AActor& Target = *ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor();
+	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier) * GetBonusDamageRatio(Spec, Target, TargetTags, Rules);
 	const int32 HPDamage = CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant);
 
 	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable)
