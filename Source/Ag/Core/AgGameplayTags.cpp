@@ -64,6 +64,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Busy, "State.Busy", "행동 중. 후딜 전까지 다른 행동을 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Acting, "State.Acting", "모션이 있는 플레이어 행동이 실행 중. 그동안 이동 입력을 무시함");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Invincible, "State.Invincible", "무적");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Invincible_Downed, "State.Invincible.Downed",
+		"넉업·넉다운으로 바닥에 누워 있는 동안의 무적. 플레이어만 지키고, 적은 누워 있어도 맞음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_PerfectDodgeWindow, "State.PerfectDodgeWindow", "극한 회피 구간");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Guarding, "State.Guarding", "가드 중");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_ParryWindow, "State.ParryWindow", "패리 구간");

@@ -46,6 +46,10 @@
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.Invincible"]
   },
+  "DownedInvincible": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": ["State.Invincible.Downed"]
+  },
   "Hidden": {
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.Hidden"]

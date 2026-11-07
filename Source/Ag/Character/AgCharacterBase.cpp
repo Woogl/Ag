@@ -216,10 +216,10 @@ void AAgCharacterBase::BeginPlay()
 		.AddUObject(this, &ThisClass::HandlePassThroughChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hidden, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleHiddenChanged);
-	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Airborne, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandleAirborneKnockUpChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction_KnockUp, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandleAirborneKnockUpChanged);
+		.AddUObject(this, &ThisClass::HandleWeaponCapsuleTagChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction_KnockDown, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleWeaponCapsuleTagChanged);
 	DeathEventHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Death)
 	                       .AddUObject(this, &ThisClass::HandleDeathEvent);
 	PawnResponse = GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_Pawn);
@@ -452,13 +452,13 @@ void AAgCharacterBase::HandleHiddenChanged(const FGameplayTag Tag, int32 NewCoun
 	SetActorHiddenInGame(NewCount > 0);
 }
 
-void AAgCharacterBase::HandleAirborneKnockUpChanged(const FGameplayTag Tag, int32 NewCount)
+void AAgCharacterBase::HandleWeaponCapsuleTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// 떠 있는 동안 공중 피격 모션이 몸을 뒤집고 저글이 높이를 올려 무기가 피직스 바디를 비껴가므로,
-	// 캡슐도 무기에 맞습니다.
-	const bool bAirborneKnockUp = AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Airborne) &&
-	                              AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockUp);
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_AgWeapon, bAirborneKnockUp ? ECR_Overlap : ECR_Ignore);
+	// 넉업·넉다운 동안은 공중 피격 모션이 몸을 뒤집고 저글이 높이를 올리거나 몸이 바닥에 붙어 무기가 피직스 바디를
+	// 비껴가므로, 캡슐도 무기에 맞습니다. 누워 있는 플레이어의 무적은 대미지 실행이 지킵니다.
+	const bool bKnocked = AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockUp) ||
+	                      AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_KnockDown);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_AgWeapon, bKnocked ? ECR_Overlap : ECR_Ignore);
 }
 
 void AAgCharacterBase::UpdateTimeDilation()

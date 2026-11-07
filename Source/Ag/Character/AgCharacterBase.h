@@ -161,7 +161,7 @@ private:
 
 	void HandleHiddenChanged(const FGameplayTag Tag, int32 NewCount);
 
-	void HandleAirborneKnockUpChanged(const FGameplayTag Tag, int32 NewCount);
+	void HandleWeaponCapsuleTagChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void UpdateTimeDilation();
 

@@ -17,7 +17,16 @@ void UAgAbilityTask_SendGameplayEvent::Activate()
 {
 	if (AActor* Owner = GetAvatarActor())
 	{
-		for (AActor* Target : AgTargeting::FindTargets(Params.Targets, *Owner))
+		TArray<AActor*> Targets;
+		if (Params.Targets.Range > 0.f)
+		{
+			Targets = AgTargeting::FindTargets(Params.Targets, *Owner);
+		}
+		else if (AActor* ActionTarget = CastChecked<UAgGameplayAbility>(Ability)->GetActionTarget())
+		{
+			Targets.Add(ActionTarget);
+		}
+		for (AActor* Target : Targets)
 		{
 			FGameplayEventData Payload;
 			Payload.EventTag = Params.Event;

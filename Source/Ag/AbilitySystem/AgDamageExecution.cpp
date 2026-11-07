@@ -41,6 +41,21 @@ namespace
 		}
 	}
 
+	bool IsInvincible(const FGameplayTagContainer& TargetTags, const AActor& Target)
+	{
+		if (!TargetTags.HasTag(AgGameplayTags::State_Invincible))
+		{
+			return false;
+		}
+		// 누워 있는 동안의 무적은 하위 태그로만 붙으므로, 부모 태그를 직접 가진 효과가 없으면 그 무적뿐이고 플레이어만 지킵니다.
+		if (TargetTags.HasTagExact(AgGameplayTags::State_Invincible))
+		{
+			return true;
+		}
+		const AAgCharacterBase* Character = Cast<AAgCharacterBase>(&Target);
+		return Character && Character->GetCharacterData()->Team == EAgTeam::Player;
+	}
+
 	int32 CalculateDamage(float SourceATK, float Multiplier, float TargetDEF, float DefenseConstant, float Reduction = 1.f)
 	{
 		return FMath::RoundToInt(SourceATK * Multiplier * (DefenseConstant / (DefenseConstant + TargetDEF)) * Reduction);
@@ -72,7 +87,7 @@ namespace
 		}
 		return 1.f + Bonus;
 	}
-}
+} // namespace
 
 UAgDamageExecution::UAgDamageExecution()
 {
@@ -86,13 +101,14 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	FGameplayEffectSpec& Spec = *ExecutionParams.GetOwningSpecForPreExecuteMod();
 	const FGameplayTagContainer& TargetTags = Spec.CapturedTargetTags.GetActorTags();
 	const FGameplayTagContainer& AttackTags = Spec.GetDynamicAssetTags();
+	const AActor& Target = *ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor();
 
 	if (TargetTags.HasTag(AgGameplayTags::State_PerfectDodgeWindow))
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_PerfectDodge);
 		return;
 	}
-	if (TargetTags.HasTag(AgGameplayTags::State_Invincible))
+	if (IsInvincible(TargetTags, Target))
 	{
 		return;
 	}
@@ -109,7 +125,6 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
-	const AActor& Target = *ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor();
 	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier) * GetBonusDamageRatio(Spec, Target, TargetTags, Rules);
 	const int32 HPDamage = CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant);
 

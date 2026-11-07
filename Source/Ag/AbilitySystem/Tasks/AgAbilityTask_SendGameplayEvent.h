@@ -17,6 +17,7 @@ struct FAgSendGameplayEventParams : public FAgTaskParams
 	UPROPERTY()
 	FGameplayTag Event;
 
+	/** 받을 캐릭터를 찾는 조건입니다. 비우면 행동의 대상(처형 대상 등) 하나에게 보냅니다. */
 	UPROPERTY()
 	FAgTargetingRequest Targets;
 

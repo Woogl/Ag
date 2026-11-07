@@ -51,7 +51,10 @@ namespace
 		return Start - FVector(0.f, 0.f, FloorResult.FloorDist - UCharacterMovementComponent::MIN_FLOOR_DIST);
 	}
 
-	/** 대상 둘레에서 등 뒤에 가장 가까운, 나타날 수 있는 캡슐 중심 위치입니다. 대상이 떠 있으면 그 아래 바닥에서 찾습니다. */
+	/**
+	 * 대상 둘레에서 순간이동하는 캐릭터의 반대편(캐릭터에서 대상 너머)에 가장 가까운, 나타날 수 있는 캡슐 중심 위치입니다.
+	 * 대상이 떠 있으면 그 아래 바닥에서 찾습니다.
+	 */
 	TOptional<FVector> FindAppearLocation(const ACharacter& Character, const ACharacter& Target, float Distance)
 	{
 		const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
@@ -65,8 +68,8 @@ namespace
 		const float StepHeight = Movement->MaxStepHeight;
 		const FVector TargetLocation = Target.GetActorLocation();
 		const TOptional<double> TargetFloorZ = TargetMovement->IsFalling()
-			? FindFloorZ(*TargetMovement, TargetLocation, MaxTargetFloorDepth)
-			: TOptional<double>(TargetLocation.Z - Target.GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+		                                           ? FindFloorZ(*TargetMovement, TargetLocation, MaxTargetFloorDepth)
+		                                           : TOptional<double>(TargetLocation.Z - Target.GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 		if (!TargetFloorZ)
 		{
 			return {};
@@ -80,12 +83,17 @@ namespace
 		}
 		Angles.Add(180.f);
 
-		const FVector Back = -Target.GetActorForwardVector().GetSafeNormal2D();
+		// 두 캐릭터가 겹쳐 반대편 방향이 없으면 캐릭터가 바라보는 쪽 너머로 갑니다.
+		FVector Beyond = (TargetLocation - Character.GetActorLocation()).GetSafeNormal2D();
+		if (Beyond.IsZero())
+		{
+			Beyond = Character.GetActorForwardVector().GetSafeNormal2D();
+		}
 		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgTeleport), false, &Character);
 		QueryParams.AddIgnoredActor(&Target);
 		for (const float Angle : Angles)
 		{
-			const FVector Horizontal = TargetLocation + Back.RotateAngleAxis(Angle, FVector::UpVector) * Distance;
+			const FVector Horizontal = TargetLocation + Beyond.RotateAngleAxis(Angle, FVector::UpVector) * Distance;
 			// 계단 높이만큼 높은 바닥도 찾도록 그만큼 위에서 내려 봅니다.
 			const TOptional<double> FloorZ =
 				FindFloorZ(*Movement, FVector(Horizontal.X, Horizontal.Y, *TargetFloorZ + StepHeight + HalfHeight), 2.f * StepHeight);
@@ -104,7 +112,7 @@ namespace
 		}
 		return {};
 	}
-}
+} // namespace
 
 UAbilityTask* FAgTeleportParams::MakeTask(const FAgTaskContext& Context) const
 {

@@ -82,10 +82,11 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 
 bool AAgEnemyCharacter::CanLosePP() const
 {
+	// 누워 있는 동안의 무적(하위 태그)은 플레이어만 지키고 적은 누워서도 맞아 PP를 잃으므로, 무적은 부모 태그만 봅니다.
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	return ASC && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
 	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
-	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Invincible);
+	       !ASC->GetOwnedGameplayTags().HasTagExact(AgGameplayTags::State_Invincible);
 }
 
 bool AAgEnemyCharacter::IsPhaseTransitionPending() const
