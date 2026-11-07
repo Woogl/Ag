@@ -275,7 +275,7 @@ def _setup():
         ctx.aset[key] = unreal.find_object(None, actor.get_path_name() + ".AttributeSet")
     ctx.brains = [a.get_controller().get_component_by_class(unreal.BrainComponent) for k, a in ctx.chars.items() if k != "p" and a.get_controller()]
     # 패드처럼 창을 거치지 않는 입력도 뷰포트에서 버린다. 키 입력 명령(AgPressKey 등)은 뷰포트를 거치지 않는다.
-    ctx.console("AgIgnoreDeviceInput")
+    ctx.console("AgIgnoreDeviceInput 1")
     # 준비: 적 AI를 멈추고, 맵을 연 직후의 적 공격이 끝나고 프레임이 안정되기를 기다린다.
     ctx.ai(False)
     # 화면에 제목, 준비, 시험 항목 전체를 한 줄씩 띄운다. 판정은 끝나고 그 아래에 붙는다.

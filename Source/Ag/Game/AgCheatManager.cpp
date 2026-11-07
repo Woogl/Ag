@@ -13,6 +13,8 @@
 #include "Engine/LocalPlayer.h"
 #include "EngineUtils.h"
 #include "GameplayEffect.h"
+#include "GameplayEffectComponents/ImmunityGameplayEffectComponent.h"
+#include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "GenericPlatform/GenericPlatformInputDeviceMapper.h"
 #include "InputCoreTypes.h"
 #include "InputKeyEventArgs.h"
@@ -23,6 +25,29 @@ namespace
 	{
 		UE_LOG(LogAg, Display, TEXT("%s"), *Message);
 		Cheats.GetOuterAPlayerController()->ClientMessage(Message);
+	}
+
+	/**
+	 * 인자가 없으면 지금 상태를 뒤집고, 0·1이면 그 상태로 둡니다. 인자를 문자열로 받는 까닭은, 엔진이 문자열이 아닌
+	 * 인자가 비면 에디터 밖에서 명령을 실행하지 않기 때문입니다.
+	 */
+	TOptional<bool> ParseSwitch(const UCheatManager& Cheats, const TCHAR* Command, const FString& OnOff, bool bCurrent)
+	{
+		if (OnOff.IsEmpty())
+		{
+			return !bCurrent;
+		}
+		if (OnOff == TEXT("0") || OnOff == TEXT("1"))
+		{
+			return OnOff == TEXT("1");
+		}
+		Report(Cheats, FString::Printf(TEXT("%s: use 1, 0, or no argument to toggle"), Command));
+		return {};
+	}
+
+	void ReportSwitch(const UCheatManager& Cheats, const TCHAR* Command, bool bOn)
+	{
+		Report(Cheats, FString::Printf(TEXT("%s: %s"), Command, bOn ? TEXT("on") : TEXT("off")));
 	}
 
 	AAgPlayerCharacter* GetPlayer(const UCheatManager& Cheats)
@@ -65,6 +90,61 @@ namespace
 		Modifier.ModifierMagnitude = FScalableFloat(Value);
 		UAbilitySystemComponent* SourceASC = Source.GetAbilitySystemComponent();
 		SourceASC->ApplyGameplayEffectToTarget(Effect, Target.GetAbilitySystemComponent(), 1.f, SourceASC->MakeEffectContext());
+	}
+
+	constexpr EAgCheatSwitch AllSwitches[] = {EAgCheatSwitch::Invincible, EAgCheatSwitch::NoCooldown, EAgCheatSwitch::InfiniteMP,
+		EAgCheatSwitch::InfiniteSP, EAgCheatSwitch::InfiniteUP};
+
+	struct FAgLockedResource
+	{
+		FGameplayAttribute Attribute;
+		FGameplayAttribute MaxAttribute;
+	};
+
+	FAgLockedResource GetLockedResource(EAgCheatSwitch Switch)
+	{
+		switch (Switch)
+		{
+			case EAgCheatSwitch::InfiniteMP:
+				return {UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute()};
+			case EAgCheatSwitch::InfiniteSP:
+				return {UAgAttributeSet::GetSPAttribute(), UAgAttributeSet::GetMaxSPAttribute()};
+			case EAgCheatSwitch::InfiniteUP:
+				return {UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute()};
+			default:
+				return {};
+		}
+	}
+
+	UGameplayEffect* MakeSwitchEffect(EAgCheatSwitch Switch)
+	{
+		UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage());
+		Effect->DurationPolicy = EGameplayEffectDurationType::Infinite;
+		if (Switch == EAgCheatSwitch::Invincible)
+		{
+			// 회피·처형도 같은 태그를 붙였다 떼지만, 태그는 개수로 쌓이므로 그 어빌리티가 떼도 이 효과의 무적은 남습니다.
+			FInheritedTagContainer Tags;
+			Tags.AddTag(AgGameplayTags::State_Invincible);
+			Effect->AddComponent<UTargetTagsGameplayEffectComponent>().SetAndApplyTargetTagChanges(Tags);
+		}
+		else if (Switch == EAgCheatSwitch::NoCooldown)
+		{
+			// 엔진 AbilitySystem.IgnoreCooldowns는 모든 캐릭터에 걸리고 쿨다운 효과는 그대로 걸어 충전 줄이 계속 쌓이므로,
+			// 플레이어에게 쿨다운 효과 면역을 겁니다.
+			const FGameplayTagContainer CooldownTag(AgGameplayTags::Effect_Cooldown);
+			Effect->AddComponent<UImmunityGameplayEffectComponent>().ImmunityQueries.Add(FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(CooldownTag));
+		}
+		else
+		{
+			const FAgLockedResource Resource = GetLockedResource(Switch);
+			FGameplayModifierInfo& Modifier = Effect->Modifiers.AddDefaulted_GetRef();
+			Modifier.Attribute = Resource.Attribute;
+			Modifier.ModifierOp = EGameplayModOp::Override;
+			FAttributeBasedFloat Max;
+			Max.BackingAttribute = FGameplayEffectAttributeCaptureDefinition(Resource.MaxAttribute, EGameplayEffectAttributeCaptureSource::Target, false);
+			Modifier.ModifierMagnitude = FGameplayEffectModifierMagnitude(Max);
+		}
+		return Effect;
 	}
 
 	void SetEnemyAIRunning(UWorld* World, bool bRunning)
@@ -136,7 +216,7 @@ void UAgCheatManager::AgKillEnemies()
 	}
 }
 
-void UAgCheatManager::AgGod()
+void UAgCheatManager::AgGod(const FString& OnOff)
 {
 	AAgPlayerCharacter* Player = GetPlayer(*this);
 	if (!Player)
@@ -144,55 +224,109 @@ void UAgCheatManager::AgGod()
 		Report(*this, TEXT("AgGod: no player character"));
 		return;
 	}
+	const UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent();
+	bool bAllOn = true;
+	for (const EAgCheatSwitch Switch : AllSwitches)
+	{
+		bAllOn = bAllOn && IsSwitchOn(*ASC, Switch);
+	}
+	const TOptional<bool> bOn = ParseSwitch(*this, TEXT("AgGod"), OnOff, bAllOn);
+	if (!bOn.IsSet())
+	{
+		return;
+	}
 
-	bGod = !bGod;
-	// 회피·처형도 같은 태그를 붙였다 떼므로, 개수로 더하고 빼야 그 어빌리티의 무적과 섞이지 않습니다.
-	UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent();
-	if (bGod)
+	for (const EAgCheatSwitch Switch : AllSwitches)
 	{
-		ASC->AddLooseGameplayTag(AgGameplayTags::State_Invincible);
+		SetSwitch(*Player, Switch, *bOn);
 	}
-	else
-	{
-		ASC->RemoveLooseGameplayTag(AgGameplayTags::State_Invincible);
-	}
-	Report(*this, bGod ? TEXT("AgGod: on") : TEXT("AgGod: off"));
+	ReportSwitch(*this, TEXT("AgGod"), *bOn);
 }
 
-void UAgCheatManager::AgFillMPUP()
+void UAgCheatManager::AgInvincible(const FString& OnOff)
+{
+	RunSwitch(TEXT("AgInvincible"), OnOff, EAgCheatSwitch::Invincible);
+}
+
+void UAgCheatManager::AgSetHP(float Percent)
 {
 	AAgPlayerCharacter* Player = GetPlayer(*this);
 	if (!Player)
 	{
-		Report(*this, TEXT("AgFillMPUP: no player character"));
+		Report(*this, TEXT("AgSetHP: no player character"));
 		return;
 	}
 
-	const UAgAttributeSet* Stats = Player->GetAttributeSet();
-	ApplyOverride(*Player, *Player, UAgAttributeSet::GetMPAttribute(), Stats->GetMaxMP());
-	ApplyOverride(*Player, *Player, UAgAttributeSet::GetUPAttribute(), Stats->GetMaxUP());
+	const float HP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxHP() * Percent / 100.f);
+	ApplyOverride(*Player, *Player, UAgAttributeSet::GetHPAttribute(), HP);
 }
 
-void UAgCheatManager::AgGroggy()
+void UAgCheatManager::AgSetMP(float Percent)
+{
+	AAgPlayerCharacter* Player = GetPlayer(*this);
+	if (!Player)
+	{
+		Report(*this, TEXT("AgSetMP: no player character"));
+		return;
+	}
+
+	const float MP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxMP() * Percent / 100.f);
+	ApplyOverride(*Player, *Player, UAgAttributeSet::GetMPAttribute(), MP);
+}
+
+void UAgCheatManager::AgSetUP(float Percent)
+{
+	AAgPlayerCharacter* Player = GetPlayer(*this);
+	if (!Player)
+	{
+		Report(*this, TEXT("AgSetUP: no player character"));
+		return;
+	}
+
+	const float UP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxUP() * Percent / 100.f);
+	ApplyOverride(*Player, *Player, UAgAttributeSet::GetUPAttribute(), UP);
+}
+
+void UAgCheatManager::AgInfiniteMP(const FString& OnOff)
+{
+	RunSwitch(TEXT("AgInfiniteMP"), OnOff, EAgCheatSwitch::InfiniteMP);
+}
+
+void UAgCheatManager::AgInfiniteSP(const FString& OnOff)
+{
+	RunSwitch(TEXT("AgInfiniteSP"), OnOff, EAgCheatSwitch::InfiniteSP);
+}
+
+void UAgCheatManager::AgInfiniteUP(const FString& OnOff)
+{
+	RunSwitch(TEXT("AgInfiniteUP"), OnOff, EAgCheatSwitch::InfiniteUP);
+}
+
+void UAgCheatManager::AgNoCooldown(const FString& OnOff)
+{
+	RunSwitch(TEXT("AgNoCooldown"), OnOff, EAgCheatSwitch::NoCooldown);
+}
+
+void UAgCheatManager::AgTargetGroggy()
 {
 	AAgPlayerCharacter* Player = GetPlayer(*this);
 	AAgEnemyCharacter* Enemy = FindTargetEnemy(Player);
 	if (!Enemy || !Enemy->CanLosePP())
 	{
-		Report(*this, TEXT("AgGroggy: no target enemy that can lose PP"));
+		Report(*this, TEXT("AgTargetGroggy: no target enemy that can lose PP"));
 		return;
 	}
 
 	ApplyOverride(*Player, *Enemy, UAgAttributeSet::GetPPAttribute(), 0.f);
 }
 
-void UAgCheatManager::AgPattern(FName Id)
+void UAgCheatManager::AgTargetPattern(FName Id)
 {
 	AAgEnemyCharacter* Enemy = FindTargetEnemy(GetPlayer(*this));
 	const FGameplayAbilitySpec* Spec = Enemy ? Enemy->FindAbilitySpec(Id) : nullptr;
 	if (!Spec)
 	{
-		Report(*this, FString::Printf(TEXT("AgPattern: no target enemy with '%s'"), *Id.ToString()));
+		Report(*this, FString::Printf(TEXT("AgTargetPattern: no target enemy with '%s'"), *Id.ToString()));
 		return;
 	}
 
@@ -201,17 +335,17 @@ void UAgCheatManager::AgPattern(FName Id)
 	ASC->RemoveActiveEffectsWithTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
 	if (!ASC->TryActivateAbility(Handle))
 	{
-		Report(*this, FString::Printf(TEXT("AgPattern: %s could not start '%s'"), *Enemy->GetName(), *Id.ToString()));
+		Report(*this, FString::Printf(TEXT("AgTargetPattern: %s could not start '%s'"), *Enemy->GetName(), *Id.ToString()));
 	}
 }
 
-void UAgCheatManager::AgSetHP(float Percent)
+void UAgCheatManager::AgTargetHP(float Percent)
 {
 	AAgPlayerCharacter* Player = GetPlayer(*this);
 	AAgEnemyCharacter* Enemy = FindTargetEnemy(Player);
 	if (!Enemy)
 	{
-		Report(*this, TEXT("AgSetHP: no target enemy"));
+		Report(*this, TEXT("AgTargetHP: no target enemy"));
 		return;
 	}
 
@@ -229,7 +363,7 @@ void UAgCheatManager::AgStartAI()
 	SetEnemyAIRunning(GetWorld(), true);
 }
 
-void UAgCheatManager::AgIgnoreDeviceInput()
+void UAgCheatManager::AgIgnoreDeviceInput(const FString& OnOff)
 {
 	const ULocalPlayer* LocalPlayer = GetOuterAPlayerController()->GetLocalPlayer();
 	UGameViewportClient* ViewportClient = LocalPlayer ? LocalPlayer->ViewportClient.Get() : nullptr;
@@ -238,12 +372,16 @@ void UAgCheatManager::AgIgnoreDeviceInput()
 		Report(*this, TEXT("AgIgnoreDeviceInput: no game viewport"));
 		return;
 	}
+	const TOptional<bool> bOn = ParseSwitch(*this, TEXT("AgIgnoreDeviceInput"), OnOff, ViewportClient->IgnoreInput());
+	if (!bOn.IsSet())
+	{
+		return;
+	}
 
 	// 엔진 'UI 전용' 입력 모드처럼 뷰포트에서 장치 입력을 버립니다. 콘솔은 계속 받고, 키 입력 명령은 뷰포트를 거치지
 	// 않아 그대로 들어갑니다.
-	const bool bIgnore = !ViewportClient->IgnoreInput();
-	ViewportClient->SetIgnoreInput(bIgnore);
-	Report(*this, bIgnore ? TEXT("AgIgnoreDeviceInput: on") : TEXT("AgIgnoreDeviceInput: off"));
+	ViewportClient->SetIgnoreInput(*bOn);
+	ReportSwitch(*this, TEXT("AgIgnoreDeviceInput"), *bOn);
 }
 
 void UAgCheatManager::AgPressKey(FName KeyName)
@@ -260,4 +398,54 @@ void UAgCheatManager::AgMoveMouse(float X, float Y)
 {
 	InjectKey(*this, EKeys::MouseX, IE_Axis, X);
 	InjectKey(*this, EKeys::MouseY, IE_Axis, Y);
+}
+
+void UAgCheatManager::RunSwitch(const TCHAR* Command, const FString& OnOff, EAgCheatSwitch Switch)
+{
+	AAgPlayerCharacter* Player = GetPlayer(*this);
+	if (!Player)
+	{
+		Report(*this, FString::Printf(TEXT("%s: no player character"), Command));
+		return;
+	}
+	const TOptional<bool> bOn = ParseSwitch(*this, Command, OnOff, IsSwitchOn(*Player->GetAbilitySystemComponent(), Switch));
+	if (!bOn.IsSet())
+	{
+		return;
+	}
+
+	SetSwitch(*Player, Switch, *bOn);
+	ReportSwitch(*this, Command, *bOn);
+}
+
+bool UAgCheatManager::IsSwitchOn(const UAbilitySystemComponent& ASC, EAgCheatSwitch Switch) const
+{
+	const FActiveGameplayEffectHandle* Handle = SwitchEffects.Find(Switch);
+	return Handle && ASC.GetActiveGameplayEffect(*Handle) != nullptr;
+}
+
+void UAgCheatManager::SetSwitch(AAgPlayerCharacter& Player, EAgCheatSwitch Switch, bool bOn)
+{
+	UAbilitySystemComponent* ASC = Player.GetAbilitySystemComponent();
+	if (bOn == IsSwitchOn(*ASC, Switch))
+	{
+		return;
+	}
+	if (bOn)
+	{
+		SwitchEffects.Add(Switch, ASC->ApplyGameplayEffectToSelf(MakeSwitchEffect(Switch), 1.f, ASC->MakeEffectContext()));
+		if (Switch == EAgCheatSwitch::NoCooldown)
+		{
+			ASC->RemoveActiveEffectsWithTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
+		}
+		return;
+	}
+
+	ASC->RemoveActiveGameplayEffect(SwitchEffects[Switch]);
+	// 덮어쓰기는 현재 값에만 걸려 켜 둔 동안의 비용이 기본값에서 빠져 있으므로, 끈 뒤에도 가득 차 있게 채웁니다.
+	const FAgLockedResource Resource = GetLockedResource(Switch);
+	if (Resource.Attribute.IsValid())
+	{
+		ApplyOverride(Player, Player, Resource.Attribute, ASC->GetNumericAttribute(Resource.MaxAttribute));
+	}
 }

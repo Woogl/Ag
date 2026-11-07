@@ -3,8 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "GameFramework/CheatManager.h"
 #include "AgCheatManager.generated.h"
+
+class AAgPlayerCharacter;
+class UAbilitySystemComponent;
+
+enum class EAgCheatSwitch : uint8
+{
+	Invincible,
+	NoCooldown,
+	InfiniteMP,
+	InfiniteSP,
+	InfiniteUP,
+};
 
 UCLASS()
 class UAgCheatManager : public UCheatManager
@@ -22,19 +35,40 @@ public:
 	void AgKillEnemies();
 
 	UFUNCTION(Exec)
-	void AgGod();
+	void AgGod(const FString& OnOff);
 
 	UFUNCTION(Exec)
-	void AgFillMPUP();
-
-	UFUNCTION(Exec)
-	void AgGroggy();
-
-	UFUNCTION(Exec)
-	void AgPattern(FName Id);
+	void AgInvincible(const FString& OnOff);
 
 	UFUNCTION(Exec)
 	void AgSetHP(float Percent);
+
+	UFUNCTION(Exec)
+	void AgSetMP(float Percent);
+
+	UFUNCTION(Exec)
+	void AgSetUP(float Percent);
+
+	UFUNCTION(Exec)
+	void AgInfiniteMP(const FString& OnOff);
+
+	UFUNCTION(Exec)
+	void AgInfiniteSP(const FString& OnOff);
+
+	UFUNCTION(Exec)
+	void AgInfiniteUP(const FString& OnOff);
+
+	UFUNCTION(Exec)
+	void AgNoCooldown(const FString& OnOff);
+
+	UFUNCTION(Exec)
+	void AgTargetGroggy();
+
+	UFUNCTION(Exec)
+	void AgTargetPattern(FName Id);
+
+	UFUNCTION(Exec)
+	void AgTargetHP(float Percent);
 
 	UFUNCTION(Exec)
 	void AgStopAI();
@@ -43,7 +77,7 @@ public:
 	void AgStartAI();
 
 	UFUNCTION(Exec)
-	void AgIgnoreDeviceInput();
+	void AgIgnoreDeviceInput(const FString& OnOff);
 
 	UFUNCTION(Exec)
 	void AgPressKey(FName KeyName);
@@ -55,5 +89,11 @@ public:
 	void AgMoveMouse(float X, float Y);
 
 private:
-	bool bGod = false;
+	void RunSwitch(const TCHAR* Command, const FString& OnOff, EAgCheatSwitch Switch);
+
+	bool IsSwitchOn(const UAbilitySystemComponent& ASC, EAgCheatSwitch Switch) const;
+
+	void SetSwitch(AAgPlayerCharacter& Player, EAgCheatSwitch Switch, bool bOn);
+
+	TMap<EAgCheatSwitch, FActiveGameplayEffectHandle> SwitchEffects;
 };
