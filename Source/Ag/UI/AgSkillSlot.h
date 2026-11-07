@@ -13,7 +13,7 @@ class UImage;
 class UTextBlock;
 struct FGameplayAbilitySpecHandle;
 
-/** 전투 HUD의 스킬·궁극기 칸. 입력 태그의 어빌리티로 아이콘, MP 코스트, 흐림, 쿨다운을 그립니다. */
+/** 전투 HUD의 스킬·궁극기 칸. 입력 태그의 어빌리티로 아이콘, MP 코스트, 흐림, 쿨다운, 남은 충전 수를 그립니다. */
 UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgSkillSlot : public UCommonUserWidget
 {
@@ -25,7 +25,7 @@ public:
 	/** 아이콘, MP 코스트, 흐림을 다시 그립니다. */
 	void UpdateAbility();
 
-	/** 쿨다운 표시를 다시 그리고, 쿨다운 중이면 다음 틱에 다시 부릅니다. */
+	/** 쿨다운 표시와 남은 충전 수를 다시 그리고, 충전이 최대보다 적으면 다음 틱에 다시 부릅니다. */
 	void UpdateCooldown();
 
 protected:
@@ -47,6 +47,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> CooldownText;
 
+	/** 최대 충전이 2회 이상인 어빌리티만 보입니다. */
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> ChargeText;
+
 	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
 	float DisabledOpacity = 1.f;
 
@@ -59,6 +63,7 @@ private:
 
 	int32 ShownCost = INDEX_NONE;
 	FIntPoint ShownCooldown = FIntPoint(INDEX_NONE, INDEX_NONE);
+	int32 ShownCharges = INDEX_NONE;
 
 	FTimerHandle CooldownTimer;
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
+#include "Data/AgAbilityData.h"
 #include "Data/AgTaskParams.h"
 #include "GameplayTagContainer.h"
 #include "AgAbilityTask_SendGameplayEvent.generated.h"
@@ -15,6 +16,9 @@ struct FAgSendGameplayEventParams : public FAgTaskParams
 
 	UPROPERTY()
 	FGameplayTag Event;
+
+	UPROPERTY()
+	FAgTargetingRequest Targets;
 
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };

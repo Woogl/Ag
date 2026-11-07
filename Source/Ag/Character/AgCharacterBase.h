@@ -159,6 +159,8 @@ private:
 
 	void HandlePassThroughChanged(const FGameplayTag Tag, int32 NewCount);
 
+	void HandleHiddenChanged(const FGameplayTag Tag, int32 NewCount);
+
 	void HandleAirborneKnockUpChanged(const FGameplayTag Tag, int32 NewCount);
 
 	void UpdateTimeDilation();

@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
 #include "Character/AgCharacterBase.h"
+#include "Components/CapsuleComponent.h"
 
 UAbilityTask* FAgAreaHitParams::MakeTask(const FAgTaskContext& Context) const
 {
@@ -21,6 +22,18 @@ void UAgAbilityTask_AreaHit::Activate()
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	if (Character)
 	{
+		// 피해가 행동을 끝내도 연출은 판정 반경까지 보이도록 판정보다 먼저 실행합니다.
+		if (Params.Cue.IsValid())
+		{
+			FGameplayCueParameters CueParameters;
+			CueParameters.Instigator = Character;
+			CueParameters.EffectCauser = Character;
+			CueParameters.Location = Character->GetActorLocation() - FVector(0.f, 0.f, Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+			CueParameters.Normal = Character->GetActorForwardVector().GetSafeNormal2D();
+			CueParameters.RawMagnitude = Params.Area.Range;
+			AbilitySystemComponent->ExecuteGameplayCue(Params.Cue, CueParameters);
+		}
+
 		const TSharedPtr<FAgHitState> HitState = MakeShared<FAgHitState>();
 		for (AActor* Target : AgTargeting::FindTargets(Params.Area, *Character))
 		{

@@ -7,7 +7,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
 
 FString UAgAnimNotify_PlayCameraEffect::GetNotifyName_Implementation() const
 {
@@ -41,7 +40,7 @@ void UAgAnimNotify_PlayCameraEffect::Notify(USkeletalMeshComponent* MeshComp, UA
 	const FVector Epicenter = Owner->GetActorLocation();
 	for (const TSubclassOf<UCameraShakeBase>& Shake : CameraShakes)
 	{
-		UGameplayStatics::PlayWorldCameraShake(Owner, Shake, Epicenter, InnerRadius, OuterRadius);
+		APlayerCameraManager::PlayWorldCameraShake(World, Shake, Epicenter, InnerRadius, OuterRadius, 1.f);
 	}
 	for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
 	{
@@ -54,7 +53,7 @@ void UAgAnimNotify_PlayCameraEffect::Notify(USkeletalMeshComponent* MeshComp, UA
 		UCameraModifier* Modifier = CameraManager->FindCameraModifierByClass(UAgFieldOfViewCameraModifier::StaticClass());
 		if (UAgFieldOfViewCameraModifier* FieldOfViewCamera = Cast<UAgFieldOfViewCameraModifier>(Modifier))
 		{
-			// 엔진의 CalcRadialShakeScale은 protected라, 셰이크와 같은 감쇠(PlayWorldCameraShake 기본 감쇠 지수 1)를 직접 구합니다.
+			// 엔진의 CalcRadialShakeScale은 protected라, 셰이크와 같은 감쇠(위에서 넘긴 감쇠 지수 1)를 직접 구합니다.
 			const float Distance = FVector::Dist(Epicenter, CameraManager->GetCameraLocation());
 			const float Scale = FMath::GetMappedRangeValueClamped(FVector2f(InnerRadius, OuterRadius), FVector2f(1.f, 0.f), Distance);
 			FieldOfViewCamera->Play(FieldOfView, Scale);

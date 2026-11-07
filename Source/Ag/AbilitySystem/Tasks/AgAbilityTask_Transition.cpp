@@ -111,7 +111,8 @@ void UAgAbilityTask_Transition::RecheckTag()
 
 void UAgAbilityTask_Transition::TryTransition()
 {
-	if (IsFinished())
+	if (IsFinished() ||
+		(Params.bCommitAbility && !Ability->CommitAbility(Ability->GetCurrentAbilitySpecHandle(), Ability->GetCurrentActorInfo(), Ability->GetCurrentActivationInfo())))
 	{
 		return;
 	}

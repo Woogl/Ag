@@ -5,7 +5,6 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_PlayMontage.h"
-#include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"

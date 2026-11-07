@@ -3,6 +3,7 @@
 #include "UI/AgSkillSlot.h"
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
@@ -59,36 +60,54 @@ void UAgSkillSlot::UpdateCooldown()
 
 	float Remaining = 0.f;
 	float Duration = 0.f;
+	int32 Charges = 0;
+	int32 MaxCharges = 0;
 	FGameplayAbilitySpecHandle Handle;
-	if (const UGameplayAbility* Ability = FindAbility(Handle))
+	if (const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(FindAbility(Handle)))
 	{
-		Ability->GetCooldownTimeRemainingAndDuration(Handle, ASC->AbilityActorInfo.Get(), Remaining, Duration);
+		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
+		Ability->GetCooldownTimeRemainingAndDuration(Handle, ActorInfo, Remaining, Duration);
+		Charges = Ability->GetCharges(Handle, ActorInfo);
+		const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(ASC->GetAvatarActor());
+		const FAgAbilityData* Data = Player ? Player->FindAbility(Handle) : nullptr;
+		MaxCharges = Data ? Data->MaxCharges : 0;
 	}
+
+	const bool bShowsCharges = MaxCharges >= 2;
+	ChargeText->SetVisibility(bShowsCharges ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (bShowsCharges && Charges != ShownCharges)
+	{
+		ShownCharges = Charges;
+		ChargeText->SetText(FText::AsNumber(Charges));
+	}
+
 	const bool bCoolingDown = Remaining > 0.f && Duration > 0.f;
 	const ESlateVisibility CooldownVisibility = bCoolingDown ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
 	CooldownSweep->SetVisibility(CooldownVisibility);
 	CooldownText->SetVisibility(CooldownVisibility);
-	if (!bCoolingDown)
+	if (bCoolingDown)
 	{
-		return;
-	}
+		if (UMaterialInstanceDynamic* Material = CooldownSweep->GetDynamicMaterial())
+		{
+			Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
+		}
 
-	if (UMaterialInstanceDynamic* Material = CooldownSweep->GetDynamicMaterial())
-	{
-		Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
+		const bool bWholeSeconds = Remaining >= 1.f;
+		const FIntPoint Shown(bWholeSeconds ? 1 : 0, FMath::CeilToInt(bWholeSeconds ? Remaining : Remaining * 10.f));
+		if (Shown != ShownCooldown)
+		{
+			ShownCooldown = Shown;
+			FNumberFormattingOptions OneDecimal;
+			OneDecimal.MinimumFractionalDigits = 1;
+			OneDecimal.MaximumFractionalDigits = 1;
+			CooldownText->SetText(bWholeSeconds ? FText::AsNumber(Shown.Y) : FText::AsNumber(Shown.Y / 10.f, &OneDecimal));
+		}
 	}
-
-	const bool bWholeSeconds = Remaining >= 1.f;
-	const FIntPoint Shown(bWholeSeconds ? 1 : 0, FMath::CeilToInt(bWholeSeconds ? Remaining : Remaining * 10.f));
-	if (Shown != ShownCooldown)
+	// 충전이 남아 쿨다운 표시가 없어도, 충전이 돌아오는 순간 숫자를 바꾸려면 계속 봐야 합니다.
+	if (Charges < MaxCharges)
 	{
-		ShownCooldown = Shown;
-		FNumberFormattingOptions OneDecimal;
-		OneDecimal.MinimumFractionalDigits = 1;
-		OneDecimal.MaximumFractionalDigits = 1;
-		CooldownText->SetText(bWholeSeconds ? FText::AsNumber(Shown.Y) : FText::AsNumber(Shown.Y / 10.f, &OneDecimal));
+		CooldownTimer = TimerManager.SetTimerForNextTick(this, &ThisClass::UpdateCooldown);
 	}
-	CooldownTimer = TimerManager.SetTimerForNextTick(this, &ThisClass::UpdateCooldown);
 }
 
 void UAgSkillSlot::NativeDestruct()

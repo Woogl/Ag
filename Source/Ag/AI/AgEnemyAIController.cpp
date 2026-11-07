@@ -119,7 +119,7 @@ void AAgEnemyAIController::OnPossess(APawn* InPawn)
 	}
 
 	ConfigurePerception(Enemy->GetCharacterData()->AI);
-	// 플레이어 타임라인이 기본 공격 시작 이벤트를 공격 대상에게 보내므로 자기 캐릭터에서 받습니다.
+	// 플레이어 타임라인이 기본 공격 시작 이벤트를 주위의 적에게 보내므로 자기 캐릭터에서 받습니다.
 	BasicAttackHandle = Enemy->GetAbilitySystemComponent()->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_BasicAttackStarted).AddUObject(this, &ThisClass::HandleTargetBasicAttack);
 
 	if (Enemy->AIStateTree)

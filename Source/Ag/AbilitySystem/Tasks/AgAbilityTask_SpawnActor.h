@@ -18,6 +18,10 @@ struct FAgSpawnActorParams : public FAgTaskParams
 	UPROPERTY()
 	FName SocketName;
 
+	/** 생성 회전의 Roll(도)입니다. 몸 정면 수평 방향을 축으로, 뒤에서 볼 때 시계 방향이 +입니다. */
+	UPROPERTY()
+	float Roll = 0.f;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

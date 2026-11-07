@@ -108,6 +108,17 @@
         "HoldTime": 0.08,
         "BlendOutTime": 0.25
       }
+    },
+    "BlinkRushHit": {
+      "CameraShakes": [
+        "/Game/Camera/CS_Medium.CS_Medium_C"
+      ],
+      "FieldOfView": {
+        "Offset": -6.0,
+        "BlendInTime": 0.04,
+        "HoldTime": 0.08,
+        "BlendOutTime": 0.25
+      }
     }
   },
   "SprintFieldOfView": {

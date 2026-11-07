@@ -3,6 +3,7 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_SendGameplayEvent.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
+#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
 UAbilityTask* FAgSendGameplayEventParams::MakeTask(const FAgTaskContext& Context) const
@@ -14,15 +15,16 @@ UAbilityTask* FAgSendGameplayEventParams::MakeTask(const FAgTaskContext& Context
 
 void UAgAbilityTask_SendGameplayEvent::Activate()
 {
-	AActor* Owner = GetAvatarActor();
-	AActor* Target = CastChecked<UAgGameplayAbility>(Ability)->GetActionTarget();
-	if (Owner && Target)
+	if (AActor* Owner = GetAvatarActor())
 	{
-		FGameplayEventData Payload;
-		Payload.EventTag = Params.Event;
-		Payload.Instigator = Owner;
-		Payload.Target = Target;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Target, Params.Event, Payload);
+		for (AActor* Target : AgTargeting::FindTargets(Params.Targets, *Owner))
+		{
+			FGameplayEventData Payload;
+			Payload.EventTag = Params.Event;
+			Payload.Instigator = Owner;
+			Payload.Target = Target;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Target, Params.Event, Payload);
+		}
 	}
 	EndTask();
 }

@@ -17,7 +17,7 @@ namespace AgTargeting
 	AActor* FindTarget(const FAgTargetingRequest& Request, AActor& Source);
 	bool IsInRange(const AActor& Source, const AActor& Target, float Range);
 
-	/** 출처가 AI면 지각의 시야가 대상을 지금 감지하고, Socket이 있으면 출처 메시의 그 소켓에서 대상 캡슐 중심까지 WorldStatic이 가리지 않습니다. */
+	/** 출처가 AI면 지각의 시야가 대상을 지금 감지하고, 출처 메시의 Socket(없으면 출처 캡슐 중심)에서 대상 캡슐 중심까지 WorldStatic이 가리지 않습니다. */
 	bool IsVisible(const AActor& Source, const AActor& Target, FName Socket);
 
 	/** 조종하는 폰의 카메라 컴포넌트 시야로 투영합니다. 처형 카메라나 컷신이 화면을 바꿔도 게임 카메라 기준입니다. */
@@ -29,6 +29,16 @@ namespace AgTargeting
 
 UCLASS()
 class UAgTargetingSelectionTask_Sphere : public UTargetingTask
+{
+	GENERATED_BODY()
+
+public:
+	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
+};
+
+/** 출처의 락온 대상을 거리와 관계없이 후보에 더합니다. */
+UCLASS()
+class UAgTargetingSelectionTask_LockOnTarget : public UTargetingTask
 {
 	GENERATED_BODY()
 
@@ -64,6 +74,16 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Target Filter")
 	FGameplayTagRequirements Requirements;
+};
+
+/** 출처에게 락온 대상이 있으면 그 대상만 남깁니다. 락온 중이 아니면 거르지 않습니다. */
+UCLASS()
+class UAgTargetingFilterTask_LockOnTarget : public UTargetingFilterTask_BasicFilterTemplate
+{
+	GENERATED_BODY()
+
+protected:
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
 UCLASS()

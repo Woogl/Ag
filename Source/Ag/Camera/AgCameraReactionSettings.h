@@ -16,6 +16,7 @@ enum class EAgCameraSituation : uint8
 	PerfectDodge,
 	DodgeCounterHit,
 	GuardCounterHit,
+	BlinkRushHit,
 	PlayerHurt,
 	PlayerHurtHeavy,
 	Guard,

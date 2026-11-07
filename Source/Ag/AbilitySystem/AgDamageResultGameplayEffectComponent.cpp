@@ -14,7 +14,6 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Data/AgAbilityData.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"

@@ -9,7 +9,6 @@
 #include "AgAbilityTask_PlayMontage.generated.h"
 
 class UAnimMontage;
-class UAgGameplayAbility;
 struct FAnimMontageInstance;
 
 USTRUCT()

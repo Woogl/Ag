@@ -9,6 +9,17 @@
       "bGuardable": true
     }
   },
+  "CrescentWave": {
+    "Class": "/Game/Projectiles/BP_CrescentWave.BP_CrescentWave_C",
+    "Speed": 2500,
+    "Range": 2000,
+    "Damage": {
+      "HPMultiplier": 0.5,
+      "PPMultiplier": 0.5,
+      "HitReaction": "Flinch",
+      "bGuardable": true
+    }
+  },
   "PistolBullet": {
     "Class": "/Game/Projectiles/BP_PistolBullet.BP_PistolBullet_C",
     "Speed": 3000,

@@ -28,6 +28,23 @@
 DECLARE_TARGETING_DATA_STORE(FAgTargetingRequest)
 DEFINE_TARGETING_DATA_STORE(FAgTargetingRequest)
 
+namespace
+{
+	/** 선택 Task마다 후보를 더하므로, 이미 든 후보는 다시 넣지 않습니다. */
+	void AddCandidate(FTargetingDefaultResultsSet& Results, const AActor& Owner, AActor& Candidate)
+	{
+		if (Results.TargetResults.ContainsByPredicate([&Candidate](const FTargetingDefaultResultData& Result)
+		{ return Result.HitResult.GetActor() == &Candidate; }))
+		{
+			return;
+		}
+		FTargetingDefaultResultData& Result = Results.TargetResults.AddDefaulted_GetRef();
+		Result.HitResult.HitObjectHandle = FActorInstanceHandle(&Candidate);
+		Result.HitResult.Location = Candidate.GetActorLocation();
+		Result.HitResult.Distance = FVector::Distance(Owner.GetActorLocation(), Candidate.GetActorLocation());
+	}
+} // namespace
+
 TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AActor& Source)
 {
 	TArray<AActor*> Targets;
@@ -83,20 +100,21 @@ bool AgTargeting::IsVisible(const AActor& Source, const AActor& Target, FName So
 	{
 		return false;
 	}
-	if (Socket.IsNone())
+	FVector Start = Source.GetActorLocation();
+	if (!Socket.IsNone())
 	{
-		return true;
-	}
-	const ACharacter* Character = Cast<ACharacter>(&Source);
-	const USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
-	if (!Mesh || !Mesh->DoesSocketExist(Socket))
-	{
-		return false;
+		const ACharacter* Character = Cast<ACharacter>(&Source);
+		const USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
+		if (!Mesh || !Mesh->DoesSocketExist(Socket))
+		{
+			return false;
+		}
+		Start = Mesh->GetSocketLocation(Socket);
 	}
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgVisible), false, &Source);
 	QueryParams.AddIgnoredActor(&Target);
-	return !Source.GetWorld()->LineTraceTestByObjectType(Mesh->GetSocketLocation(Socket), Target.GetActorLocation(),
-		FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams);
+	return !Source.GetWorld()->LineTraceTestByObjectType(Start, Target.GetActorLocation(), FCollisionObjectQueryParams(ECC_WorldStatic),
+		QueryParams);
 }
 
 bool AgTargeting::ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition)
@@ -181,17 +199,26 @@ void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& Ta
 		{
 			// 캐릭터 메시도 Pawn 오브젝트 종류라, 캡슐(몸과 회피를 시작한 자리)에 닿은 결과만 씁니다.
 			AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(Overlap.GetActor());
-			if (!Candidate || !Cast<UCapsuleComponent>(Overlap.GetComponent()) ||
-				Results.TargetResults.ContainsByPredicate([Candidate](const FTargetingDefaultResultData& Result)
-			{ return Result.HitResult.GetActor() == Candidate; }))
+			if (Candidate && Cast<UCapsuleComponent>(Overlap.GetComponent()))
 			{
-				continue;
+				AddCandidate(Results, *Owner, *Candidate);
 			}
-			FTargetingDefaultResultData& Result = Results.TargetResults.AddDefaulted_GetRef();
-			Result.HitResult.HitObjectHandle = FActorInstanceHandle(Candidate);
-			Result.HitResult.Location = Candidate->GetActorLocation();
-			Result.HitResult.Distance = FVector::Distance(Owner->GetActorLocation(), Candidate->GetActorLocation());
 		}
+	}
+
+	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
+}
+
+void UAgTargetingSelectionTask_LockOnTarget::Execute(const FTargetingRequestHandle& TargetingHandle) const
+{
+	Super::Execute(TargetingHandle);
+	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
+
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
+	if (AAgCharacterBase* LockOnTarget = Owner ? Owner->GetLockOnTarget() : nullptr)
+	{
+		AddCandidate(FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle), *Owner, *LockOnTarget);
 	}
 
 	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
@@ -226,6 +253,14 @@ bool UAgTargetingFilterTask_TagRequirements::ShouldFilterTarget(const FTargeting
 	const FGameplayTagContainer& Tags = ASC->GetOwnedGameplayTags();
 	const FAgTargetingRequest* Request = UE::TargetingSystem::TTargetingDataStore<FAgTargetingRequest>::Find(TargetingHandle);
 	return !Requirements.RequirementsMet(Tags) || (Request && (!Tags.HasAll(Request->TargetRequiredTags) || Tags.HasAny(Request->TargetBlockedTags)));
+}
+
+bool UAgTargetingFilterTask_LockOnTarget::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+{
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
+	const AActor* LockOnTarget = Owner ? Owner->GetLockOnTarget() : nullptr;
+	return LockOnTarget && TargetData.HitResult.GetActor() != LockOnTarget;
 }
 
 bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const

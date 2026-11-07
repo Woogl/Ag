@@ -11,7 +11,6 @@
 #include "Components/ShapeComponent.h"
 #include "Engine/World.h"
 #include "Core/AgAssetManager.h"
-#include "Core/AgGameplayTags.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
 #include "Ag.h"
@@ -28,6 +27,14 @@ namespace
 		const double C = Offset.SizeSquared();
 		const double Time = A < 0.0 ? (-B - FMath::Sqrt(B * B - 4.0 * A * C)) / (2.0 * A) : Offset.Size() / Speed;
 		return TargetLocation + Velocity * Time;
+	}
+
+	/** 방향만 바꾸고, 생성할 때 받은 Roll(장풍의 기울기)은 그대로 둡니다. */
+	FRotator MakeFlightRotation(const FVector& Direction, float Roll)
+	{
+		FRotator Rotation = Direction.Rotation();
+		Rotation.Roll = Roll;
+		return Rotation;
 	}
 
 } // namespace
@@ -67,7 +74,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	Reflector = &Defender;
 	const FVector ReturnDirection = (Shooter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	FlightDirection = ReturnDirection.IsNearlyZero() ? -FlightDirection : ReturnDirection;
-	SetActorRotation(FlightDirection.Rotation());
+	SetActorRotation(MakeFlightRotation(FlightDirection, GetActorRotation().Roll));
 	Traveled = 0.f;
 	TouchedActors.Reset();
 }
@@ -115,7 +122,7 @@ void AAgProjectile::BeginPlay()
 	if (!AimDirection.IsNearlyZero())
 	{
 		FlightDirection = AimDirection;
-		SetActorRotation(FlightDirection.Rotation());
+		SetActorRotation(MakeFlightRotation(FlightDirection, GetActorRotation().Roll));
 	}
 }
 

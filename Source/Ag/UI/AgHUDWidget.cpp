@@ -102,10 +102,11 @@ void UAgHUDWidget::NativeConstruct()
 	}
 
 #if WITH_EDITOR
-	// 데이터 파일을 다시 읽으면 보스 이름과 스킬 아이콘·코스트가 바뀝니다.
+	// 데이터 파일을 다시 읽으면 보스 이름과 스킬 아이콘·코스트·최대 충전이 바뀝니다.
 	UAgAssetManager::Get().OnJsonDataReloaded.AddWeakLambda(this, [this]
 	{
 		UpdateSkillSlots();
+		UpdateCooldowns();
 		UpdateBoss();
 	});
 #endif
@@ -184,7 +185,10 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 	}
 	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 부여될 때 스킬 슬롯을 다시 그립니다.
 	ASC.AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
-	{ UpdateSkillSlots(); });
+	{
+		UpdateSkillSlots();
+		UpdateCooldowns();
+	});
 	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
 	{ UpdateCooldowns(); });
 }

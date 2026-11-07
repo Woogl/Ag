@@ -214,6 +214,8 @@ void AAgCharacterBase::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleHitstopChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_PassThrough, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandlePassThroughChanged);
+	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Hidden, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleHiddenChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_Airborne, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleAirborneKnockUpChanged);
 	AbilitySystemComponent->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction_KnockUp, EGameplayTagEventType::NewOrRemoved)
@@ -443,6 +445,11 @@ void AAgCharacterBase::HandlePassThroughChanged(const FGameplayTag Tag, int32 Ne
 	{
 		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, NewCount > 0 ? ECR_Ignore : PawnResponse.GetValue());
 	}
+}
+
+void AAgCharacterBase::HandleHiddenChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	SetActorHiddenInGame(NewCount > 0);
 }
 
 void AAgCharacterBase::HandleAirborneKnockUpChanged(const FGameplayTag Tag, int32 NewCount)

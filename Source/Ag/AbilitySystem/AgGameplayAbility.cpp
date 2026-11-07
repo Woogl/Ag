@@ -10,7 +10,6 @@
 #include "Character/AgCharacterBase.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
-#include "Data/AgCharacterData.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgEffectData.h"
 #include "Data/AgTaskParams.h"
@@ -112,10 +111,16 @@ void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpe
 	CooldownDuration = Data->Cooldown;
 }
 
-FAgResourceCost UAgGameplayAbility::GetCost() const
+int32 UAgGameplayAbility::GetCharges(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
 {
-	const FAgAbilityData* Data = IsActive() ? &Definition : FindDefinition(CurrentSpecHandle, CurrentActorInfo);
-	return Data ? Data->Cost : FAgResourceCost();
+	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
+	if (!Spec || !Data)
+	{
+		return 0;
+	}
+	const int32 Used = ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).Num();
+	return FMath::Max(Data->MaxCharges - Used, 0);
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffect& Effect) const
@@ -335,6 +340,6 @@ void UAgGameplayAbility::FinishIfTasksDone()
 {
 	if (IsActive() && !bStartingTasks && Definition.End == EAgAbilityEnd::Tasks && ActiveTasks.IsEmpty())
 	{
-		K2_EndAbility();
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 	}
 }

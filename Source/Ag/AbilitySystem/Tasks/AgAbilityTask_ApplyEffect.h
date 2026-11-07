@@ -8,7 +8,6 @@
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_ApplyEffect.generated.h"
 
-class UGameplayEffect;
 struct FGameplayEffectRemovalInfo;
 
 USTRUCT()

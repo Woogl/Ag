@@ -28,7 +28,10 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_GuardCounter);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_PerfectDodge);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Skill);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Skill_1);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Skill_2);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Skill_3);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Skill_4);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Ultimate);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Execution);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Action_Jump);
@@ -75,6 +78,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_LockedOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Airborne);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_PassThrough);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hidden);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_TimeStop);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dashing);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Cutscene);
@@ -143,6 +147,10 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UnblockableTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_ParryTelegraph);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_WeaponTrail);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Teleport);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_BlinkRushThrust);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UpperSlashBlade);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_PunishingEdge);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Action_Escape);
 } // namespace AgGameplayTags

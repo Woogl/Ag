@@ -5,6 +5,7 @@
 #include "Camera/AgPlayerCameraManager.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgGameplayTags.h"
+#include "NiagaraComponent.h"
 
 namespace
 {
@@ -32,6 +33,10 @@ namespace
 		else if (Tags.HasTagExact(AgGameplayTags::Ability_Action_GuardCounter))
 		{
 			CameraManager.PlayCameraReaction(EAgCameraSituation::GuardCounterHit, Target);
+		}
+		else if (Tags.HasTagExact(AgGameplayTags::Ability_Action_Skill_1))
+		{
+			CameraManager.PlayCameraReaction(EAgCameraSituation::BlinkRushHit, Target);
 		}
 	}
 }
@@ -92,7 +97,30 @@ void UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(AActor* Target, const
 
 bool UAgGameplayCueNotify_Burst::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters) const
 {
-	const bool bResult = Super::OnExecute_Implementation(Target, Parameters);
+	if (MagnitudeNiagaraParameter.IsNone())
+	{
+		const bool bResult = Super::OnExecute_Implementation(Target, Parameters);
+		PlayCombatCameraReactions(Target, Parameters);
+		return bResult;
+	}
+
+	// 엔진은 생성한 효과를 BP 전용 OnBurst에만 넘기므로, 부모의 실행 순서를 따라 부르며 그 사이에 값을 넣습니다.
+	FGameplayCueNotify_SpawnContext SpawnContext(Target ? Target->GetWorld() : GetWorld(), Target, Parameters);
+	SpawnContext.SetDefaultSpawnCondition(&DefaultSpawnCondition);
+	SpawnContext.SetDefaultPlacementInfo(&DefaultPlacementInfo);
+	if (DefaultSpawnCondition.ShouldSpawn(SpawnContext))
+	{
+		FGameplayCueNotify_SpawnResult SpawnResult;
+		BurstEffects.ExecuteEffects(SpawnContext, SpawnResult);
+		for (UFXSystemComponent* FX : SpawnResult.FxSystemComponents)
+		{
+			if (UNiagaraComponent* Niagara = Cast<UNiagaraComponent>(FX))
+			{
+				Niagara->SetVariableFloat(MagnitudeNiagaraParameter, Parameters.RawMagnitude);
+			}
+		}
+		OnBurst(Target, Parameters, SpawnResult);
+	}
 	PlayCombatCameraReactions(Target, Parameters);
-	return bResult;
+	return false;
 }

@@ -20,6 +20,10 @@ struct FAgAreaHitParams : public FAgTaskParams
 	UPROPERTY()
 	FAgTargetingRequest Area;
 
+	/** 비우지 않으면 판정하는 순간 이 큐를 발밑에서 실행합니다. RawMagnitude는 판정 반경입니다. */
+	UPROPERTY()
+	FGameplayTag Cue;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

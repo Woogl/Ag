@@ -1,0 +1,24 @@
+{
+  "image": "플레이어 모션 스킬 3",
+  "character": "player",
+  "animation": {
+    "play_rate": 1.2,
+    "segments": [
+      {
+        "clip": "ACS2ComboSkill/Combo01_1",
+        "from": 0.0,
+        "to": 0.5
+      },
+      {
+        "clip": "ACS2ComboSkill/Combo01_2",
+        "from": 0.0,
+        "to": 0.43
+      },
+      {
+        "clip": "ACS2ComboSkill/Combo01_3",
+        "from": 0.0,
+        "to": 1.9
+      }
+    ]
+  }
+}

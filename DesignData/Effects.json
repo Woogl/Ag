@@ -46,6 +46,10 @@
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.Invincible"]
   },
+  "Hidden": {
+    "DurationPolicy": "Infinite",
+    "GrantedTags": ["State.Hidden"]
+  },
   "PassThrough": {
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.PassThrough"]

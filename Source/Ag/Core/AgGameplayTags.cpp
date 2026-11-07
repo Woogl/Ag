@@ -26,7 +26,10 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_GuardCounter, "Ability.Action.GuardCounter");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_Parry, "Ability.Action.Parry", "패리 모션 (패리 이벤트로 발동, 가드를 끝내지 않음)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_PerfectDodge, "Ability.Action.PerfectDodge", "극한 회피 모션 (극한 회피 이벤트로 발동, 회피를 끝냄)");
-	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Skill, "Ability.Action.Skill");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_Skill_1, "Ability.Action.Skill.1", "스킬 1");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_Skill_2, "Ability.Action.Skill.2", "스킬 2");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_Skill_3, "Ability.Action.Skill.3", "스킬 3");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Action_Skill_4, "Ability.Action.Skill.4", "스킬 4");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Ultimate, "Ability.Action.Ultimate");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Execution, "Ability.Action.Execution");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Action_Jump, "Ability.Action.Jump");
@@ -75,6 +78,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_LockedOn, "State.LockedOn", "락온 중 (락온 어빌리티가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Airborne, "State.Airborne", "이동 모드가 떨어지는 중 (캐릭터가 붙임)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_PassThrough, "State.PassThrough", "캐릭터끼리 통과: 캡슐이 Pawn 채널을 무시함");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Hidden, "State.Hidden", "캐릭터가 보이지 않음 (무기 포함)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_TimeStop, "State.TimeStop", "가진 캐릭터만 빼고 게임 전체의 시간을 멈춤");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Dashing, "State.Dashing", "돌진 중 (Dash Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Cutscene, "State.Cutscene", "컷신 재생 중 (PlayCutscene Task가 도는 동안)");
@@ -148,6 +152,10 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UnblockableTelegraph, "GameplayCue.UnblockableTelegraph", "가드 불가 예고");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_ParryTelegraph, "GameplayCue.ParryTelegraph", "패리 예고");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_WeaponTrail, "GameplayCue.WeaponTrail", "무기 궤적");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Teleport, "GameplayCue.Teleport", "순간이동으로 사라지거나 나타나는 자리의 효과");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_BlinkRushThrust, "GameplayCue.BlinkRushThrust", "스킬 1 찌르기에서 칼끝의 섬광");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UpperSlashBlade, "GameplayCue.UpperSlashBlade", "스킬 2 동작 동안 칼날에 서리는 기운");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PunishingEdge, "GameplayCue.PunishingEdge", "스킬 4 내려찍기 VFX: 판정 반경(RawMagnitude)까지 퍼짐");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(UI_Action_Escape, "UI.Action.Escape", "Esc: 일시정지 메뉴 열기, 팝업·메뉴 닫기");
 } // namespace AgGameplayTags

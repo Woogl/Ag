@@ -32,6 +32,10 @@ struct FAgTransitionParams : public FAgTaskParams
 	UPROPERTY()
 	bool bSectionEndsWithTag = false;
 
+	/** 켜면 옮기기 전에 어빌리티를 다시 커밋(비용·쿨다운)하고, 커밋하지 못하면 옮기지 않고 계속 기다립니다. */
+	UPROPERTY()
+	bool bCommitAbility = false;
+
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

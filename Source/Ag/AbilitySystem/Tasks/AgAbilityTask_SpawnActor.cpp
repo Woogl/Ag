@@ -41,7 +41,9 @@ void UAgAbilityTask_SpawnActor::Activate()
 		return;
 	}
 	const FVector Location = Params.SocketName.IsNone() ? Character->GetActorLocation() : Mesh->GetSocketLocation(Params.SocketName);
-	const FTransform Transform(Character->GetActorForwardVector().GetSafeNormal2D().Rotation(), Location);
+	FRotator Rotation = Character->GetActorForwardVector().GetSafeNormal2D().Rotation();
+	Rotation.Roll = Params.Roll;
+	const FTransform Transform(Rotation, Location);
 
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Template = Template;
