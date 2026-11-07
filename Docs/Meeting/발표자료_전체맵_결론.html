@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>맵 제작 방식 비교 결론</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#1c2230; --sub:#5b6478; --line:#e2e5ec;
+    --py:#2f6fed; --py-soft:#e6eefe;
+    --mcp:#e8742a; --mcp-soft:#fdeee3;
+    --ok:#1f9d6b; --warn:#d99a00; --bad:#d64545;
+    --warn-soft:#fff6dd; --ok-soft:#e3f6ee; --bad-soft:#fdeaea;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;overflow:hidden}
+
+  .deck{height:100vh;overflow-y:auto;scroll-snap-type:y mandatory;scroll-behavior:smooth}
+  .slide{min-height:100vh;scroll-snap-align:start;padding:56px 7vw 72px;display:flex;flex-direction:column;justify-content:center;max-width:1280px;margin:0 auto;position:relative}
+  .tag{font-size:14px;font-weight:700;color:var(--py);letter-spacing:.04em;margin-bottom:10px}
+  h1{font-size:clamp(34px,5vw,56px);line-height:1.2;margin-bottom:18px}
+  h2{font-size:clamp(26px,3.4vw,38px);line-height:1.3;margin-bottom:10px}
+  .lead{font-size:clamp(17px,1.8vw,21px);color:var(--sub);margin-bottom:28px;max-width:60em}
+  .lead b{color:var(--ink)}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:820px){.grid2,.grid3{grid-template-columns:1fr}.slide{padding:40px 20px 64px}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px}
+  .card h3{font-size:19px;margin-bottom:8px}
+  .card p{color:var(--sub);font-size:16px}
+  .card.py{border-top:5px solid var(--py)}
+  .card.mcp{border-top:5px solid var(--mcp)}
+  .card.ok{background:var(--ok-soft);border-color:#bfe6d4}
+  .card.warn{background:var(--warn-soft);border-color:#f0dfa6}
+  .card.bad{background:var(--bad-soft);border-color:#f3c4c4}
+
+  .big{font-size:clamp(40px,6vw,68px);font-weight:800;line-height:1.1}
+  .big.py{color:var(--py)} .big.mcp{color:var(--mcp)}
+  .small{font-size:14px;color:var(--sub)}
+
+  /* 막대 그래프 */
+  .row{display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center;margin:10px 0}
+  .row .name{font-weight:700;font-size:16px}
+  .bars{display:flex;flex-direction:column;gap:6px}
+  .bar{display:flex;align-items:center;gap:10px}
+  .bar i{display:block;height:26px;border-radius:6px;min-width:4px}
+  .bar.py i{background:var(--py)} .bar.mcp i{background:var(--mcp)}
+  .bar span{font-size:15px;font-weight:700;white-space:nowrap}
+  .bar i.seg2{background:#9db9f5;border-radius:0 6px 6px 0}
+  .bar i.seg1{border-radius:6px 0 0 6px}
+  .legend{display:flex;gap:18px;font-size:14px;color:var(--sub);margin:4px 0 12px;flex-wrap:wrap}
+  .legend em{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+  .legend em:before{content:"";width:14px;height:14px;border-radius:4px;background:var(--c)}
+
+  .quote{border-left:5px solid var(--py);background:var(--py-soft);padding:16px 20px;border-radius:0 12px 12px 0;font-size:clamp(17px,1.9vw,22px);font-weight:600;margin:18px 0}
+  .quote.mcp{border-left-color:var(--mcp);background:var(--mcp-soft)}
+
+  /* 다음 장으로 이어지는 연결 문장 */
+  .bridge{margin-top:18px;padding:14px 20px;border:2px dashed var(--py);border-radius:12px;background:#fff;font-size:clamp(16px,1.7vw,19px);font-weight:600;color:var(--ink)}
+  .bridge:before{content:"다음 장 ▸ ";color:var(--py)}
+
+  ul.clean{list-style:none}
+  ul.clean li{padding:9px 0 9px 26px;position:relative;font-size:clamp(16px,1.7vw,19px);border-bottom:1px solid var(--line)}
+  ul.clean li:last-child{border-bottom:0}
+  ul.clean li:before{content:"";position:absolute;left:4px;top:19px;width:10px;height:10px;border-radius:50%;background:var(--py)}
+  ul.clean.warn li:before{background:var(--warn)}
+  ul.clean.bad li:before{background:var(--bad)}
+  ul.clean.ok li:before{background:var(--ok)}
+  ul.clean li small{display:block;color:var(--sub);font-size:14px;margin-top:2px}
+
+  .pill{display:inline-block;font-size:13px;font-weight:700;padding:3px 10px;border-radius:99px;margin-right:6px}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}
+  .pill.warn{background:var(--warn-soft);color:#a87400}
+  .pill.bad{background:var(--bad-soft);color:var(--bad)}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line);font-size:16px}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#eef0f5;font-size:14px;color:var(--sub)}
+  tr:last-child td{border-bottom:0}
+
+  .notes{margin-top:26px;padding:14px 18px;border:1px dashed #b9c0d0;border-radius:12px;background:#fbfbfd;font-size:15px;color:var(--sub)}
+  .notes b{color:var(--ink)}
+  body.hide-notes .notes{display:none}
+
+  .pager{position:fixed;right:22px;bottom:18px;display:flex;gap:8px;align-items:center;font-size:14px;color:var(--sub);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:99px;padding:6px 8px 6px 16px;z-index:10}
+  .pager button{border:0;background:var(--ink);color:#fff;border-radius:99px;width:30px;height:30px;font-size:15px;cursor:pointer}
+  .pager button.t{width:auto;padding:0 12px;font-size:13px;background:#eef0f5;color:var(--ink)}
+
+  @media print{
+    body{overflow:visible} .deck{height:auto;overflow:visible}
+    .slide{min-height:auto;page-break-after:always;padding:30px} .pager{display:none}
+  }
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+
+<!-- 1. 표지 -->
+<section class="slide">
+  <div class="tag">분석 결과 · Part 1 맵 제작 · Part 2 몬스터 배치</div>
+  <h1>맵 제작 방식 비교<br>MCP 방식 vs 파이썬 방식</h1>
+  <p class="lead">언리얼 에디터에서 회색 상자로 지형을 세우는 단계(그레이박스)를 AI로 만들 때, 어떤 방식이 나은지 직접 만들어 비교했다.</p>
+  <div class="grid2" style="margin-bottom:22px">
+    <div class="card"><h3>Part 1. 맵 제작</h3><p>같은 미니던전 3개를 두 방식으로 만들어 시간, AI 작업량, 막힌 곳, 검증을 비교했다.</p></div>
+    <div class="card"><h3>Part 2. 몬스터 배치</h3><p>그 맵 6개(던전 3개 × 방식 2개)에 몬스터를 놓으며 Part 1에서 남은 질문을 확인했다.</p></div>
+  </div>
+  <div class="grid2">
+    <div class="card mcp"><h3>MCP 방식</h3><p>AI가 에디터에 "큐브 하나 놓아줘"처럼 지시를 하나씩 보내서 만든다. 사람이 에디터를 손으로 조작하는 것과 비슷하다.</p></div>
+    <div class="card py"><h3>파이썬 방식</h3><p>작은 프로그램 하나를 에디터에 한 번 보내서 통째로 만든다. 설계도를 건네주고 "알아서 지어 줘"하는 것과 비슷하다.</p></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> 오늘 말씀드릴 건 하나입니다. 맵을 AI로 만들 때 어떤 방식이 나은지, 실제로 만들어 보고 확인한 결과입니다. 결론과 근거만 간단히 정리했습니다.</div>
+</section>
+
+<!-- 2. 결론 먼저 -->
+<section class="slide">
+  <div class="tag">결론 먼저</div>
+  <h2>많이 만들 때는 파이썬이 빨랐다</h2>
+  <div class="grid3" style="margin-top:20px">
+    <div class="card ok"><span class="pill ok">확인</span><h3>시간</h3><p>세 맵 모두 파이썬이 짧았다. 파이썬은 1~4초, MCP는 6~11초 걸렸다.</p></div>
+    <div class="card warn"><span class="pill warn">맵마다 다름</span><h3>AI 작업량(토큰)</h3><p>한 맵에서만 파이썬이 분명히 적었다. 나머지 두 맵은 설계 비용이 어디에 붙었는지에 따라 갈렸다.</p></div>
+    <div class="card ok"><span class="pill ok">확인</span><h3>막힌 곳</h3><p>MCP는 저장 문제로 약 15분을 썼다. 파이썬은 저장 누락 하나, 약 1분이었다.</p></div>
+  </div>
+  <div class="quote">방식만큼 중요했던 것은 검증이다. 만든 뒤 저장하고 다시 열어 숫자로 맞춰 보는 방법이 실제 문제를 가장 잘 잡았다.</div>
+  <div class="quote mcp">몬스터 배치도 결과는 두 방식이 같았고, 파이썬이 약 30배 빨랐다. 그래서 대량·반복 작업은 파이썬이 주력이다.</div>
+  <div class="notes"><b>발표 멘트</b> 결론은 이 한 장입니다. 뒤 장들은 근거입니다. 토큰은 AI가 읽고 쓰는 글자 단위라서 많이 쓸수록 시간과 비용이 듭니다. 시간 비교에서 결투 회랑은 초기 방식이라 MCP가 약 5분이 걸렸고, 30배라는 숫자는 MCP를 묶어서 쓴 경우입니다.</div>
+</section>
+
+<!-- ===== Part 1 · 맵 제작 ===== -->
+<!-- 3. 시간 -->
+<section class="slide">
+  <div class="tag">Part 1 · 1. 시간</div>
+  <h2>만드는 속도는 세 맵 모두 파이썬이 빨랐다</h2>
+  <p class="lead">에디터가 실제로 맵을 만든 시간이다. 같은 줄의 파랑과 주황만 비교하면 된다.</p>
+  <div class="legend"><em style="--c:var(--py)">파이썬</em><em style="--c:var(--mcp)">MCP</em></div>
+
+  <div class="card">
+    <div class="row"><div class="name">요새 돌파<br><span class="small">액터 192개</span></div>
+      <div class="bars">
+        <div class="bar py"><i style="width:12%"></i><span>3.8초</span></div>
+        <div class="bar mcp"><i style="width:30%"></i><span>7.0~11.2초</span></div>
+      </div></div>
+    <div class="row"><div class="name">폐허 성곽길<br><span class="small">액터 약 110개</span></div>
+      <div class="bars">
+        <div class="bar py"><i style="width:3.5%"></i><span>1.0~1.2초</span></div>
+        <div class="bar mcp"><i style="width:17%"></i><span>6.3~6.4초</span></div>
+      </div></div>
+    <div class="row"><div class="name">결투 회랑<br><span class="small">액터 85개</span></div>
+      <div class="bars">
+        <div class="bar py"><i style="width:2.5%"></i><span>0.9초</span></div>
+        <div class="bar mcp"><i style="width:100%"></i><span>약 5분 (초기 방식)</span></div>
+      </div></div>
+  </div>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card"><h3>결투 회랑만 격차가 큰 이유</h3><p>그때는 큐브마다 지시를 따로 보냈다(143회). 이후 30개씩 묶어 보내도록 바꿨다.</p></div>
+    <div class="card"><h3>개선 후 격차</h3><p><span class="big mcp" style="font-size:40px">2~6배</span><br>묶음 호출로 만든 요새·폐허 기준이다. 차이가 줄었지만 파이썬이 여전히 빠르다.</p></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> 결투 회랑의 5분은 개선 전 값이라는 점을 같이 말씀드려야 합니다. 요새 돌파의 MCP 시간은 원인을 모르는 이상치 2건(186초, 256초)을 뺀 값입니다.</div>
+</section>
+
+<!-- 4. 토큰 -->
+<section class="slide" id="tokens">
+  <div class="tag">Part 1 · 2. AI 작업량 (토큰)</div>
+  <h2>AI 작업량은 맵마다 결과가 갈렸다</h2>
+  <p class="lead">AI가 읽고 쓴 글자량이다. 좌표표 설계 비용이 어느 쪽에 붙었는지에 따라 달라졌다.</p>
+  <div class="legend"><em style="--c:var(--py)">파이썬</em><em style="--c:#9db9f5">파이썬 중 좌표표 설계</em><em style="--c:var(--mcp)">MCP</em></div>
+
+  <div class="card">
+    <div class="row"><div class="name">결투 회랑<br><span class="small">MCP가 설계를 떠안음</span></div>
+      <div class="bars">
+        <div class="bar py"><i style="width:18%"></i><span>약 1.5만</span></div>
+        <div class="bar mcp"><i style="width:92%"></i><span>약 7.5만 (설계·도구 조사 포함)</span></div>
+      </div></div>
+    <div class="row"><div class="name">요새 + 폐허<br><span class="small">파이썬이 설계를 떠안음</span></div>
+      <div class="bars">
+        <div class="bar py"><i style="width:63.7%;background:#9db9f5;border-radius:6px 0 0 6px"></i><i style="width:36.3%;border-radius:0 6px 6px 0"></i><span>약 8.2만 (설계 5.2만 포함)</span></div>
+        <div class="bar mcp"><i style="width:81%"></i><span>약 6.6만</span></div>
+      </div></div>
+  </div>
+
+  <div class="quote">설계 비용을 빼고 만드는 일만 보면, 요새 + 폐허도 파이썬(약 3만)이 MCP(약 6.6만)보다 적다.</div>
+  <div class="notes"><b>발표 멘트</b> 좌표표 설계는 두 방식이 똑같이 필요한 일인데, 먼저 한 쪽에 붙어서 그쪽이 커 보입니다. 그래서 "파이썬이 토큰도 적다"고 딱 잘라 말하지 않고 맵마다 다르다고 말씀드립니다. MCP 쪽에는 폐허 높이 재설계가 섞여 있어 완전히 같은 조건은 아닙니다. Part 2에서는 토큰을 따로 재지 않았습니다.</div>
+</section>
+
+<!-- 5. 병목 -->
+<section class="slide">
+  <div class="tag">Part 1 · 3. 막힌 곳 (병목)</div>
+  <h2>오래 막힌 곳은 방식마다 달랐다</h2>
+  <p class="lead">맵을 만드는 계산은 거의 시간을 쓰지 않았다. 시간은 문제를 찾아 우회하는 데 들었다.</p>
+  <div class="grid3">
+    <div class="card mcp"><h3>MCP</h3><div class="big mcp">약 15분</div><p style="margin-top:8px">새로 만든 액터가 저장되지 않는 문제, 시작점이 다시 열면 원점으로 돌아가는 문제.</p></div>
+    <div class="card py"><h3>파이썬</h3><div class="big py">약 7분</div><p style="margin-top:8px">맵 생성이 아니라 화면 캡처 설정 문제였다. MCP였어도 만났을 문제다.</p></div>
+    <div class="card"><h3>공통</h3><div class="big">약 17분</div><p style="margin-top:8px">에디터 연결 문제(포트 번호, 다른 도구와 충돌).</p></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> MCP의 15분은 방식 자체의 약점, 즉 새 액터를 저장하는 기능이 없다는 데서 나왔습니다. 파이썬의 7분은 방식과 상관없는 캡처 문제였습니다. 좌표표 설계 시간(결투 4분, 요새+폐허 6분)은 먼저 한 쪽에 붙기 때문에 단계별 시간을 방식끼리 그대로 비교하지는 않습니다.</div>
+</section>
+
+<!-- 6. 검증 -->
+<section class="slide">
+  <div class="tag">Part 1 · 4. 검증</div>
+  <h2>화면에선 멀쩡해도 저장 파일에는 빠져 있었다</h2>
+  <p class="lead"><b>검증</b>은 "만든 맵이 기획서대로 맞는지 확인하는 단계"다. 다 만들었다고 맞게 만든 것은 아니라서, 네 가지 방법으로 확인했다.</p>
+  <table>
+    <tr><th style="width:20%">확인 방법</th><th>하는 일</th><th style="width:34%">결과</th></tr>
+    <tr><td>눈으로 보기</td><td>에디터 화면을 찍어 AI가 직접 본다</td><td>모양은 확인됐지만 위치 오류는 못 잡았다</td></tr>
+    <tr><td>설계도와 대조</td><td>맵의 위치를 좌표표 숫자와 비교한다</td><td>에디터 메모리의 값만 보면 틀린 걸 놓친다</td></tr>
+    <tr><td><b>저장 후 다시 열기</b></td><td>맵을 저장하고, 파일에서 새로 읽어 값이 그대로인지 본다</td><td><b>실제 문제 3건을 잡았다</b></td></tr>
+    <tr><td>시선 계산</td><td>시작 지점에서 탑 꼭대기까지 보이지 않는 선을 쏴 벽이 가리는지 본다</td><td>폐허 성곽길의 종탑이 시작 지점에서 가려짐을 확인했다</td></tr>
+  </table>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card ok"><h3>"저장 후 다시 열기"로 잡은 문제</h3>
+      <ul class="clean ok">
+        <li>옮긴 보스와 시작점이 저장에서 빠져 있었다<small>에디터 값만 보고 "오차 0"이라 했는데, 다시 열어 보니 원위치였다 (결투 회랑 파이썬 맵)</small></li>
+        <li>저장 파일이 모자랐다 (98개 대 205개)<small>MCP 맵 (요새 돌파)</small></li>
+        <li>시작점이 다시 열면 원점으로 돌아갔다<small>파일에는 정상 위치가 있었다. 원인은 못 찾고, 지우고 새로 만드는 방식으로 피했다</small></li>
+      </ul></div>
+    <div class="card ok"><h3>MCP 맵은 어떻게 믿나</h3>
+      <p>파이썬 맵과 숫자로 대조해서 요새 195개, 폐허 115개 액터가 전부 일치했다. 이것이 MCP 맵 품질의 근거다.</p></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> "만들었다"와 "맞게 만들었다"는 다릅니다. 화면에서는 멀쩡해 보여도 저장 파일에서 빠진 게 있었고, 다시 열어 숫자로 맞춰 봐야 드러났습니다.</div>
+</section>
+
+<!-- 7. AI가 임의로 정한 부분 -->
+<section class="slide">
+  <div class="tag">Part 1 · 5. AI가 임의로 정한 부분</div>
+  <h2>AI가 스스로 정한 곳과 그 이유</h2>
+  <p class="lead">기획서에 없거나 값을 바꾼 부분이다. 무엇을 했는지보다 <b>왜 그렇게 했는지</b>를 정리했고, 모두 기획자 확인을 마쳤다.</p>
+  <table>
+    <tr><th style="width:15%">구분</th><th style="width:40%">AI가 한 일</th><th>AI의 의도</th></tr>
+    <tr><td><span class="pill bad">값 변경</span></td><td>폐허 성곽길 통로 동쪽 바깥벽을 AI가 처음 정한 5m에서 4.2m로 낮췄다</td><td>성벽 위 통로에서 종탑이 보이게 하려는 것. 기획서가 "시야를 확인하고 높이를 조정하라"고 한 항목이다</td></tr>
+    <tr><td><span class="pill warn">추가</span></td><td>폐허 종탑에 시계(3시 정각)를 달았다</td><td>"시계탑"이라는 말을 폐허 성곽길의 종탑으로 추정해서 달았다. 시각은 AI가 정했다</td></tr>
+    <tr><td><span class="pill warn">추가</span></td><td>요새 탑의 깃대와 빨간 깃발, 종 방 구조물, 이끼 조각, 돌무더기, 색 팔레트 9색</td><td>랜드마크는 기획서 크기를 지키고 형태만 입힌다고 가정하고, 그 형태를 채우는 장식으로 넣었다</td></tr>
+    <tr><td><span class="pill warn">해석</span></td><td>"시작 위치 자체가 높아야 한다"를 "시작부터 높은 지대"로 이해했다. 선택지 중 시작 6m, 비탈길 6m에서 12m로 진행했다</td><td>낮은 담으로 마당을 엿보는 자리를 높게 만들려는 것으로 읽었다. 해석은 AI가 보고에 밝혔고, 선택은 사용자가 했다</td></tr>
+    <tr><td><span class="pill warn">후속 변경</span></td><td>경사로를 20m로 늘림, 출구와 단 구역을 서쪽으로 약 4.5m 이동, 지대와 비탈길 밑 채움, 적 표식 높이 조정</td><td>위의 높이 선택이 맵 전체와 이어지도록 맞추기 위한 조정이다</td></tr>
+  </table>
+  <div class="notes"><b>발표 멘트</b> AI가 임의로 정한 곳과 그 이유입니다. 값을 바꾼 건 벽 높이 하나이고, 나머지는 기획서에 없던 것을 채우거나 해석한 것입니다. 결투 회랑에서도 색 지정이 없어 전부 회색으로 만들고 치수를 상자 73개로 나눴는데, 이것도 AI의 해석입니다.</div>
+</section>
+
+<!-- 8. 한계 -->
+<section class="slide">
+  <div class="tag">Part 1 · 6. 결과의 범위</div>
+  <h2>이 결과는 맵 3개에서 본 경향이다</h2>
+  <div class="grid2">
+    <div class="card"><h3>조건</h3>
+      <ul class="clean warn">
+        <li>맵 3개뿐이고 반복 측정이 아니다</li>
+        <li>설계 비용이 붙은 쪽이 맵마다 다르다</li>
+        <li>MCP는 중간에 묶음 호출로 개선되어 앞뒤가 다르다</li>
+      </ul></div>
+    <div class="card"><h3>기록</h3>
+      <ul class="clean warn">
+        <li>MCP 실행 시간 이상치 2건은 원인을 모른다</li>
+        <li>요새·폐허의 MCP 호출 횟수는 실측이 아닌 계산값이다</li>
+        <li>맵 색(머티리얼) 기록이 서로 어긋났다<small>결투 회랑은 Part 2에서 같음을 확인했다. 요새·폐허는 MCP 맵이 삭제되어 백업으로만 확인된다</small></li>
+      </ul></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> 이 결과로 어느 방식이 항상 낫다고 말할 수는 없고, 이번 3개 맵 조건에서의 경향이라고 보시면 됩니다.</div>
+</section>
+
+<!-- 9. AI의 설계 한계 -->
+<section class="slide">
+  <div class="tag">Part 1 · 7. AI의 한계</div>
+  <h2>AI가 만든 맵은 벽이 이어지는 부분에서 문제가 났다</h2>
+  <p class="lead">설계 문제 세 가지가 확인됐다.</p>
+  <div class="grid3">
+    <div class="card bad"><h3>1. 맞물리지 않는 벽</h3>
+      <p>벽끼리 맞물리지 않고 어긋나게 놓였다. 한 곳이 아니라 여러 위치에서 같은 유형이 나왔다.</p></div>
+    <div class="card bad"><h3>2. 벽이 없어 레벨 밖으로 나감</h3>
+      <p>막아야 할 곳에 벽이 없어서, 레벨 밖으로 나갈 수 있는 구조가 됐다.</p></div>
+    <div class="card bad"><h3>3. 벽과 이어지지 않는 오르막</h3>
+      <p>오르막(경사로)이 벽과 이어지지 않게 설계되어 있다.</p></div>
+  </div>
+  <div class="quote">숫자 대조는 "설계도대로 만들었는가"만 본다. 설계도 자체의 문제는 대조를 통과하고, 눈으로 보거나 직접 걸어 봐야 드러난다.</div>
+  <div class="notes"><b>발표 멘트</b> 숫자 대조가 만능은 아니라는 뜻입니다. 그래서 다음 단계로 게임을 직접 실행해 보는 테스트가 필요합니다.</div>
+</section>
+
+<!-- 10. Part 1 정리 -->
+<section class="slide">
+  <div class="tag">Part 1 정리 · 맵 제작 방식 비교</div>
+  <h2>Part 1 정리: 대량 배치는 파이썬이 편했다</h2>
+  <div class="grid2">
+    <div class="card ok"><h3>확인된 것</h3>
+      <ul class="clean ok">
+        <li>도형을 대량으로 놓는 작업은 파이썬이 빠르고 걸림돌이 적었다</li>
+        <li>MCP는 새 액터 저장 문제로 추가 시간이 들었다</li>
+        <li>어느 방식이든 "저장 후 다시 열어 숫자로 대조"가 필요했다</li>
+      </ul></div>
+    <div class="card warn"><h3>남은 질문</h3>
+      <ul class="clean warn">
+        <li>MCP 없이 파이썬만으로 되는가<small>Part 1의 파이썬 방식도 맵 복제와 저장에는 MCP를 썼다</small></li>
+        <li>좌표표(설계도)가 없는 맵에서도 같은가<small>세 맵 모두 좌표표로 만든 맵이었다</small></li>
+        <li>몬스터 배치처럼 반복이 많은 작업에서도 같은가</li>
+      </ul></div>
+  </div>
+  <div class="quote">만드는 속도는 파이썬, 검증은 방식과 상관없이 "저장 후 다시 열어 대조".</div>
+  <div class="bridge">이 세 질문을 같은 맵 6개에 몬스터를 배치하면서 확인했다 (Part 2)</div>
+  <div class="notes"><b>발표 멘트</b> 대량 배치는 파이썬이 낫다는 근거가 쌓였고, 검증 습관이 품질을 가른다는 게 Part 1의 가장 큰 소득입니다. 다만 파이썬 방식도 맵 복제와 저장은 MCP로 했기 때문에, Part 2에서 이 부분을 확인했습니다.</div>
+</section>
+
+<!-- ===== Part 2 · 몬스터 배치 ===== -->
+<!-- 11. 무엇을 했나 -->
+<section class="slide">
+  <div class="tag">Part 2 · 몬스터 배치</div>
+  <h2>맵 6개에 몬스터를 놓았더니<br>결과물은 두 방식이 같았다</h2>
+  <p class="lead">MCP 맵 3개는 MCP로, 파이썬 맵 3개는 파이썬으로, 스크립트를 처음부터 따로 써서 배치했다. 기존 임시 표식은 모두 지웠다.</p>
+  <div class="grid3">
+    <div class="card"><h3>배치</h3><p>근거리(절단자) 12명, 원거리(경비 사수) 9명. 기획서의 "배치 요소" 문장을 위치와 방향으로 바꿨다.</p></div>
+    <div class="card ok"><span class="pill ok">확인</span><h3>검증</h3><p>저장 후 다시 열어 대조해서 6개 맵 모두 통과했다. 위치 오차 1cm 미만, 벽에 닿은 몬스터 없음, 임시 표식 0개.</p></div>
+    <div class="card ok"><span class="pill ok">확인</span><h3>시작점과 보스</h3><p>6개 맵 모두 기획서 값과 오차 0. 옮기지 않았다.</p></div>
+  </div>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card warn"><h3>결과가 같은 이유</h3><p>같은 AI가 같은 기획서 문장으로 계산했기 때문이다. 그래서 비교할 것은 결과가 아니라 시간, 호출 횟수, 준비 과정이다.</p></div>
+    <div class="card"><h3>준비 과정의 차이</h3><p>MCP는 켜져 있던 에디터를 MCP 연결 옵션으로 다시 켜야 했다(속도 비교에는 포함하지 않았다). 파이썬은 켜진 에디터에 바로 연결됐다.</p></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> 결과가 같으니 방식의 차이는 만드는 과정에서 나타납니다. 이어지는 장에서 속도, 이유, 그리고 설계표가 없는 맵의 경우를 차례로 보겠습니다.</div>
+</section>
+
+<!-- 12. 속도 -->
+<section class="slide">
+  <div class="tag">Part 2 · 속도</div>
+  <h2>파이썬이 약 30배 빨랐다</h2>
+  <p class="lead">세 맵 합계 시간이다. 몬스터를 지우고, 놓고, 저장하고, 다시 열어 대조하는 데 걸렸다.</p>
+  <div class="legend"><em style="--c:var(--py)">파이썬</em><em style="--c:var(--mcp)">MCP</em><em style="--c:#f2b78f">MCP (묶어서 호출)</em></div>
+  <div class="card">
+    <div class="row"><div class="name">세 맵 합계</div>
+      <div class="bars">
+        <div class="bar mcp"><i style="width:100%"></i><span>257초 (도구를 하나씩 호출, 요청 767회)</span></div>
+        <div class="bar mcp"><i style="width:28%;background:#f2b78f"></i><span>약 71초 (묶어서 호출, 요청 21회)</span></div>
+        <div class="bar py"><i style="width:2%"></i><span>2.2초 (3회 전송)</span></div>
+      </div></div>
+  </div>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card"><h3>MCP는 쓰는 방법에 따라 3.6배 달라졌다</h3><p>하나씩 부르면 257초, 묶어서 부르면 약 71초였다.</p></div>
+    <div class="card warn"><h3>숫자 읽는 법</h3><p>"50~90배 느리다"는 가장 단순하게 쓴 경우의 값이고, 묶어서 쓰면 약 30배다. 이번 맵 3개의 작은 규모에서 나온 값이다.</p></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> 숫자를 하나만 기억하신다면 "파이썬이 약 30배 빠르다"입니다. 도구를 하나씩 부른 값만 보고 100배 이상이라고 하면 과장입니다. 같은 조건 재측정에서 267초와 257초로 거의 같았고, 묶음 호출은 맵마다 3~4회 돌려 17~34초였습니다. 처음 한 번 8.4초가 나온 적이 있는데 원인은 모르고, 이후 모든 실행은 17~34초였습니다.</div>
+</section>
+
+<!-- 13. 왜 느렸나 -->
+<section class="slide">
+  <div class="tag">Part 2 · 느린 이유</div>
+  <h2>MCP는 도구를 한 번 부를 때마다 시간이 든다</h2>
+  <div class="grid3" style="margin-top:14px">
+    <div class="card mcp"><h3>호출 1번당</h3><div class="big mcp" style="font-size:44px">0.33초</div><p style="margin-top:6px">하나씩 호출할 때. 요청을 보내고 받는 왕복 약 0.17초 + 에디터 실행 약 0.16초.</p></div>
+    <div class="card mcp"><h3>묶어서 호출하면</h3><div class="big mcp" style="font-size:44px">0.16초</div><p style="margin-top:6px">왕복은 사라지지만 도구를 실행하는 시간은 남는다. 그래서 파이썬만큼 빨라지지 않는다.</p></div>
+    <div class="card py"><h3>파이썬</h3><div class="big py" style="font-size:44px">1초 미만</div><p style="margin-top:6px">도구 호출 단계 없이 에디터 기능을 바로 쓴다.</p></div>
+  </div>
+  <ul class="clean" style="margin-top:18px">
+    <li>맵 열기(0.7초)와 저장(0.5초)은 느린 부분이 아니었다<small>시간은 거의 전부 몬스터 배치와 벽 검사 단계에서 썼다</small></li>
+    <li>처음 스크립트가 호출을 낭비했다<small>시작점을 찾으려고 액터 200개 이름을 하나씩 물었다. 이름 검색으로 바꾸자 370회가 156회로 줄었다</small></li>
+  </ul>
+  <div class="notes"><b>발표 멘트</b> MCP가 느린 건 방식이 나빠서가 아니라 호출마다 비용이 붙기 때문입니다. 호출 수를 줄이면 많이 좋아지지만 파이썬 수준까지는 안 내려갑니다. 0.17과 0.16은 평균 차이로 계산한 추정값이고, 3.6배 빨라진 것은 묶기와 호출 줄이기를 합친 효과입니다.</div>
+</section>
+
+<!-- 14. 설계표 없는 맵 실험 -->
+<section class="slide">
+  <div class="tag">Part 2 · 기준점 실험</div>
+  <h2>설계표가 없는 맵에서도 두 방식 모두 성공했다</h2>
+  <p class="lead">"파이썬은 내가 먼저 맵을 만들어서 쉬웠던 것 아닌가"를 확인했다. 팀이 만든 시뮬레이션 룸에서 아레나 중심을 맵에서 직접 찾아 5자리에 배치했다. 복사본에서만 했고 끝난 뒤 모두 삭제했다.</p>
+  <table>
+    <tr><th></th><th>MCP</th><th>파이썬</th></tr>
+    <tr><td>아레나 중심 찾기</td><td>정답과 일치</td><td>정답과 일치</td></tr>
+    <tr><td>5자리 배치 (재열기 대조)</td><td>오차 0, 벽 접촉 없음</td><td>오차 0, 벽 접촉 없음</td></tr>
+    <tr><td>전체 시간 / 에디터 요청</td><td>37.7초 / 10회</td><td>1.1초 / 1회</td></tr>
+    <tr><td>맵의 액터 크기 읽기</td><td>22.4초</td><td>0.0초</td></tr>
+    <tr><td>선만 쏴서 중심 찾기</td><td>정답 일치, 2.9초</td><td>정답 일치, 0.14초</td></tr>
+  </table>
+  <div class="quote">어려움은 방식이 아니라 "기준점을 맵에서 읽는 일"에 있었다. 에디터를 수십~수백 번 들여다봐야 해서 파이썬이 훨씬 편했다.</div>
+  <div class="notes"><b>발표 멘트</b> 이 맵은 아레나 바닥이 크고 납작해서 비교적 쉬운 사례입니다. 몬스터 종류와 바라보는 방향은 기획서에 없어서 실험용으로 정했습니다. 지형을 합쳐 둔 어려운 맵은 선 스캔으로 가능성만 보았고 실제로 해 보지는 않았습니다.</div>
+</section>
+
+<!-- 15. 정본 확정과 체감 -->
+<section class="slide">
+  <div class="tag">Part 2 · 맵 정리와 현장 체감</div>
+  <h2>담당 기획자는 파이썬 맵을 정본으로 남겼다.<br>수정하기도 편했다.</h2>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card py"><span class="pill ok">기획자 체감</span><h3>수정과 변형이 쉬웠다</h3><p>조각이 잘게 쪼개져 있어서 벽 하나를 지우거나 모양을 바꾸기 쉬웠다. 같은 작업이 1~2초에 끝나서 시간도 빨라 편했다.</p></div>
+    <div class="card"><span class="pill ok">확인된 근거</span><h3>결투 회랑 기준</h3><p>지형 조각 73개는 같다. 파이썬 맵은 조각마다 액터 1개(73개), MCP 맵은 구간별 13개 액터에 묶여 있었다.</p></div>
+  </div>
+  <ul class="clean" style="margin-top:16px">
+    <li>두 결투 회랑 맵은 같은 맵이었다<small>높이 지도 6,232개 점 중 2점만 약 10cm 차이, 머티리얼도 같았다</small></li>
+    <li>MCP 맵 3개를 백업 후 삭제하고, 파이썬 맵 3개를 기획서 이름으로 바꿨다<small>LV_DuelCorridor, LV_FortressBreach, LV_TempDungeon03. 이름 바꾸기가 에디터 확인창에 막혀 "복제 후 삭제"로 우회했고, 복제본은 원본과 같음을 대조했다</small></li>
+  </ul>
+  <div class="notes"><b>발표 멘트</b> "편했다"는 담당 기획자의 체감이고 측정값은 아닙니다. 다만 결투 회랑에서는 조각이 낱개인지 묶음인지의 차이가 실제로 있었습니다. 요새 돌파와 폐허 성곽길은 저장 파일 수가 같아 같은 구성으로 보지만 조각 구조를 따로 비교하지는 않았습니다.</div>
+</section>
+
+<!-- 16. 전체 결론 -->
+<section class="slide">
+  <div class="tag">전체 결론 · Part 1 + Part 2</div>
+  <h2>많이 만들 땐 파이썬,<br>하나씩 확인하며 고칠 땐 MCP</h2>
+  <div class="grid2">
+    <div class="card ok"><h3>이번에 확인된 것</h3>
+      <ul class="clean ok">
+        <li>대량 배치와 반복 작업은 파이썬이 빠르다<small>Part 1 세 맵 모두, Part 2에서 약 30배</small></li>
+        <li>맵 복제, 배치, 저장, 재열기 대조를 파이썬만으로 할 수 있다</li>
+        <li>설계표가 없는 맵에서도 두 방식 모두 가능했다</li>
+        <li>어느 방식이든 "저장 후 다시 열어 숫자로 대조"가 필요하다</li>
+        <li>파이썬이 수정하기 편하고 빨랐다<small>조각이 낱개라 삭제와 변형이 쉬웠다 (기획자 체감)</small></li>
+      </ul></div>
+    <div class="card warn"><h3>MCP가 맞을 수 있는 경우</h3>
+      <ul class="clean warn">
+        <li>한두 개를 확인하며 고치는 작업<small>호출마다 결과가 한 줄씩 남아 비개발자도 읽기 쉽다. 파이썬은 스크립트를 읽어야 한다</small></li>
+        <li>허용된 도구 안의 일만 시키고 싶을 때<small>파이썬은 파일 쓰기까지 할 수 있어 실수의 영향이 크다</small></li>
+        <li>애니메이션, 블루프린트, 스테이트트리 전용 도구<small>도구 목록에서만 확인했고 파이썬과 비교하지 않았다</small></li>
+      </ul></div>
+  </div>
+  <div class="quote">만드는 속도는 파이썬, 확인과 통제가 필요하면 MCP. 어느 쪽이든 검증은 "저장 후 다시 열어 대조".</div>
+  <p class="small">같은 AI가 두 방식을 모두 했고, 맵당 몬스터 6~9명의 작은 규모에서 잰 결과다.</p>
+  <div class="notes"><b>발표 멘트</b> 합친 결론은 "대량·반복은 파이썬, 확인하며 고치는 건 MCP"입니다. 시간은 방식마다 1~4회씩만 재서 평균으로 믿기에는 부족하고, 조명이나 연출 같은 후반 작업은 비교하지 않았습니다. MCP 전용 도구 영역도 비교하지 않아서 "MCP가 꼭 필요한 경우"는 아직 확정하지 못했습니다.</div>
+</section>
+
+<!-- 17. 운영 제안과 남은 확인 -->
+<section class="slide">
+  <div class="tag">마무리 · 운영 제안과 남은 확인</div>
+  <h2>이렇게 운영하고, 남은 것은 한 번에 확인한다</h2>
+  <div class="grid2">
+    <div class="card ok"><h3>운영 제안</h3>
+      <ul class="clean ok">
+        <li>기획서, 좌표표, 맵 순서로 흐름을 고정한다<small>맵의 진짜 자산은 방식이 아니라 좌표표다. 기획이 바뀌면 좌표표만 고치고 다시 만들면 된다</small></li>
+        <li>대량 제작과 수정 재생성은 파이썬으로 한다</li>
+        <li>"저장 후 다시 열어 숫자로 대조"를 필수 절차로 둔다</li>
+        <li>작업 폴더와 기억 파일을 프로젝트 폴더로 맞춘다<small>요새·폐허 작업 때 프로젝트 폴더가 아니어서 기억 파일과 작업 요령 문서를 받지 못했다</small></li>
+      </ul></div>
+    <div class="card warn"><h3>남은 확인 사항</h3>
+      <ul class="clean warn">
+        <li>게임 직접 실행(PIE) 테스트<small>점프 높이, 적의 시야, 경사로, 12m 낙하 규칙, 새 높이의 종탑 시야, 벽 연결</small></li>
+        <li>폐허 성곽길 높이 정본 결정과 기획서 수정<small>기획서는 0m와 3m, 맵은 6m와 12m. 마당 가운데에서 성벽 위 사수가 안 보이는 자리가 생겼다</small></li>
+        <li>결투 회랑 매복 적 시야 2건<small>통로 2 직선 끝 약 1m와 샛길 출구 직전에서 보인다</small></li>
+        <li>시뮬레이션 룸 시작 지점이 기획서와 약 64cm 어긋남</li>
+        <li>폐허 성곽길 기준점 3곳의 해석<small>"모퉁이에서 6m"를 가장자리 기준으로 읽었다. 다르게 읽으면 2~3m 달라진다</small></li>
+        <li>MCP 이상치 재현, MCP 전용 도구를 파이썬과 비교</li>
+      </ul></div>
+  </div>
+  <div class="notes"><b>발표 멘트</b> "둘 다 똑같이 쓴다"가 아니라 "파이썬이 주력"입니다. MCP를 완전히 빼도 되는지는 전용 도구 영역을 비교한 뒤에 정하겠습니다. 오른쪽은 이번에 못 끝낸 것을 한곳에 모았습니다. 몬스터 시야 점검은 16개 문장 중 13개가 기대대로였고, 눈높이 선 하나로 본 것이라 실제 AI 시야와는 다를 수 있습니다.</div>
+</section>
+
+</main>
+
+<div class="pager">
+  <span id="pg"></span>
+  <button id="prev" aria-label="이전">&#8593;</button>
+  <button id="next" aria-label="다음">&#8595;</button>
+  <button class="t" id="tn">멘트 숨기기</button>
+</div>
+
+<script>
+  // 슬라이드 이동 (방향키, 스페이스, 버튼)
+  const deck = document.getElementById('deck');
+  const slides = [...document.querySelectorAll('.slide')];
+  const pg = document.getElementById('pg');
+  let cur = 0;
+  pg.textContent = '1 / ' + slides.length;
+  function go(i){
+    cur = Math.max(0, Math.min(slides.length-1, i));
+    slides[cur].scrollIntoView({behavior:'smooth'});
+  }
+  deck.addEventListener('scroll', () => {
+    const y = deck.scrollTop + deck.clientHeight/2;
+    slides.forEach((s,i) => { if (y >= s.offsetTop && y < s.offsetTop + s.offsetHeight) { cur = i; pg.textContent = (i+1) + ' / ' + slides.length; } });
+  });
+  document.addEventListener('keydown', e => {
+    if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); go(cur+1); }
+    if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); go(cur-1); }
+  });
+  document.getElementById('next').onclick = () => go(cur+1);
+  document.getElementById('prev').onclick = () => go(cur-1);
+  // 발표 멘트 보이기/숨기기
+  const tn = document.getElementById('tn');
+  tn.onclick = () => { document.body.classList.toggle('hide-notes'); tn.textContent = document.body.classList.contains('hide-notes') ? '멘트 보이기' : '멘트 숨기기'; };
+</script>
+</body>
+</html>

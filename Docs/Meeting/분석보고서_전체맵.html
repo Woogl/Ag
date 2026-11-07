@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>맵 제작 분석 보고서</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 배치: 왼쪽 목차(넓은 화면) + 본문 한 단. 좁은 화면에서는 목차가 위에서 줄바꿈 칩으로 */
+:root {
+  --bg: #f4f6f7;
+  --surface: #ffffff;
+  --fg: #1a2328;
+  --muted: #55646d;
+  --line: #d9e1e5;
+  --accent: #1d6a85;
+  --accent-soft: #e0eef3;
+  --head-bg: #eaf0f3;
+  --code-bg: #eef2f4;
+  --font-body: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1518; --surface: #162026; --fg: #e3eaed; --muted: #9aa9b1; --line: #29363d;
+    --accent: #72c4df; --accent-soft: #17313b; --head-bg: #1c2a31; --code-bg: #1d2a30; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1518; --surface: #162026; --fg: #e3eaed; --muted: #9aa9b1; --line: #29363d;
+  --accent: #72c4df; --accent-soft: #17313b; --head-bg: #1c2a31; --code-bg: #1d2a30; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.75;
+  padding-block: 0 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  word-break: keep-all; overflow-wrap: break-word;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }
+header.hero { max-width: 1120px; margin: 0 auto; padding: 48px 0 28px; }
+header.hero h1 { font-size: clamp(26px, 4.4vw, 38px); line-height: 1.3; margin: 0 0 14px; text-wrap: balance; letter-spacing: -0.01em; }
+header.hero p { margin: 0 0 6px; color: var(--muted); font-size: 15px; max-width: 70ch; }
+.hint { margin-top: 18px; padding: 12px 16px; background: var(--accent-soft); color: var(--fg); border-radius: 6px; font-size: 15px; max-width: 70ch; }
+nav.toc { position: sticky; top: 24px; align-self: start; font-size: 14px; display: flex; flex-direction: column; gap: 2px; max-height: calc(100vh - 48px); overflow-y: auto; }
+nav.toc .label { font-size: 12px; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 4px; line-height: 1.4; border-left: 2px solid transparent; }
+nav.toc a:hover { color: var(--fg); background: var(--head-bg); }
+nav.toc a.on { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+main { min-width: 0; }
+section { padding: 8px 0 36px; scroll-margin-top: 16px; }
+h2 { font-size: clamp(21px, 3vw, 26px); line-height: 1.35; margin: 24px 0 14px; padding-top: 22px; border-top: 1px solid var(--line); text-wrap: balance; }
+section:first-child h2 { border-top: 0; padding-top: 0; }
+h3 { font-size: 18px; line-height: 1.4; margin: 30px 0 10px; color: var(--accent); }
+p { margin: 0 0 14px; max-width: 72ch; }
+ul, ol { margin: 0 0 16px; padding-left: 1.3em; max-width: 72ch; }
+li { margin-bottom: 7px; }
+li::marker { color: var(--accent); }
+strong { font-weight: 700; }
+code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.88em; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; word-break: break-all; }
+.tw { overflow-x: auto; margin: 14px 0 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.55; font-variant-numeric: tabular-nums; }
+th { background: var(--head-bg); text-align: left; font-weight: 700; white-space: nowrap; }
+th, td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; min-width: 90px; }
+td { min-width: 110px; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--head-bg) 35%, transparent); }
+section.summary { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 26px clamp(16px, 3vw, 30px) 14px; margin-bottom: 28px; }
+section.summary h2 { border-top: 0; padding-top: 0; margin-top: 0; color: var(--accent); }
+section.summary ol { padding-left: 1.4em; }
+section.summary li { margin-bottom: 14px; }
+section.gloss { background: var(--accent-soft); border-radius: 10px; padding: 22px clamp(16px, 3vw, 30px) 8px; margin-bottom: 20px; }
+section.gloss h2 { border-top: 0; padding-top: 0; margin-top: 0; font-size: 19px; }
+section.gloss li { margin-bottom: 5px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+footer { max-width: 1120px; margin: 24px auto 0; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  nav.toc { position: static; flex-direction: row; flex-wrap: wrap; gap: 6px; max-height: none; margin-bottom: 10px; }
+  nav.toc .label { width: 100%; margin-bottom: 2px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--surface); font-size: 13px; }
+  nav.toc a.on { border-color: var(--accent); }
+  header.hero { padding-top: 32px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>맵 제작 분석: MCP 방식 vs 파이썬 방식 (맵 3종 전체)</h1>
+  <p>작성 시작: 2026-11-03 근거: 당시 작업 대화 기록 파일에서 직접 확인한 값만 적었고, 추정은 "추정"이라고 표시했다.</p>
+  <div class="hint">처음 읽는다면 "용어 풀이"와 "한눈에 보기"만 읽어도 전체 결론을 알 수 있다. 근거와 한계는 각 장에 있다.</div>
+</header>
+<div class="wrap">
+  <nav class="toc" aria-label="목차"><div class="label">목차</div><a href='#s1'>용어 풀이</a><a href='#s2'>한눈에 보기</a><a href='#s3'>0. 대상 맵과 근거 기록</a><a href='#s4'>1. 의존한 메모리</a><a href='#s5'>2. 결과물 검증 방법</a><a href='#s6'>3. 병목: 시간이 실제로 많이 걸린 곳</a><a href='#s7'>4. 추론한 곳</a><a href='#s8'>5. 사용한 외부 도구</a><a href='#s9'>6. MCP 방식: Toolset별 호출 횟수</a><a href='#s10'>7. 파이썬: 스크립트 줄 수</a><a href='#s11'>8. 시간과 토큰 정리</a><a href='#s12'>9. 예상되는 한계점</a><a href='#s13'>10. 보고서에 쓸 문장 후보</a></nav>
+  <main>
+<section id='s1' class='gloss'><h2>용어 풀이 (개발을 몰라도 읽을 수 있게)</h2><ul><li>그레이박스: 회색 상자만으로 지형을 대충 세워서 동선과 크기감을 확인하는 단계.</li><li>MCP 방식: AI가 에디터에 "큐브 하나 놓아줘" 같은 지시를 하나씩 보내서 만드는 방식. 사람이 에디터를 조작하는 것과 비슷하다.</li><li>파이썬 방식: 작은 프로그램(스크립트) 하나를 에디터에 보내서 한 번에 만드는 방식.</li><li>좌표표: "어떤 모양을 어디에 얼마 크기로 놓을지"를 숫자로 적은 설계도. 두 방식이 같은 좌표표를 입력으로 썼다.</li><li>액터: 에디터 맵 안에 놓이는 물체 하나하나(상자, 기둥, 보스, 시작점 등).</li><li>훅: 특정 순간에 자동으로 실행되도록 걸어 둔 규칙.</li><li>PIE: 에디터 안에서 게임을 실제로 실행해서 걸어 보는 테스트.</li><li>토큰: AI가 읽고 쓰는 글자의 단위. 많이 쓸수록 시간과 비용이 든다.</li></ul></section>
+<section id='s2' class='summary'><h2>한눈에 보기</h2><p>세 개의 미니던전(결투 회랑, 요새 돌파, 폐허 성곽길)을 각각 MCP 방식과 파이썬 방식으로 만들어 비교했다. 아래는 이 문서 전체의 결론이다. 근거와 한계는 각 장에 있다.</p>
+<ol><li><strong>시간은 세 맵 모두 파이썬이 짧았다.</strong> 파이썬은 0.9~3.8초, MCP는 결투 회랑 약 5분(초기 방식), 요새 돌파 7~11초, 폐허 성곽길 약 6초였다. 다만 MCP를 묶음 호출로 개선한 뒤에는 격차가 수백 배에서 2~6배로 줄었다.</li><li><strong>토큰(AI가 쓴 글자량)은 맵마다 달랐다.</strong> 결투 회랑에서는 파이썬이 MCP의 약 5분의 1이었다. 그러나 요새 돌파와 폐허 성곽길 세션에서는 파이썬 단계가 약 8.2만, MCP 단계가 약 6.6만으로 오히려 파이썬 쪽이 많았다. 파이썬 단계에 좌표표 설계(약 5.2만)가 들어 있었기 때문이다. "파이썬이 토큰도 적다"는 결투 회랑에서만 확인되고, 이후 세션에서는 조건이 달라 그대로 말할 수 없다.</li><li><strong>가장 큰 병목은 방식마다 달랐다.</strong> MCP는 새 액터 저장 문제와 시작점이 원점으로 돌아가는 문제에 약 15분을 썼다. 파이썬은 에디터 연산이 거의 병목이 아니었고, 화면 캡처 설정(약 7분)과 이전 맵 삭제 권한 대기가 시간을 잡았다. 공통 병목은 좌표표 설계와 에디터 연결(약 17분)이었다.</li><li><strong>가장 믿을 만한 검증은 "저장 후 다시 열어 숫자로 대조"였다.</strong> 이 방법으로 저장 누락, 저장 파일 부족, 시작점 문제를 잡았다. 게임을 직접 실행해 보는 테스트(PIE)는 세 맵 모두 하지 않았다.</li><li><strong>AI가 기획서에 없는 것을 추가하거나 값을 바꾼 곳이 있다.</strong> 종탑 시계, 깃발, 이끼, 그리고 폐허 성곽길의 통로 바깥벽 높이를 5m에서 4.2m로 낮춘 것. 담당 기획자 확인이 필요하다 (4장).</li></ol></section>
+<section id='s3'><h2>0. 대상 맵과 근거 기록</h2><p>세 개의 미니던전을 같은 방식으로 만들었다. 각각 MCP 방식 맵과 파이썬 방식 맵이 한 쌍씩 있다.</p>
+<div class='tw'><table><thead><tr><th>던전</th><th>기획서</th><th>파이썬 맵</th><th>MCP 맵</th></tr></thead><tbody><tr><td>결투 회랑</td><td>스테이지 - 미니던전 결투 회랑</td><td>LV_DuelCorridor_Py</td><td>LV_DuelCorridor</td></tr><tr><td>요새 돌파</td><td>스테이지 - 미니던전 요새 돌파</td><td>LV_FortressBreach_Py</td><td>LV_FortressBreach_MCP</td></tr><tr><td>폐허 성곽길</td><td>스테이지 - 미니던전 폐허 성곽길</td><td>LV_TempDungeon03_Py</td><td>LV_TempDungeon03_MCP</td></tr></tbody></table></div>
+<p>폐허 성곽길은 맵 파일 이름이 TempDungeon03이고, 좌표표 폴더 이름은 RuinedRampart다. 세 이름이 같은 던전이다.</p>
+<p>작업 기록은 두 번의 세션에 나뉘어 있다.</p>
+<ul><li>1번 세션 (2026-11-02 01:10~02:23, 작업 폴더 C:\Dev\Ag): 결투 회랑을 MCP와 파이썬으로 만들었다. 이 세션 중에 두 방식의 기본 틀이 생겼다.</li><li>2번 세션 (2026-11-02 14:13~15:48, 작업 폴더 C:\Dev): 요새 돌파와 폐허 성곽길을 파이썬과 MCP로 만들었다. 1번 세션에서 만든 틀을 재사용했다.</li></ul></section>
+<section id='s4'><h2>1. 의존한 메모리</h2><p>여기서 "메모리"는 두 가지를 구분해서 적는다. 하나는 AI가 세션을 시작할 때 불러오는 기억 파일이고, 다른 하나는 AI가 필요해서 직접 찾아 읽은 프로젝트 문서와 이전 작업물이다.</p>
+<h3>1-1. 결투 회랑 (1번 세션)</h3>
+<p>세션을 시작할 때 자동으로 불러온 것은 세 가지다.</p>
+<ul><li>전역 설정 <code>CLAUDE.md</code> (말투, "큰 작업은 계획 먼저" 같은 작업 규칙)</li><li>프로젝트 규칙 <code>AGENTS.md</code> (임시 스크립트를 저장소에 두지 않는다는 규칙이 여기 있다)</li><li>기억 목록 <code>MEMORY.md</code></li></ul>
+<p>작업을 시작하며(16:29) AI가 직접 읽은 것은 다음과 같다.</p>
+<ul><li>기억 파일 <code>project-minidungeon-m2-status.md</code>: 미니던전 3종 중 무엇이 확정이고 임시인지 정리된 기억. 이걸로 결투 회랑이 "AI가 기획한 임시안"임을 알았다.</li><li>문서 인덱스, 결투 회랑 기획서, 보스 전장 기획서(보스 아레나 모양 참고)</li><li>에디터 작업 요령 문서 <code>ag-editor-workflow/SKILL.md</code>: 에디터 다루는 순서와 이 프로젝트에서 겪은 함정</li></ul>
+<p>이 세션에서는 기억 파일이 실제로 쓰였다. 읽은 기억 파일은 한 개다.</p>
+<h3>1-2. 요새 돌파, 폐허 성곽길 (2번 세션)</h3>
+<p>이 세션은 작업 폴더가 <code>C:\Dev</code>였고, 이 폴더는 프로젝트 폴더(<code>C:\Dev\Ag</code>)가 아니었다. 그 결과가 1번 세션과 다르다.</p>
+<ul><li>기억 목록 <code>MEMORY.md</code>는 불러오지 않았다. 세션 기록에 지침 파일이 전역 <code>CLAUDE.md</code> 한 개뿐이다. 이 폴더용 기억 폴더는 비어 있었다.</li><li>기억 파일은 하나도 읽지 않았다. <code>project-minidungeon-m2-status.md</code>도 읽지 않았다.</li><li>프로젝트 규칙 <code>AGENTS.md</code>는 자동 불러오기가 아니라, 기획서 읽는 순간 훅(자동 실행 규칙)이 끼워 넣어 줬다.</li><li>에디터 작업 요령 문서는 읽지 않았다.</li></ul>
+<p>대신 AI는 파일을 직접 뒤져서 필요한 것을 찾았다.</p>
+<ul><li>시작 직후(05:13) 폴더를 훑어서 <code>AG_personal</code> 폴더를 발견하고, 그 안의 결투 회랑 <code>layout.py</code>, <code>build_py.py</code> 등 이전 작업물을 읽었다.</li><li>요새 돌파와 폐허 성곽길 기획서를 읽었다 (05:16).</li><li>기억 파일 대신 이전 세션의 작업물이 사실상 기억 역할을 했다. 첫 요청에서 "하나는 레벨 제작을 끝냈다"는 말만 듣고 <code>AG_personal</code>의 결과물을 보고 파이프라인을 파악해 "결투 회랑 방식을 그대로 재사용하면 된다"고 판단했다.</li></ul>
+<h3>1-3. 정리</h3>
+<div class='tw'><table><thead><tr><th>항목</th><th>결투 회랑 (1번 세션)</th><th>요새 돌파, 폐허 성곽길 (2번 세션)</th></tr></thead><tbody><tr><td>기억 목록 자동 불러오기</td><td>됨</td><td>안 됨 (폴더가 달라서)</td></tr><tr><td>읽은 기억 파일</td><td>1개</td><td>0개</td></tr><tr><td>프로젝트 규칙 <code>AGENTS.md</code></td><td>자동</td><td>기획서를 읽을 때 훅으로 주입</td></tr><tr><td>에디터 작업 요령 문서</td><td>읽음</td><td>안 읽음</td></tr><tr><td>기획서</td><td>결투 회랑, 보스 전장</td><td>요새 돌파, 폐허 성곽길</td></tr><tr><td>이전 작업물(<code>AG_personal</code>)</td><td>아직 없음</td><td>직접 찾아서 읽음 (핵심 의존 대상)</td></tr></tbody></table></div>
+<p>이 비교에서 볼 점은 두 가지다.</p>
+<ol><li>2번 세션은 기억 파일 없이 이전 작업 폴더만으로 이어 갔다. 작업물이 저장소 밖 <code>AG_personal</code>에 남아 있었기 때문에 가능했다. 그 폴더가 없었다면 처음부터 다시 만들었을 것이다.</li><li>2번 세션이 작업 폴더가 달라서 기억과 작업 요령 문서를 받지 못한 건 개선할 점이다. 결과에는 큰 문제가 없었지만 "확정 / 임시" 구분 같은 맥락이 빠진 채로 진행됐다.</li></ol>
+<p>위키(<code>knowledge-graph</code>) 검색은 두 세션 모두 쓰지 않았다.</p></section>
+<section id='s5'><h2>2. 결과물 검증 방법</h2><p>검증은 "만든 결과가 의도대로인지 확인하는 방법"이다. 맵마다 어떤 방법을 썼고 무엇을 못 했는지 적는다.</p>
+<h3>2-1. 쓴 검증 방법 네 가지</h3>
+<ol><li>눈으로 보기: 에디터 화면을 이미지로 찍어 AI가 직접 보고 판단한다. 위에서 내려다본 그림과 시작 지점에서 본 그림을 쓴다.</li><li>설계도와 대조: 만들어진 액터의 위치를 좌표표 숫자와 비교한다. 오차(cm)로 나온다.</li><li>저장 후 다시 열기: 맵을 저장한 뒤 디스크에서 새로 읽어서 값이 유지되는지 본다. 에디터 메모리 속 값은 믿지 않고 파일에서 읽는 것이 핵심이다.</li><li>시선 계산(광선 검사): 시작 지점에서 탑 꼭대기까지 보이지 않는 선을 쏴서 중간에 벽이 가리는지 계산한다. 기획서에 "시작 지점에서 탑이 보여야 한다"는 확인 항목이 있어서 썼다.</li></ol>
+<h3>2-2. 맵별 검증 기록</h3>
+<p><strong>결투 회랑</strong></p>
+<div class='tw'><table><thead><tr><th>확인</th><th>MCP 맵</th><th>파이썬 맵</th></tr></thead><tbody><tr><td>눈으로 보기</td><td>위에서 본 전체 그림 3장 확인</td><td>MCP 맵과 눈으로 구별되지 않음을 확인</td></tr><tr><td>설계도와 대조</td><td>안 함 (호출 결과만 확인)</td><td>최대 오차 0cm (경사로와 원형 방 조각은 제외)</td></tr><tr><td>저장 후 다시 열기</td><td>저장만 확인</td><td>처음엔 안 함. 보스 위치가 이상하다는 지적 뒤 다시 열어서 확인</td></tr><tr><td>두 맵끼리 비교</td><td>눈으로만. 액터 구성이 달라 숫자 비교는 불가능</td><td></td></tr></tbody></table></div>
+<p>이때의 검증에는 구멍이 있었다. 파이썬 맵을 처음에는 에디터 메모리 값만 보고 "오차 0"이라고 했는데, 기존 액터(보스, 시작점, 내비 영역)를 옮긴 것이 저장에서 빠져 있었다. 다시 열어 보고서야 발견했다.</p>
+<p><strong>요새 돌파</strong></p>
+<div class='tw'><table><thead><tr><th>확인</th><th>파이썬 맵</th><th>MCP 맵</th></tr></thead><tbody><tr><td>눈으로 보기</td><td>위에서 본 그림, 시작 지점 시점, 탑 정면 그림 확인</td><td>기록에서 확인되지 않음</td></tr><tr><td>시선 계산</td><td>시작 지점에서 탑 꼭대기가 보임</td><td>기록에서 확인되지 않음</td></tr><tr><td>파이썬 맵과 비교</td><td></td><td>액터 195개의 위치, 회전, 크기, 폴더, 색을 디스크에서 새로 읽어 대조해 전부 일치</td></tr><tr><td>저장 확인</td><td>저장됨</td><td>저장된 파일 수가 파이썬 맵(205개)보다 적어(98개) 저장이 덜 된 것을 발견하고 고쳐서 재확인</td></tr></tbody></table></div>
+<p>시선 계산에서 비스듬히 기울어진 도형 41개는 계산에서 뺐다.</p>
+<p><strong>폐허 성곽길</strong></p>
+<div class='tw'><table><thead><tr><th>확인</th><th>파이썬 맵</th><th>MCP 맵</th></tr></thead><tbody><tr><td>눈으로 보기</td><td>조감, 시계 클로즈업, 지붕, 시작 지점 그림 확인</td><td>기록에서 확인되지 않음</td></tr><tr><td>시선 계산</td><td>성벽 위 통로에서는 종탑이 보임. 시작 지점과 마당에서는 가려짐</td><td>기록에서 확인되지 않음</td></tr><tr><td>파이썬 맵과 비교</td><td></td><td>액터 115개를 대조해 전부 일치</td></tr><tr><td>높이 변경 후</td><td>시선 계산을 다시 하지 못함 (검사 스크립트의 경로 문제로 중단)</td><td>같음</td></tr></tbody></table></div>
+<p>시선 계산의 비스듬한 도형 4개는 계산에서 뺐다. 시선 계산 결과는 옛 높이 기준이다.</p>
+<h3>2-3. 검증으로 실제로 찾아낸 문제</h3>
+<p>검증이 가치가 있었다는 증거다.</p>
+<ul><li>파이썬 맵의 보스, 시작점, 내비 영역 이동이 저장에서 빠졌다 (결투 회랑). 다시 열어 보고 발견했다.</li><li>요새 돌파 MCP 맵이 저장 파일 수가 모자랐다 (98개 대 205개). 파일 수를 세어 비교해서 발견했다.</li><li>시작점(PlayerStart)이 다시 열면 원점으로 돌아가는 현상 (요새 돌파 MCP 맵). 파일에는 정상 위치가 저장돼 있는데 불러오면 0이었다. 원인은 찾지 못했고, 지우고 새로 만드는 방식으로 피했다.</li><li>폐허 성곽길의 종탑이 시작 지점에서 가려진다는 사실을 시선 계산으로 알았다. 이건 기획서가 "확인하고 높이를 조정"하라고 한 항목이다.</li><li>화면 캡처가 처음에 저장되지 않았다. 에디터가 백그라운드 창이라 그림 그리기를 멈춘 것이 원인이었고, 그 설정을 잠시 끄고 찍은 뒤 원래대로 되돌렸다. 한 번은 카메라가 바닥만 찍어 쓸모없어서, 대신 시선 계산을 썼다.</li></ul>
+<h3>2-4. 하지 않은 검증</h3>
+<ul><li>게임 실행(PIE): 세 맵 모두 안 했다. 점프 높이, 적의 시야, 경사로 오르내림은 확인되지 않았다.</li><li>기획서의 시야 조건 중 일부: 결투 회랑의 난간 너머 엿보기, 기둥 뒤 가림 등은 확인하지 않았다.</li><li>새 높이로 바꾼 폐허 성곽길의 종탑 시야와 12m 낙하 규칙.</li><li>요새 돌파, 폐허 성곽길의 MCP 맵 화면 확인: 파이썬 맵과 숫자가 일치한다는 대조로 대신했다.</li><li>시작점을 새로 만드는 코드가 들어간 MCP 빌드 스크립트를 처음부터 끝까지 다시 돌려 보지 않았다. 같은 동작을 직접 해서 확인한 데까지만 검증했다고 AI 스스로 기록해 두었다.</li></ul>
+<h3>2-5. 기록상 서로 어긋나는 부분</h3>
+<p>AI의 최종 요약에는 "파이썬 맵과 MCP 맵을 대조했더니 색 머티리얼까지 전부 같다"는 말과 "보이는 차이로 파이썬 맵은 격자 무늬, MCP 맵은 기본 회색"이라는 말이 같이 있다. 두 설명이 한꺼번에 맞을 수 없다. 어느 쪽이 정확한지는 에디터에서 두 맵을 열어 확인해야 한다.</p>
+<h3>2-6. 정리</h3>
+<ul><li>가장 믿을 만한 검증은 "저장 후 디스크에서 다시 읽어 숫자로 대조"다. 이걸로 실제 문제 세 건을 잡았다.</li><li>눈으로 보기는 모양을 확인하는 데는 좋지만 위치 오류를 못 잡았다.</li><li>MCP 맵을 파이썬 맵과 숫자로 대조한 덕에 MCP 맵의 품질도 보증할 수 있었다. 결투 회랑은 액터 구성이 달라 이 대조를 하지 못했다.</li></ul></section>
+<section id='s6'><h2>3. 병목: 시간이 실제로 많이 걸린 곳</h2><p>병목은 "작업 전체에서 시간을 가장 많이 잡아먹은 구간"이다. 세션 기록의 시각표로 구간을 나눠서 적는다. 시각은 모두 기록에 남은 것이고, 구간 이름은 내가 붙였다.</p>
+<h3>3-1. 결투 회랑 (1번 세션)</h3>
+<div class='tw'><table><thead><tr><th>구간</th><th>걸린 시간</th><th>방식</th><th>무슨 일</th></tr></thead><tbody><tr><td>에디터와 MCP 연결</td><td>약 17분</td><td>공통 (제작 시간에는 불포함)</td><td>포트 번호 문제, 다른 프로젝트의 연결 도구와 충돌</td></tr><tr><td>계획 제안과 승인</td><td>약 3분</td><td>공통</td><td>사용자가 계획을 읽고 승인하는 시간</td></tr><tr><td>좌표표 설계</td><td>약 4분</td><td>공통</td><td>기획서 치수를 읽고 상자 73개를 계산</td></tr><tr><td>맵 배치</td><td>약 5분</td><td>MCP</td><td>큐브마다 지시를 보냄 (호출 143회)</td></tr><tr><td>이전 맵 삭제</td><td>약 1분</td><td>파이썬</td><td>삭제 도구가 안전 검사에 막혀 사용자가 직접 지움</td></tr><tr><td>맵 생성</td><td>에디터 연산 0.9초</td><td>파이썬</td><td>스크립트 실행</td></tr><tr><td>저장 누락 수정</td><td>약 1분</td><td>파이썬</td><td>이동한 보스, 시작점이 저장에서 빠진 것을 고침</td></tr></tbody></table></div>
+<p>이 맵에서 가장 큰 병목은 맵 제작 밖에 있었다. 에디터 연결에 17분을 쓴 것이다. 제작 안에서는 좌표표 설계(4분)와 MCP 배치(5분)가 컸다. 파이썬은 실행 자체가 병목이 아니었다.</p>
+<h3>3-2. 요새 돌파와 폐허 성곽길, 파이썬 방식 (2번 세션)</h3>
+<p>2번 세션의 파이썬 단계는 05:16 승인부터 05:33 완료까지 약 17분이다.</p>
+<div class='tw'><table><thead><tr><th>구간</th><th>걸린 시간</th><th>무슨 일</th></tr></thead><tbody><tr><td>좌표표 두 개 설계</td><td>약 6분</td><td>기획서 두 개를 읽고 AI가 계산해서 좌표표 작성. 그중 약 5분은 읽은 뒤 쓰기 시작하기까지의 계산 시간</td></tr><tr><td>에디터 켜기와 연결</td><td>약 1분</td><td>에디터가 꺼져 있어서 AI가 직접 켬</td></tr><tr><td>맵 생성</td><td>1분 안팎</td><td>파이썬 스크립트 실행</td></tr><tr><td>화면 캡처</td><td>약 7분</td><td>아래 설명</td></tr><tr><td>시선 계산과 정리</td><td>약 1분</td><td></td></tr></tbody></table></div>
+<p>이 단계의 가장 큰 병목은 화면 캡처였다. 7분 가까이 걸린 이유는 이렇다.</p>
+<ul><li>에디터가 백그라운드 창이라 그림 그리기를 멈춰서 캡처가 저장되지 않았다.</li><li>저장 경로를 <code>/c/...</code> 형식으로 줘서 엉뚱한 위치에 저장됐다.</li><li>잘못 저장된 파일을 찾느라 C 드라이브 전체를 검색했다 (약 1분 40초).</li><li>삭제가 안전 검사에 막혀 파일만 옮겼다.</li></ul>
+<p>이건 파이썬 방식의 문제가 아니라 화면 캡처 기능을 쓰는 방법의 문제였다. MCP 방식이었어도 같은 캡처를 하려면 마주쳤을 문제다. 맵 생성 자체는 1분 안팎이었다.</p>
+<h3>3-3. 요새 돌파와 폐허 성곽길, MCP 방식 (2번 세션)</h3>
+<p>MCP 단계는 05:40 요청부터 06:05 완료까지 약 25분이다.</p>
+<div class='tw'><table><thead><tr><th>구간</th><th>걸린 시간</th><th>무슨 일</th></tr></thead><tbody><tr><td>사용자 질문 대기</td><td>약 3분 30초</td><td>폐허 성곽길 시작 위치 해석을 사용자에게 물음 (사람 시간)</td></tr><tr><td>도구 확인</td><td>약 5분</td><td>AI의 도구 목록에 MCP가 없어서 주소로 직접 요청을 보내 확인. 사용법 파악</td></tr><tr><td>첫 빌드와 저장 문제 조사</td><td>약 9분 30초</td><td>저장 실패 → 파일 수 부족 발견 → 원인 조사 → 에디터 재시작 → 꼬인 맵 삭제 후 재생성</td></tr><tr><td>시작점 원점 문제</td><td>약 6분</td><td>파일에는 정상 위치가 있는데 불러오면 0. 원인은 못 찾고 "지우고 새로 만들기"로 우회</td></tr><tr><td>최종 비교와 보고</td><td>약 1분</td><td></td></tr></tbody></table></div>
+<p>이 단계의 병목은 확실하다. 저장 문제와 시작점 문제에 약 15분을 썼고, 이는 단계 전체의 60%다. MCP로 새로 만든 액터를 저장하는 기능이 없고(<code>save_actor</code> 실패), 에디터의 "전체 저장"을 따로 불러야 했다. 이런 문제는 파이썬 방식에서는 일어나지 않았다 (파이썬 쪽은 기존 액터 이동의 저장 누락이라는 다른 문제가 있었다).</p>
+<p>주의: 이 25분에는 폐허 성곽길의 높이 재설계도 섞여 있다. 사용자가 "시작 위치가 높아야 한다"고 바꾼 요청을 같은 구간에 처리했고, 두 맵(파이썬, MCP)에 모두 반영했다. 재설계 시간을 따로 떼어 낼 수는 없다.</p>
+<h3>3-4. 방식별로 정리</h3>
+<div class='tw'><table><thead><tr><th>병목</th><th>어느 방식</th><th>영향</th></tr></thead><tbody><tr><td>호출 횟수 (큐브마다 지시)</td><td>MCP</td><td>결투 회랑 배치 약 5분. 이후 묶음 호출로 개선</td></tr><tr><td>새 액터 저장이 안 됨, 파일 수 부족</td><td>MCP</td><td>약 10분</td></tr><tr><td>시작점이 다시 열면 원점으로 돌아감</td><td>MCP</td><td>약 6분, 원인 미확인</td></tr><tr><td>기존 액터 이동이 저장에서 빠짐</td><td>파이썬</td><td>약 1분 (고치는 데는 짧았지만 처음 검증이 놓침)</td></tr><tr><td>이전 맵 삭제가 안전 검사에 막힘</td><td>파이썬 (실은 권한 설정 문제)</td><td>약 1분, 사람이 직접 지움</td></tr><tr><td>좌표표 설계</td><td>공통</td><td>결투 4분, 요새+폐허 6분</td></tr><tr><td>에디터 연결</td><td>공통</td><td>약 17분 (결투 회랑 세션 초반)</td></tr><tr><td>화면 캡처 설정</td><td>공통 (검증 도구)</td><td>약 7분</td></tr><tr><td>사용자의 판단 대기</td><td>공통</td><td>계획 승인, 질문 응답, 결과 읽기</td></tr></tbody></table></div>
+<h3>3-5. 읽는 법과 한계</h3>
+<ul><li>에디터가 실제로 연산한 시간은 매우 짧다 (파이썬 0.9초). 병목은 대부분 "AI가 생각하고 쓰는 시간", "문제를 찾고 우회하는 시간", "사람의 판단을 기다리는 시간"이었다.</li><li>좌표표 설계는 두 방식이 공통으로 쓰는 일이지만, 파이썬을 먼저 하면 파이썬 쪽에 붙고 MCP를 먼저 하면 MCP 쪽에 붙는다. 결투 회랑은 MCP 쪽에 붙었고, 요새와 폐허는 파이썬 쪽에 붙었다 (2번 세션은 파이썬을 먼저 했다).</li><li>그래서 두 세션 모두 "파이썬이 빨랐다"로 읽으면 안 된다. 공통 작업이 어느 쪽에 붙었는지 보고 읽어야 한다.</li><li>시각표에서 "AI가 생각한 시간"과 "에디터가 일한 시간"을 정확히 나눌 수는 없다. 기록은 이벤트 사이의 간격만 남기 때문이다.</li><li>2번 세션 끝의 43분 공백(06:05~06:48)은 사용자가 결과를 읽고 세션을 저장하기까지의 시간으로, 병목에 넣지 않았다.</li></ul></section>
+<section id='s7'><h2>4. 추론한 곳 (기록으로 확인되지 않아 AI가 짐작하거나 정한 부분)</h2><p>"추론"은 기획서나 기록에 근거가 없어서 AI가 스스로 판단한 부분이다. AI가 직접 "가정", "확신 없음"이라고 적은 곳과, 기록을 보니 AI가 정한 곳을 나눠 적는다.</p>
+<h3>4-1. 결투 회랑</h3>
+<ul><li>바닥 높이를 0으로 가정했다.</li><li>시작점(92)과 보스(100)의 높이는 짐작이다. 땅에 박히거나 떠 있을 수 있다.</li><li>설계 문서는 +Y가 위쪽인데 언리얼 위에서 본 화면은 +Y가 아래쪽이다. 문서 좌표를 그대로 써서 기획서 도식과 위아래가 뒤집혀 보인다. 게임 플레이에는 영향이 없다.</li><li>색 지정이 없어 전부 같은 회색으로 만들기로 했다.</li><li>기획서의 치수를 상자 73개로 쪼개는 방식은 AI의 해석이다.</li></ul>
+<h3>4-2. 요새 돌파, 폐허 성곽길</h3>
+<p>AI가 처음에 스스로 밝힌 것:</p>
+<ul><li>기획서의 좌표와 치수를 그대로 쓰고, 랜드마크는 기획서 크기를 지키며 형태만 입힌다고 가정했다.</li><li>결투 회랑의 맵이 두 개(<code>LV_DuelCorridor</code>, <code>LV_DuelCorridor_Py</code>)인데 어느 쪽이 정본인지 몰랐다. 실제로는 <code>_Py</code> 맵을 복제해서 바탕으로 썼다.</li><li>맵 이름은 <code>_Py</code> 방식을 따랐고, 폐허 성곽길은 기획서의 가안 이름 <code>LV_TempDungeon03</code>을 썼다.</li></ul>
+<p>AI가 기획서에 없는 것을 직접 추가한 곳:</p>
+<ul><li>사용자가 말한 "시계탑"을 폐허 성곽길의 종탑이라고 추정해서 그쪽에 시계를 달았다 (시각은 3시 정각, AI가 정함).</li><li>요새 돌파의 탑에 모서리 기둥, 가로 띠, 좁은 창, 톱니 흉벽, 깃대와 빨간 깃발을 달았다.</li><li>종 방의 기둥과 보, 구리색 종, 무너진 지붕 한쪽, 이끼 조각, 돌무더기를 추가했다.</li><li>색 팔레트(돌, 이끼, 청동 등 9색)를 AI가 정했다.</li></ul>
+<p>AI가 기획서의 값을 바꾼 곳:</p>
+<ul><li>폐허 성곽길의 통로 동쪽 바깥벽을 AI가 처음 정한 5m에서 4.2m로 낮췄다. 성벽 위 통로에서 종탑이 보이게 하려는 목적이었다. 이건 담당 기획자가 확인해야 한다.</li></ul>
+<p>사용자의 지시를 AI가 해석한 곳:</p>
+<ul><li>"난간이 작은 곳, 즉 시작 위치 자체가 높이가 높아야 한다"는 말을 "낮은 담으로 마당을 엿보는 자리를 시작부터 높은 지대로 올리는 것"으로 이해했다. AI가 자기 해석을 보고에 밝혔다.</li><li>이 해석에 따라 시작 높이를 사용자에게 선택지(6m, 4.5m, 8m 이상)로 물었고, 사용자가 시작 6m와 "비탈길 6m에서 12m"를 골랐다.</li><li>그 선택에서 파생된 변경(마당에서 통로로 올라오는 경사로를 20m로 늘림, 출구와 단 구역을 서쪽으로 약 4.5m 이동, 지대와 비탈길 밑 채움, 적 표식 높이 조정)은 AI가 정했다.</li></ul>
+<p>AI가 원인을 짐작했다가 바뀐 곳:</p>
+<ul><li>MCP 맵의 저장 파일이 모자라자 "저장이 덜 된 것 같아"라고 짐작했고, 파일 수를 세어 확인했다 (짐작이 확인으로 바뀐 사례).</li><li>시작점이 원점으로 돌아가는 현상은 원인을 찾지 못했다. "지우고 새로 만들면 유지된다"는 우회만 확인했다.</li><li>화면 캡처가 저장되지 않는 원인을 "백그라운드 창이라 그림 그리기를 멈춘 것"으로 짐작해 설정을 껐더니 해결됐다.</li></ul>
+<h3>4-3. 이 분석 문서를 쓰면서 한 추정</h3>
+<ul><li>결투 회랑에서 좌표표 설계가 파이썬 쪽에 붙었다면 격차가 줄거나 뒤집혔을 것이라는 말은 시각표로 짐작한 것이다.</li><li>MCP 실행 시간의 이상치 두 건(186초, 256초)의 원인은 기록에 없다.</li></ul></section>
+<section id='s8'><h2>5. 사용한 외부 도구</h2><p>"외부 도구"는 AI 자체 기능 밖에서 불러 쓴 프로그램과 연결 통로다.</p>
+<div class='tw'><table><thead><tr><th>도구</th><th>쓴 곳</th><th>용도</th></tr></thead><tbody><tr><td>언리얼 에디터 5.8</td><td>세 맵</td><td>맵을 만드는 본체. 2번 세션에서는 꺼져 있어서 AI가 직접 켰다</td></tr><tr><td>에디터 MCP 연결 (포트 8001)</td><td>MCP 방식</td><td>에디터에 도구 호출을 보내는 통로</td></tr><tr><td>에디터 파이썬 원격 실행</td><td>파이썬 방식</td><td>스크립트를 에디터에 보내 실행하는 엔진 기능 (도우미 <code>ue_run.py</code>)</td></tr><tr><td>로컬 파이썬</td><td>세 맵</td><td>좌표표 생성, 검증 계산, 스크립트 문법 검사, MCP 호출 클라이언트(<code>mcp.py</code>)</td></tr><tr><td>이미지 그리기 도구 (파이썬)</td><td>요새, 폐허</td><td>좌표표를 위에서 본 평면도로 그려 에디터 전에 배치를 점검</td></tr><tr><td>이미지 열람</td><td>세 맵</td><td>화면 캡처와 평면도를 AI가 직접 보고 판단</td></tr><tr><td>터미널 (Bash, PowerShell)</td><td>세 맵</td><td>파일 검색과 정리, 프로세스 확인, 에디터 실행과 종료</td></tr><tr><td>질문 도구</td><td>폐허 성곽길</td><td>시작 높이와 비탈길 높이를 사용자에게 선택지로 물음</td></tr><tr><td>도구 불러오기 기능</td><td>결투 회랑</td><td>MCP 도구 목록을 읽어 옴</td></tr></tbody></table></div>
+<p>2번 세션에서는 AI의 도구 목록에 언리얼 MCP가 없었다. 그래서 AI가 MCP 주소로 직접 요청을 보내 도구 목록을 읽고, <code>build_mcp.py</code>와 <code>mcp.py</code>를 만들어 MCP를 호출했다. 이 점이 결투 회랑 때(AI가 MCP 도구를 직접 호출)와 다르다.</p>
+<p>쓰지 않은 것:</p>
+<ul><li>Blender: AI가 "형태를 더 다듬으려면 Blender로 모델링해서 가져올 수 있다"고 제안했지만, 사용자가 도형 조합으로 가자고 해서 쓰지 않았다.</li><li>Godot 연결 도구: 결투 회랑 세션에서 연결 충돌의 원인이어서 껐고 작업에는 쓰지 않았다.</li><li>위키(<code>knowledge-graph</code>)와 이미지 생성 도구도 쓰지 않았다.</li></ul></section>
+<section id='s9'><h2>6. MCP 방식: Toolset별 호출 횟수</h2><p>Toolset은 도구 묶음이다. 이 장의 숫자는 출처가 두 가지라 구분해서 읽어야 한다.</p>
+<h3>6-1. 결투 회랑 (기록에서 직접 센 값)</h3>
+<p>AI가 MCP 도구를 한 번씩 직접 호출한 기록이다.</p>
+<div class='tw'><table><thead><tr><th>Toolset</th><th>호출</th><th>내역</th></tr></thead><tbody><tr><td>PrimitiveTools</td><td>85</td><td>큐브 79, 원기둥 6</td></tr><tr><td>SceneTools</td><td>26</td><td>액터 추가 19, 레벨 열기 3, 액터 찾기 3, 현재 레벨 확인 1</td></tr><tr><td>ActorTools</td><td>22</td><td>이름 붙이기 19, 위치 변경 3</td></tr><tr><td>AssetTools</td><td>7</td><td>저장 3, 변경 여부 확인 2, 존재 확인 1, 복제 1</td></tr><tr><td>EditorAppToolset</td><td>3</td><td>화면 캡처 3</td></tr><tr><td>합계</td><td>143</td><td>도구 설명 조회 5회 별도</td></tr></tbody></table></div>
+<h3>6-2. 요새 돌파, 폐허 성곽길 (스크립트에서 계산한 값)</h3>
+<p>2번 세션에서는 AI가 호출을 직접 하지 않고 <code>build_mcp.py</code>가 대신 보냈다. 기록에는 호출 횟수가 남지 않아서, 완성된 스크립트와 좌표표로 "맵을 처음부터 한 번 만들 때"의 호출 수를 계산했다. 실측이 아니라 계산값이다.</p>
+<p>"PC에서 보낸 호출"은 실제로 오간 요청 횟수이고, "에디터 안에서 실행된 호출"은 묶음으로 보낸 스크립트가 에디터 안에서 돌리는 호출이다.</p>
+<div class='tw'><table><thead><tr><th>구분</th><th>Toolset</th><th>요새 돌파</th><th>폐허 성곽길</th></tr></thead><tbody><tr><td>PC에서 보낸 호출</td><td>SceneTools</td><td>132</td><td>120</td></tr><tr><td></td><td>ActorTools</td><td>120</td><td>111</td></tr><tr><td></td><td>AssetTools</td><td>4</td><td>4</td></tr><tr><td></td><td>ObjectTools</td><td>2</td><td>2</td></tr><tr><td></td><td>ProgrammaticToolset (묶음 실행)</td><td>6</td><td>4</td></tr><tr><td></td><td>합계</td><td>264</td><td>241</td></tr><tr><td>에디터 안에서 실행된 호출</td><td>SceneTools</td><td>348</td><td>200</td></tr><tr><td></td><td>ActorTools</td><td>66</td><td>54</td></tr><tr><td></td><td>ObjectTools</td><td>66</td><td>54</td></tr><tr><td></td><td>합계</td><td>480</td><td>308</td></tr></tbody></table></div>
+<p>읽는 법:</p>
+<ul><li>요새 돌파의 큐브 174개를 놓는 일은 PC에서 보낸 호출 6번(묶음 6개)으로 줄었다. 큐브마다 지시하던 결투 회랑 방식(큐브 79회)과 비교하면 크게 줄었다.</li><li>그런데 PC에서 보낸 호출 합계는 오히려 많다(264). 이유는 바탕 맵에서 복제된 옛 액터 85개를 하나씩 찾아 이름을 확인하고 지우는 호출이 약 170회이기 때문이다. 개선 여지가 있는 부분이다 (제안일 뿐 아직 하지 않았다).</li><li>이 스크립트로 시간이 찍힌 완료 실행은 10회(요새 8회, 폐허 2회)였고, 그 앞에 코딩 오류로 중단된 시도가 5회 있었다 (매개변수 이름 충돌).</li></ul>
+<h3>6-3. 출처 정리</h3>
+<div class='tw'><table><thead><tr><th>맵</th><th>호출 수 출처</th><th>신뢰도</th></tr></thead><tbody><tr><td>결투 회랑</td><td>기록에서 직접 셈</td><td>높음</td></tr><tr><td>요새 돌파, 폐허 성곽길</td><td>완성된 스크립트에서 계산</td><td>중간 (실제 실행 중 일부 변동 가능)</td></tr></tbody></table></div></section>
+<section id='s10'><h2>7. 파이썬: 스크립트 줄 수</h2><div class='tw'><table><thead><tr><th>파일</th><th>줄 수</th><th>역할</th><th>쓰인 맵</th></tr></thead><tbody><tr><td><code>DuelCorridor/build_py.py</code></td><td>70</td><td>결투 회랑 전용 첫 버전</td><td>결투 회랑</td></tr><tr><td><code>common/build_py.py</code></td><td>119</td><td>여러 맵용으로 공통화 (재질 생성 포함)</td><td>요새 돌파, 폐허 성곽길</td></tr><tr><td><code>common/ue_run.py</code></td><td>39</td><td>에디터에 스크립트를 보내는 도우미</td><td>세 맵</td></tr><tr><td><code>common/gb.py</code></td><td>105</td><td>좌표표 생성용 도형 도우미</td><td>요새 돌파, 폐허 성곽길</td></tr><tr><td><code>DuelCorridor/layout.py</code></td><td>140</td><td>결투 회랑 좌표표 생성</td><td>결투 회랑</td></tr><tr><td><code>FortressBreach/layout.py</code></td><td>183</td><td>요새 돌파 좌표표 생성</td><td>요새 돌파</td></tr><tr><td><code>RuinedRampart/layout.py</code></td><td>153</td><td>폐허 성곽길 좌표표 생성</td><td>폐허 성곽길</td></tr></tbody></table></div>
+<p>비교 대상인 MCP 쪽은 <code>build_mcp.py</code> 144줄과 <code>mcp.py</code> 43줄로 합계 187줄이다.</p>
+<ul><li>맵을 만드는 스크립트만 비교하면 파이썬 119+39=158줄, MCP 144+43=187줄이다.</li><li>좌표표 생성 코드(layout.py)는 두 방식이 같이 쓰므로 어느 쪽 줄 수에도 넣지 않았다.</li><li>점검용 임시 스크립트(화면 캡처, 비교, 디버깅)는 세션 중 임시 폴더에 썼고 위 표에 없다. 저장소 규칙(임시 코드는 저장소에 두지 않는다)에 따른 것이다.</li></ul></section>
+<section id='s11'><h2>8. 시간과 토큰 정리 (맵 3종 전체)</h2><h3>8-1. 실행 시간 (스크립트가 출력한 값)</h3>
+<div class='tw'><table><thead><tr><th>맵</th><th>액터 수</th><th>파이썬</th><th>MCP</th></tr></thead><tbody><tr><td>결투 회랑</td><td>85</td><td>0.9초 (2회 모두)</td><td>직접 잰 값 없음. 시각표로 약 5분 (큐브마다 호출하던 초기 방식)</td></tr><tr><td>요새 돌파</td><td>192</td><td>3.8초 (1회)</td><td>7.0~11.2초 (6회). 이상치 186.3초와 255.9초 (원인 미확인)</td></tr><tr><td>폐허 성곽길</td><td>106~112</td><td>1.0, 1.1, 1.2초 (3회)</td><td>6.4, 6.3초 (2회)</td></tr></tbody></table></div>
+<ul><li>MCP를 묶음 호출로 개선한 뒤에는 파이썬과의 차이가 약 2~6배로 줄었다. 결투 회랑 때의 "5분 대 0.9초"는 개선 전 값이다.</li><li>파이썬의 요새 돌파 3.8초는 첫 실행이라 재질 생성이 섞여 있을 수 있다 (추정).</li><li>이 시간에는 AI가 생각하고 쓰는 시간이 들어 있지 않다.</li></ul>
+<h3>8-2. AI가 쓴 글자량 (출력 토큰)</h3>
+<div class='tw'><table><thead><tr><th>세션과 단계</th><th>출력 토큰</th><th>비고</th></tr></thead><tbody><tr><td>결투 회랑: MCP 제작 구간</td><td>약 75,000</td><td>좌표표 설계와 도구 사용법 조사 포함</td></tr><tr><td>결투 회랑: 파이썬 1차</td><td>약 9,000</td><td>좌표표 재사용</td></tr><tr><td>결투 회랑: 파이썬 재제작과 수정</td><td>약 6,200</td><td>합치면 파이썬 약 15,000</td></tr><tr><td>요새, 폐허: 파이썬 단계</td><td>약 81,600</td><td>그중 좌표표 설계 약 52,000, 에디터 연결과 빌드 약 12,800, 캡처, 검증, 보고 약 16,800</td></tr><tr><td>요새, 폐허: MCP 단계</td><td>약 66,400</td><td>질문과 도구 파악 약 24,400, 빌드 스크립트 작성과 저장 문제 해결 약 42,000. 폐허 성곽길 높이 재설계 포함</td></tr></tbody></table></div>
+<p>결투 회랑에서는 파이썬이 압도적으로 적었다. 요새 돌파와 폐허 성곽길에서는 파이썬 단계에 좌표표 설계(약 5.2만)가 들어 있어서 합계가 더 컸다. 설계를 빼면 파이썬 단계는 약 2.97만으로 MCP의 약 6.6만보다 적지만, MCP 단계에도 폐허 성곽길의 높이 재설계가 섞여 있어서 정확히 같은 조건은 아니다.</p>
+<h3>8-3. 기억과 대조</h3>
+<ul><li>"파이썬이 시간이 적게 들었다": 세 맵 모두 기록으로 확인된다. 단 격차는 개선 전과 후가 크게 다르다.</li><li>"파이썬이 토큰도 적게 들었다": 결투 회랑에서만 분명하다. 나머지 두 맵에서는 설계 비용 때문에 합계가 더 많았고, 설계를 뺀 순수 제작 비용으로는 파이썬이 적었다.</li></ul></section>
+<section id='s12'><h2>9. 예상되는 한계점</h2><ol><li><strong>사례가 3개뿐이고 반복 측정이 아니다.</strong> 시간 편차를 알 수 없다.</li><li><strong>조건이 같지 않다.</strong> 결투 회랑은 MCP가 설계 비용을 떠안았고, 요새와 폐허는 파이썬이 떠안았다. MCP 방식은 도중에 개선되었다(묶음 호출).</li><li><strong>MCP 실행 시간의 이상치.</strong> 186초와 256초는 원인을 모른다. 재현 실험이 필요하다.</li><li><strong>호출 횟수의 출처가 다르다.</strong> 결투 회랑은 실측이고 나머지 두 맵은 스크립트에서 계산한 값이다.</li><li><strong>토큰에는 설명글이 포함된다.</strong> AI가 사람에게 쓴 보고도 들어 있어 순수 작업량이 아니다.</li><li><strong>검증이 부분적이다.</strong> 게임 실행(PIE)을 안 했다. 시선 조건 일부와 새 높이에서의 종탑 시야는 확인되지 않았다. 폐허 성곽길의 12m 낙하 규칙은 사용자 결정이 필요하다.</li><li><strong>MCP와 파이썬 맵의 머티리얼 모순.</strong> 2번 세션 요약에 "전부 같다"와 "격자 무늬 대 기본 회색"이 같이 있다. 에디터에서 확인해야 한다.</li><li><strong>MCP 빌드의 일부 미검증.</strong> 시작점을 새로 만드는 코드가 들어간 빌드 스크립트를 처음부터 끝까지 다시 돌려 보지 않았다 (AI 스스로 기록).</li><li><strong>세션 기록의 한계.</strong> 기록은 사건의 간격만 남겨서 "AI가 생각한 시간"과 "에디터가 일한 시간"을 정확히 나눌 수 없다.</li><li><strong>기획서와 맵의 불일치.</strong> 폐허 성곽길 기획서는 옛 높이(시작 0m, 통로 3m)로 남아 있고 맵은 새 높이다. 기획서 수정은 승인 대기 상태다.</li><li><strong>재현에는 조건이 필요하다.</strong> 에디터가 켜져 있어야 하고 8001 포트로 열려야 한다. 이전 맵의 정리와 삭제는 권한 설정에 막힐 수 있다.</li></ol></section>
+<section id='s13'><h2>10. 보고서에 쓸 문장 후보</h2><ul><li>확정으로 써도 되는 것: "도형 배치 시간은 파이썬이 세 맵 모두 짧았다 (0.9~3.8초 대 MCP 6~11초, 결투 회랑 초기 MCP는 약 5분). 호출 횟수는 결투 회랑에서 MCP 143회, 파이썬 스크립트 1회였다."</li><li>조건을 붙여야 하는 것: "AI가 쓴 글자량은 결투 회랑에서 파이썬이 5분의 1이었으나, 요새·폐허 세션에서는 좌표표 설계 비용 때문에 파이썬 쪽 합계가 더 컸다."</li><li>반드시 밝혀야 하는 것: "파이썬 방식도 맵 복제와 저장은 MCP를 썼다. MCP는 새 액터 저장 기능 부재와 시작점 현상으로 약 15분이 추가로 들었다. 검증은 저장 후 재로드 대조가 가장 효과적이었으며 게임 실행 테스트는 하지 않았다."</li><li>담당 기획자 확인이 필요한 것: "종탑 시계 등 기획서에 없는 요소, 통로 바깥벽 5m에서 4.2m 변경, 폐허 성곽길 12m 낙하 규칙."</li></ul></section>
+
+  </main>
+</div>
+<footer>근거: 2026-11-02 작업 세션 두 개의 대화 기록. 추정은 본문에서 "추정"으로 표시했다.</footer>
+<script>
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.toc a"));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute("href").slice(1)] = a; });
+  if (!("IntersectionObserver" in window)) return;
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (a) { a.classList.remove("on"); });
+        if (map[e.target.id]) map[e.target.id].classList.add("on");
+      }
+    });
+  }, { rootMargin: "-10% 0px -80% 0px" });
+  document.querySelectorAll("main section").forEach(function (s) { io.observe(s); });
+})();
+</script>
+
+</body>
+</html>
