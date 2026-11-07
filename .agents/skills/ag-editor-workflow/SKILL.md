@@ -51,6 +51,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
   2. 에셋 이름을 바꾸고, 참조하는 에셋을 모두 다시 저장한다.
   3. 저장된 `.uasset`에 옛 이름이 없는지 확인한다(`grep -a`).
   4. 임시 리다이렉트를 지운다.
+  - 게임플레이 태그는 임시 `Config/DefaultGameplayTags.ini`의 `[/Script/GameplayTags.GameplayTagsSettings]` `+GameplayTagRedirects=(OldTagName=…,NewTagName=…)`로 같은 순서를 밟는다. 리다이렉트가 없으면 빌드 뒤 그 태그를 저장한 큐 에셋·몽타주 노티파이의 값이 빈다. 큐 에셋을 다시 저장하면 큐 매니저가 찾는 등록 이름(`GameplayCueName`)도 새 태그로 바뀐다.
 
 ## 에셋 다루기
 
