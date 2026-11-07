@@ -101,11 +101,13 @@
   <text x="1661" y="928" font-size="32" font-weight="700" fill="#FFFFFF" text-anchor="middle" stroke="#000000" stroke-width="3" paint-order="stroke">3</text>
   <!-- MP 코스트: 슬롯 중심에서 (29, 29), 어두운 외곽선 -->
   <g font-size="18.7" fill="#FFFFFF" text-anchor="middle" stroke="#000000" stroke-width="3" paint-order="stroke">
-    <text x="1690" y="953">40</text>
-    <text x="1765" y="878">40</text>
-    <text x="1840" y="953">40</text>
+    <text x="1690" y="953">20</text>
+    <text x="1765" y="878">20</text>
+    <text x="1840" y="953">10</text>
     <text x="1765" y="1028">40</text>
   </g>
+  <!-- 남은 충전 횟수(스킬 3, 최대 충전 2회 이상): 슬롯 중심에서 (29, -29), MP 코스트와 같은 글자 -->
+  <text x="1840" y="895" font-size="18.7" fill="#FFFFFF" text-anchor="middle" stroke="#000000" stroke-width="3" paint-order="stroke">3</text>
   <!-- 키 표시: 십자 가운데에서 30px, 지름 28px -->
   <g fill="#000000" fill-opacity="0.55">
     <circle cx="1706" cy="917" r="14"/>
@@ -128,6 +130,7 @@
 
   <text x="1600" y="960" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 1: 쿨다운 중인 모습</text>
   <text x="1600" y="980" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
+  <text x="1600" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 3 오른쪽 위: 남은 충전 횟수</text>
 
   <!-- [6] 조작 안내 (오른쪽 가운데) -->
   <rect x="1560" y="374" width="312" height="332" rx="8" fill="#000000" fill-opacity="0.45"/>

@@ -12,7 +12,7 @@
 | Fab 애니메이션 팩 5종 (ARPG 4종, Dodge and Evade) | 없음 | 없음 |
 | 엔진 콘텐츠 | 없음 | 에디터 조작음뿐 ('엔진 사운드') |
 | 엔진 플러그인 NetworkPredictionExtras | 없음 | 게임용 착지·발사·충돌·통증 소리 ('NetworkPredictionExtras 사운드') |
-| 직접 제작 | `NS_Telegraph`, `NS_WeaponTrail` (직접 제작 나이아가라 시스템) | 없음 |
+| 직접 제작 | `NS_Telegraph`, `NS_WeaponTrail`, `NS_UpperSlashBlade`, `NS_PunishingEdge` (직접 제작 나이아가라 시스템) | 없음 |
 
 Starter Content는 설치되어 있지 않습니다.
 
