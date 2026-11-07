@@ -115,7 +115,6 @@ private:
 	ESlateVisibility StatusPanelVisibility = ESlateVisibility::SelfHitTestInvisible;
 
 	int32 ShownSkillCost = INDEX_NONE;
-	/** 표시 단위(1이면 정수 초, 0이면 0.1초)와 그 단위의 값입니다. */
 	FIntPoint ShownCooldown = FIntPoint(INDEX_NONE, INDEX_NONE);
 
 	FTimerHandle CooldownTimer;

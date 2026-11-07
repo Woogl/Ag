@@ -226,7 +226,8 @@ void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float
 	const float YawScale = GetDefault<UInputSettings>()->bEnableLegacyInputScales ? PCOwner->GetDeprecatedInputYawScale() : 1.f;
 	PRAGMA_ENABLE_DEPRECATION_WARNINGS
 	const double Now = GetWorld()->GetRealTimeSeconds();
-	FlickSamples.RemoveAll([Now](const TPair<double, float>& Sample) { return Now - Sample.Key > LockOnFlickTime; });
+	FlickSamples.RemoveAll([Now](const TPair<double, float>& Sample)
+	{ return Now - Sample.Key > LockOnFlickTime; });
 	float Angle = 0.f;
 	for (const TPair<double, float>& Sample : FlickSamples)
 	{

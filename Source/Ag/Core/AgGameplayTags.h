@@ -33,7 +33,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Sprint);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_LockOn);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_HitReward);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockDown);

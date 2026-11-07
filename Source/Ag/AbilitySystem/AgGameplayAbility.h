@@ -66,10 +66,8 @@ public:
 		return Definition.Targeting ? Definition.Targeting->TargetSpacing : 0.f;
 	}
 
-	/** 기본 공격처럼 다시 재생할 때마다 대상을 고르는 행동을 위해 재생 Task가 부릅니다. */
 	void RefreshTarget();
 
-	/** 실행 중에 대상을 바꾸는 Task가 고른 대상을 넣습니다. */
 	void SetActionTarget(AActor* NewTarget);
 
 	virtual void OnGameplayTaskActivated(UGameplayTask& Task) override;

@@ -305,7 +305,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		CueParameters.AggregatedTargetTags.AddTag(Reaction);
 	}
-	// 패리 대미지는 패리가 막은 쪽에서 낸 연출과 히트스톱이 대신하므로 대미지 숫자만 보여 줍니다.
+	// 패리 대미지는 패리가 막은 쪽에서 낸 연출과 히트스톱이 대신하므로 결과 연출과 대미지 숫자를 내지 않습니다.
 	const bool bParryDamage = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Parry);
 	if (!bParryDamage)
 	{
@@ -316,7 +316,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	}
 	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
 	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
-		HPChange && HPChange->TotalMagnitude < 0.f)
+		!bParryDamage && HPChange && HPChange->TotalMagnitude < 0.f)
 	{
 		FGameplayCueParameters NumberParameters = CueParameters;
 		NumberParameters.RawMagnitude = -HPChange->TotalMagnitude;

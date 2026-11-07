@@ -26,21 +26,19 @@ public:
 	 */
 	void SetAbilitySystem(UAbilitySystemComponent* NewASC);
 
-	/** 허용될 때 요청되었거나 최근에 HP·PP가 줄었으면 표시하고, 표시하면 true입니다. */
 	bool Update(bool bAllowed, bool bRequested);
 
 protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgStatBar> HPBar;
 
-	/** 최대 PP가 0이면 접습니다. PP 바와 HP 바 사이의 간격도 이 안에 둡니다. */
+	/** 최대 PP가 0이면 접으므로, HP 바와의 간격도 이 안에 둡니다. */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> PPSection;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgStatBar> PPBar;
 
-	/** 마지막 HP·PP 감소 뒤 네임플레이트를 표시하는 게임 시간입니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Nameplate")
 	float RecentDropShowTime = 0.f;
 
@@ -57,7 +55,6 @@ private:
 
 	TWeakObjectPtr<UAbilitySystemComponent> ASC;
 
-	/** 마지막으로 HP나 PP가 줄어든 월드 시간입니다. */
 	double LastDropTime = -UE_DOUBLE_BIG_NUMBER;
 
 	bool bShown = false;

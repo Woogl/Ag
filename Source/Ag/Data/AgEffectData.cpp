@@ -50,10 +50,6 @@ namespace
 
 	FGameplayEffectModifierMagnitude MakeMagnitude(const FAgEffectModifier& Modifier)
 	{
-		if (Modifier.Value)
-		{
-			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.Value));
-		}
 		if (Modifier.PerSecond)
 		{
 			// 기획서의 초당 값을 그대로 적도록, 주기마다 더할 값으로 바꿉니다.
@@ -63,7 +59,7 @@ namespace
 		{
 			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.Multiplier));
 		}
-		return FGameplayEffectModifierMagnitude(MakeTargetAttribute(Modifier.FromAttribute, Modifier.Coefficient));
+		return FGameplayEffectModifierMagnitude(FScalableFloat(Modifier.Value.Get(0.f)));
 	}
 
 	void AddAssetTag(UGameplayEffect& Effect, FGameplayTag Tag)

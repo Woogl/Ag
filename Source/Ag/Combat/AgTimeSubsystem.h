@@ -30,8 +30,6 @@ public:
 	}
 
 private:
-	float GetTimeStopCompensation() const;
-
 	/** 시간 정지 중에 부르면 시간 정지 배율을 덮으므로, 시간 정지가 아닐 때만 부릅니다. */
 	void ApplySlowMotion(float Speed, float RealDuration);
 

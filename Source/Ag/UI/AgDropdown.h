@@ -22,13 +22,10 @@ class UAgDropdown : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	/** 목록을 다시 채우고 SelectedKey를 고릅니다. 목록에 없으면 첫 항목을 고릅니다. */
 	void SetOptions(const TArray<FAgDropdownOption>& Options, FName SelectedKey = NAME_None);
 
-	/** 목록이 비어 있으면 None입니다. */
 	FName GetSelectedOption() const;
 
-	/** 사람이 목록에서 고른 때만 알립니다. */
 	FSimpleMulticastDelegate OnSelectionChanged;
 
 protected:
@@ -37,7 +34,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgDropdownOptionWidget> OptionWidgetClass;
 
-	/** 닫힌 칸의 위젯입니다. 비워 두면 OptionWidgetClass를 씁니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgDropdownOptionWidget> SelectedWidgetClass;
 

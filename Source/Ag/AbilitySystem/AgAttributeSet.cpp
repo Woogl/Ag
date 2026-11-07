@@ -42,21 +42,6 @@ void UAgAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 	ClampToRange(Attribute, NewValue);
 }
 
-bool UAgAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data)
-{
-	if (!Super::PreGameplayEffectExecute(Data))
-	{
-		return false;
-	}
-	if (Data.EvaluatedData.Attribute == GetPPAttribute() && Data.EvaluatedData.ModifierOp == EGameplayModOp::AddBase &&
-		Data.EvaluatedData.Magnitude < 0.f)
-	{
-		// 남은 PP의 소수부를 보존하고, 음수의 .5도 감소량 기준으로 올림하도록 절댓값을 반올림합니다.
-		Data.EvaluatedData.Magnitude = -FMath::RoundToFloat(-Data.EvaluatedData.Magnitude);
-	}
-	return true;
-}
-
 void UAgAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);

@@ -31,7 +31,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Sprint, "Ability.Sprint", "달리기. 이동이라 일반 행동(Ability.Action)에 넣지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_LockOn, "Ability.LockOn", "락온. 행동이 아니라 행동 상태의 제한과 취소를 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_HitReward, "Ability.HitReward", "공격 적중에 의한 MP·UP 충전 (Event.AttackHit으로 발동)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction, "Ability.Reaction", "이벤트로 발동하는 상태 어빌리티");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction, "Ability.Reaction.HitReaction",
 		"상태 우선순위 4의 피격 반응: 움찔 경직, 넉업(저글 포함), 넉다운, 가드 밀림, 가드 브레이크");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_Flinch, "Ability.Reaction.HitReaction.Flinch");

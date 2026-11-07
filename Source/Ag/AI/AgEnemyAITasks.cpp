@@ -53,7 +53,6 @@ namespace
 
 	bool RequestPatrolMove(AAgEnemyAIController& Controller, const FVector& Destination)
 	{
-		Controller.ClearFocus(EAIFocusPriority::Gameplay);
 		// 부분 경로를 허용하면 갈 수 없는 곳으로도 요청이 성공해 가까운 데까지 걸어가므로, 실패로 받아 건너뜁니다.
 		return Controller.MoveToLocation(Destination, -1.f, true, true, true, false, {}, false) != EPathFollowingRequestResult::Failed;
 	}
@@ -77,6 +76,23 @@ namespace
 		RequestPatrolMove(Controller, Enemy.GetHomeTransform().GetLocation());
 	}
 
+	void UpdateCombatTarget(AAgEnemyAIController& Controller)
+	{
+		UAgAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
+		const FGameplayAbilitySpec* LockOn = ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn);
+		if (LockOn && !LockOn->IsActive())
+		{
+			ASC->TryActivateAbility(LockOn->Handle);
+		}
+		if (AAgCharacterBase* Target = Controller.GetTarget())
+		{
+			Controller.SetFocus(Target);
+		}
+		else
+		{
+			Controller.ClearFocus(EAIFocusPriority::Gameplay);
+		}
+	}
 } // namespace
 
 EStateTreeRunStatus FAgEnemyAITask_KeepDistance::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
@@ -330,7 +346,7 @@ FAgEnemyAITask_Combat::FAgEnemyAITask_Combat()
 EStateTreeRunStatus FAgEnemyAITask_Combat::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
-	UpdateTarget(Controller);
+	UpdateCombatTarget(Controller);
 	Controller.StartPostPatternDelay();
 	Controller.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->AddCombatant(*Controller.GetEnemy());
 	return EStateTreeRunStatus::Running;
@@ -338,7 +354,7 @@ EStateTreeRunStatus FAgEnemyAITask_Combat::EnterState(FStateTreeExecutionContext
 
 EStateTreeRunStatus FAgEnemyAITask_Combat::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	UpdateTarget(*Context.GetInstanceData(*this).Controller);
+	UpdateCombatTarget(*Context.GetInstanceData(*this).Controller);
 	return EStateTreeRunStatus::Running;
 }
 
@@ -352,24 +368,6 @@ void FAgEnemyAITask_Combat::ExitState(FStateTreeExecutionContext& Context, const
 		ASC->CancelAbilityHandle(LockOn->Handle);
 	}
 	Controller.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->RemoveCombatant(*Controller.GetEnemy());
-}
-
-void FAgEnemyAITask_Combat::UpdateTarget(AAgEnemyAIController& Controller)
-{
-	UAgAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
-	const FGameplayAbilitySpec* LockOn = ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn);
-	if (LockOn && !LockOn->IsActive())
-	{
-		ASC->TryActivateAbility(LockOn->Handle);
-	}
-	if (AAgCharacterBase* Target = Controller.GetTarget())
-	{
-		Controller.SetFocus(Target);
-	}
-	else
-	{
-		Controller.ClearFocus(EAIFocusPriority::Gameplay);
-	}
 }
 
 EStateTreeRunStatus FAgEnemyAITask_Patrol::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const

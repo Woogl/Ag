@@ -15,6 +15,8 @@
 
 namespace
 {
+	const FName WeaponCollisionTag(TEXT("WeaponCollision"));
+
 	/** 빠르게 휘둘러도 몸을 건너뛰지 않도록 무기 날의 이동을 나눠 스윕합니다. */
 	constexpr float SweepStepLength = 10.f;
 	constexpr int32 MaxSweepSteps = 16;
@@ -116,7 +118,7 @@ void UAgAbilityTask_WeaponHit::Activate()
 	for (UCapsuleComponent* Capsule : Capsules)
 	{
 		FAgWeaponEdge Edge;
-		if (Capsule->ComponentHasTag(Params.ComponentTag) && GetEdge(Capsule, Edge.LastStart, Edge.LastEnd))
+		if (Capsule->ComponentHasTag(WeaponCollisionTag) && GetEdge(Capsule, Edge.LastStart, Edge.LastEnd))
 		{
 			Edge.Capsule = Capsule;
 			Edge.HandBone = FindAttachBone(*Capsule, *Character->GetMesh());
@@ -125,7 +127,7 @@ void UAgAbilityTask_WeaponHit::Activate()
 	}
 	if (Edges.IsEmpty())
 	{
-		UE_LOG(LogAg, Error, TEXT("WeaponHit: %s has no capsule tagged %s"), *Character->GetName(), *Params.ComponentTag.ToString());
+		UE_LOG(LogAg, Error, TEXT("WeaponHit: %s has no capsule tagged %s"), *Character->GetName(), *WeaponCollisionTag.ToString());
 		EndTask();
 		return;
 	}

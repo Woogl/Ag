@@ -21,7 +21,6 @@ public:
 
 protected:
 	virtual void NativePreConstruct() override;
-	virtual void NativeDestruct() override;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> Bar;
@@ -54,7 +53,6 @@ private:
 
 	FIntPoint ShownValues = FIntPoint(INDEX_NONE, INDEX_NONE);
 
-	/** 음수면 아직 값을 받지 않았습니다. */
 	float BarRatio = -1.f;
 	float TrailRatio = 0.f;
 	float TrailShrinkFrom = 0.f;

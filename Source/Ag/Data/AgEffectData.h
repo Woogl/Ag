@@ -37,12 +37,6 @@ struct FAgEffectModifier
 	TOptional<float> Multiplier;
 
 	UPROPERTY()
-	FGameplayAttribute FromAttribute;
-
-	UPROPERTY()
-	float Coefficient = 1.f;
-
-	UPROPERTY()
 	FGameplayTagContainer RequiredTags;
 
 	UPROPERTY()

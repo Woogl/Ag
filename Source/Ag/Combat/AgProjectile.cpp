@@ -72,12 +72,6 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	TouchedActors.Reset();
 }
 
-bool AAgProjectile::IsReflected() const
-{
-	// 반사한 캐릭터가 사라져도 반사됨으로 남아야, 원래 발사자의 피해로 돌아가지 않고 Tick에서 사라집니다.
-	return !Reflector.IsExplicitlyNull();
-}
-
 void AAgProjectile::OnDamageApplied()
 {
 	if (bDestroyOnHit)
@@ -116,7 +110,7 @@ void AAgProjectile::BeginPlay()
 		return;
 	}
 	const FVector From = GetActorLocation();
-	const FVector AimLocation = PredictLocation(From, Target->GetActorLocation(),Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed);
+	const FVector AimLocation = PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed);
 	const FVector AimDirection = (AimLocation - From).GetSafeNormal();
 	if (!AimDirection.IsNearlyZero())
 	{
@@ -168,7 +162,8 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		Reached.Append(ShapeReached);
 	}
 	// 모든 모양이 같은 거리를 쓸므로 Time이 곧 이동 거리의 비율이고, 여러 모양의 충돌을 닿은 순서로 맞힙니다.
-	Reached.StableSort([](const FHitResult& A, const FHitResult& B) { return A.Time < B.Time; });
+	Reached.StableSort([](const FHitResult& A, const FHitResult& B)
+	{ return A.Time < B.Time; });
 	for (const FHitResult& Contact : Reached)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
@@ -207,4 +202,10 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	{
 		Destroy();
 	}
+}
+
+bool AAgProjectile::IsReflected() const
+{
+	// 반사한 캐릭터가 사라져도 반사됨으로 남아야, 원래 발사자의 피해로 돌아가지 않고 Tick에서 사라집니다.
+	return !Reflector.IsExplicitlyNull();
 }

@@ -70,16 +70,6 @@ void UAgStatBar::NativePreConstruct()
 	ValueText->SetVisibility(bShowValue ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 }
 
-void UAgStatBar::NativeDestruct()
-{
-	if (const UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(TrailTimer);
-	}
-
-	Super::NativeDestruct();
-}
-
 void UAgStatBar::StartTrailShrink()
 {
 	TrailShrinkFrom = TrailRatio;

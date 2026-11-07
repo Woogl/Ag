@@ -299,18 +299,18 @@ void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Insta
 
 void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimelineMode Mode)
 {
-	enum class EPhase : uint8
+	enum class EAgPhase : uint8
 	{
 		Begin,
 		End
 	};
-	struct FPending
+	struct FAgPending
 	{
 		float Time = 0.f;
-		EPhase Phase = EPhase::Begin;
+		EAgPhase Phase = EAgPhase::Begin;
 		int32 Entry = INDEX_NONE;
 	};
-	TArray<FPending, TInlineAllocator<8>> Pending;
+	TArray<FAgPending, TInlineAllocator<8>> Pending;
 
 	// 재생 시작과 섹션 이동의 위치는 섹션 시작 시각 그대로라 섹션 0초 항목의 Start와 정확히 같습니다.
 	const float Previous = TimelinePosition;
@@ -321,38 +321,38 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 		// 앞으로 진행하며 Start를 지났으면 시작하고, End까지 지났으면 함께 끝냅니다.
 		if (bForward && !Entry.bActive && Previous < Entry.Start && Entry.Start <= NewPosition)
 		{
-			Pending.Add(FPending{Entry.Start, EPhase::Begin, Index});
+			Pending.Add(FAgPending{Entry.Start, EAgPhase::Begin, Index});
 			if (Entry.End <= NewPosition)
 			{
-				Pending.Add(FPending{Entry.End, EPhase::End, Index});
+				Pending.Add(FAgPending{Entry.End, EAgPhase::End, Index});
 			}
 			continue;
 		}
 		// 앞으로 진행하며 켜진 구간의 End를 지났으면 끝냅니다.
 		if (bForward && Entry.bActive && Entry.End <= NewPosition)
 		{
-			Pending.Add(FPending{Entry.End, EPhase::End, Index});
+			Pending.Add(FAgPending{Entry.End, EAgPhase::End, Index});
 			continue;
 		}
 		// 그 밖(재생 시작, 섹션 이동, 되감기)은 새 위치가 구간 안인지로 맞춥니다.
 		const bool bInside = Entry.Start <= NewPosition && NewPosition < Entry.End;
 		if (Entry.bActive != bInside)
 		{
-			Pending.Add(FPending{NewPosition, bInside ? EPhase::Begin : EPhase::End, Index});
+			Pending.Add(FAgPending{NewPosition, bInside ? EAgPhase::Begin : EAgPhase::End, Index});
 		}
 	}
 	TimelinePosition = NewPosition;
-	Pending.Sort([](const FPending& A, const FPending& B)
+	Pending.Sort([](const FAgPending& A, const FAgPending& B)
 	{
 		if (A.Time != B.Time)
 		{
 			return A.Time < B.Time;
 		}
-		return A.Phase == EPhase::End && B.Phase == EPhase::Begin;
+		return A.Phase == EAgPhase::End && B.Phase == EAgPhase::Begin;
 	});
 
 	const int32 InstanceId = MontageInstanceId;
-	for (const FPending& Item : Pending)
+	for (const FAgPending& Item : Pending)
 	{
 		// 항목 실행이 재생을 끝내거나 바꿀 수 있으므로 매번 확인합니다. 이 Task가 시작하는 중(첫 판정)에는 행동이 끝나도
 		// 엔진이 이 Task를 끝내지 않으므로 행동도 봅니다. 항목 실행 안에서 전환해 위치가 바뀌었으면 옮긴 위치의 판정이
@@ -367,11 +367,11 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 		FAgTimelineEntry& Entry = TimelineEntries[Item.Entry];
 		switch (Item.Phase)
 		{
-			case EPhase::Begin:
+			case EAgPhase::Begin:
 				Entry.bActive = true;
 				StartTimelineWindow(Item.Entry);
 				break;
-			case EPhase::End:
+			case EAgPhase::End:
 				Entry.bActive = false;
 				EndTimelineWindow(Item.Entry);
 				break;

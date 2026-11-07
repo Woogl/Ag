@@ -26,7 +26,6 @@ public:
 
 	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability) override;
 	void Reflect(AAgCharacterBase& Defender);
-	bool IsReflected() const;
 	/** 적중·가드·가드 브레이크로 피해를 준 뒤 불립니다. */
 	void OnDamageApplied();
 
@@ -36,6 +35,8 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
+	bool IsReflected() const;
+
 	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
 	float Speed = 0.f;

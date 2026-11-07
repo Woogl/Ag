@@ -362,7 +362,8 @@ void AAgEnemyCharacter::UpdateWorldWidgets()
 	AAgPlayerCharacter* Player = PlayerController ? Cast<AAgPlayerCharacter>(PlayerController->GetPawn()) : nullptr;
 	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
 	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
-	const bool bShown = Player && !Player->IsDead() && !IsDead() && !PlayerController->bCinematicMode && !bStageEnded;
+	const bool bCutscene = Player && Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
+	const bool bShown = Player && !Player->IsDead() && !IsDead() && !bCutscene && !bStageEnded;
 
 	const bool bLockOnTarget = bShown && Player->GetLockOnTarget() == this;
 	LockOnMarker->SetHiddenInGame(!bLockOnTarget);

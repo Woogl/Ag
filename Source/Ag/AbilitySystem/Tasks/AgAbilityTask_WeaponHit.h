@@ -23,9 +23,6 @@ struct FAgWeaponHitParams : public FAgTaskParams
 	UPROPERTY()
 	FAgDamage Damage;
 
-	UPROPERTY()
-	FName ComponentTag = TEXT("WeaponCollision");
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 

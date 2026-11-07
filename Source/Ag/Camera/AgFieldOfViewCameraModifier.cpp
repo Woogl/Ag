@@ -21,12 +21,12 @@ void UAgFieldOfViewCameraModifier::Hold(const FAgFieldOfViewEffect& Effect)
 
 void UAgFieldOfViewCameraModifier::Release(const FAgFieldOfViewEffect& Effect)
 {
-	for (FActiveEffect& Active : ActiveEffects)
+	for (FAgActiveEffect& Active : ActiveEffects)
 	{
 		if (Active.Source == &Effect && Active.bHold)
 		{
 			Active.bHold = false;
-			Active.Phase = EPhase::BlendOut;
+			Active.Phase = EAgPhase::BlendOut;
 		}
 	}
 }
@@ -41,31 +41,31 @@ void UAgFieldOfViewCameraModifier::ModifyCamera(float DeltaTime, FVector ViewLoc
 	float Offset = 0.f;
 	for (int32 Index = ActiveEffects.Num() - 1; Index >= 0; --Index)
 	{
-		FActiveEffect& Active = ActiveEffects[Index];
+		FAgActiveEffect& Active = ActiveEffects[Index];
 		switch (Active.Phase)
 		{
-			case EPhase::BlendIn:
+			case EAgPhase::BlendIn:
 				Active.Weight = Active.Effect.BlendInTime > 0.f ? FMath::Min(Active.Weight + DeltaTime / Active.Effect.BlendInTime, 1.f) : 1.f;
 				if (Active.Weight >= 1.f)
 				{
-					Active.Phase = EPhase::Hold;
+					Active.Phase = EAgPhase::Hold;
 				}
 				break;
-			case EPhase::Hold:
+			case EAgPhase::Hold:
 				if (!Active.bHold)
 				{
 					Active.HoldRemaining -= DeltaTime;
 					if (Active.HoldRemaining <= 0.f)
 					{
-						Active.Phase = EPhase::BlendOut;
+						Active.Phase = EAgPhase::BlendOut;
 					}
 				}
 				break;
-			case EPhase::BlendOut:
+			case EAgPhase::BlendOut:
 				Active.Weight = Active.Effect.BlendOutTime > 0.f ? Active.Weight - DeltaTime / Active.Effect.BlendOutTime : 0.f;
 				break;
 		}
-		if (Active.Phase == EPhase::BlendOut && Active.Weight <= 0.f)
+		if (Active.Phase == EAgPhase::BlendOut && Active.Weight <= 0.f)
 		{
 			ActiveEffects.RemoveAtSwap(Index);
 			continue;
@@ -83,7 +83,7 @@ void UAgFieldOfViewCameraModifier::Start(const FAgFieldOfViewEffect& Effect, flo
 		return;
 	}
 	// 재생 중인 같은 연출은 지금 세기에서 들어가기부터 다시 시작합니다.
-	FActiveEffect* Active = ActiveEffects.FindByPredicate([&Effect](const FActiveEffect& Each)
+	FAgActiveEffect* Active = ActiveEffects.FindByPredicate([&Effect](const FAgActiveEffect& Each)
 	{ return Each.Source == &Effect; });
 	if (!Active)
 	{
@@ -92,7 +92,7 @@ void UAgFieldOfViewCameraModifier::Start(const FAgFieldOfViewEffect& Effect, flo
 	}
 	Active->Effect = Effect;
 	Active->Scale = Scale;
-	Active->Phase = EPhase::BlendIn;
+	Active->Phase = EAgPhase::BlendIn;
 	Active->HoldRemaining = Effect.HoldTime;
 	Active->bHold = bHold;
 }

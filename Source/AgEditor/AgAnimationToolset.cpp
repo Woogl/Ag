@@ -50,12 +50,11 @@ bool UAgAnimationToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotNa
 	}
 
 	Montage->SetCompositeLength(Position);
+	// 섹션은 옛 조각의 시퀀스에 링크된 채로 남으므로, 같은 시각으로 새 조각에 다시 링크합니다.
 	for (FCompositeSection& Section : Montage->CompositeSections)
 	{
-		if (Section.GetTime() > Position)
-		{
-			Section.SetTime(0.f);
-		}
+		const float Time = Section.GetTime();
+		Section.Link(Montage, Time > Position ? 0.f : Time);
 	}
 	Montage->PostEditChange();
 	Montage->MarkPackageDirty();
@@ -87,9 +86,13 @@ bool UAgAnimationToolset::SetMontageSections(UAnimMontage* Montage, const TArray
 		return false;
 	}
 
+	// 엔진은 위치로 섹션을 찾을 때 섹션이 시작 시간 순서라고 보므로, 그 순서로 넣습니다.
+	TArray<FAgMontageSection> SortedSections = Sections;
+	SortedSections.StableSort([](const FAgMontageSection& A, const FAgMontageSection& B)
+	{ return A.StartTime < B.StartTime; });
 	Montage->Modify();
 	Montage->CompositeSections.Reset();
-	for (const FAgMontageSection& Section : Sections)
+	for (const FAgMontageSection& Section : SortedSections)
 	{
 		Montage->AddAnimCompositeSection(Section.Name, Section.StartTime);
 	}

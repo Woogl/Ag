@@ -64,10 +64,11 @@ void UAgTimeSubsystem::StartTimeStop(AAgCharacterBase& Requester)
 	GetWorld()->GetTimerManager().ClearTimer(SlowMotionTimer);
 	SlowMotionDuration = 0.f;
 	PendingSlowMotionDuration = 0.f;
-	GetWorld()->GetWorldSettings()->SetTimeDilation(TimeStopDilation);
+	AWorldSettings* WorldSettings = GetWorld()->GetWorldSettings();
+	WorldSettings->SetTimeDilation(TimeStopDilation);
 	bTimeStopped = true;
 	TimeStopRequester = &Requester;
-	Requester.SetTimeCompensation(GetTimeStopCompensation());
+	Requester.SetTimeCompensation(1.f / WorldSettings->GetEffectiveTimeDilation());
 	UE_LOG(LogAg, Verbose, TEXT("Time stop starts: %s keeps moving"), *Requester.GetName());
 }
 
@@ -92,11 +93,6 @@ void UAgTimeSubsystem::EndTimeStop(AAgCharacterBase& Requester)
 	{
 		GetWorld()->GetWorldSettings()->SetTimeDilation(1.f);
 	}
-}
-
-float UAgTimeSubsystem::GetTimeStopCompensation() const
-{
-	return bTimeStopped ? 1.f / GetWorld()->GetWorldSettings()->GetEffectiveTimeDilation() : 1.f;
 }
 
 void UAgTimeSubsystem::ApplySlowMotion(float Speed, float RealDuration)

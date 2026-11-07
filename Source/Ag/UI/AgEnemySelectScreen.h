@@ -38,7 +38,6 @@ protected:
 	TObjectPtr<UAgButton> ReturnToTitleButton;
 
 private:
-	/** 자리 번호 순서이며 빈 자리는 nullptr입니다. */
 	TArray<TSubclassOf<AAgCharacterBase>> GetLineup() const;
 	void RefreshSlots();
 	void StartLineup();

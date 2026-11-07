@@ -20,7 +20,6 @@ class AAgCharacterPreview : public AActor
 public:
 	AAgCharacterPreview();
 
-	/** 캐릭터를 캡처 앞에 세우고 렌더 타깃을 만듭니다. 한 번만 부릅니다. */
 	void ShowCharacter(TSubclassOf<AAgCharacterBase> CharacterClass);
 
 	UTextureRenderTarget2D* GetRenderTarget() const
@@ -38,7 +37,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Preview")
 	FIntPoint RenderTargetSize = FIntPoint(600, 780);
 
-	/** 메시 범위의 높이에 곱해 캡처의 세로 시야에 꼭 맞출 높이입니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Preview", meta = (ClampMin = 1))
 	float FramingScale = 1.1f;
 

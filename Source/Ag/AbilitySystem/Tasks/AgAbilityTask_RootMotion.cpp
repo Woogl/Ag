@@ -2,7 +2,6 @@
 
 #include "AbilitySystem/Tasks/AgAbilityTask_RootMotion.h"
 
-#include "AbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystem/Tasks/AgAbilityTask_PlayMontage.h"
@@ -32,9 +31,7 @@ void UAgAbilityTask_RootMotion::Activate()
 {
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
-	if (!Character || !ASC || !ASC->HasAllMatchingGameplayTags(Params.RequiredTags) ||
-		ASC->HasAnyMatchingGameplayTags(Params.BlockedTags))
+	if (!Character)
 	{
 		EndTask();
 		return;

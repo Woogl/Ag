@@ -38,7 +38,7 @@ public:
 	FSimpleMulticastDelegate OnCombatantsChanged;
 
 private:
-	struct FCombatant
+	struct FAgCombatant
 	{
 		TWeakObjectPtr<AAgEnemyCharacter> Enemy;
 		bool bAttacking = false;
@@ -48,8 +48,8 @@ private:
 	/** 차례를 기다리는 적이 물어야 합니다. 다른 적이 차지한 차례가 동시 공격 수보다 적으면 참입니다. */
 	bool HasAttackTurn(const AAgEnemyCharacter& Enemy) const;
 
-	FCombatant* FindCombatant(const AAgEnemyCharacter& Enemy);
-	const FCombatant* FindCombatant(const AAgEnemyCharacter& Enemy) const;
+	FAgCombatant* FindCombatant(const AAgEnemyCharacter& Enemy);
+	const FAgCombatant* FindCombatant(const AAgEnemyCharacter& Enemy) const;
 
-	TArray<FCombatant> Combatants;
+	TArray<FAgCombatant> Combatants;
 };
