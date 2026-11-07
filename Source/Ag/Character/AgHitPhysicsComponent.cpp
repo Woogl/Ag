@@ -13,12 +13,14 @@ namespace
 {
 	const FName TorsoBone(TEXT("spine_02"));
 	const FName GuardRangeBone(TEXT("spine_03"));
+	const FName NeckBone(TEXT("neck_01"));
 	const FName ArmBones[] = {FName(TEXT("clavicle_l")), FName(TEXT("clavicle_r"))};
 	const FName HandBones[] = {FName(TEXT("hand_l")), FName(TEXT("hand_r"))};
 
 	constexpr int32 RangeDepth = 1;
 	constexpr float BlendInTime = 0.1f;
 	constexpr float BlendOutTime = 0.3f;
+	constexpr float NeckBlendScale = 0.5f;
 
 	FName FindBodyAbove(const USkeletalMeshComponent& Mesh, FName Bone)
 	{
@@ -134,6 +136,9 @@ void UAgHitPhysicsComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	bRising = bRising && Weight < MaxBlendWeight;
 	USkeletalMeshComponent* Mesh = GetMesh();
 	Mesh->SetAllBodiesBelowPhysicsBlendWeight(RangeBone, Weight);
+	// 피직스 에셋의 머리 관절이 몸통 관절보다 넓고 물러 같은 비율로 섞으면 머리만 지나치게 흔들리므로, 목 아래는 줄여
+	// 섞습니다. 엔진은 부모에 대한 상대 자세로 섞으므로 몸통의 흔들림은 그대로 따라갑니다.
+	Mesh->SetAllBodiesBelowPhysicsBlendWeight(NeckBone, Weight * NeckBlendScale);
 	if (!bArms)
 	{
 		for (const FName& Arm : ArmBones)
