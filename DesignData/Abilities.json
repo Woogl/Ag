@@ -260,9 +260,73 @@
       }
     }
   },
-  "Skill": {
+  "Skill1": {
     "AbilityTags": ["Ability.Action.Skill"],
-    "InputTag": "Input.Skill",
+    "InputTag": "Input.Skill1",
+    "Icon": "/Game/UI/Icons/T_Skill_DashSlash.T_Skill_DashSlash",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
+    "Cost": {"MP": 40},
+    "Cooldown": 3,
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.3167, "TargetingRange": 290, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5633, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2.5, "HitReaction": "KnockUp", "bGuardable": true}}
+        ]
+      }
+    }
+  },
+  "Skill2": {
+    "AbilityTags": ["Ability.Action.Skill"],
+    "InputTag": "Input.Skill2",
+    "Icon": "/Game/UI/Icons/T_Skill_DashSlash.T_Skill_DashSlash",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
+    "Cost": {"MP": 40},
+    "Cooldown": 3,
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.3167, "TargetingRange": 290, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5633, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2.5, "HitReaction": "KnockUp", "bGuardable": true}}
+        ]
+      }
+    }
+  },
+  "Skill3": {
+    "AbilityTags": ["Ability.Action.Skill"],
+    "InputTag": "Input.Skill3",
+    "Icon": "/Game/UI/Icons/T_Skill_DashSlash.T_Skill_DashSlash",
+    "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
+    "ActivationOwnedTags": ["State.Acting"],
+    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
+    "Cost": {"MP": 40},
+    "Cooldown": 3,
+    "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 100},
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Skill.AM_Player_Skill",
+      "Sections": {
+        "Default": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.3167, "TargetingRange": 290, "bWarpTranslation": true},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5633, "Effect": "Busy"},
+          {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 2.5, "HitReaction": "KnockUp", "bGuardable": true}}
+        ]
+      }
+    }
+  },
+  "Skill4": {
+    "AbilityTags": ["Ability.Action.Skill"],
+    "InputTag": "Input.Skill4",
+    "Icon": "/Game/UI/Icons/T_Skill_DashSlash.T_Skill_DashSlash",
     "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
     "ActivationOwnedTags": ["State.Acting"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
@@ -283,6 +347,7 @@
   "Ultimate": {
     "AbilityTags": ["Ability.Action.Ultimate"],
     "InputTag": "Input.Ultimate",
+    "Icon": "/Game/UI/Icons/T_Ultimate_Judgment.T_Ultimate_Judgment",
     "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
     "ActivationOwnedTags": ["State.Invincible", "State.Acting"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],

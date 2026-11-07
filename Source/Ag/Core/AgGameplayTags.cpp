@@ -8,7 +8,10 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Guard, "Input.Guard", "가드 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Dodge, "Input.Dodge", "회피·달리기 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Jump, "Input.Jump", "점프 키");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Skill, "Input.Skill", "스킬 키");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Skill1, "Input.Skill1", "스킬 1 키");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Skill2, "Input.Skill2", "스킬 2 키");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Skill3, "Input.Skill3", "스킬 3 키");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Skill4, "Input.Skill4", "스킬 4 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Ultimate, "Input.Ultimate", "궁극기 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Execute, "Input.Execute", "처형 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_LockOn, "Input.LockOn", "락온 / 락온 해제 키");

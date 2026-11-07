@@ -4,7 +4,6 @@
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
@@ -21,9 +20,9 @@
 #include "GameplayEffectExtension.h"
 #include "Input/CommonUIInputTypes.h"
 #include "Materials/MaterialInstanceDynamic.h"
-#include "TimerManager.h"
 #include "UI/AgNameplateWidget.h"
 #include "UI/AgPauseMenu.h"
+#include "UI/AgSkillSlot.h"
 #include "UI/AgStatBar.h"
 #include "UI/AgUILayout.h"
 
@@ -82,15 +81,6 @@ void UAgHUDWidget::NativeConstruct()
 
 	StatusPanelVisibility = StatusPanel->GetVisibility();
 
-	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로, 이미지를 넣기 전까지 숨깁니다.
-	for (UImage* Icon : {SkillIconImage.Get(), UltimateIconImage.Get()})
-	{
-		if (!Icon->GetBrush().GetResourceObject())
-		{
-			Icon->SetVisibility(ESlateVisibility::Collapsed);
-		}
-	}
-
 	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
 	{
 		if (UAgAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
@@ -99,9 +89,20 @@ void UAgHUDWidget::NativeConstruct()
 			BindPlayer(*ASC);
 		}
 	}
+	const TPair<UAgSkillSlot*, FGameplayTag> SlotInputs[] = {
+		{Skill1Slot, AgGameplayTags::Input_Skill1},
+		{Skill2Slot, AgGameplayTags::Input_Skill2},
+		{Skill3Slot, AgGameplayTags::Input_Skill3},
+		{Skill4Slot, AgGameplayTags::Input_Skill4},
+		{UltimateSlot, AgGameplayTags::Input_Ultimate},
+	};
+	for (const TPair<UAgSkillSlot*, FGameplayTag>& SlotInput : SlotInputs)
+	{
+		SlotInput.Key->SetInput(PlayerASC.Get(), SlotInput.Value);
+	}
 
 #if WITH_EDITOR
-	// 데이터 파일을 다시 읽으면 보스 이름과 스킬 코스트가 바뀝니다.
+	// 데이터 파일을 다시 읽으면 보스 이름과 스킬 아이콘·코스트가 바뀝니다.
 	UAgAssetManager::Get().OnJsonDataReloaded.AddWeakLambda(this, [this]
 	{
 		UpdateSkillSlots();
@@ -118,7 +119,6 @@ void UAgHUDWidget::NativeConstruct()
 
 	UpdateStatusPanel();
 	UpdatePlayer();
-	UpdateSkillCooldown();
 }
 
 void UAgHUDWidget::NativeDestruct()
@@ -139,7 +139,6 @@ void UAgHUDWidget::NativeDestruct()
 		{
 			StageState->OnStageResultChanged.RemoveAll(this);
 		}
-		World->GetTimerManager().ClearTimer(CooldownTimer);
 	}
 
 	Super::NativeDestruct();
@@ -187,7 +186,7 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 	ASC.AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
 	{ UpdateSkillSlots(); });
 	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
-	{ UpdateSkillCooldown(); });
+	{ UpdateCooldowns(); });
 }
 
 void UAgHUDWidget::UpdateStatusPanel()
@@ -218,63 +217,24 @@ void UAgHUDWidget::UpdateSkillSlots()
 		return;
 	}
 
-	SetSlotUsable(*SkillSlot, CanPayCost(*ASC, AgGameplayTags::Input_Skill));
-	SetSlotUsable(*UltimateSlot, CanPayCost(*ASC, AgGameplayTags::Input_Ultimate));
+	for (UAgSkillSlot* SkillSlot : GetSkillSlots())
+	{
+		SkillSlot->UpdateAbility();
+	}
 
 	if (UMaterialInstanceDynamic* Gauge = UPGauge->GetDynamicMaterial())
 	{
 		const float MaxUP = ASC->GetNumericAttribute(UAgAttributeSet::GetMaxUPAttribute());
 		Gauge->SetScalarParameterValue(RatioParameter, MaxUP > 0.f ? ASC->GetNumericAttribute(UAgAttributeSet::GetUPAttribute()) / MaxUP : 0.f);
 	}
-
-	FGameplayAbilitySpecHandle SkillHandle;
-	const UAgGameplayAbility* Skill = Cast<UAgGameplayAbility>(FindAbility(*ASC, AgGameplayTags::Input_Skill, SkillHandle));
-	const int32 SkillCost = Skill ? FMath::RoundToInt(Skill->GetCost().MP) : 0;
-	if (SkillCost != ShownSkillCost)
-	{
-		ShownSkillCost = SkillCost;
-		SkillCostText->SetText(FText::AsNumber(SkillCost));
-	}
 }
 
-void UAgHUDWidget::UpdateSkillCooldown()
+void UAgHUDWidget::UpdateCooldowns()
 {
-	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
-	TimerManager.ClearTimer(CooldownTimer);
-
-	float Remaining = 0.f;
-	float Duration = 0.f;
-	FGameplayAbilitySpecHandle Handle;
-	const UAgAbilitySystemComponent* ASC = PlayerASC.Get();
-	if (const UGameplayAbility* Ability = ASC ? FindAbility(*ASC, AgGameplayTags::Input_Skill, Handle) : nullptr)
+	for (UAgSkillSlot* SkillSlot : GetSkillSlots())
 	{
-		Ability->GetCooldownTimeRemainingAndDuration(Handle, ASC->AbilityActorInfo.Get(), Remaining, Duration);
+		SkillSlot->UpdateCooldown();
 	}
-	const bool bCoolingDown = Remaining > 0.f && Duration > 0.f;
-	const ESlateVisibility CooldownVisibility = bCoolingDown ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
-	SkillCooldownSweep->SetVisibility(CooldownVisibility);
-	SkillCooldownText->SetVisibility(CooldownVisibility);
-	if (!bCoolingDown)
-	{
-		return;
-	}
-
-	if (UMaterialInstanceDynamic* Material = SkillCooldownSweep->GetDynamicMaterial())
-	{
-		Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
-	}
-
-	const bool bWholeSeconds = Remaining >= 1.f;
-	const FIntPoint Shown(bWholeSeconds ? 1 : 0, FMath::CeilToInt(bWholeSeconds ? Remaining : Remaining * 10.f));
-	if (Shown != ShownCooldown)
-	{
-		ShownCooldown = Shown;
-		FNumberFormattingOptions OneDecimal;
-		OneDecimal.MinimumFractionalDigits = 1;
-		OneDecimal.MaximumFractionalDigits = 1;
-		SkillCooldownText->SetText(bWholeSeconds ? FText::AsNumber(Shown.Y) : FText::AsNumber(Shown.Y / 10.f, &OneDecimal));
-	}
-	CooldownTimer = TimerManager.SetTimerForNextTick(this, &ThisClass::UpdateSkillCooldown);
 }
 
 void UAgHUDWidget::UpdateBoss()
@@ -287,38 +247,14 @@ void UAgHUDWidget::UpdateBoss()
 	}
 }
 
+TArray<UAgSkillSlot*, TInlineAllocator<5>> UAgHUDWidget::GetSkillSlots() const
+{
+	return {Skill1Slot.Get(), Skill2Slot.Get(), Skill3Slot.Get(), Skill4Slot.Get(), UltimateSlot.Get()};
+}
+
 void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop)
 {
 	Bar.SetValue(ASC.GetNumericAttribute(Value), ASC.GetNumericAttribute(MaxValue), bShowDrop);
-}
-
-const UGameplayAbility* UAgHUDWidget::FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag, FGameplayAbilitySpecHandle& OutHandle)
-{
-	const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(ASC.GetAvatarActor());
-	TArray<FGameplayAbilitySpecHandle> Handles;
-	if (Player)
-	{
-		Player->FindInputAbilities(InputTag, Handles);
-	}
-	const FGameplayAbilitySpec* Spec = Handles.IsEmpty() ? nullptr : ASC.FindAbilitySpecFromHandle(Handles[0]);
-	if (!Spec || !Spec->GetPrimaryInstance())
-	{
-		return nullptr;
-	}
-	OutHandle = Spec->Handle;
-	return Spec->GetPrimaryInstance();
-}
-
-bool UAgHUDWidget::CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag)
-{
-	FGameplayAbilitySpecHandle Handle;
-	const UGameplayAbility* Ability = FindAbility(ASC, InputTag, Handle);
-	return Ability && Ability->CheckCost(Handle, ASC.AbilityActorInfo.Get());
-}
-
-void UAgHUDWidget::SetSlotUsable(UWidget& SlotWidget, bool bUsable) const
-{
-	SlotWidget.SetRenderOpacity(bUsable ? 1.f : DisabledSlotOpacity);
 }
 
 void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data)

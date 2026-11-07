@@ -11,13 +11,11 @@ class UAbilitySystemComponent;
 class UAgAbilitySystemComponent;
 class UAgNameplateWidget;
 class UAgPauseMenu;
+class UAgSkillSlot;
 class UAgStatBar;
-class UGameplayAbility;
 class UImage;
 class UTextBlock;
-struct FGameplayAbilitySpecHandle;
 struct FGameplayAttribute;
-struct FGameplayTag;
 struct FOnAttributeChangeData;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
@@ -48,25 +46,19 @@ protected:
 	TObjectPtr<UAgStatBar> PlayerMPBar;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UWidget> SkillSlot;
+	TObjectPtr<UAgSkillSlot> Skill1Slot;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> SkillIconImage;
+	TObjectPtr<UAgSkillSlot> Skill2Slot;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> SkillCostText;
+	TObjectPtr<UAgSkillSlot> Skill3Slot;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> SkillCooldownSweep;
+	TObjectPtr<UAgSkillSlot> Skill4Slot;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> SkillCooldownText;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UWidget> UltimateSlot;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> UltimateIconImage;
+	TObjectPtr<UAgSkillSlot> UltimateSlot;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> UPGauge;
@@ -80,9 +72,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgNameplateWidget> BossStatus;
 
-	UPROPERTY(EditAnywhere, Category = "HUD", meta = (ClampMin = 0, ClampMax = 1))
-	float DisabledSlotOpacity = 1.f;
-
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgPauseMenu> PauseMenuClass;
 
@@ -95,16 +84,12 @@ private:
 	void UpdateStatusPanel();
 	void UpdatePlayer();
 	void UpdateSkillSlots();
-	void UpdateSkillCooldown();
+	void UpdateCooldowns();
 	void UpdateBoss();
 
+	TArray<UAgSkillSlot*, TInlineAllocator<5>> GetSkillSlots() const;
+
 	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop = true);
-
-	static const UGameplayAbility* FindAbility(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag, FGameplayAbilitySpecHandle& OutHandle);
-
-	static bool CanPayCost(const UAgAbilitySystemComponent& ASC, const FGameplayTag& InputTag);
-
-	void SetSlotUsable(UWidget& SlotWidget, bool bUsable) const;
 
 	void HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data);
 
@@ -113,9 +98,4 @@ private:
 	TWeakObjectPtr<UAgAbilitySystemComponent> PlayerASC;
 
 	ESlateVisibility StatusPanelVisibility = ESlateVisibility::SelfHitTestInvisible;
-
-	int32 ShownSkillCost = INDEX_NONE;
-	FIntPoint ShownCooldown = FIntPoint(INDEX_NONE, INDEX_NONE);
-
-	FTimerHandle CooldownTimer;
 };

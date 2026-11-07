@@ -12,6 +12,7 @@
 class UAbilityTask;
 class UAgGameplayAbility;
 class UAnimMontage;
+class UTexture2D;
 struct FGameplayEffectSpec;
 
 USTRUCT()
@@ -166,6 +167,9 @@ struct FAgAbilityData
 
 	UPROPERTY()
 	FGameplayTag InputTag;
+
+	UPROPERTY()
+	TObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY()
 	FGameplayTagContainer ActivationRequiredTags;
