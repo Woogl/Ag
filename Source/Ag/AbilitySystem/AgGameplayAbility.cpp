@@ -90,25 +90,10 @@ bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemC
 void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const
 {
 	TimeRemaining = CooldownDuration = 0.f;
-	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
-	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
-	if (!Spec || !Data)
+	if (GetCharges(Handle, ActorInfo) == 0)
 	{
-		return;
+		GetRechargeTimeRemainingAndDuration(Handle, ActorInfo, TimeRemaining, CooldownDuration);
 	}
-	const TArray<float> Remaining =
-		ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemaining(CooldownQuery(Spec->GetPrimaryInstance()));
-	if (Remaining.IsEmpty() || Remaining.Num() < Data->MaxCharges)
-	{
-		return;
-	}
-	// 쿨다운 효과는 쿨다운 간격으로 줄지어 끝나므로, 가장 먼저 끝나는 효과까지가 다음 충전까지의 시간입니다.
-	TimeRemaining = Remaining[0];
-	for (const float Time : Remaining)
-	{
-		TimeRemaining = FMath::Min(TimeRemaining, Time);
-	}
-	CooldownDuration = Data->Cooldown;
 }
 
 int32 UAgGameplayAbility::GetCharges(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
@@ -121,6 +106,30 @@ int32 UAgGameplayAbility::GetCharges(FGameplayAbilitySpecHandle Handle, const FG
 	}
 	const int32 Used = ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).Num();
 	return FMath::Max(Data->MaxCharges - Used, 0);
+}
+
+void UAgGameplayAbility::GetRechargeTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const
+{
+	TimeRemaining = CooldownDuration = 0.f;
+	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
+	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
+	if (!Spec || !Data)
+	{
+		return;
+	}
+	const TArray<float> Remaining =
+		ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemaining(CooldownQuery(Spec->GetPrimaryInstance()));
+	if (Remaining.IsEmpty())
+	{
+		return;
+	}
+	// 쿨다운 효과는 쿨다운 간격으로 줄지어 끝나므로, 가장 먼저 끝나는 효과까지가 다음 충전까지의 시간입니다.
+	TimeRemaining = Remaining[0];
+	for (const float Time : Remaining)
+	{
+		TimeRemaining = FMath::Min(TimeRemaining, Time);
+	}
+	CooldownDuration = Data->Cooldown;
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffect& Effect) const

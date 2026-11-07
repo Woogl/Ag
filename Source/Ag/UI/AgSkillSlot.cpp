@@ -66,7 +66,7 @@ void UAgSkillSlot::UpdateCooldown()
 	if (const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(FindAbility(Handle)))
 	{
 		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
-		Ability->GetCooldownTimeRemainingAndDuration(Handle, ActorInfo, Remaining, Duration);
+		Ability->GetRechargeTimeRemainingAndDuration(Handle, ActorInfo, Remaining, Duration);
 		Charges = Ability->GetCharges(Handle, ActorInfo);
 		const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(ASC->GetAvatarActor());
 		const FAgAbilityData* Data = Player ? Player->FindAbility(Handle) : nullptr;
@@ -81,17 +81,19 @@ void UAgSkillSlot::UpdateCooldown()
 		ChargeText->SetText(FText::AsNumber(Charges));
 	}
 
-	const bool bCoolingDown = Remaining > 0.f && Duration > 0.f;
-	const ESlateVisibility CooldownVisibility = bCoolingDown ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed;
-	CooldownSweep->SetVisibility(CooldownVisibility);
-	CooldownText->SetVisibility(CooldownVisibility);
-	if (bCoolingDown)
+	const bool bRecharging = Remaining > 0.f && Duration > 0.f;
+	const bool bCoolingDown = bRecharging && Charges == 0;
+	CooldownSweep->SetVisibility(bRecharging ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	CooldownText->SetVisibility(bCoolingDown ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (bRecharging)
 	{
 		if (UMaterialInstanceDynamic* Material = CooldownSweep->GetDynamicMaterial())
 		{
 			Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
 		}
-
+	}
+	if (bCoolingDown)
+	{
 		const bool bWholeSeconds = Remaining >= 1.f;
 		const FIntPoint Shown(bWholeSeconds ? 1 : 0, FMath::CeilToInt(bWholeSeconds ? Remaining : Remaining * 10.f));
 		if (Shown != ShownCooldown)
@@ -103,7 +105,6 @@ void UAgSkillSlot::UpdateCooldown()
 			CooldownText->SetText(bWholeSeconds ? FText::AsNumber(Shown.Y) : FText::AsNumber(Shown.Y / 10.f, &OneDecimal));
 		}
 	}
-	// 충전이 남아 쿨다운 표시가 없어도, 충전이 돌아오는 순간 숫자를 바꾸려면 계속 봐야 합니다.
 	if (Charges < MaxCharges)
 	{
 		CooldownTimer = TimerManager.SetTimerForNextTick(this, &ThisClass::UpdateCooldown);
