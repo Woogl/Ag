@@ -301,7 +301,7 @@
       "Sections": {
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.2, "bWarpTranslation": true},
-          {"Task": "RootMotion", "Start": 0.2, "End": 0.3167, "TargetingRange": 400, "bWarpTranslation": true},
+          {"Task": "RootMotion", "Start": 0.2, "End": 0.3167, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "Busy"},
           {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "Damage": {"HPMultiplier": 1, "PPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": true}}
         ]
@@ -622,7 +622,12 @@
       {"Task": "RootMotion"}
     ],
     "Montage": {
-      "Asset": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback"
+      "Asset": "/Game/Animations/AM_Player_GuardPushback.AM_Player_GuardPushback",
+      "Sections": {
+        "Default": [
+          {"Task": "ApplyEffect", "Start": 0.5, "Effect": "GuardCounterChance", "bRemoveOnEnd": false}
+        ]
+      }
     }
   },
   "GuardBreak": {
