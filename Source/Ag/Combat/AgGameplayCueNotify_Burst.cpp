@@ -5,6 +5,7 @@
 #include "Camera/AgPlayerCameraManager.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgGameplayTags.h"
+#include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
 
 namespace AgGameplayCueNotify_BurstPrivate
@@ -56,7 +57,7 @@ void UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(AActor* Target, const
 	{
 		Player = Cast<AAgPlayerCharacter>(Target);
 	}
-	AAgPlayerCameraManager* CameraManager = Player ? Player->GetPlayerCameraManager() : nullptr;
+	AAgPlayerCameraManager* CameraManager = Player ? Cast<AAgPlayerCameraManager>(UGameplayStatics::GetPlayerCameraManager(Player, 0)) : nullptr;
 	if (!CameraManager)
 	{
 		return;

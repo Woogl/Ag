@@ -11,7 +11,6 @@
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Camera/AgPlayerCameraManager.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
@@ -34,9 +33,6 @@ namespace AgPlayerCharacterPrivate
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
-	// 락온 카메라와 상대 쪽 회전이 이번 프레임의 이동을 마친 위치를 보도록 이동 뒤에 돕니다.
-	PrimaryActorTick.TickGroup = TG_PostPhysics;
-
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -62,12 +58,6 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	PerfectDodgeCapsule->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
 	PerfectDodgeCapsule->SetGenerateOverlapEvents(false);
 	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
-}
-
-AAgPlayerCameraManager* AAgPlayerCharacter::GetPlayerCameraManager() const
-{
-	const APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	return PlayerController ? Cast<AAgPlayerCameraManager>(PlayerController->PlayerCameraManager) : nullptr;
 }
 
 void AAgPlayerCharacter::FindInputAbilities(const FGameplayTag& InputTag, TArray<FGameplayAbilitySpecHandle>& OutHandles) const
@@ -108,6 +98,10 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleGuardingChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Sprinting, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_LockedOn, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
+	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute())
+		.AddUObject(this, &ThisClass::HandleSPChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
@@ -120,20 +114,6 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleTimeStopChanged);
 	PerfectDodgeCapsule->SetCapsuleSize(GetCapsuleComponent()->GetUnscaledCapsuleRadius(), GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 	UpdateRotationMode();
-}
-
-void AAgPlayerCharacter::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	UpdateSprint();
-	TryMoveCancel();
-	UpdateRotationMode();
-	if (AAgPlayerCameraManager* CameraManager = GetPlayerCameraManager())
-	{
-		// 카메라는 캐릭터 히트스톱의 영향을 받지 않도록 월드 시간으로 갱신합니다.
-		CameraManager->UpdateGameplayRotation(*this, CameraBoom->GetComponentLocation(), GetWorld()->GetDeltaSeconds());
-	}
 }
 
 void AAgPlayerCharacter::NotifyControllerChanged()
@@ -236,7 +216,8 @@ void AAgPlayerCharacter::UpdateRotationMode()
 	// 락온 카메라는 대상을 보므로, 카메라 정면을 바라보면 대상을 바라봅니다.
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const bool bSprinting = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting);
-	const bool bFaceCamera = (GetLockOnTarget() && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
+	const bool bLockedOn = ASC->HasMatchingGameplayTag(AgGameplayTags::State_LockedOn);
+	const bool bFaceCamera = (bLockedOn && !bSprinting) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
 	GetCharacterMovement()->bOrientRotationToMovement = !bFaceCamera;
 	GetCharacterMovement()->bUseControllerDesiredRotation = bFaceCamera;
 }
@@ -255,6 +236,9 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 	const FVector Right = YawMatrix.GetUnitAxis(EAxis::Y);
 	MoveInputDirection = (Forward * Input.Y + Right * Input.X).GetSafeNormal2D();
 	GetAbilitySystemComponent()->SetLooseGameplayTagCount(AgGameplayTags::Input_Move, MoveInputDirection.IsNearlyZero() ? 0 : 1);
+
+	// 키를 누르는 동안 매 프레임 불리므로 후딜이 시작되는 순간을 따로 알리지 않아도 됩니다. 풀린 이동이 이번 프레임부터 먹도록 먼저 봅니다.
+	TryMoveCancel();
 
 	if (CanMove())
 	{
@@ -283,10 +267,9 @@ void AAgPlayerCharacter::MoveReleased()
 
 void AAgPlayerCharacter::Look(const FInputActionValue& Value)
 {
-	if (AAgPlayerCameraManager* CameraManager = GetPlayerCameraManager())
-	{
-		CameraManager->ApplyLookInput(Value.Get<FVector2D>());
-	}
+	const FVector2D Input = Value.Get<FVector2D>();
+	AddControllerYawInput(Input.X);
+	AddControllerPitchInput(Input.Y);
 }
 
 void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
@@ -366,6 +349,10 @@ void AAgPlayerCharacter::HandleInputReleased(FGameplayTag InputTag)
 	if (InputTag == AgGameplayTags::Input_Jump)
 	{
 		StopJumping();
+	}
+	else if (InputTag == AgGameplayTags::Input_Dodge)
+	{
+		GetAbilitySystemComponent()->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Sprint));
 	}
 }
 
@@ -502,13 +489,11 @@ bool AAgPlayerCharacter::WantsSprint() const
 	return HeldInputs.Contains(AgGameplayTags::Input_Dodge) && GetAttributeSet()->GetSP() > 0.f;
 }
 
-void AAgPlayerCharacter::UpdateSprint()
+void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
 {
-	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const FGameplayAbilitySpec* Sprint = ASC->FindSpecByTag(AgGameplayTags::Ability_Sprint);
-	if (Sprint && Sprint->IsActive() && !WantsSprint())
+	if (Data.NewValue <= 0.f)
 	{
-		ASC->CancelAbilityHandle(Sprint->Handle);
+		GetAbilitySystemComponent()->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Sprint));
 	}
 }
 

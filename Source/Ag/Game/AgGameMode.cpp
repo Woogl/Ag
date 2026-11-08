@@ -127,12 +127,9 @@ void AAgGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
 	if (const AAgBossCharacter* DeadBoss = Cast<AAgBossCharacter>(DeadCharacter))
 	{
 		GetWorld()->GetSubsystem<UAgTimeSubsystem>()->StartSlowMotion(DeadBoss->GetKillSlowMotionSpeed(), DeadBoss->GetKillSlowMotionDuration());
-		if (AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		if (AAgPlayerCameraManager* CameraManager = Cast<AAgPlayerCameraManager>(UGameplayStatics::GetPlayerCameraManager(this, 0)))
 		{
-			if (AAgPlayerCameraManager* CameraManager = Player->GetPlayerCameraManager())
-			{
-				CameraManager->PlayCameraReaction(EAgCameraSituation::BossKill, DeadCharacter);
-			}
+			CameraManager->PlayCameraReaction(EAgCameraSituation::BossKill, DeadCharacter);
 		}
 	}
 

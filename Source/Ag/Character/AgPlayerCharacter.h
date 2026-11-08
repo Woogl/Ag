@@ -7,7 +7,6 @@
 #include "GameplayTagContainer.h"
 #include "AgPlayerCharacter.generated.h"
 
-class AAgPlayerCameraManager;
 class UCameraComponent;
 class UCapsuleComponent;
 class UGameplayAbility;
@@ -24,7 +23,10 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
-	AAgPlayerCameraManager* GetPlayerCameraManager() const;
+	USpringArmComponent* GetCameraBoom() const
+	{
+		return CameraBoom;
+	}
 
 	virtual FVector GetMoveInputDirection() const override
 	{
@@ -38,7 +40,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
@@ -83,7 +84,7 @@ private:
 	void HandleAbilityActivated(UGameplayAbility* Ability);
 
 	bool WantsSprint() const;
-	void UpdateSprint();
+	void HandleSPChanged(const FOnAttributeChangeData& Data);
 	void TryMoveCancel();
 
 	void ToggleLockOn();
