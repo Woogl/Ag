@@ -130,6 +130,8 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<AAgCharacterBase> Character;
 
+	float SmallestTurnAngle = 0.f;
+	float SmallestGuardTurnAngle = 0.f;
 	float LastActorYaw = 0.f;
 	float TurnDirection = 0.f;
 	bool bTurning = false;

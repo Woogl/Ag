@@ -43,6 +43,9 @@ void UAgAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
+	SmallestTurnAngle = AgAnimInstancePrivate::GetSmallestTurnAngle(TurnAnimations);
+	SmallestGuardTurnAngle = AgAnimInstancePrivate::GetSmallestTurnAngle(GuardTurnAnimations);
+
 	Character = Cast<AAgCharacterBase>(TryGetPawnOwner());
 	if (Character)
 	{
@@ -101,7 +104,7 @@ void UAgAnimInstance::UpdateTurnInPlace(float DeltaSeconds)
 
 		// 가장 작은 모션보다 작은 차이는 걸음을 크게 줄여야 해 다리가 움찔거리므로, 발을 붙인 채 몸을 그대로 둡니다.
 		const float Offset = GetTurnOffset();
-		if (!bTurning && FMath::Abs(Offset) > AgAnimInstancePrivate::GetSmallestTurnAngle(GetTurnAnimations()))
+		if (!bTurning && FMath::Abs(Offset) > (bIsGuarding ? SmallestGuardTurnAngle : SmallestTurnAngle))
 		{
 			StartTurn(Offset);
 		}

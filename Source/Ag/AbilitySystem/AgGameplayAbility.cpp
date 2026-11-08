@@ -275,10 +275,7 @@ void UAgGameplayAbility::ApplyCost(FGameplayAbilitySpecHandle Handle, const FGam
 
 bool UAgGameplayAbility::CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags) const
 {
-	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
-	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
-	return Spec && Data &&
-	       ActorInfo->AbilitySystemComponent->GetActiveEffects(AgGameplayAbilityPrivate::CooldownQuery(Spec->GetPrimaryInstance())).Num() < Data->MaxCharges;
+	return GetCharges(Handle, ActorInfo) > 0;
 }
 
 void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
