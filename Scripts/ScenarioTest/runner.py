@@ -25,7 +25,8 @@ def _tag(name):
 # 사람이 누르는 키(IMC_Default). 시나리오는 입력 태그 이름으로 누르고, 키 매핑이 바뀌면 이 표도 바꾼다.
 KEYS = {"Input.Attack": "LeftMouseButton", "Input.Guard": "RightMouseButton", "Input.Dodge": "LeftShift",
         "Input.Jump": "SpaceBar", "Input.Skill1": "One", "Input.Skill2": "Two", "Input.Skill3": "Three",
-        "Input.Skill4": "Four", "Input.Ultimate": "Q", "Input.Execute": "F", "Input.LockOn": "MiddleMouseButton"}
+        "Input.Skill4": "Four", "Input.Ultimate": "Q", "Input.Execute": "F", "Input.LockOn": "MiddleMouseButton",
+        "Input.Potion": "R"}
 
 
 class Ctx:

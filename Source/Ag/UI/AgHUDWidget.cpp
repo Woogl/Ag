@@ -34,7 +34,8 @@ namespace AgHUDWidgetPrivate
 	{
 		return {UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute(), UAgAttributeSet::GetMPAttribute(),
 			UAgAttributeSet::GetMaxMPAttribute(), UAgAttributeSet::GetSPAttribute(), UAgAttributeSet::GetMaxSPAttribute(),
-			UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute()};
+			UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute(), UAgAttributeSet::GetPotionAttribute(),
+			UAgAttributeSet::GetMaxPotionAttribute()};
 	}
 
 	const TArray<FGameplayTag>& PlayerTags()
@@ -95,6 +96,7 @@ void UAgHUDWidget::NativeConstruct()
 		{Skill3Slot, AgGameplayTags::Input_Skill3},
 		{Skill4Slot, AgGameplayTags::Input_Skill4},
 		{UltimateSlot, AgGameplayTags::Input_Ultimate},
+		{PotionSlot, AgGameplayTags::Input_Potion},
 	};
 	for (const TPair<UAgSkillSlot*, FGameplayTag>& SlotInput : SlotInputs)
 	{
@@ -210,7 +212,17 @@ void UAgHUDWidget::UpdatePlayer()
 		SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
 		SetBarValue(*PlayerSPBar, *ASC, UAgAttributeSet::GetSPAttribute(), UAgAttributeSet::GetMaxSPAttribute(), false);
 	}
+	UpdatePotion();
 	UpdateSkillSlots();
+}
+
+void UAgHUDWidget::UpdatePotion()
+{
+	if (const UAbilitySystemComponent* ASC = PlayerASC.Get())
+	{
+		PotionCountText->SetText(FText::Format(INVTEXT("{0}/{1}"), FText::AsNumber(FMath::RoundToInt(ASC->GetNumericAttribute(UAgAttributeSet::GetPotionAttribute()))),
+			FText::AsNumber(FMath::RoundToInt(ASC->GetNumericAttribute(UAgAttributeSet::GetMaxPotionAttribute())))));
+	}
 }
 
 void UAgHUDWidget::UpdateSkillSlots()
@@ -251,9 +263,9 @@ void UAgHUDWidget::UpdateBoss()
 	}
 }
 
-TArray<UAgSkillSlot*, TInlineAllocator<5>> UAgHUDWidget::GetSkillSlots() const
+TArray<UAgSkillSlot*, TInlineAllocator<6>> UAgHUDWidget::GetSkillSlots() const
 {
-	return {Skill1Slot.Get(), Skill2Slot.Get(), Skill3Slot.Get(), Skill4Slot.Get(), UltimateSlot.Get()};
+	return {Skill1Slot.Get(), Skill2Slot.Get(), Skill3Slot.Get(), Skill4Slot.Get(), UltimateSlot.Get(), PotionSlot.Get()};
 }
 
 void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop)
@@ -287,6 +299,10 @@ void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Da
 		if (Attribute == UAgAttributeSet::GetMPAttribute() || Attribute == UAgAttributeSet::GetMaxMPAttribute())
 		{
 			SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
+		}
+		else if (Attribute == UAgAttributeSet::GetPotionAttribute() || Attribute == UAgAttributeSet::GetMaxPotionAttribute())
+		{
+			UpdatePotion();
 		}
 		UpdateSkillSlots();
 	}

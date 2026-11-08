@@ -1,0 +1,36 @@
+# 회복병 작업 태스크
+
+- [x] 1. 설계 승인 때 확인한 해석을 `1-spec.md`에 적기 (시뮬레이션 룸, HUD 자리)
+- [x] 2. 마시는 모션 고르기
+  - [x] 후보 `Buff`를 재서 쓸 수 없음을 확인, 전체 모션에서 대안 찾기
+  - [x] 전용 모션 `A_Potion_Drink`와 `Buff`를 스탠드인 병을 쥐고 한 GIF에 나란히 찍어 전달
+  - [x] 고른 안을 `1-spec.md`의 '아트 에셋'에 적기
+- [x] 3. C++
+  - [x] 태그 `Input.Potion`, `GameplayCue.PotionBottle`, `GameplayCue.PotionHeal`
+  - [x] 어트리뷰트 `Potion`, `MaxPotion`과 초기화·범위 고정
+  - [x] 효과 모디파이어 `Coefficient`, `BackingAttribute`
+  - [x] 어빌리티 `ActivationAttributes`와 `CheckCost`
+  - [x] `IsFacingFixed`의 `DefaultSlot` 조건
+  - [x] 플레이어 입력(`PotionAction`, 선입력 제외)
+  - [x] HUD `PotionSlot`, `PotionCountText`, `UpdatePotion`
+  - [x] 전체 빌드
+- [x] 4. 에셋
+  - [x] `IA_Potion`, `IMC_Default`의 R
+  - [x] `ABP_Character` 상체 층 (기존 슬롯 `UpperBody`)
+  - [x] `A_Potion_Drink`, `AM_Player_Potion`
+  - [x] `BP_Player`의 `PotionAction`
+  - [x] 병 `NS_PotionBottle`, `M_PotionBottle`, `GC_PotionBottle`, 몽타주 노티파이
+  - [x] 아이콘 `T_Potion` (광택과 찰랑이는 수면 없이)
+  - [x] `WBP_HUD`, `WBP_ControlsGuide`
+  - [x] 회복 효과 `NS_PotionHeal`, `GC_PotionHeal`, 몽타주 노티파이
+- [x] 5. JSON: `Characters.json`, `Effects.json`, `Abilities.json`
+- [x] 6. 병 자리 맞추기: 정지·걷기에서 삼키는 순간 찍기
+- [x] 7. 시나리오 테스트와 `4-test.md`
+- [x] 8. 사람의 확인 (4단계 진행 지시)
+- [x] 9. 정본 동기화와 작업대 정리
+  - [x] `Docs/Design`: 린('스탯', '회복병'), 플레이어 시스템('키 배치', '상태별 허용 입력', '선입력'), UI 시스템('전투 HUD')
+  - [x] `Docs/Art`: 아트 표현 사양(병, 아이콘, 회복 효과), ABP와 로코모션(층, 슬롯), HUD와 조작 안내 SVG
+  - [x] `Docs/Architecture`: 캐릭터 기반 구조와 GAS(어트리뷰트, 병 표시, `IsFacingFixed`), 데이터 로딩과 스키마(`ActivationAttributes`, 효과 모디파이어)
+  - [x] 스킬 `애니메이션.md`: 새 캐시 저장 노드의 사용 노드는 에디터를 다시 켜야 메뉴에 나옴
+  - [x] 용어집 '회복병', 마일스톤 3의 Spec 링크
+  - [x] `Specs/회복병` 삭제

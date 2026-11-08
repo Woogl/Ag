@@ -246,7 +246,9 @@ bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGam
 	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
 	if (Data && ASC && ASC->GetNumericAttribute(UAgAttributeSet::GetSPAttribute()) >= Data->Cost.SP &&
 		ASC->GetNumericAttribute(UAgAttributeSet::GetMPAttribute()) >= Data->Cost.MP &&
-		ASC->GetNumericAttribute(UAgAttributeSet::GetUPAttribute()) >= Data->Cost.UP)
+		ASC->GetNumericAttribute(UAgAttributeSet::GetUPAttribute()) >= Data->Cost.UP &&
+		!Data->ActivationAttributes.ContainsByPredicate([ASC](const FAgAttributeCondition& Condition)
+	{ return ASC->GetNumericAttribute(Condition.Attribute) < Condition.AtLeast; }))
 	{
 		return true;
 	}

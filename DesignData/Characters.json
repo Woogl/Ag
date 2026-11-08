@@ -14,7 +14,9 @@
       "MaxUP": 100,
       "ATK": 100,
       "DEF": 50,
-      "MOV": 375
+      "MOV": 375,
+      "Potion": 3,
+      "MaxPotion": 3
     },
     "Abilities": [
       "BasicAttack",
@@ -34,6 +36,7 @@
       "Ultimate",
       "Execution",
       "Sprint",
+      "Potion",
       "LockOn",
       "HitReward",
       "Flinch",

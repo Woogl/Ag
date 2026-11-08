@@ -59,6 +59,10 @@ namespace AgEffectDataPrivate
 		{
 			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.Multiplier));
 		}
+		if (Modifier.Coefficient)
+		{
+			return FGameplayEffectModifierMagnitude(MakeTargetAttribute(Modifier.BackingAttribute, *Modifier.Coefficient));
+		}
 		return FGameplayEffectModifierMagnitude(FScalableFloat(Modifier.Value.Get(0.f)));
 	}
 

@@ -429,6 +429,25 @@
       {"Task": "ApplyEffect", "Effect": "DashAttackReady"}
     ]
   },
+  "Potion": {
+    "AbilityTags": ["Ability.Action"],
+    "InputTag": "Input.Potion",
+    "Icon": "/Game/UI/Icons/T_Potion.T_Potion",
+    "ActivationBlockedTags": ["State.Busy", "State.Acting", "State.Guarding", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne"],
+    "ActivationOwnedTags": ["State.Busy"],
+    "CancelAbilitiesWithTag": ["Ability.Sprint"],
+    "ActivationAttributes": [
+      {"Attribute": "Potion", "AtLeast": 1}
+    ],
+    "Montage": {
+      "Asset": "/Game/Animations/AM_Player_Potion.AM_Player_Potion",
+      "Sections": {
+        "Default": [
+          {"Task": "ApplyEffect", "Start": 0.8, "Effect": "PotionHeal"}
+        ]
+      }
+    }
+  },
   "LockOn": {
     "AbilityTags": ["Ability.LockOn"],
     "ActivationOwnedTags": ["State.LockedOn"],

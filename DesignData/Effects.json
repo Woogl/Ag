@@ -94,6 +94,12 @@
       {"Attribute": "SP", "PerSecond": -6, "RequiredTags": ["Input.Move"]}
     ]
   },
+  "PotionHeal": {
+    "Modifiers": [
+      {"Attribute": "HP", "Coefficient": 0.4, "BackingAttribute": "MaxHP"},
+      {"Attribute": "Potion", "Value": -1}
+    ]
+  },
   "SprintSpeed": {
     "DurationPolicy": "Infinite",
     "Modifiers": [

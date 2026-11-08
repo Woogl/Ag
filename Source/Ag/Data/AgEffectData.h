@@ -36,6 +36,13 @@ struct FAgEffectModifier
 	UPROPERTY()
 	TOptional<float> Multiplier;
 
+	/** 값이 있으면 대상의 BackingAttribute에 이 값을 곱해 더합니다. */
+	UPROPERTY()
+	TOptional<float> Coefficient;
+
+	UPROPERTY()
+	FGameplayAttribute BackingAttribute;
+
 	UPROPERTY()
 	FGameplayTagContainer RequiredTags;
 

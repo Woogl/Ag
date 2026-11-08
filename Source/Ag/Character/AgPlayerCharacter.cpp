@@ -171,6 +171,7 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		{UltimateAction, AgGameplayTags::Input_Ultimate},
 		{ExecuteAction, AgGameplayTags::Input_Execute},
 		{LockOnAction, AgGameplayTags::Input_LockOn},
+		{PotionAction, AgGameplayTags::Input_Potion},
 	};
 	for (const TPair<const UInputAction*, FGameplayTag>& ActionKey : ActionKeys)
 	{
@@ -303,7 +304,8 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 
 	// 새로 누른 키가 기억한 입력을 대신하므로, 막히지 않은 키는 기억을 지웁니다.
 	const bool bFallingJump = InputTag == AgGameplayTags::Input_Jump && GetCharacterMovement()->IsFalling();
-	BufferedInput = !bFallingJump && InputTag != AgGameplayTags::Input_Execute && IsActionInputBlocked(InputTag)
+	const bool bUnbuffered = bFallingJump || InputTag == AgGameplayTags::Input_Execute || InputTag == AgGameplayTags::Input_Potion;
+	BufferedInput = !bUnbuffered && IsActionInputBlocked(InputTag)
 	                    ? InputTag
 	                    : FGameplayTag();
 	BufferedInputTime = GetWorld()->GetTimeSeconds();

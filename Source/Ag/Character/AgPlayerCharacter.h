@@ -148,6 +148,9 @@ private:
 	TObjectPtr<UInputAction> LockOnAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> PotionAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	float InputBufferTime = 0.3f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")

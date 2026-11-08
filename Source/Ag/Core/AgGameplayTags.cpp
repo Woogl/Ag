@@ -14,6 +14,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Skill4, "Input.Skill4", "스킬 4 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Ultimate, "Input.Ultimate", "궁극기 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Execute, "Input.Execute", "처형 키");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Potion, "Input.Potion", "회복병 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_LockOn, "Input.LockOn", "락온 / 락온 해제 키");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Input_Move, "Input.Move", "이동 입력이 있는 동안");
 
@@ -158,6 +159,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_BlinkRushThrust, "GameplayCue.BlinkRushThrust", "스킬 1 찌르기에서 칼끝의 섬광");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UpperSlashBlade, "GameplayCue.UpperSlashBlade", "스킬 2 동작 동안 칼날에 서리는 기운");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PunishingEdge, "GameplayCue.PunishingEdge", "스킬 4 내려찍기 VFX: 판정 반경(RawMagnitude)까지 퍼짐");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PotionBottle, "GameplayCue.PotionBottle", "회복병을 마시는 동안 왼손에 보이는 병");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PotionHeal, "GameplayCue.PotionHeal", "회복병을 삼킨 순간의 회복 효과");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(UI_Action_Escape, "UI.Action.Escape", "Esc: 일시정지 메뉴 열기, 팝업·메뉴 닫기");
 } // namespace AgGameplayTags

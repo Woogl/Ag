@@ -64,6 +64,12 @@ protected:
 	TObjectPtr<UImage> UPGauge;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UAgSkillSlot> PotionSlot;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> PotionCountText;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> BossStatusPanel;
 
 	UPROPERTY(meta = (BindWidget))
@@ -83,11 +89,12 @@ private:
 
 	void UpdateStatusPanel();
 	void UpdatePlayer();
+	void UpdatePotion();
 	void UpdateSkillSlots();
 	void UpdateCooldowns();
 	void UpdateBoss();
 
-	TArray<UAgSkillSlot*, TInlineAllocator<5>> GetSkillSlots() const;
+	TArray<UAgSkillSlot*, TInlineAllocator<6>> GetSkillSlots() const;
 
 	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop = true);
 

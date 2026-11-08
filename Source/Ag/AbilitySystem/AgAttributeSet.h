@@ -65,6 +65,14 @@ public:
 	FGameplayAttributeData MOV;
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MOV)
 
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	FGameplayAttributeData Potion;
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, Potion)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	FGameplayAttributeData MaxPotion;
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxPotion)
+
 protected:
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;

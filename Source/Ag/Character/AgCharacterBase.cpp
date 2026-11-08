@@ -9,6 +9,7 @@
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/Skeleton.h"
 #include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgCharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -121,8 +122,10 @@ bool AAgCharacterBase::IsFacingFixed() const
 {
 	// 엔진 GetCurrentMontage는 블렌드 아웃을 시작한 몽타주를 돌려주지 않아, 행동이 끝나기 전 블렌드 아웃부터 돕니다.
 	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
+	const UAnimMontage* Montage = AbilitySystemComponent->GetCurrentMontage();
+	// 상체 슬롯만 쓰는 몽타주는 이동하면서 재생하므로 방향을 묶지 않습니다.
 	// 피격 반응 뒤의 그로기 자세는 몽타주가 아니라 애님 그래프가 재생합니다.
-	return (Animating && Animating->IsActive() && AbilitySystemComponent->GetCurrentMontage()) ||
+	return (Animating && Animating->IsActive() && Montage && Montage->IsValidSlot(FAnimSlotGroup::DefaultSlotName)) ||
 	       AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 }
 
@@ -415,12 +418,14 @@ void AAgCharacterBase::InitializeAttributes()
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxMPAttribute(), Attributes.MaxMP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxUPAttribute(), Attributes.MaxUP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPPAttribute(), Attributes.MaxPP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPotionAttribute(), Attributes.MaxPotion);
 
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetHPAttribute(), Attributes.HP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetSPAttribute(), Attributes.SP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMPAttribute(), Attributes.MP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetUPAttribute(), Attributes.UP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetPPAttribute(), Attributes.PP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetPotionAttribute(), Attributes.Potion);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetATKAttribute(), Attributes.ATK);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetDEFAttribute(), Attributes.DEF);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMOVAttribute(), Attributes.MOV);

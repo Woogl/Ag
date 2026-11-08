@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbilityTriggerType.h"
+#include "AttributeSet.h"
 #include "Data/AgTaskParams.h"
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
@@ -32,6 +33,19 @@ struct FAgResourceCost
 	bool IsFree() const;
 
 	void AddToSpec(FGameplayEffectSpec& Spec) const;
+};
+
+/** 이만큼 있어야 발동하지만 발동할 때 치르지는 않는 어트리뷰트입니다. */
+USTRUCT()
+struct FAgAttributeCondition
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FGameplayAttribute Attribute;
+
+	UPROPERTY()
+	float AtLeast = 0.f;
 };
 
 USTRUCT()
@@ -194,6 +208,9 @@ struct FAgAbilityData
 
 	UPROPERTY()
 	FAgResourceCost Cost;
+
+	UPROPERTY()
+	TArray<FAgAttributeCondition> ActivationAttributes;
 
 	UPROPERTY()
 	float Cooldown = 0.f;
