@@ -33,6 +33,8 @@ public:
 		return MoveInputDirection;
 	}
 
+	virtual bool IsMoveInputIgnored() const override;
+
 	void FindInputAbilities(const FGameplayTag& InputTag, TArray<FGameplayAbilitySpecHandle>& OutHandles) const;
 
 	/** 락온 어빌리티의 대상을 화면에서 Direction 쪽(양수 = 오른쪽)의 가장 가까운 후보로 바꿉니다. 없으면 그대로 둡니다. */
@@ -43,8 +45,7 @@ protected:
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	virtual void OnJumped_Implementation() override;
-	virtual void Landed(const FHitResult& Hit) override;
+	virtual bool CanJumpInternal_Implementation() const override;
 
 	virtual void ApplyDeathState() override;
 
@@ -53,7 +54,6 @@ private:
 
 	void Move(const FInputActionValue& Value);
 
-	void StopLandingMotion();
 	void MoveReleased();
 	void Look(const FInputActionValue& Value);
 
@@ -70,14 +70,10 @@ private:
 
 	void ActivateByTag(const FGameplayTag& AbilityTag);
 
-	void TryJump();
-
 	bool IsActionInputBlocked(const FGameplayTag& InputTag) const;
 
 	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);
 	void TryRunBufferedInput();
-
-	bool CanMove() const;
 
 	void TryRunPendingInput();
 
@@ -153,9 +149,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	float InputBufferTime = 0.3f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> JumpMontage;
 
 	FVector MoveInputDirection = FVector::ZeroVector;
 

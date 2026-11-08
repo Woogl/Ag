@@ -9,12 +9,9 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
-#include "Animation/AnimInstance.h"
-#include "Animation/AnimMontage.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
 #include "EnhancedInputComponent.h"
@@ -25,11 +22,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "InputActionValue.h"
 #include "TimerManager.h"
-
-namespace AgPlayerCharacterPrivate
-{
-	const FName JumpLandSection(TEXT("Land"));
-}
 
 AAgPlayerCharacter::AAgPlayerCharacter()
 {
@@ -58,6 +50,18 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	PerfectDodgeCapsule->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
 	PerfectDodgeCapsule->SetGenerateOverlapEvents(false);
 	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
+}
+
+bool AAgPlayerCharacter::IsMoveInputIgnored() const
+{
+	FGameplayTagContainer Blockers;
+	Blockers.AddTag(AgGameplayTags::State_Acting);
+	Blockers.AddTag(AgGameplayTags::State_MoveLocked);
+	Blockers.AddTag(AgGameplayTags::State_HitReaction);
+	Blockers.AddTag(AgGameplayTags::State_Groggy);
+	Blockers.AddTag(AgGameplayTags::State_Execution);
+	Blockers.AddTag(AgGameplayTags::State_Dead);
+	return Super::IsMoveInputIgnored() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Blockers);
 }
 
 void AAgPlayerCharacter::FindInputAbilities(const FGameplayTag& InputTag, TArray<FGameplayAbilitySpecHandle>& OutHandles) const
@@ -160,46 +164,12 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
-void AAgPlayerCharacter::OnJumped_Implementation()
+bool AAgPlayerCharacter::CanJumpInternal_Implementation() const
 {
-	Super::OnJumped_Implementation();
-
-	// 키를 누른 뒤 실제 점프 전에 시작한 행동·피격 반응의 모션을 끊지 않도록, 점프 행동이 실행 중일 때만 재생합니다.
-	const FGameplayAbilitySpec* Jump = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (Jump && Jump->IsActive() && JumpMontage && AnimInstance && !IsDead())
-	{
-		AnimInstance->Montage_Play(JumpMontage);
-	}
-}
-
-void AAgPlayerCharacter::Landed(const FHitResult& Hit)
-{
-	Super::Landed(Hit);
-
-	// 점프 공격이나 피격 반응이 점프 행동을 끝냈으면 그 행동의 모션이 착지를 맡습니다.
-	// 엔진은 이동 모드를 바꾸기 전에 알리므로, 공중 태그로 끝나는 점프 행동이 아직 실행 중입니다.
-	const FGameplayAbilitySpec* Jump = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
-	const bool bJumpAbility = Jump && Jump->IsActive();
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (!bJumpAbility || !JumpMontage || !AnimInstance || IsDead())
-	{
-		return;
-	}
-	if (!MoveInputDirection.IsNearlyZero())
-	{
-		if (AnimInstance->Montage_IsPlaying(JumpMontage))
-		{
-			AnimInstance->Montage_StopWithBlendOut(JumpMontage->GetBlendOutArgs(), JumpMontage);
-		}
-		return;
-	}
-
-	// 섹션만 옮기지 않고 다시 재생해, 남은 점프 모션이 블렌드 아웃되고 착지 모션이 블렌드 인하게 합니다.
-	if (AnimInstance->Montage_Play(JumpMontage) > 0.f)
-	{
-		AnimInstance->Montage_JumpToSection(AgPlayerCharacterPrivate::JumpLandSection, JumpMontage);
-	}
+	const UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
+	const UGameplayAbility* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
+	return Super::CanJumpInternal_Implementation() && Ability && Ability->CanActivateAbility(Spec->Handle, ASC->AbilityActorInfo.Get());
 }
 
 void AAgPlayerCharacter::ApplyDeathState()
@@ -240,23 +210,8 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 	// 키를 누르는 동안 매 프레임 불리므로 후딜이 시작되는 순간을 따로 알리지 않아도 됩니다. 풀린 이동이 이번 프레임부터 먹도록 먼저 봅니다.
 	TryMoveCancel();
 
-	if (CanMove())
-	{
-		AddMovementInput(Forward, Input.Y);
-		AddMovementInput(Right, Input.X);
-		StopLandingMotion();
-	}
-}
-
-void AAgPlayerCharacter::StopLandingMotion()
-{
-	// 착지 모션은 제자리 모션이라 움직이면 미끄러져 보이고, 행동이 아니므로 움직이면 끝냅니다.
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (JumpMontage && AnimInstance && AnimInstance->Montage_IsPlaying(JumpMontage) &&
-		AnimInstance->Montage_GetCurrentSection(JumpMontage) == AgPlayerCharacterPrivate::JumpLandSection)
-	{
-		AnimInstance->Montage_StopWithBlendOut(JumpMontage->GetBlendOutArgs(), JumpMontage);
-	}
+	AddMovementInput(Forward, Input.Y);
+	AddMovementInput(Right, Input.X);
 }
 
 void AAgPlayerCharacter::MoveReleased()
@@ -305,7 +260,7 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 
 	if (InputTag == AgGameplayTags::Input_Jump)
 	{
-		TryJump();
+		Jump();
 		return;
 	}
 	// 같은 키의 어빌리티는 발동 조건이 서로 배타적이라 하나만 발동합니다. 발동한 것이 없으면 실행 중인 행동이 이 입력을
@@ -376,17 +331,6 @@ void AAgPlayerCharacter::ActivateByTag(const FGameplayTag& AbilityTag)
 	}
 }
 
-void AAgPlayerCharacter::TryJump()
-{
-	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Jump);
-	const UGameplayAbility* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
-	if (Ability && Ability->CanActivateAbility(Spec->Handle, ASC->AbilityActorInfo.Get()))
-	{
-		Jump();
-	}
-}
-
 bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) const
 {
 	const UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
@@ -401,20 +345,10 @@ bool AAgPlayerCharacter::IsActionInputBlocked(const FGameplayTag& InputTag) cons
 
 void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// 이번 프레임에 이어지는 상태(행동을 끊은 피격 반응, 기본 공격의 후딜 표시)가 정해진 뒤에 보도록
-	// 타이머 처리(TG_PostPhysics 뒤)에서 확인합니다.
-	if (NewCount != 0)
-	{
-		return;
-	}
-	const FGameplayAbilitySpec* Guard = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Guard);
-	if (Tag == AgGameplayTags::State_Busy && Guard && Guard->IsActive())
+	// 이 프레임의 피격 반응 재발동, 다음 타 전환 시작, 무기 판정이 끝난 뒤의 상태를 보려고 타이머에서 확인합니다.
+	if (NewCount == 0)
 	{
 		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunPendingInput);
-	}
-	else if (BufferedInput.IsValid())
-	{
-		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunBufferedInput);
 	}
 }
 
@@ -435,18 +369,6 @@ void AAgPlayerCharacter::TryRunBufferedInput()
 
 	UE_LOG(LogAg, Verbose, TEXT("Buffered input runs: %s"), *InputTag.ToString());
 	RunInput(InputTag);
-}
-
-bool AAgPlayerCharacter::CanMove() const
-{
-	FGameplayTagContainer Blockers;
-	Blockers.AddTag(AgGameplayTags::State_Acting);
-	Blockers.AddTag(AgGameplayTags::State_MoveLocked);
-	Blockers.AddTag(AgGameplayTags::State_HitReaction);
-	Blockers.AddTag(AgGameplayTags::State_Groggy);
-	Blockers.AddTag(AgGameplayTags::State_Execution);
-	Blockers.AddTag(AgGameplayTags::State_Dead);
-	return !GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Blockers);
 }
 
 void AAgPlayerCharacter::TryRunPendingInput()

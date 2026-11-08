@@ -5,6 +5,23 @@
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/Skeleton.h"
+#include "AnimStateEntryNode.h"
+#include "AnimStateNode.h"
+#include "AnimStateTransitionNode.h"
+#include "AnimationStateMachineGraph.h"
+#include "AnimationStateMachineSchema.h"
+#include "EdGraph/EdGraphSchema.h"
+
+namespace AgAnimationToolsetPrivate
+{
+	UAnimStateNode* FindAnimState(const UEdGraph& Graph, FName Name)
+	{
+		TArray<UAnimStateNode*> States;
+		Graph.GetNodesOfClass(States);
+		UAnimStateNode** Found = States.FindByPredicate([Name](const UAnimStateNode* State) { return State->GetStateName() == Name.ToString(); });
+		return Found ? *Found : nullptr;
+	}
+} // namespace AgAnimationToolsetPrivate
 
 bool UAgAnimationToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FName GroupName)
 {
@@ -14,8 +31,6 @@ bool UAgAnimationToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FNam
 	}
 
 	Skeleton->Modify();
-	Skeleton->AddSlotGroupName(GroupName);
-	Skeleton->RegisterSlotNode(SlotName);
 	Skeleton->SetSlotGroupName(SlotName, GroupName);
 	Skeleton->MarkPackageDirty();
 	return Skeleton->GetSlotGroupName(SlotName) == GroupName;
@@ -44,7 +59,6 @@ bool UAgAnimationToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotNa
 		AnimSegment.AnimStartTime = Segment.StartTime;
 		AnimSegment.AnimEndTime = Segment.EndTime > 0.f ? Segment.EndTime : Segment.Animation->GetPlayLength();
 		AnimSegment.AnimPlayRate = FMath::Max(Segment.PlayRate, UE_KINDA_SMALL_NUMBER);
-		AnimSegment.LoopingCount = 1;
 		AnimSegment.StartPos = Position;
 		Position += AnimSegment.GetLength();
 	}
@@ -107,4 +121,38 @@ bool UAgAnimationToolset::SetMontageSections(UAnimMontage* Montage, const TArray
 	Montage->PostEditChange();
 	Montage->MarkPackageDirty();
 	return true;
+}
+
+UEdGraph* UAgAnimationToolset::AddAnimState(UEdGraph* StateMachineGraph, FName Name, FIntPoint Position, bool bEntry)
+{
+	UAnimationStateMachineGraph* Graph = Cast<UAnimationStateMachineGraph>(StateMachineGraph);
+	if (!Graph || Name.IsNone() || AgAnimationToolsetPrivate::FindAnimState(*Graph, Name))
+	{
+		return nullptr;
+	}
+
+	const FVector2f Location(static_cast<float>(Position.X), static_cast<float>(Position.Y));
+	UAnimStateNode* State = FEdGraphSchemaAction_NewStateNode::SpawnNodeFromTemplate<UAnimStateNode>(Graph, NewObject<UAnimStateNode>(), Location, false);
+	State->OnRenameNode(Name.ToString());
+	if (bEntry)
+	{
+		Graph->GetSchema()->TryCreateConnection(Graph->EntryNode->GetOutputPin(), State->GetInputPin());
+	}
+	return State->GetBoundGraph();
+}
+
+UEdGraph* UAgAnimationToolset::AddAnimStateTransition(UEdGraph* StateMachineGraph, FName From, FName To, int32 Priority, bool bAutomaticRule)
+{
+	UAnimationStateMachineGraph* Graph = Cast<UAnimationStateMachineGraph>(StateMachineGraph);
+	UAnimStateNode* Source = Graph ? AgAnimationToolsetPrivate::FindAnimState(*Graph, From) : nullptr;
+	UAnimStateNode* Target = Graph ? AgAnimationToolsetPrivate::FindAnimState(*Graph, To) : nullptr;
+	if (!Source || !Target || !Graph->GetSchema()->TryCreateConnection(Source->GetOutputPin(), Target->GetInputPin()))
+	{
+		return nullptr;
+	}
+
+	UAnimStateTransitionNode* Transition = CastChecked<UAnimStateTransitionNode>(Source->GetOutputPin()->LinkedTo.Last()->GetOwningNode());
+	Transition->PriorityOrder = Priority;
+	Transition->bAutomaticRuleBasedOnSequencePlayerInState = bAutomaticRule;
+	return Transition->BoundGraph;
 }

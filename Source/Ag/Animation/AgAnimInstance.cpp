@@ -5,6 +5,7 @@
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/Skeleton.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Core/AgGameplayTags.h"
@@ -14,6 +15,9 @@
 
 namespace AgAnimInstancePrivate
 {
+	const float MinJumpVelocity = 100.f;
+	const float MinMoveSpeed = 3.f;
+
 	float GetRootYaw(const UAnimSequence& Animation, float Time)
 	{
 		const FTransform Root = Animation.ExtractRootTrackTransform(FAnimExtractContext(static_cast<double>(Time)), nullptr);
@@ -71,7 +75,13 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		MoveDirection = UKismetAnimationLibrary::CalculateDirection(Velocity, Character->GetActorRotation());
 	}
 
-	bIsInAir = Character->GetCharacterMovement()->IsFalling();
+	const UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
+	bIsInAir = Movement->IsFalling();
+	bShouldJump = bIsInAir && JumpAnimation && Velocity.Z > AgAnimInstancePrivate::MinJumpVelocity;
+	bShouldLand = !bIsInAir && LandAnimation;
+	// 행동 몽타주가 착지를 맡으면, 그 몽타주가 끝날 때 뒤에서 재생되던 착지 모션이 드러나지 않도록 바로 끝냅니다.
+	const bool bShouldMove = GroundSpeed > AgAnimInstancePrivate::MinMoveSpeed && !Movement->GetCurrentAcceleration().IsNearlyZero();
+	bShouldLeaveLand = bIsInAir || bShouldMove || IsSlotActive(FAnimSlotGroup::DefaultSlotName);
 
 	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
 	bIsGuarding = GuardMoveBlendSpace && AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
@@ -83,7 +93,7 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		const FVector ToTarget = AimTarget->GetActorLocation() - Character->GetPawnViewLocation();
 		// 템플릿 Aim Offset은 위아래 90°의 끝 자세를 축 값 ±1에 둡니다.
-		AimPitch = static_cast<float>(FMath::RadiansToDegrees(FMath::Atan2(ToTarget.Z, ToTarget.Size2D())) / 90.0);
+		AimPitch = static_cast<float>(ToTarget.Rotation().Pitch / 90.0);
 	}
 
 	UpdateTurnInPlace(DeltaSeconds);

@@ -28,7 +28,13 @@ protected:
 	TObjectPtr<UBlendSpace> GuardMoveBlendSpace;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
+	TObjectPtr<UAnimSequenceBase> JumpAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
+	TObjectPtr<UAnimSequenceBase> LandAnimation;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> GroggyAnimation;
@@ -81,6 +87,15 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsInAir = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldJump = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldLand = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldLeaveLand = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsGuarding = false;

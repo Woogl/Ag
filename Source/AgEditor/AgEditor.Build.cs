@@ -13,6 +13,8 @@ public class AgEditor : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"UnrealEd",
+			"AnimGraph",
+			"BlueprintGraph",
 			"UMG",
 			"UMGEditor",
 			"MovieScene",
