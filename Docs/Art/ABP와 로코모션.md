@@ -25,10 +25,11 @@
 | 6 | 대상 바라보기: `neck_01`·`head`를 쳐다볼 대상의 머리 쪽으로 돌림 (`Look At`) | 같음 | 같음 |
 | 7 | 그로기 전환: 그로기 중이면 그로기 반복 모션 | 없음 | Samurai `Stun` |
 | 8 | 공중 전환: 떨어지는 중이면 공중 반복 모션 | 템플릿 `MM_Fall_Loop` | Halberd `Airborne` |
-| 9 | `DefaultSlot`: 행동 몽타주 | 행동별 몽타주 | 패턴·피격 몽타주 |
-| 10 | 상하 조준: 목표 높이를 향한 상하 덧입힘 (`Aim Offset`) | 없음 | 없음 |
-| 11 | `AdditiveSlot`: 덧입힘 몽타주 | `AM_GuardFlinch` | 없음 |
-| 12 | `CinematicSlot`: 레벨 시퀀스의 자세 | 궁극기 컷신 `LS_UltimateCutscene` | 없음 |
+| 9 | `UpperBody` 슬롯: 앞 층까지의 자세에 상체 몽타주의 상체만 섞음 (`Layered blend per bone`) | `AM_Player_Potion` | 없음 |
+| 10 | `DefaultSlot`: 행동 몽타주 | 행동별 몽타주 | 패턴·피격 몽타주 |
+| 11 | 상하 조준: 목표 높이를 향한 상하 덧입힘 (`Aim Offset`) | 없음 | 없음 |
+| 12 | `AdditiveSlot`: 덧입힘 몽타주 | `AM_GuardFlinch` | 없음 |
+| 13 | `CinematicSlot`: 레벨 시퀀스의 자세 | 궁극기 컷신 `LS_UltimateCutscene` | 없음 |
 
 - 일반 적은 보스와 같은 층 구성이고 넣는 에셋만 다릅니다. 절단자(`ABP_Cutter`)는 이동 `BS_CutterMove`, 제자리 회전 Samurai `Turn_*`, 그로기 Samurai `Stun`, 공중 템플릿 `MM_Fall_Loop`입니다. 경비 사수(`ABP_Gunner`)는 이동 `BS_GunnerMove`, 제자리 회전 Warrior `Turn_45*`·Halberd `Turn_90*`, 그로기 Samurai `Stun`, 공중 템플릿 `MM_Fall_Loop`, 상하 조준 `AO_Pistol`입니다.
 - 상하 조준 층은 경비 사수만 씁니다. 행동 슬롯 뒤에 있어 사격 몽타주의 자세 위에 더해지며, 섞는 구간은 [일반 적 아트 구성](<일반 적 아트 구성.md#경비-사수-사격-모션>)을 따릅니다. 다른 캐릭터는 에셋이 비어 있고 섞지 않습니다.
@@ -36,7 +37,8 @@
 - 보스와 일반 적은 가드 이동 블렌드 스페이스가 비어 있어 가드 전환이 늘 일반 이동입니다.
 - 회전 모션 목록은 자식 ABP의 기본값이고(공통 `ABP_Character`의 목록은 비어 있음), 가드 중 목록은 `ABP_Player`에만 있습니다.
 - 4 ~ 6번 층은 그로기·공중 전환과 행동 슬롯 앞에 있어, 그 자세나 몽타주가 섞여 들어오면 덮입니다.
-- 세 슬롯은 스켈레톤 `SK_Mannequin`에서 슬롯 그룹이 서로 다릅니다(`DefaultGroup`, `AdditiveGroup`, `CinematicGroup`). 몽타주는 같은 그룹의 몽타주만 멈추므로, 가드 움찔이나 컷신 자세가 재생 중인 행동 몽타주를 끊지 않습니다.
+- `DefaultSlot`, `AdditiveSlot`, `CinematicSlot`은 스켈레톤 `SK_Mannequin`에서 슬롯 그룹이 서로 다릅니다(`DefaultGroup`, `AdditiveGroup`, `CinematicGroup`). 몽타주는 같은 그룹의 몽타주만 멈추므로, 가드 움찔이나 컷신 자세가 재생 중인 행동 몽타주를 끊지 않습니다.
+- `UpperBody`는 `DefaultSlot`과 같은 `DefaultGroup`이라, 행동·피격 몽타주가 시작되면 상체 몽타주가 멈춥니다. 공중 전환까지의 자세를 캐시(`BeforeUpperBody`)해 블렌드의 바탕과 슬롯의 입력에 함께 씁니다. 블렌드의 가지 필터는 `spine_01`(깊이 0)이고 메시 공간 회전 블렌드를 켜서, 척추부터 팔과 머리까지만 몽타주를 따르고 골반과 다리는 이동 모션을 따릅니다. `DefaultSlot`보다 앞에 있어 끊길 때는 들어오는 행동 몽타주가 덮습니다. 상체 몽타주의 시퀀스는 루트 모션을 끕니다. 상체 슬롯만 쓰는 몽타주는 재생 중에도 캐릭터가 돕니다.
 - 가드 시작·해제의 블렌드 시간, 제자리 회전의 최대 각도·재생 배율·블렌드 시간, 상체 비틀기의 최대 각도와 따라가는 시간, 대상 바라보기의 한도·뒤쪽 각도·따라잡는 시간은 [데이터 로딩과 스키마](<../Architecture/데이터 로딩과 스키마.md>)의 해당 항목에 있습니다.
 - 캐릭터 메시는 화면 밖에서도 포즈와 본을 갱신합니다(`Always Tick Pose and Refresh Bones`). 공격 판정이 메시의 피직스 바디를 쓰고 무기가 손을 따라가기 때문입니다.
 

@@ -83,6 +83,13 @@
   <rect x="48" y="1012" width="160" height="10" fill="#3D8BFD"/>
   <text x="460" y="1026" font-size="24" fill="#FFFFFF">40 / 100</text>
 
+  <!-- 회복병: SP 바 12px 위, 지름 80px, 키는 칸 중심에서 오른쪽 45px -->
+  <circle cx="88" cy="922" r="40" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5"/>
+  <rect x="61" y="895" width="54" height="54" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <circle cx="133" cy="922" r="14" fill="#000000" fill-opacity="0.55"/>
+  <text x="133" y="929" font-size="18.7" fill="#FFFFFF" text-anchor="middle">R</text>
+  <text x="155" y="931" font-size="24" fill="#FFFFFF">2/3</text>
+
   <!-- [2] 슬롯: 스킬 1~4 십자와 궁극기 (오른쪽 아래), 지름 80px, 십자 가운데 (1736, 917) -->
   <g fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5">
     <circle cx="1661" cy="917" r="40"/>
@@ -133,19 +140,20 @@
   <text x="1600" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 3 오른쪽 위: 남은 충전 횟수</text>
 
   <!-- [6] 조작 안내 (오른쪽 가운데) -->
-  <rect x="1560" y="374" width="312" height="332" rx="8" fill="#000000" fill-opacity="0.45"/>
+  <rect x="1560" y="360" width="312" height="360" rx="8" fill="#000000" fill-opacity="0.45"/>
   <g font-size="18.7" fill="#FFFFFF">
-    <text x="1576" y="406">W, A, S, D</text><text x="1707" y="406">이동</text>
-    <text x="1576" y="434">마우스 이동</text><text x="1707" y="434">시야</text>
-    <text x="1576" y="462">좌클릭</text><text x="1707" y="462">기본 공격</text>
-    <text x="1576" y="490">우클릭</text><text x="1707" y="490">가드 / 패리</text>
-    <text x="1576" y="518">Left Shift</text><text x="1707" y="518">회피 / 달리기</text>
-    <text x="1576" y="546">Space</text><text x="1707" y="546">점프</text>
-    <text x="1576" y="574">1, 2, 3, 4</text><text x="1707" y="574">스킬 1, 2, 3, 4</text>
-    <text x="1576" y="602">Q</text><text x="1707" y="602">궁극기</text>
-    <text x="1576" y="630">F</text><text x="1707" y="630">처형</text>
-    <text x="1576" y="658">휠 클릭</text><text x="1707" y="658">락온 / 락온 해제</text>
-    <text x="1576" y="686">Esc</text><text x="1707" y="686">일시정지</text>
+    <text x="1576" y="392">W, A, S, D</text><text x="1707" y="392">이동</text>
+    <text x="1576" y="420">마우스 이동</text><text x="1707" y="420">시야</text>
+    <text x="1576" y="448">좌클릭</text><text x="1707" y="448">기본 공격</text>
+    <text x="1576" y="476">우클릭</text><text x="1707" y="476">가드 / 패리</text>
+    <text x="1576" y="504">Left Shift</text><text x="1707" y="504">회피 / 달리기</text>
+    <text x="1576" y="532">Space</text><text x="1707" y="532">점프</text>
+    <text x="1576" y="560">1, 2, 3, 4</text><text x="1707" y="560">스킬 1, 2, 3, 4</text>
+    <text x="1576" y="588">Q</text><text x="1707" y="588">궁극기</text>
+    <text x="1576" y="616">F</text><text x="1707" y="616">처형</text>
+    <text x="1576" y="644">R</text><text x="1707" y="644">회복병 사용</text>
+    <text x="1576" y="672">휠 클릭</text><text x="1707" y="672">락온 / 락온 해제</text>
+    <text x="1576" y="700">Esc</text><text x="1707" y="700">일시정지</text>
   </g>
 
   <!-- 번호 표시 -->
