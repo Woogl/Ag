@@ -134,8 +134,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Reaction_KnockDown, "Effect.Damage.Reaction.KnockDown", "피격 반응 넉다운");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_IgnoreToughness, "Effect.Damage.IgnoreToughness", "강인도와 관계없이 지정된 피격 반응을 그대로 적용하는 공격 (궁극기 마무리)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Unblockable, "Effect.Damage.Unblockable", "가드와 패리로 막을 수 없는 공격 (가드 불가)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Finisher, "Effect.Damage.Finisher", "마지막 일격 (처형의 마지막 일격, 궁극기 마무리)");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_NoAttackerHitstop, "Effect.Damage.NoAttackerHitstop", "적중해도 공격자는 히트스톱으로 멈추지 않는 공격 (보스 GroundSlam 착지 충격파)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Finisher, "Effect.Damage.Finisher", "처형의 마지막 일격");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Parry, "Effect.Damage.Parry", "패리한 공격자에게 주는 패리 대미지 (패리 연출이 대신하므로 대미지 숫자만 표시)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_PerfectDodge, "Effect.Damage.Result.PerfectDodge", "피격 결과 극한 회피");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Parry, "Effect.Damage.Result.Parry", "피격 결과 패리");

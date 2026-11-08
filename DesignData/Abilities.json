@@ -384,7 +384,7 @@
           {"Task": "Transition", "Start": 0, "TagRemoved": "State.Cutscene", "ToSection": "Judgment"}
         ],
         "Draw": [
-          {"Task": "AreaHit", "Start": 0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bIgnoreToughness": true, "bFinisher": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
+          {"Task": "AreaHit", "Start": 0, "Damage": {"HPMultiplier": 5, "PPMultiplier": 5, "HitReaction": "KnockUp", "bIgnoreToughness": true, "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 1000}},
           {"Task": "ApplyEffect", "Start": 0, "Effect": "UltimateSlowMotion"}
         ]
       }
@@ -713,7 +713,7 @@
     "Cooldown": 12,
     "Targeting": {"Preset": "Enemy", "Range": 5000, "bRequired": true, "TargetSpacing": 150},
     "Tasks": [
-      {"Task": "Launch", "AirTime": 1.2, "Direction": "Target", "MaxDistance": 1200}
+      {"Task": "Launch", "Height": 309, "Direction": "Target", "MaxDistance": 1200}
     ],
     "Montage": {
       "Asset": "/Game/Animations/AM_Boss_GroundSlam.AM_Boss_GroundSlam",
@@ -984,7 +984,7 @@
       "Asset": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
       "Sections": {
         "Default": [
-          {"Task": "AreaHit", "Start": 0.58, "Damage": {"HPMultiplier": 0, "HitReaction": "KnockDown", "bGuardable": false, "bAttackerHitstop": false}, "Area": {"Preset": "Hit", "Range": 400}}
+          {"Task": "SpawnActor", "Start": 0.58, "Actor": "PhaseTransitionShockwave"}
         ]
       }
     }

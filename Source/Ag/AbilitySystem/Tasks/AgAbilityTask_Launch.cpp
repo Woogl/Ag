@@ -48,7 +48,7 @@ void UAgAbilityTask_Launch::Activate()
 		Direction = (Target->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal2D();
 	}
 	const float Gravity = -Movement->GetGravityZ();
-	float Height = Params.Height ? *Params.Height : Gravity * FMath::Square(Params.AirTime.Get(0.f)) / 8.f;
+	float Height = Params.Height;
 	if (Params.Altitude)
 	{
 		FFindFloorResult Floor;
