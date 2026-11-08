@@ -13,7 +13,7 @@
 #include "GameplayEffectComponents/TargetTagRequirementsGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 
-namespace
+namespace AgEffectDataPrivate
 {
 	constexpr float PeriodicEffectInterval = 0.1f;
 
@@ -75,7 +75,7 @@ namespace
 		Changes.Added = Tags;
 		Effect.AddComponent<UTargetTagsGameplayEffectComponent>().SetAndApplyTargetTagChanges(Changes);
 	}
-} // namespace
+} // namespace AgEffectDataPrivate
 
 UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 {
@@ -83,33 +83,33 @@ UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 	switch (Id)
 	{
 		case EAgEffect::Damage:
-			AddAssetTag(*Effect, AgGameplayTags::Effect_Damage);
+			AgEffectDataPrivate::AddAssetTag(*Effect, AgGameplayTags::Effect_Damage);
 			Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>().ApplicationTagRequirements.IgnoreTags.AddTag(AgGameplayTags::State_Dead);
 			Effect->Executions.AddDefaulted_GetRef().CalculationClass = UAgDamageExecution::StaticClass();
 			Effect->AddComponent<UAgDamageResultGameplayEffectComponent>();
 			break;
 		case EAgEffect::Resource:
-			AddModifier(*Effect, UAgAttributeSet::GetSPAttribute(), EGameplayModOp::AddBase, MakeSetByCaller(AgGameplayTags::SetByCaller_SP));
-			AddModifier(*Effect, UAgAttributeSet::GetMPAttribute(), EGameplayModOp::AddBase, MakeSetByCaller(AgGameplayTags::SetByCaller_MP));
-			AddModifier(*Effect, UAgAttributeSet::GetUPAttribute(), EGameplayModOp::AddBase, MakeSetByCaller(AgGameplayTags::SetByCaller_UP));
+			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetSPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_SP));
+			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetMPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_MP));
+			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetUPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_UP));
 			break;
 		case EAgEffect::Cooldown:
 			Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
-			AddAssetTag(*Effect, AgGameplayTags::Effect_Cooldown);
+			AgEffectDataPrivate::AddAssetTag(*Effect, AgGameplayTags::Effect_Cooldown);
 			break;
 		case EAgEffect::Kill:
-			AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::Override, FScalableFloat(0.f));
+			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::Override, FScalableFloat(0.f));
 			break;
 		case EAgEffect::Hitstop:
 			Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
-			AddGrantedTags(*Effect, FGameplayTagContainer(AgGameplayTags::State_Hitstop));
+			AgEffectDataPrivate::AddGrantedTags(*Effect, FGameplayTagContainer(AgGameplayTags::State_Hitstop));
 			break;
 		case EAgEffect::PPRefill:
-			AddModifier(*Effect, UAgAttributeSet::GetPPAttribute(), EGameplayModOp::Override, MakeTargetAttribute(UAgAttributeSet::GetMaxPPAttribute(), 1.f));
+			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetPPAttribute(), EGameplayModOp::Override, AgEffectDataPrivate::MakeTargetAttribute(UAgAttributeSet::GetMaxPPAttribute(), 1.f));
 			break;
 		case EAgEffect::FallDamage:
 			Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>().ApplicationTagRequirements.IgnoreTags.AddTag(AgGameplayTags::State_Dead);
-			AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::AddBase, MakeCustomCalculation(UAgFallDamageMagnitude::StaticClass()));
+			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeCustomCalculation(UAgFallDamageMagnitude::StaticClass()));
 			break;
 	}
 
@@ -129,20 +129,20 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	if (Definition.Modifiers.ContainsByPredicate([](const FAgEffectModifier& Modifier)
 	{ return Modifier.PerSecond.IsSet(); }))
 	{
-		Effect->Period = FScalableFloat(PeriodicEffectInterval);
+		Effect->Period = FScalableFloat(AgEffectDataPrivate::PeriodicEffectInterval);
 		Effect->bExecutePeriodicEffectOnApplication = false;
 		Effect->PeriodicInhibitionPolicy = EGameplayEffectPeriodInhibitionRemovedPolicy::ResetPeriod;
 	}
 	for (const FAgEffectModifier& Modifier : Definition.Modifiers)
 	{
 		const EGameplayModOp::Type Op = Modifier.Multiplier ? EGameplayModOp::MultiplyCompound : EGameplayModOp::AddBase;
-		FGameplayModifierInfo& Info = AddModifier(*Effect, Modifier.Attribute, Op, MakeMagnitude(Modifier));
+		FGameplayModifierInfo& Info = AgEffectDataPrivate::AddModifier(*Effect, Modifier.Attribute, Op, AgEffectDataPrivate::MakeMagnitude(Modifier));
 		Info.TargetTags.RequireTags = Modifier.RequiredTags;
 		Info.TargetTags.IgnoreTags = Modifier.IgnoredTags;
 	}
 	if (!Definition.GrantedTags.IsEmpty())
 	{
-		AddGrantedTags(*Effect, Definition.GrantedTags);
+		AgEffectDataPrivate::AddGrantedTags(*Effect, Definition.GrantedTags);
 	}
 	if (!Definition.OngoingIgnoredTags.IsEmpty())
 	{

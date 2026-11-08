@@ -13,7 +13,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "TimerManager.h"
 
-namespace
+namespace AgSkillSlotPrivate
 {
 	const FName RatioParameter(TEXT("Ratio"));
 }
@@ -89,7 +89,7 @@ void UAgSkillSlot::UpdateCooldown()
 	{
 		if (UMaterialInstanceDynamic* Material = CooldownSweep->GetDynamicMaterial())
 		{
-			Material->SetScalarParameterValue(RatioParameter, Remaining / Duration);
+			Material->SetScalarParameterValue(AgSkillSlotPrivate::RatioParameter, Remaining / Duration);
 		}
 	}
 	if (bCoolingDown)

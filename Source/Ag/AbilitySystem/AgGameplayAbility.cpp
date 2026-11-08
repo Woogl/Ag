@@ -15,7 +15,7 @@
 #include "Data/AgTaskParams.h"
 #include "Ag.h"
 
-namespace
+namespace AgGameplayAbilityPrivate
 {
 	FGameplayEffectQuery CooldownQuery(const UObject* Source)
 	{
@@ -104,7 +104,7 @@ int32 UAgGameplayAbility::GetCharges(FGameplayAbilitySpecHandle Handle, const FG
 	{
 		return 0;
 	}
-	const int32 Used = ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).Num();
+	const int32 Used = ActorInfo->AbilitySystemComponent->GetActiveEffects(AgGameplayAbilityPrivate::CooldownQuery(Spec->GetPrimaryInstance())).Num();
 	return FMath::Max(Data->MaxCharges - Used, 0);
 }
 
@@ -118,7 +118,7 @@ void UAgGameplayAbility::GetRechargeTimeRemainingAndDuration(FGameplayAbilitySpe
 		return;
 	}
 	const TArray<float> Remaining =
-		ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemaining(CooldownQuery(Spec->GetPrimaryInstance()));
+		ActorInfo->AbilitySystemComponent->GetActiveEffectsTimeRemaining(AgGameplayAbilityPrivate::CooldownQuery(Spec->GetPrimaryInstance()));
 	if (Remaining.IsEmpty())
 	{
 		return;
@@ -276,7 +276,7 @@ bool UAgGameplayAbility::CheckCooldown(FGameplayAbilitySpecHandle Handle, const 
 	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
 	const FAgAbilityData* Data = FindDefinition(Handle, ActorInfo);
 	return Spec && Data &&
-	       ActorInfo->AbilitySystemComponent->GetActiveEffects(CooldownQuery(Spec->GetPrimaryInstance())).Num() < Data->MaxCharges;
+	       ActorInfo->AbilitySystemComponent->GetActiveEffects(AgGameplayAbilityPrivate::CooldownQuery(Spec->GetPrimaryInstance())).Num() < Data->MaxCharges;
 }
 
 void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const
@@ -287,7 +287,7 @@ void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const 
 		// 걸린 쿨다운 효과 하나가 쓴 충전 하나입니다. 새 효과를 가장 늦게 끝나는 효과 뒤에 이어 붙여, 충전이 한 번에
 		// 하나씩 돌아오고 흐르던 쿨다운이 다시 시작하지 않게 합니다.
 		float QueuedTime = 0.f;
-		for (const float Remaining : ASC->GetActiveEffectsTimeRemaining(CooldownQuery(this)))
+		for (const float Remaining : ASC->GetActiveEffectsTimeRemaining(AgGameplayAbilityPrivate::CooldownQuery(this)))
 		{
 			QueuedTime = FMath::Max(QueuedTime, Remaining);
 		}

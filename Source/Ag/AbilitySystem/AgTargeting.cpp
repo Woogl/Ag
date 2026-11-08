@@ -28,7 +28,7 @@
 DECLARE_TARGETING_DATA_STORE(FAgTargetingRequest)
 DEFINE_TARGETING_DATA_STORE(FAgTargetingRequest)
 
-namespace
+namespace AgTargetingPrivate
 {
 	/** 선택 Task마다 후보를 더하므로, 이미 든 후보는 다시 넣지 않습니다. */
 	void AddCandidate(FTargetingDefaultResultsSet& Results, const AActor& Owner, AActor& Candidate)
@@ -43,7 +43,7 @@ namespace
 		Result.HitResult.Location = Candidate.GetActorLocation();
 		Result.HitResult.Distance = FVector::Distance(Owner.GetActorLocation(), Candidate.GetActorLocation());
 	}
-} // namespace
+} // namespace AgTargetingPrivate
 
 TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AActor& Source)
 {
@@ -201,7 +201,7 @@ void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& Ta
 			AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(Overlap.GetActor());
 			if (Candidate && Cast<UCapsuleComponent>(Overlap.GetComponent()))
 			{
-				AddCandidate(Results, *Owner, *Candidate);
+				AgTargetingPrivate::AddCandidate(Results, *Owner, *Candidate);
 			}
 		}
 	}
@@ -218,7 +218,7 @@ void UAgTargetingSelectionTask_LockOnTarget::Execute(const FTargetingRequestHand
 	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
 	if (AAgCharacterBase* LockOnTarget = Owner ? Owner->GetLockOnTarget() : nullptr)
 	{
-		AddCandidate(FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle), *Owner, *LockOnTarget);
+		AgTargetingPrivate::AddCandidate(FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle), *Owner, *LockOnTarget);
 	}
 
 	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);

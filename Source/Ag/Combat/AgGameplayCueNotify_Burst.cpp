@@ -7,7 +7,7 @@
 #include "Core/AgGameplayTags.h"
 #include "NiagaraComponent.h"
 
-namespace
+namespace AgGameplayCueNotify_BurstPrivate
 {
 	void PlayAttackCameraReactions(AAgPlayerCameraManager& CameraManager, const AActor* Target, const FGameplayCueParameters& Parameters)
 	{
@@ -64,7 +64,7 @@ void UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(AActor* Target, const
 
 	if (Player == Attacker)
 	{
-		PlayAttackCameraReactions(*CameraManager, Target, Parameters);
+		AgGameplayCueNotify_BurstPrivate::PlayAttackCameraReactions(*CameraManager, Target, Parameters);
 	}
 	else if (CueTag == AgGameplayTags::GameplayCue_Hit)
 	{

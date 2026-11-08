@@ -11,11 +11,11 @@
 #include "UI/AgButton.h"
 #include "UI/AgDropdown.h"
 
-namespace
+namespace AgEnemySelectScreenPrivate
 {
 	/** 엔진 목록은 None을 빈 항목으로 다뤄 고를 수 없으므로, 빈 자리에 따로 키를 둡니다. */
 	const FName EmptyOption(TEXT("Empty"));
-} // namespace
+} // namespace AgEnemySelectScreenPrivate
 
 void UAgEnemySelectScreen::NativeOnInitialized()
 {
@@ -66,7 +66,7 @@ TArray<TSubclassOf<AAgCharacterBase>> UAgEnemySelectScreen::GetLineup() const
 	for (const UAgDropdown* SlotDropdown : SlotDropdowns)
 	{
 		const FName Selected = SlotDropdown->GetSelectedOption();
-		Lineup.Add(GameMode->FindEnemyClass(Selected == EmptyOption ? NAME_None : Selected));
+		Lineup.Add(GameMode->FindEnemyClass(Selected == AgEnemySelectScreenPrivate::EmptyOption ? NAME_None : Selected));
 	}
 	return Lineup;
 }
@@ -77,7 +77,7 @@ void UAgEnemySelectScreen::RefreshSlots()
 	const TArray<TSubclassOf<AAgCharacterBase>> Lineup = GetLineup();
 	for (int32 Index = 0; Index < SlotDropdowns.Num(); ++Index)
 	{
-		TArray<FAgDropdownOption> Options = {{EmptyOption, EmptyText}};
+		TArray<FAgDropdownOption> Options = {{AgEnemySelectScreenPrivate::EmptyOption, EmptyText}};
 		for (const TSubclassOf<AAgCharacterBase>& EnemyClass : GameMode->GetEnemyClasses())
 		{
 			if (GameMode->CanPlace(Lineup, Index, EnemyClass))

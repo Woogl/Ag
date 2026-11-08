@@ -2,10 +2,10 @@
 
 #include "UI/AgNameplateComponent.h"
 
-namespace
+namespace AgNameplateComponentPrivate
 {
 	const FName FrontLayerName(TEXT("AgFrontNameplateLayer"));
-} // namespace
+} // namespace AgNameplateComponentPrivate
 
 void UAgNameplateComponent::SetFrontmost(bool bNewFrontmost)
 {
@@ -22,7 +22,7 @@ void UAgNameplateComponent::SetFrontmost(bool bNewFrontmost)
 	{
 		RemoveWidgetFromScreen();
 	}
-	SharedLayerName = bFrontmost ? FrontLayerName : BackLayerName;
+	SharedLayerName = bFrontmost ? AgNameplateComponentPrivate::FrontLayerName : BackLayerName;
 	LayerZOrder = bFrontmost ? BackLayerZOrder + 1 : BackLayerZOrder;
 	if (bWasOnScreen)
 	{

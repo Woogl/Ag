@@ -8,7 +8,7 @@
 #include "UI/AgButton.h"
 #include "UI/AgDropdown.h"
 
-namespace
+namespace AgStageSelectScreenPrivate
 {
 	FName MakeOption(int32 StageIndex)
 	{
@@ -19,7 +19,7 @@ namespace
 	{
 		return Option.IsNone() ? INDEX_NONE : FCString::Atoi(*Option.ToString());
 	}
-} // namespace
+} // namespace AgStageSelectScreenPrivate
 
 void UAgStageSelectScreen::NativeOnInitialized()
 {
@@ -43,7 +43,7 @@ void UAgStageSelectScreen::NativeOnActivated()
 		{
 			if (GameMode->IsStageAvailable(Index))
 			{
-				Options.Add({MakeOption(Index), GameMode->GetStages()[Index].DisplayName});
+				Options.Add({AgStageSelectScreenPrivate::MakeOption(Index), GameMode->GetStages()[Index].DisplayName});
 			}
 		}
 	}
@@ -64,6 +64,6 @@ void UAgStageSelectScreen::OpenSelectedStage()
 {
 	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
 	{
-		GameMode->OpenStage(GetStageIndex(StageDropdown->GetSelectedOption()));
+		GameMode->OpenStage(AgStageSelectScreenPrivate::GetStageIndex(StageDropdown->GetSelectedOption()));
 	}
 }

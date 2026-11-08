@@ -10,7 +10,7 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-namespace
+namespace AgAbilityTask_TeleportPrivate
 {
 	constexpr float AngleStep = 15.f;
 	constexpr float MaxTargetFloorDepth = 1000.f;
@@ -112,7 +112,7 @@ namespace
 		}
 		return {};
 	}
-} // namespace
+} // namespace AgAbilityTask_TeleportPrivate
 
 UAbilityTask* FAgTeleportParams::MakeTask(const FAgTaskContext& Context) const
 {
@@ -132,7 +132,7 @@ void UAgAbilityTask_Teleport::Activate()
 	}
 
 	const ACharacter* Target = Cast<ACharacter>(AgAbility->GetActionTarget());
-	const TOptional<FVector> Location = Target ? FindAppearLocation(*Character, *Target, Params.Distance) : NullOpt;
+	const TOptional<FVector> Location = Target ? AgAbilityTask_TeleportPrivate::FindAppearLocation(*Character, *Target, Params.Distance) : NullOpt;
 	if (Location)
 	{
 		Character->TeleportTo(*Location, FRotator(0.f, (Target->GetActorLocation() - *Location).Rotation().Yaw, 0.f), false, true);

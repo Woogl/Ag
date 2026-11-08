@@ -11,7 +11,7 @@
 #include "Data/AgCombatRules.h"
 #include "KismetAnimationLibrary.h"
 
-namespace
+namespace AgDamageExecutionPrivate
 {
 	struct FAgDamageCaptures
 	{
@@ -87,13 +87,13 @@ namespace
 		}
 		return 1.f + Bonus;
 	}
-} // namespace
+} // namespace AgDamageExecutionPrivate
 
 UAgDamageExecution::UAgDamageExecution()
 {
-	RelevantAttributesToCapture.Add(GetCaptures().ATK);
-	RelevantAttributesToCapture.Add(GetCaptures().DEF);
-	RelevantAttributesToCapture.Add(GetCaptures().SP);
+	RelevantAttributesToCapture.Add(AgDamageExecutionPrivate::GetCaptures().ATK);
+	RelevantAttributesToCapture.Add(AgDamageExecutionPrivate::GetCaptures().DEF);
+	RelevantAttributesToCapture.Add(AgDamageExecutionPrivate::GetCaptures().SP);
 }
 
 void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -108,7 +108,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_PerfectDodge);
 		return;
 	}
-	if (IsInvincible(TargetTags, Target))
+	if (AgDamageExecutionPrivate::IsInvincible(TargetTags, Target))
 	{
 		return;
 	}
@@ -119,14 +119,14 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	float SourceATK = 0.f;
 	float TargetDEF = 0.f;
 	float TargetSP = 0.f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(GetCaptures().ATK, EvaluateParameters, SourceATK);
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(GetCaptures().DEF, EvaluateParameters, TargetDEF);
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(GetCaptures().SP, EvaluateParameters, TargetSP);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().ATK, EvaluateParameters, SourceATK);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().DEF, EvaluateParameters, TargetDEF);
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().SP, EvaluateParameters, TargetSP);
 
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
-	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier) * GetBonusDamageRatio(Spec, Target, TargetTags, Rules);
-	const int32 HPDamage = CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant);
+	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier) * AgDamageExecutionPrivate::GetBonusDamageRatio(Spec, Target, TargetTags, Rules);
+	const int32 HPDamage = AgDamageExecutionPrivate::CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant);
 
 	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable)
 	{
@@ -139,14 +139,14 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 		const float GuardSPCost = HPDamage * Rules.GuardSPCostRatio;
 		const bool bGuardBreak = TargetSP < GuardSPCost && !TargetTags.HasTag(AgGameplayTags::State_SuperArmor);
 		Spec.AddDynamicAssetTag(bGuardBreak ? AgGameplayTags::Effect_Damage_Result_GuardBreak : AgGameplayTags::Effect_Damage_Result_Guard);
-		AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant, Rules.GuardReduction));
-		AddOutput(OutExecutionOutput, UAgAttributeSet::GetSPAttribute(), -FMath::Min(TargetSP, GuardSPCost));
+		AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -AgDamageExecutionPrivate::CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant, Rules.GuardReduction));
+		AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetSPAttribute(), -FMath::Min(TargetSP, GuardSPCost));
 		return;
 	}
 
 	// 사망 판정이 그로기 판정보다 먼저이도록 HP를 먼저 낮춥니다.
 	Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Hit);
-	const int32 PPDamage = CalculateDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PPMultiplier), TargetDEF, Rules.DefenseConstant);
-	AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -HPDamage);
-	AddOutput(OutExecutionOutput, UAgAttributeSet::GetPPAttribute(), -PPDamage);
+	const int32 PPDamage = AgDamageExecutionPrivate::CalculateDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PPMultiplier), TargetDEF, Rules.DefenseConstant);
+	AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -HPDamage);
+	AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetPPAttribute(), -PPDamage);
 }

@@ -12,7 +12,7 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
-namespace
+namespace AgCombatSubsystemPrivate
 {
 	bool IsWaitingForTurn(const AAgEnemyCharacter& Enemy)
 	{
@@ -32,7 +32,7 @@ namespace
 		const AAgCharacterBase* Target = Controller ? Controller->GetTarget() : nullptr;
 		return Target ? Enemy.GetHorizontalDistanceTo(Target) : TNumericLimits<float>::Max();
 	}
-} // namespace
+} // namespace AgCombatSubsystemPrivate
 
 void UAgCombatSubsystem::AddCombatant(AAgEnemyCharacter& Enemy)
 {
@@ -106,7 +106,7 @@ bool UAgCombatSubsystem::HasAttackTurn(const AAgEnemyCharacter& Enemy) const
 	}
 	const double Now = GetWorld()->GetTimeSeconds();
 	const bool bSelfReattackWaiting = Self->ReattackWaitEndTime > Now;
-	const float SelfDistance = GetTargetDistance(Enemy);
+	const float SelfDistance = AgCombatSubsystemPrivate::GetTargetDistance(Enemy);
 
 	// 앞 순서의 적은 이미 패턴을 시작했든 아직 기다리든 한 자리로 세므로, 같은 프레임에서 적들이 묻는 순서와 관계없이 결과가
 	// 같습니다.
@@ -122,10 +122,10 @@ bool UAgCombatSubsystem::HasAttackTurn(const AAgEnemyCharacter& Enemy) const
 		{
 			++TakenTurns;
 		}
-		else if (IsWaitingForTurn(*OtherEnemy))
+		else if (AgCombatSubsystemPrivate::IsWaitingForTurn(*OtherEnemy))
 		{
 			const bool bOtherReattackWaiting = Other.ReattackWaitEndTime > Now;
-			const bool bAhead = bOtherReattackWaiting != bSelfReattackWaiting ? !bOtherReattackWaiting : GetTargetDistance(*OtherEnemy) < SelfDistance;
+			const bool bAhead = bOtherReattackWaiting != bSelfReattackWaiting ? !bOtherReattackWaiting : AgCombatSubsystemPrivate::GetTargetDistance(*OtherEnemy) < SelfDistance;
 			TakenTurns += bAhead ? 1 : 0;
 		}
 	}

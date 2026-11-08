@@ -9,7 +9,7 @@
 #include "Character/AgCharacterBase.h"
 #include "Ag.h"
 
-namespace
+namespace AgAbilityTask_PlayMontagePrivate
 {
 	UAnimInstance* FindAnimInstance(const UGameplayAbility* Ability)
 	{
@@ -64,7 +64,7 @@ namespace
 		Montage.GetSectionStartAndEndTime(SectionIndex, SectionStart, SectionEnd);
 		return Params.End ? SectionStart + *Params.End : SectionEnd;
 	}
-} // namespace
+} // namespace AgAbilityTask_PlayMontagePrivate
 
 UAbilityTask* FAgAbilityMontage::MakeTask(UAgGameplayAbility& Ability) const
 {
@@ -101,7 +101,7 @@ void UAgAbilityTask_PlayMontage::Activate()
 		const UAgGameplayAbility& AgAbility = *CastChecked<UAgGameplayAbility>(Ability);
 		const FAgMontageStart* Start = Params.StartSections.FindByPredicate([&AgAbility, Character, ASC](const FAgMontageStart& Candidate)
 		{
-			return MatchesStart(Candidate, AgAbility, *Character, *ASC);
+			return AgAbilityTask_PlayMontagePrivate::MatchesStart(Candidate, AgAbility, *Character, *ASC);
 		});
 		if (!Start)
 		{
@@ -119,7 +119,7 @@ void UAgAbilityTask_PlayMontage::TickTask(float DeltaTime)
 	{
 		return;
 	}
-	UAnimInstance* Anim = FindAnimInstance(Ability);
+	UAnimInstance* Anim = AgAbilityTask_PlayMontagePrivate::FindAnimInstance(Ability);
 	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 	if (!Instance)
 	{
@@ -143,7 +143,7 @@ void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 
 	const int32 InstanceId = MontageInstanceId;
 	MontageInstanceId = INDEX_NONE;
-	UAnimInstance* Anim = InstanceId != INDEX_NONE ? FindAnimInstance(Ability) : nullptr;
+	UAnimInstance* Anim = InstanceId != INDEX_NONE ? AgAbilityTask_PlayMontagePrivate::FindAnimInstance(Ability) : nullptr;
 	FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(InstanceId) : nullptr;
 	if (Instance && Instance->Montage && !Instance->IsStopped())
 	{
@@ -160,7 +160,7 @@ void UAgAbilityTask_PlayMontage::JumpToSection(FName Section)
 	{
 		return;
 	}
-	UAnimInstance* Anim = FindAnimInstance(Ability);
+	UAnimInstance* Anim = AgAbilityTask_PlayMontagePrivate::FindAnimInstance(Ability);
 	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 	if (!Instance)
 	{
@@ -188,7 +188,7 @@ void UAgAbilityTask_PlayMontage::ReplaySection(FName Section, float BlendTime)
 
 const FAnimMontageInstance* UAgAbilityTask_PlayMontage::GetMontageInstance() const
 {
-	UAnimInstance* Anim = MontageInstanceId != INDEX_NONE ? FindAnimInstance(Ability) : nullptr;
+	UAnimInstance* Anim = MontageInstanceId != INDEX_NONE ? AgAbilityTask_PlayMontagePrivate::FindAnimInstance(Ability) : nullptr;
 	return Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 }
 
@@ -279,8 +279,8 @@ void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Insta
 		for (const TInstancedStruct<FAgTaskParams>& Item : Section.Value.Tasks)
 		{
 			const FAgTaskParams& ItemParams = Item.Get();
-			const TOptional<float> Start = GetStartTime(*PlayedMontage, Section.Key, ItemParams);
-			const TOptional<float> End = GetEndTime(*PlayedMontage, Section.Key, ItemParams);
+			const TOptional<float> Start = AgAbilityTask_PlayMontagePrivate::GetStartTime(*PlayedMontage, Section.Key, ItemParams);
+			const TOptional<float> End = AgAbilityTask_PlayMontagePrivate::GetEndTime(*PlayedMontage, Section.Key, ItemParams);
 			if (!Start || !End)
 			{
 				UE_LOG(LogAg, Error, TEXT("%s: section %s or %s of the timeline is missing in the montage"), *GetNameSafe(PlayedMontage),

@@ -9,7 +9,7 @@
 #include "Core/AgGameplayTags.h"
 #include "PhysicsEngine/BodyInstance.h"
 
-namespace
+namespace AgHitPhysicsComponentPrivate
 {
 	const FName TorsoBone(TEXT("spine_02"));
 	const FName GuardRangeBone(TEXT("spine_03"));
@@ -75,7 +75,7 @@ namespace
 		// 위치를 주는 엔진 밀기는 속도 변화를 받지 않아, 질량을 곱해 다른 바디와 같은 속도 변화로 맞춥니다.
 		Body.AddImpulseAtPosition(Hit.Direction * Speed * Body.GetBodyMass(), Point);
 	}
-} // namespace
+} // namespace AgHitPhysicsComponentPrivate
 
 UAgHitPhysicsComponent::UAgHitPhysicsComponent()
 {
@@ -132,16 +132,16 @@ void UAgHitPhysicsComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		return;
 	}
 
-	Weight = FMath::FInterpConstantTo(Weight, bRising ? MaxBlendWeight : 0.f, DeltaTime, MaxBlendWeight / (bRising ? BlendInTime : BlendOutTime));
+	Weight = FMath::FInterpConstantTo(Weight, bRising ? MaxBlendWeight : 0.f, DeltaTime, MaxBlendWeight / (bRising ? AgHitPhysicsComponentPrivate::BlendInTime : AgHitPhysicsComponentPrivate::BlendOutTime));
 	bRising = bRising && Weight < MaxBlendWeight;
 	USkeletalMeshComponent* Mesh = GetMesh();
 	Mesh->SetAllBodiesBelowPhysicsBlendWeight(RangeBone, Weight);
 	// 피직스 에셋의 머리 관절이 몸통 관절보다 넓고 물러 같은 비율로 섞으면 머리만 지나치게 흔들리므로, 목 아래는 줄여
 	// 섞습니다. 엔진은 부모에 대한 상대 자세로 섞으므로 몸통의 흔들림은 그대로 따라갑니다.
-	Mesh->SetAllBodiesBelowPhysicsBlendWeight(NeckBone, Weight * NeckBlendScale);
+	Mesh->SetAllBodiesBelowPhysicsBlendWeight(AgHitPhysicsComponentPrivate::NeckBone, Weight * AgHitPhysicsComponentPrivate::NeckBlendScale);
 	if (!bArms)
 	{
-		for (const FName& Arm : ArmBones)
+		for (const FName& Arm : AgHitPhysicsComponentPrivate::ArmBones)
 		{
 			Mesh->SetAllBodiesBelowPhysicsBlendWeight(Arm, 0.f);
 		}
@@ -158,8 +158,8 @@ void UAgHitPhysicsComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 void UAgHitPhysicsComponent::Start(const FAgPhysicsHit& Hit)
 {
 	USkeletalMeshComponent* Mesh = GetMesh();
-	const FName HitBone = Hit.bGuard ? NAME_None : FindHitBone(*Mesh, Hit);
-	const FName NewRangeBone = Hit.bGuard ? GuardRangeBone : FindRangeBone(*Mesh, HitBone);
+	const FName HitBone = Hit.bGuard ? NAME_None : AgHitPhysicsComponentPrivate::FindHitBone(*Mesh, Hit);
+	const FName NewRangeBone = Hit.bGuard ? AgHitPhysicsComponentPrivate::GuardRangeBone : AgHitPhysicsComponentPrivate::FindRangeBone(*Mesh, HitBone);
 	// 물리 자세가 남은 바디를 키네마틱으로 되돌리면 애니메이션 자세로 튀므로, 흔드는 동안 범위와 팔은 더하기만 합니다.
 	if (RangeBone.IsNone() || Mesh->BoneIsChildOf(RangeBone, NewRangeBone))
 	{
@@ -173,13 +173,13 @@ void UAgHitPhysicsComponent::Start(const FAgPhysicsHit& Hit)
 	// 않으므로, 범위 안 바디를 모두 같은 속도로 밀고 맞은 바디만 맞은 위치에서 밀어 그 자리를 중심으로 돌게 합니다.
 	// 가드는 양손으로 칼을 쥐어 두 손을 함께 맞은 위치에서 밀어야 손이 손잡이에서 벌어지지 않습니다.
 	const FBodyInstance* HitBody = Hit.bGuard ? nullptr : Mesh->GetBodyInstance(HitBone);
-	const FBodyInstance* LeftHand = Mesh->GetBodyInstance(HandBones[0]);
-	const FBodyInstance* RightHand = Mesh->GetBodyInstance(HandBones[1]);
+	const FBodyInstance* LeftHand = Mesh->GetBodyInstance(AgHitPhysicsComponentPrivate::HandBones[0]);
+	const FBodyInstance* RightHand = Mesh->GetBodyInstance(AgHitPhysicsComponentPrivate::HandBones[1]);
 	Mesh->ForEachBodyBelow(RangeBone, true, false, [this, &Hit, HitBody, LeftHand, RightHand](FBodyInstance* Body)
 	{
 		if (Hit.bGuard ? (Body == LeftHand || Body == RightHand) : Body == HitBody)
 		{
-			PushAtHit(*Body, Hit, PushSpeed);
+			AgHitPhysicsComponentPrivate::PushAtHit(*Body, Hit, PushSpeed);
 		}
 		else
 		{

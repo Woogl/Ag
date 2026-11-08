@@ -20,7 +20,7 @@
 #include "UObject/UObjectGlobals.h"
 #include "UObject/UnrealType.h"
 
-namespace
+namespace AgAssetManagerPrivate
 {
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
 	const TCHAR* const JsonFolderName = TEXT("DesignData");
@@ -70,13 +70,13 @@ namespace
 			}
 		}
 	}
-} // namespace
+} // namespace AgAssetManagerPrivate
 
 UAgAssetManager::UAgAssetManager()
 {
-	for (const FAgJsonFile& File : JsonFiles)
+	for (const AgAssetManagerPrivate::FAgJsonFile& File : AgAssetManagerPrivate::JsonFiles)
 	{
-		const FObjectProperty& Member = GetMember(File);
+		const FObjectProperty& Member = AgAssetManagerPrivate::GetMember(File);
 		UObject* Object = CreateDefaultSubobject(File.Member, Member.PropertyClass, Member.PropertyClass, true, false);
 		Member.SetObjectPropertyValue_InContainer(this, Object);
 	}
@@ -91,7 +91,7 @@ UAgAssetManager& UAgAssetManager::Get()
 
 FString UAgAssetManager::GetJsonFolder()
 {
-	return FPaths::Combine(FPaths::ProjectDir(), JsonFolderName);
+	return FPaths::Combine(FPaths::ProjectDir(), AgAssetManagerPrivate::JsonFolderName);
 }
 
 const UAgCombatRules& UAgAssetManager::GetCombatRules() const
@@ -172,9 +172,9 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 	// JSON에서 읽은 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 읽으면서 만든 객체(캐릭터 데이터, GE, 대상
 	// 프리셋과 그 Task)는 저장되지 않으므로, 그 객체의 클래스와 그 객체가 가리키는 것까지 따라갑니다.
 	TArray<UObject*> Pending;
-	for (const FAgJsonFile& File : JsonFiles)
+	for (const AgAssetManagerPrivate::FAgJsonFile& File : AgAssetManagerPrivate::JsonFiles)
 	{
-		Pending.Add(GetMember(File).GetObjectPropertyValue_InContainer(this));
+		Pending.Add(AgAssetManagerPrivate::GetMember(File).GetObjectPropertyValue_InContainer(this));
 	}
 	TSet<UObject*> Visited;
 	while (!Pending.IsEmpty())
@@ -245,9 +245,9 @@ void UAgAssetManager::StartInitialLoading()
 bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 {
 	TArray<UObject*> Loaded;
-	for (const FAgJsonFile& File : JsonFiles)
+	for (const AgAssetManagerPrivate::FAgJsonFile& File : AgAssetManagerPrivate::JsonFiles)
 	{
-		Loaded.Add(NewObject<UObject>(this, GetMember(File).PropertyClass));
+		Loaded.Add(NewObject<UObject>(this, AgAssetManagerPrivate::GetMember(File).PropertyClass));
 	}
 	// 읽는 동안 클래스·에셋 로딩이 GC를 돌릴 수 있는데, 새 객체는 아직 아무도 가리키지 않습니다.
 	const TGCObjectsScopeGuard<UObject> LoadedGuard(Loaded);
@@ -256,8 +256,8 @@ bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 	bool bRead = true;
 	for (int32 Index = 0; Index < Loaded.Num(); ++Index)
 	{
-		const FAgJsonFile& File = JsonFiles[Index];
-		const FString Path = FString(JsonFolderName) / File.FileName;
+		const AgAssetManagerPrivate::FAgJsonFile& File = AgAssetManagerPrivate::JsonFiles[Index];
+		const FString Path = FString(AgAssetManagerPrivate::JsonFolderName) / File.FileName;
 		bool bFileRead = false;
 		if (File.Field)
 		{
@@ -268,7 +268,7 @@ bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 		else
 		{
 			TObjectPtr<UObject> Object = Loaded[Index];
-			bFileRead = Reader.ReadFile(Path, GetMember(File), &Object);
+			bFileRead = Reader.ReadFile(Path, AgAssetManagerPrivate::GetMember(File), &Object);
 		}
 		// 오류를 모두 알리도록 실패해도 다음 파일을 읽습니다.
 		bRead = bFileRead && bRead;
@@ -281,12 +281,12 @@ bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 		return false;
 	}
 
-	UAgEffectSet& NewEffects = FindLoaded<UAgEffectSet>(Loaded);
+	UAgEffectSet& NewEffects = AgAssetManagerPrivate::FindLoaded<UAgEffectSet>(Loaded);
 	for (const TPair<FName, FAgEffectDefinition>& Pair : NewEffects.Definitions)
 	{
 		NewEffects.Effects.Add(Pair.Key, AgEffectData::MakeEffect(Pair.Value, *this));
 	}
-	UAgTargetingPresetSet& NewTargetingPresets = FindLoaded<UAgTargetingPresetSet>(Loaded);
+	UAgTargetingPresetSet& NewTargetingPresets = AgAssetManagerPrivate::FindLoaded<UAgTargetingPresetSet>(Loaded);
 	for (const TPair<FName, FTargetingTaskSet>& Pair : NewTargetingPresets.Definitions)
 	{
 		UTargetingPreset* Preset = NewObject<UTargetingPreset>(this);
@@ -295,19 +295,19 @@ bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 	}
 
 	// 캐릭터는 자기 데이터 객체를 들고 있으므로, ID가 그대로인 항목은 기존 객체에 값만 복사합니다.
-	for (TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : FindLoaded<UAgCharacterSet>(Loaded).Characters)
+	for (TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : AgAssetManagerPrivate::FindLoaded<UAgCharacterSet>(Loaded).Characters)
 	{
 		const TObjectPtr<UAgCharacterData>* Existing = Characters->Characters.Find(Pair.Key);
 		if (Existing)
 		{
-			CopyJsonFields(*Pair.Value, **Existing);
+			AgAssetManagerPrivate::CopyJsonFields(*Pair.Value, **Existing);
 			Pair.Value = *Existing;
 		}
 	}
 
 	for (int32 Index = 0; Index < Loaded.Num(); ++Index)
 	{
-		CopyJsonFields(*Loaded[Index], *GetMember(JsonFiles[Index]).GetObjectPropertyValue_InContainer(this));
+		AgAssetManagerPrivate::CopyJsonFields(*Loaded[Index], *AgAssetManagerPrivate::GetMember(AgAssetManagerPrivate::JsonFiles[Index]).GetObjectPropertyValue_InContainer(this));
 	}
 	return bRead;
 }

@@ -10,7 +10,7 @@
 #include "GameFramework/WorldSettings.h"
 #include "TimerManager.h"
 
-namespace
+namespace AgTimeSubsystemPrivate
 {
 	// 엔진의 최솟값(MinGlobalTimeDilation 0.0001)보다 커야 하고, 약 4초의 정지 동안 멈춘 쪽이 0.004초만큼 움직이는
 	// 정도라 보이지 않습니다.
@@ -65,7 +65,7 @@ void UAgTimeSubsystem::StartTimeStop(AAgCharacterBase& Requester)
 	SlowMotionDuration = 0.f;
 	PendingSlowMotionDuration = 0.f;
 	AWorldSettings* WorldSettings = GetWorld()->GetWorldSettings();
-	WorldSettings->SetTimeDilation(TimeStopDilation);
+	WorldSettings->SetTimeDilation(AgTimeSubsystemPrivate::TimeStopDilation);
 	bTimeStopped = true;
 	TimeStopRequester = &Requester;
 	Requester.SetTimeCompensation(1.f / WorldSettings->GetEffectiveTimeDilation());

@@ -21,7 +21,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 
-namespace
+namespace AgCharacterBasePrivate
 {
 	const FName RagdollProfileName(TEXT("Ragdoll"));
 
@@ -196,7 +196,7 @@ void AAgCharacterBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	WeaponComponent = FindComponentByTag<USceneComponent>(WeaponTag);
+	WeaponComponent = FindComponentByTag<USceneComponent>(AgCharacterBasePrivate::WeaponTag);
 
 	// 몽타주 타임라인은 몽타주가 나아가고 포즈가 갱신된 뒤에 판정해야 무기 판정 구간의 자세와 위치가 맞습니다.
 	// 메시는 포즈 평가를 물리 뒤까지 미뤄 끝내기도 하므로(tick.AnimationDelaysEndGroup), TG_DuringPhysics에 틱하는
@@ -345,7 +345,7 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 	HitPhysics->Stop();
 
 	USkeletalMeshComponent* MeshComponent = GetMesh();
-	MeshComponent->SetCollisionProfileName(RagdollProfileName);
+	MeshComponent->SetCollisionProfileName(AgCharacterBasePrivate::RagdollProfileName);
 	MeshComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	MeshComponent->SetSimulatePhysics(true);
 	if (!PushVelocity.IsNearlyZero())
@@ -363,7 +363,7 @@ void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
 
 	const AActor* Attacker = Payload ? Payload->Instigator.Get() : nullptr;
 	const FVector Push =
-		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * DeathPushSpeed : FVector::ZeroVector;
+		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * AgCharacterBasePrivate::DeathPushSpeed : FVector::ZeroVector;
 	DieWithRagdoll(Push);
 }
 
@@ -464,7 +464,7 @@ void AAgCharacterBase::HandleWeaponCapsuleTagChanged(const FGameplayTag Tag, int
 void AAgCharacterBase::UpdateTimeDilation()
 {
 	const bool bHitstop = AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Hitstop);
-	CustomTimeDilation = (bHitstop ? HitstopTimeDilation : 1.f) * TimeCompensation;
+	CustomTimeDilation = (bHitstop ? AgCharacterBasePrivate::HitstopTimeDilation : 1.f) * TimeCompensation;
 }
 
 FTransform AAgCharacterBase::ClampRootMotion(const FTransform& WorldRootMotion, UCharacterMovementComponent* Movement, float DeltaSeconds)

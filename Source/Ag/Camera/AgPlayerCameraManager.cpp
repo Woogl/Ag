@@ -12,7 +12,7 @@
 #include "GameFramework/InputSettings.h"
 #include "GameFramework/PlayerController.h"
 
-namespace
+namespace AgPlayerCameraManagerPrivate
 {
 	// 기획에서 자주 고칠 값이 아니라 데이터 대신 코드에 둡니다.
 	constexpr double LockOnFlickTime = 0.1;
@@ -212,10 +212,10 @@ void AAgPlayerCameraManager::UpdateLockOnCamera(const AAgCharacterBase& Target, 
 	const float CurrentPitch = static_cast<float>(FRotator::NormalizeAxis(Current.Pitch));
 	const float CurrentYaw = static_cast<float>(Current.Yaw);
 	const float GoalYaw = CurrentYaw + static_cast<float>(FMath::FindDeltaAngleDegrees(Current.Yaw, Goal.Yaw));
-	const float Pitch = SpringToward(CurrentPitch, LockOnPitchRate, static_cast<float>(Goal.Pitch), DeltaTime,
+	const float Pitch = AgPlayerCameraManagerPrivate::SpringToward(CurrentPitch, LockOnPitchRate, static_cast<float>(Goal.Pitch), DeltaTime,
 		Settings.SmoothingTime, Settings.RotationSpeed);
 	const float Yaw =
-		SpringToward(CurrentYaw, LockOnYawRate, GoalYaw, DeltaTime, Settings.SmoothingTime, Settings.RotationSpeed);
+		AgPlayerCameraManagerPrivate::SpringToward(CurrentYaw, LockOnYawRate, GoalYaw, DeltaTime, Settings.SmoothingTime, Settings.RotationSpeed);
 	PCOwner->SetControlRotation(FRotator(Pitch, Yaw, 0.f));
 }
 
@@ -227,7 +227,7 @@ void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float
 	PRAGMA_ENABLE_DEPRECATION_WARNINGS
 	const double Now = GetWorld()->GetRealTimeSeconds();
 	FlickSamples.RemoveAll([Now](const TPair<double, float>& Sample)
-	{ return Now - Sample.Key > LockOnFlickTime; });
+	{ return Now - Sample.Key > AgPlayerCameraManagerPrivate::LockOnFlickTime; });
 	float Angle = 0.f;
 	for (const TPair<double, float>& Sample : FlickSamples)
 	{
@@ -235,13 +235,13 @@ void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float
 	}
 	// 판정 각도 아래로만 내려가도 다시 받으면 한 번 튕기는 도중 속도가 출렁일 때 두 번 바뀌므로, 거의 멈추거나 반대로
 	// 움직여야 다시 받습니다. 새 입력을 더하기 전에 보아야 멈췄다가 다시 튕긴 첫 입력부터 판정합니다.
-	if (Angle * FlickDirection < LockOnFlickRestAngle)
+	if (Angle * FlickDirection < AgPlayerCameraManagerPrivate::LockOnFlickRestAngle)
 	{
 		FlickDirection = 0.f;
 	}
 	FlickSamples.Emplace(Now, YawInput * YawScale);
 	Angle += YawInput * YawScale;
-	if (FlickDirection == 0.f && FMath::Abs(Angle) >= LockOnFlickAngle)
+	if (FlickDirection == 0.f && FMath::Abs(Angle) >= AgPlayerCameraManagerPrivate::LockOnFlickAngle)
 	{
 		FlickDirection = FMath::Sign(Angle);
 		Player.SwitchLockOnTarget(FlickDirection);
@@ -293,7 +293,7 @@ void AAgPlayerCameraManager::UpdateCameraTurn(const FVector& PivotLocation, floa
 	}
 	const float GoalYaw = CurrentYaw + Offset - FMath::Sign(Offset) * TurnAngle;
 	const FAgLockOnCameraSettings& Settings = UAgAssetManager::Get().GetCameraData().LockOn;
-	const float Yaw = SpringToward(CurrentYaw, TurnYawRate, GoalYaw, DeltaTime, Settings.SmoothingTime, Settings.RotationSpeed);
+	const float Yaw = AgPlayerCameraManagerPrivate::SpringToward(CurrentYaw, TurnYawRate, GoalYaw, DeltaTime, Settings.SmoothingTime, Settings.RotationSpeed);
 	PCOwner->SetControlRotation(FRotator(Current.Pitch, Yaw, 0.f));
 }
 

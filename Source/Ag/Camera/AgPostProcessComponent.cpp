@@ -10,7 +10,7 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceDynamic.h"
 
-namespace
+namespace AgPostProcessComponentPrivate
 {
 	const FName EffectWeightParameter(TEXT("AgEffectWeight"));
 	const FName EffectTimeParameter(TEXT("AgEffectTime"));
@@ -33,7 +33,7 @@ bool UAgPostProcessComponent::Start(AActor* Target, float Duration)
 {
 	Reset();
 	APawn* Pawn = Cast<APawn>(Target);
-	if (!Material || !IsLocalPlayerPawn(Pawn) || !GetWorld())
+	if (!Material || !AgPostProcessComponentPrivate::IsLocalPlayerPawn(Pawn) || !GetWorld())
 	{
 		return false;
 	}
@@ -125,7 +125,7 @@ bool UAgPostProcessComponent::ValidateSettings(FString& Error) const
 	{
 		const UMaterial* BaseMaterial = Material->GetMaterial();
 		float DefaultWeight = 0.f;
-		if (!BaseMaterial || BaseMaterial->MaterialDomain != MD_PostProcess || !Material->GetScalarParameterValue(FMaterialParameterInfo(EffectWeightParameter), DefaultWeight))
+		if (!BaseMaterial || BaseMaterial->MaterialDomain != MD_PostProcess || !Material->GetScalarParameterValue(FMaterialParameterInfo(AgPostProcessComponentPrivate::EffectWeightParameter), DefaultWeight))
 		{
 			Error = TEXT("material must use the Post Process domain and define AgEffectWeight");
 			return false;
@@ -147,7 +147,7 @@ void UAgPostProcessComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		return;
 	}
 	const double Now = GetWorld()->GetAudioTimeSeconds();
-	if (!IsLocalPlayerPawn(TargetPawn.Get()) || (bFadingOut && Now - StopTime >= PlaybackBlendOut) || (PlaybackDuration > 0.f && Now - StartTime >= PlaybackDuration))
+	if (!AgPostProcessComponentPrivate::IsLocalPlayerPawn(TargetPawn.Get()) || (bFadingOut && Now - StopTime >= PlaybackBlendOut) || (PlaybackDuration > 0.f && Now - StartTime >= PlaybackDuration))
 	{
 		Finish();
 		return;
@@ -179,8 +179,8 @@ float UAgPostProcessComponent::GetWeight(double Now) const
 void UAgPostProcessComponent::UpdateMaterial(double Now)
 {
 	const float Weight = GetWeight(Now);
-	MaterialInstance->SetScalarParameterValue(EffectWeightParameter, Weight);
-	MaterialInstance->SetScalarParameterValue(EffectTimeParameter, static_cast<float>(Now - StartTime));
+	MaterialInstance->SetScalarParameterValue(AgPostProcessComponentPrivate::EffectWeightParameter, Weight);
+	MaterialInstance->SetScalarParameterValue(AgPostProcessComponentPrivate::EffectTimeParameter, static_cast<float>(Now - StartTime));
 	Volume->bEnabled = Weight > 0.f;
 }
 

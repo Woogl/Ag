@@ -10,7 +10,7 @@
 #include "TimerManager.h"
 #include "UI/AgStatBar.h"
 
-namespace
+namespace AgNameplateWidgetPrivate
 {
 	TArray<FGameplayAttribute> StatusAttributes()
 	{
@@ -23,7 +23,7 @@ namespace
 		static const TArray<FGameplayTag> Tags = {AgGameplayTags::State_Groggy, AgGameplayTags::State_Execution};
 		return Tags;
 	}
-} // namespace
+} // namespace AgNameplateWidgetPrivate
 
 void UAgNameplateWidget::SetAbilitySystem(UAbilitySystemComponent* NewASC)
 {
@@ -32,11 +32,11 @@ void UAgNameplateWidget::SetAbilitySystem(UAbilitySystemComponent* NewASC)
 	LastDropTime = -UE_DOUBLE_BIG_NUMBER;
 	if (NewASC)
 	{
-		for (const FGameplayAttribute& Attribute : StatusAttributes())
+		for (const FGameplayAttribute& Attribute : AgNameplateWidgetPrivate::StatusAttributes())
 		{
 			NewASC->GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, &ThisClass::HandleAttributeChanged);
 		}
-		for (const FGameplayTag& Tag : StatusTags())
+		for (const FGameplayTag& Tag : AgNameplateWidgetPrivate::StatusTags())
 		{
 			NewASC->RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
 				.AddWeakLambda(this, [this](const FGameplayTag, int32)
@@ -74,11 +74,11 @@ void UAgNameplateWidget::Unbind()
 	{
 		return;
 	}
-	for (const FGameplayAttribute& Attribute : StatusAttributes())
+	for (const FGameplayAttribute& Attribute : AgNameplateWidgetPrivate::StatusAttributes())
 	{
 		Target->GetGameplayAttributeValueChangeDelegate(Attribute).RemoveAll(this);
 	}
-	for (const FGameplayTag& Tag : StatusTags())
+	for (const FGameplayTag& Tag : AgNameplateWidgetPrivate::StatusTags())
 	{
 		Target->RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved).RemoveAll(this);
 	}

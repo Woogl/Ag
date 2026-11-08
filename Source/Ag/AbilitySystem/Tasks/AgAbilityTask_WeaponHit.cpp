@@ -13,7 +13,7 @@
 #include "Engine/World.h"
 #include "Ag.h"
 
-namespace
+namespace AgAbilityTask_WeaponHitPrivate
 {
 	const FName WeaponCollisionTag(TEXT("WeaponCollision"));
 
@@ -84,7 +84,7 @@ namespace
 	{
 		return Instance.GetPreviousPosition() + Instance.GetDeltaMoved();
 	}
-} // namespace
+} // namespace AgAbilityTask_WeaponHitPrivate
 
 UAbilityTask* FAgWeaponHitParams::MakeTask(const FAgTaskContext& Context) const
 {
@@ -118,22 +118,22 @@ void UAgAbilityTask_WeaponHit::Activate()
 	for (UCapsuleComponent* Capsule : Capsules)
 	{
 		FAgWeaponEdge Edge;
-		if (Capsule->ComponentHasTag(WeaponCollisionTag) && GetEdge(Capsule, Edge.LastStart, Edge.LastEnd))
+		if (Capsule->ComponentHasTag(AgAbilityTask_WeaponHitPrivate::WeaponCollisionTag) && AgAbilityTask_WeaponHitPrivate::GetEdge(Capsule, Edge.LastStart, Edge.LastEnd))
 		{
 			Edge.Capsule = Capsule;
-			Edge.HandBone = FindAttachBone(*Capsule, *Character->GetMesh());
+			Edge.HandBone = AgAbilityTask_WeaponHitPrivate::FindAttachBone(*Capsule, *Character->GetMesh());
 			Edges.Add(Edge);
 		}
 	}
 	if (Edges.IsEmpty())
 	{
-		UE_LOG(LogAg, Error, TEXT("WeaponHit: %s has no capsule tagged %s"), *Character->GetName(), *WeaponCollisionTag.ToString());
+		UE_LOG(LogAg, Error, TEXT("WeaponHit: %s has no capsule tagged %s"), *Character->GetName(), *AgAbilityTask_WeaponHitPrivate::WeaponCollisionTag.ToString());
 		EndTask();
 		return;
 	}
-	if (const FAnimMontageInstance* Instance = GetMontageInstance(Playback))
+	if (const FAnimMontageInstance* Instance = AgAbilityTask_WeaponHitPrivate::GetMontageInstance(Playback))
 	{
-		LastPosition = GetPosePosition(*Instance);
+		LastPosition = AgAbilityTask_WeaponHitPrivate::GetPosePosition(*Instance);
 		// 구간에 들어선 프레임의 자세는 이미 Start를 지났으므로, 앞 프레임 자세와의 사이에서 Start의 자세를 잡아
 		// 거기서부터 스윕합니다.
 		const float Previous = Instance->GetPreviousPosition();
@@ -146,8 +146,8 @@ void UAgAbilityTask_WeaponHit::Activate()
 				FVector PreviousStart, PreviousEnd;
 				if (GetPreviousEdge(Edge, PreviousStart, PreviousEnd))
 				{
-					Edge.LastStart = ArcLerp(Center, PreviousStart, Edge.LastStart, Alpha);
-					Edge.LastEnd = ArcLerp(Center, PreviousEnd, Edge.LastEnd, Alpha);
+					Edge.LastStart = AgAbilityTask_WeaponHitPrivate::ArcLerp(Center, PreviousStart, Edge.LastStart, Alpha);
+					Edge.LastEnd = AgAbilityTask_WeaponHitPrivate::ArcLerp(Center, PreviousEnd, Edge.LastEnd, Alpha);
 				}
 			}
 			LastPosition = Window->Min;
@@ -165,10 +165,10 @@ void UAgAbilityTask_WeaponHit::OnDestroy(bool bInOwnerFinished)
 	SweepTick.UnRegisterTickFunction();
 	// End를 지난 프레임에는 재생 Task가 물리 갱신 뒤의 스윕보다 먼저 이 Task를 끝내므로, 앞 스윕 자세에서 End까지 남은
 	// 움직임을 여기서 스윕합니다. 행동이 끝났거나 재생이 바뀌었으면 하지 않고, 스윕 중 피해가 구간을 끝냈으면 다시 하지 않습니다.
-	const FAnimMontageInstance* Instance = GetMontageInstance(Playback);
+	const FAnimMontageInstance* Instance = AgAbilityTask_WeaponHitPrivate::GetMontageInstance(Playback);
 	if (!bInOwnerFinished && !bSweeping && Window && Instance)
 	{
-		const float Position = GetPosePosition(*Instance);
+		const float Position = AgAbilityTask_WeaponHitPrivate::GetPosePosition(*Instance);
 		if (Instance->GetPreviousPosition() <= LastPosition && LastPosition < FMath::Min(Position, Window->Max))
 		{
 			SweepEdges(FMath::Min((Window->Max - LastPosition) / (Position - LastPosition), 1.f));
@@ -206,9 +206,9 @@ void UAgAbilityTask_WeaponHit::SweepEdges(float AlphaEnd)
 			return;
 		}
 	}
-	if (const FAnimMontageInstance* Instance = GetMontageInstance(Playback))
+	if (const FAnimMontageInstance* Instance = AgAbilityTask_WeaponHitPrivate::GetMontageInstance(Playback))
 	{
-		LastPosition = GetPosePosition(*Instance);
+		LastPosition = AgAbilityTask_WeaponHitPrivate::GetPosePosition(*Instance);
 	}
 }
 
@@ -216,13 +216,13 @@ bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge, float AlphaEnd)
 {
 	const UCapsuleComponent* Capsule = Edge.Capsule.Get();
 	FVector EdgeStart, EdgeEnd;
-	if (!GetEdge(Capsule, EdgeStart, EdgeEnd))
+	if (!AgAbilityTask_WeaponHitPrivate::GetEdge(Capsule, EdgeStart, EdgeEnd))
 	{
 		return true;
 	}
 	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	const float Travel = FMath::Max(FVector::Dist(EdgeStart, Edge.LastStart), FVector::Dist(EdgeEnd, Edge.LastEnd)) * AlphaEnd;
-	const int32 Steps = FMath::Clamp(FMath::CeilToInt(Travel / SweepStepLength), 1, MaxSweepSteps);
+	const int32 Steps = FMath::Clamp(FMath::CeilToInt(Travel / AgAbilityTask_WeaponHitPrivate::SweepStepLength), 1, AgAbilityTask_WeaponHitPrivate::MaxSweepSteps);
 	const FCollisionShape Shape = FCollisionShape::MakeSphere(Capsule->GetScaledCapsuleRadius());
 	const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgWeaponSweep), false, Character);
 	const FVector Center = Character->GetActorLocation();
@@ -233,8 +233,8 @@ bool UAgAbilityTask_WeaponHit::Sweep(FAgWeaponEdge& Edge, float AlphaEnd)
 	for (int32 Step = 1; Step <= Steps; ++Step)
 	{
 		const float Alpha = AlphaEnd * Step / Steps;
-		const FVector From = ArcLerp(Center, Edge.LastStart, EdgeStart, Alpha);
-		const FVector To = ArcLerp(Center, Edge.LastEnd, EdgeEnd, Alpha);
+		const FVector From = AgAbilityTask_WeaponHitPrivate::ArcLerp(Center, Edge.LastStart, EdgeStart, Alpha);
+		const FVector To = AgAbilityTask_WeaponHitPrivate::ArcLerp(Center, Edge.LastEnd, EdgeEnd, Alpha);
 		Touches.Reset();
 		GetWorld()->SweepMultiByChannel(Touches, From, To, FQuat::Identity, ECC_AgWeapon, Shape, QueryParams);
 		for (const FHitResult& Touch : Touches)
@@ -311,6 +311,6 @@ bool UAgAbilityTask_WeaponHit::GetPreviousEdge(const FAgWeaponEdge& Edge, FVecto
 	FTransform PreviousMesh = Mesh->GetComponentTransform();
 	PreviousMesh.AddToTranslation(-Character->GetVelocity() * GetWorld()->GetDeltaSeconds() * Character->CustomTimeDilation);
 	const FTransform CapsuleToBone = Capsule->GetComponentTransform().GetRelativeTransform(Current[Bone] * Mesh->GetComponentTransform());
-	MakeEdge(CapsuleToBone * Previous[Bone] * PreviousMesh, Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere(), OutStart, OutEnd);
+	AgAbilityTask_WeaponHitPrivate::MakeEdge(CapsuleToBone * Previous[Bone] * PreviousMesh, Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere(), OutStart, OutEnd);
 	return true;
 }

@@ -19,7 +19,7 @@
 #include "UObject/PropertyOptional.h"
 #include "UObject/UnrealType.h"
 
-namespace
+namespace AgJsonReaderPrivate
 {
 	bool Fail(const FString& At, const FString& Reason)
 	{
@@ -50,7 +50,7 @@ namespace
 		const FStructProperty* Struct = CastField<FStructProperty>(&Property);
 		return Struct && Struct->Struct == FInstancedStruct::StaticStruct() && !static_cast<const FInstancedStruct*>(Value)->IsValid();
 	}
-} // namespace
+} // namespace AgJsonReaderPrivate
 
 FAgJsonReader::FAgJsonReader(UObject& InOuter)
 	: Outer(InOuter)
@@ -62,13 +62,13 @@ bool FAgJsonReader::ReadFile(const FString& Path, const FProperty& Property, voi
 	FString Text;
 	if (!FFileHelper::LoadFileToString(Text, *FPaths::Combine(FPaths::ProjectDir(), Path)))
 	{
-		return Fail(Path, TEXT("can't read the file"));
+		return AgJsonReaderPrivate::Fail(Path, TEXT("can't read the file"));
 	}
 	TSharedPtr<FJsonValue> Value;
 	const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
 	if (!FJsonSerializer::Deserialize(Reader, Value) || !Value.IsValid())
 	{
-		return Fail(Path, Reader->GetErrorMessage());
+		return AgJsonReaderPrivate::Fail(Path, Reader->GetErrorMessage());
 	}
 	const TSharedPtr<FJsonObject>* Root = nullptr;
 	if (Value->TryGetObject(Root))
@@ -109,7 +109,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
 		if (!Value->TryGetArray(Items))
 		{
-			return Fail(Path, TEXT("must be an array"));
+			return AgJsonReaderPrivate::Fail(Path, TEXT("must be an array"));
 		}
 		FScriptArrayHelper Helper(Array, Out);
 		Helper.Resize(Items->Num());
@@ -118,7 +118,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		{
 			const bool bItem = Read(FString::Printf(TEXT("%s[%d]"), *Path, Index), (*Items)[Index], *Array->Inner, Helper.GetRawPtr(Slot));
 			bRead = bItem && bRead;
-			if (!bItem && IsEmptyReference(*Array->Inner, Helper.GetRawPtr(Slot)))
+			if (!bItem && AgJsonReaderPrivate::IsEmptyReference(*Array->Inner, Helper.GetRawPtr(Slot)))
 			{
 				Helper.RemoveValues(Slot);
 			}
@@ -134,7 +134,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		const TSharedPtr<FJsonObject>* Object = nullptr;
 		if (!Value->TryGetObject(Object))
 		{
-			return Fail(Path, TEXT("must be an object"));
+			return AgJsonReaderPrivate::Fail(Path, TEXT("must be an object"));
 		}
 		FScriptMapHelper Helper(Map, Out);
 		bool bRead = true;
@@ -146,16 +146,16 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 			}
 			const FString Key(Entry.Key);
 			FDefaultConstructedPropertyElement KeyValue(Map->KeyProp);
-			if (!Read(ChildPath(Path, Key), MakeShared<FJsonValueString>(Key), *Map->KeyProp, KeyValue.GetObjAddress()))
+			if (!Read(AgJsonReaderPrivate::ChildPath(Path, Key), MakeShared<FJsonValueString>(Key), *Map->KeyProp, KeyValue.GetObjAddress()))
 			{
 				bRead = false;
 				continue;
 			}
 			void* Item = Helper.FindOrAdd(KeyValue.GetObjAddress());
-			if (!Read(ChildPath(Path, Key), Entry.Value, *Map->ValueProp, Item))
+			if (!Read(AgJsonReaderPrivate::ChildPath(Path, Key), Entry.Value, *Map->ValueProp, Item))
 			{
 				bRead = false;
-				if (IsEmptyReference(*Map->ValueProp, Item))
+				if (AgJsonReaderPrivate::IsEmptyReference(*Map->ValueProp, Item))
 				{
 					Helper.RemovePair(KeyValue.GetObjAddress());
 				}
@@ -174,7 +174,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		const TArray<TSharedPtr<FJsonValue>>* Items = nullptr;
 		if (!Value->TryGetArray(Items))
 		{
-			return Fail(Path, TEXT("must be an array of gameplay tags"));
+			return AgJsonReaderPrivate::Fail(Path, TEXT("must be an array of gameplay tags"));
 		}
 		FGameplayTagContainer& Tags = *static_cast<FGameplayTagContainer*>(Out);
 		Tags.Reset();
@@ -189,7 +189,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 			}
 			else
 			{
-				bRead = Fail(FString::Printf(TEXT("%s[%d]"), *Path, Index), Name + TEXT(" is not a gameplay tag"));
+				bRead = AgJsonReaderPrivate::Fail(FString::Printf(TEXT("%s[%d]"), *Path, Index), Name + TEXT(" is not a gameplay tag"));
 			}
 		}
 		return bRead;
@@ -198,14 +198,14 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 	{
 		if (Value->Type != EJson::String)
 		{
-			return Fail(Path, TEXT("must be a gameplay tag string"));
+			return AgJsonReaderPrivate::Fail(Path, TEXT("must be a gameplay tag string"));
 		}
 		// 엔진 변환은 등록되지 않은 태그 이름도 그대로 받으므로 직접 찾습니다.
 		const FString Name = Value->AsString();
 		const FGameplayTag Tag = Name.IsEmpty() ? FGameplayTag() : FGameplayTag::RequestGameplayTag(FName(*Name), false);
 		if (!Name.IsEmpty() && !Tag.IsValid())
 		{
-			return Fail(Path, Name + TEXT(" is not a gameplay tag"));
+			return AgJsonReaderPrivate::Fail(Path, Name + TEXT(" is not a gameplay tag"));
 		}
 		*static_cast<FGameplayTag*>(Out) = Tag;
 		return true;
@@ -222,7 +222,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		});
 		if (!Attribute)
 		{
-			return Fail(Path, Name + TEXT(" is not an attribute"));
+			return AgJsonReaderPrivate::Fail(Path, Name + TEXT(" is not an attribute"));
 		}
 		*static_cast<FGameplayAttribute*>(Out) = FGameplayAttribute(*Attribute);
 		return true;
@@ -235,7 +235,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 			Value->TryGetObject(Object) && (*Object)->TryGetStringField(TEXT("Task"), TaskName) ? AgTaskParams::FindStruct(TaskName) : nullptr;
 		if (!Task)
 		{
-			return Fail(Path, TEXT("Task must name a task: ") + TaskName);
+			return AgJsonReaderPrivate::Fail(Path, TEXT("Task must name a task: ") + TaskName);
 		}
 		FInstancedStruct& Instance = *static_cast<FInstancedStruct*>(Out);
 		Instance.InitializeAs(Task);
@@ -253,7 +253,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 			Class = LoadClass<UObject>(nullptr, *ClassPath, nullptr, LOAD_NoWarn);
 			if (!Class || !Class->IsChildOf(ObjectProperty->PropertyClass) || Class->HasAnyClassFlags(CLASS_Abstract))
 			{
-				return Fail(Path, ClassPath + TEXT(" is not a class of ") + ObjectProperty->PropertyClass->GetName());
+				return AgJsonReaderPrivate::Fail(Path, ClassPath + TEXT(" is not a class of ") + ObjectProperty->PropertyClass->GetName());
 			}
 			TypeKey = TEXT("Class");
 		}
@@ -267,7 +267,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		}
 		if (!Object)
 		{
-			return Fail(Path, TEXT("unknown entry"));
+			return AgJsonReaderPrivate::Fail(Path, TEXT("unknown entry"));
 		}
 		Type = Object->GetClass();
 		Container = Object;
@@ -296,7 +296,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 		const TSharedPtr<FJsonObject>* Object = nullptr;
 		if (!Value->TryGetObject(Object))
 		{
-			return Fail(Path, TEXT("must be an object"));
+			return AgJsonReaderPrivate::Fail(Path, TEXT("must be an object"));
 		}
 		const bool bObject = Type->IsChildOf(UObject::StaticClass());
 		bool bRead = true;
@@ -318,17 +318,17 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 			}
 			if (!Found)
 			{
-				bRead = Fail(ChildPath(Path, Key), TEXT("unknown key"));
+				bRead = AgJsonReaderPrivate::Fail(AgJsonReaderPrivate::ChildPath(Path, Key), TEXT("unknown key"));
 				continue;
 			}
-			bRead = Read(ChildPath(Path, Key), Field.Value, *Found, Found->ContainerPtrToValuePtr<void>(Container)) && bRead;
+			bRead = Read(AgJsonReaderPrivate::ChildPath(Path, Key), Field.Value, *Found, Found->ContainerPtrToValuePtr<void>(Container)) && bRead;
 		}
 		if (bRead && Type == FAgHitReward::StaticStruct())
 		{
 			const FAgHitReward& Reward = *static_cast<const FAgHitReward*>(Container);
 			if (!FMath::IsFinite(Reward.MP) || !FMath::IsFinite(Reward.UP) || Reward.MP < 0.f || Reward.UP < 0.f || (Reward.MP == 0.f && Reward.UP == 0.f))
 			{
-				return Fail(Path, TEXT("HitReward must contain finite non-negative amounts with at least one positive amount"));
+				return AgJsonReaderPrivate::Fail(Path, TEXT("HitReward must contain finite non-negative amounts with at least one positive amount"));
 			}
 		}
 		return bRead;
@@ -337,13 +337,13 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 	FText Reason;
 	if (!FJsonObjectConverter::JsonValueToUProperty(Value, const_cast<FProperty*>(&Property), Out, 0, 0, false, &Reason))
 	{
-		return Fail(Path, Reason.ToString());
+		return AgJsonReaderPrivate::Fail(Path, Reason.ToString());
 	}
 	// 엔진 변환은 찾지 못한 에셋·클래스를 null로 두고 성공으로 돌려주므로 직접 확인합니다.
 	const UObject* Referenced = ObjectProperty ? ObjectProperty->GetObjectPropertyValue(Out) : nullptr;
 	if (ObjectProperty && !Referenced && !Value->AsString().IsEmpty() && Value->AsString() != TEXT("None"))
 	{
-		return Fail(Path, Value->AsString() + TEXT(" is not an asset or class of ") + ObjectProperty->PropertyClass->GetName());
+		return AgJsonReaderPrivate::Fail(Path, Value->AsString() + TEXT(" is not an asset or class of ") + ObjectProperty->PropertyClass->GetName());
 	}
 	// 엔진 로더는 리다이렉터를 따라가 옛 경로도 읽지만, 에디터는 JSON 경로를 참조로 모르므로 리다이렉터가 지워지기 전에 알립니다.
 	if (Referenced && !Referenced->GetPathName().Equals(Value->AsString(), ESearchCase::IgnoreCase))
@@ -362,7 +362,7 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 	if (DataId && (!FileIds || !FileIds->Contains(*static_cast<const FName*>(Out))))
 	{
 		*static_cast<FName*>(Out) = NAME_None;
-		return Fail(Path, Value->AsString() + TEXT(" is not an ID in ") + *DataId + TEXT(".json"));
+		return AgJsonReaderPrivate::Fail(Path, Value->AsString() + TEXT(" is not an ID in ") + *DataId + TEXT(".json"));
 	}
 #endif
 	return true;

@@ -10,7 +10,7 @@
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
 
-namespace
+namespace AgAbilityTask_PlayCutscenePrivate
 {
 	// 레벨 시퀀스에서 재생하는 캐릭터를 받는 바인딩에 붙인 태그와 같아야 합니다.
 	const FName OwnerBindingTag(TEXT("Owner"));
@@ -53,7 +53,7 @@ void UAgAbilityTask_PlayCutscene::Activate()
 	SequenceActor = NewActor;
 	SequenceActor->bOverrideInstanceData = true;
 	CastChecked<UDefaultLevelSequenceInstanceData>(SequenceActor->DefaultInstanceData)->TransformOriginActor = GetAvatarActor();
-	SequenceActor->SetBindingByTag(OwnerBindingTag, {GetAvatarActor()});
+	SequenceActor->SetBindingByTag(AgAbilityTask_PlayCutscenePrivate::OwnerBindingTag, {GetAvatarActor()});
 	Player->OnFinished.AddDynamic(this, &ThisClass::HandleFinished);
 	Player->Play();
 }

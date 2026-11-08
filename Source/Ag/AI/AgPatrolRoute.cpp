@@ -18,7 +18,7 @@
 #endif
 
 #if WITH_EDITOR
-namespace
+namespace AgPatrolRoutePrivate
 {
 	constexpr double GroundSearchHeight = 100000.;
 	constexpr double NearFloorSearchHeight = 100.;
@@ -89,7 +89,7 @@ namespace
 		}
 		return FVector(Point.X, Point.Y, *Nearest);
 	}
-} // namespace
+} // namespace AgPatrolRoutePrivate
 #endif
 
 AAgPatrolRoute::AAgPatrolRoute()
@@ -236,7 +236,7 @@ void AAgPatrolRoute::SnapPointsToGround()
 	for (int32 Index = 0; Index < GetPointCount(); ++Index)
 	{
 		const FVector Point = GetPointLocation(Index);
-		const TOptional<FVector> Ground = FindGround(*GetWorld(), Point);
+		const TOptional<FVector> Ground = AgPatrolRoutePrivate::FindGround(*GetWorld(), Point);
 		if (Ground && !Ground->Equals(Point, UE_KINDA_SMALL_NUMBER))
 		{
 			Spline->SetLocationAtSplinePoint(Index, *Ground, ESplineCoordinateSpace::World, false);
@@ -256,7 +256,7 @@ void AAgPatrolRoute::CollectProblems(TArray<TSharedRef<FTokenizedMessage>>& OutM
 	const int32 PointCount = GetPointCount();
 	for (int32 Index = 0; Index < PointCount; ++Index)
 	{
-		if (!FindGround(World, GetPointLocation(Index)))
+		if (!AgPatrolRoutePrivate::FindGround(World, GetPointLocation(Index)))
 		{
 			OutMessages.Add(MakeWarning(*this, FString::Printf(TEXT("Patrol point %d has no floor below it."), Index + 1)));
 		}

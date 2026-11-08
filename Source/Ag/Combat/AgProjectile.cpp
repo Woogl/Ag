@@ -15,7 +15,7 @@
 #include "Data/AgEffectData.h"
 #include "Ag.h"
 
-namespace
+namespace AgProjectilePrivate
 {
 	/** From에서 Speed로 곧게 날아간 투사체가 수평 속도 Velocity로 움직이는 대상에 닿는 위치입니다. */
 	FVector PredictLocation(const FVector& From, const FVector& TargetLocation, const FVector& Velocity, float Speed)
@@ -37,7 +37,7 @@ namespace
 		return Rotation;
 	}
 
-} // namespace
+} // namespace AgProjectilePrivate
 
 AAgProjectile::AAgProjectile()
 {
@@ -74,7 +74,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	Reflector = &Defender;
 	const FVector ReturnDirection = (Shooter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	FlightDirection = ReturnDirection.IsNearlyZero() ? -FlightDirection : ReturnDirection;
-	SetActorRotation(MakeFlightRotation(FlightDirection, GetActorRotation().Roll));
+	SetActorRotation(AgProjectilePrivate::MakeFlightRotation(FlightDirection, GetActorRotation().Roll));
 	Traveled = 0.f;
 	TouchedActors.Reset();
 }
@@ -117,12 +117,12 @@ void AAgProjectile::BeginPlay()
 		return;
 	}
 	const FVector From = GetActorLocation();
-	const FVector AimLocation = PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed);
+	const FVector AimLocation = AgProjectilePrivate::PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed);
 	const FVector AimDirection = (AimLocation - From).GetSafeNormal();
 	if (!AimDirection.IsNearlyZero())
 	{
 		FlightDirection = AimDirection;
-		SetActorRotation(MakeFlightRotation(FlightDirection, GetActorRotation().Roll));
+		SetActorRotation(AgProjectilePrivate::MakeFlightRotation(FlightDirection, GetActorRotation().Roll));
 	}
 }
 

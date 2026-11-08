@@ -17,7 +17,7 @@
 #include "StateTreeState.h"
 #include "StateTreeTaskBase.h"
 
-namespace
+namespace AgStateTreeToolsetPrivate
 {
 	UStateTreeEditorData* GetStateTreeEditorData(UStateTree* StateTree)
 	{
@@ -73,7 +73,7 @@ namespace
 		const UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
 		return NodeStruct && NodeStruct->IsChildOf(Base) && EditorData && EditorData->Schema && EditorData->Schema->IsStructAllowed(NodeStruct);
 	}
-} // namespace
+} // namespace AgStateTreeToolsetPrivate
 
 UStateTree* UAgStateTreeToolset::CreateStateTree(const FString& AssetPath, TSubclassOf<UStateTreeSchema> Schema)
 {
@@ -90,7 +90,7 @@ UStateTree* UAgStateTreeToolset::CreateStateTree(const FString& AssetPath, TSubc
 
 bool UAgStateTreeToolset::AddStateTreeState(UStateTree* StateTree, const FString& ParentPath, FName Name, FName SelectionBehavior)
 {
-	UStateTreeState* Parent = FindStateTreeState(StateTree, ParentPath);
+	UStateTreeState* Parent = AgStateTreeToolsetPrivate::FindStateTreeState(StateTree, ParentPath);
 	const int64 Selection = StaticEnum<EStateTreeStateSelectionBehavior>()->GetValueByNameString(SelectionBehavior.ToString());
 	if (!Parent || Name.IsNone() || Selection == INDEX_NONE)
 	{
@@ -111,7 +111,7 @@ bool UAgStateTreeToolset::AddStateTreeState(UStateTree* StateTree, const FString
 
 bool UAgStateTreeToolset::RemoveStateTreeState(UStateTree* StateTree, const FString& StatePath)
 {
-	UStateTreeState* State = FindStateTreeState(StateTree, StatePath);
+	UStateTreeState* State = AgStateTreeToolsetPrivate::FindStateTreeState(StateTree, StatePath);
 	if (!State)
 	{
 		return false;
@@ -124,7 +124,7 @@ bool UAgStateTreeToolset::RemoveStateTreeState(UStateTree* StateTree, const FStr
 	}
 	else
 	{
-		UStateTreeEditorData* EditorData = GetStateTreeEditorData(StateTree);
+		UStateTreeEditorData* EditorData = AgStateTreeToolsetPrivate::GetStateTreeEditorData(StateTree);
 		EditorData->Modify();
 		EditorData->SubTrees.Remove(State);
 	}
@@ -134,8 +134,8 @@ bool UAgStateTreeToolset::RemoveStateTreeState(UStateTree* StateTree, const FStr
 
 bool UAgStateTreeToolset::AddStateTreeTask(UStateTree* StateTree, const FString& StatePath, UScriptStruct* Task, const FString& InstanceValues)
 {
-	UStateTreeState* State = FindStateTreeState(StateTree, StatePath);
-	if (!State || !IsStateTreeNodeAllowed(StateTree, Task, FStateTreeTaskBase::StaticStruct()))
+	UStateTreeState* State = AgStateTreeToolsetPrivate::FindStateTreeState(StateTree, StatePath);
+	if (!State || !AgStateTreeToolsetPrivate::IsStateTreeNodeAllowed(StateTree, Task, FStateTreeTaskBase::StaticStruct()))
 	{
 		return false;
 	}
@@ -143,7 +143,7 @@ bool UAgStateTreeToolset::AddStateTreeTask(UStateTree* StateTree, const FString&
 	State->Modify();
 	FStateTreeEditorNode& Node = State->Tasks.AddDefaulted_GetRef();
 	Node.InitializeAs(State, Task);
-	if (!ImportStateTreeNodeValues(Node, InstanceValues))
+	if (!AgStateTreeToolsetPrivate::ImportStateTreeNodeValues(Node, InstanceValues))
 	{
 		State->Tasks.Pop();
 		return false;
@@ -154,7 +154,7 @@ bool UAgStateTreeToolset::AddStateTreeTask(UStateTree* StateTree, const FString&
 
 bool UAgStateTreeToolset::ClearStateTreeTasks(UStateTree* StateTree, const FString& StatePath)
 {
-	UStateTreeState* State = FindStateTreeState(StateTree, StatePath);
+	UStateTreeState* State = AgStateTreeToolsetPrivate::FindStateTreeState(StateTree, StatePath);
 	if (!State)
 	{
 		return false;
@@ -168,15 +168,15 @@ bool UAgStateTreeToolset::ClearStateTreeTasks(UStateTree* StateTree, const FStri
 
 bool UAgStateTreeToolset::AddStateTreeTransition(UStateTree* StateTree, const FString& StatePath, FName Trigger, FGameplayTag EventTag, const FString& TargetPath, EStateTreeTransitionPriority Priority, UScriptStruct* Condition, const FString& ConditionValues)
 {
-	UStateTreeState* State = FindStateTreeState(StateTree, StatePath);
-	const UStateTreeState* Target = FindStateTreeState(StateTree, TargetPath);
+	UStateTreeState* State = AgStateTreeToolsetPrivate::FindStateTreeState(StateTree, StatePath);
+	const UStateTreeState* Target = AgStateTreeToolsetPrivate::FindStateTreeState(StateTree, TargetPath);
 	const int64 TriggerValue = StaticEnum<EStateTreeTransitionTrigger>()->GetValueByNameString(Trigger.ToString());
 	if (!State || !Target || TriggerValue == INDEX_NONE || TriggerValue == static_cast<int64>(EStateTreeTransitionTrigger::None))
 	{
 		return false;
 	}
 	const EStateTreeTransitionTrigger TriggerType = static_cast<EStateTreeTransitionTrigger>(TriggerValue);
-	if ((TriggerType == EStateTreeTransitionTrigger::OnEvent && !EventTag.IsValid()) || (Condition && !IsStateTreeNodeAllowed(StateTree, Condition, FStateTreeConditionBase::StaticStruct())))
+	if ((TriggerType == EStateTreeTransitionTrigger::OnEvent && !EventTag.IsValid()) || (Condition && !AgStateTreeToolsetPrivate::IsStateTreeNodeAllowed(StateTree, Condition, FStateTreeConditionBase::StaticStruct())))
 	{
 		return false;
 	}
@@ -190,7 +190,7 @@ bool UAgStateTreeToolset::AddStateTreeTransition(UStateTree* StateTree, const FS
 	{
 		FStateTreeEditorNode& Node = Transition.Conditions.AddDefaulted_GetRef();
 		Node.InitializeAs(State, Condition);
-		if (!ImportStateTreeNodeValues(Node, ConditionValues))
+		if (!AgStateTreeToolsetPrivate::ImportStateTreeNodeValues(Node, ConditionValues))
 		{
 			State->Transitions.Pop();
 			return false;
@@ -202,7 +202,7 @@ bool UAgStateTreeToolset::AddStateTreeTransition(UStateTree* StateTree, const FS
 
 bool UAgStateTreeToolset::ClearStateTreeTransitions(UStateTree* StateTree, const FString& StatePath)
 {
-	UStateTreeState* State = FindStateTreeState(StateTree, StatePath);
+	UStateTreeState* State = AgStateTreeToolsetPrivate::FindStateTreeState(StateTree, StatePath);
 	if (!State)
 	{
 		return false;
@@ -216,7 +216,7 @@ bool UAgStateTreeToolset::ClearStateTreeTransitions(UStateTree* StateTree, const
 
 FString UAgStateTreeToolset::CompileStateTree(UStateTree* StateTree)
 {
-	if (!GetStateTreeEditorData(StateTree))
+	if (!AgStateTreeToolsetPrivate::GetStateTreeEditorData(StateTree))
 	{
 		return TEXT("Failed\nNo StateTree editor data");
 	}

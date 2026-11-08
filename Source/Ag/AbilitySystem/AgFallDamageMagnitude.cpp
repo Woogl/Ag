@@ -7,7 +7,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCombatRules.h"
 
-namespace
+namespace AgFallDamageMagnitudePrivate
 {
 	const FGameplayEffectAttributeCaptureDefinition& GetMaxHPCapture()
 	{
@@ -18,7 +18,7 @@ namespace
 
 UAgFallDamageMagnitude::UAgFallDamageMagnitude()
 {
-	RelevantAttributesToCapture.Add(GetMaxHPCapture());
+	RelevantAttributesToCapture.Add(AgFallDamageMagnitudePrivate::GetMaxHPCapture());
 }
 
 float UAgFallDamageMagnitude::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
@@ -28,6 +28,6 @@ float UAgFallDamageMagnitude::CalculateBaseMagnitude_Implementation(const FGamep
 	const float Ratio = FMath::Clamp((FallHeight - Rules.FallDamageStartHeight) / (Rules.FallDeathHeight - Rules.FallDamageStartHeight), 0.f, 1.f);
 
 	float MaxHP = 0.f;
-	GetCapturedAttributeMagnitude(GetMaxHPCapture(), Spec, FAggregatorEvaluateParameters(), MaxHP);
+	GetCapturedAttributeMagnitude(AgFallDamageMagnitudePrivate::GetMaxHPCapture(), Spec, FAggregatorEvaluateParameters(), MaxHP);
 	return -FMath::RoundToFloat(MaxHP * Ratio);
 }

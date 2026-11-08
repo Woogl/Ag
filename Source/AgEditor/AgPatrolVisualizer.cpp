@@ -10,7 +10,7 @@
 #include "SceneManagement.h"
 #include "SceneView.h"
 
-namespace
+namespace AgPatrolVisualizerPrivate
 {
 	const FLinearColor WalkableColor(0.15f, 0.85f, 0.15f);
 	const FLinearColor UnreachableColor(1.f, 0.1f, 0.1f);
@@ -38,11 +38,11 @@ namespace
 				return UnknownColor;
 		}
 	}
-} // namespace
+} // namespace AgPatrolVisualizerPrivate
 
 void FAgPatrolVisualizer::DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI)
 {
-	const UAgPatrolPreviewComponent* Preview = GetEditorPreview(Component);
+	const UAgPatrolPreviewComponent* Preview = AgPatrolVisualizerPrivate::GetEditorPreview(Component);
 	TArray<FVector> Points;
 	if (!Preview || !Preview->GetPreviewPoints(Points))
 	{
@@ -53,21 +53,21 @@ void FAgPatrolVisualizer::DrawVisualization(const UActorComponent* Component, co
 	// 언덕을 넘는 구간이 지형에 가려지지 않도록 전경에 그립니다.
 	for (const FAgPatrolPreviewSegment& Segment : Segments)
 	{
-		const FLinearColor& Color = GetPathColor(Segment.Result);
+		const FLinearColor& Color = AgPatrolVisualizerPrivate::GetPathColor(Segment.Result);
 		for (int32 Index = 1; Index < Segment.Path.Num(); ++Index)
 		{
-			PDI->DrawLine(Segment.Path[Index - 1], Segment.Path[Index], Color, SDPG_Foreground, LineThickness);
+			PDI->DrawLine(Segment.Path[Index - 1], Segment.Path[Index], Color, SDPG_Foreground, AgPatrolVisualizerPrivate::LineThickness);
 		}
 	}
 	for (const FVector& Point : Points)
 	{
-		PDI->DrawPoint(Point, FLinearColor::White, PointSize, SDPG_Foreground);
+		PDI->DrawPoint(Point, FLinearColor::White, AgPatrolVisualizerPrivate::PointSize, SDPG_Foreground);
 	}
 }
 
 void FAgPatrolVisualizer::DrawVisualizationHUD(const UActorComponent* Component, const FViewport* Viewport, const FSceneView* View, FCanvas* Canvas)
 {
-	const UAgPatrolPreviewComponent* Preview = GetEditorPreview(Component);
+	const UAgPatrolPreviewComponent* Preview = AgPatrolVisualizerPrivate::GetEditorPreview(Component);
 	TArray<FVector> Points;
 	if (!Preview || !Preview->GetPreviewPoints(Points))
 	{
@@ -79,8 +79,8 @@ void FAgPatrolVisualizer::DrawVisualizationHUD(const UActorComponent* Component,
 		FVector2D Pixel;
 		if (View->WorldToPixel(Points[Index], Pixel))
 		{
-			FCanvasTextItem Number(Pixel / DPIScale + NumberOffset, FText::AsNumber(Index + 1), GEngine->GetLargeFont(), FLinearColor::White);
-			Number.Scale = FVector2D(NumberScale);
+			FCanvasTextItem Number(Pixel / DPIScale + AgPatrolVisualizerPrivate::NumberOffset, FText::AsNumber(Index + 1), GEngine->GetLargeFont(), FLinearColor::White);
+			Number.Scale = FVector2D(AgPatrolVisualizerPrivate::NumberScale);
 			Number.EnableShadow(FLinearColor::Black);
 			Canvas->DrawItem(Number);
 		}

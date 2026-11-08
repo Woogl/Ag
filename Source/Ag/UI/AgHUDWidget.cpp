@@ -26,7 +26,7 @@
 #include "UI/AgStatBar.h"
 #include "UI/AgUILayout.h"
 
-namespace
+namespace AgHUDWidgetPrivate
 {
 	const FName RatioParameter(TEXT("Ratio"));
 
@@ -60,7 +60,7 @@ namespace
 		ASC->AbilitySpecDirtiedCallbacks.RemoveAll(User);
 		ASC->AbilityCommittedCallbacks.RemoveAll(User);
 	}
-} // namespace
+} // namespace AgHUDWidgetPrivate
 
 void UAgHUDWidget::NativeOnInitialized()
 {
@@ -124,7 +124,7 @@ void UAgHUDWidget::NativeConstruct()
 
 void UAgHUDWidget::NativeDestruct()
 {
-	Unbind(PlayerASC.Get(), this, PlayerAttributes(), PlayerTags());
+	AgHUDWidgetPrivate::Unbind(PlayerASC.Get(), this, AgHUDWidgetPrivate::PlayerAttributes(), AgHUDWidgetPrivate::PlayerTags());
 	PlayerASC.Reset();
 	Boss.Reset();
 #if WITH_EDITOR
@@ -173,11 +173,11 @@ void UAgHUDWidget::HandleCombatantsChanged()
 
 void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 {
-	for (const FGameplayAttribute& Attribute : PlayerAttributes())
+	for (const FGameplayAttribute& Attribute : AgHUDWidgetPrivate::PlayerAttributes())
 	{
 		ASC.GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, &ThisClass::HandlePlayerAttributeChanged);
 	}
-	for (const FGameplayTag& Tag : PlayerTags())
+	for (const FGameplayTag& Tag : AgHUDWidgetPrivate::PlayerTags())
 	{
 		ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
 			.AddWeakLambda(this, [this](const FGameplayTag, int32)
@@ -229,7 +229,7 @@ void UAgHUDWidget::UpdateSkillSlots()
 	if (UMaterialInstanceDynamic* Gauge = UPGauge->GetDynamicMaterial())
 	{
 		const float MaxUP = ASC->GetNumericAttribute(UAgAttributeSet::GetMaxUPAttribute());
-		Gauge->SetScalarParameterValue(RatioParameter, MaxUP > 0.f ? ASC->GetNumericAttribute(UAgAttributeSet::GetUPAttribute()) / MaxUP : 0.f);
+		Gauge->SetScalarParameterValue(AgHUDWidgetPrivate::RatioParameter, MaxUP > 0.f ? ASC->GetNumericAttribute(UAgAttributeSet::GetUPAttribute()) / MaxUP : 0.f);
 	}
 }
 

@@ -12,7 +12,7 @@
 #include "GameFramework/Controller.h"
 #include "KismetAnimationLibrary.h"
 
-namespace
+namespace AgAnimInstancePrivate
 {
 	float GetRootYaw(const UAnimSequence& Animation, float Time)
 	{
@@ -37,7 +37,7 @@ namespace
 		}
 		return Smallest;
 	}
-} // namespace
+} // namespace AgAnimInstancePrivate
 
 void UAgAnimInstance::NativeInitializeAnimation()
 {
@@ -101,7 +101,7 @@ void UAgAnimInstance::UpdateTurnInPlace(float DeltaSeconds)
 
 		// 가장 작은 모션보다 작은 차이는 걸음을 크게 줄여야 해 다리가 움찔거리므로, 발을 붙인 채 몸을 그대로 둡니다.
 		const float Offset = GetTurnOffset();
-		if (!bTurning && FMath::Abs(Offset) > GetSmallestTurnAngle(GetTurnAnimations()))
+		if (!bTurning && FMath::Abs(Offset) > AgAnimInstancePrivate::GetSmallestTurnAngle(GetTurnAnimations()))
 		{
 			StartTurn(Offset);
 		}
@@ -133,7 +133,7 @@ void UAgAnimInstance::StartTurn(float Offset)
 	float PickedAngle = 0.f;
 	for (UAnimSequence* Animation : GetTurnAnimations())
 	{
-		const float Angle = Animation ? GetTurnAngle(*Animation) : 0.f;
+		const float Angle = Animation ? AgAnimInstancePrivate::GetTurnAngle(*Animation) : 0.f;
 		if (Angle * Offset <= 0.f)
 		{
 			continue;
@@ -167,7 +167,7 @@ void UAgAnimInstance::AdvanceTurn(float DeltaSeconds)
 	const float Length = TurnAnimation->GetPlayLength();
 	const float NewTime = FMath::Min(TurnTime + DeltaSeconds * PlayRate, Length);
 	// 회전량을 늘리거나 줄이면 몸이 도는 만큼 걸음이 따라가지 못해 발이 미끄러지므로, 모션의 회전량을 그대로 씁니다.
-	RootYawOffset += FMath::UnwindDegrees(GetRootYaw(*TurnAnimation, NewTime) - GetRootYaw(*TurnAnimation, TurnTime));
+	RootYawOffset += FMath::UnwindDegrees(AgAnimInstancePrivate::GetRootYaw(*TurnAnimation, NewTime) - AgAnimInstancePrivate::GetRootYaw(*TurnAnimation, TurnTime));
 	TurnTime = NewTime;
 	bTurning = TurnTime < Length;
 }

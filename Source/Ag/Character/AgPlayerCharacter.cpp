@@ -27,7 +27,7 @@
 #include "InputActionValue.h"
 #include "TimerManager.h"
 
-namespace
+namespace AgPlayerCharacterPrivate
 {
 	const FName JumpLandSection(TEXT("Land"));
 }
@@ -217,7 +217,7 @@ void AAgPlayerCharacter::Landed(const FHitResult& Hit)
 	// 섹션만 옮기지 않고 다시 재생해, 남은 점프 모션이 블렌드 아웃되고 착지 모션이 블렌드 인하게 합니다.
 	if (AnimInstance->Montage_Play(JumpMontage) > 0.f)
 	{
-		AnimInstance->Montage_JumpToSection(JumpLandSection, JumpMontage);
+		AnimInstance->Montage_JumpToSection(AgPlayerCharacterPrivate::JumpLandSection, JumpMontage);
 	}
 }
 
@@ -268,7 +268,7 @@ void AAgPlayerCharacter::StopLandingMotion()
 	// 착지 모션은 제자리 모션이라 움직이면 미끄러져 보이고, 행동이 아니므로 움직이면 끝냅니다.
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (JumpMontage && AnimInstance && AnimInstance->Montage_IsPlaying(JumpMontage) &&
-		AnimInstance->Montage_GetCurrentSection(JumpMontage) == JumpLandSection)
+		AnimInstance->Montage_GetCurrentSection(JumpMontage) == AgPlayerCharacterPrivate::JumpLandSection)
 	{
 		AnimInstance->Montage_StopWithBlendOut(JumpMontage->GetBlendOutArgs(), JumpMontage);
 	}

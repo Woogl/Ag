@@ -7,7 +7,7 @@
 #include "Core/AgGameplayTags.h"
 #include "GameplayEffectExtension.h"
 
-namespace
+namespace AgAttributeSetPrivate
 {
 	/** 받는 쪽이 Instigator를 밀려나는 기준으로 쓰므로 공격자 대신 EffectCauser(공격자 또는 투사체)를 넘깁니다. */
 	void SendJudgmentEvent(AActor* Character, const FGameplayTag& EventTag, const FGameplayEffectSpec& Spec)
@@ -50,11 +50,11 @@ void UAgAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetOwningActor());
 	if (Data.EvaluatedData.Attribute == GetHPAttribute() && GetHP() <= 0.f)
 	{
-		SendJudgmentEvent(GetOwningActor(), AgGameplayTags::Event_Death, Data.EffectSpec);
+		AgAttributeSetPrivate::SendJudgmentEvent(GetOwningActor(), AgGameplayTags::Event_Death, Data.EffectSpec);
 	}
 	else if (Data.EvaluatedData.Attribute == GetPPAttribute() && GetPP() <= 0.f && Character->CanLosePP())
 	{
-		SendJudgmentEvent(GetOwningActor(), AgGameplayTags::Event_Groggy, Data.EffectSpec);
+		AgAttributeSetPrivate::SendJudgmentEvent(GetOwningActor(), AgGameplayTags::Event_Groggy, Data.EffectSpec);
 	}
 }
 

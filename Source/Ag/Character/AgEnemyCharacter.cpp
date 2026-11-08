@@ -36,14 +36,14 @@
 #include "Logging/TokenizedMessage.h"
 #endif
 
-namespace
+namespace AgEnemyCharacterPrivate
 {
 	const FName LockOnBone(TEXT("spine_05"));
 	const FName NameplateBone(TEXT("head"));
 	/** 마네킹의 머리 뼈 기준 +X가 정수리 쪽이며, 정수리까지 약 18cm입니다. */
 	const FVector NameplateOffset(18.f, 0.f, 0.f);
 	const FName GroggyEffectId(TEXT("Groggy"));
-} // namespace
+} // namespace AgEnemyCharacterPrivate
 
 AAgEnemyCharacter::AAgEnemyCharacter()
 {
@@ -58,10 +58,10 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
 	Nameplate = CreateDefaultSubobject<UAgNameplateComponent>(TEXT("Nameplate"));
-	LockOnMarker->SetupAttachment(GetMesh(), LockOnBone);
-	ExecutionPrompt->SetupAttachment(GetMesh(), LockOnBone);
-	Nameplate->SetupAttachment(GetMesh(), NameplateBone);
-	Nameplate->SetRelativeLocation(NameplateOffset);
+	LockOnMarker->SetupAttachment(GetMesh(), AgEnemyCharacterPrivate::LockOnBone);
+	ExecutionPrompt->SetupAttachment(GetMesh(), AgEnemyCharacterPrivate::LockOnBone);
+	Nameplate->SetupAttachment(GetMesh(), AgEnemyCharacterPrivate::NameplateBone);
+	Nameplate->SetRelativeLocation(AgEnemyCharacterPrivate::NameplateOffset);
 	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get(), static_cast<UWidgetComponent*>(Nameplate.Get())})
 	{
 		WorldWidget->SetWidgetSpace(EWidgetSpace::Screen);
@@ -172,7 +172,7 @@ void AAgEnemyCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& Ou
 
 FVector AAgEnemyCharacter::GetTargetLocation(AActor* RequestedBy) const
 {
-	return GetMesh()->GetBoneIndex(LockOnBone) != INDEX_NONE ? GetMesh()->GetBoneLocation(LockOnBone) : GetActorLocation();
+	return GetMesh()->GetBoneIndex(AgEnemyCharacterPrivate::LockOnBone) != INDEX_NONE ? GetMesh()->GetBoneLocation(AgEnemyCharacterPrivate::LockOnBone) : GetActorLocation();
 }
 
 #if WITH_EDITOR
@@ -325,7 +325,7 @@ void AAgEnemyCharacter::HandleGroggyEvent(const FGameplayEventData* Payload)
 {
 	// 그로기 모션은 이 효과의 태그로 발동하는 어빌리티가 맡고, 태그가 빠지면 엔진이 끝냅니다.
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(GroggyEffectId), 1.f, ASC->MakeEffectContext());
+	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(AgEnemyCharacterPrivate::GroggyEffectId), 1.f, ASC->MakeEffectContext());
 }
 
 void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)

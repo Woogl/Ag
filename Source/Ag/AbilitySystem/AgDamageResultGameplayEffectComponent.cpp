@@ -22,7 +22,7 @@
 #include "KismetAnimationLibrary.h"
 #include "Perception/AISense_Damage.h"
 
-namespace
+namespace AgDamageResultGameplayEffectComponentPrivate
 {
 	const FName GuardCounterChanceEffectId(TEXT("GuardCounterChance"));
 	const FName MoveLockEffectId(TEXT("MoveLock"));
@@ -223,7 +223,7 @@ namespace
 		DefenderASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(MoveLockEffectId), 1.f, DefenderASC.MakeEffectContext());
 	}
 
-} // namespace
+} // namespace AgDamageResultGameplayEffectComponentPrivate
 
 void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
 {
@@ -238,7 +238,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	const FGameplayTagContainer& SpecTags = std::as_const(GESpec).CapturedSourceTags.GetSpecTags();
 	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_PerfectDodge))
 	{
-		StartPerfectDodge(*Target, *Attacker);
+		AgDamageResultGameplayEffectComponentPrivate::StartPerfectDodge(*Target, *Attacker);
 		return;
 	}
 
@@ -265,33 +265,33 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 			TargetASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
 			if (!Projectile)
 			{
-				DamageParriedAttacker(*Target->GetAbilitySystemComponent(), *Attacker);
+				AgDamageResultGameplayEffectComponentPrivate::DamageParriedAttacker(*Target->GetAbilitySystemComponent(), *Attacker);
 			}
-			SendEvent(Target, AgGameplayTags::Event_Parry, Causer, Context);
+			AgDamageResultGameplayEffectComponentPrivate::SendEvent(Target, AgGameplayTags::Event_Parry, Causer, Context);
 		}
 		else if (bGuard)
 		{
-			Reaction = StartGuardReaction(Causer, Target, SpecTags, Context);
-			LockMove(*TargetASC);
+			Reaction = AgDamageResultGameplayEffectComponentPrivate::StartGuardReaction(Causer, Target, SpecTags, Context);
+			AgDamageResultGameplayEffectComponentPrivate::LockMove(*TargetASC);
 		}
 		else if (bGuardBreak)
 		{
-			SendEvent(Target, AgGameplayTags::Event_Guard_Break, Causer);
+			AgDamageResultGameplayEffectComponentPrivate::SendEvent(Target, AgGameplayTags::Event_Guard_Break, Causer);
 		}
 		else
 		{
-			Reaction = StartHitReaction(Causer, Target, SpecTags, Context);
+			Reaction = AgDamageResultGameplayEffectComponentPrivate::StartHitReaction(Causer, Target, SpecTags, Context);
 		}
 		// 패리 어빌리티가 발동하며 남은 기회를 지우므로, 패리 이벤트를 보낸 뒤에 겁니다.
 		if (bParry || bGuard)
 		{
-			GrantGuardCounterChance(*TargetASC);
+			AgDamageResultGameplayEffectComponentPrivate::GrantGuardCounterChance(*TargetASC);
 		}
 	}
 
 	if (!bHit)
 	{
-		SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target, Context);
+		AgDamageResultGameplayEffectComponentPrivate::SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target, Context);
 	}
 
 	FGameplayCueParameters CueParameters;
@@ -329,10 +329,10 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution) && !bParryDamage)
 	{
 		const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
-		ApplyHitstop(*Target->GetAbilitySystemComponent(), HitstopDuration);
+		AgDamageResultGameplayEffectComponentPrivate::ApplyHitstop(*Target->GetAbilitySystemComponent(), HitstopDuration);
 		if (Causer == Attacker && !SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_NoAttackerHitstop))
 		{
-			ApplyHitstop(*Attacker->GetAbilitySystemComponent(), HitstopDuration);
+			AgDamageResultGameplayEffectComponentPrivate::ApplyHitstop(*Attacker->GetAbilitySystemComponent(), HitstopDuration);
 		}
 	}
 
@@ -341,7 +341,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	{
 		// 이 이벤트로 발동한 어빌리티가 다시 적중을 일으킬 수 있으므로 보내기 전에 표시합니다.
 		HitState->bLanded = true;
-		SendEvent(Attacker, AgGameplayTags::Event_AttackHit, Target, Context, SpecTags);
+		AgDamageResultGameplayEffectComponentPrivate::SendEvent(Attacker, AgGameplayTags::Event_AttackHit, Target, Context, SpecTags);
 	}
 	if (bParry && IsValid(Projectile) && !Target->IsDead())
 	{

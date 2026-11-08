@@ -19,7 +19,7 @@
 #include "InputCoreTypes.h"
 #include "InputKeyEventArgs.h"
 
-namespace
+namespace AgCheatManagerPrivate
 {
 	void Report(const UCheatManager& Cheats, const FString& Message)
 	{
@@ -187,7 +187,7 @@ namespace
 		}
 		InjectKey(Cheats, Key, Event, Value);
 	}
-} // namespace
+} // namespace AgCheatManagerPrivate
 
 void UAgCheatManager::AgKillPlayer()
 {
@@ -218,29 +218,29 @@ void UAgCheatManager::AgKillEnemies()
 
 void UAgCheatManager::AgGod(const FString& OnOff)
 {
-	AAgPlayerCharacter* Player = GetPlayer(*this);
+	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
 	if (!Player)
 	{
-		Report(*this, TEXT("AgGod: no player character"));
+		AgCheatManagerPrivate::Report(*this, TEXT("AgGod: no player character"));
 		return;
 	}
 	const UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent();
 	bool bAllOn = true;
-	for (const EAgCheatSwitch Switch : AllSwitches)
+	for (const EAgCheatSwitch Switch : AgCheatManagerPrivate::AllSwitches)
 	{
 		bAllOn = bAllOn && IsSwitchOn(*ASC, Switch);
 	}
-	const TOptional<bool> bOn = ParseSwitch(*this, TEXT("AgGod"), OnOff, bAllOn);
+	const TOptional<bool> bOn = AgCheatManagerPrivate::ParseSwitch(*this, TEXT("AgGod"), OnOff, bAllOn);
 	if (!bOn.IsSet())
 	{
 		return;
 	}
 
-	for (const EAgCheatSwitch Switch : AllSwitches)
+	for (const EAgCheatSwitch Switch : AgCheatManagerPrivate::AllSwitches)
 	{
 		SetSwitch(*Player, Switch, *bOn);
 	}
-	ReportSwitch(*this, TEXT("AgGod"), *bOn);
+	AgCheatManagerPrivate::ReportSwitch(*this, TEXT("AgGod"), *bOn);
 }
 
 void UAgCheatManager::AgInvincible(const FString& OnOff)
@@ -250,41 +250,41 @@ void UAgCheatManager::AgInvincible(const FString& OnOff)
 
 void UAgCheatManager::AgSetHP(float Percent)
 {
-	AAgPlayerCharacter* Player = GetPlayer(*this);
+	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
 	if (!Player)
 	{
-		Report(*this, TEXT("AgSetHP: no player character"));
+		AgCheatManagerPrivate::Report(*this, TEXT("AgSetHP: no player character"));
 		return;
 	}
 
 	const float HP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxHP() * Percent / 100.f);
-	ApplyOverride(*Player, *Player, UAgAttributeSet::GetHPAttribute(), HP);
+	AgCheatManagerPrivate::ApplyOverride(*Player, *Player, UAgAttributeSet::GetHPAttribute(), HP);
 }
 
 void UAgCheatManager::AgSetMP(float Percent)
 {
-	AAgPlayerCharacter* Player = GetPlayer(*this);
+	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
 	if (!Player)
 	{
-		Report(*this, TEXT("AgSetMP: no player character"));
+		AgCheatManagerPrivate::Report(*this, TEXT("AgSetMP: no player character"));
 		return;
 	}
 
 	const float MP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxMP() * Percent / 100.f);
-	ApplyOverride(*Player, *Player, UAgAttributeSet::GetMPAttribute(), MP);
+	AgCheatManagerPrivate::ApplyOverride(*Player, *Player, UAgAttributeSet::GetMPAttribute(), MP);
 }
 
 void UAgCheatManager::AgSetUP(float Percent)
 {
-	AAgPlayerCharacter* Player = GetPlayer(*this);
+	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
 	if (!Player)
 	{
-		Report(*this, TEXT("AgSetUP: no player character"));
+		AgCheatManagerPrivate::Report(*this, TEXT("AgSetUP: no player character"));
 		return;
 	}
 
 	const float UP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxUP() * Percent / 100.f);
-	ApplyOverride(*Player, *Player, UAgAttributeSet::GetUPAttribute(), UP);
+	AgCheatManagerPrivate::ApplyOverride(*Player, *Player, UAgAttributeSet::GetUPAttribute(), UP);
 }
 
 void UAgCheatManager::AgInfiniteMP(const FString& OnOff)
@@ -309,24 +309,24 @@ void UAgCheatManager::AgNoCooldown(const FString& OnOff)
 
 void UAgCheatManager::AgTargetGroggy()
 {
-	AAgPlayerCharacter* Player = GetPlayer(*this);
-	AAgEnemyCharacter* Enemy = FindTargetEnemy(Player);
+	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
+	AAgEnemyCharacter* Enemy = AgCheatManagerPrivate::FindTargetEnemy(Player);
 	if (!Enemy || !Enemy->CanLosePP())
 	{
-		Report(*this, TEXT("AgTargetGroggy: no target enemy that can lose PP"));
+		AgCheatManagerPrivate::Report(*this, TEXT("AgTargetGroggy: no target enemy that can lose PP"));
 		return;
 	}
 
-	ApplyOverride(*Player, *Enemy, UAgAttributeSet::GetPPAttribute(), 0.f);
+	AgCheatManagerPrivate::ApplyOverride(*Player, *Enemy, UAgAttributeSet::GetPPAttribute(), 0.f);
 }
 
 void UAgCheatManager::AgTargetPattern(FName Id)
 {
-	AAgEnemyCharacter* Enemy = FindTargetEnemy(GetPlayer(*this));
+	AAgEnemyCharacter* Enemy = AgCheatManagerPrivate::FindTargetEnemy(AgCheatManagerPrivate::GetPlayer(*this));
 	const FGameplayAbilitySpec* Spec = Enemy ? Enemy->FindAbilitySpec(Id) : nullptr;
 	if (!Spec)
 	{
-		Report(*this, FString::Printf(TEXT("AgTargetPattern: no target enemy with '%s'"), *Id.ToString()));
+		AgCheatManagerPrivate::Report(*this, FString::Printf(TEXT("AgTargetPattern: no target enemy with '%s'"), *Id.ToString()));
 		return;
 	}
 
@@ -335,32 +335,32 @@ void UAgCheatManager::AgTargetPattern(FName Id)
 	ASC->RemoveActiveEffectsWithTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
 	if (!ASC->TryActivateAbility(Handle))
 	{
-		Report(*this, FString::Printf(TEXT("AgTargetPattern: %s could not start '%s'"), *Enemy->GetName(), *Id.ToString()));
+		AgCheatManagerPrivate::Report(*this, FString::Printf(TEXT("AgTargetPattern: %s could not start '%s'"), *Enemy->GetName(), *Id.ToString()));
 	}
 }
 
 void UAgCheatManager::AgTargetHP(float Percent)
 {
-	AAgPlayerCharacter* Player = GetPlayer(*this);
-	AAgEnemyCharacter* Enemy = FindTargetEnemy(Player);
+	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
+	AAgEnemyCharacter* Enemy = AgCheatManagerPrivate::FindTargetEnemy(Player);
 	if (!Enemy)
 	{
-		Report(*this, TEXT("AgTargetHP: no target enemy"));
+		AgCheatManagerPrivate::Report(*this, TEXT("AgTargetHP: no target enemy"));
 		return;
 	}
 
 	const float HP = FMath::RoundToFloat(Enemy->GetAttributeSet()->GetMaxHP() * Percent / 100.f);
-	ApplyOverride(*Player, *Enemy, UAgAttributeSet::GetHPAttribute(), HP);
+	AgCheatManagerPrivate::ApplyOverride(*Player, *Enemy, UAgAttributeSet::GetHPAttribute(), HP);
 }
 
 void UAgCheatManager::AgStopAI()
 {
-	SetEnemyAIRunning(GetWorld(), false);
+	AgCheatManagerPrivate::SetEnemyAIRunning(GetWorld(), false);
 }
 
 void UAgCheatManager::AgStartAI()
 {
-	SetEnemyAIRunning(GetWorld(), true);
+	AgCheatManagerPrivate::SetEnemyAIRunning(GetWorld(), true);
 }
 
 void UAgCheatManager::AgIgnoreDeviceInput(const FString& OnOff)
@@ -369,10 +369,10 @@ void UAgCheatManager::AgIgnoreDeviceInput(const FString& OnOff)
 	UGameViewportClient* ViewportClient = LocalPlayer ? LocalPlayer->ViewportClient.Get() : nullptr;
 	if (!ViewportClient)
 	{
-		Report(*this, TEXT("AgIgnoreDeviceInput: no game viewport"));
+		AgCheatManagerPrivate::Report(*this, TEXT("AgIgnoreDeviceInput: no game viewport"));
 		return;
 	}
-	const TOptional<bool> bOn = ParseSwitch(*this, TEXT("AgIgnoreDeviceInput"), OnOff, ViewportClient->IgnoreInput());
+	const TOptional<bool> bOn = AgCheatManagerPrivate::ParseSwitch(*this, TEXT("AgIgnoreDeviceInput"), OnOff, ViewportClient->IgnoreInput());
 	if (!bOn.IsSet())
 	{
 		return;
@@ -381,41 +381,41 @@ void UAgCheatManager::AgIgnoreDeviceInput(const FString& OnOff)
 	// 엔진 'UI 전용' 입력 모드처럼 뷰포트에서 장치 입력을 버립니다. 콘솔은 계속 받고, 키 입력 명령은 뷰포트를 거치지
 	// 않아 그대로 들어갑니다.
 	ViewportClient->SetIgnoreInput(*bOn);
-	ReportSwitch(*this, TEXT("AgIgnoreDeviceInput"), *bOn);
+	AgCheatManagerPrivate::ReportSwitch(*this, TEXT("AgIgnoreDeviceInput"), *bOn);
 }
 
 void UAgCheatManager::AgPressKey(FName KeyName)
 {
-	InjectNamedKey(*this, TEXT("AgPressKey"), KeyName, IE_Pressed, 1.f);
+	AgCheatManagerPrivate::InjectNamedKey(*this, TEXT("AgPressKey"), KeyName, IE_Pressed, 1.f);
 }
 
 void UAgCheatManager::AgReleaseKey(FName KeyName)
 {
-	InjectNamedKey(*this, TEXT("AgReleaseKey"), KeyName, IE_Released, 0.f);
+	AgCheatManagerPrivate::InjectNamedKey(*this, TEXT("AgReleaseKey"), KeyName, IE_Released, 0.f);
 }
 
 void UAgCheatManager::AgMoveMouse(float X, float Y)
 {
-	InjectKey(*this, EKeys::MouseX, IE_Axis, X);
-	InjectKey(*this, EKeys::MouseY, IE_Axis, Y);
+	AgCheatManagerPrivate::InjectKey(*this, EKeys::MouseX, IE_Axis, X);
+	AgCheatManagerPrivate::InjectKey(*this, EKeys::MouseY, IE_Axis, Y);
 }
 
 void UAgCheatManager::RunSwitch(const TCHAR* Command, const FString& OnOff, EAgCheatSwitch Switch)
 {
-	AAgPlayerCharacter* Player = GetPlayer(*this);
+	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
 	if (!Player)
 	{
-		Report(*this, FString::Printf(TEXT("%s: no player character"), Command));
+		AgCheatManagerPrivate::Report(*this, FString::Printf(TEXT("%s: no player character"), Command));
 		return;
 	}
-	const TOptional<bool> bOn = ParseSwitch(*this, Command, OnOff, IsSwitchOn(*Player->GetAbilitySystemComponent(), Switch));
+	const TOptional<bool> bOn = AgCheatManagerPrivate::ParseSwitch(*this, Command, OnOff, IsSwitchOn(*Player->GetAbilitySystemComponent(), Switch));
 	if (!bOn.IsSet())
 	{
 		return;
 	}
 
 	SetSwitch(*Player, Switch, *bOn);
-	ReportSwitch(*this, Command, *bOn);
+	AgCheatManagerPrivate::ReportSwitch(*this, Command, *bOn);
 }
 
 bool UAgCheatManager::IsSwitchOn(const UAbilitySystemComponent& ASC, EAgCheatSwitch Switch) const
@@ -433,7 +433,7 @@ void UAgCheatManager::SetSwitch(AAgPlayerCharacter& Player, EAgCheatSwitch Switc
 	}
 	if (bOn)
 	{
-		SwitchEffects.Add(Switch, ASC->ApplyGameplayEffectToSelf(MakeSwitchEffect(Switch), 1.f, ASC->MakeEffectContext()));
+		SwitchEffects.Add(Switch, ASC->ApplyGameplayEffectToSelf(AgCheatManagerPrivate::MakeSwitchEffect(Switch), 1.f, ASC->MakeEffectContext()));
 		if (Switch == EAgCheatSwitch::NoCooldown)
 		{
 			ASC->RemoveActiveEffectsWithTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
@@ -443,9 +443,9 @@ void UAgCheatManager::SetSwitch(AAgPlayerCharacter& Player, EAgCheatSwitch Switc
 
 	ASC->RemoveActiveGameplayEffect(SwitchEffects[Switch]);
 	// 덮어쓰기는 현재 값에만 걸려 켜 둔 동안의 비용이 기본값에서 빠져 있으므로, 끈 뒤에도 가득 차 있게 채웁니다.
-	const FAgLockedResource Resource = GetLockedResource(Switch);
+	const AgCheatManagerPrivate::FAgLockedResource Resource = AgCheatManagerPrivate::GetLockedResource(Switch);
 	if (Resource.Attribute.IsValid())
 	{
-		ApplyOverride(Player, Player, Resource.Attribute, ASC->GetNumericAttribute(Resource.MaxAttribute));
+		AgCheatManagerPrivate::ApplyOverride(Player, Player, Resource.Attribute, ASC->GetNumericAttribute(Resource.MaxAttribute));
 	}
 }

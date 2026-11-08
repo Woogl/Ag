@@ -16,7 +16,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "StateTreeExecutionContext.h"
 
-namespace
+namespace AgEnemyAITasksPrivate
 {
 	constexpr float RetryInterval = 0.5f;
 
@@ -92,7 +92,7 @@ namespace
 			Controller.ClearFocus(EAIFocusPriority::Gameplay);
 		}
 	}
-} // namespace
+} // namespace AgEnemyAITasksPrivate
 
 EStateTreeRunStatus FAgEnemyAITask_KeepDistance::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
@@ -101,7 +101,7 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::EnterState(FStateTreeExecutionC
 	InstanceData.bApproaching = false;
 	InstanceData.bWasDelaying = InstanceData.Controller->IsInPostPatternDelay();
 	// 움찔이 끝나고 들어왔을 때처럼 쓸 수 있는 패턴이 이미 있으면 첫 틱에 바로 끝나도록 합니다.
-	InstanceData.CheckElapsed = RetryInterval;
+	InstanceData.CheckElapsed = AgEnemyAITasksPrivate::RetryInterval;
 	InstanceData.TargetRange = InstanceData.Controller->GetEnemy()->GetCharacterData()->AI.PreferredDistance;
 	return EStateTreeRunStatus::Running;
 }
@@ -122,7 +122,7 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 	InstanceData.bWasDelaying = bDelaying;
 	InstanceData.CheckElapsed += DeltaTime;
 
-	if (InstanceData.CheckElapsed >= RetryInterval || bDelayEnded)
+	if (InstanceData.CheckElapsed >= AgEnemyAITasksPrivate::RetryInterval || bDelayEnded)
 	{
 		InstanceData.CheckElapsed = 0.f;
 		bool bAttackTurn = false;
@@ -137,7 +137,7 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 			TArray<FFloatInterval> ReadyRanges;
 			Enemy->GatherReadyPatternRanges(ReadyRanges);
 			bAttackTurn = !ReadyRanges.IsEmpty();
-			InstanceData.TargetRange = bAttackTurn ? PickNearestRange(ReadyRanges, Distance) : Enemy->GetCharacterData()->AI.PreferredDistance;
+			InstanceData.TargetRange = bAttackTurn ? AgEnemyAITasksPrivate::PickNearestRange(ReadyRanges, Distance) : Enemy->GetCharacterData()->AI.PreferredDistance;
 		}
 		else
 		{
@@ -153,7 +153,7 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 		}
 		else if (!bApproach && InstanceData.bApproaching)
 		{
-			StopPathMove(Controller);
+			AgEnemyAITasksPrivate::StopPathMove(Controller);
 		}
 		InstanceData.bApproaching = bApproach;
 	}
@@ -179,7 +179,7 @@ void FAgEnemyAITask_KeepDistance::ExitState(FStateTreeExecutionContext& Context,
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	if (InstanceData.bApproaching)
 	{
-		StopPathMove(*InstanceData.Controller);
+		AgEnemyAITasksPrivate::StopPathMove(*InstanceData.Controller);
 	}
 }
 
@@ -347,7 +347,7 @@ FAgEnemyAITask_Combat::FAgEnemyAITask_Combat()
 EStateTreeRunStatus FAgEnemyAITask_Combat::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
-	UpdateCombatTarget(Controller);
+	AgEnemyAITasksPrivate::UpdateCombatTarget(Controller);
 	Controller.StartPostPatternDelay();
 	Controller.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->AddCombatant(*Controller.GetEnemy());
 	return EStateTreeRunStatus::Running;
@@ -355,7 +355,7 @@ EStateTreeRunStatus FAgEnemyAITask_Combat::EnterState(FStateTreeExecutionContext
 
 EStateTreeRunStatus FAgEnemyAITask_Combat::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	UpdateCombatTarget(*Context.GetInstanceData(*this).Controller);
+	AgEnemyAITasksPrivate::UpdateCombatTarget(*Context.GetInstanceData(*this).Controller);
 	return EStateTreeRunStatus::Running;
 }
 
@@ -402,11 +402,11 @@ EStateTreeRunStatus FAgEnemyAITask_Patrol::Tick(FStateTreeExecutionContext& Cont
 		{
 			if (InstanceData.PointIndex != INDEX_NONE)
 			{
-				RequestReachablePointMove(Controller, *Enemy, InstanceData);
+				AgEnemyAITasksPrivate::RequestReachablePointMove(Controller, *Enemy, InstanceData);
 			}
 			else
 			{
-				RequestPatrolMove(Controller, Enemy->GetHomeTransform().GetLocation());
+				AgEnemyAITasksPrivate::RequestPatrolMove(Controller, Enemy->GetHomeTransform().GetLocation());
 			}
 			return EStateTreeRunStatus::Running;
 		}
@@ -416,12 +416,12 @@ EStateTreeRunStatus FAgEnemyAITask_Patrol::Tick(FStateTreeExecutionContext& Cont
 	if (InstanceData.PointIndex == INDEX_NONE)
 	{
 		const FTransform& Home = Enemy->GetHomeTransform();
-		Controller.SetFocalPoint(Enemy->GetActorLocation() + Home.GetRotation().GetForwardVector() * HomeFacingDistance);
+		Controller.SetFocalPoint(Enemy->GetActorLocation() + Home.GetRotation().GetForwardVector() * AgEnemyAITasksPrivate::HomeFacingDistance);
 		return EStateTreeRunStatus::Running;
 	}
 	InstanceData.FailedCount = 0;
 	InstanceData.PointIndex = (InstanceData.PointIndex + 1) % Enemy->GetPatrolRoute()->GetPointCount();
-	RequestReachablePointMove(Controller, *Enemy, InstanceData);
+	AgEnemyAITasksPrivate::RequestReachablePointMove(Controller, *Enemy, InstanceData);
 	return EStateTreeRunStatus::Running;
 }
 

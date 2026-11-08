@@ -18,7 +18,7 @@
 #include "UI/AgUILayout.h"
 #include "UObject/Package.h"
 
-namespace
+namespace AgSimulationRoomGameModePrivate
 {
 	const TCHAR* LineupOption = TEXT("Enemies");
 
@@ -35,7 +35,7 @@ namespace
 	{
 		return Character.GetGenericTeamId() == FGenericTeamId(static_cast<uint8>(EAgTeam::Enemy));
 	}
-} // namespace
+} // namespace AgSimulationRoomGameModePrivate
 
 TSubclassOf<AAgCharacterBase> AAgSimulationRoomGameMode::FindEnemyClass(FName CharacterDataId) const
 {
@@ -50,13 +50,13 @@ bool AAgSimulationRoomGameMode::CanPlace(const TArray<TSubclassOf<AAgCharacterBa
 	{
 		return false;
 	}
-	if (!IsBossClass(EnemyClass))
+	if (!AgSimulationRoomGameModePrivate::IsBossClass(EnemyClass))
 	{
 		return true;
 	}
 	for (int32 Index = 0; Index < InLineup.Num(); ++Index)
 	{
-		if (Index != SlotIndex && IsBossClass(InLineup[Index]))
+		if (Index != SlotIndex && AgSimulationRoomGameModePrivate::IsBossClass(InLineup[Index]))
 		{
 			return false;
 		}
@@ -74,7 +74,7 @@ void AAgSimulationRoomGameMode::StartLineup(const TArray<TSubclassOf<AAgCharacte
 
 	// PIE의 월드 패키지 이름에는 PIE 접두사가 붙어 있어, 떼어 낸 이름으로 같은 맵을 엽니다.
 	const FString MapName = UWorld::RemovePIEPrefix(GetWorld()->GetPackage()->GetName());
-	UGameplayStatics::OpenLevel(this, FName(MapName), true, FString::Printf(TEXT("%s=%s"), LineupOption, *FString::Join(Ids, TEXT(","))));
+	UGameplayStatics::OpenLevel(this, FName(MapName), true, FString::Printf(TEXT("%s=%s"), AgSimulationRoomGameModePrivate::LineupOption, *FString::Join(Ids, TEXT(","))));
 }
 
 UTextureRenderTarget2D* AAgSimulationRoomGameMode::GetEnemyPreview(TSubclassOf<AAgCharacterBase> EnemyClass)
@@ -88,7 +88,7 @@ UTextureRenderTarget2D* AAgSimulationRoomGameMode::GetEnemyPreview(TSubclassOf<A
 	TObjectPtr<AAgCharacterPreview>& Preview = EnemyPreviews.FindOrAdd(EnemyClass);
 	if (!Preview)
 	{
-		Preview = GetWorld()->SpawnActor<AAgCharacterPreview>(EnemyPreviewClass, PreviewOrigin + FVector(0., CandidateIndex * PreviewSpacing, 0.), FRotator::ZeroRotator);
+		Preview = GetWorld()->SpawnActor<AAgCharacterPreview>(EnemyPreviewClass, AgSimulationRoomGameModePrivate::PreviewOrigin + FVector(0., CandidateIndex * AgSimulationRoomGameModePrivate::PreviewSpacing, 0.), FRotator::ZeroRotator);
 		Preview->ShowCharacter(EnemyClass);
 	}
 	return Preview->GetRenderTarget();
@@ -102,7 +102,7 @@ void AAgSimulationRoomGameMode::InitGame(const FString& MapName, const FString& 
 	Lineup.SetNum(SpawnPoints.Num());
 
 	TArray<FString> Ids;
-	UGameplayStatics::ParseOption(Options, LineupOption).ParseIntoArray(Ids, TEXT(","), false);
+	UGameplayStatics::ParseOption(Options, AgSimulationRoomGameModePrivate::LineupOption).ParseIntoArray(Ids, TEXT(","), false);
 	for (int32 Index = 0; Index < Ids.Num(); ++Index)
 	{
 		if (Ids[Index].IsEmpty())
@@ -145,12 +145,12 @@ bool AAgSimulationRoomGameMode::IsStageCleared(const AAgCharacterBase& DeadChara
 {
 	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
 	{
-		if (IsEnemyTeam(**It) && !It->IsDead())
+		if (AgSimulationRoomGameModePrivate::IsEnemyTeam(**It) && !It->IsDead())
 		{
 			return false;
 		}
 	}
-	return IsEnemyTeam(DeadCharacter);
+	return AgSimulationRoomGameModePrivate::IsEnemyTeam(DeadCharacter);
 }
 
 void AAgSimulationRoomGameMode::CollectSpawnPoints()

@@ -2,7 +2,7 @@
 
 #include "Data/AgTaskParams.h"
 
-namespace
+namespace AgTaskParamsPrivate
 {
 	const TCHAR* const StructPrefix = TEXT("Ag");
 	const TCHAR* const StructSuffix = TEXT("Params");
@@ -23,7 +23,7 @@ const UScriptStruct* AgTaskParams::FindStruct(const FString& TaskName)
 		}
 	}
 	const UScriptStruct* Struct =
-		FindObject<UScriptStruct>(nullptr, *FString::Printf(TEXT("/Script/Ag.%s%s%s"), StructPrefix, *TaskName, StructSuffix));
+		FindObject<UScriptStruct>(nullptr, *FString::Printf(TEXT("/Script/Ag.%s%s%s"), AgTaskParamsPrivate::StructPrefix, *TaskName, AgTaskParamsPrivate::StructSuffix));
 	const UScriptStruct* Base = FAgTaskParams::StaticStruct();
 	return Struct && Struct != Base && Struct->IsChildOf(Base) ? Struct : nullptr;
 }

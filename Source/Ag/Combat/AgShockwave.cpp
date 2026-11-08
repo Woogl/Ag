@@ -11,11 +11,11 @@
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
 
-namespace
+namespace AgShockwavePrivate
 {
 	/** BP 외형 고리의 반경과 높이입니다. */
 	constexpr float VisualSize = 100.f;
-} // namespace
+} // namespace AgShockwavePrivate
 
 AAgShockwave::AAgShockwave()
 {
@@ -95,5 +95,5 @@ void AAgShockwave::Tick(float DeltaSeconds)
 
 void AAgShockwave::UpdateScale()
 {
-	SetActorScale3D(FVector(Radius / VisualSize, Radius / VisualSize, Height / VisualSize));
+	SetActorScale3D(FVector(Radius / AgShockwavePrivate::VisualSize, Radius / AgShockwavePrivate::VisualSize, Height / AgShockwavePrivate::VisualSize));
 }
