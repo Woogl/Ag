@@ -53,5 +53,5 @@
   <text x="960" y="769" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
 
   <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
-  <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 닫기: Confirm 버튼 · 팝업 뒤의 타이틀 버튼은 조작할 수 없음</text>
+  <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 닫기: Confirm 버튼, Esc · 팝업 뒤의 타이틀 버튼은 조작할 수 없음</text>
 </svg>
