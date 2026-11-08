@@ -149,7 +149,7 @@
   <rect x="985.4" y="212.4" width="187.1" height="81.2" fill="#2f3742"/>
   <rect x="290.9" y="264.6" width="4.3" height="42.1" fill="#2f3742"/>
   <rect x="334.3" y="292.2" width="174.0" height="14.5" fill="#2f3742"/>
-  <polygon points="812.2,168.6 824.5,156.3 808.1,139.9 795.8,152.2" fill="#4a5563"/>
+  <polygon points="810.1,137.9 826.5,154.3 799.9,180.9 783.5,164.5" fill="#4a5563"/>
   <polygon points="129.9,136.9 129.9,206.5 131.1,206.5 131.1,136.9" fill="#3a8f7a"/>
   <polygon points="277.8,266.1 306.8,266.1 306.8,231.3 277.8,231.3" fill="#4a5563"/>
   <polygon points="434.5,284.7 463.9,284.7 463.9,273.1 434.5,273.1" fill="#3a8f7a"/>
@@ -163,7 +163,7 @@
   <polygon points="463.4,129.8 509.8,129.8 509.8,112.4 463.4,112.4" fill="#5d6878"/>
   <polygon points="477.9,234.2 495.3,234.2 495.3,228.4 477.9,228.4" fill="#8a939e"/>
   <polygon points="463.4,286.4 509.8,286.4 509.8,269.0 463.4,269.0" fill="#5d6878"/>
-  <polygon points="795.8,246.6 808.1,258.9 824.5,242.5 812.2,230.2" fill="#4a5563"/>
+  <polygon points="826.5,244.5 810.1,260.9 783.5,234.3 799.9,217.9" fill="#4a5563"/>
   <polygon points="216.9,231.3 234.3,231.3 234.3,225.5 216.9,225.5" fill="#8a939e"/>
   <polygon points="287.9,308.1 296.6,308.1 296.6,266.1 287.9,266.1" fill="#4a5563"/>
   <polygon points="666.4,216.8 689.6,216.8 689.6,182.0 666.4,182.0" fill="#5d6878"/>
@@ -179,7 +179,7 @@
   <polygon points="287.9,308.1 296.6,308.1 296.6,299.4 287.9,299.4" fill="#4a5563"/>
   <!-- 추가 엄폐물: 마당 양쪽 엄폐물, 안뜰 양쪽 엄폐물, 안뜰 한쪽 엄폐물 2개 -->
   <polygon points="454.7,216.8 460.5,216.8 460.5,182.0 454.7,182.0" fill="#8a939e"/>
-  <polygon points="779.5,216.8 785.3,216.8 785.3,182.0 779.5,182.0" fill="#8a939e"/>
+  <polygon points="773.7,216.8 779.5,216.8 779.5,182.0 773.7,182.0" fill="#8a939e"/>
   <polygon points="733.1,161.7 750.5,161.7 750.5,155.9 733.1,155.9" fill="#8a939e"/>
   <polygon points="733.1,242.9 750.5,242.9 750.5,237.1 733.1,237.1" fill="#8a939e"/>
   <!-- 벽 (높이 4m 이상), 기둥, 난간 -->
@@ -284,8 +284,8 @@
   <line x1="282.3" y1="248.7" x2="267.1" y2="248.7" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
   <line x1="407.0" y1="199.4" x2="391.8" y2="199.4" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
   <line x1="464.4" y1="126.8" x2="450.2" y2="132.0" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="803.0" y1="237.4" x2="792.3" y2="226.7" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="803.0" y1="161.4" x2="792.3" y2="172.1" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
+  <line x1="796.8" y1="231.3" x2="786.1" y2="220.6" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
+  <line x1="796.8" y1="167.5" x2="786.1" y2="178.2" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
   <line x1="470.8" y1="277.7" x2="455.6" y2="277.7" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
   <line x1="1111.4" y1="199.4" x2="1096.2" y2="199.4" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
   <line x1="668.0" y1="199.4" x2="652.8" y2="199.4" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
@@ -301,10 +301,10 @@
   <text x="417.0" y="202.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">근</text>
   <circle cx="473.8" cy="123.4" r="8" fill="#e08a2e"/>
   <text x="473.8" y="126.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="810.1" cy="244.5" r="8" fill="#e08a2e"/>
-  <text x="810.1" y="247.7" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="810.1" cy="154.3" r="8" fill="#e08a2e"/>
-  <text x="810.1" y="157.5" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
+  <circle cx="803.9" cy="238.4" r="8" fill="#e08a2e"/>
+  <text x="803.9" y="241.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
+  <circle cx="803.9" cy="160.4" r="8" fill="#e08a2e"/>
+  <text x="803.9" y="163.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
   <circle cx="480.8" cy="277.7" r="8" fill="#e08a2e"/>
   <text x="480.8" y="280.9" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
   <circle cx="1124.6" cy="199.4" r="11.2" fill="#9b6bd6"/>
@@ -336,7 +336,7 @@
   <text x="1078.2" y="137.9" font-size="12" fill="#9aa4b1" text-anchor="middle">33m × 33m</text>
   <text x="388.0" y="303.2" font-size="11" fill="#7ed67e" text-anchor="middle">샛길 (1.5m → 3m)</text>
   <text x="457.6" y="179.4" font-size="11" fill="#c9d1d9" text-anchor="middle">양쪽 엄폐물</text>
-  <text x="775.0" y="202.6" font-size="11" fill="#c9d1d9" text-anchor="end">양쪽 엄폐물</text>
+  <text x="770.0" y="202.6" font-size="11" fill="#c9d1d9" text-anchor="end">양쪽 엄폐물</text>
   <text x="988.9" y="227.8" font-size="14" fill="#f5c84c" font-weight="700" text-anchor="middle">G</text>
   <text x="1078.2" y="209.8" font-size="14" fill="#9aa4b1" text-anchor="middle">C</text>
   <circle cx="1078.2" cy="199.4" r="3" fill="#9aa4b1"/>
