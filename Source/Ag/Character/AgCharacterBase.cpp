@@ -64,26 +64,6 @@ FGenericTeamId AAgCharacterBase::GetGenericTeamId() const
 	return CharacterData ? FGenericTeamId(static_cast<uint8>(CharacterData->Team)) : FGenericTeamId::NoTeam;
 }
 
-ETeamAttitude::Type AAgCharacterBase::GetTeamAttitudeTowards(const AActor& Other) const
-{
-	const IGenericTeamAgentInterface* OtherAgent = Cast<const IGenericTeamAgentInterface>(&Other);
-	if (!OtherAgent)
-	{
-		return ETeamAttitude::Neutral;
-	}
-	const FGenericTeamId Team = GetGenericTeamId();
-	const FGenericTeamId OtherTeam = OtherAgent->GetGenericTeamId();
-	if (OtherTeam == Team)
-	{
-		return ETeamAttitude::Friendly;
-	}
-	// 적 팀과 중립 팀은 서로 노리지 않습니다. 적중은 Friendly가 아니면 맞으므로, 공격 판정에 들어온 상대는 맞습니다.
-	const FGenericTeamId EnemyTeam(static_cast<uint8>(EAgTeam::Enemy));
-	const FGenericTeamId NeutralTeam(static_cast<uint8>(EAgTeam::Neutral));
-	const bool bIgnored = (Team == EnemyTeam && OtherTeam == NeutralTeam) || (Team == NeutralTeam && OtherTeam == EnemyTeam);
-	return bIgnored ? ETeamAttitude::Neutral : ETeamAttitude::Hostile;
-}
-
 FGameplayAbilitySpec* AAgCharacterBase::FindAbilitySpec(FName Id) const
 {
 	const FGameplayAbilitySpecHandle* Handle = AbilityIds.FindKey(Id);

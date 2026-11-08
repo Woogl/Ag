@@ -124,11 +124,7 @@ void UAgGameplayAbility::GetRechargeTimeRemainingAndDuration(FGameplayAbilitySpe
 		return;
 	}
 	// 쿨다운 효과는 쿨다운 간격으로 줄지어 끝나므로, 가장 먼저 끝나는 효과까지가 다음 충전까지의 시간입니다.
-	TimeRemaining = Remaining[0];
-	for (const float Time : Remaining)
-	{
-		TimeRemaining = FMath::Min(TimeRemaining, Time);
-	}
+	TimeRemaining = FMath::Min(Remaining);
 	CooldownDuration = Data->Cooldown;
 }
 
@@ -285,11 +281,7 @@ void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const 
 	{
 		// 걸린 쿨다운 효과 하나가 쓴 충전 하나입니다. 새 효과를 가장 늦게 끝나는 효과 뒤에 이어 붙여, 충전이 한 번에
 		// 하나씩 돌아오고 흐르던 쿨다운이 다시 시작하지 않게 합니다.
-		float QueuedTime = 0.f;
-		for (const float Remaining : ASC->GetActiveEffectsTimeRemaining(AgGameplayAbilityPrivate::CooldownQuery(this)))
-		{
-			QueuedTime = FMath::Max(QueuedTime, Remaining);
-		}
+		const float QueuedTime = FMath::Max(ASC->GetActiveEffectsTimeRemaining(AgGameplayAbilityPrivate::CooldownQuery(this)));
 		// 출처로 이 어빌리티 인스턴스를 넣어, 행동마다의 쿨다운을 구분합니다.
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 		Context.AddSourceObject(this);

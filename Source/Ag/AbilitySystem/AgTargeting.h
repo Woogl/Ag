@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
+#include "Tasks/SimpleTargetingSelectionTask.h"
 #include "Tasks/TargetingFilterTask_BasicFilterTemplate.h"
 #include "Tasks/TargetingSortTask_Base.h"
-#include "Tasks/TargetingTask.h"
 #include "AgTargeting.generated.h"
 
 struct FAgTargetingRequest;
@@ -28,22 +28,22 @@ namespace AgTargeting
 }
 
 UCLASS()
-class UAgTargetingSelectionTask_Sphere : public UTargetingTask
+class UAgTargetingSelectionTask_Sphere : public USimpleTargetingSelectionTask
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
+	virtual void SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const override;
 };
 
 /** 출처의 락온 대상을 거리와 관계없이 후보에 더합니다. */
 UCLASS()
-class UAgTargetingSelectionTask_LockOnTarget : public UTargetingTask
+class UAgTargetingSelectionTask_LockOnTarget : public USimpleTargetingSelectionTask
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
+	virtual void SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const override;
 };
 
 UCLASS()

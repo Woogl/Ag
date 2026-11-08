@@ -40,13 +40,12 @@ void UAgAbilityTask_Launch::Activate()
 	const AActor* Target = Params.Direction == EAgLaunchDirection::Target ? AgAbility->GetActionTarget() : nullptr;
 	if (Target)
 	{
-		const FVector Delta = (Target->GetActorLocation() - Character->GetActorLocation()) * FVector(1.f, 1.f, 0.f);
-		Distance = FMath::Max(0.f, static_cast<float>(Delta.Size()) - AgAbility->GetTargetSpacing());
+		Distance = FMath::Max(0.f, Character->GetHorizontalDistanceTo(Target) - AgAbility->GetTargetSpacing());
 		if (Params.MaxDistance)
 		{
 			Distance = FMath::Min(Distance, *Params.MaxDistance);
 		}
-		Direction = Delta.GetSafeNormal();
+		Direction = (Target->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal2D();
 	}
 	const float Gravity = -Movement->GetGravityZ();
 	float Height = Params.Height ? *Params.Height : Gravity * FMath::Square(Params.AirTime.Get(0.f)) / 8.f;

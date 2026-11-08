@@ -28,23 +28,6 @@
 DECLARE_TARGETING_DATA_STORE(FAgTargetingRequest)
 DEFINE_TARGETING_DATA_STORE(FAgTargetingRequest)
 
-namespace AgTargetingPrivate
-{
-	/** 선택 Task마다 후보를 더하므로, 이미 든 후보는 다시 넣지 않습니다. */
-	void AddCandidate(FTargetingDefaultResultsSet& Results, const AActor& Owner, AActor& Candidate)
-	{
-		if (Results.TargetResults.ContainsByPredicate([&Candidate](const FTargetingDefaultResultData& Result)
-		{ return Result.HitResult.GetActor() == &Candidate; }))
-		{
-			return;
-		}
-		FTargetingDefaultResultData& Result = Results.TargetResults.AddDefaulted_GetRef();
-		Result.HitResult.HitObjectHandle = FActorInstanceHandle(&Candidate);
-		Result.HitResult.Location = Candidate.GetActorLocation();
-		Result.HitResult.Distance = FVector::Distance(Owner.GetActorLocation(), Candidate.GetActorLocation());
-	}
-} // namespace AgTargetingPrivate
-
 TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AActor& Source)
 {
 	TArray<AActor*> Targets;
@@ -179,13 +162,9 @@ AActor* AgTargeting::FindSideTarget(const FAgTargetingRequest& Request, APawn& S
 	return Nearest;
 }
 
-void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& TargetingHandle) const
+void UAgTargetingSelectionTask_Sphere::SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const
 {
-	Super::Execute(TargetingHandle);
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
-
-	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
+	const AActor* Owner = SourceContext.SourceActor.Get();
 	const FAgTargetingRequest* Request = UE::TargetingSystem::TTargetingDataStore<FAgTargetingRequest>::Find(TargetingHandle);
 	if (Owner && Owner->GetWorld() && Request && Request->Range > 0.f)
 	{
@@ -194,34 +173,22 @@ void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& Ta
 		const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgTargetingSphere), false, Owner);
 		Owner->GetWorld()->OverlapMultiByObjectType(Overlaps, Owner->GetActorLocation(), FQuat::Identity, FCollisionObjectQueryParams(ECC_Pawn),
 			FCollisionShape::MakeSphere(Request->Range), QueryParams);
-		FTargetingDefaultResultsSet& Results = FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle);
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
 			// 캐릭터 메시도 Pawn 오브젝트 종류라, 캡슐(몸과 회피를 시작한 자리)에 닿은 결과만 씁니다.
 			AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(Overlap.GetActor());
 			if (Candidate && Cast<UCapsuleComponent>(Overlap.GetComponent()))
 			{
-				AgTargetingPrivate::AddCandidate(Results, *Owner, *Candidate);
+				AddTargetActor(TargetingHandle, Candidate);
 			}
 		}
 	}
-
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
 }
 
-void UAgTargetingSelectionTask_LockOnTarget::Execute(const FTargetingRequestHandle& TargetingHandle) const
+void UAgTargetingSelectionTask_LockOnTarget::SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const
 {
-	Super::Execute(TargetingHandle);
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
-
-	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
-	if (AAgCharacterBase* LockOnTarget = Owner ? Owner->GetLockOnTarget() : nullptr)
-	{
-		AgTargetingPrivate::AddCandidate(FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle), *Owner, *LockOnTarget);
-	}
-
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
+	const AAgCharacterBase* Owner = Cast<AAgCharacterBase>(SourceContext.SourceActor);
+	AddTargetActor(TargetingHandle, Owner ? Owner->GetLockOnTarget() : nullptr);
 }
 
 bool UAgTargetingFilterTask_Hostile::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const

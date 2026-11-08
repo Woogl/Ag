@@ -25,7 +25,7 @@ float UAgFallDamageMagnitude::CalculateBaseMagnitude_Implementation(const FGamep
 {
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const float FallHeight = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_FallHeight);
-	const float Ratio = FMath::Clamp((FallHeight - Rules.FallDamageStartHeight) / (Rules.FallDeathHeight - Rules.FallDamageStartHeight), 0.f, 1.f);
+	const float Ratio = FMath::GetMappedRangeValueClamped(FVector2f(Rules.FallDamageStartHeight, Rules.FallDeathHeight), FVector2f(0.f, 1.f), FallHeight);
 
 	float MaxHP = 0.f;
 	GetCapturedAttributeMagnitude(AgFallDamageMagnitudePrivate::GetMaxHPCapture(), Spec, FAggregatorEvaluateParameters(), MaxHP);

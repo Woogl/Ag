@@ -102,12 +102,6 @@ FGenericTeamId AAgEnemyAIController::GetGenericTeamId() const
 	return Enemy ? Enemy->GetGenericTeamId() : FGenericTeamId::NoTeam;
 }
 
-ETeamAttitude::Type AAgEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const
-{
-	const AAgEnemyCharacter* Enemy = GetEnemy();
-	return Enemy ? Enemy->GetTeamAttitudeTowards(Other) : ETeamAttitude::Neutral;
-}
-
 void AAgEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);

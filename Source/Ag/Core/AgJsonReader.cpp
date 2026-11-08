@@ -307,16 +307,9 @@ bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Valu
 			{
 				continue;
 			}
-			// 쿡한 빌드는 속성 이름의 대소문자를 보존하지 않으므로(예: UP → Up) 키는 대소문자를 구분하지 않습니다.
-			const FProperty* Found = nullptr;
-			for (TFieldIterator<FProperty> It(Type); It && !Found; ++It)
-			{
-				if ((!bObject || IsField(**It)) && !It->HasAnyPropertyFlags(CPF_Deprecated) && It->GetName().Equals(Key, ESearchCase::IgnoreCase))
-				{
-					Found = *It;
-				}
-			}
-			if (!Found)
+			// 쿡한 빌드는 속성 이름의 대소문자를 보존하지 않지만(예: UP → Up) FName 비교는 대소문자를 구분하지 않습니다.
+			const FProperty* Found = Type->FindPropertyByName(FName(*Key));
+			if (!Found || (bObject && !IsField(*Found)) || Found->HasAnyPropertyFlags(CPF_Deprecated))
 			{
 				bRead = AgJsonReaderPrivate::Fail(AgJsonReaderPrivate::ChildPath(Path, Key), TEXT("unknown key"));
 				continue;

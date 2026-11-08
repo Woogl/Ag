@@ -72,15 +72,14 @@ void AAgShockwave::Tick(float DeltaSeconds)
 		{
 			continue;
 		}
-		const FVector ToCapsule = (Capsule->GetComponentLocation() - Center) * FVector(1.f, 1.f, 0.f);
-		const float Distance = ToCapsule.Size();
+		const float Distance = FVector::Dist2D(Capsule->GetComponentLocation(), Center);
 		const float CapsuleRadius = Capsule->GetScaledCapsuleRadius();
 		if (Distance - CapsuleRadius > Radius || Distance + CapsuleRadius < InnerRadius)
 		{
 			continue;
 		}
 		TouchedActors.Add(Target);
-		const FVector ToTarget = ((Target->GetActorLocation() - Center) * FVector(1.f, 1.f, 0.f)).GetSafeNormal();
+		const FVector ToTarget = (Target->GetActorLocation() - Center).GetSafeNormal2D();
 		const FVector HitLocation = Target->GetActorLocation() - ToTarget * Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
 		DamageSpec.Data->GetContext().AddOrigin(HitLocation);
 		Shooter->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*DamageSpec.Data, Target->GetAbilitySystemComponent());

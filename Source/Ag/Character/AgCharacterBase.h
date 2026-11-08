@@ -37,8 +37,6 @@ public:
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
-	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
-
 	UAgAttributeSet* GetAttributeSet() const
 	{
 		return AttributeSet;
