@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1090" height="400" viewBox="0 0 1090 400" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+<rect width="1090" height="400" fill="#11151b"/>
+<text x="24" y="30" font-size="21" font-weight="700" fill="#FFFFFF">요새 돌파 · 옆에서 본 높이 단면</text>
+<g transform="translate(0,-249)">
+<text x="24" y="323.0" font-size="17" font-weight="700" fill="#FFFFFF">요새 돌파 (LV_FortressBreach) · 언덕 위에서 내려와 점점 낮아진다</text>
+<line x1="54" y1="523.0" x2="1030.0" y2="523.0" stroke="#2a313b" stroke-width="1"/>
+<text x="50" y="527.0" font-size="10" fill="#8794a5" text-anchor="end">0m</text>
+<line x1="54" y1="496.0" x2="1030.0" y2="496.0" stroke="#2a313b" stroke-width="1"/>
+<text x="50" y="500.0" font-size="10" fill="#8794a5" text-anchor="end">3m</text>
+<line x1="54" y1="469.0" x2="1030.0" y2="469.0" stroke="#2a313b" stroke-width="1"/>
+<text x="50" y="473.0" font-size="10" fill="#8794a5" text-anchor="end">6m</text>
+<line x1="54" y1="442.0" x2="1030.0" y2="442.0" stroke="#2a313b" stroke-width="1"/>
+<text x="50" y="446.0" font-size="10" fill="#8794a5" text-anchor="end">9m</text>
+<line x1="54" y1="415.0" x2="1030.0" y2="415.0" stroke="#2a313b" stroke-width="1"/>
+<text x="50" y="419.0" font-size="10" fill="#8794a5" text-anchor="end">12m</text>
+<line x1="54" y1="388.0" x2="1030.0" y2="388.0" stroke="#2a313b" stroke-width="1"/>
+<text x="50" y="392.0" font-size="10" fill="#8794a5" text-anchor="end">15m</text>
+<line x1="54" y1="361.0" x2="1030.0" y2="361.0" stroke="#2a313b" stroke-width="1"/>
+<text x="50" y="365.0" font-size="10" fill="#8794a5" text-anchor="end">18m</text>
+<rect x="60.0" y="523.0" width="970.0" height="4.0" fill="#2f3742"/>
+<polygon points="60.0,523.0 60.0,469.0 150.0,469.0 150.0,523.0" fill="#4a5563" stroke="#aab4c2" stroke-width="1"/>
+<polygon points="150.0,523.0 150.0,469.0 210.0,523.0 210.0,523.0" fill="#4a5563" stroke="#aab4c2" stroke-width="1"/>
+<text x="105.0" y="451.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">언덕 6m</text>
+<polygon points="245.0,523.0 245.0,523.0 275.0,509.5 275.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<polygon points="275.0,523.0 275.0,509.5 300.0,509.5 300.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="287.5" y="479.5" font-size="10.5" fill="#d7dee8" text-anchor="middle">망대 1.5m</text>
+<polygon points="405.0,523.0 405.0,523.0 435.0,496.0 435.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<polygon points="435.0,523.0 435.0,496.0 475.0,496.0 475.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="440.0" y="466.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">성벽 위 통로 3m</text>
+<polygon points="502.5,523.0 502.5,487.0 507.5,487.0 507.5,523.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
+<polygon points="527.5,523.0 527.5,487.0 532.5,487.0 532.5,523.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
+<polygon points="552.5,523.0 552.5,487.0 557.5,487.0 557.5,523.0" fill="#8a96a8" fill-opacity="0.45" stroke="#8a96a8" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="530.0" y="483.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">칸막이(벽 높이)</text>
+<polygon points="565.0,523.0 565.0,523.0 605.0,496.0 605.0,523.0" fill="#4a5563" stroke="#aab4c2" stroke-width="1"/>
+<polygon points="605.0,523.0 605.0,496.0 625.0,496.0 625.0,523.0" fill="#4a5563" stroke="#aab4c2" stroke-width="1"/>
+<text x="615.0" y="466.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">단상 3m</text>
+<polygon points="700.0,523.0 700.0,523.0 730.0,509.5 730.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<polygon points="730.0,523.0 730.0,509.5 750.0,509.5 750.0,523.0" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="740.0" y="479.5" font-size="10.5" fill="#d7dee8" text-anchor="middle">발코니 1.5m</text>
+<polygon points="785.0,523.0 785.0,343.0 835.0,343.0 835.0,523.0" fill="#8a7a5a" stroke="#aab4c2" stroke-width="1"/>
+<text x="810.0" y="338.0" font-size="10.5" fill="#d7dee8" text-anchor="middle">탑 20m (대기 공간 = 1층)</text>
+<polyline points="70.0,469.0 150.0,469.0 210.0,523.0 565.0,523.0 605.0,496.0 625.0,496.0 625.0,523.0 865.0,523.0" fill="none" stroke="#7fd1ff" stroke-width="3" stroke-linejoin="round"/>
+<polyline points="300.0,509.5 445.0,509.5 475.0,496.0" fill="none" stroke="#e8c36a" stroke-width="3" stroke-dasharray="5 4" stroke-linejoin="round"/>
+<text x="310.0" y="504.5" font-size="10" fill="#e8c36a">샛길</text>
+<text x="630.0" y="483.4" font-size="10" fill="#7fd1ff">뛰어내리기 3m</text>
+<circle cx="287.5" cy="500.5" r="7.5" fill="#3a78c0" stroke="#11151b" stroke-width="1"/>
+<text x="287.5" y="504.5" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">원</text>
+<circle cx="400.0" cy="514.0" r="7.5" fill="#c0453a" stroke="#11151b" stroke-width="1"/>
+<text x="400.0" y="518.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">근</text>
+<circle cx="450.0" cy="487.0" r="7.5" fill="#3a78c0" stroke="#11151b" stroke-width="1"/>
+<text x="450.0" y="491.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">원</text>
+<circle cx="465.0" cy="487.0" r="7.5" fill="#3a78c0" stroke="#11151b" stroke-width="1"/>
+<text x="465.0" y="491.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">원</text>
+<circle cx="615.0" cy="487.0" r="7.5" fill="#3a78c0" stroke="#11151b" stroke-width="1"/>
+<text x="615.0" y="491.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">원</text>
+<circle cx="690.0" cy="514.0" r="7.5" fill="#c0453a" stroke="#11151b" stroke-width="1"/>
+<text x="690.0" y="518.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">근</text>
+<circle cx="702.5" cy="514.0" r="7.5" fill="#c0453a" stroke="#11151b" stroke-width="1"/>
+<text x="702.5" y="518.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">근</text>
+<circle cx="740.0" cy="500.5" r="7.5" fill="#3a78c0" stroke="#11151b" stroke-width="1"/>
+<text x="740.0" y="504.5" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">원</text>
+<circle cx="752.5" cy="500.5" r="7.5" fill="#3a78c0" stroke="#11151b" stroke-width="1"/>
+<text x="752.5" y="504.5" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">원</text>
+<circle cx="70.0" cy="460.0" r="7.5" fill="#FFFFFF"/>
+<text x="70.0" y="464.0" font-size="10" font-weight="700" fill="#11151b" text-anchor="middle">P</text>
+<rect x="865.0" y="523.0" width="165.0" height="4.0" fill="#3a3340"/>
+<text x="947.5" y="515.0" font-size="11" fill="#d9c4e8" text-anchor="middle">보스 아레나</text>
+<circle cx="987.5" cy="514.0" r="7.5" fill="#a24bd1"/>
+<text x="987.5" y="518.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">보</text>
+<rect x="60.0" y="531.0" width="150.0" height="22" fill="#1b222b" stroke="#11151b" stroke-width="1"/>
+<text x="135.0" y="546.0" font-size="10.5" fill="#c9d1db" text-anchor="middle">진입로</text>
+<rect x="210.0" y="531.0" width="90.0" height="22" fill="#222a35" stroke="#11151b" stroke-width="1"/>
+<text x="255.0" y="546.0" font-size="10.5" fill="#c9d1db" text-anchor="middle">전초</text>
+<rect x="300.0" y="531.0" width="25.0" height="22" fill="#1b222b" stroke="#11151b" stroke-width="1"/>
+<rect x="325.0" y="531.0" width="150.0" height="22" fill="#222a35" stroke="#11151b" stroke-width="1"/>
+<text x="400.0" y="546.0" font-size="10.5" fill="#c9d1db" text-anchor="middle">마당</text>
+<rect x="475.0" y="531.0" width="150.0" height="22" fill="#1b222b" stroke="#11151b" stroke-width="1"/>
+<text x="550.0" y="546.0" font-size="10.5" fill="#c9d1db" text-anchor="middle">사격 통로</text>
+<rect x="625.0" y="531.0" width="130.0" height="22" fill="#222a35" stroke="#11151b" stroke-width="1"/>
+<text x="690.0" y="546.0" font-size="10.5" fill="#c9d1db" text-anchor="middle">안뜰</text>
+<rect x="755.0" y="531.0" width="30.0" height="22" fill="#1b222b" stroke="#11151b" stroke-width="1"/>
+<rect x="785.0" y="531.0" width="50.0" height="22" fill="#222a35" stroke="#11151b" stroke-width="1"/>
+<text x="810.0" y="546.0" font-size="10.5" fill="#c9d1db" text-anchor="middle">대기</text>
+<rect x="835.0" y="531.0" width="30.0" height="22" fill="#1b222b" stroke="#11151b" stroke-width="1"/>
+<rect x="865.0" y="531.0" width="165.0" height="22" fill="#222a35" stroke="#11151b" stroke-width="1"/>
+<text x="947.5" y="546.0" font-size="10.5" fill="#c9d1db" text-anchor="middle">아레나</text>
+<text x="60" y="569.0" font-size="10" fill="#8794a5">0m</text>
+<text x="90" y="569.0" font-size="10" fill="#8794a5">진행 거리 (m, 길을 곧게 편 기준)</text>
+</g>
+<g transform="translate(0,-505)">
+<line x1="24" y1="855.0" x2="50" y2="855.0" stroke="#7fd1ff" stroke-width="3"/>
+<text x="56" y="859.0" font-size="11" fill="#c9d1db">플레이어가 걷는 길</text>
+<line x1="190" y1="855.0" x2="216" y2="855.0" stroke="#e8c36a" stroke-width="3" stroke-dasharray="5 4"/>
+<text x="222" y="859.0" font-size="11" fill="#c9d1db">샛길(선택)</text>
+<rect x="300" y="849.0" width="26" height="12" fill="#6f7b8c" fill-opacity="0.45" stroke="#6f7b8c" stroke-dasharray="4 3"/>
+<text x="332" y="859.0" font-size="11" fill="#c9d1db">길 옆에 있는 구조물(벽, 단, 발코니 등)</text>
+<circle cx="568" cy="855.0" r="7.5" fill="#c0453a"/><text x="568" y="859.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">근</text>
+<text x="582" y="859.0" font-size="11" fill="#c9d1db">근거리 적</text>
+<circle cx="668" cy="855.0" r="7.5" fill="#3a78c0"/><text x="668" y="859.0" font-size="10" font-weight="700" fill="#FFFFFF" text-anchor="middle">원</text>
+<text x="682" y="859.0" font-size="11" fill="#c9d1db">원거리 적</text>
+<text x="770" y="859.0" font-size="11" fill="#c9d1db">세로는 가로보다 약 1.8배 늘려 그렸습니다.</text>
+</g>
+</svg>

@@ -177,6 +177,11 @@
   <polygon points="129.9,135.2 129.9,204.8 158.9,204.8 158.9,135.2" fill="#3a8f7a"/>
   <polygon points="448.9,170.4 466.3,170.4 466.3,164.6 448.9,164.6" fill="#8a939e"/>
   <polygon points="287.9,308.1 296.6,308.1 296.6,299.4 287.9,299.4" fill="#4a5563"/>
+  <!-- 추가 엄폐물: 마당 양쪽 엄폐물, 안뜰 양쪽 엄폐물, 안뜰 한쪽 엄폐물 2개 -->
+  <polygon points="454.7,216.8 460.5,216.8 460.5,182.0 454.7,182.0" fill="#8a939e"/>
+  <polygon points="779.5,216.8 785.3,216.8 785.3,182.0 779.5,182.0" fill="#8a939e"/>
+  <polygon points="733.1,161.7 750.5,161.7 750.5,155.9 733.1,155.9" fill="#8a939e"/>
+  <polygon points="733.1,242.9 750.5,242.9 750.5,237.1 733.1,237.1" fill="#8a939e"/>
   <!-- 벽 (높이 4m 이상), 기둥, 난간 -->
   <polygon points="620.0,219.7 689.6,219.7 689.6,216.8 620.0,216.8" fill="#b4bcc7"/>
   <polygon points="836.4,166.4 829.2,154.1 826.7,155.5 833.9,167.9" fill="#b4bcc7"/>
@@ -330,6 +335,8 @@
   <text x="1078.2" y="127.5" font-size="15" fill="#c9d1d9" text-anchor="middle">보스 아레나</text>
   <text x="1078.2" y="137.9" font-size="12" fill="#9aa4b1" text-anchor="middle">33m × 33m</text>
   <text x="388.0" y="303.2" font-size="11" fill="#7ed67e" text-anchor="middle">샛길 (1.5m → 3m)</text>
+  <text x="457.6" y="179.4" font-size="11" fill="#c9d1d9" text-anchor="middle">양쪽 엄폐물</text>
+  <text x="775.0" y="202.6" font-size="11" fill="#c9d1d9" text-anchor="end">양쪽 엄폐물</text>
   <text x="988.9" y="227.8" font-size="14" fill="#f5c84c" font-weight="700" text-anchor="middle">G</text>
   <text x="1078.2" y="209.8" font-size="14" fill="#9aa4b1" text-anchor="middle">C</text>
   <circle cx="1078.2" cy="199.4" r="3" fill="#9aa4b1"/>
