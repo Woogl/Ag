@@ -50,7 +50,7 @@ STEPS = [                            # (시작 후 초, 화면에 띄울 항목,
 def evaluate(c):                     # (전체 통과 여부, 판정 항목 목록)
     chain = [m for m in c.seq("p", 2.5, 8.5) if m.startswith("AM_Player_BasicAttack:")]
     dmg = c.boss_hp0 - c.attr("b", "HP")
-    items = [(len(chain) >= 5, "1~5타가 이어짐 (%d타)" % len(chain)),
+    items = [(len(chain) >= 4, "1~4타가 이어짐 (%d타)" % len(chain)),
              (dmg > 0, "보스가 대미지를 받음 (%.0f)" % dmg)]
     return all(ok for ok, _ in items), items
 ```

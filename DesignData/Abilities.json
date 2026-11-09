@@ -36,13 +36,6 @@
         ],
         "Attack4": [
           {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted", "Targets": {"Preset": "Enemy", "Range": 5000}},
-          {"Task": "RootMotion", "Start": 0, "End": 0.17, "TargetingRange": 230, "bWarpTranslation": true},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.41, "Effect": "Busy"},
-          {"Task": "WeaponHit", "Start": 0.27, "End": 0.33, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
-          {"Task": "Transition", "Start": 0.41, "Event": "Input.Attack", "ToSection": "Attack5", "BlendTime": 0.25}
-        ],
-        "Attack5": [
-          {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted", "Targets": {"Preset": "Enemy", "Range": 5000}},
           {"Task": "RootMotion", "Start": 0, "End": 0.21, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.83, "Effect": "Busy"},
           {"Task": "WeaponHit", "Start": 0.31, "End": 0.38, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "bGuardable": true}},
@@ -464,7 +457,7 @@
     "Tasks": [
       {"Task": "HitReward", "Rewards": [
         {"AbilityTag": "Ability.Action.BasicAttack", "MP": 5},
-        {"AbilityTag": "Ability.Action.BasicAttack", "Section": "Attack5", "UP": 15},
+        {"AbilityTag": "Ability.Action.BasicAttack", "Section": "Attack4", "UP": 15},
         {"AbilityTag": "Ability.Action.DashAttack", "MP": 5},
         {"AbilityTag": "Ability.Action.JumpAttack", "MP": 5},
         {"AbilityTag": "Ability.Action.DodgeCounter", "MP": 10},

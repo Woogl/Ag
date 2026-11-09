@@ -19,11 +19,6 @@
         "to": 0.45
       },
       {
-        "clip": "Samurai/Attack_Combo_B4",
-        "from": 0.0,
-        "to": 0.3333
-      },
-      {
         "clip": "ACS2ComboSkill/Attack03_5_Root",
         "from": 0.5,
         "to": 1.1,
