@@ -36,6 +36,7 @@
     "Speed": 1500,
     "MaxRadius": 5000,
     "Height": 10,
+    "Width": 100,
     "Damage": {
       "HPMultiplier": 2,
       "HitReaction": "KnockUp",
