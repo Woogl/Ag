@@ -116,7 +116,7 @@
 
 | 항목 | 모션 | 메모 |
 |---|---|---|
-| DoubleStrike | `Attack_Combo1` → `Attack_Combo2` | 찌르기 → 내려찍기 2타입니다. `Attack_Combo3`은 몸 왼쪽 가까이를 베는 동작이라 거리가 있으면 빗나가므로 잇지 않습니다. |
+| DoubleStrike | `Attack_Combo2` → `Attack_Combo1` | 내려찍기 → 찌르기 2타입니다. `Attack_Combo3`은 몸 왼쪽 가까이를 베는 동작이라 거리가 있으면 빗나가므로 잇지 않습니다. |
 | Sweep | `Attack_Sprint` | 첫 휩쓸기(0.48~0.52초에 정면 통과)만 공격이고, 반대로 한 번 더 휘두르는 동작은 판정 없는 마무리입니다. QuintupleStrike 마무리(`Attack_Combo4`)와 다른 모션을 쓰려고 골랐습니다. 첫 프레임은 다음 프레임과 자세가 크게 달라(본 위치 평균 45cm, 루트 40cm) 0.033초부터 씁니다. 대기 자세에서 바로 시작하는 모션이 아니어서 몽타주 블렌드 인으로 잇고, 대기 자세와의 자세 차이는 `Attack_Combo4`와 비슷합니다. 다른 보스 모션처럼 루트 모션을 켰습니다. |
 | DashThrust | `Attack_Heavy1_Start` → `Attack_Heavy1` | 웅크려 창을 뒤로 당기는 0.82초가 그대로 패턴 전조 동작이 됩니다. 모션 자체의 이동은 약 3m이므로, [보스 캐릭터 - 커스터](<../Design/Content/보스 캐릭터 - 커스터.md>)의 돌진 거리만큼은 코드로 이동시킵니다. `Attack_Heavy1_Start`는 0.25초 이후 웅크린 자세로 거의 멈춰 있습니다. `Attack_Heavy1`은 0.10초에 몸을 앞으로 내던지기 시작해(0.20초에 순간 최고 속도 초당 17m), 0.20 ~ 0.45초 동안 창을 다 내지른 자세(창끝이 몸 앞 약 2m)로 거의 멈춰 있다가 창을 거둡니다. |
 | GroundSlam | `Attack_Airborne_Start` → `Mid` → `End` | 궤적과 체공 시간은 코드로 주며, 체공 시간은 `Abilities.json`의 GroundSlam 타임라인을 따릅니다. `Start`는 0.37초, `Mid`는 1회 0.98초입니다. 도약 직전에 웅크리는 모션은 없습니다. |

@@ -293,8 +293,8 @@
       "Sections": {
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.2, "bWarpTranslation": true},
-          {"Task": "RootMotion", "Start": 0.2, "End": 0.3167, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "Busy"},
+          {"Task": "RootMotion", "Start": 0.2, "End": 0.3167, "bWarpTranslation": true},
           {"Task": "WeaponHit", "Start": 0.4167, "End": 0.4833, "Damage": {"HPMultiplier": 1, "PPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": true}}
         ]
       }
