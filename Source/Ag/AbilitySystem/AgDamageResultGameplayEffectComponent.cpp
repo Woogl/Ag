@@ -168,7 +168,7 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 		}
 		else
 		{
-			Target->PlayAnimMontage(Target->GetGuardFlinchMontage());
+			SendEvent(Target, AgGameplayTags::Event_Guard_Flinch, Causer);
 		}
 		Target->GetHitPhysics()->Play(MakePhysicsHit(*Causer, *Target, Context, true));
 		return Event;

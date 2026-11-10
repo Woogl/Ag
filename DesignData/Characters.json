@@ -42,7 +42,8 @@
       "KnockDown",
       "KnockUp",
       "Juggle",
-      "GuardPushback"
+      "GuardPushback",
+      "GuardFlinch"
     ]
   },
   "Boss": {

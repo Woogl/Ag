@@ -46,6 +46,8 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction_Juggle, "Ability.Reaction.HitReaction.Juggle",
 		"넉업으로 떠 있는 동안 움찔에 맞아 다시 조금 떠오름");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_GuardPushback, "Ability.Reaction.HitReaction.GuardPushback");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_GuardFlinch, "Ability.Reaction.GuardFlinch",
+		"가드 자세 위에 덧입히는 반응. 피격 반응이 아니라 다른 피격 반응이 끊지 않음");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Groggy, "Ability.Reaction.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_Executed, "Ability.Reaction.Executed", "처형 피격 (그로기를 종료하고 처형 상태로 전환)");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
@@ -98,6 +100,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_ArmRight, "Event.Hit.Stagger.ArmRight", "오른쪽 어깨·팔에 맞은 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_ArmLeft, "Event.Hit.Stagger.ArmLeft", "왼쪽 어깨·팔에 맞은 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_Body, "Event.Hit.Stagger.Body", "배·골반·다리에 맞았거나 맞은 부위가 없는 움찔");
+	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Flinch, "Event.Guard.Flinch");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Pushback, "Event.Guard.Pushback");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Groggy, "Event.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Executed, "Event.Executed");

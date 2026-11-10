@@ -46,6 +46,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Juggle);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_GuardPushback);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_GuardFlinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Executed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_PhaseTransition);
@@ -97,6 +98,7 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_ArmRight);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_ArmLeft);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_Body);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Flinch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Executed);

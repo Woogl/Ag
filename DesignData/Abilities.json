@@ -621,6 +621,17 @@
       }
     }
   },
+  "GuardFlinch": {
+    "AbilityTags": ["Ability.Reaction.GuardFlinch"],
+    "ActivationBlockedTags": ["State.HitReaction.GuardPushback", "State.Acting", "State.Execution", "State.Dead"],
+    "AbilityTriggers": [
+      {"TriggerTag": "Event.Guard.Flinch"}
+    ],
+    "bAllowRetrigger": true,
+    "Montage": {
+      "Asset": "/Game/Animations/AM_GuardFlinch.AM_GuardFlinch"
+    }
+  },
   "DoubleStrike": {
     "AbilityTags": ["Ability.Enemy.Pattern"],
     "ActivationBlockedTags": ["State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
