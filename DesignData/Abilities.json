@@ -645,15 +645,16 @@
     "Targeting": {"Preset": "Enemy", "Range": 5000, "TargetSpacing": 150},
     "Montage": {
       "Asset": "/Game/Animations/AM_Boss_DoubleStrike.AM_Boss_DoubleStrike",
+      "StartSections": [{"Section": "Attack2"}],
       "Sections": {
         "Attack1": [
           {"Task": "RootMotion", "Start": 0, "End": 0.386, "bWarpTranslation": true},
-          {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
-          {"Task": "Transition", "Start": 0.52, "ToSection": "Attack2", "BlendTime": 0.2}
+          {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1.4, "HitReaction": "KnockDown", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1.4, "HitReaction": "KnockDown", "bGuardable": true}},
+          {"Task": "Transition", "Start": 1.05, "ToSection": "Attack1", "BlendTime": 0.2}
         ]
       }
     },
