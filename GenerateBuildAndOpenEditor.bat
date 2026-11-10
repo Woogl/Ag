@@ -22,6 +22,16 @@ if not defined ENGINE (
     exit /b 1
 )
 
+rem 기획자가 새 C++ 파일을 받고 솔루션 재생성을 잊어도 되도록 매번 재생성한다. 바뀐 파일만 다시 쓴다.
+echo 솔루션 파일을 다시 만듭니다.
+call "%ENGINE%\Engine\Build\BatchFiles\Build.bat" -ProjectFiles "-Project=%PROJECT%" -Game -Rocket
+if errorlevel 1 (
+    echo.
+    echo 솔루션 파일을 만들지 못했습니다. 이 창의 내용을 프로그래머에게 보내 주세요.
+    pause
+    exit /b 1
+)
+
 echo 빌드합니다. 바뀐 코드가 없으면 금방 끝납니다.
 call "%ENGINE%\Engine\Build\BatchFiles\Build.bat" AgEditor Win64 DebugGame "-Project=%PROJECT%" -WaitMutex
 if errorlevel 1 (
