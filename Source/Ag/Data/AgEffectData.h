@@ -42,12 +42,6 @@ struct FAgEffectModifier
 
 	UPROPERTY()
 	FGameplayAttribute BackingAttribute;
-
-	UPROPERTY()
-	FGameplayTagContainer RequiredTags;
-
-	UPROPERTY()
-	FGameplayTagContainer IgnoredTags;
 };
 
 USTRUCT()

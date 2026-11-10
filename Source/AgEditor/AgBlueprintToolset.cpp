@@ -90,9 +90,9 @@ bool UAgBlueprintToolset::RemoveWidgetAnimation(UWidgetBlueprint* WidgetBlueprin
 			bRemoved = true;
 		}
 	}
-	WidgetBlueprint->OnVariableRemoved(AnimationName);
 	if (bRemoved)
 	{
+		WidgetBlueprint->OnVariableRemoved(AnimationName);
 		FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(WidgetBlueprint);
 	}
 	return bRemoved;

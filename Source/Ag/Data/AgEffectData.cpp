@@ -17,13 +17,12 @@ namespace AgEffectDataPrivate
 {
 	constexpr float PeriodicEffectInterval = 0.1f;
 
-	FGameplayModifierInfo& AddModifier(UGameplayEffect& Effect, FGameplayAttribute Attribute, EGameplayModOp::Type Op, const FGameplayEffectModifierMagnitude& Magnitude)
+	void AddModifier(UGameplayEffect& Effect, FGameplayAttribute Attribute, EGameplayModOp::Type Op, const FGameplayEffectModifierMagnitude& Magnitude)
 	{
 		FGameplayModifierInfo& Modifier = Effect.Modifiers.AddDefaulted_GetRef();
 		Modifier.Attribute = Attribute;
 		Modifier.ModifierOp = Op;
 		Modifier.ModifierMagnitude = Magnitude;
-		return Modifier;
 	}
 
 	FAttributeBasedFloat MakeTargetAttribute(FGameplayAttribute Attribute, float Coefficient)
@@ -139,9 +138,7 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	for (const FAgEffectModifier& Modifier : Definition.Modifiers)
 	{
 		const EGameplayModOp::Type Op = Modifier.Multiplier ? EGameplayModOp::MultiplyCompound : EGameplayModOp::AddBase;
-		FGameplayModifierInfo& Info = AgEffectDataPrivate::AddModifier(*Effect, Modifier.Attribute, Op, AgEffectDataPrivate::MakeMagnitude(Modifier));
-		Info.TargetTags.RequireTags = Modifier.RequiredTags;
-		Info.TargetTags.IgnoreTags = Modifier.IgnoredTags;
+		AgEffectDataPrivate::AddModifier(*Effect, Modifier.Attribute, Op, AgEffectDataPrivate::MakeMagnitude(Modifier));
 	}
 	if (!Definition.GrantedTags.IsEmpty())
 	{

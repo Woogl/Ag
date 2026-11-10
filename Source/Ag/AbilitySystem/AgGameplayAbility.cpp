@@ -87,15 +87,6 @@ bool UAgGameplayAbility::DoesAbilitySatisfyTagRequirements(const UAbilitySystemC
 	       Super::DoesAbilitySatisfyTagRequirements(ASC, SourceTags, TargetTags, OptionalRelevantTags);
 }
 
-void UAgGameplayAbility::GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const
-{
-	TimeRemaining = CooldownDuration = 0.f;
-	if (GetCharges(Handle, ActorInfo) == 0)
-	{
-		GetRechargeTimeRemainingAndDuration(Handle, ActorInfo, TimeRemaining, CooldownDuration);
-	}
-}
-
 int32 UAgGameplayAbility::GetCharges(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const
 {
 	const FGameplayAbilitySpec* Spec = ActorInfo ? ActorInfo->AbilitySystemComponent->FindAbilitySpecFromHandle(Handle) : nullptr;
@@ -149,9 +140,15 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeDamageSpec(const FAgDamage& Da
 
 void UAgGameplayAbility::RefreshTarget()
 {
-	if (IsActive() && Definition.Targeting)
+	if (!IsActive() || !Definition.Targeting)
 	{
-		ActionTarget = FindTargetingTarget(Definition, CurrentActorInfo);
+		return;
+	}
+	AActor* NewTarget = FindTargetingTarget(Definition, CurrentActorInfo);
+	// 대상이 있어야 하는 행동은 대상 없이 이어 갈 수 없으므로, 다시 고를 후보가 없으면 지금 대상을 유지합니다.
+	if (NewTarget || !Definition.Targeting->bRequired)
+	{
+		ActionTarget = NewTarget;
 	}
 }
 
