@@ -27,6 +27,11 @@ namespace AgNameplateWidgetPrivate
 
 void UAgNameplateWidget::SetAbilitySystem(UAbilitySystemComponent* NewASC)
 {
+	// 같은 대상을 다시 연결하면 남아 있는 대미지 잔상이 지워지므로 그대로 둡니다.
+	if (ASC.Get() == NewASC)
+	{
+		return;
+	}
 	Unbind();
 	ASC = NewASC;
 	LastDropTime = -UE_DOUBLE_BIG_NUMBER;
@@ -54,11 +59,10 @@ bool UAgNameplateWidget::Update(bool bAllowed, bool bRequested)
 	const bool bShow = bAllowed && (bRequested || bRecentDrop);
 	// 가려진 동안에도 바는 최신 값을 따라가므로, 다시 보일 때 그동안의 피해 잔상을 재생하지 않도록 지웁니다. 요청이 없어
 	// 숨어 있던 것은 피해가 곧 표시를 요청하므로, 그 피해의 잔상은 남깁니다.
-	if (bShow && !bShown && !bWasAllowed)
+	if (bShow && !bWasAllowed)
 	{
 		ClearTrails();
 	}
-	bShown = bShow;
 	bWasAllowed = bAllowed;
 	return bShow;
 }

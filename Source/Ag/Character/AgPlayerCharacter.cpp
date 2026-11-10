@@ -237,24 +237,24 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 		return;
 	}
 
-	// 새로 누른 키가 기억한 입력을 대신하므로, 막히지 않은 키는 기억을 지웁니다.
+	// 새로 누른 키가 기억한 입력을 대신합니다. 막히지 않은 키는 바로 실행하고, 막힌 키는 기억합니다.
+	BufferedInput = FGameplayTag();
+	if (!IsActionInputBlocked(InputTag))
+	{
+		RunInput(InputTag);
+		return;
+	}
 	const bool bFallingJump = InputTag == AgGameplayTags::Input_Jump && GetCharacterMovement()->IsFalling();
 	const bool bUnbuffered = bFallingJump || InputTag == AgGameplayTags::Input_Execute || InputTag == AgGameplayTags::Input_Potion;
-	BufferedInput = !bUnbuffered && IsActionInputBlocked(InputTag)
-	                    ? InputTag
-	                    : FGameplayTag();
-	BufferedInputTime = GetWorld()->GetTimeSeconds();
-
-	RunInput(InputTag);
+	if (!bUnbuffered)
+	{
+		BufferedInput = InputTag;
+		BufferedInputTime = GetWorld()->GetTimeSeconds();
+	}
 }
 
 void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 {
-	if (IsActionInputBlocked(InputTag))
-	{
-		return;
-	}
-
 	if (InputTag == AgGameplayTags::Input_Jump)
 	{
 		Jump();
@@ -345,21 +345,32 @@ void AAgPlayerCharacter::HandleInputBlockChanged(const FGameplayTag Tag, int32 N
 	// 이 프레임의 피격 반응 재발동, 다음 타 전환 시작, 무기 판정이 끝난 뒤의 상태를 보려고 타이머에서 확인합니다.
 	if (NewCount == 0)
 	{
-		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::TryRunPendingInput);
+		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::HandleInputUnblocked);
 	}
+}
+
+void AAgPlayerCharacter::HandleInputUnblocked()
+{
+	// 기억한 입력이 가드 자세로 돌아오는 것보다 우선합니다.
+	TryRunBufferedInput();
+	ReturnToGuardFromParry();
+}
+
+bool AAgPlayerCharacter::HasBufferedInput() const
+{
+	return BufferedInput.IsValid() && GetWorld()->GetTimeSeconds() - BufferedInputTime <= InputBufferTime;
 }
 
 void AAgPlayerCharacter::TryRunBufferedInput()
 {
-	if (!BufferedInput.IsValid() || IsActionInputBlocked(BufferedInput))
+	if (!HasBufferedInput() || IsActionInputBlocked(BufferedInput))
 	{
 		return;
 	}
 
 	const FGameplayTag InputTag = BufferedInput;
 	BufferedInput = FGameplayTag();
-	const bool bExpired = GetWorld()->GetTimeSeconds() - BufferedInputTime > InputBufferTime;
-	if (IsDead() || bExpired || (IsReleaseInput(InputTag) && !HeldInputs.Contains(InputTag)))
+	if (IsDead() || (IsReleaseInput(InputTag) && !HeldInputs.Contains(InputTag)))
 	{
 		return;
 	}
@@ -368,10 +379,8 @@ void AAgPlayerCharacter::TryRunBufferedInput()
 	RunInput(InputTag);
 }
 
-void AAgPlayerCharacter::TryRunPendingInput()
+void AAgPlayerCharacter::ReturnToGuardFromParry()
 {
-	// 기억한 입력이 가드 자세로 돌아오는 것보다 우선합니다.
-	TryRunBufferedInput();
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Guard = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Guard);
 	if (!IsDead() && Guard && Guard->IsActive() && !IsActionInputBlocked(AgGameplayTags::Input_Guard))
@@ -407,7 +416,7 @@ void AAgPlayerCharacter::TryMoveCancel()
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	// 기억한 입력은 후딜이 시작된 뒤 타이머에서 실행되므로, 남아 있는 동안 기다려 그 입력이 먼저 나가게 합니다.
 	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_MoveCancel) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Busy) ||
-		MoveInputDirection.IsNearlyZero() || BufferedInput.IsValid())
+		MoveInputDirection.IsNearlyZero() || HasBufferedInput())
 	{
 		return;
 	}

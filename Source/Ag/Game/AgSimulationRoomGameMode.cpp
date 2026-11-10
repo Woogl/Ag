@@ -134,7 +134,7 @@ void AAgSimulationRoomGameMode::HandleStartingNewPlayer_Implementation(APlayerCo
 		return;
 	}
 
-	// 엔진은 플레이어 참가를 월드 BeginPlay 전에 처리하므로, 배치한 적도 게임 모드의 BeginPlay가 전투원으로 등록합니다.
+	// 엔진은 플레이어 참가를 월드 BeginPlay 전에 처리하므로, 배치한 적의 사망도 게임 모드의 BeginPlay가 구독합니다.
 	if (APawn* Player = NewPlayer ? NewPlayer->GetPawn() : nullptr)
 	{
 		SpawnLineup(*Player);

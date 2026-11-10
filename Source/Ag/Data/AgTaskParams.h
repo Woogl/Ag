@@ -8,7 +8,6 @@
 class UAbilityTask;
 class UAgAbilityTask_PlayMontage;
 class UAgGameplayAbility;
-struct FGameplayEventData;
 
 struct FAgTaskContext
 {
@@ -17,9 +16,6 @@ struct FAgTaskContext
 	/** 타임라인 항목의 구간으로, Params의 섹션 기준 시각과 달리 몽타주 기준 시각입니다. 발동 Task에는 없습니다. */
 	TOptional<FFloatInterval> Window;
 	UAgAbilityTask_PlayMontage* Playback = nullptr;
-
-	/** 어빌리티를 발동시킨 이벤트로, 이벤트로 발동했을 때 발동 Task에만 있습니다. */
-	const FGameplayEventData* TriggerEvent = nullptr;
 };
 
 /**

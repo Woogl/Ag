@@ -23,17 +23,15 @@ void UAgStatBar::SetValue(float Value, float MaxValue)
 void UAgStatBar::SetRatio(float Ratio)
 {
 	Bar->SetPercent(Ratio);
-	const float PreviousRatio = BarRatio;
+	const bool bDropped = Ratio < BarRatio;
 	BarRatio = Ratio;
 	if (!bShowTrail)
 	{
 		return;
 	}
 
-	const bool bFirstValue = PreviousRatio < 0.f;
-	const bool bDropped = !bFirstValue && Ratio < PreviousRatio;
-	const bool bTrailBelowBar = TrailRatio <= Ratio;
-	if (bFirstValue || bTrailBelowBar)
+	// 잔상은 0에서 시작하므로 첫 값도 여기서 바에 맞춰집니다.
+	if (TrailRatio <= Ratio)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(TrailTimer);
 		SetTrailRatio(Ratio);
@@ -56,7 +54,7 @@ void UAgStatBar::SetRatio(float Ratio)
 void UAgStatBar::ClearTrail()
 {
 	GetWorld()->GetTimerManager().ClearTimer(TrailTimer);
-	SetTrailRatio(FMath::Max(BarRatio, 0.f));
+	SetTrailRatio(BarRatio);
 }
 
 void UAgStatBar::NativePreConstruct()

@@ -48,7 +48,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 
-	/** 플레이어가 아닌 전투원이 죽었을 때 Stage Clear인지 정합니다. 기본은 죽은 캐릭터가 보스일 때입니다. */
+	/** 플레이어가 아닌 캐릭터가 죽었을 때 Stage Clear인지 정합니다. 기본은 죽은 캐릭터가 보스일 때입니다. */
 	virtual bool IsStageCleared(const AAgCharacterBase& DeadCharacter) const;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
@@ -67,7 +67,7 @@ protected:
 	float StageResultPresentationTime = 4.f;
 
 private:
-	void HandleCombatantDied(AAgCharacterBase* DeadCharacter);
+	void HandleCharacterDied(AAgCharacterBase* DeadCharacter);
 	void ShowResult();
 
 	FTimerHandle ResultTimer;

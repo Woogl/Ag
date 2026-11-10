@@ -18,9 +18,9 @@ namespace AgSkillSlotPrivate
 	const FName RatioParameter(TEXT("Ratio"));
 }
 
-void UAgSkillSlot::SetInput(UAgAbilitySystemComponent* InASC, const FGameplayTag& InInputTag)
+void UAgSkillSlot::SetInput(AAgPlayerCharacter* InPlayer, const FGameplayTag& InInputTag)
 {
-	ASC = InASC;
+	Player = InPlayer;
 	InputTag = InInputTag;
 	UpdateAbility();
 	UpdateCooldown();
@@ -28,10 +28,9 @@ void UAgSkillSlot::SetInput(UAgAbilitySystemComponent* InASC, const FGameplayTag
 
 void UAgSkillSlot::UpdateAbility()
 {
-	FGameplayAbilitySpecHandle Handle;
-	const UGameplayAbility* Ability = FindAbility(Handle);
-	const AAgPlayerCharacter* Player = Ability ? Cast<AAgPlayerCharacter>(ASC->GetAvatarActor()) : nullptr;
-	const FAgAbilityData* Data = Player ? Player->FindAbility(Handle) : nullptr;
+	// 데이터를 다시 읽으면 아이콘과 코스트가 바뀌므로, 어빌리티의 사본이 아니라 캐릭터 데이터의 지금 정의를 봅니다.
+	const UAgGameplayAbility* Ability = FindAbility();
+	const FAgAbilityData* Data = Ability ? Player->FindAbility(Ability->GetCurrentAbilitySpecHandle()) : nullptr;
 
 	UTexture2D* Icon = Data ? Data->Icon.Get() : nullptr;
 	IconImage->SetBrushFromTexture(Icon);
@@ -46,7 +45,7 @@ void UAgSkillSlot::UpdateAbility()
 		CostText->SetVisibility(Cost > 0 ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	}
 
-	const bool bUsable = Ability && Ability->CheckCost(Handle, ASC->AbilityActorInfo.Get());
+	const bool bUsable = Ability && Ability->CheckCost(Ability->GetCurrentAbilitySpecHandle(), Ability->GetCurrentActorInfo());
 	Body->SetRenderOpacity(bUsable ? 1.f : DisabledOpacity);
 }
 
@@ -59,14 +58,11 @@ void UAgSkillSlot::UpdateCooldown()
 	float Duration = 0.f;
 	int32 Charges = 0;
 	int32 MaxCharges = 0;
-	FGameplayAbilitySpecHandle Handle;
-	if (const UAgGameplayAbility* Ability = Cast<UAgGameplayAbility>(FindAbility(Handle)))
+	if (const UAgGameplayAbility* Ability = FindAbility())
 	{
-		const FGameplayAbilityActorInfo* ActorInfo = ASC->AbilityActorInfo.Get();
-		Ability->GetRechargeTimeRemainingAndDuration(Handle, ActorInfo, Remaining, Duration);
-		Charges = Ability->GetCharges(Handle, ActorInfo);
-		const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(ASC->GetAvatarActor());
-		const FAgAbilityData* Data = Player ? Player->FindAbility(Handle) : nullptr;
+		Ability->GetRechargeTimeRemainingAndDuration(Remaining, Duration);
+		Charges = Ability->GetCharges();
+		const FAgAbilityData* Data = Player->FindAbility(Ability->GetCurrentAbilitySpecHandle());
 		MaxCharges = Data ? Data->MaxCharges : 0;
 	}
 
@@ -118,20 +114,14 @@ void UAgSkillSlot::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-const UGameplayAbility* UAgSkillSlot::FindAbility(FGameplayAbilitySpecHandle& OutHandle) const
+const UAgGameplayAbility* UAgSkillSlot::FindAbility() const
 {
-	const UAgAbilitySystemComponent* AbilitySystem = ASC.Get();
-	const AAgPlayerCharacter* Player = AbilitySystem ? Cast<AAgPlayerCharacter>(AbilitySystem->GetAvatarActor()) : nullptr;
+	const AAgPlayerCharacter* Character = Player.Get();
 	TArray<FGameplayAbilitySpecHandle> Handles;
-	if (Player)
+	if (Character)
 	{
-		Player->FindInputAbilities(InputTag, Handles);
+		Character->FindInputAbilities(InputTag, Handles);
 	}
-	const FGameplayAbilitySpec* Spec = Handles.IsEmpty() ? nullptr : AbilitySystem->FindAbilitySpecFromHandle(Handles[0]);
-	if (!Spec || !Spec->GetPrimaryInstance())
-	{
-		return nullptr;
-	}
-	OutHandle = Spec->Handle;
-	return Spec->GetPrimaryInstance();
+	const FGameplayAbilitySpec* Spec = Handles.IsEmpty() ? nullptr : Character->GetAbilitySystemComponent()->FindAbilitySpecFromHandle(Handles[0]);
+	return Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
 }

@@ -53,7 +53,7 @@ private:
 
 	FIntPoint ShownValues = FIntPoint(INDEX_NONE, INDEX_NONE);
 
-	float BarRatio = -1.f;
+	float BarRatio = 0.f;
 	float TrailRatio = 0.f;
 	float TrailShrinkFrom = 0.f;
 	double TrailShrinkStartTime = 0.0;

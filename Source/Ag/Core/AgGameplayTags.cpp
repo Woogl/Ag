@@ -102,7 +102,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Groggy, "Event.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Executed, "Event.Executed");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
-	UE_DEFINE_GAMEPLAY_TAG(Event_PhaseTransition, "Event.PhaseTransition");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Parry, "Event.Parry", "패리함 (피격 처리가 막은 쪽에 보냄, 패리 모션을 시작함)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_PerfectDodge, "Event.PerfectDodge",
 		"극한 회피함 (피격 처리가 피한 쪽에 보냄, Instigator는 공격한 캐릭터, 극한 회피 모션을 시작함)");

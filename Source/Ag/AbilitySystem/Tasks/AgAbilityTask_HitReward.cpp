@@ -9,7 +9,8 @@
 
 UAbilityTask* FAgHitRewardParams::MakeTask(const FAgTaskContext& Context) const
 {
-	if (!Context.TriggerEvent)
+	const FGameplayEventData* TriggerEvent = Context.Ability.GetTriggerEvent();
+	if (!TriggerEvent)
 	{
 		UE_LOG(LogAg, Error, TEXT("HitReward (ability %s): place it in Tasks of an ability triggered by Event.AttackHit"),
 			*Context.Ability.GetAbilityId().ToString());
@@ -17,7 +18,7 @@ UAbilityTask* FAgHitRewardParams::MakeTask(const FAgTaskContext& Context) const
 	}
 	UAgAbilityTask_HitReward* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_HitReward>(&Context.Ability);
 	Task->Params = *this;
-	Task->AttackTags = Context.TriggerEvent->InstigatorTags;
+	Task->AttackTags = TriggerEvent->InstigatorTags;
 	return Task;
 }
 

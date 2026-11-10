@@ -34,9 +34,10 @@ namespace AgAbilityTask_PlayMontagePrivate
 
 	bool MatchesStart(const FAgMontageStart& Start, const UAgGameplayAbility& Ability, const AAgCharacterBase& Character, const UAbilitySystemComponent& ASC)
 	{
+		const FGameplayEventData* TriggerEvent = Ability.GetTriggerEvent();
 		return ASC.HasAllMatchingGameplayTags(Start.RequiredTags) && !ASC.HasAnyMatchingGameplayTags(Start.BlockedTags) &&
 		       (!Start.MoveDirection || MatchesMoveDirection(Ability, Character, *Start.MoveDirection)) &&
-		       (!Start.EventTag.IsValid() || Ability.GetTriggerEventTag().MatchesTag(Start.EventTag));
+		       (!Start.EventTag.IsValid() || (TriggerEvent && TriggerEvent->EventTag.MatchesTag(Start.EventTag)));
 	}
 
 	TOptional<float> GetStartTime(const UAnimMontage& Montage, FName Section, const FAgTaskParams& Params)
@@ -92,7 +93,7 @@ void UAgAbilityTask_PlayMontage::Activate()
 	// 읽지 못한 몽타주는 데이터를 읽을 때 오류로 알렸습니다.
 	if (!Params.Asset)
 	{
-		CancelAbility();
+		EndInterrupted();
 		return;
 	}
 	FName Section;
@@ -197,7 +198,7 @@ void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
 	UAgAbilitySystemComponent* ASC = Cast<UAgAbilitySystemComponent>(AbilitySystemComponent.Get());
 	if (!ASC)
 	{
-		CancelAbility();
+		EndInterrupted();
 		return;
 	}
 
@@ -220,7 +221,7 @@ void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
 		UE_LOG(LogAg, Error, TEXT("PlayMontage: failed to play %s (section %s)"), *Params.Asset->GetName(), *Section.ToString());
 		// 이전 재생이 남아 있으면 Task가 끝날 때 멈추도록 다시 맡습니다.
 		MontageInstanceId = PreviousInstanceId;
-		CancelAbility();
+		EndInterrupted();
 		return;
 	}
 	const int32 InstanceId = Instance->GetInstanceID();
@@ -233,13 +234,9 @@ void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
 	BeginTimeline(*Instance);
 }
 
-void UAgAbilityTask_PlayMontage::CancelAbility()
+void UAgAbilityTask_PlayMontage::EndInterrupted()
 {
-	// 블루프린트에서 PlayMontageAndWait의 OnInterrupted를 CancelAbility에 잇는 것과 같습니다.
-	if (Ability && Ability->IsActive())
-	{
-		Ability->CancelAbility(Ability->GetCurrentAbilitySpecHandle(), Ability->GetCurrentActorInfo(), Ability->GetCurrentActivationInfo(), true);
-	}
+	bPlaybackInterrupted = true;
 	EndTask();
 }
 
@@ -265,7 +262,7 @@ void UAgAbilityTask_PlayMontage::FinishPlayback(bool bInterrupted)
 	MontageInstanceId = INDEX_NONE;
 	if (bInterrupted)
 	{
-		CancelAbility();
+		EndInterrupted();
 		return;
 	}
 	EndTask();

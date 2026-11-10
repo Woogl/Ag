@@ -59,13 +59,6 @@ bool AAgEnemyAIController::IsEnemyReacting() const
 	return ASC->HasAnyMatchingGameplayTags(ReactionTags);
 }
 
-bool AAgEnemyAIController::IsEnemyFlinching() const
-{
-	const AAgEnemyCharacter* Enemy = GetEnemy();
-	const UAbilitySystemComponent* ASC = Enemy ? Enemy->GetAbilitySystemComponent() : nullptr;
-	return ASC && ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch);
-}
-
 bool AAgEnemyAIController::IsTargetNoticed() const
 {
 	// 엔진은 보이지 않게 되거나 맞은 순간부터 자극의 나이를 세고, 감각의 최대 나이가 지나면 잊습니다. 대미지 감각은 팀을

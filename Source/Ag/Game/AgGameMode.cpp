@@ -77,7 +77,7 @@ void AAgGameMode::BeginPlay()
 	// 엔진은 플레이어 폰을 월드 BeginPlay 전에 스폰하므로, 이 순회가 플레이어도 등록합니다.
 	for (TActorIterator<AAgCharacterBase> It(GetWorld()); It; ++It)
 	{
-		It->OnDied.AddUObject(this, &ThisClass::HandleCombatantDied);
+		It->OnDied.AddUObject(this, &ThisClass::HandleCharacterDied);
 	}
 }
 
@@ -104,7 +104,7 @@ bool AAgGameMode::IsStageCleared(const AAgCharacterBase& DeadCharacter) const
 	return DeadCharacter.IsA<AAgBossCharacter>();
 }
 
-void AAgGameMode::HandleCombatantDied(AAgCharacterBase* DeadCharacter)
+void AAgGameMode::HandleCharacterDied(AAgCharacterBase* DeadCharacter)
 {
 	AAgGameState* StageState = GetGameState<AAgGameState>();
 	if (!StageState || StageState->GetStageResult() != EAgStageResult::None)

@@ -57,7 +57,6 @@ private:
 
 	double LastDropTime = -UE_DOUBLE_BIG_NUMBER;
 
-	bool bShown = false;
 	bool bWasAllowed = false;
 
 	FTimerHandle GroggyTimer;

@@ -37,29 +37,6 @@ namespace AgHUDWidgetPrivate
 			UAgAttributeSet::GetPotionAttribute(), UAgAttributeSet::GetMaxPotionAttribute()};
 	}
 
-	const TArray<FGameplayTag>& PlayerTags()
-	{
-		static const TArray<FGameplayTag> Tags = {AgGameplayTags::State_Cutscene};
-		return Tags;
-	}
-
-	void Unbind(UAbilitySystemComponent* ASC, const UObject* User, const TArray<FGameplayAttribute>& Attributes, const TArray<FGameplayTag>& Tags)
-	{
-		if (!ASC)
-		{
-			return;
-		}
-		for (const FGameplayAttribute& Attribute : Attributes)
-		{
-			ASC->GetGameplayAttributeValueChangeDelegate(Attribute).RemoveAll(User);
-		}
-		for (const FGameplayTag& Tag : Tags)
-		{
-			ASC->RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved).RemoveAll(User);
-		}
-		ASC->AbilitySpecDirtiedCallbacks.RemoveAll(User);
-		ASC->AbilityCommittedCallbacks.RemoveAll(User);
-	}
 } // namespace AgHUDWidgetPrivate
 
 void UAgHUDWidget::NativeOnInitialized()
@@ -81,25 +58,15 @@ void UAgHUDWidget::NativeConstruct()
 
 	StatusPanelVisibility = StatusPanel->GetVisibility();
 
-	if (const AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn()))
+	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn());
+	if (UAgAbilitySystemComponent* ASC = Player ? Player->GetAbilitySystemComponent() : nullptr)
 	{
-		if (UAgAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
-		{
-			PlayerASC = ASC;
-			BindPlayer(*ASC);
-		}
+		PlayerASC = ASC;
+		BindPlayer(*ASC);
 	}
-	const TPair<UAgSkillSlot*, FGameplayTag> SlotInputs[] = {
-		{Skill1Slot, AgGameplayTags::Input_Skill1},
-		{Skill2Slot, AgGameplayTags::Input_Skill2},
-		{Skill3Slot, AgGameplayTags::Input_Skill3},
-		{Skill4Slot, AgGameplayTags::Input_Skill4},
-		{UltimateSlot, AgGameplayTags::Input_Ultimate},
-		{PotionSlot, AgGameplayTags::Input_Potion},
-	};
-	for (const TPair<UAgSkillSlot*, FGameplayTag>& SlotInput : SlotInputs)
+	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
 	{
-		SlotInput.Key->SetInput(PlayerASC.Get(), SlotInput.Value);
+		SkillSlot.Key->SetInput(Player, SkillSlot.Value);
 	}
 
 #if WITH_EDITOR
@@ -125,9 +92,8 @@ void UAgHUDWidget::NativeConstruct()
 
 void UAgHUDWidget::NativeDestruct()
 {
-	AgHUDWidgetPrivate::Unbind(PlayerASC.Get(), this, AgHUDWidgetPrivate::PlayerAttributes(), AgHUDWidgetPrivate::PlayerTags());
+	UnbindPlayer();
 	PlayerASC.Reset();
-	Boss.Reset();
 #if WITH_EDITOR
 	UAgAssetManager::Get().OnJsonDataReloaded.RemoveAll(this);
 #endif
@@ -162,13 +128,9 @@ void UAgHUDWidget::OpenPauseMenu()
 
 void UAgHUDWidget::HandleCombatantsChanged()
 {
-	// 보스 상태에 남은 대미지 흔적이 다른 적의 전투 진입으로 지워지지 않도록, 보스가 바뀔 때만 다시 연결합니다.
-	AAgBossCharacter* NewBoss = GetWorld()->GetSubsystem<UAgCombatSubsystem>()->FindBoss();
-	if (Boss.Get() != NewBoss)
-	{
-		Boss = NewBoss;
-		BossStatus->SetAbilitySystem(NewBoss ? NewBoss->GetAbilitySystemComponent() : nullptr);
-	}
+	// 같은 보스를 다시 넘기면 보스 상태가 그대로 두므로, 다른 적의 전투 진입으로 대미지 잔상이 지워지지 않습니다.
+	const AAgBossCharacter* Boss = GetWorld()->GetSubsystem<UAgCombatSubsystem>()->FindBoss();
+	BossStatus->SetAbilitySystem(Boss ? Boss->GetAbilitySystemComponent() : nullptr);
 	UpdateBoss();
 }
 
@@ -178,12 +140,9 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 	{
 		ASC.GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, &ThisClass::HandlePlayerAttributeChanged);
 	}
-	for (const FGameplayTag& Tag : AgHUDWidgetPrivate::PlayerTags())
-	{
-		ASC.RegisterGameplayTagEvent(Tag, EGameplayTagEventType::NewOrRemoved)
-			.AddWeakLambda(this, [this](const FGameplayTag, int32)
-		{ UpdateStatusPanel(); });
-	}
+	ASC.RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
+		.AddWeakLambda(this, [this](const FGameplayTag, int32)
+	{ UpdateStatusPanel(); });
 	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 부여될 때 스킬 슬롯을 다시 그립니다.
 	ASC.AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
 	{
@@ -192,6 +151,22 @@ void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
 	});
 	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
 	{ UpdateCooldowns(); });
+}
+
+void UAgHUDWidget::UnbindPlayer()
+{
+	UAbilitySystemComponent* ASC = PlayerASC.Get();
+	if (!ASC)
+	{
+		return;
+	}
+	for (const FGameplayAttribute& Attribute : AgHUDWidgetPrivate::PlayerAttributes())
+	{
+		ASC->GetGameplayAttributeValueChangeDelegate(Attribute).RemoveAll(this);
+	}
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved).RemoveAll(this);
+	ASC->AbilitySpecDirtiedCallbacks.RemoveAll(this);
+	ASC->AbilityCommittedCallbacks.RemoveAll(this);
 }
 
 void UAgHUDWidget::UpdateStatusPanel()
@@ -211,6 +186,7 @@ void UAgHUDWidget::UpdatePlayer()
 		SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
 	}
 	UpdatePotion();
+	UpdateUPGauge();
 	UpdateSkillSlots();
 }
 
@@ -223,47 +199,54 @@ void UAgHUDWidget::UpdatePotion()
 	}
 }
 
-void UAgHUDWidget::UpdateSkillSlots()
+void UAgHUDWidget::UpdateUPGauge()
 {
-	const UAgAbilitySystemComponent* ASC = PlayerASC.Get();
-	if (!ASC)
-	{
-		return;
-	}
-
-	for (UAgSkillSlot* SkillSlot : GetSkillSlots())
-	{
-		SkillSlot->UpdateAbility();
-	}
-
-	if (UMaterialInstanceDynamic* Gauge = UPGauge->GetDynamicMaterial())
+	const UAbilitySystemComponent* ASC = PlayerASC.Get();
+	UMaterialInstanceDynamic* Gauge = ASC ? UPGauge->GetDynamicMaterial() : nullptr;
+	if (Gauge)
 	{
 		const float MaxUP = ASC->GetNumericAttribute(UAgAttributeSet::GetMaxUPAttribute());
 		Gauge->SetScalarParameterValue(AgHUDWidgetPrivate::RatioParameter, MaxUP > 0.f ? ASC->GetNumericAttribute(UAgAttributeSet::GetUPAttribute()) / MaxUP : 0.f);
 	}
 }
 
+void UAgHUDWidget::UpdateSkillSlots()
+{
+	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
+	{
+		SkillSlot.Key->UpdateAbility();
+	}
+}
+
 void UAgHUDWidget::UpdateCooldowns()
 {
-	for (UAgSkillSlot* SkillSlot : GetSkillSlots())
+	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
 	{
-		SkillSlot->UpdateCooldown();
+		SkillSlot.Key->UpdateCooldown();
 	}
 }
 
 void UAgHUDWidget::UpdateBoss()
 {
-	const AAgBossCharacter* BossCharacter = Boss.Get();
-	BossStatusPanel->SetVisibility(BossCharacter ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
-	if (BossCharacter)
+	const UWorld* World = GetWorld();
+	const AAgBossCharacter* Boss = World ? World->GetSubsystem<UAgCombatSubsystem>()->FindBoss() : nullptr;
+	BossStatusPanel->SetVisibility(Boss ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+	if (Boss)
 	{
-		BossNameText->SetText(BossCharacter->GetCharacterData()->DisplayName);
+		BossNameText->SetText(Boss->GetCharacterData()->DisplayName);
 	}
 }
 
-TArray<UAgSkillSlot*, TInlineAllocator<6>> UAgHUDWidget::GetSkillSlots() const
+TArray<TPair<UAgSkillSlot*, FGameplayTag>, TInlineAllocator<6>> UAgHUDWidget::GetSkillSlots() const
 {
-	return {Skill1Slot.Get(), Skill2Slot.Get(), Skill3Slot.Get(), Skill4Slot.Get(), UltimateSlot.Get(), PotionSlot.Get()};
+	return {
+		{Skill1Slot.Get(), AgGameplayTags::Input_Skill1},
+		{Skill2Slot.Get(), AgGameplayTags::Input_Skill2},
+		{Skill3Slot.Get(), AgGameplayTags::Input_Skill3},
+		{Skill4Slot.Get(), AgGameplayTags::Input_Skill4},
+		{UltimateSlot.Get(), AgGameplayTags::Input_Ultimate},
+		{PotionSlot.Get(), AgGameplayTags::Input_Potion},
+	};
 }
 
 void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue)
@@ -285,16 +268,18 @@ void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Da
 	{
 		SetBarValue(*PlayerHPBar, *ASC, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute());
 	}
+	else if (Attribute == UAgAttributeSet::GetMPAttribute() || Attribute == UAgAttributeSet::GetMaxMPAttribute())
+	{
+		SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
+	}
+	else if (Attribute == UAgAttributeSet::GetPotionAttribute() || Attribute == UAgAttributeSet::GetMaxPotionAttribute())
+	{
+		UpdatePotion();
+	}
 	else
 	{
-		if (Attribute == UAgAttributeSet::GetMPAttribute() || Attribute == UAgAttributeSet::GetMaxMPAttribute())
-		{
-			SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
-		}
-		else if (Attribute == UAgAttributeSet::GetPotionAttribute() || Attribute == UAgAttributeSet::GetMaxPotionAttribute())
-		{
-			UpdatePotion();
-		}
-		UpdateSkillSlots();
+		UpdateUPGauge();
 	}
+	// 슬롯의 흐림은 어빌리티 정의의 비용과 발동 조건이 정하므로, 어느 자원이 바뀌어도 다시 봅니다.
+	UpdateSkillSlots();
 }

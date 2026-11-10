@@ -27,7 +27,6 @@ public:
 	AAgCharacterBase* GetTarget() const;
 
 	bool IsEnemyReacting() const;
-	bool IsEnemyFlinching() const;
 
 	bool IsTargetNoticed() const;
 

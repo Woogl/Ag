@@ -953,9 +953,6 @@
     "ActivationBlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.NonCombat"],
     "ActivationOwnedTags": ["State.Invincible"],
     "CancelAbilitiesWithTag": ["Ability.Enemy.Pattern"],
-    "AbilityTriggers": [
-      {"TriggerTag": "Event.PhaseTransition"}
-    ],
     "Montage": {
       "Asset": "/Game/Animations/AM_Boss_PhaseTransition.AM_Boss_PhaseTransition",
       "Sections": {
