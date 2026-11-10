@@ -92,8 +92,8 @@
     "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
-      "HP": 10000,
-      "MaxHP": 10000,
+      "HP": 100000,
+      "MaxHP": 100000,
       "PP": 1000,
       "MaxPP": 1000,
       "ATK": 100
@@ -120,8 +120,8 @@
     "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
-      "HP": 10000,
-      "MaxHP": 10000,
+      "HP": 100000,
+      "MaxHP": 100000,
       "PP": 1000,
       "MaxPP": 1000,
       "ATK": 100

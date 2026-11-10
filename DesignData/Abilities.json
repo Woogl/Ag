@@ -351,7 +351,7 @@
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.87, "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 1.05, "Effect": "Busy"},
-          {"Task": "AreaHit", "Start": 1.03, "Damage": {"HPMultiplier": 2, "PPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 400}, "Cue": "GameplayCue.PunishingEdge"}
+          {"Task": "AreaHit", "Start": 1.03, "Damage": {"HPMultiplier": 2, "PPMultiplier": 2, "HitReaction": "KnockDown", "bGuardable": true}, "Area": {"Preset": "Hit", "Range": 400}, "Cue": "GameplayCue.PunishingEdge"}
         ]
       }
     }
