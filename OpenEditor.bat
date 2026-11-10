@@ -22,7 +22,15 @@ if not defined ENGINE (
     exit /b 1
 )
 
-rem 기획자가 새 C++ 파일을 받고 솔루션 재생성을 잊어도 되도록 매번 재생성한다. 바뀐 파일만 다시 쓴다.
+rem 기획자가 새 C++ 파일을 받고 솔루션 재생성을 잊어도 되도록, 소스 파일 목록·빌드 설정·엔진이 지난 재생성 뒤 바뀌었으면 재생성한다.
+set "STAMP=%~dp0Intermediate\ProjectFiles\OpenEditor.stamp"
+set "FINGERPRINT="
+set "OLDPRINT="
+for /f "usebackq delims=" %%H in (`powershell -NoProfile -Command "$root = Split-Path -LiteralPath $env:PROJECT; $lines = @($env:ENGINE, (Get-FileHash -LiteralPath $env:PROJECT).Hash); foreach ($dir in 'Source', 'Plugins') { $p = Join-Path $root $dir; if (Test-Path -LiteralPath $p) { Get-ChildItem -LiteralPath $p -Recurse -File | Where-Object { $_.FullName -notmatch '\\(Binaries|Intermediate)\\' } | Sort-Object FullName | ForEach-Object { $lines += $_.FullName.Substring($root.Length); if ($_.Extension -in '.cs', '.uplugin') { $lines += (Get-FileHash -LiteralPath $_.FullName).Hash } } } }; $bytes = [Text.Encoding]::UTF8.GetBytes($lines -join [char]10); [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($bytes)).Replace('-', '')"`) do set "FINGERPRINT=%%H"
+if exist "%STAMP%" set /p OLDPRINT=<"%STAMP%"
+if not exist "%~dp0Intermediate\ProjectFiles\Ag.vcxproj" set "OLDPRINT="
+if defined FINGERPRINT if "%FINGERPRINT%"=="%OLDPRINT%" goto Build
+
 echo 솔루션 파일을 다시 만듭니다.
 call "%ENGINE%\Engine\Build\BatchFiles\Build.bat" -ProjectFiles "-Project=%PROJECT%" -Game -Rocket
 if errorlevel 1 (
@@ -31,7 +39,9 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+if defined FINGERPRINT >"%STAMP%" echo %FINGERPRINT%
 
+:Build
 echo 빌드합니다. 바뀐 코드가 없으면 금방 끝납니다.
 call "%ENGINE%\Engine\Build\BatchFiles\Build.bat" AgEditor Win64 DebugGame "-Project=%PROJECT%" -WaitMutex
 if errorlevel 1 (
