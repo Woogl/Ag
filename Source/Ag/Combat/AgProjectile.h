@@ -26,7 +26,7 @@ public:
 
 	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability) override;
 	void Reflect(AAgCharacterBase& Defender);
-	/** 적중·가드·가드 브레이크로 피해를 준 뒤 불립니다. */
+	/** 적중·가드로 피해를 준 뒤 불립니다. */
 	void OnDamageApplied();
 
 protected:

@@ -309,7 +309,7 @@ def _warmed_up():
 def _record(t):
     """한 프레임의 기록. 플레이어는 p로 시작하는 값, 적은 그 키(b, e0…)로 시작하는 값이다."""
     velocity = ctx.player.get_velocity()
-    row = {"t": round(t, 3), "pm": ctx.montage("p"), "pHP": ctx.attr("p", "HP"), "pSP": ctx.attr("p", "SP"),
+    row = {"t": round(t, 3), "pm": ctx.montage("p"), "pHP": ctx.attr("p", "HP"),
            "pMP": ctx.attr("p", "MP"), "pUP": ctx.attr("p", "UP"), "guard": ctx.has("p", "State.Guarding"),
            "pdead": ctx.has("p", "State.Dead"), "pvz": round(velocity.z, 1), "pspeed": round(math.hypot(velocity.x, velocity.y), 1),
            "fov": round(ctx.fov(), 2)}

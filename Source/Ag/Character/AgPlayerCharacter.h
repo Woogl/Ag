@@ -79,8 +79,6 @@ private:
 
 	void HandleAbilityActivated(UGameplayAbility* Ability);
 
-	bool WantsSprint() const;
-	void HandleSPChanged(const FOnAttributeChangeData& Data);
 	void TryMoveCancel();
 
 	void ToggleLockOn();

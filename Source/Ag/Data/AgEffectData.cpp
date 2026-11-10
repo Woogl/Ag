@@ -93,7 +93,6 @@ UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 			Effect->AddComponent<UAgDamageResultGameplayEffectComponent>();
 			break;
 		case EAgEffect::Resource:
-			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetSPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_SP));
 			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetMPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_MP));
 			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetUPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_UP));
 			break;
@@ -173,9 +172,8 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	return Effect;
 }
 
-void AgEffectData::SetResourceAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP)
+void AgEffectData::SetResourceAmounts(FGameplayEffectSpec& Spec, float MP, float UP)
 {
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_SP, SP);
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, MP);
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UP);
 }

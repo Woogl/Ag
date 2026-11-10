@@ -78,7 +78,7 @@ def evaluate(c):                     # (전체 통과 여부, 판정 항목 목�
 | `spans(who, tag)` | `WATCH_TAGS`의 태그가 붙어 있던 구간 [(시작, 끝)] |
 | `pos()`, `forward()` | 플레이어 위치와 앞 방향 |
 | `banner(text, key)` | 화면에 글자 한 줄을 더합니다. 같은 `key`로 다시 부르면 그 줄이 바뀝니다. |
-| `rows`, `notes` | 프레임마다 기록한 값, 결과에 남길 메모. 기록은 플레이어의 몽타주(`pm`)·HP·SP·MP·UP·가드·사망·수직 속도(`pvz`)·수평 속력(`pspeed`), 카메라 시야각(`fov`), 적마다 그 키를 붙인 몽타주(`bm`)·HP·PP·사망·`focus`·`known`·`seen`·`angle`, 캐릭터별 `WATCH_TAGS` 태그(`tags`)입니다. |
+| `rows`, `notes` | 프레임마다 기록한 값, 결과에 남길 메모. 기록은 플레이어의 몽타주(`pm`)·HP·MP·UP·가드·사망·수직 속도(`pvz`)·수평 속력(`pspeed`), 카메라 시야각(`fov`), 적마다 그 키를 붙인 몽타주(`bm`)·HP·PP·사망·`focus`·`known`·`seen`·`angle`, 캐릭터별 `WATCH_TAGS` 태그(`tags`)입니다. |
 
 - 더 필요한 것은 단계 함수에서 `unreal` 모듈로 직접 합니다. 액터 속성을 쓸 때는 `set_editor_property(이름, 값, unreal.PropertyAccessChangeNotifyMode.NEVER)`로 씁니다. 알림과 함께 쓰면 엔진이 컴포넌트를 다시 등록하면서 캐릭터의 어빌리티가 모두 사라집니다.
 - 키·마우스 입력은 [확인용 입력](<../../Docs/Architecture/개발 도구와 검증.md>)의 콘솔 명령으로 들어가 사람의 입력과 같은 경로를 거치고, 넣은 다음 프레임에 처리됩니다.

@@ -46,7 +46,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_Juggle);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_GuardPushback);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_HitReaction_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_Executed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Reaction_PhaseTransition);
@@ -60,7 +59,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_KnockDown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_KnockUp);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_GuardPushback);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_HitReaction_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_SuperArmor);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Busy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Acting);
@@ -86,7 +84,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Cutscene);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_NonCombat);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Aiming);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_SPDelay);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Regen_PPDelay);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_KnockDown);
@@ -101,7 +98,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_ArmLeft);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Hit_Stagger_Body);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Pushback);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Guard_Break);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Groggy);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Executed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Death);
@@ -115,7 +111,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Apex);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_MoveBlocked);
 
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_SP);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_MP);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_UP);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(SetByCaller_HPMultiplier);
@@ -134,7 +129,6 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Parry);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Guard);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_GuardBreak);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Effect_Damage_Result_Hit);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateScreen);

@@ -5,12 +5,12 @@
 
 bool FAgResourceCost::IsFree() const
 {
-	return SP <= 0.f && MP <= 0.f && UP <= 0.f;
+	return MP <= 0.f && UP <= 0.f;
 }
 
 void FAgResourceCost::AddToSpec(FGameplayEffectSpec& Spec) const
 {
-	AgEffectData::SetResourceAmounts(Spec, -SP, -MP, -UP);
+	AgEffectData::SetResourceAmounts(Spec, -MP, -UP);
 }
 
 bool FAgPatternSelection::IsAvailable(float TargetDistance, int32 Phase) const

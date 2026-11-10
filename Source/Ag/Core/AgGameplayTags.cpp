@@ -39,14 +39,13 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_LockOn, "Ability.LockOn", "락온. 행동이 아니라 행동 상태의 제한과 취소를 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_HitReward, "Ability.HitReward", "공격 적중에 의한 MP·UP 충전 (Event.AttackHit으로 발동)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction, "Ability.Reaction.HitReaction",
-		"상태 우선순위 4의 피격 반응: 움찔 경직, 넉업(저글 포함), 넉다운, 가드 밀림, 가드 브레이크");
+		"상태 우선순위 4의 피격 반응: 움찔 경직, 넉업(저글 포함), 넉다운, 가드 밀림");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_Flinch, "Ability.Reaction.HitReaction.Flinch");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockDown, "Ability.Reaction.HitReaction.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_KnockUp, "Ability.Reaction.HitReaction.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_HitReaction_Juggle, "Ability.Reaction.HitReaction.Juggle",
 		"넉업으로 떠 있는 동안 움찔에 맞아 다시 조금 떠오름");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_GuardPushback, "Ability.Reaction.HitReaction.GuardPushback");
-	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_HitReaction_GuardBreak, "Ability.Reaction.HitReaction.GuardBreak");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_Groggy, "Ability.Reaction.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_Reaction_Executed, "Ability.Reaction.Executed", "처형 피격 (그로기를 종료하고 처형 상태로 전환)");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Reaction_PhaseTransition, "Ability.Reaction.PhaseTransition");
@@ -60,7 +59,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_KnockDown, "State.HitReaction.KnockDown");
 	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_KnockUp, "State.HitReaction.KnockUp");
 	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_GuardPushback, "State.HitReaction.GuardPushback");
-	UE_DEFINE_GAMEPLAY_TAG(State_HitReaction_GuardBreak, "State.HitReaction.GuardBreak");
 	UE_DEFINE_GAMEPLAY_TAG(State_SuperArmor, "State.SuperArmor");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Busy, "State.Busy", "행동 중. 후딜 전까지 다른 행동을 받지 않음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Acting, "State.Acting", "모션이 있는 플레이어 행동이 실행 중. 그동안 이동 입력을 무시함");
@@ -87,7 +85,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Cutscene, "State.Cutscene", "컷신 재생 중 (PlayCutscene Task가 도는 동안)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_NonCombat, "State.NonCombat", "적이 전투 중이 아님 (비전투 상태, 플레이어 사망 뒤 대기)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Aiming, "State.Aiming", "적이 조준 중. 이 동안만 상하 조준 높이를 갱신함");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_SPDelay, "State.Regen.SPDelay", "SP 리젠 대기");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(State_Regen_PPDelay, "State.Regen.PPDelay", "PP 리젠 대기");
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_KnockDown, "Event.Hit.KnockDown");
@@ -102,7 +99,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_ArmLeft, "Event.Hit.Stagger.ArmLeft", "왼쪽 어깨·팔에 맞은 움찔");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Hit_Stagger_Body, "Event.Hit.Stagger.Body", "배·골반·다리에 맞았거나 맞은 부위가 없는 움찔");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Pushback, "Event.Guard.Pushback");
-	UE_DEFINE_GAMEPLAY_TAG(Event_Guard_Break, "Event.Guard.Break");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Groggy, "Event.Groggy");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Executed, "Event.Executed");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Death, "Event.Death");
@@ -115,12 +111,11 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackHit, "Event.AttackHit",
 		"내 공격의 한 타가 처음 적중함. 그 피해의 효과 컨텍스트와 스펙 태그(InstigatorTags)를 실음 (적중 보상)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked",
-		"내 공격이 가드·가드 브레이크·패리로 막힘. 그 피해의 효과 컨텍스트를 실음 (DashThrust의 돌진이 멈춤)");
+		"내 공격이 가드·패리로 막힘. 그 피해의 효과 컨텍스트를 실음 (DashThrust의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Landed, "Event.Landed", "캐릭터가 착지함 (캐릭터가 자기에게 보냄)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Apex, "Event.Apex", "띄워진(Launch) 뒤 수직 속도가 오름에서 내림으로 바뀜 (캐릭터가 자기에게 보냄)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_MoveBlocked, "Event.MoveBlocked", "이동이 벽에 막힘. 턱을 넘지 못한 충돌만 (캐릭터가 자기에게 보냄)");
 
-	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_SP, "SetByCaller.SP");
 	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_MP, "SetByCaller.MP");
 	UE_DEFINE_GAMEPLAY_TAG(SetByCaller_UP, "SetByCaller.UP");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(SetByCaller_HPMultiplier, "SetByCaller.HPMultiplier", "공격의 HP 배율");
@@ -139,14 +134,13 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_PerfectDodge, "Effect.Damage.Result.PerfectDodge", "피격 결과 극한 회피");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Parry, "Effect.Damage.Result.Parry", "피격 결과 패리");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Guard, "Effect.Damage.Result.Guard", "피격 결과 가드");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_GuardBreak, "Effect.Damage.Result.GuardBreak", "피격 결과 가드 브레이크");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Effect_Damage_Result_Hit, "Effect.Damage.Result.Hit", "피격 결과 일반 피격");
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateScreen, "GameplayCue.UltimateScreen", "궁극기 포스트프로세스");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PerfectDodgeScreen, "GameplayCue.PerfectDodgeScreen", "극한 회피 성공 포스트프로세스");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PerfectDodge, "GameplayCue.PerfectDodge", "극한 회피 성공 연출");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Hit, "GameplayCue.Hit", "일반 피격의 이펙트와 효과음");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Guard, "GameplayCue.Guard", "가드·가드 브레이크의 이펙트와 효과음");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Guard, "GameplayCue.Guard", "가드의 이펙트와 효과음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Parry, "GameplayCue.Parry", "패리 전용 이펙트와 효과음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateSlashes, "GameplayCue.UltimateSlashes",
 		"궁극기 베기 선: 켜진 동안 실행마다 하나씩 새기고, 꺼지면 선마다 터뜨린 뒤 모두 지움");

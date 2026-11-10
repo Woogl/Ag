@@ -64,10 +64,6 @@ void UAgAttributeSet::ClampToRange(const FGameplayAttribute& Attribute, float& V
 	{
 		Value = FMath::Clamp(Value, 0.f, GetMaxHP());
 	}
-	else if (Attribute == GetSPAttribute())
-	{
-		Value = FMath::Clamp(Value, 0.f, GetMaxSP());
-	}
 	else if (Attribute == GetMPAttribute())
 	{
 		Value = FMath::Clamp(Value, 0.f, GetMaxMP());

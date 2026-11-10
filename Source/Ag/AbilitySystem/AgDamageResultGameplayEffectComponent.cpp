@@ -244,17 +244,15 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 
 	const bool bParry = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Parry);
 	const bool bGuard = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Guard);
-	const bool bGuardBreak = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_GuardBreak);
 	const bool bHit = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit);
-	if (!bParry && !bGuard && !bGuardBreak && !bHit)
+	if (!bParry && !bGuard && !bHit)
 	{
 		return;
 	}
 	UAISense_Damage::ReportDamageEvent(Target, Target, Attacker, 1.f, Attacker->GetActorLocation(), Context.GetOrigin());
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
-	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, parry %d, guard %d, guard break %d, HP now %.0f, PP now %.0f, SP now %.0f"),
-		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, bGuardBreak, TargetStats->GetHP(), TargetStats->GetPP(),
-		TargetStats->GetSP());
+	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, parry %d, guard %d, HP now %.0f, PP now %.0f"),
+		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, TargetStats->GetHP(), TargetStats->GetPP());
 
 	// 사망 판정(어트리뷰트 세트)이 이 처리보다 먼저이므로, 이번 타격으로 죽었으면 반응하지 않습니다.
 	FGameplayTag Reaction;
@@ -273,10 +271,6 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		{
 			Reaction = AgDamageResultGameplayEffectComponentPrivate::StartGuardReaction(Causer, Target, SpecTags, Context);
 			AgDamageResultGameplayEffectComponentPrivate::LockMove(*TargetASC);
-		}
-		else if (bGuardBreak)
-		{
-			AgDamageResultGameplayEffectComponentPrivate::SendEvent(Target, AgGameplayTags::Event_Guard_Break, Causer);
 		}
 		else
 		{
@@ -308,9 +302,9 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	const bool bParryDamage = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Parry);
 	if (!bParryDamage)
 	{
-		const FGameplayTag ResultCue = bParry                    ? AgGameplayTags::GameplayCue_Parry
-		                               : (bGuard || bGuardBreak) ? AgGameplayTags::GameplayCue_Guard
-		                                                         : AgGameplayTags::GameplayCue_Hit;
+		const FGameplayTag ResultCue = bParry   ? AgGameplayTags::GameplayCue_Parry
+		                               : bGuard ? AgGameplayTags::GameplayCue_Guard
+		                                        : AgGameplayTags::GameplayCue_Hit;
 		TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
 	}
 	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.

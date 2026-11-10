@@ -33,9 +33,8 @@ namespace AgHUDWidgetPrivate
 	TArray<FGameplayAttribute> PlayerAttributes()
 	{
 		return {UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute(), UAgAttributeSet::GetMPAttribute(),
-			UAgAttributeSet::GetMaxMPAttribute(), UAgAttributeSet::GetSPAttribute(), UAgAttributeSet::GetMaxSPAttribute(),
-			UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute(), UAgAttributeSet::GetPotionAttribute(),
-			UAgAttributeSet::GetMaxPotionAttribute()};
+			UAgAttributeSet::GetMaxMPAttribute(), UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute(),
+			UAgAttributeSet::GetPotionAttribute(), UAgAttributeSet::GetMaxPotionAttribute()};
 	}
 
 	const TArray<FGameplayTag>& PlayerTags()
@@ -210,7 +209,6 @@ void UAgHUDWidget::UpdatePlayer()
 	{
 		SetBarValue(*PlayerHPBar, *ASC, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute());
 		SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
-		SetBarValue(*PlayerSPBar, *ASC, UAgAttributeSet::GetSPAttribute(), UAgAttributeSet::GetMaxSPAttribute(), false);
 	}
 	UpdatePotion();
 	UpdateSkillSlots();
@@ -268,9 +266,9 @@ TArray<UAgSkillSlot*, TInlineAllocator<6>> UAgHUDWidget::GetSkillSlots() const
 	return {Skill1Slot.Get(), Skill2Slot.Get(), Skill3Slot.Get(), Skill4Slot.Get(), UltimateSlot.Get(), PotionSlot.Get()};
 }
 
-void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop)
+void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue)
 {
-	Bar.SetValue(ASC.GetNumericAttribute(Value), ASC.GetNumericAttribute(MaxValue), bShowDrop);
+	Bar.SetValue(ASC.GetNumericAttribute(Value), ASC.GetNumericAttribute(MaxValue));
 }
 
 void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data)
@@ -286,13 +284,6 @@ void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Da
 	if (Attribute == UAgAttributeSet::GetHPAttribute() || Attribute == UAgAttributeSet::GetMaxHPAttribute())
 	{
 		SetBarValue(*PlayerHPBar, *ASC, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute());
-	}
-	else if (Attribute == UAgAttributeSet::GetSPAttribute() || Attribute == UAgAttributeSet::GetMaxSPAttribute())
-	{
-		// 대미지 GE가 SP를 줄이는 것은 가드와 가드 브레이크뿐입니다.
-		const UGameplayEffect* Effect = Data.GEModData ? Data.GEModData->EffectSpec.Def.Get() : nullptr;
-		const bool bGuardDrop = Data.NewValue < Data.OldValue && Effect && Effect->GetAssetTags().HasTagExact(AgGameplayTags::Effect_Damage);
-		SetBarValue(*PlayerSPBar, *ASC, UAgAttributeSet::GetSPAttribute(), UAgAttributeSet::GetMaxSPAttribute(), bGuardDrop);
 	}
 	else
 	{

@@ -215,7 +215,7 @@
 | 궁극기 | 컷신 `Attack_Heavy1_Start` → `Attack_Heavy_Mid`(반복), 베기 `UnequipB`, 칼 뽑기 `Equip` | `Attack_Heavy1_Start`는 몸을 낮추고 칼을 뒤로 거두는 자세라 컷신에서 기다리는 동작으로 씁니다. `UnequipB`는 칼을 크게 휘두른 뒤 천천히 허리로 가져가 끝(2.07초)에서 칼집에 넣고, 끝 자세가 `Equip`의 첫 자세와 정확히 같아 칼 뽑기로 바로 이어집니다. `Equip`은 `Idle1` 자세로 끝납니다. 컷신에서 베기로 넘어갈 때는 자세가 크게 달라 튀지만, 카메라가 바뀌는 순간이라 보이지 않습니다. |
 | 처형 | Warrior 팩 `Execute` | 찌르고 버티다 발차기로 칼을 뽑는 짧은 처형입니다. 보스 쪽은 Warrior 팩의 짝 모션 `Executed`(처형 피격)·`Executed_Death`(처형 사망)입니다. ('Warrior 팩의 처형') |
 | 회피 | 이동 입력이 없으면 `Dodge` | 제자리(뒤로 물러나기) 회피에 씁니다. 입력이 있는 회피는 ACS2 Combo Skill 팩의 `Step_Slide_F`를, 극한 회피는 Dodge and Evade 팩을 씁니다([플레이어 캐릭터 - 린](<../Design/Content/플레이어 캐릭터 - 린.md>), [아트 표현 사양](<아트 표현 사양.md>) 참고). |
-| 가드 / 가드 움찔 / 가드 밀림 / 가드 브레이크 | `Guard` 계열 / `Guard_Hit1` / `Guard_Hit2`·`3` / `Guard_Break` | 가드 자세는 양손으로 칼을 쥡니다(두 손 사이 17cm, `Idle1`과 같음). |
+| 가드 / 가드 움찔 / 가드 밀림 | `Guard` 계열 / `Guard_Hit1` / `Guard_Hit2`·`3` | 가드 자세는 양손으로 칼을 쥡니다(두 손 사이 17cm, `Idle1`과 같음). |
 | 가드 중 제자리 회전 | `Guard_Turn45L`·`45R`·`90L`·`90R` | [ABP와 로코모션](<ABP와 로코모션.md>) '제자리 회전' |
 | 제자리 회전 | `Turn_45L`·`45R`·`90L`·`90R` | 처음·끝 자세가 `Idle1`이라 서 있는 자세(`Idle2`)와 다리가 15.7cm 다릅니다. [ABP와 로코모션](<ABP와 로코모션.md>) '제자리 회전' |
 | 패리 | `Parry` | |

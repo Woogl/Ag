@@ -72,9 +72,7 @@
   <rect x="1341" y="392" width="84" height="4" fill="#F2A33A"/>
   <text x="1400" y="362" font-size="14" fill="#9aa4b1" text-anchor="middle">(전투·락온·최근 피해 시)</text>
 
-  <!-- [1] 플레이어 상태: SP / HP / MP -->
-  <rect x="48" y="974" width="400" height="8" fill="#000000" fill-opacity="0.5"/>
-  <rect x="48" y="974" width="300" height="8" fill="#4CC38A"/>
+  <!-- [1] 플레이어 상태: HP / MP -->
   <rect x="48" y="988" width="400" height="16" fill="#000000" fill-opacity="0.5"/>
   <rect x="48" y="988" width="340" height="16" fill="#D94545"/>
   <rect x="388" y="988" width="32" height="16" fill="#FFFFFF" fill-opacity="0.7"/>
@@ -83,12 +81,12 @@
   <rect x="48" y="1012" width="160" height="10" fill="#3D8BFD"/>
   <text x="460" y="1026" font-size="24" fill="#FFFFFF">40 / 100</text>
 
-  <!-- 회복병: SP 바 12px 위, 지름 80px, 키는 칸 중심에서 오른쪽 45px -->
-  <circle cx="88" cy="922" r="40" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5"/>
-  <rect x="61" y="895" width="54" height="54" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <circle cx="133" cy="922" r="14" fill="#000000" fill-opacity="0.55"/>
-  <text x="133" y="929" font-size="18.7" fill="#FFFFFF" text-anchor="middle">R</text>
-  <text x="155" y="931" font-size="24" fill="#FFFFFF">2/3</text>
+  <!-- 회복병: HP 바 12px 위, 지름 80px, 키는 칸 중심에서 오른쪽 45px -->
+  <circle cx="88" cy="936" r="40" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5"/>
+  <rect x="61" y="909" width="54" height="54" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <circle cx="133" cy="936" r="14" fill="#000000" fill-opacity="0.55"/>
+  <text x="133" y="943" font-size="18.7" fill="#FFFFFF" text-anchor="middle">R</text>
+  <text x="155" y="945" font-size="24" fill="#FFFFFF">2/3</text>
 
   <!-- [2] 슬롯: 스킬 1~4 십자와 궁극기 (오른쪽 아래), 지름 80px, 십자 가운데 (1736, 917) -->
   <g fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5">

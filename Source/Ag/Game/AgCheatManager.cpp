@@ -93,7 +93,7 @@ namespace AgCheatManagerPrivate
 	}
 
 	constexpr EAgCheatSwitch AllSwitches[] = {EAgCheatSwitch::Invincible, EAgCheatSwitch::NoCooldown, EAgCheatSwitch::InfiniteMP,
-		EAgCheatSwitch::InfiniteSP, EAgCheatSwitch::InfiniteUP};
+		EAgCheatSwitch::InfiniteUP};
 
 	struct FAgLockedResource
 	{
@@ -107,8 +107,6 @@ namespace AgCheatManagerPrivate
 		{
 			case EAgCheatSwitch::InfiniteMP:
 				return {UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute()};
-			case EAgCheatSwitch::InfiniteSP:
-				return {UAgAttributeSet::GetSPAttribute(), UAgAttributeSet::GetMaxSPAttribute()};
 			case EAgCheatSwitch::InfiniteUP:
 				return {UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute()};
 			default:
@@ -290,11 +288,6 @@ void UAgCheatManager::AgSetUP(float Percent)
 void UAgCheatManager::AgInfiniteMP(const FString& OnOff)
 {
 	RunSwitch(TEXT("AgInfiniteMP"), OnOff, EAgCheatSwitch::InfiniteMP);
-}
-
-void UAgCheatManager::AgInfiniteSP(const FString& OnOff)
-{
-	RunSwitch(TEXT("AgInfiniteSP"), OnOff, EAgCheatSwitch::InfiniteSP);
 }
 
 void UAgCheatManager::AgInfiniteUP(const FString& OnOff)

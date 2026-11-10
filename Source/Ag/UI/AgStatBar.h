@@ -15,8 +15,8 @@ class UAgStatBar : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetValue(float Value, float MaxValue, bool bShowDrop = true);
-	void SetRatio(float Ratio, bool bShowDrop = true);
+	void SetValue(float Value, float MaxValue);
+	void SetRatio(float Ratio);
 	void ClearTrail();
 
 protected:

@@ -103,8 +103,8 @@
     "ActivationOwnedTags": ["State.Acting", "State.MoveCancel"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "bAllowRetrigger": true,
-    "Cost": {"SP": 20},
-    "Cooldown": 0.4,
+    "Cooldown": 1,
+    "MaxCharges": 2,
     "Tasks": [
       {"Task": "RootMotion", "Direction": "MoveInput"}
     ],
@@ -241,8 +241,7 @@
     ],
     "Tasks": [
       {"Task": "RootMotion"},
-      {"Task": "ApplyEffect", "Effect": "ParryReward"},
-      {"Task": "ApplyEffect", "Effect": "SPRegenDelay", "bRemoveOnEnd": false}
+      {"Task": "ApplyEffect", "Effect": "ParryReward"}
     ],
     "Montage": {
       "Asset": "/Game/Animations/AM_Player_Parry.AM_Player_Parry",
@@ -417,7 +416,6 @@
     "ActivationOwnedTags": ["State.Sprinting"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Tasks": [
-      {"Task": "ApplyEffect", "Effect": "SprintDrain"},
       {"Task": "ApplyEffect", "Effect": "SprintSpeed"},
       {"Task": "ApplyEffect", "Effect": "DashAttackReady"}
     ]
@@ -471,7 +469,7 @@
   },
   "Flinch": {
     "AbilityTags": ["Ability.Reaction.HitReaction.Flinch"],
-    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Execution", "State.Dead", "State.SuperArmor", "State.Airborne"],
+    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.Execution", "State.Dead", "State.SuperArmor", "State.Airborne"],
     "ActivationOwnedTags": ["State.HitReaction.Flinch"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
     "AbilityTriggers": [
@@ -494,7 +492,7 @@
   "FlinchAir": {
     "AbilityTags": ["Ability.Reaction.HitReaction.Flinch"],
     "ActivationRequiredTags": ["State.Airborne"],
-    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak", "State.Execution", "State.Dead", "State.SuperArmor"],
+    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.Execution", "State.Dead", "State.SuperArmor"],
     "ActivationOwnedTags": ["State.HitReaction.Flinch"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
     "AbilityTriggers": [
@@ -621,22 +619,6 @@
           {"Task": "ApplyEffect", "Start": 0.5, "Effect": "GuardCounterChance", "bRemoveOnEnd": false}
         ]
       }
-    }
-  },
-  "GuardBreak": {
-    "AbilityTags": ["Ability.Reaction.HitReaction.GuardBreak"],
-    "ActivationBlockedTags": ["State.Groggy", "State.Execution", "State.Dead", "State.SuperArmor"],
-    "ActivationOwnedTags": ["State.HitReaction.GuardBreak"],
-    "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction"],
-    "AbilityTriggers": [
-      {"TriggerTag": "Event.Guard.Break"}
-    ],
-    "bAllowRetrigger": true,
-    "Tasks": [
-      {"Task": "RootMotion"}
-    ],
-    "Montage": {
-      "Asset": "/Game/Animations/AM_Player_GuardBreak.AM_Player_GuardBreak"
     }
   },
   "DoubleStrike": {
@@ -931,7 +913,7 @@
   },
   "Groggy": {
     "AbilityTags": ["Ability.Reaction.Groggy"],
-    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback", "State.HitReaction.GuardBreak"],
+    "ActivationBlockedTags": ["State.HitReaction.KnockDown", "State.HitReaction.KnockUp", "State.HitReaction.GuardPushback"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint", "Ability.Enemy.Pattern", "Ability.Reaction.HitReaction.Flinch"],
     "AbilityTriggers": [
       {"TriggerTag": "State.Groggy", "TriggerSource": "OwnedTagPresent"}

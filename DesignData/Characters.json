@@ -6,8 +6,6 @@
     "Attributes": {
       "HP": 1000,
       "MaxHP": 1000,
-      "SP": 100,
-      "MaxSP": 100,
       "MP": 0,
       "MaxMP": 100,
       "UP": 0,
@@ -44,10 +42,8 @@
       "KnockDown",
       "KnockUp",
       "Juggle",
-      "GuardPushback",
-      "GuardBreak"
-    ],
-    "Effects": ["SPRegen"]
+      "GuardPushback"
+    ]
   },
   "Boss": {
     "DisplayName": "커스터",

@@ -22,9 +22,6 @@ struct FAgResourceCost
 	GENERATED_BODY()
 
 	UPROPERTY()
-	float SP = 0.f;
-
-	UPROPERTY()
 	float MP = 0.f;
 
 	UPROPERTY()

@@ -66,11 +66,6 @@
         "/Game/Camera/CS_Medium.CS_Medium_C"
       ]
     },
-    "GuardBreak": {
-      "CameraShakes": [
-        "/Game/Camera/CS_Large.CS_Large_C"
-      ]
-    },
     "ExecutionStab": {
       "CameraShakes": [
         "/Game/Camera/CS_Small.CS_Small_C"

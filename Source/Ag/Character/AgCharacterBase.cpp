@@ -394,14 +394,12 @@ void AAgCharacterBase::InitializeAttributes()
 
 	// 최대치를 먼저 넣습니다. 현재 값이 최대치에 맞춰 잘리기 때문입니다.
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxHPAttribute(), Attributes.MaxHP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxSPAttribute(), Attributes.MaxSP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxMPAttribute(), Attributes.MaxMP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxUPAttribute(), Attributes.MaxUP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPPAttribute(), Attributes.MaxPP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPotionAttribute(), Attributes.MaxPotion);
 
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetHPAttribute(), Attributes.HP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetSPAttribute(), Attributes.SP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMPAttribute(), Attributes.MP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetUPAttribute(), Attributes.UP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetPPAttribute(), Attributes.PP);

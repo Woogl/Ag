@@ -4,7 +4,6 @@
 
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
-#include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -104,8 +103,6 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_LockedOn, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleMoveStateChanged);
-	ASC->GetGameplayAttributeValueChangeDelegate(UAgAttributeSet::GetSPAttribute())
-		.AddUObject(this, &ThisClass::HandleSPChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Busy, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_HitReaction, EGameplayTagEventType::NewOrRemoved)
@@ -391,7 +388,6 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	Enders.AddTag(AgGameplayTags::Ability_Action);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockDown);
 	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_KnockUp);
-	Enders.AddTag(AgGameplayTags::Ability_Reaction_HitReaction_GuardBreak);
 	if (const UAgGameplayAbility* AgAbility = Cast<UAgGameplayAbility>(Ability); AgAbility && AgAbility->GetDefinition().AbilityTags.HasAny(Enders))
 	{
 		FGameplayTagContainer Removed;
@@ -406,19 +402,6 @@ void AAgPlayerCharacter::HandleAbilityActivated(UGameplayAbility* Ability)
 	}
 }
 
-bool AAgPlayerCharacter::WantsSprint() const
-{
-	return HeldInputs.Contains(AgGameplayTags::Input_Dodge) && GetAttributeSet()->GetSP() > 0.f;
-}
-
-void AAgPlayerCharacter::HandleSPChanged(const FOnAttributeChangeData& Data)
-{
-	if (Data.NewValue <= 0.f)
-	{
-		GetAbilitySystemComponent()->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Sprint));
-	}
-}
-
 void AAgPlayerCharacter::TryMoveCancel()
 {
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
@@ -428,7 +411,7 @@ void AAgPlayerCharacter::TryMoveCancel()
 	{
 		return;
 	}
-	if (WantsSprint())
+	if (HeldInputs.Contains(AgGameplayTags::Input_Dodge))
 	{
 		ActivateByTag(AgGameplayTags::Ability_Sprint);
 	}

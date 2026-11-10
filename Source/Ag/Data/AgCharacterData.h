@@ -42,12 +42,6 @@ struct FAgAttributes
 	float MaxHP = 0.f;
 
 	UPROPERTY()
-	float SP = 0.f;
-
-	UPROPERTY()
-	float MaxSP = 0.f;
-
-	UPROPERTY()
 	float MP = 0.f;
 
 	UPROPERTY()

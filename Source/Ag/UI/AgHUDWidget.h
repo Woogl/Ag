@@ -37,9 +37,6 @@ protected:
 	TObjectPtr<UWidget> StatusPanel;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgStatBar> PlayerSPBar;
-
-	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgStatBar> PlayerHPBar;
 
 	UPROPERTY(meta = (BindWidget))
@@ -96,7 +93,7 @@ private:
 
 	TArray<UAgSkillSlot*, TInlineAllocator<6>> GetSkillSlots() const;
 
-	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop = true);
+	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue);
 
 	void HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data);
 

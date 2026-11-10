@@ -22,14 +22,6 @@ public:
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxHP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
-	FGameplayAttributeData SP;
-	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, SP)
-
-	UPROPERTY(BlueprintReadOnly, Category = "Stats")
-	FGameplayAttributeData MaxSP;
-	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxSP)
-
-	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MP;
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MP)
 
