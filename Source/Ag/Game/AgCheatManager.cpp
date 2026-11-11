@@ -92,6 +92,18 @@ namespace AgCheatManagerPrivate
 		SourceASC->ApplyGameplayEffectToTarget(Effect, Target.GetAbilitySystemComponent(), 1.f, SourceASC->MakeEffectContext());
 	}
 
+	void SetPlayerResource(const UCheatManager& Cheats, const TCHAR* Command, const FGameplayAttribute& Attribute, const FGameplayAttribute& MaxAttribute, float Percent)
+	{
+		AAgPlayerCharacter* Player = GetPlayer(Cheats);
+		if (!Player)
+		{
+			Report(Cheats, FString::Printf(TEXT("%s: no player character"), Command));
+			return;
+		}
+		const float MaxValue = Player->GetAbilitySystemComponent()->GetNumericAttribute(MaxAttribute);
+		ApplyOverride(*Player, *Player, Attribute, FMath::RoundToFloat(MaxValue * Percent / 100.f));
+	}
+
 	constexpr EAgCheatSwitch AllSwitches[] = {EAgCheatSwitch::Invincible, EAgCheatSwitch::NoCooldown, EAgCheatSwitch::InfiniteMP,
 		EAgCheatSwitch::InfiniteUP};
 
@@ -248,41 +260,17 @@ void UAgCheatManager::AgInvincible(const FString& OnOff)
 
 void UAgCheatManager::AgSetHP(float Percent)
 {
-	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
-	if (!Player)
-	{
-		AgCheatManagerPrivate::Report(*this, TEXT("AgSetHP: no player character"));
-		return;
-	}
-
-	const float HP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxHP() * Percent / 100.f);
-	AgCheatManagerPrivate::ApplyOverride(*Player, *Player, UAgAttributeSet::GetHPAttribute(), HP);
+	AgCheatManagerPrivate::SetPlayerResource(*this, TEXT("AgSetHP"), UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute(), Percent);
 }
 
 void UAgCheatManager::AgSetMP(float Percent)
 {
-	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
-	if (!Player)
-	{
-		AgCheatManagerPrivate::Report(*this, TEXT("AgSetMP: no player character"));
-		return;
-	}
-
-	const float MP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxMP() * Percent / 100.f);
-	AgCheatManagerPrivate::ApplyOverride(*Player, *Player, UAgAttributeSet::GetMPAttribute(), MP);
+	AgCheatManagerPrivate::SetPlayerResource(*this, TEXT("AgSetMP"), UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute(), Percent);
 }
 
 void UAgCheatManager::AgSetUP(float Percent)
 {
-	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
-	if (!Player)
-	{
-		AgCheatManagerPrivate::Report(*this, TEXT("AgSetUP: no player character"));
-		return;
-	}
-
-	const float UP = FMath::RoundToFloat(Player->GetAttributeSet()->GetMaxUP() * Percent / 100.f);
-	AgCheatManagerPrivate::ApplyOverride(*Player, *Player, UAgAttributeSet::GetUPAttribute(), UP);
+	AgCheatManagerPrivate::SetPlayerResource(*this, TEXT("AgSetUP"), UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute(), Percent);
 }
 
 void UAgCheatManager::AgInfiniteMP(const FString& OnOff)

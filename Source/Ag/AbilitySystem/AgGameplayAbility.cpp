@@ -167,6 +167,12 @@ FGameplayEffectSpecHandle UAgGameplayAbility::MakeDamageSpec(const FAgDamage& Da
 	return Spec;
 }
 
+const FAgAbilityData* UAgGameplayAbility::FindDefinition() const
+{
+	const AAgCharacterBase* Character = CurrentActorInfo ? Cast<AAgCharacterBase>(CurrentActorInfo->AvatarActor.Get()) : nullptr;
+	return Character ? Character->FindAbility(CurrentSpecHandle) : nullptr;
+}
+
 const FGameplayEventData* UAgGameplayAbility::GetTriggerEvent() const
 {
 	// 엔진은 발동할 때 받은 실행 정보를 CurrentEventData에 복사해 둡니다. 이벤트 트리거는 부모 태그까지 맞춰 발동하고,
@@ -315,12 +321,6 @@ void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const 
 			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 		}
 	}
-}
-
-const FAgAbilityData* UAgGameplayAbility::FindDefinition() const
-{
-	const AAgCharacterBase* Character = CurrentActorInfo ? Cast<AAgCharacterBase>(CurrentActorInfo->AvatarActor.Get()) : nullptr;
-	return Character ? Character->FindAbility(CurrentSpecHandle) : nullptr;
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const

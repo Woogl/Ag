@@ -19,6 +19,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
+#include "Game/AgGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 
@@ -300,6 +301,14 @@ void AAgCharacterBase::ApplyDeathState()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
+void AAgCharacterBase::NotifyGameModeOfDeath()
+{
+	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
+	{
+		GameMode->HandleCharacterDied(*this);
+	}
+}
+
 void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
 {
 	FGameplayEventData Payload;
@@ -318,7 +327,7 @@ void AAgCharacterBase::DieWithRagdoll(const FVector& PushVelocity)
 
 	ApplyDeathState();
 	StartRagdoll(PushVelocity);
-	OnDied.Broadcast(this);
+	NotifyGameModeOfDeath();
 }
 
 void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)

@@ -287,7 +287,7 @@ bool AAgEnemyCharacter::CanActivatePattern(FName Id) const
 void AAgEnemyCharacter::DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition)
 {
 	ApplyDeathState();
-	OnDied.Broadcast(this);
+	NotifyGameModeOfDeath();
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	FAnimMontageInstance* Instance = AnimInstance && AnimInstance->Montage_Play(&DeathMontage, 1.f, EMontagePlayReturnType::MontageLength, StartPosition) > 0.f

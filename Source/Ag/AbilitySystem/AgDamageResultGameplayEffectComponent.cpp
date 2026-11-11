@@ -27,6 +27,43 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 	const FName GuardCounterChanceEffectId(TEXT("GuardCounterChance"));
 	const FName MoveLockEffectId(TEXT("MoveLock"));
 
+	enum class EAgDamageResult : uint8
+	{
+		Hit,
+		Guard,
+		Parry
+	};
+
+	/** 피해 한 번의 결과 처리(반응, 연출)가 함께 보는 값입니다. */
+	struct FAgDamageOutcome
+	{
+		AAgCharacterBase* Target = nullptr;
+		AAgCharacterBase* Attacker = nullptr;
+		/** 공격자 또는 공격자가 만든 액터(투사체, 충격파)입니다. */
+		AActor* Causer = nullptr;
+		/** 공격의 성질(적용하는 쪽), 피격 결과(실행 계산), 공격한 어빌리티의 태그(엔진)가 모두 스펙 태그에 있습니다. */
+		const FGameplayTagContainer& SpecTags;
+		FGameplayEffectContextHandle Context;
+		EAgDamageResult Result = EAgDamageResult::Hit;
+	};
+
+	TOptional<EAgDamageResult> FindResult(const FGameplayTagContainer& SpecTags)
+	{
+		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Parry))
+		{
+			return EAgDamageResult::Parry;
+		}
+		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Guard))
+		{
+			return EAgDamageResult::Guard;
+		}
+		if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit))
+		{
+			return EAgDamageResult::Hit;
+		}
+		return {};
+	}
+
 	void SendEvent(AActor* Target, const FGameplayTag& EventTag, AActor* Instigator, const FGameplayEffectContextHandle& Context = FGameplayEffectContextHandle(), const FGameplayTagContainer& InstigatorTags = FGameplayTagContainer::EmptyContainer)
 	{
 		FGameplayEventData Payload;
@@ -223,110 +260,116 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 		DefenderASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(MoveLockEffectId), 1.f, DefenderASC.MakeEffectContext());
 	}
 
+	/** 맞은 쪽의 반응(패리, 가드, 피격)을 시작하고, 연출에 넘길 반응 이벤트를 돌려줍니다. 반응이 없으면 빈 태그입니다. */
+	FGameplayTag StartDefenderReaction(const FAgDamageOutcome& Outcome)
+	{
+		UAgAbilitySystemComponent* TargetASC = Outcome.Target->GetAbilitySystemComponent();
+		FGameplayTag Reaction;
+		switch (Outcome.Result)
+		{
+			case EAgDamageResult::Parry:
+				TargetASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
+				// 투사체는 반사되어 돌아가 맞히므로 패리 대미지를 따로 주지 않습니다.
+				if (!Cast<AAgProjectile>(Outcome.Causer))
+				{
+					DamageParriedAttacker(*TargetASC, *Outcome.Attacker);
+				}
+				SendEvent(Outcome.Target, AgGameplayTags::Event_Parry, Outcome.Causer, Outcome.Context);
+				break;
+			case EAgDamageResult::Guard:
+				Reaction = StartGuardReaction(Outcome.Causer, Outcome.Target, Outcome.SpecTags, Outcome.Context);
+				LockMove(*TargetASC);
+				break;
+			case EAgDamageResult::Hit:
+				Reaction = StartHitReaction(Outcome.Causer, Outcome.Target, Outcome.SpecTags, Outcome.Context);
+				break;
+		}
+		// 패리 어빌리티가 발동하며 남은 기회를 지우므로, 패리 이벤트를 보낸 뒤에 겁니다.
+		if (Outcome.Result != EAgDamageResult::Hit)
+		{
+			GrantGuardCounterChance(*TargetASC);
+		}
+		return Reaction;
+	}
+
+	/** 결과 연출(피격, 가드, 패리)과 대미지 숫자를 냅니다. */
+	void PlayResultCues(const FAgDamageOutcome& Outcome, const FGameplayTag& Reaction, const FGameplayEffectSpec& Spec)
+	{
+		UAgAbilitySystemComponent* TargetASC = Outcome.Target->GetAbilitySystemComponent();
+		FGameplayCueParameters CueParameters;
+		CueParameters.Location = Outcome.Context.GetOrigin();
+		CueParameters.Instigator = Outcome.Attacker;
+		CueParameters.EffectCauser = Outcome.Causer;
+		CueParameters.AggregatedSourceTags = Outcome.SpecTags;
+		// 이전 타격의 상태가 남아 있어도 이번에 실제로 발생한 반응만 연출에 전달합니다.
+		if (Reaction.IsValid())
+		{
+			CueParameters.AggregatedTargetTags.AddTag(Reaction);
+		}
+		const FGameplayTag ResultCue = Outcome.Result == EAgDamageResult::Parry   ? AgGameplayTags::GameplayCue_Parry
+		                               : Outcome.Result == EAgDamageResult::Guard ? AgGameplayTags::GameplayCue_Guard
+		                                                                          : AgGameplayTags::GameplayCue_Hit;
+		TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
+
+		// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
+		const FGameplayEffectModifiedAttribute* HPChange = Spec.GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
+		if (HPChange && HPChange->TotalMagnitude < 0.f)
+		{
+			CueParameters.RawMagnitude = -HPChange->TotalMagnitude;
+			if (Outcome.SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
+			{
+				CueParameters.Location = Outcome.Target->GetActorLocation();
+			}
+			TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageFloater, CueParameters);
+		}
+	}
+
 } // namespace AgDamageResultGameplayEffectComponentPrivate
 
 void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGameplayEffectsContainer& ActiveGEContainer, FGameplayEffectSpec& GESpec, FPredictionKey& PredictionKey) const
 {
-	UAbilitySystemComponent* TargetASC = ActiveGEContainer.Owner;
-	AAgCharacterBase* Target = CastChecked<AAgCharacterBase>(TargetASC->GetAvatarActor());
+	AAgCharacterBase* Target = CastChecked<AAgCharacterBase>(ActiveGEContainer.Owner->GetAvatarActor());
 	const FGameplayEffectContextHandle Context = GESpec.GetContext();
 	AAgCharacterBase* Attacker = CastChecked<AAgCharacterBase>(Context.GetInstigator());
-	AActor* Causer = Context.GetEffectCauser();
-	AAgProjectile* Projectile = Cast<AAgProjectile>(Causer);
-
-	// 공격의 성질(적용하는 쪽), 피격 결과(실행 계산), 공격한 어빌리티의 태그(엔진)가 모두 스펙 태그에 있습니다.
 	const FGameplayTagContainer& SpecTags = std::as_const(GESpec).CapturedSourceTags.GetSpecTags();
 	if (SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_PerfectDodge))
 	{
 		AgDamageResultGameplayEffectComponentPrivate::StartPerfectDodge(*Target, *Attacker);
 		return;
 	}
-
-	const bool bParry = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Parry);
-	const bool bGuard = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Guard);
-	const bool bHit = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_Hit);
-	if (!bParry && !bGuard && !bHit)
+	const TOptional<AgDamageResultGameplayEffectComponentPrivate::EAgDamageResult> Result = AgDamageResultGameplayEffectComponentPrivate::FindResult(SpecTags);
+	if (!Result)
 	{
 		return;
 	}
+	const AgDamageResultGameplayEffectComponentPrivate::FAgDamageOutcome Outcome{Target, Attacker, Context.GetEffectCauser(), SpecTags, Context, *Result};
+	const bool bParry = *Result == AgDamageResultGameplayEffectComponentPrivate::EAgDamageResult::Parry;
+	const bool bHit = *Result == AgDamageResultGameplayEffectComponentPrivate::EAgDamageResult::Hit;
+
 	UAISense_Damage::ReportDamageEvent(Target, Target, Attacker, 1.f, Attacker->GetActorLocation(), Context.GetOrigin());
 	const UAgAttributeSet* TargetStats = Target->GetAttributeSet();
 	UE_LOG(LogAg, Verbose, TEXT("Hit: %s -> %s, parry %d, guard %d, HP now %.0f, PP now %.0f"),
-		*Attacker->GetName(), *Target->GetName(), bParry, bGuard, TargetStats->GetHP(), TargetStats->GetPP());
+		*Attacker->GetName(), *Target->GetName(), bParry, !bParry && !bHit, TargetStats->GetHP(), TargetStats->GetPP());
 
 	// 사망 판정(어트리뷰트 세트)이 이 처리보다 먼저이므로, 이번 타격으로 죽었으면 반응하지 않습니다.
-	FGameplayTag Reaction;
-	if (!Target->IsDead())
-	{
-		if (bParry)
-		{
-			TargetASC->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_ParryWindow));
-			if (!Projectile)
-			{
-				AgDamageResultGameplayEffectComponentPrivate::DamageParriedAttacker(*Target->GetAbilitySystemComponent(), *Attacker);
-			}
-			AgDamageResultGameplayEffectComponentPrivate::SendEvent(Target, AgGameplayTags::Event_Parry, Causer, Context);
-		}
-		else if (bGuard)
-		{
-			Reaction = AgDamageResultGameplayEffectComponentPrivate::StartGuardReaction(Causer, Target, SpecTags, Context);
-			AgDamageResultGameplayEffectComponentPrivate::LockMove(*TargetASC);
-		}
-		else
-		{
-			Reaction = AgDamageResultGameplayEffectComponentPrivate::StartHitReaction(Causer, Target, SpecTags, Context);
-		}
-		// 패리 어빌리티가 발동하며 남은 기회를 지우므로, 패리 이벤트를 보낸 뒤에 겁니다.
-		if (bParry || bGuard)
-		{
-			AgDamageResultGameplayEffectComponentPrivate::GrantGuardCounterChance(*TargetASC);
-		}
-	}
-
+	const FGameplayTag Reaction = Target->IsDead() ? FGameplayTag() : AgDamageResultGameplayEffectComponentPrivate::StartDefenderReaction(Outcome);
 	if (!bHit)
 	{
 		AgDamageResultGameplayEffectComponentPrivate::SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target, Context);
 	}
 
-	FGameplayCueParameters CueParameters;
-	CueParameters.Location = Context.GetOrigin();
-	CueParameters.Instigator = Attacker;
-	CueParameters.EffectCauser = Causer;
-	CueParameters.AggregatedSourceTags = SpecTags;
-	// 이전 타격의 상태가 남아 있어도 이번에 실제로 발생한 반응만 연출에 전달합니다.
-	if (Reaction.IsValid())
+	// 패리 대미지는 패리가 막은 쪽에서 낸 연출과 히트스톱이 대신하므로 결과 연출, 대미지 숫자, 히트스톱을 내지 않습니다.
+	if (!SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Parry))
 	{
-		CueParameters.AggregatedTargetTags.AddTag(Reaction);
-	}
-	// 패리 대미지는 패리가 막은 쪽에서 낸 연출과 히트스톱이 대신하므로 결과 연출과 대미지 숫자를 내지 않습니다.
-	const bool bParryDamage = SpecTags.HasTagExact(AgGameplayTags::Effect_Damage_Parry);
-	if (!bParryDamage)
-	{
-		const FGameplayTag ResultCue = bParry   ? AgGameplayTags::GameplayCue_Parry
-		                               : bGuard ? AgGameplayTags::GameplayCue_Guard
-		                                        : AgGameplayTags::GameplayCue_Hit;
-		TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
-	}
-	// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
-	if (const FGameplayEffectModifiedAttribute* HPChange = std::as_const(GESpec).GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());
-		!bParryDamage && HPChange && HPChange->TotalMagnitude < 0.f)
-	{
-		FGameplayCueParameters NumberParameters = CueParameters;
-		NumberParameters.RawMagnitude = -HPChange->TotalMagnitude;
-		if (SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
+		AgDamageResultGameplayEffectComponentPrivate::PlayResultCues(Outcome, Reaction, GESpec);
+		if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 		{
-			NumberParameters.Location = Target->GetActorLocation();
-		}
-		TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_DamageFloater, NumberParameters);
-	}
-
-	if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution) && !bParryDamage)
-	{
-		const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
-		AgDamageResultGameplayEffectComponentPrivate::ApplyHitstop(*Target->GetAbilitySystemComponent(), HitstopDuration);
-		if (Causer == Attacker)
-		{
-			AgDamageResultGameplayEffectComponentPrivate::ApplyHitstop(*Attacker->GetAbilitySystemComponent(), HitstopDuration);
+			const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
+			AgDamageResultGameplayEffectComponentPrivate::ApplyHitstop(*Target->GetAbilitySystemComponent(), HitstopDuration);
+			if (Outcome.Causer == Attacker)
+			{
+				AgDamageResultGameplayEffectComponentPrivate::ApplyHitstop(*Attacker->GetAbilitySystemComponent(), HitstopDuration);
+			}
 		}
 	}
 
@@ -337,6 +380,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		HitState->bLanded = true;
 		AgDamageResultGameplayEffectComponentPrivate::SendEvent(Attacker, AgGameplayTags::Event_AttackHit, Target, Context, SpecTags);
 	}
+	AAgProjectile* Projectile = Cast<AAgProjectile>(Outcome.Causer);
 	if (bParry && IsValid(Projectile) && !Target->IsDead())
 	{
 		Projectile->Reflect(*Target);

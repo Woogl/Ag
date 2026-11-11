@@ -138,7 +138,7 @@ classDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 캐릭터 사망 구독, 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록(`Stages`: 이름과 레벨)과 레벨이 게임에 있는지 확인(`IsStageAvailable`), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료) |
+| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록(`Stages`: 이름과 레벨)과 레벨이 게임에 있는지 확인(`IsStageAvailable`), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료) |
 | `AAgGameState` | `AGameStateBase` | 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함)와 변경 알림(`OnStageResultChanged`) |
 | `UAgCombatSubsystem` | `UWorldSubsystem` | 전투 중인 적 목록(`FAgEnemyAITask_Combat`이 등록·해제)과 변경 알림(`OnCombatantsChanged`), 목록의 보스(`FindBoss`), 플레이어가 처형하는 동안의 패턴 금지(`ArePatternsBlocked`), 패턴 시작 허가(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 동시 공격 수의 차례)와 공격 시작·끝(`StartAttack`, `EndAttack`, 끝나면 재공격 대기) |
 | `AAgSimulationRoomGameMode` | `AAgGameMode` | 후보 적 클래스(`EnemyClasses`), 레벨의 배치 지점을 `Slot` 순으로 수집, 레벨 주소 옵션 `Enemies`(자리 번호 순서의 캐릭터 데이터 ID)로 받은 구성을 플레이어 참가 처리에서 배치하고 놓은 캐릭터마다 플레이어에게 맞은 것과 같은 엔진 대미지 감각 자극(`ReportDamageEvent`)을 보내 시야와 관계없이 전투 진입, 구성이 비었으면 적 선택 화면 열기, 어느 적을 어느 자리에 둘 수 있는지(`CanPlace`), 같은 맵을 구성 옵션으로 다시 열기, 후보 적마다 표시 액터(`EnemyPreviewClass`)를 처음 쓸 때 하나 띄워 두고 그 렌더 타깃을 돌려줌(`GetEnemyPreview`). Stage Clear 조건은 적 팀 캐릭터가 모두 사망 |
@@ -229,7 +229,6 @@ sequenceDiagram
     participant C as AAgCharacterBase
     participant ASC as 캐릭터 ASC
     participant D as 캐릭터 데이터
-    participant GM as 게임 모드
     C->>ASC: MOV 변화, 히트스톱·캐릭터 통과 태그, 사망 이벤트 구독
     C->>D: 스탯 초기값
     C->>ASC: 스탯 기본값(최대값 먼저), MOV 반영
@@ -238,7 +237,7 @@ sequenceDiagram
     C->>D: 시작 효과 ID 목록<br>(정의는 Effects.json)
     C->>ASC: GameplayEffect 적용<br>(리젠)
     C->>C: 루트 모션 자르기 연결
-    Note over C,GM: 게임 모드: BeginPlay에서 레벨 캐릭터의 사망 구독(플레이어는 그 전에 스폰됨)<br>플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작, 상태 태그 구독, 락온 회전 방식, 사망 시 시야를 제외한 입력 차단<br>적: 그로기 이벤트·태그, 어빌리티 끝 구독, 처형 사망 모션
+    Note over C,D: 플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작, 상태 태그 구독, 락온 회전 방식, 사망 시 시야를 제외한 입력 차단<br>적: 그로기 이벤트·태그, 어빌리티 끝 구독, 처형 사망 모션
 ```
 
 ### 어빌리티 실행

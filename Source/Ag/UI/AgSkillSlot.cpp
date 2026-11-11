@@ -30,7 +30,7 @@ void UAgSkillSlot::UpdateAbility()
 {
 	// 데이터를 다시 읽으면 아이콘과 코스트가 바뀌므로, 어빌리티의 사본이 아니라 캐릭터 데이터의 지금 정의를 봅니다.
 	const UAgGameplayAbility* Ability = FindAbility();
-	const FAgAbilityData* Data = Ability ? Player->FindAbility(Ability->GetCurrentAbilitySpecHandle()) : nullptr;
+	const FAgAbilityData* Data = Ability ? Ability->FindDefinition() : nullptr;
 
 	UTexture2D* Icon = Data ? Data->Icon.Get() : nullptr;
 	IconImage->SetBrushFromTexture(Icon);
@@ -62,7 +62,7 @@ void UAgSkillSlot::UpdateCooldown()
 	{
 		Ability->GetRechargeTimeRemainingAndDuration(Remaining, Duration);
 		Charges = Ability->GetCharges();
-		const FAgAbilityData* Data = Player->FindAbility(Ability->GetCurrentAbilitySpecHandle());
+		const FAgAbilityData* Data = Ability->FindDefinition();
 		MaxCharges = Data ? Data->MaxCharges : 0;
 	}
 

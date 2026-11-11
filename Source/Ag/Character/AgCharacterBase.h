@@ -17,13 +17,10 @@ struct FAgAbilityData;
 class UMotionWarpingComponent;
 class UAgHitPhysicsComponent;
 class UAnimMontage;
-class AAgCharacterBase;
 struct FGameplayAbilitySpec;
 struct FGameplayEventData;
 struct FGameplayTag;
 struct FOnAttributeChangeData;
-
-DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase*);
 
 UCLASS(Abstract)
 class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
@@ -101,8 +98,6 @@ public:
 	void PushDisableMontageRootMotion();
 	void PopDisableMontageRootMotion();
 
-	FAgCharacterDiedSignature OnDied;
-
 	virtual void PreInitializeComponents() override;
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
@@ -121,6 +116,9 @@ public:
 
 protected:
 	virtual void ApplyDeathState();
+
+	/** 승패는 게임 모드가 정하므로, 죽은 캐릭터가 게임 모드에 직접 알립니다. */
+	void NotifyGameModeOfDeath();
 
 	void SendEventToSelf(const FGameplayTag& EventTag);
 

@@ -44,6 +44,9 @@ public:
 		return Definition;
 	}
 
+	/** 캐릭터 데이터에 있는 지금의 정의입니다. 데이터를 다시 읽은 뒤에는 사본(GetDefinition)과 다를 수 있고, 받은 포인터는 그 함수 안에서만 씁니다. */
+	const FAgAbilityData* FindDefinition() const;
+
 	/** 이 발동을 일으킨 게임플레이 이벤트입니다. 이벤트 트리거로 발동하지 않았으면 없습니다. */
 	const FGameplayEventData* GetTriggerEvent() const;
 
@@ -81,8 +84,6 @@ protected:
 	virtual void ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 private:
-	/** 캐릭터 데이터에 있는 지금의 정의입니다. 데이터를 다시 읽은 뒤에는 사본(Definition)과 다를 수 있습니다. */
-	const FAgAbilityData* FindDefinition() const;
 	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect) const;
 
 	AActor* FindTargetingTarget(const FAgAbilityData& Data) const;
