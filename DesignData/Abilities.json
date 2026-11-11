@@ -116,14 +116,14 @@
       ],
       "Sections": {
         "Backstep": [
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.2, "Effect": "PerfectDodgeWindow"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "PerfectDodgeWindow"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.4, "Effect": "Busy"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"},
           {"Task": "ApplyEffect", "Start": 0.4, "Effect": "DashAttackReady"}
         ],
         "Forward": [
           {"Task": "RootMotion", "Start": 0, "Direction": "MoveInput", "Distance": 400},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.2, "Effect": "PerfectDodgeWindow"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.5, "Effect": "PerfectDodgeWindow"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.45, "Effect": "Busy"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.3, "Effect": "Invincible"},
           {"Task": "ApplyEffect", "Start": 0.45, "Effect": "DashAttackReady"}
