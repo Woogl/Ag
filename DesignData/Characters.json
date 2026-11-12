@@ -11,7 +11,7 @@
       "UP": 0,
       "MaxUP": 100,
       "ATK": 100,
-      "DEF": 50,
+      "DEF": 100,
       "MOV": 375,
       "Potion": 3,
       "MaxPotion": 3
