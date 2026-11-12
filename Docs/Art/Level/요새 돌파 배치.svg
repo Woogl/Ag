@@ -1,378 +1,148 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1222" height="430" viewBox="0 0 1222 430" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
-  <defs>
-    <marker id="arrowFacing" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0 0 L10 5 L0 10 Z" fill="#FFFFFF"/>
-    </marker>
-  </defs>
-  <rect width="1222" height="430" fill="#11151b"/>
-  <text x="40.0" y="40.0" font-size="24" fill="#FFFFFF" font-weight="700">LV_FortressBreach · 위에서 본 배치 (오른쪽이 보스 방향)</text>
-  <!-- 바닥 (벽으로 둘러싸인 안쪽, 높이 0m) -->
-  <rect x="396.7" y="118.2" width="36.2" height="4.3" fill="#2f3742"/>
-  <rect x="395.2" y="122.5" width="37.7" height="2.9" fill="#2f3742"/>
-  <rect x="775.1" y="125.5" width="1.5" height="1.5" fill="#2f3742"/>
-  <rect x="753.4" y="125.5" width="2.9" height="1.5" fill="#2f3742"/>
-  <rect x="747.6" y="126.9" width="23.2" height="1.4" fill="#2f3742"/>
-  <rect x="779.5" y="126.9" width="2.9" height="1.4" fill="#2f3742"/>
-  <rect x="466.3" y="118.2" width="42.0" height="11.6" fill="#2f3742"/>
-  <rect x="396.7" y="125.5" width="36.2" height="4.4" fill="#2f3742"/>
-  <rect x="782.4" y="128.3" width="4.4" height="1.5" fill="#2f3742"/>
-  <rect x="743.2" y="128.3" width="26.1" height="1.5" fill="#2f3742"/>
-  <rect x="786.8" y="129.8" width="4.4" height="1.4" fill="#2f3742"/>
-  <rect x="738.9" y="129.8" width="30.5" height="1.4" fill="#2f3742"/>
-  <rect x="396.7" y="129.8" width="111.6" height="2.9" fill="#2f3742"/>
-  <rect x="736.0" y="131.2" width="31.9" height="1.4" fill="#2f3742"/>
-  <rect x="791.1" y="131.2" width="2.9" height="1.4" fill="#2f3742"/>
-  <rect x="733.1" y="132.7" width="34.8" height="1.5" fill="#2f3742"/>
-  <rect x="795.4" y="132.7" width="1.5" height="1.5" fill="#2f3742"/>
-  <rect x="730.2" y="134.2" width="36.2" height="1.4" fill="#2f3742"/>
-  <rect x="798.4" y="134.2" width="1.4" height="1.4" fill="#2f3742"/>
-  <rect x="728.8" y="135.6" width="37.7" height="1.5" fill="#2f3742"/>
-  <rect x="725.9" y="137.1" width="40.6" height="1.4" fill="#2f3742"/>
-  <rect x="724.4" y="138.5" width="42.0" height="1.4" fill="#2f3742"/>
-  <rect x="722.9" y="139.9" width="47.9" height="1.5" fill="#2f3742"/>
-  <rect x="807.0" y="141.4" width="2.9" height="1.4" fill="#2f3742"/>
-  <rect x="720.0" y="141.4" width="53.6" height="1.4" fill="#2f3742"/>
-  <rect x="805.6" y="142.8" width="5.8" height="1.5" fill="#2f3742"/>
-  <rect x="718.6" y="142.8" width="59.4" height="1.5" fill="#2f3742"/>
-  <rect x="805.6" y="144.3" width="7.2" height="1.4" fill="#2f3742"/>
-  <rect x="717.1" y="144.3" width="63.8" height="1.4" fill="#2f3742"/>
-  <rect x="714.2" y="145.8" width="71.0" height="1.4" fill="#2f3742"/>
-  <rect x="805.6" y="145.8" width="10.1" height="1.4" fill="#2f3742"/>
-  <rect x="805.6" y="147.2" width="11.6" height="1.5" fill="#2f3742"/>
-  <rect x="712.8" y="147.2" width="75.4" height="1.5" fill="#2f3742"/>
-  <rect x="711.4" y="148.7" width="81.2" height="1.4" fill="#2f3742"/>
-  <rect x="804.1" y="148.7" width="14.5" height="2.9" fill="#2f3742"/>
-  <rect x="711.4" y="150.1" width="84.1" height="1.5" fill="#2f3742"/>
-  <rect x="804.1" y="151.6" width="16.0" height="1.4" fill="#2f3742"/>
-  <rect x="709.9" y="151.6" width="89.9" height="1.4" fill="#2f3742"/>
-  <rect x="708.4" y="153.0" width="113.1" height="1.4" fill="#2f3742"/>
-  <rect x="707.0" y="154.4" width="116.0" height="2.9" fill="#2f3742"/>
-  <rect x="705.5" y="157.3" width="118.9" height="1.5" fill="#2f3742"/>
-  <rect x="704.1" y="158.8" width="121.8" height="1.4" fill="#2f3742"/>
-  <rect x="702.6" y="160.2" width="124.7" height="2.9" fill="#2f3742"/>
-  <rect x="701.2" y="163.1" width="127.6" height="2.9" fill="#2f3742"/>
-  <rect x="699.8" y="166.1" width="130.5" height="2.9" fill="#2f3742"/>
-  <rect x="698.3" y="168.9" width="133.4" height="1.4" fill="#2f3742"/>
-  <rect x="696.9" y="170.4" width="136.3" height="4.4" fill="#2f3742"/>
-  <rect x="695.4" y="174.8" width="139.2" height="4.3" fill="#2f3742"/>
-  <rect x="205.3" y="177.6" width="5.8" height="1.5" fill="#2f3742"/>
-  <rect x="205.3" y="179.1" width="11.6" height="1.5" fill="#2f3742"/>
-  <rect x="693.9" y="179.1" width="142.1" height="2.9" fill="#2f3742"/>
-  <rect x="205.3" y="180.6" width="17.4" height="1.4" fill="#2f3742"/>
-  <rect x="205.3" y="182.0" width="24.7" height="1.4" fill="#2f3742"/>
-  <rect x="338.7" y="132.7" width="169.6" height="52.2" fill="#2f3742"/>
-  <rect x="692.5" y="182.0" width="146.4" height="2.9" fill="#2f3742"/>
-  <rect x="205.3" y="183.4" width="30.5" height="1.4" fill="#2f3742"/>
-  <rect x="205.3" y="184.9" width="36.2" height="1.5" fill="#2f3742"/>
-  <rect x="985.4" y="106.6" width="187.1" height="81.2" fill="#2f3742"/>
-  <rect x="883.9" y="173.3" width="53.6" height="14.5" fill="#2f3742"/>
-  <rect x="669.3" y="184.9" width="169.6" height="2.9" fill="#2f3742"/>
-  <rect x="205.3" y="186.3" width="43.5" height="1.5" fill="#2f3742"/>
-  <rect x="205.3" y="187.8" width="49.3" height="1.4" fill="#2f3742"/>
-  <rect x="205.3" y="189.2" width="56.6" height="1.4" fill="#2f3742"/>
-  <rect x="205.3" y="190.7" width="62.3" height="1.4" fill="#2f3742"/>
-  <rect x="205.3" y="192.1" width="68.2" height="1.5" fill="#2f3742"/>
-  <rect x="205.3" y="193.6" width="75.4" height="1.5" fill="#2f3742"/>
-  <rect x="205.3" y="195.1" width="81.2" height="1.4" fill="#2f3742"/>
-  <rect x="550.4" y="184.9" width="47.9" height="13.1" fill="#2f3742"/>
-  <rect x="205.3" y="196.5" width="87.0" height="1.4" fill="#2f3742"/>
-  <rect x="205.3" y="197.9" width="94.3" height="1.4" fill="#2f3742"/>
-  <rect x="608.4" y="184.9" width="10.1" height="17.4" fill="#2f3742"/>
-  <rect x="338.7" y="184.9" width="201.6" height="17.4" fill="#2f3742"/>
-  <rect x="579.4" y="197.9" width="18.9" height="4.4" fill="#2f3742"/>
-  <rect x="550.4" y="197.9" width="18.9" height="4.4" fill="#2f3742"/>
-  <rect x="205.3" y="199.4" width="100.0" height="5.8" fill="#2f3742"/>
-  <rect x="338.7" y="202.3" width="230.6" height="2.9" fill="#2f3742"/>
-  <rect x="205.3" y="205.2" width="364.0" height="2.9" fill="#2f3742"/>
-  <rect x="132.8" y="206.6" width="23.2" height="1.5" fill="#2f3742"/>
-  <rect x="669.3" y="187.8" width="503.2" height="24.6" fill="#2f3742"/>
-  <rect x="579.4" y="202.3" width="39.1" height="13.0" fill="#2f3742"/>
-  <rect x="132.8" y="208.1" width="436.4" height="7.2" fill="#2f3742"/>
-  <rect x="669.3" y="212.4" width="169.6" height="2.9" fill="#2f3742"/>
-  <rect x="692.5" y="215.3" width="146.4" height="1.5" fill="#2f3742"/>
-  <rect x="693.9" y="216.8" width="142.1" height="2.9" fill="#2f3742"/>
-  <rect x="695.4" y="219.7" width="139.2" height="4.3" fill="#2f3742"/>
-  <rect x="883.9" y="212.4" width="53.6" height="14.5" fill="#2f3742"/>
-  <rect x="696.9" y="224.0" width="136.3" height="4.4" fill="#2f3742"/>
-  <rect x="132.8" y="215.3" width="375.5" height="14.5" fill="#2f3742"/>
-  <rect x="698.3" y="228.4" width="133.4" height="1.4" fill="#2f3742"/>
-  <rect x="132.8" y="229.8" width="172.5" height="2.9" fill="#2f3742"/>
-  <rect x="699.8" y="229.8" width="130.5" height="2.9" fill="#2f3742"/>
-  <rect x="701.2" y="232.8" width="127.6" height="2.9" fill="#2f3742"/>
-  <rect x="702.6" y="235.7" width="124.7" height="2.9" fill="#2f3742"/>
-  <rect x="704.1" y="238.5" width="121.8" height="1.5" fill="#2f3742"/>
-  <rect x="705.5" y="240.0" width="118.9" height="1.4" fill="#2f3742"/>
-  <rect x="707.0" y="241.4" width="116.0" height="2.9" fill="#2f3742"/>
-  <rect x="708.4" y="244.3" width="113.1" height="1.4" fill="#2f3742"/>
-  <rect x="709.9" y="245.8" width="89.9" height="1.5" fill="#2f3742"/>
-  <rect x="804.1" y="245.8" width="16.0" height="1.5" fill="#2f3742"/>
-  <rect x="711.4" y="247.2" width="84.1" height="1.4" fill="#2f3742"/>
-  <rect x="804.1" y="247.2" width="14.5" height="2.9" fill="#2f3742"/>
-  <rect x="711.4" y="248.7" width="81.2" height="1.5" fill="#2f3742"/>
-  <rect x="805.6" y="250.2" width="11.6" height="1.4" fill="#2f3742"/>
-  <rect x="712.8" y="250.2" width="75.4" height="1.4" fill="#2f3742"/>
-  <rect x="205.3" y="232.8" width="100.0" height="20.3" fill="#2f3742"/>
-  <rect x="714.2" y="251.6" width="71.0" height="1.4" fill="#2f3742"/>
-  <rect x="805.6" y="251.6" width="10.1" height="1.4" fill="#2f3742"/>
-  <rect x="805.6" y="253.0" width="7.2" height="1.5" fill="#2f3742"/>
-  <rect x="717.1" y="253.0" width="63.8" height="1.5" fill="#2f3742"/>
-  <rect x="805.6" y="254.5" width="5.8" height="1.4" fill="#2f3742"/>
-  <rect x="718.6" y="254.5" width="59.4" height="1.4" fill="#2f3742"/>
-  <rect x="720.0" y="255.9" width="53.6" height="1.4" fill="#2f3742"/>
-  <rect x="807.0" y="255.9" width="2.9" height="1.4" fill="#2f3742"/>
-  <rect x="722.9" y="257.4" width="47.9" height="1.5" fill="#2f3742"/>
-  <rect x="724.4" y="258.9" width="42.0" height="1.4" fill="#2f3742"/>
-  <rect x="725.9" y="260.3" width="40.6" height="1.5" fill="#2f3742"/>
-  <rect x="728.8" y="261.8" width="37.7" height="1.4" fill="#2f3742"/>
-  <rect x="280.7" y="253.0" width="24.6" height="11.6" fill="#2f3742"/>
-  <rect x="205.3" y="253.0" width="36.2" height="11.6" fill="#2f3742"/>
-  <rect x="798.4" y="263.2" width="1.4" height="1.4" fill="#2f3742"/>
-  <rect x="730.2" y="263.2" width="36.2" height="1.4" fill="#2f3742"/>
-  <rect x="733.1" y="264.6" width="34.8" height="1.5" fill="#2f3742"/>
-  <rect x="795.4" y="264.6" width="1.5" height="1.5" fill="#2f3742"/>
-  <rect x="736.0" y="266.1" width="31.9" height="1.4" fill="#2f3742"/>
-  <rect x="791.1" y="266.1" width="2.9" height="1.4" fill="#2f3742"/>
-  <rect x="786.8" y="267.5" width="4.4" height="1.5" fill="#2f3742"/>
-  <rect x="738.9" y="267.5" width="30.5" height="1.5" fill="#2f3742"/>
-  <rect x="338.7" y="229.8" width="169.6" height="40.6" fill="#2f3742"/>
-  <rect x="743.2" y="269.0" width="26.1" height="1.4" fill="#2f3742"/>
-  <rect x="782.4" y="269.0" width="4.4" height="1.4" fill="#2f3742"/>
-  <rect x="312.6" y="237.1" width="18.9" height="34.8" fill="#2f3742"/>
-  <rect x="747.6" y="270.4" width="23.2" height="1.4" fill="#2f3742"/>
-  <rect x="779.5" y="270.4" width="2.9" height="1.4" fill="#2f3742"/>
-  <rect x="775.1" y="271.9" width="1.5" height="1.5" fill="#2f3742"/>
-  <rect x="753.4" y="271.9" width="17.4" height="1.5" fill="#2f3742"/>
-  <rect x="466.3" y="270.4" width="42.0" height="14.5" fill="#2f3742"/>
-  <rect x="338.7" y="270.4" width="94.2" height="14.5" fill="#2f3742"/>
-  <rect x="299.6" y="271.9" width="31.9" height="13.1" fill="#2f3742"/>
-  <rect x="501.1" y="284.9" width="7.2" height="7.2" fill="#2f3742"/>
-  <rect x="985.4" y="212.4" width="187.1" height="81.2" fill="#2f3742"/>
-  <rect x="290.9" y="264.6" width="4.3" height="42.1" fill="#2f3742"/>
-  <rect x="334.3" y="292.2" width="174.0" height="14.5" fill="#2f3742"/>
-  <polygon points="810.1,137.9 826.5,154.3 799.9,180.9 783.5,164.5" fill="#4a5563"/>
-  <polygon points="129.9,136.9 129.9,206.5 131.1,206.5 131.1,136.9" fill="#3a8f7a"/>
-  <polygon points="277.8,266.1 306.8,266.1 306.8,231.3 277.8,231.3" fill="#4a5563"/>
-  <polygon points="434.5,284.7 463.9,284.7 463.9,273.1 434.5,273.1" fill="#3a8f7a"/>
-  <polygon points="40.0,135.6 158.9,135.6 158.9,100.8 40.0,100.8" fill="#6f7b8c"/>
-  <polygon points="296.9,309.6 331.7,309.6 331.7,288.7 296.9,288.7" fill="#3a8f7a"/>
-  <polygon points="331.4,309.6 508.3,309.6 508.3,288.7 331.4,288.7" fill="#5d6878"/>
-  <polygon points="434.5,128.1 463.9,128.1 463.9,116.5 434.5,116.5" fill="#3a8f7a"/>
-  <polygon points="773.0,271.2 805.4,259.4 801.5,248.5 769.0,260.3" fill="#3a8f7a"/>
-  <polygon points="620.3,216.8 666.7,216.8 666.7,182.0 620.3,182.0" fill="#3a8f7a"/>
-  <polygon points="367.7,170.4 385.1,170.4 385.1,164.6 367.7,164.6" fill="#8a939e"/>
-  <polygon points="463.4,129.8 509.8,129.8 509.8,112.4 463.4,112.4" fill="#5d6878"/>
-  <polygon points="477.9,234.2 495.3,234.2 495.3,228.4 477.9,228.4" fill="#8a939e"/>
-  <polygon points="463.4,286.4 509.8,286.4 509.8,269.0 463.4,269.0" fill="#5d6878"/>
-  <polygon points="826.5,244.5 810.1,260.9 783.5,234.3 799.9,217.9" fill="#4a5563"/>
-  <polygon points="216.9,231.3 234.3,231.3 234.3,225.5 216.9,225.5" fill="#8a939e"/>
-  <polygon points="287.9,308.1 296.6,308.1 296.6,266.1 287.9,266.1" fill="#4a5563"/>
-  <polygon points="666.4,216.8 689.6,216.8 689.6,182.0 666.4,182.0" fill="#5d6878"/>
-  <polygon points="769.0,138.5 801.5,150.3 805.4,139.4 773.0,127.6" fill="#3a8f7a"/>
-  <polygon points="243.2,266.1 278.0,266.1 278.0,254.5 243.2,254.5" fill="#3a8f7a"/>
-  <polygon points="498.2,308.6 509.8,308.6 509.8,285.4 498.2,285.4" fill="#5d6878"/>
-  <polygon points="263.3,228.4 280.7,228.4 280.7,222.6 263.3,222.6" fill="#8a939e"/>
-  <polygon points="157.7,136.9 157.7,206.5 158.9,206.5 158.9,136.9" fill="#3a8f7a"/>
-  <polygon points="414.1,234.2 431.5,234.2 431.5,228.4 414.1,228.4" fill="#8a939e"/>
-  <polygon points="243.0,208.1 260.4,208.1 260.4,202.3 243.0,202.3" fill="#8a939e"/>
-  <polygon points="129.9,135.2 129.9,204.8 158.9,204.8 158.9,135.2" fill="#3a8f7a"/>
-  <polygon points="448.9,170.4 466.3,170.4 466.3,164.6 448.9,164.6" fill="#8a939e"/>
-  <polygon points="287.9,308.1 296.6,308.1 296.6,299.4 287.9,299.4" fill="#4a5563"/>
-  <!-- 추가 엄폐물: 마당 양쪽 엄폐물, 안뜰 양쪽 엄폐물, 안뜰 한쪽 엄폐물 2개 -->
-  <polygon points="454.7,216.8 460.5,216.8 460.5,182.0 454.7,182.0" fill="#8a939e"/>
-  <polygon points="773.7,216.8 779.5,216.8 779.5,182.0 773.7,182.0" fill="#8a939e"/>
-  <polygon points="733.1,161.7 750.5,161.7 750.5,155.9 733.1,155.9" fill="#8a939e"/>
-  <polygon points="733.1,242.9 750.5,242.9 750.5,237.1 733.1,237.1" fill="#8a939e"/>
-  <!-- 벽 (높이 4m 이상), 기둥, 난간 -->
-  <polygon points="620.0,219.7 689.6,219.7 689.6,216.8 620.0,216.8" fill="#b4bcc7"/>
-  <polygon points="836.4,166.4 829.2,154.1 826.7,155.5 833.9,167.9" fill="#b4bcc7"/>
-  <polygon points="512.7,182.0 620.0,182.0 620.0,179.1 512.7,179.1" fill="#b4bcc7"/>
-  <polygon points="620.0,182.0 689.6,182.0 689.6,179.1 620.0,179.1" fill="#b4bcc7"/>
-  <polygon points="393.8,129.8 393.8,112.4 388.0,112.4 388.0,129.8" fill="#b4bcc7"/>
-  <polygon points="509.8,182.0 512.7,182.0 512.7,112.4 509.8,112.4" fill="#b4bcc7"/>
-  <polygon points="458.0,289.6 498.6,289.6 498.6,286.7 458.0,286.7" fill="#b4bcc7"/>
-  <polygon points="306.8,202.3 309.7,202.3 309.7,193.6 306.8,193.6" fill="#b4bcc7"/>
-  <polygon points="944.8,216.8 979.6,216.8 979.6,213.9 944.8,213.9" fill="#b4bcc7"/>
-  <polygon points="870.6,169.2 879.8,169.2 879.8,160.0 870.6,160.0" fill="#b4bcc7"/>
-  <polygon points="940.2,238.8 949.4,238.8 949.4,229.6 940.2,229.6" fill="#b4bcc7"/>
-  <polygon points="296.7,287.4 298.1,287.4 298.1,267.7 296.7,267.7" fill="#b4bcc7"/>
-  <polygon points="829.2,244.7 836.4,232.4 833.9,230.9 826.7,243.3" fill="#b4bcc7"/>
-  <polygon points="939.0,184.9 944.8,184.9 944.8,164.6 939.0,164.6" fill="#b4bcc7"/>
-  <polygon points="732.0,128.0 719.7,135.2 721.1,137.7 733.5,130.5" fill="#b4bcc7"/>
-  <polygon points="277.8,254.5 280.7,254.5 280.7,231.3 277.8,231.3" fill="#8a939e"/>
-  <polygon points="720.1,134.8 709.2,144.0 711.1,146.2 722.0,137.1" fill="#b4bcc7"/>
-  <polygon points="940.2,169.2 949.4,169.2 949.4,160.0 940.2,160.0" fill="#b4bcc7"/>
-  <polygon points="332.9,289.3 335.8,289.3 335.8,231.3 332.9,231.3" fill="#b4bcc7"/>
-  <polygon points="820.4,255.2 829.6,244.3 827.3,242.4 818.2,253.3" fill="#b4bcc7"/>
-  <polygon points="689.0,219.5 693.9,232.9 696.6,231.9 691.7,218.5" fill="#b4bcc7"/>
-  <polygon points="875.2,234.2 881.0,234.2 881.0,213.9 875.2,213.9" fill="#b4bcc7"/>
-  <polygon points="840.4,184.9 875.2,184.9 875.2,182.0 840.4,182.0" fill="#b4bcc7"/>
-  <polygon points="785.1,275.4 798.5,270.5 797.5,267.8 784.1,272.7" fill="#b4bcc7"/>
-  <polygon points="881.0,234.2 939.0,234.2 939.0,228.4 881.0,228.4" fill="#b4bcc7"/>
-  <polygon points="286.5,311.0 509.8,311.0 509.8,308.1 286.5,308.1" fill="#b4bcc7"/>
-  <polygon points="840.4,216.8 875.2,216.8 875.2,213.9 840.4,213.9" fill="#b4bcc7"/>
-  <polygon points="599.7,199.4 605.5,199.4 605.5,182.0 599.7,182.0" fill="#b4bcc7"/>
-  <polygon points="509.8,310.2 512.7,310.2 512.7,217.4 509.8,217.4" fill="#b4bcc7"/>
-  <polygon points="979.6,184.9 982.5,184.9 982.5,100.8 979.6,100.8" fill="#b4bcc7"/>
-  <polygon points="693.6,232.4 700.8,244.7 703.3,243.3 696.1,230.9" fill="#b4bcc7"/>
-  <polygon points="366.4,289.6 378.0,289.6 378.0,286.7 366.4,286.7" fill="#b4bcc7"/>
-  <polygon points="810.3,135.2 798.0,128.0 796.5,130.5 808.9,137.7" fill="#b4bcc7"/>
-  <polygon points="424.4,289.6 459.2,289.6 459.2,286.7 424.4,286.7" fill="#b4bcc7"/>
-  <polygon points="512.7,219.7 620.0,219.7 620.0,216.8 512.7,216.8" fill="#b4bcc7"/>
-  <polygon points="771.6,277.7 785.6,275.3 785.1,272.4 771.1,274.9" fill="#b4bcc7"/>
-  <polygon points="286.5,311.0 287.9,311.0 287.9,266.1 286.5,266.1" fill="#b4bcc7"/>
-  <polygon points="700.4,244.3 709.6,255.2 711.8,253.3 702.7,242.4" fill="#b4bcc7"/>
-  <polygon points="820.8,144.0 809.9,134.8 808.0,137.1 818.9,146.2" fill="#b4bcc7"/>
-  <polygon points="306.8,269.0 309.7,269.0 309.7,231.3 306.8,231.3" fill="#b4bcc7"/>
-  <polygon points="199.5,205.2 202.4,205.2 202.4,173.3 199.5,173.3" fill="#b4bcc7"/>
-  <polygon points="378.0,289.6 447.6,289.6 447.6,286.7 378.0,286.7" fill="#b4bcc7"/>
-  <polygon points="836.1,232.9 841.0,219.5 838.3,218.5 833.4,231.9" fill="#b4bcc7"/>
-  <polygon points="809.9,264.0 820.8,254.8 818.9,252.6 808.0,261.7" fill="#b4bcc7"/>
-  <polygon points="979.6,298.0 982.5,298.0 982.5,213.9 979.6,213.9" fill="#b4bcc7"/>
-  <polygon points="757.9,277.7 772.1,277.7 772.1,274.8 757.9,274.8" fill="#b4bcc7"/>
-  <polygon points="744.4,275.3 758.4,277.7 758.9,274.9 744.9,272.4" fill="#b4bcc7"/>
-  <polygon points="772.1,121.1 757.9,121.1 757.9,124.0 772.1,124.0" fill="#b4bcc7"/>
-  <polygon points="332.9,202.3 335.8,202.3 335.8,126.9 332.9,126.9" fill="#b4bcc7"/>
-  <polygon points="875.2,184.9 881.0,184.9 881.0,164.6 875.2,164.6" fill="#b4bcc7"/>
-  <polygon points="744.9,123.4 731.5,128.3 732.5,131.0 745.9,126.1" fill="#b4bcc7"/>
-  <polygon points="200.7,174.4 307.9,198.2 308.5,195.4 201.3,171.6" fill="#b4bcc7"/>
-  <polygon points="1173.9,298.0 1176.8,298.0 1176.8,100.8 1173.9,100.8" fill="#b4bcc7"/>
-  <polygon points="296.6,269.0 309.7,269.0 309.7,266.1 296.6,266.1" fill="#b4bcc7"/>
-  <polygon points="277.8,234.2 306.8,234.2 306.8,231.3 277.8,231.3" fill="#8a939e"/>
-  <polygon points="798.5,128.3 785.1,123.4 784.1,126.1 797.5,131.0" fill="#b4bcc7"/>
-  <polygon points="758.4,121.1 744.4,123.5 744.9,126.4 758.9,123.9" fill="#b4bcc7"/>
-  <polygon points="158.9,205.2 202.4,205.2 202.4,202.3 158.9,202.3" fill="#b4bcc7"/>
-  <polygon points="306.8,202.3 335.8,202.3 335.8,199.4 306.8,199.4" fill="#b4bcc7"/>
-  <polygon points="127.0,237.1 129.9,237.1 129.9,205.2 127.0,205.2" fill="#b4bcc7"/>
-  <polygon points="870.6,238.8 879.8,238.8 879.8,229.6 870.6,229.6" fill="#b4bcc7"/>
-  <polygon points="709.2,254.8 720.1,264.0 722.0,261.7 711.1,252.6" fill="#b4bcc7"/>
-  <polygon points="693.9,165.9 689.0,179.3 691.7,180.3 696.6,166.9" fill="#b4bcc7"/>
-  <polygon points="199.5,269.0 202.4,269.0 202.4,234.2 199.5,234.2" fill="#b4bcc7"/>
-  <polygon points="570.7,216.8 576.5,216.8 576.5,199.4 570.7,199.4" fill="#b4bcc7"/>
-  <polygon points="335.8,129.8 393.8,129.8 393.8,126.9 335.8,126.9" fill="#b4bcc7"/>
-  <polygon points="944.8,184.9 979.6,184.9 979.6,182.0 944.8,182.0" fill="#b4bcc7"/>
-  <polygon points="731.5,270.5 744.9,275.4 745.9,272.7 732.5,267.8" fill="#b4bcc7"/>
-  <polygon points="829.6,154.5 820.4,143.6 818.2,145.5 827.3,156.4" fill="#b4bcc7"/>
-  <polygon points="202.4,269.0 287.9,269.0 287.9,266.1 202.4,266.1" fill="#b4bcc7"/>
-  <polygon points="798.0,270.8 810.3,263.6 808.9,261.1 796.5,268.3" fill="#b4bcc7"/>
-  <polygon points="510.1,219.7 515.9,219.7 515.9,216.8 510.1,216.8" fill="#b4bcc7"/>
-  <polygon points="296.8,289.6 366.4,289.6 366.4,286.7 296.8,286.7" fill="#b4bcc7"/>
-  <polygon points="541.7,199.4 547.5,199.4 547.5,182.0 541.7,182.0" fill="#b4bcc7"/>
-  <polygon points="881.0,170.4 939.0,170.4 939.0,164.6 881.0,164.6" fill="#b4bcc7"/>
-  <polygon points="700.8,154.1 693.6,166.4 696.1,167.9 703.3,155.5" fill="#b4bcc7"/>
-  <polygon points="127.0,237.1 202.4,237.1 202.4,234.2 127.0,234.2" fill="#b4bcc7"/>
-  <polygon points="719.7,263.6 732.0,270.8 733.5,268.3 721.1,261.1" fill="#b4bcc7"/>
-  <polygon points="709.6,143.6 700.4,154.5 702.7,156.4 711.8,145.5" fill="#b4bcc7"/>
-  <polygon points="306.8,234.2 335.8,234.2 335.8,231.3 306.8,231.3" fill="#b4bcc7"/>
-  <polygon points="785.6,123.5 771.6,121.1 771.1,123.9 785.1,126.4" fill="#b4bcc7"/>
-  <polygon points="393.8,115.3 509.8,115.3 509.8,112.4 393.8,112.4" fill="#b4bcc7"/>
-  <polygon points="939.0,234.2 944.8,234.2 944.8,213.9 939.0,213.9" fill="#b4bcc7"/>
-  <polygon points="979.6,298.0 1176.8,298.0 1176.8,295.1 979.6,295.1" fill="#b4bcc7"/>
-  <polygon points="841.0,179.3 836.1,165.9 833.4,166.9 838.3,180.3" fill="#b4bcc7"/>
-  <polygon points="979.6,103.7 1176.8,103.7 1176.8,100.8 979.6,100.8" fill="#b4bcc7"/>
-  <rect x="870.6" y="160.0" width="78.9" height="78.9" fill="none" stroke="#d6b25e" stroke-width="3"/>
-  <!-- 뛰어내리는 가장자리, 샛길 문 -->
-  <line x1="689.6" y1="216.8" x2="689.6" y2="182.0" stroke="#FFFFFF" stroke-width="3" stroke-dasharray="4 3"/>
-  <line x1="288.2" y1="267.3" x2="296.4" y2="267.3" stroke="#7ed67e" stroke-width="3"/>
-  <!-- 전망 지점에서 내려다보는 방향, 대기 공간에서 커스터가 보이는 방향 -->
-  <line x1="141.5" y1="118.2" x2="292.3" y2="248.7" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
-  <line x1="141.5" y1="118.2" x2="724.4" y2="141.4" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
-  <line x1="141.5" y1="118.2" x2="898.4" y2="187.8" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
-  <line x1="950.6" y1="199.4" x2="1089.8" y2="199.4" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
-  <!-- 바라보는 방향 -->
-  <line x1="61.6" y1="118.2" x2="76.8" y2="118.2" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="755.0" y1="176.2" x2="739.8" y2="176.2" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="282.3" y1="248.7" x2="267.1" y2="248.7" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="407.0" y1="199.4" x2="391.8" y2="199.4" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="464.4" y1="126.8" x2="450.2" y2="132.0" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="796.8" y1="231.3" x2="786.1" y2="220.6" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="796.8" y1="167.5" x2="786.1" y2="178.2" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="470.8" y1="277.7" x2="455.6" y2="277.7" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="1111.4" y1="199.4" x2="1096.2" y2="199.4" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="668.0" y1="199.4" x2="652.8" y2="199.4" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <line x1="755.0" y1="222.6" x2="739.8" y2="222.6" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <!-- 플레이어와 적 -->
-  <circle cx="51.6" cy="118.2" r="8" fill="#4c9be8"/>
-  <text x="51.6" y="121.4" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">P</text>
-  <circle cx="765.0" cy="176.2" r="8" fill="#e5534b"/>
-  <text x="765.0" y="179.4" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">근</text>
-  <circle cx="292.3" cy="248.7" r="8" fill="#e08a2e"/>
-  <text x="292.3" y="251.9" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="417.0" cy="199.4" r="8" fill="#e5534b"/>
-  <text x="417.0" y="202.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">근</text>
-  <circle cx="473.8" cy="123.4" r="8" fill="#e08a2e"/>
-  <text x="473.8" y="126.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="803.9" cy="238.4" r="8" fill="#e08a2e"/>
-  <text x="803.9" y="241.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="803.9" cy="160.4" r="8" fill="#e08a2e"/>
-  <text x="803.9" y="163.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="480.8" cy="277.7" r="8" fill="#e08a2e"/>
-  <text x="480.8" y="280.9" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="1124.6" cy="199.4" r="11.2" fill="#9b6bd6"/>
-  <text x="1124.6" y="202.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">B</text>
-  <circle cx="678.0" cy="199.4" r="8" fill="#e08a2e"/>
-  <text x="678.0" y="202.6" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">원</text>
-  <circle cx="765.0" cy="222.6" r="8" fill="#e5534b"/>
-  <text x="765.0" y="225.8" font-size="10" fill="#FFFFFF" font-weight="700" text-anchor="middle">근</text>
-  <!-- 구간 이름 -->
-  <text x="98.0" y="90.9" font-size="15" fill="#c9d1d9" text-anchor="middle">진입로 (언덕)</text>
-  <text x="89.3" y="129.2" font-size="11" fill="#c9d1d9" text-anchor="middle">언덕 6m</text>
-  <text x="137.4" y="107.2" font-size="11" fill="#c9d1d9" text-anchor="middle">전망 지점</text>
-  <text x="173.4" y="172.7" font-size="11" fill="#c9d1d9" text-anchor="start">내리막</text>
-  <text x="251.7" y="195.3" font-size="15" fill="#c9d1d9" text-anchor="middle">전초</text>
-  <text x="292.3" y="222.0" font-size="11" fill="#c9d1d9" text-anchor="middle">망대 1.5m</text>
-  <text x="422.8" y="147.8" font-size="15" fill="#c9d1d9" text-anchor="middle">마당</text>
-  <text x="422.8" y="157.1" font-size="12" fill="#9aa4b1" text-anchor="middle">30m × 24m</text>
-  <text x="486.6" y="142.6" font-size="11" fill="#c9d1d9" text-anchor="start">성벽 3m</text>
-  <text x="486.6" y="262.6" font-size="11" fill="#c9d1d9" text-anchor="start">성벽 3m</text>
-  <text x="426.3" y="105.4" font-size="11" fill="#c9d1d9" text-anchor="start">경사로</text>
-  <text x="567.8" y="174.5" font-size="15" fill="#c9d1d9" text-anchor="middle">사격 통로</text>
-  <text x="683.8" y="230.7" font-size="11" fill="#c9d1d9" text-anchor="middle">단상 3m</text>
-  <text x="688.4" y="174.5" font-size="11" fill="#FFFFFF" text-anchor="end">3m 뛰어내림</text>
-  <text x="765.0" y="113.0" font-size="15" fill="#c9d1d9" text-anchor="middle">안뜰</text>
-  <text x="765.0" y="284.1" font-size="11" fill="#c9d1d9" text-anchor="middle">지름 26m</text>
-  <text x="910.0" y="155.9" font-size="15" fill="#d6b25e" text-anchor="middle">탑</text>
-  <text x="910.0" y="242.9" font-size="11" fill="#c9d1d9" text-anchor="middle">대기 공간</text>
-  <text x="1078.2" y="127.5" font-size="15" fill="#c9d1d9" text-anchor="middle">보스 아레나</text>
-  <text x="1078.2" y="137.9" font-size="12" fill="#9aa4b1" text-anchor="middle">33m × 33m</text>
-  <text x="388.0" y="303.2" font-size="11" fill="#7ed67e" text-anchor="middle">샛길 (1.5m → 3m)</text>
-  <text x="457.6" y="179.4" font-size="11" fill="#c9d1d9" text-anchor="middle">양쪽 엄폐물</text>
-  <text x="770.0" y="202.6" font-size="11" fill="#c9d1d9" text-anchor="end">양쪽 엄폐물</text>
-  <text x="988.9" y="227.8" font-size="14" fill="#f5c84c" font-weight="700" text-anchor="middle">G</text>
-  <text x="1078.2" y="209.8" font-size="14" fill="#9aa4b1" text-anchor="middle">C</text>
-  <circle cx="1078.2" cy="199.4" r="3" fill="#9aa4b1"/>
-  <!-- 범례와 축척 -->
-  <circle cx="48.0" cy="366.0" r="6" fill="#4c9be8"/>
-  <text x="58.0" y="370.0" font-size="12" fill="#c9d1d9">플레이어 시작 지점</text>
-  <circle cx="190.0" cy="366.0" r="6" fill="#e5534b"/>
-  <text x="200.0" y="370.0" font-size="12" fill="#c9d1d9">근거리 일반 적</text>
-  <circle cx="312.0" cy="366.0" r="6" fill="#e08a2e"/>
-  <text x="322.0" y="370.0" font-size="12" fill="#c9d1d9">원거리 일반 적</text>
-  <circle cx="434.0" cy="366.0" r="6" fill="#9b6bd6"/>
-  <text x="444.0" y="370.0" font-size="12" fill="#c9d1d9">보스 (커스터)</text>
-  <line x1="546.0" y1="366.0" x2="564.0" y2="366.0" stroke="#FFFFFF" stroke-width="2" marker-end="url(#arrowFacing)"/>
-  <text x="570.0" y="370.0" font-size="12" fill="#c9d1d9">바라보는 방향</text>
-  <line x1="668.0" y1="366.0" x2="688.0" y2="366.0" stroke="#7ed67e" stroke-width="4"/>
-  <text x="694.0" y="370.0" font-size="12" fill="#c9d1d9">샛길 문</text>
-  <line x1="760.0" y1="366.0" x2="780.0" y2="366.0" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="2 5"/>
-  <text x="786.0" y="370.0" font-size="12" fill="#c9d1d9">보이는 방향</text>
-  <rect x="42.0" y="384.0" width="12.0" height="12.0" fill="#2f3742"/>
-  <text x="58.0" y="394.0" font-size="12" fill="#c9d1d9">바닥 0m</text>
-  <rect x="122.0" y="384.0" width="12.0" height="12.0" fill="#3a8f7a"/>
-  <text x="138.0" y="394.0" font-size="12" fill="#c9d1d9">경사로</text>
-  <rect x="196.0" y="384.0" width="12.0" height="12.0" fill="#4a5563"/>
-  <text x="212.0" y="394.0" font-size="12" fill="#c9d1d9">1.5m</text>
-  <rect x="256.0" y="384.0" width="12.0" height="12.0" fill="#5d6878"/>
-  <text x="272.0" y="394.0" font-size="12" fill="#c9d1d9">3m</text>
-  <rect x="306.0" y="384.0" width="12.0" height="12.0" fill="#6f7b8c"/>
-  <text x="322.0" y="394.0" font-size="12" fill="#c9d1d9">6m</text>
-  <rect x="356.0" y="384.0" width="12.0" height="12.0" fill="#8a939e"/>
-  <text x="372.0" y="394.0" font-size="12" fill="#c9d1d9">엄폐물 (2m)</text>
-  <rect x="456.0" y="384.0" width="12.0" height="12.0" fill="#b4bcc7"/>
-  <text x="472.0" y="394.0" font-size="12" fill="#c9d1d9">벽·칸막이 (높이 4m 이상)</text>
-  <rect x="626.0" y="384.0" width="12.0" height="12.0" fill="none" stroke="#d6b25e" stroke-width="2"/>
-  <text x="642.0" y="394.0" font-size="12" fill="#c9d1d9">탑 (높이 약 20m, 1층이 대기 공간)</text>
-  <line x1="1040.0" y1="390.0" x2="1160.0" y2="390.0" stroke="#9aa4b1" stroke-width="2"/>
-  <line x1="1040.0" y1="384.0" x2="1040.0" y2="396.0" stroke="#9aa4b1" stroke-width="2"/>
-  <line x1="1160.0" y1="384.0" x2="1160.0" y2="396.0" stroke="#9aa4b1" stroke-width="2"/>
-  <text x="1100.0" y="380.0" font-size="12" fill="#9aa4b1" text-anchor="middle">20m</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1185" height="377" viewBox="0 0 1185 377" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+<defs><linearGradient id="rampDown" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a8798"/><stop offset="1" stop-color="#28303a"/></linearGradient><linearGradient id="rampUp" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#28303a"/><stop offset="1" stop-color="#525e6c"/></linearGradient><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#FFFFFF"/></marker></defs>
+<rect width="1185" height="377" fill="#11151b"/>
+<text x="30" y="38" font-size="24" fill="#FFFFFF" font-weight="700">LV_FortressBreach · 위에서 본 배치 (오른쪽이 보스 방향)</text>
+<text x="30" y="62" font-size="13" fill="#8794a5">기획서의 수치로 그린 계획도입니다. 그레이박스를 만들기 전의 그림이라 실제 좌표와 다를 수 있습니다.</text>
+<rect x="40.0" y="153.5" width="90.0" height="25.0" fill="#7a8798"/>
+<rect x="105.0" y="178.5" width="25.0" height="60.0" fill="url(#rampDown)"/>
+<rect x="105.0" y="236.0" width="25.0" height="30.0" fill="#28303a"/>
+<rect x="130.0" y="236.0" width="150.0" height="30.0" fill="#28303a"/>
+<rect x="250.0" y="186.0" width="25.0" height="50.0" fill="#28303a"/>
+<rect x="275.0" y="186.0" width="45.0" height="25.0" fill="#28303a"/>
+<rect x="267.5" y="266.0" width="10.0" height="15.0" fill="#28303a"/>
+<rect x="267.5" y="271.0" width="202.5" height="10.0" fill="#28303a"/>
+<rect x="460.0" y="258.5" width="10.0" height="12.5" fill="#28303a"/>
+<rect x="320.0" y="138.5" width="150.0" height="120.0" fill="#28303a"/>
+<rect x="470.0" y="183.5" width="40.0" height="30.0" fill="#28303a"/>
+<rect x="510.0" y="106.0" width="30.0" height="107.5" fill="#28303a"/>
+<rect x="540.0" y="106.0" width="150.0" height="40.0" fill="url(#rampUp)"/>
+<rect x="690.0" y="106.0" width="40.0" height="40.0" fill="#525e6c"/>
+<rect x="730.0" y="106.0" width="30.0" height="107.5" fill="#525e6c"/>
+<rect x="760.0" y="138.5" width="180.0" height="120.0" fill="#525e6c"/>
+<rect x="940.0" y="186.0" width="40.0" height="25.0" fill="#525e6c"/>
+<rect x="980.0" y="116.0" width="165.0" height="165.0" fill="#525e6c"/>
+<line x1="470.0" y1="213.5" x2="540.0" y2="213.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="730.0" y1="213.5" x2="760.0" y2="213.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="40.0" y1="153.5" x2="130.0" y2="153.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="470.0" y1="183.5" x2="510.0" y2="183.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="267.5" y1="281.0" x2="470.0" y2="281.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="980.0" y1="281.0" x2="1145.0" y2="281.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="540.0" y1="146.0" x2="730.0" y2="146.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="320.0" y1="138.5" x2="470.0" y2="138.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="760.0" y1="138.5" x2="940.0" y2="138.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="277.5" y1="271.0" x2="460.0" y2="271.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="105.0" y1="266.0" x2="267.5" y2="266.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="277.5" y1="266.0" x2="280.0" y2="266.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="980.0" y1="116.0" x2="1145.0" y2="116.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="320.0" y1="258.5" x2="460.0" y2="258.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="760.0" y1="258.5" x2="940.0" y2="258.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="40.0" y1="178.5" x2="105.0" y2="178.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="250.0" y1="186.0" x2="320.0" y2="186.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="940.0" y1="186.0" x2="980.0" y2="186.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="510.0" y1="106.0" x2="760.0" y2="106.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="130.0" y1="236.0" x2="250.0" y2="236.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="275.0" y1="236.0" x2="280.0" y2="236.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="275.0" y1="211.0" x2="320.0" y2="211.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="940.0" y1="211.0" x2="980.0" y2="211.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="1145.0" y1="281.0" x2="1145.0" y2="116.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="250.0" y1="236.0" x2="250.0" y2="186.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="980.0" y1="281.0" x2="980.0" y2="211.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="980.0" y1="186.0" x2="980.0" y2="116.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="105.0" y1="266.0" x2="105.0" y2="178.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="940.0" y1="258.5" x2="940.0" y2="211.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="940.0" y1="186.0" x2="940.0" y2="138.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="760.0" y1="258.5" x2="760.0" y2="213.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="760.0" y1="138.5" x2="760.0" y2="106.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="280.0" y1="266.0" x2="280.0" y2="236.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="470.0" y1="281.0" x2="470.0" y2="213.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="470.0" y1="183.5" x2="470.0" y2="138.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="730.0" y1="213.5" x2="730.0" y2="146.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="320.0" y1="258.5" x2="320.0" y2="211.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="320.0" y1="186.0" x2="320.0" y2="138.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="510.0" y1="183.5" x2="510.0" y2="106.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="40.0" y1="178.5" x2="40.0" y2="153.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="275.0" y1="236.0" x2="275.0" y2="211.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="130.0" y1="236.0" x2="130.0" y2="153.5" stroke="#d7dee8" stroke-width="2"/>
+<line x1="540.0" y1="213.5" x2="540.0" y2="146.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="277.5" y1="271.0" x2="277.5" y2="266.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="267.5" y1="281.0" x2="267.5" y2="266.0" stroke="#d7dee8" stroke-width="2"/>
+<line x1="460.0" y1="271.0" x2="460.0" y2="258.5" stroke="#d7dee8" stroke-width="2"/>
+<rect x="170.0" y="251.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="220.0" y="236.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="257.5" y="258.5" width="5.0" height="7.5" fill="#aab4c2"/>
+<rect x="350.0" y="221.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="350.0" y="161.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="380.0" y="236.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="380.0" y="146.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="575.0" y="128.5" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="610.0" y="108.5" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="645.0" y="128.5" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="790.0" y="226.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="790.0" y="156.0" width="5.0" height="15.0" fill="#aab4c2"/>
+<rect x="870.0" y="158.5" width="5.0" height="80.0" fill="#aab4c2"/>
+<line x1="940.0" y1="211.0" x2="940.0" y2="186.0" stroke="#ffd166" stroke-width="5"/>
+<line x1="117.5" y1="188.5" x2="117.5" y2="228.5" stroke="#FFFFFF" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="560.0" y1="126.0" x2="670.0" y2="126.0" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+<text x="85.0" y="143.5" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">진입로 (언덕 6m)</text>
+<text x="97.5" y="206.0" font-size="11" fill="#d7dee8" text-anchor="end" font-weight="400">내리막</text>
+<text x="142.5" y="160.0" font-size="11" fill="#d7dee8" text-anchor="start" font-weight="400">전망 지점</text>
+<text x="195.0" y="223.5" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">통로</text>
+<text x="360.0" y="289.0" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="700">샛길</text>
+<text x="395.0" y="128.5" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">마당</text>
+<text x="615.0" y="98.0" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">언덕길 (0m → 4m)</text>
+<text x="850.0" y="128.5" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">성문 앞 (4m)</text>
+<text x="1062.5" y="108.0" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">보스 아레나 (4m)</text>
+<text x="947.5" y="225.0" font-size="12" fill="#ffd166" text-anchor="start" font-weight="700">성문</text>
+<text x="872.5" y="153.0" font-size="10.5" fill="#d7dee8" text-anchor="middle" font-weight="400">가림벽</text>
+<text x="262.5" y="280.0" font-size="10.5" fill="#d7dee8" text-anchor="end" font-weight="400">샛길 문</text>
+<circle cx="265.0" cy="251.0" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="265.0" y="254.6" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="450.0" cy="228.5" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="450.0" y="232.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="450.0" cy="168.5" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="450.0" y="172.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="693.0" cy="136.0" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="693.0" y="139.6" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="693.0" cy="116.0" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="693.0" y="119.6" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="845.0" cy="223.5" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="845.0" y="227.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="845.0" cy="173.5" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="845.0" y="177.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="922.5" cy="198.5" r="7" fill="#f0a35e" stroke="#11151b" stroke-width="1"/>
+<text x="922.5" y="202.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">원</text>
+<circle cx="395.0" cy="213.5" r="7" fill="#e06c75" stroke="#11151b" stroke-width="1"/>
+<text x="395.0" y="217.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">근</text>
+<circle cx="395.0" cy="183.5" r="7" fill="#e06c75" stroke="#11151b" stroke-width="1"/>
+<text x="395.0" y="187.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">근</text>
+<circle cx="820.0" cy="198.5" r="7" fill="#e06c75" stroke="#11151b" stroke-width="1"/>
+<text x="820.0" y="202.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">근</text>
+<circle cx="900.0" cy="198.5" r="7" fill="#e06c75" stroke="#11151b" stroke-width="1"/>
+<text x="900.0" y="202.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">근</text>
+<circle cx="50.0" cy="166.0" r="7" fill="#7fd1a0" stroke="#11151b" stroke-width="1"/>
+<text x="50.0" y="169.6" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">P</text>
+<circle cx="1102.5" cy="198.5" r="9" fill="#c792ea" stroke="#11151b" stroke-width="1"/>
+<text x="1102.5" y="202.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">B</text>
+<circle cx="1062.5" cy="198.5" r="6" fill="#8794a5" stroke="#11151b" stroke-width="1"/>
+<text x="1062.5" y="202.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">C</text>
+<circle cx="980.0" cy="198.5" r="6" fill="#8794a5" stroke="#11151b" stroke-width="1"/>
+<text x="980.0" y="202.1" font-size="9.5" fill="#11151b" text-anchor="middle" font-weight="700">G</text>
+<circle cx="37" cy="343" r="7" fill="#7fd1a0"/>
+<text x="50" y="347.5" font-size="13" fill="#d7dee8">P 플레이어 시작</text>
+<circle cx="189.5" cy="343" r="7" fill="#f0a35e"/>
+<text x="202.5" y="347.5" font-size="13" fill="#d7dee8">원 원거리 일반 적</text>
+<circle cx="354.5" cy="343" r="7" fill="#e06c75"/>
+<text x="367.5" y="347.5" font-size="13" fill="#d7dee8">근 근거리 일반 적</text>
+<circle cx="519.5" cy="343" r="7" fill="#c792ea"/>
+<text x="532.5" y="347.5" font-size="13" fill="#d7dee8">B 보스 시작</text>
+<circle cx="647.0" cy="343" r="7" fill="#8794a5"/>
+<text x="660.0" y="347.5" font-size="13" fill="#d7dee8">G 아레나 입구 · C 아레나 중심</text>
+<rect x="30" y="356" width="18" height="6" fill="#aab4c2"/><text x="56" y="365" font-size="13" fill="#d7dee8">엄폐물·칸막이</text>
+<line x1="170" y1="359" x2="188" y2="359" stroke="#ffd166" stroke-width="5"/><text x="196" y="365" font-size="13" fill="#d7dee8">성문 (닫힘)</text>
+<line x1="300" y1="359" x2="318" y2="359" stroke="#d7dee8" stroke-width="2"/><text x="326" y="365" font-size="13" fill="#d7dee8">벽</text>
+<rect x="370" y="353" width="18" height="12" fill="#28303a" stroke="#55606e" stroke-width="0.5"/><text x="394" y="365" font-size="13" fill="#d7dee8">바닥 0m</text>
+<rect x="460" y="353" width="18" height="12" fill="#525e6c" stroke="#55606e" stroke-width="0.5"/><text x="484" y="365" font-size="13" fill="#d7dee8">바닥 4m</text>
+<rect x="550" y="353" width="18" height="12" fill="#7a8798" stroke="#55606e" stroke-width="0.5"/><text x="574" y="365" font-size="13" fill="#d7dee8">바닥 6m</text>
+<line x1="1055.0" y1="360" x2="1155.0" y2="360" stroke="#FFFFFF" stroke-width="2"/>
+<text x="1105.0" y="354" font-size="12" fill="#d7dee8" text-anchor="middle">20m</text>
 </svg>
