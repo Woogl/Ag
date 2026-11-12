@@ -9,6 +9,7 @@
 class UAgButton;
 class UCommonTextBlock;
 class UWidgetAnimation;
+struct FAgCombatStats;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgBattleResultScreen : public UCommonActivatableWidget
@@ -35,6 +36,27 @@ protected:
 	TObjectPtr<UCommonTextBlock> TitleText;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UWidget> CombatStatsTable;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonTextBlock> AttemptText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonTextBlock> DurationText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonTextBlock> EnemiesText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonTextBlock> ParryCountText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonTextBlock> PerfectDodgeCountText;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UCommonTextBlock> HitCountText;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> RestartButton;
 
 	UPROPERTY(meta = (BindWidget))
@@ -42,4 +64,8 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> QuitButton;
+
+private:
+	/** 시뮬레이션 룸에서 결과로 끝난 전투가 있으면 통계 표를 채워 보이고, 아니면 접습니다. */
+	void ShowCombatStats();
 };

@@ -32,7 +32,7 @@
 | - | - | - |
 | `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정)과 적중 가능 판정(`CanBeHitBy`), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, Launch가 띄울 때마다 켜는 엔진 정점 알림으로 보내는 `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 넉업·넉다운 동안 캡슐도 무기에 맞음, `State.Hidden` 동안 무기까지 숨김), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
 | `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 모든 캐릭터의 회전과 낙하 높이. 엔진 회전을 쓰고, 사망·방향 고정 중에는 돌지 않습니다. 방향 고정(`IsFacingFixed`)은 `DefaultSlot`을 쓰는 어빌리티 몽타주를 재생하는 동안과 그로기이며, 상체 슬롯만 쓰는 몽타주(회복병)는 재생 중에도 돕니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. 낙하 높이는 공중에서 마지막으로 발이 가장 높았던 지점(걸어 나가 떨어지면 딛고 있던 바닥)부터 착지한 바닥까지 잽니다. |
-| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소), 달리기·락온 발동과 취소, 락온 대상 전환, 몸 회전, 극한 회피 캡슐(`PerfectDodgeCapsule`), 궁극기 시간 정지 요청, 사망 시 시야를 제외한 입력 차단. |
+| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소), 달리기·락온 발동과 취소, 락온 대상 전환, 몸 회전, 극한 회피 캡슐(`PerfectDodgeCapsule`), 전투 통계 기록(`CombatStats`), 궁극기 시간 정지 요청, 사망 시 시야를 제외한 입력 차단. |
 | `AAgPlayerCameraManager` | `APlayerCameraManager` | BP 파생 클래스 없이 생성합니다. 락온 보간·시야 입력 판단(엔진 `ProcessViewRotation`에서 락온과 처형 중 회전 차단, 락온 중 대상 전환 튕김 판정)·상대 쪽 회전·요청받은 상황의 연출 재생·달리기 시야각·처형 카메라 시작과 종료·컷신 진입 정리를 맡고, 설정은 `UAgCameraData`에서 읽습니다. 엔진 점유 알림으로 플레이어 ASC에 연결합니다. 기본 모디파이어 클래스는 C++ 생성자의 `DefaultModifiers`에서 지정하고 엔진이 생성합니다. |
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
 | `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
@@ -138,9 +138,11 @@ classDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록(`Stages`: 이름과 레벨)과 레벨이 게임에 있는지 확인(`IsStageAvailable`), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료) |
+| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록(`Stages`: 이름과 레벨)과 레벨이 게임에 있는지 확인(`IsStageAvailable`), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료), 도전 횟수 알림(다시 시작 전 `RequestRestart`, 레벨을 열 때 `BeginAttempt`) |
 | `AAgGameState` | `AGameStateBase` | 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함)와 변경 알림(`OnStageResultChanged`) |
-| `UAgCombatSubsystem` | `UWorldSubsystem` | 전투 중인 적 목록(`FAgEnemyAITask_Combat`이 등록·해제)과 변경 알림(`OnCombatantsChanged`), 목록의 보스(`FindBoss`), 플레이어가 처형하는 동안의 패턴 금지(`ArePatternsBlocked`), 패턴 시작 허가(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 동시 공격 수의 차례)와 공격 시작·끝(`StartAttack`, `EndAttack`, 끝나면 재공격 대기) |
+| `UAgCombatStatsSubsystem` | `UGameInstanceSubsystem` | 레벨을 다시 열어도 남는 전투 통계 상태. 도전 횟수(Restart 요청이 있었으면 +1, 아니면 1)와 이번 실행의 기록 파일(`Saved/CombatStats/<실행 시각>.json`, 기록이 끝날 때마다 엔진 `FJsonObjectConverter`로 전체를 다시 씀) |
+| `UAgCombatStatsComponent` | `UActorComponent` | 플레이어의 지금 전투 기록. 전투 중인 적 목록이 비었다가 생기면 시작하고 비면 끝내며(플레이어 사망 → 사망, 상대한 적이 모두 사망 → 처치, 그 밖 → 이탈), Stage Clear가 정해지면 바로 처치로 끝냄. 패리·극한 회피는 플레이어 ASC의 `Event.Parry`·`Event.PerfectDodge`, 피격은 엔진 `OnGameplayEffectAppliedDelegateToSelf`의 `Effect.Damage.Result.Hit`로 세고, 전투 시간은 일시정지에 멈추고 시간 배율을 받지 않는 엔진 시계(`GetAudioTimeSeconds`)로 잼. 스테이지 결과가 정해진 뒤에 끝난 기록을 시뮬레이션 룸 결과창에 내줌(`GetStageResultStats`) |
+| `UAgCombatSubsystem` | `UWorldSubsystem` | 전투 중인 적 목록(`FAgEnemyAITask_Combat`이 등록·해제, `GetCombatants`)과 변경 알림(`OnCombatantsChanged`), 목록의 보스(`FindBoss`), 플레이어가 처형하는 동안의 패턴 금지(`ArePatternsBlocked`), 패턴 시작 허가(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 동시 공격 수의 차례)와 공격 시작·끝(`StartAttack`, `EndAttack`, 끝나면 재공격 대기) |
 | `AAgSimulationRoomGameMode` | `AAgGameMode` | 후보 적 클래스(`EnemyClasses`), 레벨의 배치 지점을 `Slot` 순으로 수집, 레벨 주소 옵션 `Enemies`(자리 번호 순서의 캐릭터 데이터 ID)로 받은 구성을 플레이어 참가 처리에서 배치하고 놓은 캐릭터마다 플레이어에게 맞은 것과 같은 엔진 대미지 감각 자극(`ReportDamageEvent`)을 보내 시야와 관계없이 전투 진입, 구성이 비었으면 적 선택 화면 열기, 어느 적을 어느 자리에 둘 수 있는지(`CanPlace`), 같은 맵을 구성 옵션으로 다시 열기, 후보 적마다 표시 액터(`EnemyPreviewClass`)를 처음 쓸 때 하나 띄워 두고 그 렌더 타깃을 돌려줌(`GetEnemyPreview`). Stage Clear 조건은 적 팀 캐릭터가 모두 사망 |
 | `AAgEnemySpawnPoint` | `ATargetPoint` | 레벨에 놓는 배치 자리 표시. 자리 번호 `Slot`만 가짐 |
 | `AAgCharacterPreview` | `AActor` | 캐릭터 클래스 하나를 AI 빙의 없이 스폰해 정면의 씬 캡처(`Capture`)로 렌더 타깃에 그림. 띄운 캐릭터는 씬 캡처에만 보이고, 자기 조명(`Light`)과 함께 라이팅 채널 1에만 두어 레벨의 조명·그림자와 섞이지 않음. 게임이 멈춘 동안에도 메시와 캡처가 틱하며, 메시 범위로 캡처 높이와 거리를 맞춤 |
@@ -153,6 +155,7 @@ classDiagram
 - `UComboBoxKey`를 상속하지 않고 사용자 위젯으로 감싼 것은 모양을 위젯 블루프린트 기본값에 두고, 사용자 위젯만 받는 `UDynamicEntryBox`(적 선택 화면의 자리 줄)의 항목으로 만들기 위해서입니다. CommonUI 버튼이 엔진 버튼을 감싸는 것과 같은 구조입니다.
 - 표시용 캐릭터는 그 적의 클래스 그대로 스폰합니다. 블루프린트에서 소켓에 붙인 무기와 ABP를 엔진의 생성 과정이 그대로 만들어 카드의 모습이 게임과 같습니다. UMG의 3D 뷰포트 위젯(`UViewport`)은 엔진에서 Experimental이라 쓰지 않습니다.
 - 표시 액터는 카드 위젯이 아니라 게임 모드가 적 종류마다 하나를 레벨 수명 동안 가집니다. `UComboBoxKey`는 목록을 다시 채울 때마다 닫힌 칸 위젯을 새로 만들어, 카드가 가지면 캐릭터를 다시 스폰하고 대기 모션도 처음부터 다시 시작되기 때문입니다.
+- 전투 통계의 사망 기록은 Game Over가 정해질 때가 아니라 적이 모두 대기로 빠져 전투 중인 적이 없어질 때 끝냅니다. 쓰러뜨린 공격의 효과 적용 알림이 그 공격의 사망 처리(어트리뷰트 세트 → 게임 모드)보다 늦게 와서, Game Over에서 끝내면 마지막 피격이 빠지기 때문입니다.
 
 ```mermaid
 classDiagram
@@ -173,6 +176,10 @@ classDiagram
     UWorldSubsystem <|-- UAgCombatSubsystem
     UAgCombatSubsystem --> AAgEnemyCharacter : 전투 중인 적
     UAgCombatSubsystem ..> AAgCharacterBase : 플레이어의 처형 상태
+    UGameInstanceSubsystem <|-- UAgCombatStatsSubsystem
+    UAgCombatStatsSubsystem <.. AAgGameMode : 도전 횟수
+    UAgCombatStatsComponent ..> UAgCombatSubsystem : 전투 시작·끝
+    UAgCombatStatsComponent ..> UAgCombatStatsSubsystem : 기록 저장
 ```
 
 ### 피격 상태와 AI 조건

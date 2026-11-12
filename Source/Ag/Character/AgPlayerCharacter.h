@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "AgPlayerCharacter.generated.h"
 
+class UAgCombatStatsComponent;
 class UCameraComponent;
 class UCapsuleComponent;
 class UGameplayAbility;
@@ -26,6 +27,11 @@ public:
 	USpringArmComponent* GetCameraBoom() const
 	{
 		return CameraBoom;
+	}
+
+	UAgCombatStatsComponent* GetCombatStats() const
+	{
+		return CombatStats;
 	}
 
 	virtual FVector GetMoveInputDirection() const override
@@ -103,6 +109,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	TObjectPtr<UCapsuleComponent> PerfectDodgeCapsule;
+
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	TObjectPtr<UAgCombatStatsComponent> CombatStats;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;

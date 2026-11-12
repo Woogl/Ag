@@ -9,6 +9,7 @@
 #include "AbilitySystemComponent.h"
 #include "Ag.h"
 #include "Camera/CameraComponent.h"
+#include "Combat/AgCombatStatsComponent.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Core/AgCollision.h"
@@ -49,6 +50,8 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	PerfectDodgeCapsule->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
 	PerfectDodgeCapsule->SetGenerateOverlapEvents(false);
 	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
+
+	CombatStats = CreateDefaultSubobject<UAgCombatStatsComponent>(TEXT("CombatStats"));
 }
 
 bool AAgPlayerCharacter::IsMoveInputIgnored() const
