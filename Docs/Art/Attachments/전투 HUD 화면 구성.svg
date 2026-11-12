@@ -64,7 +64,7 @@
   <text x="1106" y="481" font-size="32" fill="#FFFFFF" text-anchor="middle">[F] 처형</text>
   <text x="982" y="512" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
 
-  <!-- [7] 적 네임플레이트: 머리 위 16px, HP 118 × 10px, 간격 6px, PP 118 × 4px -->
+  <!-- [6] 적 네임플레이트: 머리 위 16px, HP 118 × 10px, 간격 6px, PP 118 × 4px -->
   <rect x="1341" y="376" width="118" height="10" fill="#000000" fill-opacity="0.5"/>
   <rect x="1341" y="376" width="70" height="10" fill="#D94545"/>
   <rect x="1411" y="376" width="14" height="10" fill="#FFFFFF" fill-opacity="0.7"/>
@@ -137,23 +137,6 @@
   <text x="1600" y="980" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
   <text x="1600" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 3 오른쪽 위: 남은 충전 횟수</text>
 
-  <!-- [6] 조작 안내 (오른쪽 가운데) -->
-  <rect x="1560" y="360" width="312" height="360" rx="8" fill="#000000" fill-opacity="0.45"/>
-  <g font-size="18.7" fill="#FFFFFF">
-    <text x="1576" y="392">W, A, S, D</text><text x="1707" y="392">이동</text>
-    <text x="1576" y="420">마우스 이동</text><text x="1707" y="420">시야</text>
-    <text x="1576" y="448">좌클릭</text><text x="1707" y="448">기본 공격</text>
-    <text x="1576" y="476">우클릭</text><text x="1707" y="476">가드 / 패리</text>
-    <text x="1576" y="504">Left Shift</text><text x="1707" y="504">회피 / 달리기</text>
-    <text x="1576" y="532">Space</text><text x="1707" y="532">점프</text>
-    <text x="1576" y="560">1, 2, 3, 4</text><text x="1707" y="560">스킬 1, 2, 3, 4</text>
-    <text x="1576" y="588">Q</text><text x="1707" y="588">궁극기</text>
-    <text x="1576" y="616">F</text><text x="1707" y="616">처형</text>
-    <text x="1576" y="644">R</text><text x="1707" y="644">회복병 사용</text>
-    <text x="1576" y="672">휠 클릭</text><text x="1707" y="672">락온 / 락온 해제</text>
-    <text x="1576" y="700">Esc</text><text x="1707" y="700">일시정지</text>
-  </g>
-
   <!-- 번호 표시 -->
   <g font-size="18" font-weight="700" text-anchor="middle" fill="#1b1f24">
     <circle cx="624" cy="996" r="16" fill="#FFD23F"/>
@@ -166,9 +149,7 @@
     <text x="920" y="456">4</text>
     <circle cx="1260" cy="470" r="16" fill="#FFD23F"/>
     <text x="1260" y="476">5</text>
-    <circle cx="1536" cy="540" r="16" fill="#FFD23F"/>
-    <text x="1536" y="546">6</text>
     <circle cx="1317" cy="386" r="16" fill="#FFD23F"/>
-    <text x="1317" y="392">7</text>
+    <text x="1317" y="392">6</text>
   </g>
 </svg>
