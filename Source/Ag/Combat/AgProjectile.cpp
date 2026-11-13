@@ -117,17 +117,7 @@ void AAgProjectile::BeginPlay()
 		return;
 	}
 	const FVector From = GetActorLocation();
-	const FVector TargetLocation = Target->GetActorLocation();
-	const FVector TargetVelocity = Target->GetVelocity() * FVector(1.0, 1.0, 0.0);
-	if (FlightTime > 0.f)
-	{
-		// 거리와 관계없이 같은 시간에 닿도록, 예측 지점까지의 3차원 거리를 FlightTime으로 나눠 속도를 정합니다. 한도에 걸리면 한도 속도로
-		// 날아가며 이때 예측 지점은 그 속도로 다시 구합니다. 속도는 발사 때 한 번만 정하므로 반사된 탄도 이 속도를 유지합니다.
-		const double FixedTimeSpeed = FVector::Dist(From, TargetLocation + TargetVelocity * FlightTime) / FlightTime;
-		const double ClampedSpeed = FMath::Clamp(FixedTimeSpeed, MinSpeed, MaxSpeed > 0.f ? MaxSpeed : FixedTimeSpeed);
-		Speed = static_cast<float>(ClampedSpeed);
-	}
-	const FVector AimLocation = AgProjectilePrivate::PredictLocation(From, TargetLocation, TargetVelocity, Speed);
+	const FVector AimLocation = AgProjectilePrivate::PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed);
 	const FVector AimDirection = (AimLocation - From).GetSafeNormal();
 	if (!AimDirection.IsNearlyZero())
 	{
