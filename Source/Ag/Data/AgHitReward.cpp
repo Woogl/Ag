@@ -5,5 +5,5 @@
 
 void FAgHitReward::AddToSpec(FGameplayEffectSpec& Spec) const
 {
-	AgEffectData::SetResourceAmounts(Spec, 0.f, MP, UP);
+	AgEffectData::SetResourceAmounts(Spec, MP, UP);
 }

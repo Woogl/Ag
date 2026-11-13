@@ -28,23 +28,6 @@
 DECLARE_TARGETING_DATA_STORE(FAgTargetingRequest)
 DEFINE_TARGETING_DATA_STORE(FAgTargetingRequest)
 
-namespace AgTargetingPrivate
-{
-	/** 선택 Task마다 후보를 더하므로, 이미 든 후보는 다시 넣지 않습니다. */
-	void AddCandidate(FTargetingDefaultResultsSet& Results, const AActor& Owner, AActor& Candidate)
-	{
-		if (Results.TargetResults.ContainsByPredicate([&Candidate](const FTargetingDefaultResultData& Result)
-		{ return Result.HitResult.GetActor() == &Candidate; }))
-		{
-			return;
-		}
-		FTargetingDefaultResultData& Result = Results.TargetResults.AddDefaulted_GetRef();
-		Result.HitResult.HitObjectHandle = FActorInstanceHandle(&Candidate);
-		Result.HitResult.Location = Candidate.GetActorLocation();
-		Result.HitResult.Distance = FVector::Distance(Owner.GetActorLocation(), Candidate.GetActorLocation());
-	}
-} // namespace AgTargetingPrivate
-
 TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AActor& Source)
 {
 	TArray<AActor*> Targets;
@@ -117,7 +100,7 @@ bool AgTargeting::IsVisible(const AActor& Source, const AActor& Target, FName So
 		QueryParams);
 }
 
-bool AgTargeting::ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition)
+bool AgTargeting::ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition, FVector2D* OutScreenSize)
 {
 	const APlayerController* Controller = Cast<APlayerController>(Pawn.GetController());
 	const ULocalPlayer* LocalPlayer = Controller ? Controller->GetLocalPlayer() : nullptr;
@@ -131,6 +114,10 @@ bool AgTargeting::ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLoc
 	if (!LocalPlayer || !Camera || ViewportWidth <= 0 || ViewportHeight <= 0)
 	{
 		return false;
+	}
+	if (OutScreenSize)
+	{
+		*OutScreenSize = FVector2D(ViewportWidth, ViewportHeight);
 	}
 
 	// 엔진 투영(ULocalPlayer::GetProjectionData)은 카메라 매니저의 최종 시야를 쓰므로, 같은 계산을 카메라 컴포넌트의
@@ -179,13 +166,9 @@ AActor* AgTargeting::FindSideTarget(const FAgTargetingRequest& Request, APawn& S
 	return Nearest;
 }
 
-void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& TargetingHandle) const
+void UAgTargetingSelectionTask_Sphere::SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const
 {
-	Super::Execute(TargetingHandle);
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
-
-	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const AActor* Owner = Source ? Source->SourceActor.Get() : nullptr;
+	const AActor* Owner = SourceContext.SourceActor.Get();
 	const FAgTargetingRequest* Request = UE::TargetingSystem::TTargetingDataStore<FAgTargetingRequest>::Find(TargetingHandle);
 	if (Owner && Owner->GetWorld() && Request && Request->Range > 0.f)
 	{
@@ -194,34 +177,22 @@ void UAgTargetingSelectionTask_Sphere::Execute(const FTargetingRequestHandle& Ta
 		const FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgTargetingSphere), false, Owner);
 		Owner->GetWorld()->OverlapMultiByObjectType(Overlaps, Owner->GetActorLocation(), FQuat::Identity, FCollisionObjectQueryParams(ECC_Pawn),
 			FCollisionShape::MakeSphere(Request->Range), QueryParams);
-		FTargetingDefaultResultsSet& Results = FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle);
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
 			// 캐릭터 메시도 Pawn 오브젝트 종류라, 캡슐(몸과 회피를 시작한 자리)에 닿은 결과만 씁니다.
 			AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(Overlap.GetActor());
 			if (Candidate && Cast<UCapsuleComponent>(Overlap.GetComponent()))
 			{
-				AgTargetingPrivate::AddCandidate(Results, *Owner, *Candidate);
+				AddTargetActor(TargetingHandle, Candidate);
 			}
 		}
 	}
-
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
 }
 
-void UAgTargetingSelectionTask_LockOnTarget::Execute(const FTargetingRequestHandle& TargetingHandle) const
+void UAgTargetingSelectionTask_LockOnTarget::SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const
 {
-	Super::Execute(TargetingHandle);
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Executing);
-
-	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
-	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
-	if (AAgCharacterBase* LockOnTarget = Owner ? Owner->GetLockOnTarget() : nullptr)
-	{
-		AgTargetingPrivate::AddCandidate(FTargetingDefaultResultsSet::FindOrAdd(TargetingHandle), *Owner, *LockOnTarget);
-	}
-
-	SetTaskAsyncState(TargetingHandle, ETargetingTaskAsyncState::Completed);
+	const AAgCharacterBase* Owner = Cast<AAgCharacterBase>(SourceContext.SourceActor);
+	AddTargetActor(TargetingHandle, Owner ? Owner->GetLockOnTarget() : nullptr);
 }
 
 bool UAgTargetingFilterTask_Hostile::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
@@ -267,19 +238,11 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const APawn* Pawn = Source ? Cast<APawn>(Source->SourceActor) : nullptr;
-	const APlayerController* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
 	const AActor* Candidate = TargetData.HitResult.GetActor();
-	if (!Controller || !Candidate)
-	{
-		return true;
-	}
-	int32 ViewportWidth = 0;
-	int32 ViewportHeight = 0;
-	Controller->GetViewportSize(ViewportWidth, ViewportHeight);
 	FVector2D ScreenPosition;
-	const bool bOnScreen = AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition) &&
-	                       ScreenPosition.X >= 0.f && ScreenPosition.Y >= 0.f && ScreenPosition.X <= ViewportWidth &&
-	                       ScreenPosition.Y <= ViewportHeight;
+	FVector2D ScreenSize;
+	const bool bOnScreen = Pawn && Candidate && AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition, &ScreenSize) &&
+	                       ScreenPosition.X >= 0. && ScreenPosition.Y >= 0. && ScreenPosition.X <= ScreenSize.X && ScreenPosition.Y <= ScreenSize.Y;
 	return !bOnScreen;
 }
 
@@ -294,24 +257,12 @@ float UAgTargetingSortTask_ScreenCenter::GetScoreForTarget(const FTargetingReque
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const APawn* Pawn = Source ? Cast<APawn>(Source->SourceActor) : nullptr;
-	const APlayerController* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
 	const AActor* Candidate = TargetData.HitResult.GetActor();
-	if (!Controller || !Candidate)
-	{
-		return TNumericLimits<float>::Max();
-	}
-	int32 ViewportWidth = 0;
-	int32 ViewportHeight = 0;
-	Controller->GetViewportSize(ViewportWidth, ViewportHeight);
-	if (ViewportWidth <= 0 || ViewportHeight <= 0)
-	{
-		return TNumericLimits<float>::Max();
-	}
 	FVector2D ScreenPosition;
-	if (!AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition))
+	FVector2D ScreenSize;
+	if (!Pawn || !Candidate || !AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition, &ScreenSize))
 	{
 		return TNumericLimits<float>::Max();
 	}
-	const FVector2D ScreenCenter(ViewportWidth * 0.5f, ViewportHeight * 0.5f);
-	return FVector2D::Distance(ScreenPosition, ScreenCenter);
+	return static_cast<float>(FVector2D::Distance(ScreenPosition, ScreenSize * 0.5));
 }

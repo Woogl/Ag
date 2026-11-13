@@ -28,7 +28,13 @@ protected:
 	TObjectPtr<UBlendSpace> GuardMoveBlendSpace;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
+	TObjectPtr<UAnimSequenceBase> JumpAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> AirborneAnimation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
+	TObjectPtr<UAnimSequenceBase> LandAnimation;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Assets")
 	TObjectPtr<UAnimSequenceBase> GroggyAnimation;
@@ -83,6 +89,15 @@ protected:
 	bool bIsInAir = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldJump = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldLand = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
+	bool bShouldLeaveLand = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsGuarding = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
@@ -130,6 +145,8 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<AAgCharacterBase> Character;
 
+	float SmallestTurnAngle = 0.f;
+	float SmallestGuardTurnAngle = 0.f;
 	float LastActorYaw = 0.f;
 	float TurnDirection = 0.f;
 	bool bTurning = false;

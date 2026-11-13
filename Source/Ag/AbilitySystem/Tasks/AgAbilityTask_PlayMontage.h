@@ -48,6 +48,12 @@ public:
 	/** 재생이 바뀌면 구간 Task가 끝나므로, 구간 Task가 켜져 있는 동안은 그 구간의 재생입니다. */
 	const FAnimMontageInstance* GetMontageInstance() const;
 
+	/** 몽타주가 끊기거나 재생하지 못해 끝났는지. Task는 행동을 끝내지 않으므로, 어빌리티가 이 값을 보고 행동을 취소합니다. */
+	bool WasInterrupted() const
+	{
+		return bPlaybackInterrupted;
+	}
+
 private:
 	enum class EAgTimelineMode : uint8
 	{
@@ -61,7 +67,7 @@ private:
 	}
 
 	void Play(FName Section, float BlendTime);
-	void CancelAbility();
+	void EndInterrupted();
 
 	void HandleMontageBlendingOut(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId);
 	void HandleMontageEnded(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId);
@@ -83,6 +89,8 @@ private:
 	 * 받지 않으므로, 끝나는 구간이 요청하는 전환을 거르도록 구간을 끝내기 전에 비웁니다.
 	 */
 	int32 MontageInstanceId = INDEX_NONE;
+
+	bool bPlaybackInterrupted = false;
 
 	UPROPERTY()
 	TArray<FAgTimelineEntry> TimelineEntries;

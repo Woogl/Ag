@@ -7,9 +7,9 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 
-void UAgStatBar::SetValue(float Value, float MaxValue, bool bShowDrop)
+void UAgStatBar::SetValue(float Value, float MaxValue)
 {
-	SetRatio(MaxValue > 0.f ? Value / MaxValue : 0.f, bShowDrop);
+	SetRatio(MaxValue > 0.f ? Value / MaxValue : 0.f);
 
 	const FIntPoint Values(FMath::RoundToInt(Value), FMath::RoundToInt(MaxValue));
 	if (bShowValue && Values != ShownValues)
@@ -20,27 +20,23 @@ void UAgStatBar::SetValue(float Value, float MaxValue, bool bShowDrop)
 	}
 }
 
-void UAgStatBar::SetRatio(float Ratio, bool bShowDrop)
+void UAgStatBar::SetRatio(float Ratio)
 {
 	Bar->SetPercent(Ratio);
-	const float PreviousRatio = BarRatio;
+	const bool bDropped = Ratio < BarRatio;
 	BarRatio = Ratio;
 	if (!bShowTrail)
 	{
 		return;
 	}
 
-	const bool bFirstValue = PreviousRatio < 0.f;
-	const bool bDropped = !bFirstValue && Ratio < PreviousRatio;
-	const bool bTrailBelowBar = TrailRatio <= Ratio;
-	// 잔상이 바보다 길면 기다리거나 줄어드는 중이므로, 잔상 없이 줄어들 때는 그 흐름을 그대로 둡니다.
-	const bool bDropWithoutRunningTrail = bDropped && !bShowDrop && TrailRatio <= PreviousRatio;
-	if (bFirstValue || bTrailBelowBar || bDropWithoutRunningTrail)
+	// 잔상은 0에서 시작하므로 첫 값도 여기서 바에 맞춰집니다.
+	if (TrailRatio <= Ratio)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(TrailTimer);
 		SetTrailRatio(Ratio);
 	}
-	else if (bDropped && bShowDrop)
+	else if (bDropped)
 	{
 		FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 		TimerManager.ClearTimer(TrailTimer);
@@ -58,7 +54,7 @@ void UAgStatBar::SetRatio(float Ratio, bool bShowDrop)
 void UAgStatBar::ClearTrail()
 {
 	GetWorld()->GetTimerManager().ClearTimer(TrailTimer);
-	SetTrailRatio(FMath::Max(BarRatio, 0.f));
+	SetTrailRatio(BarRatio);
 }
 
 void UAgStatBar::NativePreConstruct()

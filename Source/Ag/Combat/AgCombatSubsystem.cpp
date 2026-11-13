@@ -47,6 +47,18 @@ void UAgCombatSubsystem::RemoveCombatant(const AAgEnemyCharacter& Enemy)
 	OnCombatantsChanged.Broadcast();
 }
 
+void UAgCombatSubsystem::GetCombatants(TArray<AAgEnemyCharacter*>& OutEnemies) const
+{
+	OutEnemies.Reset();
+	for (const FAgCombatant& Combatant : Combatants)
+	{
+		if (AAgEnemyCharacter* Enemy = Combatant.Enemy.Get())
+		{
+			OutEnemies.Add(Enemy);
+		}
+	}
+}
+
 AAgBossCharacter* UAgCombatSubsystem::FindBoss() const
 {
 	for (const FAgCombatant& Combatant : Combatants)

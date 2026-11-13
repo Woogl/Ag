@@ -5,6 +5,7 @@
 #include "Camera/AgPlayerCameraManager.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgGameplayTags.h"
+#include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
 
 namespace AgGameplayCueNotify_BurstPrivate
@@ -56,7 +57,7 @@ void UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(AActor* Target, const
 	{
 		Player = Cast<AAgPlayerCharacter>(Target);
 	}
-	AAgPlayerCameraManager* CameraManager = Player ? Player->GetPlayerCameraManager() : nullptr;
+	AAgPlayerCameraManager* CameraManager = Player ? Cast<AAgPlayerCameraManager>(UGameplayStatics::GetPlayerCameraManager(Player, 0)) : nullptr;
 	if (!CameraManager)
 	{
 		return;
@@ -74,16 +75,8 @@ void UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(AActor* Target, const
 	}
 	else if (CueTag == AgGameplayTags::GameplayCue_Guard)
 	{
-		EAgCameraSituation Situation = EAgCameraSituation::Guard;
-		if (Parameters.AggregatedSourceTags.HasTagExact(AgGameplayTags::Effect_Damage_Result_GuardBreak))
-		{
-			Situation = EAgCameraSituation::GuardBreak;
-		}
-		else if (Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Guard_Pushback))
-		{
-			Situation = EAgCameraSituation::GuardPushback;
-		}
-		CameraManager->PlayCameraReaction(Situation, Attacker);
+		const bool bPushback = Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Guard_Pushback);
+		CameraManager->PlayCameraReaction(bPushback ? EAgCameraSituation::GuardPushback : EAgCameraSituation::Guard, Attacker);
 	}
 	else if (CueTag == AgGameplayTags::GameplayCue_Parry)
 	{

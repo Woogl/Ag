@@ -39,9 +39,21 @@
     "Speed": 1500,
     "MaxRadius": 5000,
     "Height": 10,
+    "Width": 100,
     "Damage": {
       "HPMultiplier": 2,
       "HitReaction": "KnockUp",
+      "bGuardable": false
+    }
+  },
+  "PhaseTransitionShockwave": {
+    "Class": "/Game/Projectiles/BP_RoarShockwave.BP_RoarShockwave_C",
+    "Speed": 100000,
+    "MaxRadius": 400,
+    "Height": 400,
+    "Damage": {
+      "HPMultiplier": 0,
+      "HitReaction": "KnockDown",
       "bGuardable": false
     }
   }

@@ -28,29 +28,31 @@
   </g>
   <rect width="1920" height="1080" fill="#000000" fill-opacity="0.7"/>
 
-  <!-- 팝업 패널 -->
-  <rect x="780" y="276" width="360" height="528" rx="8" fill="#2b3036"/>
-  <text x="804" y="332" font-size="32" font-weight="700" fill="#FFFFFF">Controls</text>
+  <!-- 팝업 패널: 안쪽 여백 40px -->
+  <rect x="717" y="156" width="486" height="768" rx="8" fill="#2b3036"/>
+  <text x="757" y="226" font-size="32" font-weight="700" fill="#FFFFFF">Controls</text>
 
-  <!-- 조작 안내 (전투 HUD와 같은 모양) -->
-  <rect x="804" y="364" width="312" height="332" rx="8" fill="#000000" fill-opacity="0.45"/>
-  <g font-size="18.7" fill="#FFFFFF">
-    <text x="820" y="396">W, A, S, D</text><text x="951" y="396">이동</text>
-    <text x="820" y="424">마우스 이동</text><text x="951" y="424">시야</text>
-    <text x="820" y="452">좌클릭</text><text x="951" y="452">기본 공격</text>
-    <text x="820" y="480">우클릭</text><text x="951" y="480">가드 / 패리</text>
-    <text x="820" y="508">Left Shift</text><text x="951" y="508">회피 / 달리기</text>
-    <text x="820" y="536">Space</text><text x="951" y="536">점프</text>
-    <text x="820" y="564">1, 2, 3, 4</text><text x="951" y="564">스킬 1, 2, 3, 4</text>
-    <text x="820" y="592">Q</text><text x="951" y="592">궁극기</text>
-    <text x="820" y="620">F</text><text x="951" y="620">처형</text>
-    <text x="820" y="648">휠 클릭</text><text x="951" y="648">락온 / 락온 해제</text>
-    <text x="820" y="676">Esc</text><text x="951" y="676">일시정지</text>
+  <!-- 조작 안내: 제목 아래 24px, 안쪽 여백 24px, 글자 Medium, 키는 굵게, 줄 간격 1.5배, 키와 조작 이름 사이 48px -->
+  <rect x="757" y="260" width="406" height="520" rx="8" fill="#000000" fill-opacity="0.45"/>
+  <g font-size="24" fill="#FFFFFF">
+    <text x="781" y="308" font-weight="700">W, A, S, D</text><text x="964" y="308">이동</text>
+    <text x="781" y="348" font-weight="700">마우스 이동</text><text x="964" y="348">시야</text>
+    <text x="781" y="388" font-weight="700">좌클릭</text><text x="964" y="388">기본 공격</text>
+    <text x="781" y="428" font-weight="700">우클릭</text><text x="964" y="428">가드 / 패리</text>
+    <text x="781" y="468" font-weight="700">Left Shift</text><text x="964" y="468">회피 / 달리기</text>
+    <text x="781" y="508" font-weight="700">Space</text><text x="964" y="508">점프</text>
+    <text x="781" y="548" font-weight="700">1, 2, 3, 4</text><text x="964" y="548">스킬 1, 2, 3, 4</text>
+    <text x="781" y="588" font-weight="700">Q</text><text x="964" y="588">궁극기</text>
+    <text x="781" y="628" font-weight="700">F</text><text x="964" y="628">처형</text>
+    <text x="781" y="668" font-weight="700">R</text><text x="964" y="668">회복병 사용</text>
+    <text x="781" y="708" font-weight="700">휠 클릭</text><text x="964" y="708">락온 / 락온 해제</text>
+    <text x="781" y="748" font-weight="700">Esc</text><text x="964" y="748">일시정지</text>
   </g>
 
-  <rect x="840" y="708" width="240" height="72" rx="8" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
-  <text x="960" y="755" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
+  <!-- Confirm 버튼: 조작 안내 아래 32px -->
+  <rect x="840" y="812" width="240" height="72" rx="8" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
+  <text x="960" y="859" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
 
   <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
-  <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 닫기: Confirm 버튼 · 팝업 뒤의 타이틀 버튼은 조작할 수 없음</text>
+  <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 닫기: Confirm 버튼, Esc · 팝업 뒤의 타이틀 버튼은 조작할 수 없음</text>
 </svg>

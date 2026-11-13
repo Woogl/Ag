@@ -11,7 +11,7 @@
 
 class AAgCharacterBase;
 
-/** 지면에서 모든 수평 방향으로 퍼지는 고리입니다. BP 외형은 반경·높이 1m 고리로 만들고, 판정 반경·높이에 맞춰 배율을 바꿉니다. */
+/** 지면에서 모든 수평 방향으로 퍼지는 고리입니다. BP 외형은 반경·높이 1m 원통으로 만들고, 판정 반경·높이에 맞춰 배율을 바꿉니다. 너비는 사용자 지정 프리미티브 데이터 0번(안쪽 반경 ÷ 바깥 반경)으로 머티리얼에 넘깁니다. */
 UCLASS(Abstract)
 class AAgShockwave : public AActor, public IAgAbilitySpawnedActor
 {
@@ -27,7 +27,7 @@ protected:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
-	void UpdateScale();
+	void UpdateLook();
 
 	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
 	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
@@ -39,6 +39,10 @@ private:
 	/** 지면에서 판정이 닿는 높이입니다. */
 	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
 	float Height = 0.f;
+
+	/** 바깥 가장자리에서 안쪽으로 판정이 닿는 너비입니다. */
+	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
+	float Width = 0.f;
 
 	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
 	FAgDamage Damage;

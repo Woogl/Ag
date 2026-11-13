@@ -12,7 +12,6 @@ struct FGameplayEventData;
 UENUM()
 enum class EAgLaunchDirection : uint8
 {
-	Up,
 	Back,
 	Target
 };
@@ -23,16 +22,13 @@ struct FAgLaunchParams : public FAgTaskParams
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TOptional<float> AirTime;
-
-	UPROPERTY()
-	TOptional<float> Height;
+	float Height = 0.f;
 
 	UPROPERTY()
 	TOptional<float> Altitude;
 
 	UPROPERTY()
-	EAgLaunchDirection Direction = EAgLaunchDirection::Up;
+	EAgLaunchDirection Direction = EAgLaunchDirection::Back;
 
 	UPROPERTY()
 	float Distance = 0.f;

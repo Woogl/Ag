@@ -42,12 +42,6 @@ struct FAgAttributes
 	float MaxHP = 0.f;
 
 	UPROPERTY()
-	float SP = 0.f;
-
-	UPROPERTY()
-	float MaxSP = 0.f;
-
-	UPROPERTY()
 	float MP = 0.f;
 
 	UPROPERTY()
@@ -73,6 +67,12 @@ struct FAgAttributes
 
 	UPROPERTY()
 	float MOV = 0.f;
+
+	UPROPERTY()
+	float Potion = 0.f;
+
+	UPROPERTY()
+	float MaxPotion = 0.f;
 };
 
 USTRUCT()

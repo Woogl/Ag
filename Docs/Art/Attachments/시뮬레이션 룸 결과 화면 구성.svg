@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4553"/>
+      <stop offset="1" stop-color="#2a323d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경: 전투가 끝난 장면 (임시) -->
+  <rect width="1920" height="760" fill="url(#sky)"/>
+  <rect y="760" width="1920" height="320" fill="#222831"/>
+  <path d="M0 760 H1920" stroke="#4a5563" stroke-width="2"/>
+
+  <!-- 쓰러진 적 -->
+  <g fill="#4b5563">
+    <rect x="1040" y="716" width="300" height="56" rx="24"/>
+    <circle cx="1372" cy="736" r="30"/>
+    <rect x="300" y="736" width="240" height="44" rx="20"/>
+    <circle cx="566" cy="752" r="24"/>
+  </g>
+
+  <!-- 서 있는 플레이어 (뒷모습) -->
+  <g fill="#3f4753">
+    <circle cx="700" cy="640" r="34"/>
+    <rect x="636" y="680" width="128" height="200" rx="28"/>
+    <rect x="648" y="870" width="46" height="120" rx="16"/>
+    <rect x="706" y="870" width="46" height="120" rx="16"/>
+  </g>
+
+  <!-- 화면을 60% 어둡게 -->
+  <rect width="1920" height="1080" fill="#000000" fill-opacity="0.6"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">시뮬레이션 룸 Stage Clear UI · 기준 해상도 1920 × 1080 · 제목, 통계 표, 버튼을 화면 가운데에 세로로 놓음</text>
+
+  <!-- 제목 -->
+  <text x="960" y="281" font-size="112" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="8">STAGE CLEAR</text>
+
+  <!-- 전투 통계 표 (글자 Medium, 줄 간격 40px) -->
+  <g font-size="24" fill="#FFFFFF">
+    <text x="793" y="397">도전 횟수</text>
+    <text x="937" y="397">2</text>
+    <text x="793" y="437">전투 시간</text>
+    <text x="937" y="437">0:48.312</text>
+    <text x="793" y="477">상대한 적</text>
+    <text x="937" y="477">커스터, 절단자 × 2</text>
+    <text x="793" y="517">패리 성공</text>
+    <text x="937" y="517">3</text>
+    <text x="793" y="557">회피 성공</text>
+    <text x="937" y="557">1</text>
+    <text x="793" y="597">피격 횟수</text>
+    <text x="937" y="597">5</text>
+  </g>
+  <text x="1190" y="397" font-size="16" fill="#9aa4b1">← 항목 이름과 값, 위에서부터 차례로</text>
+
+  <!-- 버튼 (세로 배치) -->
+  <g font-size="32" font-weight="700" text-anchor="middle">
+    <rect x="750" y="674" width="420" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <text x="960" y="721" fill="#FFFFFF">Restart</text>
+
+    <rect x="750" y="766" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="813" fill="#c9d1db">Return to Title</text>
+
+    <rect x="750" y="858" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="905" fill="#c9d1db">Quit</text>
+  </g>
+  <text x="1190" y="716" font-size="16" fill="#9aa4b1">← 처음 선택된 버튼</text>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, ↑·↓ / 실행: 좌클릭, Enter</text>
+</svg>

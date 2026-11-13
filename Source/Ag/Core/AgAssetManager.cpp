@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "TargetingSystem/TargetingPreset.h"
 #include "UObject/GCObjectScopeGuard.h"
@@ -66,7 +67,7 @@ namespace AgAssetManagerPrivate
 		{
 			if (FAgJsonReader::IsField(**It))
 			{
-				It->CopyCompleteValue(It->ContainerPtrToValuePtr<void>(&To), It->ContainerPtrToValuePtr<void>(&From));
+				It->CopyCompleteValue_InContainer(&To, &From);
 			}
 		}
 	}
@@ -106,8 +107,7 @@ const UAgCameraData& UAgAssetManager::GetCameraData() const
 
 const UTargetingPreset* UAgAssetManager::FindTargetingPreset(FName Id) const
 {
-	const TObjectPtr<UTargetingPreset>* Found = TargetingPresets->Presets.Find(Id);
-	return Found ? Found->Get() : nullptr;
+	return TargetingPresets->Presets.FindRef(Id);
 }
 
 const FAgAbilityData* UAgAssetManager::FindAbility(FName Id) const
@@ -117,14 +117,12 @@ const FAgAbilityData* UAgAssetManager::FindAbility(FName Id) const
 
 AActor* UAgAssetManager::FindSpawnActor(FName Id) const
 {
-	const TObjectPtr<AActor>* Found = SpawnActors->SpawnActors.Find(Id);
-	return Found ? Found->Get() : nullptr;
+	return SpawnActors->SpawnActors.FindRef(Id);
 }
 
 const UGameplayEffect* UAgAssetManager::FindEffect(FName Id) const
 {
-	const TObjectPtr<UGameplayEffect>* Found = Effects->Effects.Find(Id);
-	return Found ? Found->Get() : nullptr;
+	return Effects->Effects.FindRef(Id);
 }
 
 const UGameplayEffect* UAgAssetManager::GetEffect(EAgEffect Effect) const
@@ -134,8 +132,7 @@ const UGameplayEffect* UAgAssetManager::GetEffect(EAgEffect Effect) const
 
 UAgCharacterData* UAgAssetManager::FindCharacterData(FName Id) const
 {
-	const TObjectPtr<UAgCharacterData>* Found = Characters->Characters.Find(Id);
-	return Found ? Found->Get() : nullptr;
+	return Characters->Characters.FindRef(Id);
 }
 
 TArray<FName> UAgAssetManager::GetCharacterDataIds() const
@@ -191,14 +188,14 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 		Finder.AddPropertyReferencesWithStructARO(Object->GetClass(), Object);
 		for (UObject* Reference : References)
 		{
-			const FString PackageName = Reference->GetOutermost()->GetName();
+			const UPackage* Package = Reference->GetOutermost();
 			if (Reference->IsIn(this))
 			{
 				Pending.Add(Reference);
 			}
-			else if (!PackageName.StartsWith(TEXT("/Script/")) && PackageName != TEXT("/Engine/Transient"))
+			else if (!FPackageName::IsScriptPackage(Package->GetName()) && Package != GetTransientPackage())
 			{
-				PackagesToCook.AddUnique(FName(*PackageName));
+				PackagesToCook.AddUnique(Package->GetFName());
 			}
 		}
 	}

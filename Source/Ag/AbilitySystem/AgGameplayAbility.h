@@ -22,13 +22,13 @@ public:
 	virtual void OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) override;
 	virtual bool CanActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual bool DoesAbilitySatisfyTagRequirements(const UAbilitySystemComponent& ASC, const FGameplayTagContainer* SourceTags = nullptr, const FGameplayTagContainer* TargetTags = nullptr, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
-	virtual void GetCooldownTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const override;
+	virtual bool CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 
 	/** 남은 충전 수입니다. 걸린 쿨다운 효과 하나가 쓴 충전 하나입니다. */
-	int32 GetCharges(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const;
+	int32 GetCharges() const;
 
-	/** 다음 충전까지 남은 시간입니다. GetCooldownTimeRemainingAndDuration과 달리 충전이 남아 있어도 값을 줍니다. */
-	void GetRechargeTimeRemainingAndDuration(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, float& TimeRemaining, float& CooldownDuration) const;
+	/** 다음 충전까지 남은 시간과 쿨다운 길이입니다. 충전이 남아 있어도 값을 줍니다. */
+	void GetRechargeTimeRemainingAndDuration(float& TimeRemaining, float& CooldownDuration) const;
 
 	/** 엔진 MakeOutgoingGameplayEffectSpec은 GE 클래스를 받는데 Effects.json의 효과는 GE 객체이므로 직접 만듭니다. */
 	FGameplayEffectSpecHandle MakeEffectSpec(const UGameplayEffect& Effect) const;
@@ -44,11 +44,11 @@ public:
 		return Definition;
 	}
 
-	/** 이벤트로 발동하지 않았으면 비어 있습니다. */
-	const FGameplayTag& GetTriggerEventTag() const
-	{
-		return TriggerEventTag;
-	}
+	/** 캐릭터 데이터에 있는 지금의 정의입니다. 데이터를 다시 읽은 뒤에는 사본(GetDefinition)과 다를 수 있고, 받은 포인터는 그 함수 안에서만 씁니다. */
+	const FAgAbilityData* FindDefinition() const;
+
+	/** 이 발동을 일으킨 게임플레이 이벤트입니다. 이벤트 트리거로 발동하지 않았으면 없습니다. */
+	const FGameplayEventData* GetTriggerEvent() const;
 
 	AActor* GetActionTarget() const
 	{
@@ -79,19 +79,14 @@ public:
 
 protected:
 	virtual void ActivateAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
-	virtual bool CheckCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCost(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const override;
 	virtual bool CheckCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 	virtual void ApplyCooldown(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, FGameplayAbilityActivationInfo ActivationInfo) const override;
 
 private:
-	const FAgAbilityData* FindDefinition(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo) const;
 	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect) const;
-	FGameplayEffectSpecHandle MakeEffectSpec(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const UGameplayEffect* Effect) const;
 
-	AActor* FindTargetingTarget(const FAgAbilityData& Data, const FGameplayAbilityActorInfo* ActorInfo) const;
-
-	bool IsEventTrigger(const FGameplayEventData* TriggerEventData) const;
+	AActor* FindTargetingTarget(const FAgAbilityData& Data) const;
 
 	void FinishIfTasksDone();
 
@@ -106,8 +101,6 @@ private:
 	FAgAbilityData Definition;
 
 	TWeakObjectPtr<AActor> ActionTarget;
-
-	FGameplayTag TriggerEventTag;
 
 	bool bStartingTasks = false;
 };

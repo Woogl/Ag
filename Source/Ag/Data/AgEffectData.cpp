@@ -17,13 +17,12 @@ namespace AgEffectDataPrivate
 {
 	constexpr float PeriodicEffectInterval = 0.1f;
 
-	FGameplayModifierInfo& AddModifier(UGameplayEffect& Effect, FGameplayAttribute Attribute, EGameplayModOp::Type Op, const FGameplayEffectModifierMagnitude& Magnitude)
+	void AddModifier(UGameplayEffect& Effect, FGameplayAttribute Attribute, EGameplayModOp::Type Op, const FGameplayEffectModifierMagnitude& Magnitude)
 	{
 		FGameplayModifierInfo& Modifier = Effect.Modifiers.AddDefaulted_GetRef();
 		Modifier.Attribute = Attribute;
 		Modifier.ModifierOp = Op;
 		Modifier.ModifierMagnitude = Magnitude;
-		return Modifier;
 	}
 
 	FAttributeBasedFloat MakeTargetAttribute(FGameplayAttribute Attribute, float Coefficient)
@@ -59,6 +58,10 @@ namespace AgEffectDataPrivate
 		{
 			return FGameplayEffectModifierMagnitude(FScalableFloat(*Modifier.Multiplier));
 		}
+		if (Modifier.Coefficient)
+		{
+			return FGameplayEffectModifierMagnitude(MakeTargetAttribute(Modifier.BackingAttribute, *Modifier.Coefficient));
+		}
 		return FGameplayEffectModifierMagnitude(FScalableFloat(Modifier.Value.Get(0.f)));
 	}
 
@@ -89,7 +92,6 @@ UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 			Effect->AddComponent<UAgDamageResultGameplayEffectComponent>();
 			break;
 		case EAgEffect::Resource:
-			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetSPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_SP));
 			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetMPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_MP));
 			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetUPAttribute(), EGameplayModOp::AddBase, AgEffectDataPrivate::MakeSetByCaller(AgGameplayTags::SetByCaller_UP));
 			break;
@@ -136,9 +138,7 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	for (const FAgEffectModifier& Modifier : Definition.Modifiers)
 	{
 		const EGameplayModOp::Type Op = Modifier.Multiplier ? EGameplayModOp::MultiplyCompound : EGameplayModOp::AddBase;
-		FGameplayModifierInfo& Info = AgEffectDataPrivate::AddModifier(*Effect, Modifier.Attribute, Op, AgEffectDataPrivate::MakeMagnitude(Modifier));
-		Info.TargetTags.RequireTags = Modifier.RequiredTags;
-		Info.TargetTags.IgnoreTags = Modifier.IgnoredTags;
+		AgEffectDataPrivate::AddModifier(*Effect, Modifier.Attribute, Op, AgEffectDataPrivate::MakeMagnitude(Modifier));
 	}
 	if (!Definition.GrantedTags.IsEmpty())
 	{
@@ -169,9 +169,8 @@ UGameplayEffect* AgEffectData::MakeEffect(const FAgEffectDefinition& Definition,
 	return Effect;
 }
 
-void AgEffectData::SetResourceAmounts(FGameplayEffectSpec& Spec, float SP, float MP, float UP)
+void AgEffectData::SetResourceAmounts(FGameplayEffectSpec& Spec, float MP, float UP)
 {
-	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_SP, SP);
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_MP, MP);
 	Spec.SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_UP, UP);
 }

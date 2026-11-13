@@ -17,13 +17,10 @@ struct FAgAbilityData;
 class UMotionWarpingComponent;
 class UAgHitPhysicsComponent;
 class UAnimMontage;
-class AAgCharacterBase;
 struct FGameplayAbilitySpec;
 struct FGameplayEventData;
 struct FGameplayTag;
 struct FOnAttributeChangeData;
-
-DECLARE_MULTICAST_DELEGATE_OneParam(FAgCharacterDiedSignature, AAgCharacterBase*);
 
 UCLASS(Abstract)
 class AAgCharacterBase : public ACharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
@@ -36,8 +33,6 @@ public:
 	virtual UAgAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
-
-	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 	UAgAttributeSet* GetAttributeSet() const
 	{
@@ -76,11 +71,6 @@ public:
 		return WeaponComponent;
 	}
 
-	UAnimMontage* GetGuardFlinchMontage() const
-	{
-		return GuardFlinchMontage;
-	}
-
 	bool IsDead() const;
 
 	/** 무기, 투사체, 범위 적중이 모두 이 판정을 써야 맞는 대상이 공격 방식마다 갈리지 않습니다. */
@@ -108,8 +98,6 @@ public:
 	void PushDisableMontageRootMotion();
 	void PopDisableMontageRootMotion();
 
-	FAgCharacterDiedSignature OnDied;
-
 	virtual void PreInitializeComponents() override;
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
@@ -128,6 +116,9 @@ public:
 
 protected:
 	virtual void ApplyDeathState();
+
+	/** 승패는 게임 모드가 정하므로, 죽은 캐릭터가 게임 모드에 직접 알립니다. */
+	void NotifyGameModeOfDeath();
 
 	void SendEventToSelf(const FGameplayTag& EventTag);
 
@@ -193,9 +184,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Animation")
 	TObjectPtr<UAgHitPhysicsComponent> HitPhysics;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> GuardFlinchMontage;
 
 	TMap<FGameplayAbilitySpecHandle, FName> AbilityIds;
 

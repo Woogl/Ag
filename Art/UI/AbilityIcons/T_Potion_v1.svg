@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="liquid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffb0a3"/>
+      <stop offset="0.4" stop-color="#ff5d55"/>
+      <stop offset="1" stop-color="#c92333"/>
+    </linearGradient>
+    <linearGradient id="cork" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd9c9"/>
+      <stop offset="1" stop-color="#ff9a86"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="11"/>
+    </filter>
+    <clipPath id="body">
+      <path d="M112 62 V90 C112 100 104 105 94 112 C74 126 60 146 60 170 C60 208 92 232 128 232 C164 232 196 208 196 170 C196 146 182 126 162 112 C152 105 144 100 144 90 V62 Z"/>
+    </clipPath>
+  </defs>
+  <path d="M112 62 V90 C112 100 104 105 94 112 C74 126 60 146 60 170 C60 208 92 232 128 232 C164 232 196 208 196 170 C196 146 182 126 162 112 C152 105 144 100 144 90 V62 Z" fill="#ff4d4a" opacity="0.6" filter="url(#glow)"/>
+  <g clip-path="url(#body)">
+    <rect x="50" y="56" width="156" height="180" fill="#ffffff" opacity="0.1"/>
+    <rect x="50" y="138" width="156" height="102" fill="url(#liquid)"/>
+  </g>
+  <path d="M112 62 V90 C112 100 104 105 94 112 C74 126 60 146 60 170 C60 208 92 232 128 232 C164 232 196 208 196 170 C196 146 182 126 162 112 C152 105 144 100 144 90 V62" fill="none" stroke="#ffe6e0" stroke-width="5" stroke-linejoin="round" opacity="0.85"/>
+  <rect x="104" y="28" width="48" height="36" rx="8" fill="url(#cork)"/>
+</svg>

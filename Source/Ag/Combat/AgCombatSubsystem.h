@@ -18,6 +18,9 @@ public:
 	void AddCombatant(AAgEnemyCharacter& Enemy);
 	void RemoveCombatant(const AAgEnemyCharacter& Enemy);
 
+	/** 전투 중인 적을 전투에 들어간 순서로 돌려줍니다. */
+	void GetCombatants(TArray<AAgEnemyCharacter*>& OutEnemies) const;
+
 	AAgBossCharacter* FindBoss() const;
 
 	/** 플레이어가 처형하는 동안 참입니다. 이때는 어떤 적도 패턴을 시작하지 않고, 실행 중인 패턴도 멈춥니다. */

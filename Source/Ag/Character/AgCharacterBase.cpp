@@ -9,6 +9,7 @@
 #include "Ag.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/Skeleton.h"
 #include "Character/AgHitPhysicsComponent.h"
 #include "Character/AgCharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -18,6 +19,7 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgEffectData.h"
+#include "Game/AgGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 
@@ -63,26 +65,6 @@ FGenericTeamId AAgCharacterBase::GetGenericTeamId() const
 	return CharacterData ? FGenericTeamId(static_cast<uint8>(CharacterData->Team)) : FGenericTeamId::NoTeam;
 }
 
-ETeamAttitude::Type AAgCharacterBase::GetTeamAttitudeTowards(const AActor& Other) const
-{
-	const IGenericTeamAgentInterface* OtherAgent = Cast<const IGenericTeamAgentInterface>(&Other);
-	if (!OtherAgent)
-	{
-		return ETeamAttitude::Neutral;
-	}
-	const FGenericTeamId Team = GetGenericTeamId();
-	const FGenericTeamId OtherTeam = OtherAgent->GetGenericTeamId();
-	if (OtherTeam == Team)
-	{
-		return ETeamAttitude::Friendly;
-	}
-	// 적 팀과 중립 팀은 서로 노리지 않습니다. 적중은 Friendly가 아니면 맞으므로, 공격 판정에 들어온 상대는 맞습니다.
-	const FGenericTeamId EnemyTeam(static_cast<uint8>(EAgTeam::Enemy));
-	const FGenericTeamId NeutralTeam(static_cast<uint8>(EAgTeam::Neutral));
-	const bool bIgnored = (Team == EnemyTeam && OtherTeam == NeutralTeam) || (Team == NeutralTeam && OtherTeam == EnemyTeam);
-	return bIgnored ? ETeamAttitude::Neutral : ETeamAttitude::Hostile;
-}
-
 FGameplayAbilitySpec* AAgCharacterBase::FindAbilitySpec(FName Id) const
 {
 	const FGameplayAbilitySpecHandle* Handle = AbilityIds.FindKey(Id);
@@ -121,8 +103,10 @@ bool AAgCharacterBase::IsFacingFixed() const
 {
 	// 엔진 GetCurrentMontage는 블렌드 아웃을 시작한 몽타주를 돌려주지 않아, 행동이 끝나기 전 블렌드 아웃부터 돕니다.
 	const UGameplayAbility* Animating = AbilitySystemComponent->GetAnimatingAbility();
+	const UAnimMontage* Montage = AbilitySystemComponent->GetCurrentMontage();
+	// 상체 슬롯만 쓰는 몽타주는 이동하면서 재생하므로 방향을 묶지 않습니다.
 	// 피격 반응 뒤의 그로기 자세는 몽타주가 아니라 애님 그래프가 재생합니다.
-	return (Animating && Animating->IsActive() && AbilitySystemComponent->GetCurrentMontage()) ||
+	return (Animating && Animating->IsActive() && Montage && Montage->IsValidSlot(FAnimSlotGroup::DefaultSlotName)) ||
 	       AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 }
 
@@ -317,6 +301,14 @@ void AAgCharacterBase::ApplyDeathState()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
+void AAgCharacterBase::NotifyGameModeOfDeath()
+{
+	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
+	{
+		GameMode->HandleCharacterDied(*this);
+	}
+}
+
 void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
 {
 	FGameplayEventData Payload;
@@ -335,7 +327,7 @@ void AAgCharacterBase::DieWithRagdoll(const FVector& PushVelocity)
 
 	ApplyDeathState();
 	StartRagdoll(PushVelocity);
-	OnDied.Broadcast(this);
+	NotifyGameModeOfDeath();
 }
 
 void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
@@ -411,16 +403,16 @@ void AAgCharacterBase::InitializeAttributes()
 
 	// 최대치를 먼저 넣습니다. 현재 값이 최대치에 맞춰 잘리기 때문입니다.
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxHPAttribute(), Attributes.MaxHP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxSPAttribute(), Attributes.MaxSP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxMPAttribute(), Attributes.MaxMP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxUPAttribute(), Attributes.MaxUP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPPAttribute(), Attributes.MaxPP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMaxPotionAttribute(), Attributes.MaxPotion);
 
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetHPAttribute(), Attributes.HP);
-	ASC.SetNumericAttributeBase(UAgAttributeSet::GetSPAttribute(), Attributes.SP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMPAttribute(), Attributes.MP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetUPAttribute(), Attributes.UP);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetPPAttribute(), Attributes.PP);
+	ASC.SetNumericAttributeBase(UAgAttributeSet::GetPotionAttribute(), Attributes.Potion);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetATKAttribute(), Attributes.ATK);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetDEFAttribute(), Attributes.DEF);
 	ASC.SetNumericAttributeBase(UAgAttributeSet::GetMOVAttribute(), Attributes.MOV);

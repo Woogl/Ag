@@ -64,10 +64,6 @@ void UAgAttributeSet::ClampToRange(const FGameplayAttribute& Attribute, float& V
 	{
 		Value = FMath::Clamp(Value, 0.f, GetMaxHP());
 	}
-	else if (Attribute == GetSPAttribute())
-	{
-		Value = FMath::Clamp(Value, 0.f, GetMaxSP());
-	}
 	else if (Attribute == GetMPAttribute())
 	{
 		Value = FMath::Clamp(Value, 0.f, GetMaxMP());
@@ -79,6 +75,10 @@ void UAgAttributeSet::ClampToRange(const FGameplayAttribute& Attribute, float& V
 	else if (Attribute == GetPPAttribute())
 	{
 		Value = FMath::Clamp(Value, 0.f, GetMaxPP());
+	}
+	else if (Attribute == GetPotionAttribute())
+	{
+		Value = FMath::Clamp(Value, 0.f, GetMaxPotion());
 	}
 	else
 	{

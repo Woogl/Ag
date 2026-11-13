@@ -27,7 +27,6 @@ public:
 	AAgCharacterBase* GetTarget() const;
 
 	bool IsEnemyReacting() const;
-	bool IsEnemyFlinching() const;
 
 	bool IsTargetNoticed() const;
 
@@ -37,7 +36,6 @@ public:
 	bool IsInPostPatternDelay() const;
 
 	virtual FGenericTeamId GetGenericTeamId() const override;
-	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;

@@ -7,7 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "AgPlayerCharacter.generated.h"
 
-class AAgPlayerCameraManager;
+class UAgCombatStatsComponent;
 class UCameraComponent;
 class UCapsuleComponent;
 class UGameplayAbility;
@@ -24,12 +24,22 @@ class AAgPlayerCharacter : public AAgCharacterBase
 public:
 	AAgPlayerCharacter();
 
-	AAgPlayerCameraManager* GetPlayerCameraManager() const;
+	USpringArmComponent* GetCameraBoom() const
+	{
+		return CameraBoom;
+	}
+
+	UAgCombatStatsComponent* GetCombatStats() const
+	{
+		return CombatStats;
+	}
 
 	virtual FVector GetMoveInputDirection() const override
 	{
 		return MoveInputDirection;
 	}
+
+	virtual bool IsMoveInputIgnored() const override;
 
 	void FindInputAbilities(const FGameplayTag& InputTag, TArray<FGameplayAbilitySpecHandle>& OutHandles) const;
 
@@ -38,12 +48,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaSeconds) override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	virtual void OnJumped_Implementation() override;
-	virtual void Landed(const FHitResult& Hit) override;
+	virtual bool CanJumpInternal_Implementation() const override;
 
 	virtual void ApplyDeathState() override;
 
@@ -52,7 +60,6 @@ private:
 
 	void Move(const FInputActionValue& Value);
 
-	void StopLandingMotion();
 	void MoveReleased();
 	void Look(const FInputActionValue& Value);
 
@@ -69,21 +76,19 @@ private:
 
 	void ActivateByTag(const FGameplayTag& AbilityTag);
 
-	void TryJump();
-
 	bool IsActionInputBlocked(const FGameplayTag& InputTag) const;
 
 	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);
+	void HandleInputUnblocked();
+
+	/** 기억한 입력이 있고 기억 시간(InputBufferTime)이 지나지 않았습니다. */
+	bool HasBufferedInput() const;
 	void TryRunBufferedInput();
 
-	bool CanMove() const;
-
-	void TryRunPendingInput();
+	void ReturnToGuardFromParry();
 
 	void HandleAbilityActivated(UGameplayAbility* Ability);
 
-	bool WantsSprint() const;
-	void UpdateSprint();
 	void TryMoveCancel();
 
 	void ToggleLockOn();
@@ -104,6 +109,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	TObjectPtr<UCapsuleComponent> PerfectDodgeCapsule;
+
+	UPROPERTY(VisibleAnywhere, Category = "Combat")
+	TObjectPtr<UAgCombatStatsComponent> CombatStats;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;
@@ -148,10 +156,10 @@ private:
 	TObjectPtr<UInputAction> LockOnAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	float InputBufferTime = 0.3f;
+	TObjectPtr<UInputAction> PotionAction;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> JumpMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	float InputBufferTime = 0.3f;
 
 	FVector MoveInputDirection = FVector::ZeroVector;
 

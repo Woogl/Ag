@@ -6,15 +6,15 @@
     "Attributes": {
       "HP": 1000,
       "MaxHP": 1000,
-      "SP": 100,
-      "MaxSP": 100,
       "MP": 0,
       "MaxMP": 100,
       "UP": 0,
       "MaxUP": 100,
       "ATK": 100,
-      "DEF": 50,
-      "MOV": 375
+      "DEF": 100,
+      "MOV": 375,
+      "Potion": 3,
+      "MaxPotion": 3
     },
     "Abilities": [
       "BasicAttack",
@@ -34,6 +34,7 @@
       "Ultimate",
       "Execution",
       "Sprint",
+      "Potion",
       "LockOn",
       "HitReward",
       "Flinch",
@@ -42,9 +43,8 @@
       "KnockUp",
       "Juggle",
       "GuardPushback",
-      "GuardBreak"
-    ],
-    "Effects": ["SPRegen"]
+      "GuardFlinch"
+    ]
   },
   "Boss": {
     "DisplayName": "커스터",
@@ -92,8 +92,8 @@
     "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
-      "HP": 10000,
-      "MaxHP": 10000,
+      "HP": 100000,
+      "MaxHP": 100000,
       "PP": 1000,
       "MaxPP": 1000,
       "ATK": 100
@@ -120,8 +120,8 @@
     "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
-      "HP": 10000,
-      "MaxHP": 10000,
+      "HP": 100000,
+      "MaxHP": 100000,
       "PP": 1000,
       "MaxPP": 1000,
       "ATK": 100

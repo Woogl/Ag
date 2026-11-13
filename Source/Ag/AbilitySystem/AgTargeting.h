@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameplayEffectTypes.h"
+#include "Tasks/SimpleTargetingSelectionTask.h"
 #include "Tasks/TargetingFilterTask_BasicFilterTemplate.h"
 #include "Tasks/TargetingSortTask_Base.h"
-#include "Tasks/TargetingTask.h"
 #include "AgTargeting.generated.h"
 
 struct FAgTargetingRequest;
@@ -21,29 +21,29 @@ namespace AgTargeting
 	bool IsVisible(const AActor& Source, const AActor& Target, FName Socket);
 
 	/** 조종하는 폰의 카메라 컴포넌트 시야로 투영합니다. 처형 카메라나 컷신이 화면을 바꿔도 게임 카메라 기준입니다. */
-	bool ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition);
+	bool ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition, FVector2D* OutScreenSize = nullptr);
 
 	/** 후보 가운데 게임 카메라 화면에서 Current보다 Direction 쪽(양수 = 오른쪽)에 있고 Current와 가로로 가장 가까운 대상입니다. */
 	AActor* FindSideTarget(const FAgTargetingRequest& Request, APawn& Source, const AActor& Current, float Direction);
 }
 
 UCLASS()
-class UAgTargetingSelectionTask_Sphere : public UTargetingTask
+class UAgTargetingSelectionTask_Sphere : public USimpleTargetingSelectionTask
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
+	virtual void SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const override;
 };
 
 /** 출처의 락온 대상을 거리와 관계없이 후보에 더합니다. */
 UCLASS()
-class UAgTargetingSelectionTask_LockOnTarget : public UTargetingTask
+class UAgTargetingSelectionTask_LockOnTarget : public USimpleTargetingSelectionTask
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Execute(const FTargetingRequestHandle& TargetingHandle) const override;
+	virtual void SelectTargets_Implementation(const FTargetingRequestHandle& TargetingHandle, const FTargetingSourceContext& SourceContext) const override;
 };
 
 UCLASS()

@@ -25,9 +25,9 @@ public:
 	AAgPlayerCameraManager();
 
 	virtual void InitializeFor(APlayerController* PC) override;
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void ProcessViewRotation(float DeltaTime, FRotator& OutViewRotation, FRotator& OutDeltaRot) override;
 
-	void UpdateGameplayRotation(const AAgPlayerCharacter& Player, const FVector& PivotLocation, float DeltaTime);
-	void ApplyLookInput(const FVector2D& Input);
 	void PlayCameraReaction(EAgCameraSituation Situation, const AActor* TurnTarget);
 
 protected:
@@ -43,7 +43,7 @@ private:
 	void HandlePossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
 
 	void UpdateLockOnCamera(const AAgCharacterBase& Target, const FVector& PivotLocation, float DeltaTime);
-	void UpdateLockOnFlick(AAgPlayerCharacter& Player, float YawInput);
+	void UpdateLockOnFlick(AAgPlayerCharacter& Player, float YawDelta);
 	void StartCameraTurn(const AActor& Opponent, float Angle);
 	void UpdateCameraTurn(const FVector& PivotLocation, float DeltaTime);
 	bool IsExecutionCameraActive() const;

@@ -15,7 +15,6 @@ enum class EAgCheatSwitch : uint8
 	Invincible,
 	NoCooldown,
 	InfiniteMP,
-	InfiniteSP,
 	InfiniteUP,
 };
 
@@ -51,9 +50,6 @@ public:
 
 	UFUNCTION(Exec)
 	void AgInfiniteMP(const FString& OnOff);
-
-	UFUNCTION(Exec)
-	void AgInfiniteSP(const FString& OnOff);
 
 	UFUNCTION(Exec)
 	void AgInfiniteUP(const FString& OnOff);

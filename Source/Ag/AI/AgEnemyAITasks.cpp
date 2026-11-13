@@ -304,7 +304,7 @@ EStateTreeRunStatus FAgEnemyAITask_WaitReaction::Tick(FStateTreeExecutionContext
 	// 움찔 도중 넉다운으로 바뀌는 것처럼 반응이 이어질 수 있어, 머무는 동안 한 번이라도 있었는지 기록합니다. 움찔은
 	// 그로기 중에도 발동해 겹치므로, 움찔 중이어도 그로기면 기록합니다.
 	const UAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
-	InstanceData.bHeavyReaction |= !Controller.IsEnemyFlinching() || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	InstanceData.bHeavyReaction |= !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 	return EStateTreeRunStatus::Running;
 }
 
@@ -328,7 +328,6 @@ EStateTreeRunStatus FAgEnemyAITask_NonCombat::EnterState(FStateTreeExecutionCont
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	UAgAbilitySystemComponent* ASC = InstanceData.Controller->GetEnemy()->GetAbilitySystemComponent();
 	ASC->AddLooseGameplayTag(AgGameplayTags::State_NonCombat);
-	ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Enemy_Pattern));
 	return EStateTreeRunStatus::Running;
 }
 

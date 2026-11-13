@@ -15,8 +15,8 @@ class UAgStatBar : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetValue(float Value, float MaxValue, bool bShowDrop = true);
-	void SetRatio(float Ratio, bool bShowDrop = true);
+	void SetValue(float Value, float MaxValue);
+	void SetRatio(float Ratio);
 	void ClearTrail();
 
 protected:
@@ -53,7 +53,7 @@ private:
 
 	FIntPoint ShownValues = FIntPoint(INDEX_NONE, INDEX_NONE);
 
-	float BarRatio = -1.f;
+	float BarRatio = 0.f;
 	float TrailRatio = 0.f;
 	float TrailShrinkFrom = 0.f;
 	double TrailShrinkStartTime = 0.0;

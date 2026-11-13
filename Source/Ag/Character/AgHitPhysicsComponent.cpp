@@ -72,8 +72,7 @@ namespace AgHitPhysicsComponentPrivate
 		// 팔에 맞아 몸통을 밀 때처럼 맞은 곳이 바디 밖이면, 지나치게 돌지 않게 바디 표면의 가장 가까운 점을 밉니다.
 		FVector Point = Hit.Location;
 		Body.GetDistanceToBody(Hit.Location, Point);
-		// 위치를 주는 엔진 밀기는 속도 변화를 받지 않아, 질량을 곱해 다른 바디와 같은 속도 변화로 맞춥니다.
-		Body.AddImpulseAtPosition(Hit.Direction * Speed * Body.GetBodyMass(), Point);
+		Body.AddVelocityChangeImpulseAtLocation(Hit.Direction * Speed, Point);
 	}
 } // namespace AgHitPhysicsComponentPrivate
 

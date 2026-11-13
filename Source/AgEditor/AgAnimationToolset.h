@@ -9,6 +9,7 @@
 
 class UAnimMontage;
 class UAnimSequenceBase;
+class UEdGraph;
 class USkeleton;
 
 USTRUCT(BlueprintType)
@@ -77,4 +78,21 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetMontageSections(UAnimMontage* Montage, const TArray<FAgMontageSection>& Sections);
+
+	/**
+	 * 애님 블루프린트의 상태 머신 그래프에 상태를 더합니다.
+	 * @param bEntry 상태 머신이 시작할 상태이면 true입니다.
+	 * @return 상태 안의 그래프입니다. 포즈는 엔진 블루프린트 도구로 넣습니다. 상태 머신 그래프가 아니거나 이름이 겹치면 nullptr입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static UEdGraph* AddAnimState(UEdGraph* StateMachineGraph, FName Name, FIntPoint Position, bool bEntry);
+
+	/**
+	 * 상태 머신 그래프의 두 상태를 잇는 전환을 더합니다.
+	 * @param Priority 같은 상태에서 나가는 전환이 함께 참이면 작은 값이 먼저입니다.
+	 * @param bAutomaticRule 재생 중인 시퀀스가 끝나기 크로스페이드 시간 전에 규칙 없이 전환하면 true입니다.
+	 * @return 전환 규칙 그래프입니다. 규칙은 엔진 블루프린트 도구로 넣습니다. 상태를 찾지 못하면 nullptr입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static UEdGraph* AddAnimStateTransition(UEdGraph* StateMachineGraph, FName From, FName To, int32 Priority, bool bAutomaticRule);
 };

@@ -28,13 +28,19 @@
 
   <!-- 전투 HUD (멈춘 채로 메뉴 아래에 보임) -->
   <g fill="#9aa4b1" fill-opacity="0.8">
-    <rect x="460" y="110" width="1000" height="14"/>
-    <rect x="460" y="128" width="1000" height="6" fill="#c9d1db"/>
-    <rect x="48" y="958" width="400" height="8" fill="#c9d1db"/>
-    <rect x="48" y="970" width="400" height="16"/>
-    <rect x="48" y="992" width="400" height="10" fill="#7c8a9c"/>
-    <rect x="1668" y="936" width="96" height="96" rx="6" fill="none" stroke="#9aa4b1" stroke-width="3"/>
-    <rect x="1776" y="936" width="96" height="96" rx="6" fill="none" stroke="#9aa4b1" stroke-width="3"/>
+    <rect x="460" y="92" width="1000" height="14"/>
+    <rect x="460" y="114" width="1000" height="6" fill="#c9d1db"/>
+    <rect x="48" y="974" width="400" height="8" fill="#c9d1db"/>
+    <rect x="48" y="988" width="400" height="16"/>
+    <rect x="48" y="1012" width="400" height="10" fill="#7c8a9c"/>
+    <g fill="none" stroke="#9aa4b1" stroke-width="3">
+      <circle cx="88" cy="922" r="40"/>
+      <circle cx="1661" cy="917" r="40"/>
+      <circle cx="1736" cy="842" r="40"/>
+      <circle cx="1811" cy="917" r="40"/>
+      <circle cx="1736" cy="992" r="40"/>
+      <circle cx="1832" cy="821" r="40"/>
+    </g>
   </g>
 
   <!-- 화면을 60% 어둡게 -->
@@ -42,7 +48,7 @@
 
   <!-- 화면 여백 48px -->
   <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
-  <text x="56" y="34" font-size="16" fill="#9aa4b1">일시정지 메뉴 · 기준 해상도 1920 × 1080 · 보스전에서 Esc를 누르면 표시 (뒤의 전투 HUD는 그대로 보임)</text>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">일시정지 메뉴 · 기준 해상도 1920 × 1080 · 스테이지 레벨에서 Esc를 누르면 표시 (뒤의 전투 HUD는 그대로 보임)</text>
 
   <!-- 버튼 (세로 배치, 화면 가운데) -->
   <g font-size="32" font-weight="700" text-anchor="middle">

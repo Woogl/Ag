@@ -3,20 +3,6 @@
     "DurationPolicy": "Infinite",
     "GrantedTags": ["State.SuperArmor"]
   },
-  "SPRegen": {
-    "DurationPolicy": "Infinite",
-    "Modifiers": [
-      {"Attribute": "SP", "PerSecond": 40, "IgnoredTags": ["State.Guarding"]},
-      {"Attribute": "SP", "PerSecond": 10, "RequiredTags": ["State.Guarding"]}
-    ],
-    "OngoingIgnoredTags": ["State.Regen.SPDelay"],
-    "RegenDelay": {"Effect": "SPRegenDelay"}
-  },
-  "SPRegenDelay": {
-    "DurationPolicy": "HasDuration",
-    "Duration": 2,
-    "GrantedTags": ["State.Regen.SPDelay"]
-  },
   "PPRegen": {
     "DurationPolicy": "Infinite",
     "Modifiers": [
@@ -84,14 +70,14 @@
   },
   "Groggy": {
     "DurationPolicy": "HasDuration",
-    "Duration": 5,
+    "Duration": 8,
     "GrantedTags": ["State.Groggy"],
     "RemovalTags": ["State.Execution", "State.Dead"]
   },
-  "SprintDrain": {
-    "DurationPolicy": "Infinite",
+  "PotionHeal": {
     "Modifiers": [
-      {"Attribute": "SP", "PerSecond": -6, "RequiredTags": ["Input.Move"]}
+      {"Attribute": "HP", "Coefficient": 0.4, "BackingAttribute": "MaxHP"},
+      {"Attribute": "Potion", "Value": -1}
     ]
   },
   "SprintSpeed": {

@@ -91,18 +91,19 @@ bool AAgEnemyCharacter::CanLosePP() const
 
 bool AAgEnemyCharacter::IsPhaseTransitionPending() const
 {
-	return GetReachedPhase() > StartedTransitionPhase;
+	return GetReachedPhase() > Phase;
 }
 
 bool AAgEnemyCharacter::StartPhaseTransition()
 {
-	const int32 TargetPhase = GetReachedPhase();
-	SendEventToSelf(AgGameplayTags::Event_PhaseTransition);
-	if (!IsPhaseTransitionActive())
+	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	const FGameplayAbilitySpec* Spec = ASC->FindSpecByTag(AgGameplayTags::Ability_Reaction_PhaseTransition);
+	if (!Spec || !ASC->TryActivateAbility(Spec->Handle))
 	{
 		return false;
 	}
-	StartedTransitionPhase = TargetPhase;
+	// 전환하는 동안에는 패턴을 고르지 않으므로, 새 페이즈의 패턴은 전환이 끝난 뒤부터 쓰입니다.
+	Phase = GetReachedPhase();
 	return true;
 }
 
@@ -110,13 +111,6 @@ bool AAgEnemyCharacter::IsPhaseTransitionActive() const
 {
 	const FGameplayAbilitySpec* Spec = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Reaction_PhaseTransition);
 	return Spec && Spec->IsActive();
-}
-
-bool AAgEnemyCharacter::CanActivatePattern(FName Id) const
-{
-	const FGameplayAbilitySpec* Spec = FindAbilitySpec(Id);
-	const UGameplayAbility* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
-	return Ability && Ability->CanActivateAbility(Spec->Handle, GetAbilitySystemComponent()->AbilityActorInfo.Get());
 }
 
 void AAgEnemyCharacter::GatherPatterns(float TargetDistance, bool bResponse, TArray<TPair<FName, float>>& OutCandidates) const
@@ -283,10 +277,17 @@ int32 AAgEnemyCharacter::GetReachedPhase() const
 	return 1;
 }
 
+bool AAgEnemyCharacter::CanActivatePattern(FName Id) const
+{
+	const FGameplayAbilitySpec* Spec = FindAbilitySpec(Id);
+	const UGameplayAbility* Ability = Spec ? Spec->GetPrimaryInstance() : nullptr;
+	return Ability && Ability->CanActivateAbility(Spec->Handle, GetAbilitySystemComponent()->AbilityActorInfo.Get());
+}
+
 void AAgEnemyCharacter::DieWithDeathMotion(UAnimMontage& DeathMontage, float StartPosition)
 {
 	ApplyDeathState();
-	OnDied.Broadcast(this);
+	NotifyGameModeOfDeath();
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	FAnimMontageInstance* Instance = AnimInstance && AnimInstance->Montage_Play(&DeathMontage, 1.f, EMontagePlayReturnType::MontageLength, StartPosition) > 0.f
@@ -343,10 +344,6 @@ void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 	}
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
-	if (bPhaseTransitionCompleted)
-	{
-		Phase = GetReachedPhase();
-	}
 }
 
 bool AAgEnemyCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const

@@ -18,17 +18,13 @@ void UAgAbilitySystemComponent::ApplyAbilityBlockAndCancelTags(const FGameplayTa
 
 void UAgAbilitySystemComponent::CancelAbilitiesWithSpecTags(const FGameplayTagContainer& Tags, UGameplayAbility* Ignore)
 {
-	TArray<FGameplayAbilitySpecHandle> Handles;
-	for (const FGameplayAbilitySpec& Spec : GetActivatableAbilities())
+	ABILITYLIST_SCOPE_LOCK();
+	for (FGameplayAbilitySpec& Spec : GetActivatableAbilities())
 	{
-		if (Spec.IsActive() && Spec.GetPrimaryInstance() != Ignore && Spec.GetDynamicSpecSourceTags().HasAny(Tags))
+		if (Spec.IsActive() && Spec.GetDynamicSpecSourceTags().HasAny(Tags))
 		{
-			Handles.Add(Spec.Handle);
+			CancelAbilitySpec(Spec, Ignore);
 		}
-	}
-	for (const FGameplayAbilitySpecHandle Handle : Handles)
-	{
-		CancelAbilityHandle(Handle);
 	}
 }
 

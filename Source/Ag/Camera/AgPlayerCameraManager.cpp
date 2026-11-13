@@ -9,8 +9,8 @@
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCameraData.h"
-#include "GameFramework/InputSettings.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
 
 namespace AgPlayerCameraManagerPrivate
 {
@@ -39,6 +39,10 @@ namespace AgPlayerCameraManagerPrivate
 
 AAgPlayerCameraManager::AAgPlayerCameraManager()
 {
+	// 스프링 암(TG_PostPhysics)보다 앞이라 바꾼 회전이 그 프레임 화면에 보입니다. 뒤로 옮기면 프레임 간격이 고르지 않을 때
+	// 대상이 흔들립니다. 캐릭터 이동과의 순서는 회전 스무딩이 걸러 주므로 정하지 않습니다.
+	PrimaryActorTick.bCanEverTick = true;
+
 	DefaultModifiers.Add(UAgExecutionCameraModifier::StaticClass());
 	DefaultModifiers.Add(UAgFieldOfViewCameraModifier::StaticClass());
 }
@@ -55,48 +59,55 @@ void AAgPlayerCameraManager::InitializeFor(APlayerController* PC)
 	SetObservedAbilitySystem(Player ? Player->GetAbilitySystemComponent() : nullptr);
 }
 
-void AAgPlayerCameraManager::UpdateGameplayRotation(const AAgPlayerCharacter& Player, const FVector& PivotLocation, float DeltaTime)
+void AAgPlayerCameraManager::Tick(float DeltaSeconds)
 {
-	if (GetPlayerCharacter() != &Player)
+	Super::Tick(DeltaSeconds);
+
+	if (const AAgPlayerCharacter* Player = GetPlayerCharacter())
 	{
-		return;
+		const FVector PivotLocation = Player->GetCameraBoom()->GetComponentLocation();
+		AAgCharacterBase* Target = Player->GetLockOnTarget();
+		if (Target != PreviousLockOnTarget.Get())
+		{
+			PreviousLockOnTarget = Target;
+			LockOnPitchRate = 0.f;
+			LockOnYawRate = 0.f;
+		}
+		if (Target)
+		{
+			UpdateLockOnCamera(*Target, PivotLocation, DeltaSeconds);
+		}
+		UpdateCameraTurn(PivotLocation, DeltaSeconds);
 	}
-	AAgCharacterBase* Target = Player.GetLockOnTarget();
-	if (Target != PreviousLockOnTarget.Get())
-	{
-		PreviousLockOnTarget = Target;
-		LockOnPitchRate = 0.f;
-		LockOnYawRate = 0.f;
-	}
-	if (Target)
-	{
-		UpdateLockOnCamera(*Target, PivotLocation, DeltaTime);
-	}
-	UpdateCameraTurn(PivotLocation, DeltaTime);
 }
 
-void AAgPlayerCameraManager::ApplyLookInput(const FVector2D& Input)
+void AAgPlayerCameraManager::ProcessViewRotation(float DeltaTime, FRotator& OutViewRotation, FRotator& OutDeltaRot)
 {
+	// 엔진은 입력이 없는 프레임에도 부르므로, 판정과 취소는 입력이 있을 때만 합니다.
 	AAgPlayerCharacter* Player = GetPlayerCharacter();
-	if (!Player || !PCOwner || !PCOwner->IsLocalPlayerController())
+	if (Player && !OutDeltaRot.IsZero())
 	{
-		return;
+		const bool bLockedOn = Player->GetLockOnTarget() != nullptr;
+		const bool bCutscene = Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
+		if (bLockedOn && !IsExecutionCameraActive() && !bCutscene)
+		{
+			UpdateLockOnFlick(*Player, static_cast<float>(OutDeltaRot.Yaw));
+		}
+		else
+		{
+			FlickSamples.Reset();
+			FlickDirection = 0.f;
+		}
+		if (bLockedOn || IsExecutionCameraActive())
+		{
+			OutDeltaRot = FRotator::ZeroRotator;
+		}
+		else
+		{
+			TurnOpponent.Reset();
+		}
 	}
-	const bool bCutscene = Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
-	if (Player->GetLockOnTarget() && !IsExecutionCameraActive() && !bCutscene)
-	{
-		UpdateLockOnFlick(*Player, Input.X);
-		return;
-	}
-	FlickSamples.Reset();
-	FlickDirection = 0.f;
-	if (Player->GetLockOnTarget() || IsExecutionCameraActive())
-	{
-		return;
-	}
-	TurnOpponent.Reset();
-	PCOwner->AddYawInput(Input.X);
-	PCOwner->AddPitchInput(Input.Y);
+	Super::ProcessViewRotation(DeltaTime, OutViewRotation, OutDeltaRot);
 }
 
 void AAgPlayerCameraManager::PlayCameraReaction(EAgCameraSituation Situation, const AActor* TurnTarget)
@@ -219,12 +230,8 @@ void AAgPlayerCameraManager::UpdateLockOnCamera(const AAgCharacterBase& Target, 
 	PCOwner->SetControlRotation(FRotator(Pitch, Yaw, 0.f));
 }
 
-void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float YawInput)
+void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float YawDelta)
 {
-	// 자유 시점이었다면 돌았을 각도로 봅니다. 엔진 AddYawInput과 같은 배율입니다.
-	PRAGMA_DISABLE_DEPRECATION_WARNINGS
-	const float YawScale = GetDefault<UInputSettings>()->bEnableLegacyInputScales ? PCOwner->GetDeprecatedInputYawScale() : 1.f;
-	PRAGMA_ENABLE_DEPRECATION_WARNINGS
 	const double Now = GetWorld()->GetRealTimeSeconds();
 	FlickSamples.RemoveAll([Now](const TPair<double, float>& Sample)
 	{ return Now - Sample.Key > AgPlayerCameraManagerPrivate::LockOnFlickTime; });
@@ -239,8 +246,8 @@ void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float
 	{
 		FlickDirection = 0.f;
 	}
-	FlickSamples.Emplace(Now, YawInput * YawScale);
-	Angle += YawInput * YawScale;
+	FlickSamples.Emplace(Now, YawDelta);
+	Angle += YawDelta;
 	if (FlickDirection == 0.f && FMath::Abs(Angle) >= AgPlayerCameraManagerPrivate::LockOnFlickAngle)
 	{
 		FlickDirection = FMath::Sign(Angle);

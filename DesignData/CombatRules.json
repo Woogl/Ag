@@ -5,7 +5,6 @@
   "GroggyBonusDamage": 0.5,
   "BackAttackBonusDamage": 0.1,
   "AerialBonusDamage": 0.1,
-  "GuardSPCostRatio": 0.25,
   "ParryHPMultiplier": 0,
   "ParryPPMultiplier": 1,
   "FallDamageStartHeight": 1000,

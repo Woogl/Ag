@@ -22,14 +22,6 @@ public:
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxHP)
 
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
-	FGameplayAttributeData SP;
-	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, SP)
-
-	UPROPERTY(BlueprintReadOnly, Category = "Stats")
-	FGameplayAttributeData MaxSP;
-	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxSP)
-
-	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MP;
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MP)
 
@@ -64,6 +56,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Stats")
 	FGameplayAttributeData MOV;
 	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MOV)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	FGameplayAttributeData Potion;
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, Potion)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stats")
+	FGameplayAttributeData MaxPotion;
+	ATTRIBUTE_ACCESSORS_BASIC(UAgAttributeSet, MaxPotion)
 
 protected:
 	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;

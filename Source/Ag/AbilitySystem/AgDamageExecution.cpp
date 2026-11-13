@@ -17,12 +17,10 @@ namespace AgDamageExecutionPrivate
 	{
 		FGameplayEffectAttributeCaptureDefinition ATK;
 		FGameplayEffectAttributeCaptureDefinition DEF;
-		FGameplayEffectAttributeCaptureDefinition SP;
 
 		FAgDamageCaptures()
 			: ATK(UAgAttributeSet::GetATKAttribute(), EGameplayEffectAttributeCaptureSource::Source, true)
 			, DEF(UAgAttributeSet::GetDEFAttribute(), EGameplayEffectAttributeCaptureSource::Target, false)
-			, SP(UAgAttributeSet::GetSPAttribute(), EGameplayEffectAttributeCaptureSource::Target, false)
 		{
 		}
 	};
@@ -93,7 +91,6 @@ UAgDamageExecution::UAgDamageExecution()
 {
 	RelevantAttributesToCapture.Add(AgDamageExecutionPrivate::GetCaptures().ATK);
 	RelevantAttributesToCapture.Add(AgDamageExecutionPrivate::GetCaptures().DEF);
-	RelevantAttributesToCapture.Add(AgDamageExecutionPrivate::GetCaptures().SP);
 }
 
 void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
@@ -118,10 +115,8 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	EvaluateParameters.TargetTags = Spec.CapturedTargetTags.GetAggregatedTags();
 	float SourceATK = 0.f;
 	float TargetDEF = 0.f;
-	float TargetSP = 0.f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().ATK, EvaluateParameters, SourceATK);
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().DEF, EvaluateParameters, TargetDEF);
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().SP, EvaluateParameters, TargetSP);
 
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
@@ -136,11 +131,8 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	if (TargetTags.HasTag(AgGameplayTags::State_Guarding) && bGuardable)
 	{
-		const float GuardSPCost = HPDamage * Rules.GuardSPCostRatio;
-		const bool bGuardBreak = TargetSP < GuardSPCost && !TargetTags.HasTag(AgGameplayTags::State_SuperArmor);
-		Spec.AddDynamicAssetTag(bGuardBreak ? AgGameplayTags::Effect_Damage_Result_GuardBreak : AgGameplayTags::Effect_Damage_Result_Guard);
+		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Guard);
 		AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -AgDamageExecutionPrivate::CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant, Rules.GuardReduction));
-		AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetSPAttribute(), -FMath::Min(TargetSP, GuardSPCost));
 		return;
 	}
 

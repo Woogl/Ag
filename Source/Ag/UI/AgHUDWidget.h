@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "CommonActivatableWidget.h"
+#include "GameplayTagContainer.h"
 #include "AgHUDWidget.generated.h"
 
-class AAgBossCharacter;
 class UAbilitySystemComponent;
 class UAgAbilitySystemComponent;
 class UAgNameplateWidget;
@@ -37,9 +37,6 @@ protected:
 	TObjectPtr<UWidget> StatusPanel;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgStatBar> PlayerSPBar;
-
-	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgStatBar> PlayerHPBar;
 
 	UPROPERTY(meta = (BindWidget))
@@ -64,6 +61,12 @@ protected:
 	TObjectPtr<UImage> UPGauge;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UAgSkillSlot> PotionSlot;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> PotionCountText;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> BossStatusPanel;
 
 	UPROPERTY(meta = (BindWidget))
@@ -80,20 +83,22 @@ private:
 	void HandleCombatantsChanged();
 
 	void BindPlayer(UAbilitySystemComponent& ASC);
+	void UnbindPlayer();
 
 	void UpdateStatusPanel();
 	void UpdatePlayer();
+	void UpdatePotion();
+	void UpdateUPGauge();
 	void UpdateSkillSlots();
 	void UpdateCooldowns();
 	void UpdateBoss();
 
-	TArray<UAgSkillSlot*, TInlineAllocator<5>> GetSkillSlots() const;
+	/** 스킬·궁극기·회복병 칸과 그 칸을 발동하는 입력 태그입니다. */
+	TArray<TPair<UAgSkillSlot*, FGameplayTag>, TInlineAllocator<6>> GetSkillSlots() const;
 
-	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue, bool bShowDrop = true);
+	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue);
 
 	void HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data);
-
-	TWeakObjectPtr<AAgBossCharacter> Boss;
 
 	TWeakObjectPtr<UAgAbilitySystemComponent> PlayerASC;
 

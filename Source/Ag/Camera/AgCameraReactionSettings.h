@@ -21,7 +21,6 @@ enum class EAgCameraSituation : uint8
 	PlayerHurtHeavy,
 	Guard,
 	GuardPushback,
-	GuardBreak,
 	ExecutionStab,
 	ExecutionBlow,
 	BossKill,

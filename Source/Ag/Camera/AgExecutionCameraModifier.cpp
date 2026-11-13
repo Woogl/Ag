@@ -59,7 +59,7 @@ void UAgExecutionCameraModifier::ModifyCamera(float DeltaTime, FVector ViewLocat
 	}
 
 	const float ZoomAlpha = Settings.ZoomDuration > 0.f ? FMath::Min(Elapsed / Settings.ZoomDuration, 1.f) : 1.f;
-	const float CompositionFOV = FMath::Lerp(Settings.FieldOfView, Settings.ZoomFieldOfView, FMath::InterpEaseOut(0.f, 1.f, ZoomAlpha, 2.f));
+	const float CompositionFOV = FMath::InterpEaseOut(Settings.FieldOfView, Settings.ZoomFieldOfView, ZoomAlpha, 2.f);
 
 	// 엔진의 알파는 선형이라, 옮겨 가기 시작하고 멈추는 순간이 튀지 않게 이즈 인·아웃을 겁니다.
 	const float Weight = FMath::InterpEaseInOut(0.f, 1.f, Alpha, 2.f);

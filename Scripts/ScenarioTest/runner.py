@@ -25,7 +25,8 @@ def _tag(name):
 # 사람이 누르는 키(IMC_Default). 시나리오는 입력 태그 이름으로 누르고, 키 매핑이 바뀌면 이 표도 바꾼다.
 KEYS = {"Input.Attack": "LeftMouseButton", "Input.Guard": "RightMouseButton", "Input.Dodge": "LeftShift",
         "Input.Jump": "SpaceBar", "Input.Skill1": "One", "Input.Skill2": "Two", "Input.Skill3": "Three",
-        "Input.Skill4": "Four", "Input.Ultimate": "Q", "Input.Execute": "F", "Input.LockOn": "MiddleMouseButton"}
+        "Input.Skill4": "Four", "Input.Ultimate": "Q", "Input.Execute": "F", "Input.LockOn": "MiddleMouseButton",
+        "Input.Potion": "R"}
 
 
 class Ctx:
@@ -308,7 +309,7 @@ def _warmed_up():
 def _record(t):
     """한 프레임의 기록. 플레이어는 p로 시작하는 값, 적은 그 키(b, e0…)로 시작하는 값이다."""
     velocity = ctx.player.get_velocity()
-    row = {"t": round(t, 3), "pm": ctx.montage("p"), "pHP": ctx.attr("p", "HP"), "pSP": ctx.attr("p", "SP"),
+    row = {"t": round(t, 3), "pm": ctx.montage("p"), "pHP": ctx.attr("p", "HP"),
            "pMP": ctx.attr("p", "MP"), "pUP": ctx.attr("p", "UP"), "guard": ctx.has("p", "State.Guarding"),
            "pdead": ctx.has("p", "State.Dead"), "pvz": round(velocity.z, 1), "pspeed": round(math.hypot(velocity.x, velocity.y), 1),
            "fov": round(ctx.fov(), 2)}
