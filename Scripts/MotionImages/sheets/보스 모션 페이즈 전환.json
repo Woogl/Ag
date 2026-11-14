@@ -1,6 +1,5 @@
 {
   "image": "보스 모션 페이즈 전환",
-  "character": "boss",
   "animation": {
     "segments": [
       {

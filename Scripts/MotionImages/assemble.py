@@ -11,10 +11,9 @@ ROOT = Path(__file__).resolve().parents[2]
 _spec = importlib.util.spec_from_file_location("animation_gif_settings", ROOT / "Scripts/AnimationGifs/settings.py")
 SOURCE = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(SOURCE)
-OUTPUT_WIDTH = 480
-OUTPUT_HEIGHT = math.floor((SOURCE.HEIGHT + SOURCE.HEADER) * OUTPUT_WIDTH / SOURCE.WIDTH + 0.5)
-# 정보 띠가 낮던 이전 촬영 크기입니다.
-LEGACY_SIZES = ((640, 574), (480, 431))
+FPS = 20
+# 조합의 처음과 끝 자세를 더 보여 줄 프레임 수입니다.
+HOLD_START_FRAMES, HOLD_END_FRAMES = 8, 10
 
 
 def read_clip(clip):
@@ -24,7 +23,7 @@ def read_clip(clip):
         path = path.with_name(name + ".gif")
     frames, samples = [], []
     with Image.open(path) as image:
-        if image.size not in LEGACY_SIZES + ((SOURCE.WIDTH, SOURCE.HEIGHT + SOURCE.HEADER),):
+        if image.size != (SOURCE.WIDTH, SOURCE.HEIGHT + SOURCE.HEADER):
             raise ValueError("원본 GIF 크기가 다릅니다: " + str(path))
         count = image.n_frames
         for index, frame in enumerate(ImageSequence.Iterator(image)):
@@ -36,21 +35,12 @@ def read_clip(clip):
             sample_count = round(duration * SOURCE.FPS / 1000)
             if sample_count < 1 or abs(sample_count * 1000 / SOURCE.FPS - duration) > 0.01:
                 raise ValueError("원본 GIF의 프레임 시간이 다릅니다: " + str(path))
-            body = frame.convert("RGB")
-            # 축소 뒤에도 원본 프레임의 색으로 매핑해 새 팔레트의 색 변화를 피합니다.
-            indexed = body.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
-            if body.size != (OUTPUT_WIDTH, OUTPUT_HEIGHT):
-                resized = body.resize((OUTPUT_WIDTH, round(body.height * OUTPUT_WIDTH / body.width)), Image.Resampling.LANCZOS)
-                # 이전 원본은 세로로 늘리지 않고, 위를 정보 띠 색으로 채워 지금 크기에 맞춥니다.
-                padded = Image.new("RGB", (OUTPUT_WIDTH, OUTPUT_HEIGHT), SOURCE.HEADER_COLOR)
-                padded.paste(resized, (0, OUTPUT_HEIGHT - resized.height))
-                indexed = padded.quantize(palette=indexed, dither=Image.Dither.NONE)
-            frames.append(indexed)
+            frames.append(frame.convert("RGB").quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE))
             samples.extend([len(frames) - 1] * sample_count)
     return frames, samples
 
 
-def assemble_sheet(sheet, out_dir, fps=20, hold_start=8, hold_end=10):
+def assemble_sheet(sheet, out_dir):
     animation = sheet["animation"]
     rate = animation.get("play_rate", 1.0)
     if not math.isfinite(rate) or rate <= 0:
@@ -64,7 +54,7 @@ def assemble_sheet(sheet, out_dir, fps=20, hold_start=8, hold_end=10):
         if not math.isfinite(speed) or speed <= 0:
             raise ValueError("구간 배속은 양수여야 합니다")
         duration = segment["hold"] if "hold" in segment else (end - begin) / speed
-        if not all(math.isfinite(value) for value in (begin, end, speed, duration)) or speed <= 0 or duration <= 0 or begin < 0 or end < begin:
+        if not all(math.isfinite(value) for value in (begin, end, duration)) or duration <= 0 or begin < 0 or end < begin:
             raise ValueError("잘못된 모션 구간: " + str(segment))
         if end * SOURCE.FPS > len(clips[segment["clip"]][1]) - 1 + 0.01:
             raise ValueError("원본 GIF 범위를 넘는 구간: " + str(segment))
@@ -74,8 +64,8 @@ def assemble_sheet(sheet, out_dir, fps=20, hold_start=8, hold_end=10):
     if not segments:
         raise ValueError("모션 구간이 없습니다")
     frames = []
-    for index in range(-hold_start, round(total * fps) + 1 + hold_end):
-        moment = min(max(index / fps, 0), total)
+    for index in range(-HOLD_START_FRAMES, round(total * FPS) + 1 + HOLD_END_FRAMES):
+        moment = min(max(index / FPS, 0), total)
         segment_index = bisect.bisect_right(starts, moment + 1e-9) - 1
         clip, begin, end, speed = segments[segment_index]
         position = min(begin + (moment - starts[segment_index]) * speed, end)
@@ -87,7 +77,7 @@ def assemble_sheet(sheet, out_dir, fps=20, hold_start=8, hold_end=10):
     temporary = output.with_suffix(".gif.tmp")
     try:
         frames[0].save(temporary, format="GIF", save_all=True, append_images=frames[1:],
-                       duration=round(1000 / fps), loop=0, optimize=False, disposal=1)
+                       duration=round(1000 / FPS), loop=0, optimize=False, disposal=1)
         temporary.replace(output)
     finally:
         temporary.unlink(missing_ok=True)

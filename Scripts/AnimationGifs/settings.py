@@ -23,15 +23,23 @@ PACK_WEAPONS = {
     "Dual_Wield": [("Sword", "hand_r", (-10.463401, 4.405117, -1.218026), (91.067833, 9.846496, -1.753910)),
                    ("Axe", "hand_l", (10.382331, -6.224471, 2.030272), (-92.0, 9.846271, -15.254195))],
 }
+# 촬영용 임시 캐릭터는 레벨의 물체에서 멀리 떨어진 곳에 둡니다. 무기는 blueprint의 게임 무기를 그대로 씁니다.
+CHARACTERS = {
+    "player": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple", "blueprint": "/Game/Characters/BP_Player",
+               "actor": (0.0, -20000.0, 0.0)},
+    "boss": {"mesh": "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple", "blueprint": "/Game/Characters/BP_Boss",
+             "actor": (0.0, 20000.0, 0.0)},
+}
+# 게임 무기 소켓이 붙은 본입니다. 게임 무기를 이 본 기준으로 재고 붙입니다.
+WEAPON_BONE = "hand_r"
+# ARPG 팩이 아닌 팩의 경로와 GIF 폴더 이름입니다. 이 팩들은 플레이어 마네킹으로 찍습니다.
+PLAYER_PACKS = {"/Fab/Dodge_and_Evade_Anims/": "Dodge_and_Evade", "/Fab/ACS2ComboSkill/": "ACS2ComboSkill"}
 
 
 def output_relative(path):
     if "/Fab/ARPG_Pack/" in path:
         return Path(path.split("/")[4].removeprefix("ARPG_")) / (path.rsplit("/", 1)[-1] + ".gif")
-    if "/Fab/Dodge_and_Evade_Anims/" in path:
-        return Path("Dodge_and_Evade") / (path.rsplit("/", 1)[-1] + ".gif")
-    if "/Fab/Dodge_Animations/" in path:
-        return Path("Dodge_Animations") / (path.rsplit("/", 1)[-1] + ".gif")
-    if "/Fab/ACS2ComboSkill/" in path:
-        return Path("ACS2ComboSkill") / (path.rsplit("/", 1)[-1] + ".gif")
+    for folder, name in PLAYER_PACKS.items():
+        if folder in path:
+            return Path(name) / (path.rsplit("/", 1)[-1] + ".gif")
     return Path("Base") / Path(path.removeprefix("/Game/")).with_suffix(".gif")

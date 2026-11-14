@@ -1,6 +1,5 @@
 {
   "image": "보스 모션 5연격",
-  "character": "boss",
   "animation": {
     "play_rate": 0.7777777777777778,
     "segments": [

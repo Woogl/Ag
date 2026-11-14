@@ -1,6 +1,5 @@
 {
   "image": "플레이어 모션 점프 공격",
-  "character": "player",
   "animation": {
     "segments": [
       {

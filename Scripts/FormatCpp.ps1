@@ -52,7 +52,7 @@ try {
     }
 
     $Arguments = @("--style=file:$ProjectRoot/.clang-format", '--fallback-style=none', '--Werror')
-    if ($Write) { $Arguments += '-i' } else { $Arguments += @('--dry-run', '--Werror') }
+    if ($Write) { $Arguments += '-i' } else { $Arguments += '--dry-run' }
     $Failed = 0
     foreach ($Target in $Targets) {
         & $ClangFormat @Arguments $Target

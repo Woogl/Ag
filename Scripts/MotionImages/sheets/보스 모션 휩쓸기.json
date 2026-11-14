@@ -1,6 +1,5 @@
 {
   "image": "보스 모션 휩쓸기",
-  "character": "boss",
   "animation": {
     "play_rate": 0.8,
     "segments": [

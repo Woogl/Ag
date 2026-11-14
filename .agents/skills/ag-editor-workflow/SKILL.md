@@ -29,7 +29,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
   - 다른 프로젝트의 에디터도 켜져 있으면 첫 노드가 이 프로젝트가 아닐 수 있다. `unreal.Paths.get_project_file_path()`로 먼저 확인한다.
   - 테스트 창도 원격 실행을 쓴다. 창마다 포트를 나누는 방법은 `Scripts/ScenarioTest`의 코드를 따른다.
 - `python -I`로 돌리는 스크립트는 `PYTHONIOENCODING`을 무시한다. 한글을 출력하려면 `sys.stdout.reconfigure(encoding="utf-8")`를 먼저 부른다.
-- 저장소의 파이썬 모듈(`Scripts/MotionImages/common.py` 등)을 가져다 쓰는 임시 스크립트는 `sys.dont_write_bytecode = True`를 먼저 둔다. 아니면 저장소에 `__pycache__`가 생긴다.
+- 저장소의 파이썬 모듈(`Scripts/AnimationGifs/settings.py` 등)을 가져다 쓰는 임시 스크립트는 `sys.dont_write_bytecode = True`를 먼저 둔다. 아니면 저장소에 `__pycache__`가 생긴다.
 
 ## 빌드와 에디터 재시작
 

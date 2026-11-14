@@ -1,6 +1,5 @@
 {
   "image": "플레이어 모션 스킬 3",
-  "character": "player",
   "animation": {
     "play_rate": 1.2,
     "segments": [

@@ -5,8 +5,11 @@
 프레임마다 상태를 기록하고, 단계마다 화면에 안내를 띄우며, 끝나면 판정을 화면과 OUT에 남긴다.
 캐릭터는 키로 가리킨다: "p" 플레이어, "b" 보스, "e0"·"e1"… 보스를 뺀 적(준비할 때 플레이어에 가까운 순서).
 """
-import unreal, json, time, math, builtins, ctypes, os
+import unreal, json, time, math, ctypes, os, inspect, traceback
 from ctypes import wintypes
+
+# 보낸 글에서 실행기가 시작하는 줄. 그 앞은 시나리오이고, 시나리오가 글의 맨 앞이라 줄 번호가 시나리오 파일과 같다.
+_RUNNER_LINE = inspect.currentframe().f_lineno
 
 # PIE 밖에서 액터 속성을 알림과 함께 쓰면 엔진이 컴포넌트를 다시 등록하고, 그때 ASC가 어빌리티를 모두 지운다.
 NEVER = unreal.PropertyAccessChangeNotifyMode.NEVER
@@ -230,7 +233,6 @@ class Ctx:
 
 
 ctx = Ctx()
-builtins._ag_qa_ctx = ctx
 
 
 def _lock_window():
@@ -259,17 +261,16 @@ def _setup():
         if pc and pc.get_controlled_pawn():
             break
     else:
-        return False
+        return  # 플레이어가 아직 없다. ctx.warm이 None으로 남아 다음 프레임에 다시 온다.
     ctx.world, ctx.pc = world, pc
     ctx.player = pc.get_controlled_pawn()
     boss_class = unreal.load_class(None, "/Script/Ag.AgBossCharacter")
     enemies = list(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.load_class(None, "/Script/Ag.AgEnemyCharacter")))
     bosses = [e for e in enemies if unreal.MathLibrary.class_is_child_of(e.get_class(), boss_class)]
     others = sorted((e for e in enemies if e not in bosses), key=lambda e: e.get_distance_to(ctx.player))
-    ctx.boss = bosses[0] if bosses else None
     ctx.chars = {"p": ctx.player}
-    if ctx.boss:
-        ctx.chars["b"] = ctx.boss
+    if bosses:
+        ctx.chars["b"] = bosses[0]
     ctx.chars.update(("e%d" % i, e) for i, e in enumerate(others))
     for key, actor in ctx.chars.items():
         ctx.asc[key] = actor.get_component_by_class(unreal.AbilitySystemComponent)
@@ -285,10 +286,10 @@ def _setup():
     for i in range(len(STEPS)):
         ctx._step_line(i, "wait")
     ctx.warm = {"start": time.time(), "times": []}
-    return True
 
 
-def _warmed_up():
+def _warm_up():
+    """준비 중의 한 프레임. 모든 캐릭터의 몽타주가 끝나고 프레임이 안정되면(늦어도 20초 뒤) 시간을 세기 시작한다."""
     now = time.time()
     w = ctx.warm
     w["times"] = [x for x in w["times"] + [now] if now - x <= 2.0]
@@ -302,8 +303,6 @@ def _warmed_up():
         if AI_ON:
             ctx.ai(True)
         ctx.t0 = now
-        return True
-    return False
 
 
 def _record(t):
@@ -324,13 +323,22 @@ def _record(t):
     return row
 
 
+def _summary(e):
+    """예외를 "종류: 내용 (시나리오 41줄)"로 줄인다. 시나리오를 거치지 않았으면 예외가 난 실행기 함수 이름을 붙인다."""
+    # 보낸 글(시나리오 + 실행기)의 프레임만 본다. 그 안에서 부른 다른 모듈의 줄 번호는 이 글의 줄이 아니다.
+    frames = [f for f in traceback.extract_tb(e.__traceback__) if f.filename == _summary.__code__.co_filename]
+    lines = [f.lineno for f in frames if f.lineno < _RUNNER_LINE]
+    where = "시나리오 %d줄" % lines[-1] if lines else "실행기 %s" % frames[-1].name
+    return "%s: %s (%s)" % (type(e).__name__, e, where)
+
+
 def _finish(error=None):
     unreal.unregister_slate_post_tick_callback(ctx.handle)
     try:
         ctx.clear_inputs()
         ctx.ai(False)  # 판정 뒤에 적이 계속 공격하지 않게 한다.
-    except Exception:
-        pass
+    except Exception as e:
+        ctx.notes.append("정리 오류: " + _summary(e))
     ok, items = False, [(False, "오류: " + error)] if error else []
     if not error:
         try:
@@ -339,7 +347,7 @@ def _finish(error=None):
             items = [(None, l) if isinstance(l, str) else (bool(l[0]), l[1]) for l in lines]
         except Exception as e:
             ok = False
-            error = "판정 오류: %s: %s" % (type(e).__name__, e)
+            error = "판정 오류: " + _summary(e)
             items = [(False, error)]
     verdict = "실행 실패" if error else "통과" if ok else "테스트 실패"
     lines = ["%s %s" % ("-" if i is None else "[통과]" if i else "[실패]", text) for i, text in items]
@@ -349,14 +357,17 @@ def _finish(error=None):
         ctx.banner("판정: %s" % verdict, "verdict", PASS if ok else FAIL)
         for n, (i, text) in enumerate(items):
             ctx.banner("  " + lines[n], "verdict%d" % n, PASS if (ok if i is None else i) else FAIL)
-    except Exception:
-        pass
+    except Exception as e:
+        ctx.notes.append("판정 표시 오류: " + _summary(e))
     full = [v for k, v in ctx.fps.items() if k < max(ctx.fps)] if ctx.fps else []
-    with open(OUT, "w", encoding="utf-8") as f:
+    # run.py는 OUT이 생기면 바로 읽으므로, 다 쓴 뒤에 이름을 바꿔 내놓는다. 쓰다가 실패하면 run.py가 제한 시간까지
+    # 기다리므로, 시나리오가 기록에 넣은 엔진 값(Vector 등)은 글자로 남긴다.
+    with open(OUT + ".tmp", "w", encoding="utf-8") as f:
         json.dump({"title": TITLE, "verdict": verdict, "lines": lines, "notes": ctx.notes,
                    "montages": {k: ctx.seq(k) for k in ctx.chars},
                    "seconds": ctx.rows[-1]["t"] if ctx.rows else 0, "frames": len(ctx.rows),
-                   "fps_min": min(full) if full else 0, "rows": ctx.rows}, f, ensure_ascii=False)
+                   "fps_min": min(full) if full else 0, "rows": ctx.rows}, f, ensure_ascii=False, default=str)
+    os.replace(OUT + ".tmp", OUT)
     ctx.done = True
 
 
@@ -368,7 +379,7 @@ def _tick(dt):
             _setup()
             return
         if ctx.t0 is None:
-            _warmed_up()
+            _warm_up()
             return
         t = time.time() - ctx.t0
         ctx.fps[int(t)] = ctx.fps.get(int(t), 0) + 1
@@ -385,7 +396,7 @@ def _tick(dt):
         if ctx.step_index >= len(STEPS):
             _finish()
     except Exception as e:
-        _finish("%s: %s" % (type(e).__name__, e))
+        _finish(_summary(e))
 
 
 ctx.handle = unreal.register_slate_post_tick_callback(_tick)

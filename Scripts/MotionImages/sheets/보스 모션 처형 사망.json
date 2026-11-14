@@ -1,6 +1,5 @@
 {
   "image": "보스 모션 처형 사망",
-  "character": "boss",
   "animation": {
     "play_rate": 0.6,
     "segments": [

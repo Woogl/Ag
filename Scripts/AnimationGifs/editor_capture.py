@@ -2,20 +2,43 @@
 """에디터 내부에서 실행합니다. 외부 실행기는 start에 작업 파일을 한 번 전달합니다."""
 import json
 import math
-import sys
 import time
 import traceback
 from pathlib import Path
 
 import unreal
 
-from settings import CAMERA_OFFSET, CAMERA_ZOOM, CROP_FRACTION, FPS, HEIGHT, PACK_WEAPONS, RENDER_SCALE, ROOT, WARMUP_FRAMES, WIDTH
-
-sys.dont_write_bytecode = True
-sys.path.insert(0, str(ROOT / "Scripts" / "MotionImages"))
-from common import CHARACTERS, add, qconj, qmul, qrot, sub
+from settings import (CAMERA_OFFSET, CAMERA_ZOOM, CHARACTERS, CROP_FRACTION, FPS, HEIGHT, PACK_WEAPONS, PLAYER_PACKS, RENDER_SCALE,
+                      WARMUP_FRAMES, WEAPON_BONE, WIDTH)
 
 _active = None
+
+
+# 위치는 스켈레톤 컴포넌트 공간의 cm이고, 쿼터니언은 (x, y, z, w)입니다.
+def add(a, b):
+    return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
+
+
+def sub(a, b):
+    return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+
+
+def qmul(a, b):
+    ax, ay, az, aw = a
+    bx, by, bz, bw = b
+    return (aw * bx + ax * bw + ay * bz - az * by,
+            aw * by - ax * bz + ay * bw + az * bx,
+            aw * bz + ax * by - ay * bx + az * bw,
+            aw * bw - ax * bx - ay * by - az * bz)
+
+
+def qconj(q):
+    return (-q[0], -q[1], -q[2], q[3])
+
+
+def qrot(q, v):
+    r = qmul(qmul(q, (v[0], v[1], v[2], 0.0)), qconj(q))
+    return (r[0], r[1], r[2])
 
 
 def atomic_json(path, value):
@@ -35,7 +58,7 @@ def atomic_json(path, value):
 def inventory():
     assets = unreal.AssetRegistryHelpers.get_asset_registry().get_assets_by_class(
         unreal.TopLevelAssetPath("/Script/Engine", "AnimSequence"), True)
-    # 다른 스켈레톤의 시퀀스(Dodge Animations 팩의 UE4 마네킹용 원본)는 프로젝트 마네킹에서 재생되지 않아 뺍니다.
+    # 다른 스켈레톤의 시퀀스는 프로젝트 마네킹에서 재생되지 않아 뺍니다.
     skeleton = "/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin"
     return sorted(str(asset.package_name) for asset in assets
                   if str(asset.package_name).startswith("/Game/") and skeleton in str(asset.get_tag_value("Skeleton")))
@@ -131,7 +154,7 @@ class Capture:
         else:
             component.set_static_mesh(weapon_mesh)
         rule = unreal.AttachmentRule.KEEP_RELATIVE
-        component.attach_to_component(mesh, "hand_r", rule, rule, rule, False)
+        component.attach_to_component(mesh, WEAPON_BONE, rule, rule, rule, False)
         component.set_relative_transform(unreal.Transform(unreal.Vector(*weapon_info["loc"]), unreal.Quat(*weapon_info["q"]).rotator(), unreal.Vector(*weapon_info["scale"])), False, False)
         equipment = [(weapon, component, "game")]
         if name == "boss":
@@ -157,8 +180,7 @@ class Capture:
             raise RuntimeError("Not an AnimSequence: " + self.path)
         self.length = unreal.AnimationLibrary.get_sequence_length(self.animation)
         self.times = [min(i / FPS, self.length) for i in range(math.ceil(self.length * FPS) + 1)]
-        player = ("ARPG_Samurai" in self.path or "/Dodge_and_Evade_Anims/" in self.path or "/Fab/Dodge_Animations/" in self.path
-                  or "/Fab/ACS2ComboSkill/" in self.path)
+        player = "ARPG_Samurai" in self.path or any(folder in self.path for folder in PLAYER_PACKS)
         self.character_name = "player" if player else "boss"
         self.actor, self.mesh, equipment = self.character(self.character_name)
         visible = [self.actor]
@@ -302,11 +324,8 @@ class Capture:
 
 
 def start(manifest):
+    # 촬영 중인지와 PIE는 실행기가 이 모듈을 reload하기 전에 확인합니다(animation_gifs의 editor_import). reload가 _active를 지웁니다.
     global _active
-    if _active is not None:
-        raise RuntimeError("Animation GIF capture is already running")
-    if unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world() is not None:
-        raise RuntimeError("Stop PIE before capturing animation GIFs")
     _active = Capture(manifest)
     try:
         _active.begin()

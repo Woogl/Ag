@@ -1,7 +1,7 @@
 # Copyright Woogle. All Rights Reserved.
 """테스트 창 하나를 띄워 시나리오를 실행하고, 판정을 출력한 뒤 창을 닫는다. README.md 참고.
 
-    python -I Scripts/ScenarioTest/run.py <시나리오.py> [--hold 초] [--keep]
+    python -I Scripts/ScenarioTest/run.py <시나리오.py> [--hold 초] [--keep] [--map 맵 경로]
 
 종료 코드: 0 통과, 1 테스트 실패, 2 실행 실패.
 """
@@ -18,7 +18,7 @@ MAP = "/Game/Maps/LV_BossStage"
 
 def engine_dir():
     """Ag.uproject의 엔진 버전으로 런처가 설치한 엔진 폴더를 찾는다."""
-    version = json.load(open(PROJECT, encoding="utf-8")).get("EngineAssociation", "5.8")
+    version = json.load(open(PROJECT, encoding="utf-8"))["EngineAssociation"]
     try:
         import winreg
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\EpicGames\Unreal Engine\%s" % version) as key:
@@ -33,15 +33,21 @@ import remote_execution as remote
 
 # 창 자리: 화면 오른쪽 2×2. 자리마다 원격 실행 포트를 따로 써서 다른 창과 섞이지 않게 한다.
 SLOTS = {1: (900, 20), 2: (1740, 20), 3: (900, 520), 4: (1740, 520)}
+MULTICAST = "239.0.0.1"
+PORT = 6800  # 자리 n의 창은 멀티캐스트 포트 PORT + n, 명령 연결 포트 PORT + 20 + n을 쓴다.
+
+
+def endpoint(slot):
+    """그 자리 창의 명령줄에 들어가는 원격 실행 주소. 떠 있는 창이 어느 자리인지도 명령줄의 이 글자로 본다."""
+    return "RemoteExecutionMulticastGroupEndpoint=%s:%d" % (MULTICAST, PORT + slot)
 
 
 def take_slot():
     """비어 있는 자리를 잠근다. 그 자리 포트를 쓰는 창이 떠 있으면(--keep으로 남긴 창 포함) 건너뛴다.
     잠금 파일에는 이 run.py의 PID를 적고, 그 PID가 끝났으면 빈 자리로 본다."""
     lines = powershell("Get-CimInstance Win32_Process -Filter \"Name='UnrealEditor.exe'\" | ForEach-Object { $_.CommandLine }")
-    busy = {int(p) - 6800 for p in re.findall(r"RemoteExecutionMulticastGroupEndpoint=239\.0\.0\.1:(\d+)", lines)}
     for slot in SLOTS:
-        if slot in busy:
+        if endpoint(slot) in lines:
             continue
         lock = os.path.join(WORK, "slot%d.lock" % slot)
         for _ in range(2):
@@ -93,8 +99,8 @@ def start_watchdog(game_pid, slot):
     창 PID가 다른 프로세스에 다시 쓰였을 수 있으니, 이 자리의 포트를 쓰는 테스트 창인지 확인하고 닫는다."""
     script = ("Wait-Process -Id %d -ErrorAction SilentlyContinue; "
               "$p = Get-CimInstance Win32_Process -Filter 'ProcessId=%d'; "
-              "if ($p -and $p.CommandLine -like '*RemoteExecutionMulticastGroupEndpoint=239.0.0.1:%d*') "
-              "{ Stop-Process -Id %d -Force }") % (os.getpid(), game_pid, 6800 + slot, game_pid)
+              "if ($p -and $p.CommandLine -like '*%s*') "
+              "{ Stop-Process -Id %d -Force }") % (os.getpid(), game_pid, endpoint(slot), game_pid)
     encoded = base64.b64encode(script.encode("utf-16-le")).decode()
     cmd = "powershell -NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand " + encoded
     powershell("Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = '%s' } | Out-Null" % cmd)
@@ -109,8 +115,12 @@ def powershell(script):
     # 한글(창 제목)이 시스템 코드페이지로 나오지 않게 출력을 UTF-8로 고정한다.
     script = "[Console]::OutputEncoding = [Text.Encoding]::UTF8\n" + script
     encoded = base64.b64encode(script.encode("utf-16-le")).decode()
-    return subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
-                          capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip()
+    done = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace")
+    # 실패를 빈 출력으로 돌려주면 부른 쪽이 '쓰는 자리 없음', '빌드 없음'으로 읽는다.
+    if done.returncode:
+        raise RuntimeError("PowerShell 실패(%d): %s" % (done.returncode, done.stderr.strip()))
+    return done.stdout.strip()
 
 
 def launch(slot, title, map_path):
@@ -122,7 +132,7 @@ def launch(slot, title, map_path):
         # 낮은 그래픽 품질과 60fps 제한: 여러 창과 에디터가 GPU를 나눠 써도 프레임이 일정해야 타이밍 확인을 믿을 수 있다.
         '"-ExecCmds=scalability 0, t.MaxFPS 60"',
         '"-abslog=%s"' % os.path.join(WORK, "slot%d.log" % slot),
-        "-ini:Engine:[/Script/PythonScriptPlugin.PythonScriptPluginSettings]:RemoteExecutionMulticastGroupEndpoint=239.0.0.1:%d" % (6800 + slot),
+        "-ini:Engine:[/Script/PythonScriptPlugin.PythonScriptPluginSettings]:" + endpoint(slot),
         '"-ini:Game:[/Script/EngineSettings.GeneralProjectSettings]:ProjectDisplayedTitle=테스트 %d - %s"' % (slot, title.replace('"', "'")),
         '"-ini:Game:[/Script/EngineSettings.GeneralProjectSettings]:ProjectDebugTitleInfo= "',
     ]
@@ -134,8 +144,8 @@ def launch(slot, title, map_path):
 def send(slot, code):
     config = remote.RemoteExecutionConfig()
     config.multicast_bind_address = "127.0.0.1"
-    config.multicast_group_endpoint = ("239.0.0.1", 6800 + slot)
-    config.command_endpoint = ("127.0.0.1", 6820 + slot)
+    config.multicast_group_endpoint = (MULTICAST, PORT + slot)
+    config.command_endpoint = ("127.0.0.1", PORT + 20 + slot)
     rx = remote.RemoteExecution(config)
     rx.start()
     try:
@@ -145,16 +155,17 @@ def send(slot, code):
         if not rx.remote_nodes:
             return "창이 원격 실행에 응답하지 않음"
         rx.open_command_connection(rx.remote_nodes[0])
+        # MODE_EXEC_FILE은 보낸 글의 첫 '.py' 바로 뒤가 공백이나 끝이면 그 앞을 파일 경로로 읽는다(시나리오의 주석이라도).
         res = rx.run_command(code, unattended=True, exec_mode=remote.MODE_EXEC_FILE, raise_on_failure=False)
         return None if res.get("success") else "시나리오 실행 실패: %s" % res.get("result")
     finally:
         rx.stop()
 
 
-def top_level_names(source, with_imports):
+def top_level_names(tree, with_imports):
     """모듈 맨 위의 def, class, 대입(과 import)이 묶는 이름."""
     names = set()
-    for node in ast.parse(source).body:
+    for node in tree.body:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             names.add(node.name)
         elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
@@ -163,6 +174,15 @@ def top_level_names(source, with_imports):
         elif with_imports and isinstance(node, (ast.Import, ast.ImportFrom)):
             names.update((alias.asname or alias.name).split(".")[0] for alias in node.names)
     return names
+
+
+def scenario_title(tree, path):
+    """시나리오 맨 위의 TITLE 대입 값. 없으면 None."""
+    title = None
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "TITLE" for t in node.targets):
+            title = eval(compile(ast.Expression(node.value), path, "eval"), {})
+    return title
 
 
 def main():
@@ -175,13 +195,13 @@ def main():
 
     scenario = open(a.scenario, encoding="utf-8").read()
     runner = open(os.path.join(os.path.dirname(__file__), "runner.py"), encoding="utf-8").read()
+    tree = ast.parse(scenario)
     # 시나리오는 실행기와 한 이름 공간에서 돌아, 같은 이름은 오류 없이 실행기 것으로 바뀐다.
-    clash = sorted(top_level_names(scenario, False) & (top_level_names(runner, True) | {"OUT"}))
+    clash = sorted(top_level_names(tree, False) & (top_level_names(ast.parse(runner), True) | {"OUT"}))
     if clash:
         print("시나리오의 이름이 실행기와 겹침(이름을 바꿀 것): %s" % ", ".join(clash))
         return 2
-    title = {}
-    exec(compile("".join(l for l in scenario.splitlines(True) if l.startswith("TITLE")), a.scenario, "exec"), title)
+    title = scenario_title(tree, a.scenario) or os.path.basename(a.scenario)
     os.makedirs(WORK, exist_ok=True)
     if not wait_for_build():
         print("빌드가 30분 넘게 끝나지 않음")
@@ -197,13 +217,13 @@ def main():
     out = os.path.join(WORK, "slot%d_%s.json" % (slot, time.strftime("%Y%m%d-%H%M%S")))
     pid = 0
     try:
-        pid = launch(slot, title.get("TITLE", os.path.basename(a.scenario)), a.map)
+        pid = launch(slot, title, a.map)
         if not pid:
             print("창을 띄우지 못함")
             return 2
         if not a.keep:
             start_watchdog(pid, slot)
-        print("테스트 %d 창 (PID %d): %s" % (slot, pid, title.get("TITLE")))
+        print("테스트 %d 창 (PID %d): %s" % (slot, pid, title))
         error = send(slot, scenario + "\nOUT = r'%s'\n" % out + runner)
         if error:
             print(error)
@@ -214,7 +234,6 @@ def main():
         if not os.path.exists(out):
             print("결과 없음(창이 닫혔거나 시간 초과)")
             return 2
-        time.sleep(0.3)
         r = json.load(open(out, encoding="utf-8"))
         print("%s → %s" % (r["title"], r["verdict"]))
         for line in r["lines"]:
