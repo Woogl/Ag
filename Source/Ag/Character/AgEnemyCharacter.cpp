@@ -317,6 +317,7 @@ void AAgEnemyCharacter::HandleGroggyEvent(const FGameplayEventData* Payload)
 	// 그로기 모션은 이 효과의 태그로 발동하는 어빌리티가 맡고, 태그가 빠지면 엔진이 끝냅니다.
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(AgEnemyCharacterPrivate::GroggyEffectId), 1.f, ASC->MakeEffectContext());
+	ASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Groggy, ASC->MakeEffectContext());
 }
 
 void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
