@@ -1,0 +1,12 @@
+{
+  "image": "플레이어 모션 대시 공격",
+  "animation": {
+    "segments": [
+      {
+        "clip": "Samurai/Attack_Heavy1",
+        "from": 0.0,
+        "to": 0.7333
+      }
+    ]
+  }
+}

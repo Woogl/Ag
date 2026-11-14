@@ -3,9 +3,9 @@
   "animation": {
     "segments": [
       {
-        "clip": "Samurai/Attack_Heavy1",
+        "clip": "Samurai/Attack_Combo4",
         "from": 0.0,
-        "to": 0.7333
+        "to": 1.15
       }
     ]
   }
