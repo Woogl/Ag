@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Camera/PlayerCameraManager.h"
-#include "Camera/AgCameraReactionSettings.h"
+#include "Data/AgCameraData.h"
 #include "GameplayTagContainer.h"
 #include "AgPlayerCameraManager.generated.h"
 
@@ -42,19 +42,16 @@ private:
 	UFUNCTION()
 	void HandlePossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
 
-	void UpdateLockOnCamera(const AAgCharacterBase& Target, const FVector& PivotLocation, float DeltaTime);
+	void UpdateLockOnCamera(AAgPlayerCharacter& Player, const AAgCharacterBase& Target, const FVector& PivotLocation, float DeltaTime);
 	void UpdateLockOnFlick(AAgPlayerCharacter& Player, float YawDelta);
-	void StartCameraTurn(const AActor& Opponent, float Angle);
-	void UpdateCameraTurn(const FVector& PivotLocation, float DeltaTime);
+	void StartCameraTurn(const AAgPlayerCharacter& Player, const AActor& Opponent, float Angle);
+	void UpdateCameraTurn(const AAgPlayerCharacter& Player, const FVector& PivotLocation, float DeltaTime);
 	bool IsExecutionCameraActive() const;
 	void HandleAbilityCommitted(UGameplayAbility* Ability);
 	void HandleAbilityEnded(const FAbilityEndedData& EndedData);
+	void UpdateSprintFieldOfView();
 	void HandleSprintFieldOfViewChanged(const FGameplayTag Tag, int32 NewCount);
 	void HandleCutsceneChanged(const FGameplayTag Tag, int32 NewCount);
-
-#if WITH_EDITOR
-	void HandleCameraDataReloaded();
-#endif
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAgExecutionCameraModifier> ExecutionCamera;

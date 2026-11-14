@@ -2,9 +2,7 @@
 
 #include "UI/AgStageSelectScreen.h"
 
-#include "Core/AgGameplayTags.h"
 #include "Game/AgGameMode.h"
-#include "Input/CommonUIInputTypes.h"
 #include "UI/AgButton.h"
 #include "UI/AgDropdown.h"
 
@@ -25,8 +23,7 @@ void UAgStageSelectScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	RegisterUIActionBinding(FBindUIActionArgs(FUIActionTag::ConvertChecked(AgGameplayTags::UI_Action_Escape), false,
-		FSimpleDelegate::CreateUObject(this, &ThisClass::DeactivateWidget)));
+	BindEscapeToClose();
 	StartButton->OnClicked().AddUObject(this, &ThisClass::OpenSelectedStage);
 	BackButton->OnClicked().AddUObject(this, &ThisClass::DeactivateWidget);
 }
@@ -53,11 +50,6 @@ void UAgStageSelectScreen::NativeOnActivated()
 UWidget* UAgStageSelectScreen::NativeGetDesiredFocusTarget() const
 {
 	return StageDropdown->GetDesiredFocusWidget();
-}
-
-TOptional<FUIInputConfig> UAgStageSelectScreen::GetDesiredInputConfig() const
-{
-	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
 }
 
 void UAgStageSelectScreen::OpenSelectedStage()

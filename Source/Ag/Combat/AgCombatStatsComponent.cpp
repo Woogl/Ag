@@ -59,8 +59,6 @@ void UAgCombatStatsComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		StageState->OnStageResultChanged.RemoveAll(this);
 	}
-	// 레벨을 떠나며 끝나지 않은 전투는 저장하지 않습니다.
-	Recording.Reset();
 
 	Super::EndPlay(EndPlayReason);
 }

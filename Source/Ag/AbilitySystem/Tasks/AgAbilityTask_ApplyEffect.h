@@ -40,6 +40,7 @@ private:
 	UPROPERTY()
 	FAgApplyEffectParams Params;
 
+	/** 이 Task가 끝날 때 지울 효과입니다. 걸어 두고 끝나는 효과(즉시 효과, bRemoveOnEnd가 꺼진 효과)는 담지 않습니다. */
 	FActiveGameplayEffectHandle Applied;
 	FDelegateHandle RemovedHandle;
 };

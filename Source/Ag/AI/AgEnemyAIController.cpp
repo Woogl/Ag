@@ -45,18 +45,11 @@ AAgCharacterBase* AAgEnemyAIController::GetTarget() const
 
 bool AAgEnemyAIController::IsEnemyReacting() const
 {
-	const AAgEnemyCharacter* Enemy = GetEnemy();
-	const UAbilitySystemComponent* ASC = Enemy ? Enemy->GetAbilitySystemComponent() : nullptr;
-	if (!ASC)
-	{
-		return false;
-	}
-
 	FGameplayTagContainer ReactionTags;
 	ReactionTags.AddTag(AgGameplayTags::State_HitReaction);
 	ReactionTags.AddTag(AgGameplayTags::State_Groggy);
 	ReactionTags.AddTag(AgGameplayTags::State_Execution);
-	return ASC->HasAnyMatchingGameplayTags(ReactionTags);
+	return GetEnemy()->GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(ReactionTags);
 }
 
 bool AAgEnemyAIController::IsTargetNoticed() const
@@ -70,12 +63,7 @@ bool AAgEnemyAIController::IsTargetNoticed() const
 
 void AAgEnemyAIController::StartPostPatternDelay()
 {
-	const AAgEnemyCharacter* Enemy = GetEnemy();
-	if (!Enemy)
-	{
-		return;
-	}
-	const FFloatInterval& DelayTime = Enemy->GetCharacterData()->AI.PostPatternDelayTime;
+	const FFloatInterval& DelayTime = GetEnemy()->GetCharacterData()->AI.PostPatternDelayTime;
 	PostPatternDelayEndTime = GetWorld()->GetTimeSeconds() + FMath::FRandRange(DelayTime.Min, DelayTime.Max);
 }
 

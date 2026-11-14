@@ -33,11 +33,6 @@ UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
 	return StartButton;
 }
 
-TOptional<FUIInputConfig> UAgTitleScreen::GetDesiredInputConfig() const
-{
-	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
-}
-
 void UAgTitleScreen::OpenStageSelect()
 {
 	if (AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>())

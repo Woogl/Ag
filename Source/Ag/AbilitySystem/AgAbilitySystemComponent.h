@@ -26,7 +26,10 @@ public:
 	/** 엔진 PlayMontage는 블렌드 인 시간을 정할 수 없으므로 같은 기록을 남기며 직접 재생합니다. */
 	FAnimMontageInstance* PlayMontageWithBlendIn(UGameplayAbility& Ability, UAnimMontage& Montage, float BlendInTime, FName StartSection);
 
-	/** 엔진 MakeOutgoingSpec은 GE 클래스를 받는데 Effects.json의 효과는 GE 객체이므로 직접 만듭니다. */
-	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect, float Level, FGameplayEffectContextHandle Context) const;
-	FGameplayEffectSpecHandle MakeEffectSpec(const UGameplayEffect& Effect, float Level, FGameplayEffectContextHandle Context) const;
+	/**
+	 * 엔진 MakeOutgoingSpec은 GE 클래스를 받는데 이 게임의 효과는 GE 객체이므로 직접 만듭니다. 늘 유효한 스펙을 주고,
+	 * Context를 넘기지 않으면 새로 만듭니다.
+	 */
+	FGameplayEffectSpecHandle MakeEffectSpec(EAgEffect Effect, FGameplayEffectContextHandle Context = FGameplayEffectContextHandle()) const;
+	FGameplayEffectSpecHandle MakeEffectSpec(const UGameplayEffect& Effect, FGameplayEffectContextHandle Context = FGameplayEffectContextHandle()) const;
 };

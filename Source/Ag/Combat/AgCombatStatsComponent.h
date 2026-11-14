@@ -45,7 +45,6 @@ private:
 
 	double StartTime = 0.0;
 
-	/** Recording의 Enemies와 같은 순서입니다. */
 	TArray<TWeakObjectPtr<const AAgEnemyCharacter>> Enemies;
 
 	TOptional<FAgCombatStats> StageResultStats;

@@ -18,9 +18,9 @@ void UAgAbilityTask_SendGameplayEvent::Activate()
 	if (AActor* Owner = GetAvatarActor())
 	{
 		TArray<AActor*> Targets;
-		if (Params.Targets.Range > 0.f)
+		if (Params.Targets)
 		{
-			Targets = AgTargeting::FindTargets(Params.Targets, *Owner);
+			Targets = AgTargeting::FindTargets(*Params.Targets, *Owner);
 		}
 		else if (AActor* ActionTarget = CastChecked<UAgGameplayAbility>(Ability)->GetActionTarget())
 		{

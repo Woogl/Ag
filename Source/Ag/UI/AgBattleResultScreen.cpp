@@ -64,12 +64,7 @@ void UAgBattleResultScreen::NativeOnActivated()
 	TitleText->SetText(bStageCleared ? StageClearTitle : GameOverTitle);
 	ShowCombatStats();
 
-	// 버튼마다 꺼야 포커스를 받은 버튼도 실행 키(Enter)를 받지 않습니다.
-	// 버튼을 담은 패널만 끄면 마우스만 막힙니다.
-	for (UAgButton* Button : {RestartButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
-	{
-		Button->SetIsEnabled(false);
-	}
+	SetButtonsEnabled(false);
 	PlayAnimation(FadeInAnimation);
 }
 
@@ -79,10 +74,7 @@ void UAgBattleResultScreen::OnAnimationFinished_Implementation(const UWidgetAnim
 
 	if (Animation == FadeInAnimation)
 	{
-		for (UAgButton* Button : {RestartButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
-		{
-			Button->SetIsEnabled(true);
-		}
+		SetButtonsEnabled(true);
 		RequestRefreshFocus();
 	}
 }
@@ -90,11 +82,6 @@ void UAgBattleResultScreen::OnAnimationFinished_Implementation(const UWidgetAnim
 UWidget* UAgBattleResultScreen::NativeGetDesiredFocusTarget() const
 {
 	return RestartButton;
-}
-
-TOptional<FUIInputConfig> UAgBattleResultScreen::GetDesiredInputConfig() const
-{
-	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
 }
 
 void UAgBattleResultScreen::ShowCombatStats()
@@ -113,4 +100,12 @@ void UAgBattleResultScreen::ShowCombatStats()
 	ParryCountText->SetText(FText::AsNumber(Stats->ParryCount));
 	PerfectDodgeCountText->SetText(FText::AsNumber(Stats->PerfectDodgeCount));
 	HitCountText->SetText(FText::AsNumber(Stats->HitCount));
+}
+
+void UAgBattleResultScreen::SetButtonsEnabled(bool bEnabled)
+{
+	for (UAgButton* Button : {RestartButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
+	{
+		Button->SetIsEnabled(bEnabled);
+	}
 }

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "Camera/AgFieldOfViewCameraModifier.h"
+#include "Data/AgCameraData.h"
 #include "AgAnimNotify_PlayCameraEffect.generated.h"
 
 class UCameraShakeBase;

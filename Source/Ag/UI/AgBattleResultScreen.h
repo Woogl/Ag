@@ -3,16 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonActivatableWidget.h"
+#include "UI/AgMenuScreen.h"
 #include "AgBattleResultScreen.generated.h"
 
 class UAgButton;
 class UCommonTextBlock;
 class UWidgetAnimation;
-struct FAgCombatStats;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgBattleResultScreen : public UCommonActivatableWidget
+class UAgBattleResultScreen : public UAgMenuScreen
 {
 	GENERATED_BODY()
 
@@ -21,7 +20,6 @@ protected:
 	virtual void NativeOnActivated() override;
 	virtual void OnAnimationFinished_Implementation(const UWidgetAnimation* Animation) override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 	UPROPERTY(EditAnywhere, Category = "Result")
 	FText StageClearTitle;
@@ -68,4 +66,7 @@ protected:
 private:
 	/** 시뮬레이션 룸에서 결과로 끝난 전투가 있으면 통계 표를 채워 보이고, 아니면 접습니다. */
 	void ShowCombatStats();
+
+	/** 버튼마다 꺼야 포커스를 받은 버튼도 실행 키(Enter)를 받지 않습니다. 버튼을 담은 패널만 끄면 마우스만 막힙니다. */
+	void SetButtonsEnabled(bool bEnabled);
 };

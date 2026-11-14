@@ -85,7 +85,8 @@ public:
 	void AgMoveMouse(float X, float Y);
 
 private:
-	void RunSwitch(const TCHAR* Command, const FString& OnOff, EAgCheatSwitch Switch);
+	/** 여럿이면 하나라도 꺼져 있을 때 모두 켜고, 모두 켜져 있을 때 모두 끕니다. */
+	void RunSwitch(const TCHAR* Command, const FString& OnOff, TConstArrayView<EAgCheatSwitch> Switches);
 
 	bool IsSwitchOn(const UAbilitySystemComponent& ASC, EAgCheatSwitch Switch) const;
 

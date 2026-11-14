@@ -43,7 +43,4 @@ protected:
 private:
 	UPROPERTY()
 	TObjectPtr<UTextureRenderTarget2D> RenderTarget;
-
-	UPROPERTY()
-	TObjectPtr<AAgCharacterBase> Character;
 };

@@ -88,7 +88,11 @@ public:
 
 	AAgCharacterBase* GetLockOnTarget() const;
 
+	/** 몸의 방향을 돌리지 않는 동안입니다(몸 전체 몽타주를 재생하는 행동, 그로기, 사망). */
 	bool IsFacingFixed() const;
+
+	/** 그 위치가 등 쪽 90° 안입니다. 백어택, 등 쪽 움찔, 등 뒤의 대상에게 돌지 않는 행동이 같은 판정을 씁니다. */
+	bool IsBehind(const FVector& Location) const;
 
 	void Kill();
 
@@ -108,6 +112,8 @@ public:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	virtual void LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride) override;
+
 	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
 	virtual void NotifyJumpApex() override;
 	virtual void MoveBlockedBy(const FHitResult& Impact) override;
@@ -126,7 +132,8 @@ protected:
 
 	void StartRagdoll(const FVector& PushVelocity);
 
-	virtual void HandleDeathEvent(const FGameplayEventData* Payload);
+	/** 살아 있는 캐릭터가 사망 이벤트를 받으면 한 번 불립니다. */
+	virtual void Die(const AActor* Attacker);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))
 	FName CharacterDataId;
@@ -135,6 +142,8 @@ protected:
 	TObjectPtr<UAgCharacterData> CharacterData;
 
 private:
+	void HandleDeathEvent(const FGameplayEventData* Payload);
+
 	void GrantAbilities();
 
 	void ApplyEffects();

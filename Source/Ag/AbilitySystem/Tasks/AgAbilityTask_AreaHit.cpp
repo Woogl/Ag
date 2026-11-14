@@ -37,10 +37,9 @@ void UAgAbilityTask_AreaHit::Activate()
 		const TSharedPtr<FAgHitState> HitState = MakeShared<FAgHitState>();
 		for (AActor* Target : AgTargeting::FindTargets(Params.Area, *Character))
 		{
-			UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target);
-			const FGameplayEffectSpecHandle Spec = AgAbility->MakeDamageSpec(Params.Damage, HitState);
-			if (TargetASC && Spec.IsValid())
+			if (UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target))
 			{
+				const FGameplayEffectSpecHandle Spec = AgAbility->MakeDamageSpec(Params.Damage, HitState);
 				Spec.Data->GetContext().AddOrigin(Target->GetActorLocation());
 				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, TargetASC);
 			}

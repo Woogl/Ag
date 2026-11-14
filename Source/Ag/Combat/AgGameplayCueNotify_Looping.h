@@ -82,13 +82,11 @@ private:
 	void ApplyNiagaraParameters(const FGameplayCueNotify_SpawnResult& SpawnResult) const;
 	void PlaceBetweenSockets(UNiagaraComponent& Niagara) const;
 	void ApplyTargetTimeDilation(const FGameplayCueNotify_SpawnResult& SpawnResult) const;
-	void ReleaseCueTarget();
+	void StopTargetTimeDilation();
 	void PlaceRecurringMesh(AActor* Target);
 	void PlayRemovalEffectsAtRecurringMeshes(AActor* Target, const FGameplayCueParameters& Parameters);
 	void ClearRecurringMeshes();
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UStaticMeshComponent>> PlacedMeshes;
-
-	TWeakObjectPtr<AActor> CueTarget;
 };

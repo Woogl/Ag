@@ -47,10 +47,7 @@ AAgProjectile::AAgProjectile()
 void AAgProjectile::OnSpawnedByAbility(const UAgGameplayAbility& Ability)
 {
 	DamageSpec = Ability.MakeDamageSpec(Damage, MakeShared<FAgHitState>());
-	if (DamageSpec.IsValid())
-	{
-		DamageSpec.Data->GetContext().AddInstigator(GetInstigator(), this);
-	}
+	DamageSpec.Data->GetContext().AddInstigator(GetInstigator(), this);
 	AimTarget = Ability.GetActionTarget();
 }
 
@@ -61,12 +58,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	{
 		return;
 	}
-	UAgAbilitySystemComponent* ASC = Defender.GetAbilitySystemComponent();
-	const FGameplayEffectSpecHandle ReflectedSpec = ASC->MakeEffectSpec(EAgEffect::Damage, DamageSpec.Data->GetLevel(), ASC->MakeEffectContext());
-	if (!ReflectedSpec.IsValid())
-	{
-		return;
-	}
+	const FGameplayEffectSpecHandle ReflectedSpec = Defender.GetAbilitySystemComponent()->MakeEffectSpec(EAgEffect::Damage);
 	Damage.PPMultiplier = UAgAssetManager::Get().GetCombatRules().ParryPPMultiplier;
 	Damage.AddToSpec(*ReflectedSpec.Data);
 	ReflectedSpec.Data->GetContext().AddInstigator(&Defender, this);

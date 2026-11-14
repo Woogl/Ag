@@ -20,7 +20,7 @@
 
 namespace AgSimulationRoomGameModePrivate
 {
-	const TCHAR* LineupOption = TEXT("Enemies");
+	const TCHAR* const LineupOption = TEXT("Enemies");
 
 	// 표시 액터는 레벨 위 높은 곳에 적 종류마다 떨어뜨려 띄워, 레벨의 KillZ와 원거리 차폐, 서로의 조명이 닿지 않게 합니다.
 	const FVector PreviewOrigin(0., 0., 100000.);

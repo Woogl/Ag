@@ -61,9 +61,6 @@ void UAgAbilityTask_Launch::Activate()
 	const FVector HorizontalVelocity = AirTime > 0.f ? Direction * (Distance / AirTime) : FVector::ZeroVector;
 	Character->LaunchCharacter(HorizontalVelocity + FVector(0.f, 0.f, VerticalSpeed), true, true);
 
-	// 엔진은 정점을 알리면 이 값을 끄므로, 공중에서 다시 띄울 때도 켭니다.
-	Movement->bNotifyApex = true;
-
 	bMontageRootMotionDisabled = true;
 	Character->PushDisableMontageRootMotion();
 	LandedHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Landed)

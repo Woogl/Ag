@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonActivatableWidget.h"
+#include "UI/AgMenuScreen.h"
 #include "AgStageSelectScreen.generated.h"
 
 class UAgButton;
 class UAgDropdown;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgStageSelectScreen : public UCommonActivatableWidget
+class UAgStageSelectScreen : public UAgMenuScreen
 {
 	GENERATED_BODY()
 
@@ -18,7 +18,6 @@ protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgDropdown> StageDropdown;

@@ -11,13 +11,10 @@ float UAgCharacterMovementComponent::GetFallHeight(const FHitResult& LandingHit)
 
 void UAgCharacterMovementComponent::PhysicsRotation(float DeltaTime)
 {
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(CharacterOwner);
-	if (!Character || Character->IsDead() || Character->IsFacingFixed())
+	if (!CastChecked<AAgCharacterBase>(CharacterOwner)->IsFacingFixed())
 	{
-		return;
+		Super::PhysicsRotation(DeltaTime);
 	}
-
-	Super::PhysicsRotation(DeltaTime);
 }
 
 void UAgCharacterMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)

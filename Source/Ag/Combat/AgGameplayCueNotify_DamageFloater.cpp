@@ -11,7 +11,7 @@ bool UAgGameplayCueNotify_DamageFloater::OnExecute_Implementation(AActor* Target
 	const APawn* Instigator = Cast<APawn>(Parameters.GetInstigator());
 	if (Instigator && Instigator->IsPlayerControlled() && Instigator->IsLocallyControlled())
 	{
-		AAgDamageFloater::Spawn(Target->GetWorld(), FloaterWidget, Parameters.Location, FMath::RoundToInt(Parameters.RawMagnitude));
+		AAgDamageFloater::Spawn(*Target->GetWorld(), FloaterWidget, Parameters.Location, FMath::RoundToInt(Parameters.RawMagnitude));
 	}
 	return true;
 }

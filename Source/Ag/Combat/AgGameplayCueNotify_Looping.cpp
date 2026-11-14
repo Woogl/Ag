@@ -48,20 +48,20 @@ void AAgGameplayCueNotify_Looping::Tick(float DeltaSeconds)
 
 bool AAgGameplayCueNotify_Looping::OnActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
-	CueTarget = Target;
 	const bool bResult = Super::OnActive_Implementation(Target, ResolveParameters(Target, Parameters));
 	ApplyNiagaraParameters(ApplicationSpawnResults);
+	ApplyTargetTimeDilation(ApplicationSpawnResults);
 	return bResult;
 }
 
 bool AAgGameplayCueNotify_Looping::WhileActive_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
 	// 엔진 Looping 큐는 숨긴 채 만든 액터를 다시 보이게 하지 않아(Actor 큐의 WhileActive를 부르지 않음), 재활용되지
-	// 않은 액터에서는 놓은 메시가 그려지지 않습니다.
+	// 않은 액터에서는 놓은 메시와 화면 효과(숨은 액터의 포스트프로세스 컴포넌트)가 그려지지 않습니다.
 	SetActorHiddenInGame(false);
-	CueTarget = Target;
 	const bool bResult = Super::WhileActive_Implementation(Target, ResolveParameters(Target, Parameters));
 	ApplyNiagaraParameters(LoopingSpawnResults);
+	ApplyTargetTimeDilation(LoopingSpawnResults);
 	if (!bLoopingEffectsRemoved && !PostProcess->IsPlaying())
 	{
 		PostProcess->Start(Target);
@@ -75,17 +75,17 @@ bool AAgGameplayCueNotify_Looping::WhileActive_Implementation(AActor* Target, co
 
 bool AAgGameplayCueNotify_Looping::OnExecute_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
-	CueTarget = Target;
 	const bool bResult = Super::OnExecute_Implementation(Target, ResolveParameters(Target, Parameters));
 	ApplyNiagaraParameters(RecurringSpawnResults);
+	ApplyTargetTimeDilation(RecurringSpawnResults);
 	PlaceRecurringMesh(Target);
 	return bResult;
 }
 
 bool AAgGameplayCueNotify_Looping::OnRemove_Implementation(AActor* Target, const FGameplayCueParameters& Parameters)
 {
-	// 꺼질 때 효과는 대상의 시간 배율을 따르지 않으므로 대상을 먼저 놓습니다.
-	ReleaseCueTarget();
+	// 꺼질 때 효과는 대상의 시간 배율을 따르지 않습니다.
+	StopTargetTimeDilation();
 	if (PostProcess->IsPlaying())
 	{
 		// 엔진의 즉시 회수는 페이드가 끝난 뒤 컴포넌트의 완료 콜백이 대신합니다.
@@ -152,7 +152,6 @@ void AAgGameplayCueNotify_Looping::ApplyNiagaraParameters(const FGameplayCueNoti
 			}
 		}
 	}
-	ApplyTargetTimeDilation(SpawnResult);
 }
 
 void AAgGameplayCueNotify_Looping::PlaceBetweenSockets(UNiagaraComponent& Niagara) const
@@ -176,7 +175,8 @@ void AAgGameplayCueNotify_Looping::PlaceBetweenSockets(UNiagaraComponent& Niagar
 
 void AAgGameplayCueNotify_Looping::ApplyTargetTimeDilation(const FGameplayCueNotify_SpawnResult& SpawnResult) const
 {
-	const AActor* Target = CueTarget.Get();
+	// 엔진은 큐 액터의 Owner를 큐의 대상으로 둡니다.
+	const AActor* Target = GetOwner();
 	if (!bUseTargetTimeDilation || !Target)
 	{
 		return;
@@ -190,7 +190,7 @@ void AAgGameplayCueNotify_Looping::ApplyTargetTimeDilation(const FGameplayCueNot
 	}
 }
 
-void AAgGameplayCueNotify_Looping::ReleaseCueTarget()
+void AAgGameplayCueNotify_Looping::StopTargetTimeDilation()
 {
 	SetActorTickEnabled(false);
 	if (bUseTargetTimeDilation)
@@ -204,7 +204,6 @@ void AAgGameplayCueNotify_Looping::ReleaseCueTarget()
 			}
 		}
 	}
-	CueTarget.Reset();
 }
 
 void AAgGameplayCueNotify_Looping::PlaceRecurringMesh(AActor* Target)
@@ -254,9 +253,10 @@ void AAgGameplayCueNotify_Looping::PlayRemovalEffectsAtRecurringMeshes(AActor* T
 		if (DefaultSpawnCondition.ShouldSpawn(SpawnContext))
 		{
 			RemovalEffects.ExecuteEffects(SpawnContext, RemovalSpawnResults);
-			ApplyNiagaraParameters(RemovalSpawnResults);
 		}
 	}
+	// 엔진은 생성한 효과를 결과에 덧붙이므로, 모두 생성한 뒤 한 번 넣습니다.
+	ApplyNiagaraParameters(RemovalSpawnResults);
 }
 
 void AAgGameplayCueNotify_Looping::ClearRecurringMeshes()

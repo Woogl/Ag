@@ -124,7 +124,9 @@ void UAgAbilityTask_PlayMontage::TickTask(float DeltaTime)
 	const FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(MontageInstanceId) : nullptr;
 	if (!Instance)
 	{
-		EndTimeline();
+		// 엔진은 재생을 멈추거나 지우기 전에 콜백을 부르므로 여기는 닿지 않는 길이지만, 재생 없이 남으면 End가 Tasks인
+		// 행동이 끝나지 않으므로 끊긴 것으로 끝냅니다.
+		EndInterrupted();
 		return;
 	}
 	EvaluateTimeline(Instance->GetPosition(), EAgTimelineMode::Advance);

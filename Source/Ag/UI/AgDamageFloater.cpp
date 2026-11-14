@@ -18,9 +18,9 @@ AAgDamageFloater::AAgDamageFloater()
 	RootComponent = Widget;
 }
 
-void AAgDamageFloater::Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount)
+void AAgDamageFloater::Spawn(UWorld& World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount)
 {
-	if (!World || !WidgetClass)
+	if (!WidgetClass)
 	{
 		return;
 	}
@@ -28,7 +28,7 @@ void AAgDamageFloater::Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> 
 	// 위젯 컴포넌트는 BeginPlay에서 위젯을 만들므로,
 	// 스폰을 마치기 전에 위젯 클래스를 넣습니다.
 	const FTransform Transform(Location);
-	AAgDamageFloater* Floater = World->SpawnActorDeferred<AAgDamageFloater>(StaticClass(), Transform);
+	AAgDamageFloater* Floater = World.SpawnActorDeferred<AAgDamageFloater>(StaticClass(), Transform);
 	if (!Floater)
 	{
 		return;

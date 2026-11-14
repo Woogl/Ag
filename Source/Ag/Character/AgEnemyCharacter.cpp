@@ -84,7 +84,7 @@ bool AAgEnemyCharacter::CanLosePP() const
 {
 	// 누워 있는 동안의 무적(하위 태그)은 플레이어만 지키고 적은 누워서도 맞아 PP를 잃으므로, 무적은 부모 태그만 봅니다.
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	return ASC && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
+	return !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
 	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
 	       !ASC->GetOwnedGameplayTags().HasTagExact(AgGameplayTags::State_Invincible);
 }
@@ -116,12 +116,9 @@ bool AAgEnemyCharacter::IsPhaseTransitionActive() const
 void AAgEnemyCharacter::GatherPatterns(float TargetDistance, bool bResponse, TArray<TPair<FName, float>>& OutCandidates) const
 {
 	OutCandidates.Reset();
-	const UAgCharacterData* Data = GetCharacterData();
-	for (FName Id : Data->Abilities)
+	for (FName Id : GetCharacterData()->Abilities)
 	{
-		const FAgAbilityData* Ability = Data->FindAbility(Id);
-		const FAgPatternSelection* Pattern =
-			Ability && Ability->AbilityTags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
+		const FAgPatternSelection* Pattern = FindPattern(Id);
 		const float Weight = Pattern ? (bResponse ? Pattern->ResponseChance : Pattern->Weight) : 0.f;
 		if (Weight > 0.f && Pattern->IsAvailable(TargetDistance, Phase) && CanActivatePattern(Id))
 		{
@@ -133,13 +130,10 @@ void AAgEnemyCharacter::GatherPatterns(float TargetDistance, bool bResponse, TAr
 void AAgEnemyCharacter::GatherReadyPatternRanges(TArray<FFloatInterval>& OutRanges) const
 {
 	OutRanges.Reset();
-	const UAgCharacterData* Data = GetCharacterData();
 	const FGameplayAbilityActorInfo* ActorInfo = GetAbilitySystemComponent()->AbilityActorInfo.Get();
-	for (FName Id : Data->Abilities)
+	for (FName Id : GetCharacterData()->Abilities)
 	{
-		const FAgAbilityData* Ability = Data->FindAbility(Id);
-		const FAgPatternSelection* Pattern =
-			Ability && Ability->AbilityTags.HasTag(AgGameplayTags::Ability_Enemy_Pattern) ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
+		const FAgPatternSelection* Pattern = FindPattern(Id);
 		const FGameplayAbilitySpec* Spec = Pattern && Pattern->Weight > 0.f && Pattern->IsInPhase(Phase) ? FindAbilitySpec(Id) : nullptr;
 		const UGameplayAbility* Instance = Spec ? Spec->GetPrimaryInstance() : nullptr;
 		if (Instance && Instance->CheckCooldown(Spec->Handle, ActorInfo))
@@ -242,25 +236,19 @@ void AAgEnemyCharacter::Tick(float DeltaSeconds)
 	UpdateWorldWidgets();
 }
 
-void AAgEnemyCharacter::HandleDeathEvent(const FGameplayEventData* Payload)
+void AAgEnemyCharacter::Die(const AActor* Attacker)
 {
-	if (IsDead())
-	{
-		return;
-	}
-
 	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 사망 처리 전에 읽습니다.
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	const UAnimMontage* Playing = AnimInstance ? GetAbilitySystemComponent()->GetCurrentMontage() : nullptr;
 	const UAgGameplayAbility* Animating = Playing ? Cast<UAgGameplayAbility>(GetAbilitySystemComponent()->GetAnimatingAbility()) : nullptr;
 	if (UAnimMontage* Death = Animating ? Animating->GetDefinition().DeathMontage.Get() : nullptr)
 	{
-		const float Position = AnimInstance ? AnimInstance->Montage_GetPosition(Playing) : 0.f;
-		DieWithDeathMotion(*Death, Position);
+		DieWithDeathMotion(*Death, AnimInstance->Montage_GetPosition(Playing));
 		return;
 	}
 
-	Super::HandleDeathEvent(Payload);
+	Super::Die(Attacker);
 }
 
 int32 AAgEnemyCharacter::GetReachedPhase() const
@@ -275,6 +263,12 @@ int32 AAgEnemyCharacter::GetReachedPhase() const
 		}
 	}
 	return 1;
+}
+
+const FAgPatternSelection* AAgEnemyCharacter::FindPattern(FName Id) const
+{
+	const FAgAbilityData* Ability = GetCharacterData()->FindAbility(Id);
+	return Ability ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
 }
 
 bool AAgEnemyCharacter::CanActivatePattern(FName Id) const

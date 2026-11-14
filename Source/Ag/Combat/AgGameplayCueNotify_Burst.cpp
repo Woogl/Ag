@@ -10,6 +10,12 @@
 
 namespace AgGameplayCueNotify_BurstPrivate
 {
+	bool IsHeavyHit(const FGameplayCueParameters& Parameters)
+	{
+		return Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Hit_KnockUp) ||
+		       Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Hit_KnockDown);
+	}
+
 	void PlayAttackCameraReactions(AAgPlayerCameraManager& CameraManager, const AActor* Target, const FGameplayCueParameters& Parameters)
 	{
 		const FGameplayTagContainer& Tags = Parameters.AggregatedSourceTags;
@@ -24,9 +30,7 @@ namespace AgGameplayCueNotify_BurstPrivate
 			return;
 		}
 
-		const bool bHeavy = Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Hit_KnockUp) ||
-		                    Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Hit_KnockDown);
-		CameraManager.PlayCameraReaction(bHeavy ? EAgCameraSituation::PlayerHitHeavy : EAgCameraSituation::PlayerHit, Target);
+		CameraManager.PlayCameraReaction(IsHeavyHit(Parameters) ? EAgCameraSituation::PlayerHitHeavy : EAgCameraSituation::PlayerHit, Target);
 		if (Tags.HasTagExact(AgGameplayTags::Ability_Action_DodgeCounter))
 		{
 			CameraManager.PlayCameraReaction(EAgCameraSituation::DodgeCounterHit, Target);
@@ -40,7 +44,7 @@ namespace AgGameplayCueNotify_BurstPrivate
 			CameraManager.PlayCameraReaction(EAgCameraSituation::BlinkRushHit, Target);
 		}
 	}
-}
+} // namespace AgGameplayCueNotify_BurstPrivate
 
 void UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(AActor* Target, const FGameplayCueParameters& Parameters)
 {
@@ -69,8 +73,7 @@ void UAgGameplayCueNotify_Burst::PlayCombatCameraReactions(AActor* Target, const
 	}
 	else if (CueTag == AgGameplayTags::GameplayCue_Hit)
 	{
-		const bool bHeavy = Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Hit_KnockUp) ||
-		                    Parameters.AggregatedTargetTags.HasTagExact(AgGameplayTags::Event_Hit_KnockDown);
+		const bool bHeavy = AgGameplayCueNotify_BurstPrivate::IsHeavyHit(Parameters);
 		CameraManager->PlayCameraReaction(bHeavy ? EAgCameraSituation::PlayerHurtHeavy : EAgCameraSituation::PlayerHurt, Attacker);
 	}
 	else if (CueTag == AgGameplayTags::GameplayCue_Guard)

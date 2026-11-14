@@ -141,11 +141,11 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 
 	FGameplayTag ResolveStaggerEvent(const AActor& Causer, const AAgCharacterBase& Target, const FGameplayEffectContextHandle& Context)
 	{
-		const float Angle = UKismetAnimationLibrary::CalculateDirection(Causer.GetActorLocation() - Target.GetActorLocation(), Target.GetActorRotation());
-		if (FMath::Abs(Angle) >= 135.f)
+		if (Target.IsBehind(Causer.GetActorLocation()))
 		{
 			return AgGameplayTags::Event_Hit_Stagger_Back;
 		}
+		const float Angle = UKismetAnimationLibrary::CalculateDirection(Causer.GetActorLocation() - Target.GetActorLocation(), Target.GetActorRotation());
 		if (FMath::Abs(Angle) > 45.f)
 		{
 			return Angle > 0.f ? AgGameplayTags::Event_Hit_Stagger_Right : AgGameplayTags::Event_Hit_Stagger_Left;
@@ -213,7 +213,7 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 
 	void ApplyHitstop(UAgAbilitySystemComponent& ASC, float Duration)
 	{
-		const FGameplayEffectSpecHandle Spec = ASC.MakeEffectSpec(EAgEffect::Hitstop, 1.f, ASC.MakeEffectContext());
+		const FGameplayEffectSpecHandle Spec = ASC.MakeEffectSpec(EAgEffect::Hitstop);
 		Spec.Data->SetDuration(Duration, true);
 		ASC.ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	}
@@ -234,11 +234,7 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 
 	void DamageParriedAttacker(UAgAbilitySystemComponent& DefenderASC, AAgCharacterBase& Attacker)
 	{
-		const FGameplayEffectSpecHandle Spec = DefenderASC.MakeEffectSpec(EAgEffect::Damage, 1.f, DefenderASC.MakeEffectContext());
-		if (!Spec.IsValid())
-		{
-			return;
-		}
+		const FGameplayEffectSpecHandle Spec = DefenderASC.MakeEffectSpec(EAgEffect::Damage);
 		const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 		FAgDamage Damage;
 		Damage.HPMultiplier = Rules.ParryHPMultiplier;

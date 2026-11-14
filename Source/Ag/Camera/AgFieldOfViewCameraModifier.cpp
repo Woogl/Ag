@@ -16,14 +16,16 @@ void UAgFieldOfViewCameraModifier::Play(const FAgFieldOfViewEffect& Effect, floa
 
 void UAgFieldOfViewCameraModifier::Hold(const FAgFieldOfViewEffect& Effect)
 {
+	// 값이 같으면 방금 놓은 연출을 지금 세기에서 다시 잡고, 값이 바뀌었으면(데이터를 다시 읽음) 옛 연출은 빠져나갑니다.
+	Release();
 	Start(Effect, 1.f, true);
 }
 
-void UAgFieldOfViewCameraModifier::Release(const FAgFieldOfViewEffect& Effect)
+void UAgFieldOfViewCameraModifier::Release()
 {
 	for (FAgActiveEffect& Active : ActiveEffects)
 	{
-		if (Active.Source == &Effect && Active.bHold)
+		if (Active.bHold)
 		{
 			Active.bHold = false;
 			Active.Phase = EAgPhase::BlendOut;
@@ -82,15 +84,14 @@ void UAgFieldOfViewCameraModifier::Start(const FAgFieldOfViewEffect& Effect, flo
 	{
 		return;
 	}
-	// 재생 중인 같은 연출은 지금 세기에서 들어가기부터 다시 시작합니다.
+	// 유지 중인 연출은 일회성 연출과 값이 같아도 따로 둡니다. 합치면 일회성 연출이 유지를 풀어 버립니다.
 	FAgActiveEffect* Active = ActiveEffects.FindByPredicate([&Effect](const FAgActiveEffect& Each)
-	{ return Each.Source == &Effect; });
+	{ return !Each.bHold && Each.Effect == Effect; });
 	if (!Active)
 	{
 		Active = &ActiveEffects.AddDefaulted_GetRef();
-		Active->Source = &Effect;
+		Active->Effect = Effect;
 	}
-	Active->Effect = Effect;
 	Active->Scale = Scale;
 	Active->Phase = EAgPhase::BlendIn;
 	Active->HoldRemaining = Effect.HoldTime;

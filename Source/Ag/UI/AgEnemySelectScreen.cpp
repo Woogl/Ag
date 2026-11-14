@@ -54,19 +54,14 @@ UWidget* UAgEnemySelectScreen::NativeGetDesiredFocusTarget() const
 	return SlotDropdowns.IsEmpty() ? ReturnToTitleButton.Get() : SlotDropdowns[0]->GetDesiredFocusWidget();
 }
 
-TOptional<FUIInputConfig> UAgEnemySelectScreen::GetDesiredInputConfig() const
-{
-	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
-}
-
 TArray<TSubclassOf<AAgCharacterBase>> UAgEnemySelectScreen::GetLineup() const
 {
 	const AAgSimulationRoomGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgSimulationRoomGameMode>();
 	TArray<TSubclassOf<AAgCharacterBase>> Lineup;
 	for (const UAgDropdown* SlotDropdown : SlotDropdowns)
 	{
-		const FName Selected = SlotDropdown->GetSelectedOption();
-		Lineup.Add(GameMode->FindEnemyClass(Selected == AgEnemySelectScreenPrivate::EmptyOption ? NAME_None : Selected));
+		// 빈 자리의 키는 후보 적의 ID가 아니라 클래스가 없습니다.
+		Lineup.Add(GameMode->FindEnemyClass(SlotDropdown->GetSelectedOption()));
 	}
 	return Lineup;
 }

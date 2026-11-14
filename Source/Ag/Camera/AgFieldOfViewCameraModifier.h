@@ -4,25 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Camera/CameraModifier.h"
+#include "Data/AgCameraData.h"
 #include "AgFieldOfViewCameraModifier.generated.h"
-
-USTRUCT()
-struct FAgFieldOfViewEffect
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere)
-	float Offset = 0.f;
-
-	UPROPERTY(EditAnywhere, meta = (ClampMin = "0"))
-	float BlendInTime = 0.f;
-
-	UPROPERTY(EditAnywhere, meta = (ClampMin = "0"))
-	float HoldTime = 0.f;
-
-	UPROPERTY(EditAnywhere, meta = (ClampMin = "0"))
-	float BlendOutTime = 0.f;
-};
 
 UCLASS()
 class UAgFieldOfViewCameraModifier : public UCameraModifier
@@ -32,11 +15,13 @@ class UAgFieldOfViewCameraModifier : public UCameraModifier
 public:
 	UAgFieldOfViewCameraModifier(const FObjectInitializer& ObjectInitializer);
 
+	/** 값이 같은 연출이 재생 중이면 겹치지 않고 지금 세기에서 들어가기부터 다시 시작합니다. */
 	void Play(const FAgFieldOfViewEffect& Effect, float Scale = 1.f);
 
+	/** Release를 부를 때까지 유지합니다. 유지하는 연출은 하나라, 다시 부르면 앞서 유지하던 연출은 빠져나갑니다. */
 	void Hold(const FAgFieldOfViewEffect& Effect);
 
-	void Release(const FAgFieldOfViewEffect& Effect);
+	void Release();
 
 	void StopAll();
 
@@ -53,8 +38,6 @@ private:
 
 	struct FAgActiveEffect
 	{
-		// 같은 정의에서 재생한 것을 같은 연출로 보므로, 정의의 주소는 비교에만 씁니다.
-		const FAgFieldOfViewEffect* Source = nullptr;
 		FAgFieldOfViewEffect Effect;
 		float Scale = 1.f;
 		EAgPhase Phase = EAgPhase::BlendIn;

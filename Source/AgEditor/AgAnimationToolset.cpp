@@ -18,7 +18,8 @@ namespace AgAnimationToolsetPrivate
 	{
 		TArray<UAnimStateNode*> States;
 		Graph.GetNodesOfClass(States);
-		UAnimStateNode** Found = States.FindByPredicate([Name](const UAnimStateNode* State) { return State->GetStateName() == Name.ToString(); });
+		UAnimStateNode** Found = States.FindByPredicate([Name](const UAnimStateNode* State)
+		{ return State->GetStateName() == Name.ToString(); });
 		return Found ? *Found : nullptr;
 	}
 } // namespace AgAnimationToolsetPrivate

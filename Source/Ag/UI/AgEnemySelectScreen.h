@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonActivatableWidget.h"
+#include "UI/AgMenuScreen.h"
 #include "AgEnemySelectScreen.generated.h"
 
 class AAgCharacterBase;
@@ -12,7 +12,7 @@ class UAgDropdown;
 class UDynamicEntryBox;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgEnemySelectScreen : public UCommonActivatableWidget
+class UAgEnemySelectScreen : public UAgMenuScreen
 {
 	GENERATED_BODY()
 
@@ -20,7 +20,6 @@ protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 	UPROPERTY(EditAnywhere, Category = "UI", meta = (ClampMin = 0, ClampMax = 1))
 	float LockedButtonOpacity = 1.f;

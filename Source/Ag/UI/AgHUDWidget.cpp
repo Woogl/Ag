@@ -56,14 +56,9 @@ void UAgHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	StatusPanelVisibility = StatusPanel->GetVisibility();
-
 	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn());
-	if (UAgAbilitySystemComponent* ASC = Player ? Player->GetAbilitySystemComponent() : nullptr)
-	{
-		PlayerASC = ASC;
-		BindPlayer(*ASC);
-	}
+	PlayerASC = Player ? Player->GetAbilitySystemComponent() : nullptr;
+	BindPlayer();
 	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
 	{
 		SkillSlot.Key->SetInput(Player, SkillSlot.Value);
@@ -79,12 +74,12 @@ void UAgHUDWidget::NativeConstruct()
 	});
 #endif
 
-	GetWorld()->GetSubsystem<UAgCombatSubsystem>()->OnCombatantsChanged.AddUObject(this, &ThisClass::HandleCombatantsChanged);
+	GetWorld()->GetSubsystem<UAgCombatSubsystem>()->OnCombatantsChanged.AddUObject(this, &ThisClass::UpdateBoss);
 	if (AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>())
 	{
 		StageState->OnStageResultChanged.AddUObject(this, &ThisClass::UpdateStatusPanel);
 	}
-	HandleCombatantsChanged();
+	UpdateBoss();
 
 	UpdateStatusPanel();
 	UpdatePlayer();
@@ -126,30 +121,28 @@ void UAgHUDWidget::OpenPauseMenu()
 	}
 }
 
-void UAgHUDWidget::HandleCombatantsChanged()
+void UAgHUDWidget::BindPlayer()
 {
-	// 같은 보스를 다시 넘기면 보스 상태가 그대로 두므로, 다른 적의 전투 진입으로 대미지 잔상이 지워지지 않습니다.
-	const AAgBossCharacter* Boss = GetWorld()->GetSubsystem<UAgCombatSubsystem>()->FindBoss();
-	BossStatus->SetAbilitySystem(Boss ? Boss->GetAbilitySystemComponent() : nullptr);
-	UpdateBoss();
-}
-
-void UAgHUDWidget::BindPlayer(UAbilitySystemComponent& ASC)
-{
+	UAbilitySystemComponent* ASC = PlayerASC.Get();
+	if (!ASC)
+	{
+		return;
+	}
 	for (const FGameplayAttribute& Attribute : AgHUDWidgetPrivate::PlayerAttributes())
 	{
-		ASC.GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, &ThisClass::HandlePlayerAttributeChanged);
+		ASC->GetGameplayAttributeValueChangeDelegate(Attribute).AddUObject(this, &ThisClass::HandlePlayerAttributeChanged);
 	}
-	ASC.RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
+	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
 		.AddWeakLambda(this, [this](const FGameplayTag, int32)
 	{ UpdateStatusPanel(); });
-	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 부여될 때 스킬 슬롯을 다시 그립니다.
-	ASC.AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
+	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 스펙이 바뀔 때(부여, 발동, 종료) 스킬 슬롯을
+	// 다시 그립니다.
+	ASC->AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
 	{
 		UpdateSkillSlots();
 		UpdateCooldowns();
 	});
-	ASC.AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
+	ASC->AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
 	{ UpdateCooldowns(); });
 }
 
@@ -175,19 +168,31 @@ void UAgHUDWidget::UpdateStatusPanel()
 	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
 	const bool bCutscene = ASC && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
 	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
-	StatusPanel->SetVisibility(bCutscene || bStageEnded ? ESlateVisibility::Collapsed : StatusPanelVisibility);
+	StatusPanel->SetVisibility(bCutscene || bStageEnded ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
 }
 
 void UAgHUDWidget::UpdatePlayer()
 {
-	if (const UAbilitySystemComponent* ASC = PlayerASC.Get())
-	{
-		SetBarValue(*PlayerHPBar, *ASC, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute());
-		SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
-	}
+	UpdateHPBar();
+	UpdateMPBar();
 	UpdatePotion();
 	UpdateUPGauge();
-	UpdateSkillSlots();
+}
+
+void UAgHUDWidget::UpdateHPBar()
+{
+	if (const UAbilitySystemComponent* ASC = PlayerASC.Get())
+	{
+		PlayerHPBar->SetValue(ASC->GetNumericAttribute(UAgAttributeSet::GetHPAttribute()), ASC->GetNumericAttribute(UAgAttributeSet::GetMaxHPAttribute()));
+	}
+}
+
+void UAgHUDWidget::UpdateMPBar()
+{
+	if (const UAbilitySystemComponent* ASC = PlayerASC.Get())
+	{
+		PlayerMPBar->SetValue(ASC->GetNumericAttribute(UAgAttributeSet::GetMPAttribute()), ASC->GetNumericAttribute(UAgAttributeSet::GetMaxMPAttribute()));
+	}
 }
 
 void UAgHUDWidget::UpdatePotion()
@@ -228,8 +233,9 @@ void UAgHUDWidget::UpdateCooldowns()
 
 void UAgHUDWidget::UpdateBoss()
 {
-	const UWorld* World = GetWorld();
-	const AAgBossCharacter* Boss = World ? World->GetSubsystem<UAgCombatSubsystem>()->FindBoss() : nullptr;
+	// 같은 보스를 다시 넘기면 보스 상태가 그대로 두므로, 다른 적의 전투 진입으로 대미지 잔상이 지워지지 않습니다.
+	const AAgBossCharacter* Boss = GetWorld()->GetSubsystem<UAgCombatSubsystem>()->FindBoss();
+	BossStatus->SetAbilitySystem(Boss ? Boss->GetAbilitySystemComponent() : nullptr);
 	BossStatusPanel->SetVisibility(Boss ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 	if (Boss)
 	{
@@ -249,28 +255,17 @@ TArray<TPair<UAgSkillSlot*, FGameplayTag>, TInlineAllocator<6>> UAgHUDWidget::Ge
 	};
 }
 
-void UAgHUDWidget::SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue)
-{
-	Bar.SetValue(ASC.GetNumericAttribute(Value), ASC.GetNumericAttribute(MaxValue));
-}
-
 void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	const UAbilitySystemComponent* ASC = PlayerASC.Get();
-	if (!ASC)
-	{
-		return;
-	}
-
 	// 한 효과가 여러 어트리뷰트를 바꿀 때 알림 순서와 상관없도록, 바뀐 어트리뷰트의 표시만 다시 그립니다.
 	const FGameplayAttribute& Attribute = Data.Attribute;
 	if (Attribute == UAgAttributeSet::GetHPAttribute() || Attribute == UAgAttributeSet::GetMaxHPAttribute())
 	{
-		SetBarValue(*PlayerHPBar, *ASC, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute());
+		UpdateHPBar();
 	}
 	else if (Attribute == UAgAttributeSet::GetMPAttribute() || Attribute == UAgAttributeSet::GetMaxMPAttribute())
 	{
-		SetBarValue(*PlayerMPBar, *ASC, UAgAttributeSet::GetMPAttribute(), UAgAttributeSet::GetMaxMPAttribute());
+		UpdateMPBar();
 	}
 	else if (Attribute == UAgAttributeSet::GetPotionAttribute() || Attribute == UAgAttributeSet::GetMaxPotionAttribute())
 	{

@@ -69,10 +69,7 @@ bool UAgNameplateWidget::Update(bool bAllowed, bool bRequested)
 
 void UAgNameplateWidget::Unbind()
 {
-	if (const UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(GroggyTimer);
-	}
+	GetWorld()->GetTimerManager().ClearTimer(GroggyTimer);
 	UAbilitySystemComponent* Target = ASC.Get();
 	if (!Target)
 	{
@@ -144,7 +141,7 @@ void UAgNameplateWidget::UpdatePP()
 		return;
 	}
 
-	float PPBarRatio = FMath::Clamp(Target->GetNumericAttribute(UAgAttributeSet::GetPPAttribute()) / MaxPP, 0.f, 1.f);
+	float PPBarRatio = Target->GetNumericAttribute(UAgAttributeSet::GetPPAttribute()) / MaxPP;
 	if (Target->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
 		const FGameplayEffectQuery Query =

@@ -18,7 +18,7 @@ namespace AgPostProcessComponentPrivate
 	bool IsLocalPlayerPawn(const APawn* Pawn)
 	{
 		const APlayerController* Controller = Pawn ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
-		return Controller && Controller->IsLocalController() && Controller->GetPawn() == Pawn;
+		return Controller && Controller->IsLocalController();
 	}
 }
 
@@ -33,22 +33,20 @@ bool UAgPostProcessComponent::Start(AActor* Target, float Duration)
 {
 	Reset();
 	APawn* Pawn = Cast<APawn>(Target);
-	if (!Material || !AgPostProcessComponentPrivate::IsLocalPlayerPawn(Pawn) || !GetWorld())
+	if (!Material || !AgPostProcessComponentPrivate::IsLocalPlayerPawn(Pawn))
 	{
 		return false;
 	}
-	FString Error;
-	if (!ValidateSettings(Error) || !FMath::IsFinite(Duration) || Duration < 0.f || (Duration > 0.f && Duration < BlendIn + BlendOut))
+	// 머티리얼은 큐 에셋 검증(ValidateSettings)이 보고, 재생 길이는 실행 중에 정해지므로 여기서 봅니다.
+	if (Duration > 0.f && Duration < BlendIn + BlendOut)
 	{
-		UE_LOG(LogAg, Error, TEXT("%s: invalid screen effect (%s, duration %f)"), *GetPathName(), *Error, Duration);
+		UE_LOG(LogAg, Error, TEXT("%s: screen effect duration %f is shorter than its fades"), *GetPathName(), Duration);
 		return false;
 	}
 
 	MaterialInstance = UMaterialInstanceDynamic::Create(Material, this);
 	TargetPawn = Pawn;
 	PlaybackDuration = Duration;
-	PlaybackBlendIn = BlendIn;
-	PlaybackBlendOut = BlendOut;
 	StartTime = GetWorld()->GetAudioTimeSeconds();
 	// UE 5.8의 PostProcessComponent 상속에 필요한 함수가 DLL에 공개되어 있지 않아 엔진 컴포넌트를 소유합니다.
 	Volume = NewObject<UPostProcessComponent>(GetOwner(), NAME_None, RF_Transient);
@@ -73,7 +71,7 @@ bool UAgPostProcessComponent::Stop()
 	}
 	const double Now = GetWorld()->GetAudioTimeSeconds();
 	StopWeight = GetWeight(Now);
-	if (PlaybackBlendOut <= 0.f || StopWeight <= 0.f)
+	if (BlendOut <= 0.f || StopWeight <= 0.f)
 	{
 		Reset();
 		return false;
@@ -95,7 +93,7 @@ void UAgPostProcessComponent::Reset()
 	MaterialInstance = nullptr;
 	TargetPawn.Reset();
 	StartTime = StopTime = 0.;
-	PlaybackDuration = PlaybackBlendIn = PlaybackBlendOut = StopWeight = 0.f;
+	PlaybackDuration = StopWeight = 0.f;
 	bFadingOut = false;
 }
 
@@ -116,11 +114,6 @@ bool UAgPostProcessComponent::HasMaterial() const
 
 bool UAgPostProcessComponent::ValidateSettings(FString& Error) const
 {
-	if (!FMath::IsFinite(BlendIn) || !FMath::IsFinite(BlendOut) || BlendIn < 0.f || BlendOut < 0.f)
-	{
-		Error = TEXT("fade times must be finite and non-negative");
-		return false;
-	}
 	if (Material)
 	{
 		const UMaterial* BaseMaterial = Material->GetMaterial();
@@ -147,7 +140,7 @@ void UAgPostProcessComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		return;
 	}
 	const double Now = GetWorld()->GetAudioTimeSeconds();
-	if (!AgPostProcessComponentPrivate::IsLocalPlayerPawn(TargetPawn.Get()) || (bFadingOut && Now - StopTime >= PlaybackBlendOut) || (PlaybackDuration > 0.f && Now - StartTime >= PlaybackDuration))
+	if (!AgPostProcessComponentPrivate::IsLocalPlayerPawn(TargetPawn.Get()) || (bFadingOut && Now - StopTime >= BlendOut) || (PlaybackDuration > 0.f && Now - StartTime >= PlaybackDuration))
 	{
 		Finish();
 		return;
@@ -165,13 +158,13 @@ float UAgPostProcessComponent::GetWeight(double Now) const
 {
 	if (bFadingOut)
 	{
-		return StopWeight * FMath::Clamp(1.f - static_cast<float>(Now - StopTime) / PlaybackBlendOut, 0.f, 1.f);
+		return StopWeight * FMath::Clamp(1.f - static_cast<float>(Now - StopTime) / BlendOut, 0.f, 1.f);
 	}
 	const float Elapsed = static_cast<float>(Now - StartTime);
-	float Weight = PlaybackBlendIn > 0.f ? FMath::Clamp(Elapsed / PlaybackBlendIn, 0.f, 1.f) : 1.f;
-	if (PlaybackDuration > 0.f && PlaybackBlendOut > 0.f)
+	float Weight = BlendIn > 0.f ? FMath::Clamp(Elapsed / BlendIn, 0.f, 1.f) : 1.f;
+	if (PlaybackDuration > 0.f && BlendOut > 0.f)
 	{
-		Weight = FMath::Min(Weight, FMath::Clamp((PlaybackDuration - Elapsed) / PlaybackBlendOut, 0.f, 1.f));
+		Weight = FMath::Min(Weight, FMath::Clamp((PlaybackDuration - Elapsed) / BlendOut, 0.f, 1.f));
 	}
 	return Weight;
 }

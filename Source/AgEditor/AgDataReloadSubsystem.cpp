@@ -50,10 +50,7 @@ void UAgDataReloadSubsystem::HandleFilesChanged(const TArray<FFileChangeData>& C
 		if (FPaths::GetExtension(Change.Filename).Equals(TEXT("json"), ESearchCase::IgnoreCase))
 		{
 			UAgAssetManager::Get().ReloadJsonData();
-			if (GEditor)
-			{
-				GEditor->RedrawLevelEditingViewports();
-			}
+			GEditor->RedrawLevelEditingViewports();
 			return;
 		}
 	}

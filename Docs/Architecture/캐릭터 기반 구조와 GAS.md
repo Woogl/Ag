@@ -14,7 +14,7 @@
 | 어빌리티 목록 | 캐릭터 데이터(`Characters.json`)의 `Abilities`에 적힌 어빌리티 ID마다 단일 `UAgGameplayAbility`를 독립 스펙으로 부여합니다. 정의는 `Abilities.json`에 있고, 어빌리티 태그와 트리거는 스펙에 넣습니다. | 같은 클래스라도 조건·이벤트·재발동·쿨다운·GE 출처가 어빌리티마다 구분됩니다. |
 | 어빌리티 구조 | 모든 어빌리티(플레이어 액션, 보스 패턴, 피격 반응 등)를 어빌리티 클래스 하나(`UAgGameplayAbility`)와 범용 Task로 실행하고, 어빌리티가 아닌 규칙은 주인 객체가 맡습니다. | 어빌리티 하나는 `Abilities.json` 항목 하나(몽타주와 타임라인 포함)만 읽으면 파악되고, 있는 Task를 조합한 새 액션·패턴은 JSON과 몽타주만으로 더합니다. 그래서 새 Task는 둘 이상의 어빌리티가 쓸 수 있는 기능 하나일 때만 더하고, 한 어빌리티만 쓰는 규칙은 값은 효과 데이터에, 규칙은 주인 객체에 둡니다. 흐름 Task, 자식 어빌리티, 필드로 두 가지 일 중 하나를 고르는 Task는 만들지 않으며, 어빌리티와 재생 Task는 Task 종류나 어빌리티 ID로 분기하지 않습니다. |
 | 입력 | 키로 발동하는 어빌리티는 정의에 `InputTag`를 적습니다. 키를 누르면 입력 계층(`AAgPlayerCharacter`)이 그 입력의 어빌리티를 모두 발동해 보고, 하나도 발동하지 않으면 그 입력 태그로 자기에게 게임플레이 이벤트를 보냅니다(기본 공격의 다음 타). 같은 키의 어빌리티는 발동 조건이 서로 배타적이어야 합니다. 막힘 검사와 선입력은 입력 태그 단위입니다. `End`가 `InputReleased`인 어빌리티(가드)는 키를 떼면 취소합니다. 누르고 있는 동안 입력 제한이 풀려도 다시 발동하지 않으며, 선입력한 그런 입력은 아직 누르고 있을 때만 실행합니다. 입력 계층에 남는 규칙은 점프(엔진 `Jump`를 거쳐 공중 태그 트리거로 발동), 공중 입력 제한(`State.Airborne` 동안 기본 공격 키만 받음. 점프 행동은 공중 태그가 붙는 순간에만 발동을 시도해 다른 행동·피격 반응 도중 뜨면 실행되지 않으므로, 점프 행동이 아니라 공중 태그로 봄), 락온 켜고 끄기와 대상 전환(카메라 매니저의 튕김 판정을 받아 락온 어빌리티의 대상을 바꿈), 후딜 이동 캔슬(`State.MoveCancel`인 행동의 후딜에 이동 입력이 있으면 행동을 취소하고, 회피 키를 누르고 있으면 대신 달리기를 시작), 가드 중 패리 모션을 끝내 가드 자세로 돌아오기, 처형·회복병 입력과 공중 점프 입력을 선입력하지 않기입니다. HUD의 스킬·궁극기·회복병 칸(`UAgSkillSlot`)도 `InputTag`(`Input.Skill1`~`Input.Skill4`, `Input.Ultimate`, `Input.Potion`)로 어빌리티를 찾아 그 정의의 아이콘·코스트와 쿨다운, 남은 충전 수(최대 충전 2회 이상)를 그립니다. | 키 하나로 발동하는 행동은 입력 계층과 HUD를 고치지 않고 더합니다. 같은 시각의 일에 순서를 두지 않는 원칙에 따라 목록 순서로 고르지 않습니다. 새 키나 위의 남는 규칙 같은 동작은 C++가 필요합니다. |
-| 상태 | 움찔·넉업과 저글·넉다운·가드 밀림, 처형 피격은 이벤트로 발동하는 어빌리티(GameplayEvent 트리거)로, 그로기 모션은 그로기 태그로 발동하는 어빌리티(OwnedTagPresent 트리거)로, 페이즈 전환은 적 캐릭터가 직접 발동하는 어빌리티로 만듭니다. 발동·중단 관계는 태그로 나타내며, 기획 규칙은 [전투 시스템](<../Design/System/전투 시스템.md>)을 따릅니다. 공통 피격 어빌리티는 `Ability.Reaction.HitReaction` 아래에 두어 상위 상태가 부모 태그 하나로 취소합니다. 세부 상태 구분은 아래 '피격 상태와 AI 조건'을 따릅니다. 사망은 어빌리티가 아니라 캐릭터가 사망 이벤트를 받아 처리합니다. 그로기는 적 캐릭터가 `Event.Groggy`를 받아 거는 지속 효과(`Groggy`)가 상태 태그를 부여하고, 그로기 어빌리티는 그 태그가 붙으면 발동하고 떨어지면 엔진이 끝내며(`End: TriggerTag`) 모션만 맡습니다. 그로기 몽타주는 반복 섹션에서 끝 섹션으로 미리 넘어가(Transition의 `bSectionEndsWithTag`), 효과가 끝나는 때에 끝 섹션을 마칩니다. 그로기 어빌리티의 OwnedTags에는 `State.Groggy`를 넣지 않습니다(넣으면 효과가 끝나도 태그가 남아 그로기가 끝나지 않습니다). 그 밖에 어빌리티가 붙이는 상태 태그는, 어빌리티 내내 붙으면 ActivationOwnedTags에 두고, 일부 구간에만 붙으면(회피의 무적 구간, 후딜 전의 Busy 등) 시간표의 ApplyEffect 구간으로 그 태그를 주는 효과를 겁니다. | 어빌리티와 같은 방식이라 규칙이 한곳에 모입니다. 두 방식 모두 어빌리티가 끝나면 태그가 떨어지므로, 어빌리티마다 태그를 떼는 코드를 두지 않습니다. 그로기의 시작(효과)과 끝(PP 회복)은 PP·그로기 규칙의 주인인 적 캐릭터가 맡고, 그로기 어빌리티가 끝나는 때는 엔진 트리거가 정합니다. |
+| 상태 | 움찔·넉업과 저글·넉다운·가드 밀림, 처형 피격은 이벤트로 발동하는 어빌리티(GameplayEvent 트리거)로, 그로기 모션은 그로기 태그로 발동하는 어빌리티(OwnedTagPresent 트리거)로, 페이즈 전환은 적 캐릭터가 직접 발동하는 어빌리티로 만듭니다. 발동·중단 관계는 태그로 나타내며, 기획 규칙은 [전투 시스템](<../Design/System/전투 시스템.md>)을 따릅니다. 공통 피격 어빌리티는 `Ability.Reaction.HitReaction` 아래에 두어 상위 상태가 부모 태그 하나로 취소합니다. 세부 상태 구분은 아래 '피격 상태와 AI 조건'을 따릅니다. 사망은 어빌리티가 아니라 캐릭터가 사망 이벤트를 받아 처리합니다. 그로기는 적 캐릭터가 `Event.Groggy`를 받아 거는 지속 효과(`Groggy`)가 상태 태그를 부여하고, 그로기 어빌리티는 그 태그가 붙으면 발동하고 떨어지면 엔진이 끝내며(`End: TriggerTag`) 모션만 맡습니다. 그로기 몽타주는 반복 섹션에서 끝 섹션으로 미리 넘어가(Transition의 `bSectionEndsWithTag`), 효과가 끝나는 때에 끝 섹션을 마칩니다. 그로기 어빌리티의 OwnedTags에는 `State.Groggy`를 넣지 않습니다(넣으면 효과가 끝나도 태그가 남아 그로기가 끝나지 않습니다). 그 밖에 어빌리티가 붙이는 상태 태그는, 어빌리티 내내 붙으면 ActivationOwnedTags에 두고, 일부 구간에만 붙으면(회피의 무적 구간, 후딜 전의 Busy 등) 시간표의 ApplyEffect 구간으로 그 태그를 주는 효과를 겁니다. Task가 도는 동안을 뜻하는 태그(`State.Dashing`, `State.Cutscene`)는 그 Task가 붙이고 끝날 때 뗍니다. | 어빌리티와 같은 방식이라 규칙이 한곳에 모입니다. 두 방식 모두 어빌리티가 끝나면 태그가 떨어지므로, 어빌리티마다 태그를 떼는 코드를 두지 않습니다. 그로기의 시작(효과)과 끝(PP 회복)은 PP·그로기 규칙의 주인인 적 캐릭터가 맡고, 그로기 어빌리티가 끝나는 때는 엔진 트리거가 정합니다. |
 | 강인도·슈퍼아머 | 강인도는 `UAgCharacterData::Toughness`이며 어트리뷰트로 만들지 않습니다. 슈퍼아머는 JSON 효과 `SuperArmor`가 `State.SuperArmor`를 부여합니다. 반응 선택은 대미지 결과 처리 컴포넌트가 맡습니다. | 캐릭터 등급과 일시적인 상태를 구분하고, 반응 억제가 피해량·적중 연출·보상 전체를 건너뛰지 않게 합니다. |
 | 쿨다운 | 어빌리티(플레이어 액션, 보스 패턴)의 쿨다운은 쿨다운 효과(`Cooldown`) 하나로 셉니다. 어빌리티마다 태그를 두지 않고, 효과의 에셋 태그(`Effect.Cooldown`)와 걸 때 넣은 출처(그 스펙의 어빌리티 인스턴스)로 어빌리티를 구분합니다. 시간은 어빌리티 항목의 `Cooldown`이며 0이면 쿨다운이 없습니다. 충전은 걸린 쿨다운 효과 하나가 쓴 충전 하나이고, 걸린 효과가 `MaxCharges`보다 적으면 발동합니다. 새 효과는 걸린 효과 중 가장 늦게 끝나는 것의 남은 시간에 `Cooldown`을 더한 시간으로 걸어, 효과들이 `Cooldown` 간격으로 줄지어 끝나게 합니다. 다음 충전까지 남은 시간 조회(`GetRechargeTimeRemainingAndDuration`)는 충전이 남아 있어도 가장 먼저 끝나는 효과의 남은 시간과 `Cooldown`을 줍니다. 남은 충전 수 조회(`GetCharges`)는 `MaxCharges`에서 걸린 효과 수를 뺀 값이고, HUD는 충전이 최대보다 적은 동안 매 틱 다시 그립니다. 플레이어와 보스가 이 길 하나를 씁니다. | 엔진의 쿨다운 GE는 클래스(`CooldownGameplayEffectClass`)로만 받아, 코드에서 만든 GE 객체로 쿨다운을 확인·적용하는 함수를 재정의합니다. 시간은 어빌리티 정의에 두고, 공통 효과의 구성은 아래 '코드가 효과를 쓰는 방법'을 따릅니다. 어빌리티마다 태그를 두지 않아 어빌리티를 더해도 태그가 늘지 않습니다. 쿨다운 유무를 시간 하나로 정해, 쿨다운 효과가 있는지와 시간이 어긋나지 않습니다. 충전을 효과의 줄로 세어 한 번에 하나씩 충전되고 쓸 때 흐르던 쿨다운이 다시 시작하지 않으며, 충전 수를 따로 두지 않아 쿨다운 효과를 지우면(치트) 충전도 최대가 됩니다. 엔진 GE 스택은 상한이 GE 정의의 값이라 어빌리티마다 쿨다운 GE가 필요하고, 실행 중에 만든 GE의 스택 방식을 정하는 함수가 에디터 전용이라 쓰지 않습니다. |
 | 자원 변화 | 자원이 바뀌는 일마다 그 규칙을 가진 효과를 적용합니다. 어빌리티 비용은 GAS의 비용 흐름(`CheckCost`·`ApplyCost`)에서 자원 효과(`Resource`)를 음수로 걸어 치르고, 적중의 MP·UP 충전도 같은 자원 효과에 얻는 양을 넣습니다. 적중 보상은 피해 Task마다 첫 적중에 한 번, 피격 결과 처리가 공격자에게 보내는 `Event.AttackHit`으로 발동하는 적중 보상 어빌리티(`HitReward`)가 주며, 충전량은 이 어빌리티가 공격한 어빌리티의 태그와 섹션으로 고릅니다. 회복병은 타임라인의 즉시 효과(`PotionHeal`) 하나가 HP 회복과 횟수 차감을 함께 적용하므로, 삼키기 전에 끊기면 아무것도 바뀌지 않습니다. PP 회복(그로기·처형 피격이 끝날 때, 페이즈 전환)은 PP를 최대로 덮어쓰는 효과(`PPRefill`)로 처리합니다. | 자원 변경은 GameplayEffect로 적용하고 고정 기획 값은 JSON을 사용합니다. 엔진의 비용 GE는 클래스(`CostGameplayEffectClass`)로만 받아 쓰지 않고, 비용과 얻기가 자원 효과 하나를 함께 씁니다. |
@@ -30,13 +30,13 @@
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정)과 적중 가능 판정(`CanBeHitBy`), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, Launch가 띄울 때마다 켜는 엔진 정점 알림으로 보내는 `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 넉업·넉다운 동안 캡슐도 무기에 맞음, `State.Hidden` 동안 무기까지 숨김), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
-| `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 모든 캐릭터의 회전과 낙하 높이. 엔진 회전을 쓰고, 사망·방향 고정 중에는 돌지 않습니다. 방향 고정(`IsFacingFixed`)은 `DefaultSlot`을 쓰는 어빌리티 몽타주를 재생하는 동안과 그로기이며, 상체 슬롯만 쓰는 몽타주(회복병)는 재생 중에도 돕니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. 낙하 높이는 공중에서 마지막으로 발이 가장 높았던 지점(걸어 나가 떨어지면 딛고 있던 바닥)부터 착지한 바닥까지 잽니다. |
-| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소), 달리기·락온 발동과 취소, 락온 대상 전환, 몸 회전, 극한 회피 캡슐(`PerfectDodgeCapsule`), 전투 통계 기록(`CombatStats`), 궁극기 시간 정지 요청, 사망 시 시야를 제외한 입력 차단. |
+| `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정)과 적중 가능 판정(`CanBeHitBy`), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, 띄울 때마다(`LaunchCharacter`) 켜는 엔진 정점 알림으로 보내는 `Event.Apex`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 넉업·넉다운 동안 캡슐도 무기에 맞음, `State.Hidden` 동안 무기까지 숨김), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 방향 고정(`IsFacingFixed`)과 등 쪽 90° 판정(`IsBehind`: 백어택, 등 쪽 움찔, 등 뒤의 대상에게 돌지 않기), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
+| `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 모든 캐릭터의 회전과 낙하 높이. 엔진 회전을 쓰고, 방향 고정 중에는 돌지 않습니다. 방향 고정(`AAgCharacterBase::IsFacingFixed`)은 `DefaultSlot`을 쓰는 어빌리티 몽타주를 재생하는 동안과 그로기, 사망이며, 상체 슬롯만 쓰는 몽타주(회복병)는 재생 중에도 돕니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. 낙하 높이는 공중에서 마지막으로 발이 가장 높았던 지점(걸어 나가 떨어지면 딛고 있던 바닥)부터 착지한 바닥까지 잽니다. |
+| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소), 달리기·락온 발동과 취소, 락온 대상 전환, 몸 회전, 극한 회피 캡슐(`PerfectDodgeCapsule`), 전투 통계 기록(`CombatStats`), 궁극기 시간 정지 요청, 행동을 시작할 때 남은 반격 기회와 다음 타 예약 효과 지우기, 가드가 끝날 때 가드로 건 이동 잠금 지우기, 사망 시 시야를 제외한 입력 차단. |
 | `AAgPlayerCameraManager` | `APlayerCameraManager` | BP 파생 클래스 없이 생성합니다. 락온 보간·시야 입력 판단(엔진 `ProcessViewRotation`에서 락온과 처형 중 회전 차단, 락온 중 대상 전환 튕김 판정)·상대 쪽 회전·요청받은 상황의 연출 재생·달리기 시야각·처형 카메라 시작과 종료·컷신 진입 정리를 맡고, 설정은 `UAgCameraData`에서 읽습니다. 엔진 점유 알림으로 플레이어 ASC에 연결합니다. 기본 모디파이어 클래스는 C++ 생성자의 `DefaultModifiers`에서 지정하고 엔진이 생성합니다. |
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
 | `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
-| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 경로(`PatrolRoute`, 레벨 인스턴스 값)·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(전환을 발동할 때 페이즈를 올림), 지금 고를 수 있는 패턴 모으기(`GatherPatterns`)와 쿨다운이 끝난 패턴의 발동 가능 거리 모으기(`GatherReadyPatternRanges`), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 락온 지점 오른쪽의 처형 안내, 머리 위 네임플레이트)와 그 표시 조건(생존·화면 안·`WorldStatic` 가림·락온·전투, 최근 감소는 위젯이 더함). 엔진 `bCanWalkOffLedges`를 꺼서 걷기 상태의 이동(이동 입력, 경로 따라가기, 몽타주 루트 모션)이 낭떠러지를 넘지 않습니다. 공중 상태(Launch의 넉업·저글, 도약)는 해당하지 않습니다. 보스 예외는 가상 함수 `HasNameplate`. 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
+| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 경로(`PatrolRoute`, 레벨 인스턴스 값)·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(전환을 발동할 때 페이즈를 올림), 지금 고를 수 있는 패턴 모으기(`GatherPatterns`)와 쿨다운이 끝난 패턴의 발동 가능 거리 모으기(`GatherReadyPatternRanges`), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 락온 지점 오른쪽의 처형 안내, 머리 위 네임플레이트)와 그 표시 조건(생존·컷신 중이 아님·스테이지 결과가 정해지기 전·화면 안·`WorldStatic` 가림·락온·전투, 최근 감소는 위젯이 더함). 엔진 `bCanWalkOffLedges`를 꺼서 걷기 상태의 이동(이동 입력, 경로 따라가기, 몽타주 루트 모션)이 낭떠러지를 넘지 않습니다. 공중 상태(Launch의 넉업·저글, 도약)는 해당하지 않습니다. 보스 예외는 가상 함수 `HasNameplate`. 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 머리 위 네임플레이트 없음(`HasNameplate`, HUD 보스 상태로 표시), 보스 처치 슬로우모션 값 |
 | `UAgNameplateComponent` | `UWidgetComponent` | 적 머리 위 네임플레이트(화면 공간 위젯, `head` 뼈). 락온 대상일 때 엔진 화면 레이어를 바로 위 레이어로 바꿔 다시 등록(`SetFrontmost`) |
 | `UAgNameplateWidget` | `UCommonUserWidget` | HP·PP 바 묶음(`WBP_Nameplate`, HUD 보스 상태 `WBP_BossStatus`가 함께 씀). 대상 ASC 구독, 그로기 중 남은 시간으로 PP 바 채우기·처형 피격 중 정지, 최대 PP 0이면 PP 영역 접기, 네임플레이트의 최근 감소 표시 시간과 다시 표시할 때 잔상 정리(`Update`) |
@@ -74,12 +74,15 @@ classDiagram
     class AAgCharacterBase {
         UAgAbilitySystemComponent AbilitySystemComponent
         UMotionWarpingComponent MotionWarping
+        UAgHitPhysicsComponent HitPhysics
         USceneComponent WeaponComponent
     }
     class AAgPlayerCharacter {
         <<BP_Player>>
         USpringArmComponent CameraBoom
         UCameraComponent FollowCamera
+        UCapsuleComponent PerfectDodgeCapsule
+        UAgCombatStatsComponent CombatStats
         UInputMappingContext InputMapping
         UInputAction MoveAction 등
     }
@@ -98,7 +101,7 @@ classDiagram
         UAgPatrolPreviewComponent PatrolPreview 에디터 전용
     }
     class AAgEnemyAIController {
-        UAIPerceptionComponent Perception
+        UAIPerceptionComponent PerceptionComponent 엔진 멤버
         UStateTreeAIComponent StateTreeComponent
     }
     ACharacter <|-- AAgCharacterBase
@@ -146,7 +149,9 @@ classDiagram
 | `AAgSimulationRoomGameMode` | `AAgGameMode` | 후보 적 클래스(`EnemyClasses`), 레벨의 배치 지점을 `Slot` 순으로 수집, 레벨 주소 옵션 `Enemies`(자리 번호 순서의 캐릭터 데이터 ID)로 받은 구성을 플레이어 참가 처리에서 배치하고 놓은 캐릭터마다 플레이어에게 맞은 것과 같은 엔진 대미지 감각 자극(`ReportDamageEvent`)을 보내 시야와 관계없이 전투 진입, 구성이 비었으면 적 선택 화면 열기, 어느 적을 어느 자리에 둘 수 있는지(`CanPlace`), 같은 맵을 구성 옵션으로 다시 열기, 후보 적마다 표시 액터(`EnemyPreviewClass`)를 처음 쓸 때 하나 띄워 두고 그 렌더 타깃을 돌려줌(`GetEnemyPreview`). Stage Clear 조건은 적 팀 캐릭터가 모두 사망 |
 | `AAgEnemySpawnPoint` | `ATargetPoint` | 레벨에 놓는 배치 자리 표시. 자리 번호 `Slot`만 가짐 |
 | `AAgCharacterPreview` | `AActor` | 캐릭터 클래스 하나를 AI 빙의 없이 스폰해 정면의 씬 캡처(`Capture`)로 렌더 타깃에 그림. 띄운 캐릭터는 씬 캡처에만 보이고, 자기 조명(`Light`)과 함께 라이팅 채널 1에만 두어 레벨의 조명·그림자와 섞이지 않음. 게임이 멈춘 동안에도 메시와 캡처가 틱하며, 메시 범위로 캡처 높이와 거리를 맞춤 |
-| `UAgEnemySelectScreen` | `UCommonActivatableWidget` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
+| `UAgTimeSubsystem` | `UWorldSubsystem` | 게임 전체 시간 배율의 주인. 슬로우모션(길이는 실제 시간이고, 겹치면 더 느린 속도와 더 긴 남은 시간을 고름)과 궁극기 시간 정지(요청한 캐릭터만 시간 보정으로 계속 움직이고, 정지 중에 요청된 슬로우모션은 정지가 끝날 때 시작) |
+| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴·모달 화면(타이틀, 스테이지 선택, 적 선택, 일시정지, 조작 안내, 전투 결과)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정하고, Esc로 닫는 화면이 쓰는 등록 함수(`BindEscapeToClose`)를 둠 |
+| `UAgEnemySelectScreen` | `UAgMenuScreen` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
 | `UAgDropdown` | `UCommonUserWidget` | 메뉴 화면(적 선택, 스테이지 선택)이 함께 쓰는 드롭다운. 엔진 `UComboBoxKey`를 감싸 모양을 위젯 블루프린트(`WBP_Dropdown`, 적 선택의 `WBP_EnemySlot`)에 두고, 화면이 키와 표시 글자로 목록을 채우며, 사람이 고른 변경만 알림. 닫힌 칸 위젯(`SelectedWidgetClass`)을 목록 항목(`OptionWidgetClass`)과 따로 둘 수 있음 |
 | `UAgDropdownOptionWidget` | `UCommonUserWidget` | 드롭다운의 닫힌 칸과 목록 항목 하나. 받은 키와 글자 가운데 글자를 표시(`SetOption`) |
 | `UAgEnemyCard` | `UAgDropdownOptionWidget` | 적 드롭다운의 닫힌 칸(적 카드). 키로 게임 모드에서 적 클래스와 렌더 타깃을 받아 모델을 표시하고, 후보 적이 아니면(Empty) 빈 자리 표시 |
@@ -165,6 +170,7 @@ classDiagram
     ATargetPoint <|-- AAgEnemySpawnPoint
     AAgSimulationRoomGameMode ..> AAgEnemySpawnPoint : Slot 순으로 수집
     AAgSimulationRoomGameMode ..> UAgEnemySelectScreen : EnemySelectScreenClass
+    UAgMenuScreen <|-- UAgEnemySelectScreen
     AAgCharacterPreview --* AAgSimulationRoomGameMode : EnemyPreviews
     AActor <|-- AAgCharacterPreview
     AAgCharacterPreview ..> AAgCharacterBase : ShowCharacter
@@ -290,6 +296,9 @@ sequenceDiagram
 | `UAgFallDamageMagnitude` | `UGameplayModMagnitudeCalculation` | 스펙의 떨어진 높이, `CombatRules.json`의 두 높이, 대상의 MaxHP로 낙하 대미지의 HP 감소량을 계산합니다. |
 | `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 전투 결과와 실제 반응의 GameplayCue 전달·히트스톱·타의 첫 적중 알림(`Event.AttackHit`), 패리한 공격자에게 패리 대미지(`CombatRules.json`의 배율로 만든 `Damage` 스펙, 결과 연출과 대미지 숫자 없음), 가드한 쪽의 이동 잠금(`MoveLock`). 반응 억제와 다른 적중 처리를 분리합니다. |
 | `UAgGameplayCueNotify_Burst` | `UGameplayCueNotify_Burst` | 일회성 효과 재생 뒤 전투 카메라 연출을 요청합니다. 공통 정적 함수는 네 전투 태그만 처리하며 BurstLatent에서도 호출합니다. `MagnitudeNiagaraParameter`를 두면 큐의 `RawMagnitude`(예: 판정 반경)를 생성한 나이아가라의 그 파라미터에 넣습니다. |
+| `AAgGameplayCueNotify_BurstLatent` | `AGameplayCueNotify_BurstLatent` | 화면 효과(`UAgPostProcessComponent`)가 있는 일회성 큐. 화면 효과가 실제 시간으로 끝나면 회수하며, 길이는 큐의 `Duration`이고 없으면 진행 중인 슬로우모션의 길이입니다. 전투 카메라 연출도 요청합니다. |
+| `AAgGameplayCueNotify_Looping` | `AGameplayCueNotify_Looping` | 지속 큐에 엔진 큐 데이터로 안 되는 칸을 더합니다. 무기에 붙이기, 나이아가라 색·값 파라미터, 두 소켓 사이에 놓기, 대상의 시간 배율 따르기(히트스톱, 시간 정지 보정), 화면 효과, 반복 실행마다 놓는 메시와 그 자리의 꺼질 때 효과입니다. |
+| `UAgGameplayCueNotify_DamageFloater` | `UGameplayCueNotify_Static` | 플레이어가 준 피해의 대미지 숫자(`AAgDamageFloater`)를 띄웁니다. |
 | `UAgRegenDelayGameplayEffectComponent` | `UGameplayEffectComponent` | 회복 효과의 `RegenDelay`([데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'). 효과가 걸릴 때 회복하는 어트리뷰트의 변경을 구독하고 지워질 때 풉니다(엔진의 대상 태그 조건 컴포넌트가 태그 변경을 구독하는 방식). |
 | `UAgSlowMotionGameplayEffectComponent` | `UGameplayEffectComponent` | 효과의 `SlowMotionSpeed`·`SlowMotionDuration`. 효과가 실행될 때 시간 서브시스템에 슬로우모션을 겁니다. |
 
@@ -335,7 +344,7 @@ classDiagram
 | `Damage` | 즉시 효과. `Effect.Damage`, `State.Dead` 대상 제외, `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent` |
 | `Resource` | 즉시 효과. MP·UP 각각에 대응하는 SetByCaller 값을 더함. 바꾸지 않는 자원도 스펙에 0을 넣음 |
 | `Cooldown` | 지속 효과와 `Effect.Cooldown`. 지속 시간과 어빌리티별 출처는 적용할 스펙에 지정 |
-| `Kill` | 즉시 효과. HP를 0으로 덮어씀 |
+| `Kill` | 즉시 효과. `State.Dead` 대상 제외, HP를 0으로 덮어씀 |
 | `Hitstop` | 지속 효과와 `State.Hitstop` 부여. 지속 시간은 `CombatRules.json`의 `HitstopDuration`을 적용할 스펙에 지정 |
 | `PPRefill` | 즉시 효과. 대상의 MaxPP를 스냅샷 없이 읽어 PP에 덮어씀 |
 | `FallDamage` | 즉시 효과. `State.Dead` 대상 제외, HP에 `UAgFallDamageMagnitude`가 계산한 값을 더함. 캐릭터가 착지할 때마다 무브먼트 컴포넌트가 잰 떨어진 높이를 스펙에 넣어 겁니다 |

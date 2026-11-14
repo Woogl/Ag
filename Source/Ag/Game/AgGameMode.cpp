@@ -75,21 +75,10 @@ void AAgGameMode::QuitGame()
 void AAgGameMode::HandleCharacterDied(AAgCharacterBase& DeadCharacter)
 {
 	AAgGameState* StageState = GetGameState<AAgGameState>();
-	if (!StageState || StageState->GetStageResult() != EAgStageResult::None)
+	if (StageState->GetStageResult() != EAgStageResult::None)
 	{
 		return;
 	}
-
-	EAgStageResult Result = EAgStageResult::None;
-	if (DeadCharacter.IsA<AAgPlayerCharacter>())
-	{
-		Result = EAgStageResult::GameOver;
-	}
-	else if (IsStageCleared(DeadCharacter))
-	{
-		Result = EAgStageResult::Clear;
-	}
-	StageState->DecideStageResult(Result);
 
 	// 적이 남아 결과가 아직 정해지지 않아도 보스가 죽은 순간에 재생합니다.
 	if (const AAgBossCharacter* DeadBoss = Cast<AAgBossCharacter>(&DeadCharacter))
@@ -101,10 +90,12 @@ void AAgGameMode::HandleCharacterDied(AAgCharacterBase& DeadCharacter)
 		}
 	}
 
-	if (Result == EAgStageResult::None)
+	const bool bPlayerDied = DeadCharacter.IsA<AAgPlayerCharacter>();
+	if (!bPlayerDied && !IsStageCleared(DeadCharacter))
 	{
 		return;
 	}
+	StageState->DecideStageResult(bPlayerDied ? EAgStageResult::GameOver : EAgStageResult::Clear);
 	if (StageResultPresentationTime > 0.f)
 	{
 		GetWorldTimerManager().SetTimer(ResultTimer, this, &ThisClass::ShowResult, StageResultPresentationTime);

@@ -21,6 +21,7 @@
 #include "Data/AgEffectData.h"
 #include "Game/AgGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "KismetAnimationLibrary.h"
 #include "MotionWarpingComponent.h"
 
 namespace AgCharacterBasePrivate
@@ -107,16 +108,16 @@ bool AAgCharacterBase::IsFacingFixed() const
 	// 상체 슬롯만 쓰는 몽타주는 이동하면서 재생하므로 방향을 묶지 않습니다.
 	// 피격 반응 뒤의 그로기 자세는 몽타주가 아니라 애님 그래프가 재생합니다.
 	return (Animating && Animating->IsActive() && Montage && Montage->IsValidSlot(FAnimSlotGroup::DefaultSlotName)) ||
-	       AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	       AbilitySystemComponent->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) || IsDead();
+}
+
+bool AAgCharacterBase::IsBehind(const FVector& Location) const
+{
+	return FMath::Abs(UKismetAnimationLibrary::CalculateDirection(Location - GetActorLocation(), GetActorRotation())) >= 135.f;
 }
 
 void AAgCharacterBase::Kill()
 {
-	if (IsDead())
-	{
-		return;
-	}
-
 	AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::Kill), 1.f,
 		AbilitySystemComponent->MakeEffectContext());
 }
@@ -237,8 +238,7 @@ void AAgCharacterBase::Landed(const FHitResult& Hit)
 {
 	Super::Landed(Hit);
 
-	const FGameplayEffectSpecHandle Spec =
-		AbilitySystemComponent->MakeEffectSpec(EAgEffect::FallDamage, 1.f, AbilitySystemComponent->MakeEffectContext());
+	const FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeEffectSpec(EAgEffect::FallDamage);
 	Spec.Data->SetSetByCallerMagnitude(AgGameplayTags::SetByCaller_FallHeight,
 		CastChecked<UAgCharacterMovementComponent>(GetCharacterMovement())->GetFallHeight(Hit));
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data);
@@ -247,6 +247,14 @@ void AAgCharacterBase::Landed(const FHitResult& Hit)
 	{
 		SendEventToSelf(AgGameplayTags::Event_Landed);
 	}
+}
+
+void AAgCharacterBase::LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
+{
+	Super::LaunchCharacter(LaunchVelocity, bXYOverride, bZOverride);
+
+	// 엔진은 정점을 알리면 이 값을 끄므로, 공중에서 다시 띄울 때도 정점을 알리도록 띄울 때마다 켭니다.
+	GetCharacterMovement()->bNotifyApex = true;
 }
 
 void AAgCharacterBase::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
@@ -346,17 +354,20 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 	}
 }
 
-void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
+void AAgCharacterBase::Die(const AActor* Attacker)
 {
-	if (IsDead())
-	{
-		return;
-	}
-
-	const AActor* Attacker = Payload ? Payload->Instigator.Get() : nullptr;
 	const FVector Push =
 		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * AgCharacterBasePrivate::DeathPushSpeed : FVector::ZeroVector;
 	DieWithRagdoll(Push);
+}
+
+void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
+{
+	// 죽은 캐릭터의 HP를 다시 0으로 쓰는 효과(테스트용 HP 설정)도 사망 이벤트를 보냅니다.
+	if (!IsDead())
+	{
+		Die(Payload ? Payload->Instigator.Get() : nullptr);
+	}
 }
 
 void AAgCharacterBase::GrantAbilities()

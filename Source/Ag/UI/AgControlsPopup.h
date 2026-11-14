@@ -3,20 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonActivatableWidget.h"
+#include "UI/AgMenuScreen.h"
 #include "AgControlsPopup.generated.h"
 
 class UAgButton;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgControlsPopup : public UCommonActivatableWidget
+class UAgControlsPopup : public UAgMenuScreen
 {
 	GENERATED_BODY()
 
 protected:
 	virtual void NativeOnInitialized() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
-	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> ConfirmButton;

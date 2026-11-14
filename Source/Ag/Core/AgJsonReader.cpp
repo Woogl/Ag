@@ -119,19 +119,47 @@ FAgJsonReader::FAgJsonReader(UObject& InOuter)
 
 bool FAgJsonReader::ReadFile(const FString& Path, const FProperty& Property, void* Out)
 {
+	TSharedPtr<FJsonValue> Value;
+	return ParseFile(Path, Value) && Read(Path, Value, Property, Out);
+}
+
+bool FAgJsonReader::ReadFile(const FString& Path, UObject& Object)
+{
+	TSharedPtr<FJsonValue> Value;
+	if (!ParseFile(Path, Value))
+	{
+		return false;
+	}
+	if (Value->Type != EJson::Object)
+	{
+		return AgJsonReaderPrivate::Fail(Path, TEXT("must be an object"));
+	}
+	return ReadFields(Path, *Value->AsObject(), *Object.GetClass(), &Object);
+}
+
+bool FAgJsonReader::IsField(const FProperty& Property)
+{
+	// 프로젝트의 데이터 클래스는 JSON으로 채우는 필드를 Transient로 표시하고, `Class`로 만드는 엔진 객체(대상 프리셋의
+	// Task)는 편집 가능한 속성으로 설정합니다.
+	const bool bField = Property.HasAnyPropertyFlags(CPF_Transient) ||
+	                    (Property.HasAnyPropertyFlags(CPF_Edit) && !Property.HasAnyPropertyFlags(CPF_EditConst | CPF_DisableEditOnInstance));
+	return bField && !Property.HasAnyPropertyFlags(CPF_Deprecated);
+}
+
+bool FAgJsonReader::ParseFile(const FString& Path, TSharedPtr<FJsonValue>& OutValue)
+{
 	FString Text;
 	if (!FFileHelper::LoadFileToString(Text, *FPaths::Combine(FPaths::ProjectDir(), Path)))
 	{
 		return AgJsonReaderPrivate::Fail(Path, TEXT("can't read the file"));
 	}
-	TSharedPtr<FJsonValue> Value;
 	const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
-	if (!FJsonSerializer::Deserialize(Reader, Value) || !Value.IsValid())
+	if (!FJsonSerializer::Deserialize(Reader, OutValue) || !OutValue.IsValid())
 	{
 		return AgJsonReaderPrivate::Fail(Path, Reader->GetErrorMessage());
 	}
 	const TSharedPtr<FJsonObject>* Root = nullptr;
-	if (Value->TryGetObject(Root))
+	if (OutValue->TryGetObject(Root))
 	{
 		TSet<FName>& FileIds = Ids.Add(FName(FPaths::GetBaseFilename(Path)));
 		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : (*Root)->Values)
@@ -142,15 +170,7 @@ bool FAgJsonReader::ReadFile(const FString& Path, const FProperty& Property, voi
 			}
 		}
 	}
-	return Read(Path, Value, Property, Out);
-}
-
-bool FAgJsonReader::IsField(const FProperty& Property)
-{
-	// `Class`로 만드는 엔진 객체(대상 프리셋의 Task)는 편집 가능한 속성으로 설정합니다.
-	const bool bField = Property.HasAnyPropertyFlags(CPF_Transient) ||
-	                    (Property.HasAnyPropertyFlags(CPF_Edit) && !Property.HasAnyPropertyFlags(CPF_EditConst | CPF_DisableEditOnInstance));
-	return bField && !Property.HasAnyPropertyFlags(CPF_Deprecated);
+	return true;
 }
 
 bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FProperty& Property, void* Out)

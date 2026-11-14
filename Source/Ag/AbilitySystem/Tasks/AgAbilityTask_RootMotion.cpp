@@ -8,7 +8,6 @@
 #include "Animation/AnimMontage.h"
 #include "Character/AgCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "KismetAnimationLibrary.h"
 #include "MotionWarpingComponent.h"
 #include "RootMotionModifier_SkewWarp.h"
 
@@ -118,7 +117,7 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 {
 	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
 	const FAnimMontageInstance* Instance = Playback.IsValid() ? Playback->GetMontageInstance() : nullptr;
-	if (bStopped || !Character || !Instance || !Instance->Montage)
+	if (!Character || !Instance || !Instance->Montage)
 	{
 		return;
 	}
@@ -129,14 +128,12 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 	if (Params.Direction == EAgRootMotionDirection::Target)
 	{
 		const AActor* Goal = FacingTarget.Get();
-		bStopped = !Goal ||
-		           (!bFacingOnly && !AgTargeting::IsInRange(*Character, *Goal, TargetingRange));
-	}
-	if (bStopped)
-	{
-		// 워프 목표가 없어진 엔진 Modifier는 스스로 꺼지고, 그 뒤는 원래 루트 모션을 씁니다.
-		RemoveWarpTarget();
-		return;
+		if (!Goal || (!bFacingOnly && !AgTargeting::IsInRange(*Character, *Goal, TargetingRange)))
+		{
+			// 목표를 잃으면 워핑을 거두고, 남은 구간은 원래 루트 모션으로 움직입니다.
+			EndTask();
+			return;
+		}
 	}
 	const FVector Direction = GetFacingDirection();
 	if (Direction.IsNearlyZero())
@@ -194,15 +191,11 @@ bool UAgAbilityTask_RootMotion::HasGoal() const
 
 FVector UAgAbilityTask_RootMotion::GetFacingDirection() const
 {
-	const AActor* Avatar = GetAvatarActor();
-	if (Params.Direction == EAgRootMotionDirection::Target && FacingTarget.IsValid() && Avatar)
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	if (Params.Direction == EAgRootMotionDirection::Target && FacingTarget.IsValid() && Character)
 	{
-		const FVector ToTarget = FacingTarget->GetActorLocation() - Avatar->GetActorLocation();
-		if (Params.bKeepBack && FMath::Abs(UKismetAnimationLibrary::CalculateDirection(ToTarget, Avatar->GetActorRotation())) >= 135.f)
-		{
-			return FVector::ZeroVector;
-		}
-		return ToTarget.GetSafeNormal2D();
+		const FVector TargetLocation = FacingTarget->GetActorLocation();
+		return Params.bKeepBack && Character->IsBehind(TargetLocation) ? FVector::ZeroVector : (TargetLocation - Character->GetActorLocation()).GetSafeNormal2D();
 	}
 	return MoveInputDirection;
 }

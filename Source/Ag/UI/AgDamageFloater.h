@@ -17,7 +17,7 @@ class AAgDamageFloater : public AActor
 public:
 	AAgDamageFloater();
 
-	static void Spawn(UWorld* World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount);
+	static void Spawn(UWorld& World, TSubclassOf<UAgDamageFloaterWidget> WidgetClass, const FVector& Location, int32 Amount);
 
 protected:
 	virtual void Tick(float DeltaSeconds) override;

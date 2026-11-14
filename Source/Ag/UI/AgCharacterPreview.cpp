@@ -32,7 +32,7 @@ void AAgCharacterPreview::ShowCharacter(TSubclassOf<AAgCharacterBase> CharacterC
 	Capture->TextureTarget = RenderTarget;
 
 	const FTransform SpawnTransform(GetActorRotation() + FRotator(0., 180., 0.), GetActorLocation());
-	Character = GetWorld()->SpawnActorDeferred<AAgCharacterBase>(CharacterClass, SpawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+	AAgCharacterBase* Character = GetWorld()->SpawnActorDeferred<AAgCharacterBase>(CharacterClass, SpawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
 	// 적은 스폰하면 AI 컨트롤러가 빙의해 행동을 시작하므로 모습만 보이게 빙의를 끕니다.
 	Character->AutoPossessAI = EAutoPossessAI::Disabled;
 	Character->FinishSpawning(SpawnTransform);

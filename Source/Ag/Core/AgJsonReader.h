@@ -17,16 +17,21 @@ struct FInstancedStruct;
 class FAgJsonReader
 {
 public:
-	/** `Class` 키로 만드는 객체는 Outer 아래에 둡니다. */
+	/** 읽으면서 만드는 객체는 Outer 아래에 둡니다. */
 	explicit FAgJsonReader(UObject& InOuter);
 
 	/** 정의 ID는 이미 읽은 파일의 최상위 키와 대조하므로, ID로 가리켜지는 파일을 먼저 읽습니다. */
 	bool ReadFile(const FString& Path, const FProperty& Property, void* Out);
 
+	/** 파일의 최상위 키가 곧 Object의 필드인 파일을 읽습니다. */
+	bool ReadFile(const FString& Path, UObject& Object);
+
 	/** 다시 읽은 데이터를 기존 객체에 복사할 때도 같은 속성만 옮겨야, 읽은 값이 버려지지 않습니다. */
 	static bool IsField(const FProperty& Property);
 
 private:
+	bool ParseFile(const FString& Path, TSharedPtr<FJsonValue>& OutValue);
+
 	/** 속성의 종류를 가려 아래 함수 하나로 넘깁니다. */
 	bool Read(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FProperty& Property, void* Out);
 

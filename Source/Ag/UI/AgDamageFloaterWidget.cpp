@@ -13,7 +13,7 @@ void UAgDamageFloaterWidget::SetDamage(int32 Amount)
 
 float UAgDamageFloaterWidget::GetLifetime() const
 {
-	return FadeAnimation ? FadeAnimation->GetEndTime() : 0.f;
+	return FadeAnimation->GetEndTime();
 }
 
 void UAgDamageFloaterWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

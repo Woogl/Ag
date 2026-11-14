@@ -9,7 +9,6 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
-#include "KismetAnimationLibrary.h"
 
 namespace AgDamageExecutionPrivate
 {
@@ -35,11 +34,11 @@ namespace AgDamageExecutionPrivate
 	{
 		if (Change != 0.f)
 		{
-			Output.AddOutputModifier(FGameplayModifierEvaluatedData(Attribute, EGameplayModOp::Additive, Change));
+			Output.AddOutputModifier(FGameplayModifierEvaluatedData(Attribute, EGameplayModOp::AddBase, Change));
 		}
 	}
 
-	bool IsInvincible(const FGameplayTagContainer& TargetTags, const AActor& Target)
+	bool IsInvincible(const FGameplayTagContainer& TargetTags, const AAgCharacterBase& Target)
 	{
 		if (!TargetTags.HasTag(AgGameplayTags::State_Invincible))
 		{
@@ -50,8 +49,7 @@ namespace AgDamageExecutionPrivate
 		{
 			return true;
 		}
-		const AAgCharacterBase* Character = Cast<AAgCharacterBase>(&Target);
-		return Character && Character->GetCharacterData()->Team == EAgTeam::Player;
+		return Target.GetCharacterData()->Team == EAgTeam::Player;
 	}
 
 	int32 CalculateDamage(float SourceATK, float Multiplier, float TargetDEF, float DefenseConstant, float Reduction = 1.f)
@@ -59,12 +57,12 @@ namespace AgDamageExecutionPrivate
 		return FMath::RoundToInt(SourceATK * Multiplier * (DefenseConstant / (DefenseConstant + TargetDEF)) * Reduction);
 	}
 
-	float GetBonusDamageRatio(const FGameplayEffectSpec& Spec, const AActor& Target, const FGameplayTagContainer& TargetTags, const UAgCombatRules& Rules)
+	float GetBonusDamageRatio(const FGameplayEffectSpec& Spec, const AAgCharacterBase& Target, const FGameplayTagContainer& TargetTags, const UAgCombatRules& Rules)
 	{
-		const AAgCharacterBase* Attacker = Cast<AAgCharacterBase>(Spec.GetContext().GetInstigator());
-		const AActor* Causer = Spec.GetContext().GetEffectCauser();
-		if (!Attacker || !Causer || Attacker->GetCharacterData()->Team != EAgTeam::Player ||
-			Spec.GetDynamicAssetTags().HasTagExact(AgGameplayTags::Effect_Damage_Parry) || TargetTags.HasTag(AgGameplayTags::State_Execution))
+		// 대미지 효과는 캐릭터가 걸고(어빌리티, 패리 대미지), 투사체와 충격파도 쏜 캐릭터를 공격자로 넣습니다.
+		const AAgCharacterBase* Attacker = CastChecked<AAgCharacterBase>(Spec.GetContext().GetInstigator());
+		if (Attacker->GetCharacterData()->Team != EAgTeam::Player || Spec.GetDynamicAssetTags().HasTagExact(AgGameplayTags::Effect_Damage_Parry) ||
+			TargetTags.HasTag(AgGameplayTags::State_Execution))
 		{
 			return 1.f;
 		}
@@ -78,8 +76,7 @@ namespace AgDamageExecutionPrivate
 		{
 			Bonus += Rules.AerialBonusDamage;
 		}
-		const float Angle = UKismetAnimationLibrary::CalculateDirection(Causer->GetActorLocation() - Target.GetActorLocation(), Target.GetActorRotation());
-		if (FMath::Abs(Angle) >= 135.f)
+		if (Target.IsBehind(Spec.GetContext().GetEffectCauser()->GetActorLocation()))
 		{
 			Bonus += Rules.BackAttackBonusDamage;
 		}
@@ -98,7 +95,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	FGameplayEffectSpec& Spec = *ExecutionParams.GetOwningSpecForPreExecuteMod();
 	const FGameplayTagContainer& TargetTags = Spec.CapturedTargetTags.GetActorTags();
 	const FGameplayTagContainer& AttackTags = Spec.GetDynamicAssetTags();
-	const AActor& Target = *ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor();
+	const AAgCharacterBase& Target = *CastChecked<AAgCharacterBase>(ExecutionParams.GetTargetAbilitySystemComponent()->GetAvatarActor());
 
 	if (TargetTags.HasTag(AgGameplayTags::State_PerfectDodgeWindow))
 	{
@@ -121,7 +118,6 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
 	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier) * AgDamageExecutionPrivate::GetBonusDamageRatio(Spec, Target, TargetTags, Rules);
-	const int32 HPDamage = AgDamageExecutionPrivate::CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant);
 
 	if (TargetTags.HasTag(AgGameplayTags::State_ParryWindow) && bGuardable)
 	{
@@ -138,6 +134,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 
 	// 사망 판정이 그로기 판정보다 먼저이도록 HP를 먼저 낮춥니다.
 	Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Result_Hit);
+	const int32 HPDamage = AgDamageExecutionPrivate::CalculateDamage(SourceATK, HPMultiplier, TargetDEF, Rules.DefenseConstant);
 	const int32 PPDamage = AgDamageExecutionPrivate::CalculateDamage(SourceATK, Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PPMultiplier), TargetDEF, Rules.DefenseConstant);
 	AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetHPAttribute(), -HPDamage);
 	AgDamageExecutionPrivate::AddOutput(OutExecutionOutput, UAgAttributeSet::GetPPAttribute(), -PPDamage);

@@ -24,13 +24,7 @@ void UAgAbilityTask_ApplyEffect::Activate()
 		EndTask();
 		return;
 	}
-	// 주인의 ASC가 없으면 스펙이 만들어지지 않습니다.
 	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeEffectSpec(*Definition);
-	if (!Spec.IsValid())
-	{
-		EndTask();
-		return;
-	}
 	// 효과가 주는 태그의 알림이 이 구간을 끝낼 수 있습니다. 거는 동안 이미 끝났으면(구간이 닫힘) 걸린 효과를 여기서
 	// 지웁니다.
 	const FActiveGameplayEffectHandle Handle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data);
@@ -42,7 +36,6 @@ void UAgAbilityTask_ApplyEffect::Activate()
 		}
 		return;
 	}
-	Applied = Handle;
 	if (!Params.bRemoveOnEnd || Definition->DurationPolicy == EGameplayEffectDurationType::Instant)
 	{
 		EndTask();
@@ -52,10 +45,10 @@ void UAgAbilityTask_ApplyEffect::Activate()
 	FOnActiveGameplayEffectRemoved_Info* Removed = AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(Handle);
 	if (!Removed)
 	{
-		Applied.Invalidate();
 		EndTask();
 		return;
 	}
+	Applied = Handle;
 	RemovedHandle = Removed->AddUObject(this, &ThisClass::HandleEffectRemoved);
 }
 
@@ -68,10 +61,7 @@ void UAgAbilityTask_ApplyEffect::OnDestroy(bool bInOwnerFinished)
 		{
 			Removed->Remove(RemovedHandle);
 		}
-		if (Params.bRemoveOnEnd)
-		{
-			AbilitySystemComponent->RemoveActiveGameplayEffect(Applied);
-		}
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Applied);
 	}
 	Super::OnDestroy(bInOwnerFinished);
 }

@@ -171,12 +171,8 @@ void UAgAbilityTask_WeaponHit::OnDestroy(bool bInOwnerFinished)
 		const float Position = AgAbilityTask_WeaponHitPrivate::GetPosePosition(*Instance);
 		if (Instance->GetPreviousPosition() <= LastPosition && LastPosition < FMath::Min(Position, Window->Max))
 		{
+			// 이 스윕의 피해가 행동을 끝내 엔진이 이 Task를 이미 끝냈어도, 엔진 Task는 두 번째 OnDestroy를 건너뜁니다.
 			SweepEdges(FMath::Min((Window->Max - LastPosition) / (Position - LastPosition), 1.f));
-			// 이 스윕의 피해가 행동을 끝냈으면 엔진이 이 Task를 이미 끝냈습니다.
-			if (IsFinished())
-			{
-				return;
-			}
 		}
 	}
 	Super::OnDestroy(bInOwnerFinished);
@@ -284,13 +280,10 @@ bool UAgAbilityTask_WeaponHit::Hit(AAgCharacterBase& Target, const FVector& Loca
 	}
 	TouchedActors.Add(&Target);
 	const FGameplayEffectSpecHandle Spec = CastChecked<UAgGameplayAbility>(Ability)->MakeDamageSpec(Params.Damage, HitState);
-	if (Spec.IsValid())
-	{
-		// 엔진은 Origin이 없으면 HitResult의 TraceStart를 Origin으로 넣으므로, 맞은 위치를 먼저 넣습니다.
-		Spec.Data->GetContext().AddOrigin(Location);
-		Spec.Data->GetContext().AddHitResult(Contact);
-		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target.GetAbilitySystemComponent());
-	}
+	// 엔진은 Origin이 없으면 HitResult의 TraceStart를 Origin으로 넣으므로, 맞은 위치를 먼저 넣습니다.
+	Spec.Data->GetContext().AddOrigin(Location);
+	Spec.Data->GetContext().AddHitResult(Contact);
+	AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target.GetAbilitySystemComponent());
 	// 피해가 행동이나 이 구간을 끝냈으면 엔진이나 재생 Task가 이 Task도 끝냈습니다.
 	return IsActive();
 }

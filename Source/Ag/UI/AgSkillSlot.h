@@ -12,7 +12,7 @@ class UAgGameplayAbility;
 class UImage;
 class UTextBlock;
 
-/** 전투 HUD의 스킬·궁극기 칸. 입력 태그의 어빌리티로 아이콘, MP 코스트, 흐림, 쿨다운, 남은 충전 수를 그립니다. */
+/** 전투 HUD의 스킬·궁극기·회복병 칸. 입력 태그의 어빌리티로 아이콘, MP 코스트, 흐림, 쿨다운, 남은 충전 수를 그립니다. */
 UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgSkillSlot : public UCommonUserWidget
 {

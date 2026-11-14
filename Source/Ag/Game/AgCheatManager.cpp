@@ -92,6 +92,12 @@ namespace AgCheatManagerPrivate
 		SourceASC->ApplyGameplayEffectToTarget(Effect, Target.GetAbilitySystemComponent(), 1.f, SourceASC->MakeEffectContext());
 	}
 
+	void ApplyPercent(AAgCharacterBase& Source, AAgCharacterBase& Target, const FGameplayAttribute& Attribute, const FGameplayAttribute& MaxAttribute, float Percent)
+	{
+		const float MaxValue = Target.GetAbilitySystemComponent()->GetNumericAttribute(MaxAttribute);
+		ApplyOverride(Source, Target, Attribute, FMath::RoundToFloat(MaxValue * Percent / 100.f));
+	}
+
 	void SetPlayerResource(const UCheatManager& Cheats, const TCHAR* Command, const FGameplayAttribute& Attribute, const FGameplayAttribute& MaxAttribute, float Percent)
 	{
 		AAgPlayerCharacter* Player = GetPlayer(Cheats);
@@ -100,8 +106,7 @@ namespace AgCheatManagerPrivate
 			Report(Cheats, FString::Printf(TEXT("%s: no player character"), Command));
 			return;
 		}
-		const float MaxValue = Player->GetAbilitySystemComponent()->GetNumericAttribute(MaxAttribute);
-		ApplyOverride(*Player, *Player, Attribute, FMath::RoundToFloat(MaxValue * Percent / 100.f));
+		ApplyPercent(*Player, *Player, Attribute, MaxAttribute, Percent);
 	}
 
 	constexpr EAgCheatSwitch AllSwitches[] = {EAgCheatSwitch::Invincible, EAgCheatSwitch::NoCooldown, EAgCheatSwitch::InfiniteMP,
@@ -201,9 +206,9 @@ namespace AgCheatManagerPrivate
 
 void UAgCheatManager::AgKillPlayer()
 {
-	for (TActorIterator<AAgPlayerCharacter> It(GetWorld()); It; ++It)
+	if (AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this))
 	{
-		It->Kill();
+		Player->Kill();
 	}
 }
 
@@ -228,34 +233,12 @@ void UAgCheatManager::AgKillEnemies()
 
 void UAgCheatManager::AgGod(const FString& OnOff)
 {
-	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
-	if (!Player)
-	{
-		AgCheatManagerPrivate::Report(*this, TEXT("AgGod: no player character"));
-		return;
-	}
-	const UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent();
-	bool bAllOn = true;
-	for (const EAgCheatSwitch Switch : AgCheatManagerPrivate::AllSwitches)
-	{
-		bAllOn = bAllOn && IsSwitchOn(*ASC, Switch);
-	}
-	const TOptional<bool> bOn = AgCheatManagerPrivate::ParseSwitch(*this, TEXT("AgGod"), OnOff, bAllOn);
-	if (!bOn.IsSet())
-	{
-		return;
-	}
-
-	for (const EAgCheatSwitch Switch : AgCheatManagerPrivate::AllSwitches)
-	{
-		SetSwitch(*Player, Switch, *bOn);
-	}
-	AgCheatManagerPrivate::ReportSwitch(*this, TEXT("AgGod"), *bOn);
+	RunSwitch(TEXT("AgGod"), OnOff, AgCheatManagerPrivate::AllSwitches);
 }
 
 void UAgCheatManager::AgInvincible(const FString& OnOff)
 {
-	RunSwitch(TEXT("AgInvincible"), OnOff, EAgCheatSwitch::Invincible);
+	RunSwitch(TEXT("AgInvincible"), OnOff, {EAgCheatSwitch::Invincible});
 }
 
 void UAgCheatManager::AgSetHP(float Percent)
@@ -275,17 +258,17 @@ void UAgCheatManager::AgSetUP(float Percent)
 
 void UAgCheatManager::AgInfiniteMP(const FString& OnOff)
 {
-	RunSwitch(TEXT("AgInfiniteMP"), OnOff, EAgCheatSwitch::InfiniteMP);
+	RunSwitch(TEXT("AgInfiniteMP"), OnOff, {EAgCheatSwitch::InfiniteMP});
 }
 
 void UAgCheatManager::AgInfiniteUP(const FString& OnOff)
 {
-	RunSwitch(TEXT("AgInfiniteUP"), OnOff, EAgCheatSwitch::InfiniteUP);
+	RunSwitch(TEXT("AgInfiniteUP"), OnOff, {EAgCheatSwitch::InfiniteUP});
 }
 
 void UAgCheatManager::AgNoCooldown(const FString& OnOff)
 {
-	RunSwitch(TEXT("AgNoCooldown"), OnOff, EAgCheatSwitch::NoCooldown);
+	RunSwitch(TEXT("AgNoCooldown"), OnOff, {EAgCheatSwitch::NoCooldown});
 }
 
 void UAgCheatManager::AgTargetGroggy()
@@ -330,8 +313,7 @@ void UAgCheatManager::AgTargetHP(float Percent)
 		return;
 	}
 
-	const float HP = FMath::RoundToFloat(Enemy->GetAttributeSet()->GetMaxHP() * Percent / 100.f);
-	AgCheatManagerPrivate::ApplyOverride(*Player, *Enemy, UAgAttributeSet::GetHPAttribute(), HP);
+	AgCheatManagerPrivate::ApplyPercent(*Player, *Enemy, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute(), Percent);
 }
 
 void UAgCheatManager::AgStopAI()
@@ -381,7 +363,7 @@ void UAgCheatManager::AgMoveMouse(float X, float Y)
 	AgCheatManagerPrivate::InjectKey(*this, EKeys::MouseY, IE_Axis, Y);
 }
 
-void UAgCheatManager::RunSwitch(const TCHAR* Command, const FString& OnOff, EAgCheatSwitch Switch)
+void UAgCheatManager::RunSwitch(const TCHAR* Command, const FString& OnOff, TConstArrayView<EAgCheatSwitch> Switches)
 {
 	AAgPlayerCharacter* Player = AgCheatManagerPrivate::GetPlayer(*this);
 	if (!Player)
@@ -389,13 +371,19 @@ void UAgCheatManager::RunSwitch(const TCHAR* Command, const FString& OnOff, EAgC
 		AgCheatManagerPrivate::Report(*this, FString::Printf(TEXT("%s: no player character"), Command));
 		return;
 	}
-	const TOptional<bool> bOn = AgCheatManagerPrivate::ParseSwitch(*this, Command, OnOff, IsSwitchOn(*Player->GetAbilitySystemComponent(), Switch));
+	const UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent();
+	const bool bAllOn = !Switches.ContainsByPredicate([this, ASC](EAgCheatSwitch Switch)
+	{ return !IsSwitchOn(*ASC, Switch); });
+	const TOptional<bool> bOn = AgCheatManagerPrivate::ParseSwitch(*this, Command, OnOff, bAllOn);
 	if (!bOn.IsSet())
 	{
 		return;
 	}
 
-	SetSwitch(*Player, Switch, *bOn);
+	for (const EAgCheatSwitch Switch : Switches)
+	{
+		SetSwitch(*Player, Switch, *bOn);
+	}
 	AgCheatManagerPrivate::ReportSwitch(*this, Command, *bOn);
 }
 

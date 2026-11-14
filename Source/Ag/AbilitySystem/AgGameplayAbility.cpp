@@ -140,30 +140,20 @@ void UAgGameplayAbility::GetRechargeTimeRemainingAndDuration(float& TimeRemainin
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(const UGameplayEffect& Effect) const
 {
-	UAgAbilitySystemComponent* ASC = CurrentActorInfo ? Cast<UAgAbilitySystemComponent>(CurrentActorInfo->AbilitySystemComponent.Get()) : nullptr;
-	if (!ASC)
-	{
-		return FGameplayEffectSpecHandle();
-	}
-	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(Effect, GetAbilityLevel(), MakeEffectContext(CurrentSpecHandle, CurrentActorInfo));
-	if (Spec.IsValid())
-	{
-		ApplyAbilityTagsToGameplayEffectSpec(*Spec.Data, ASC->FindAbilitySpecFromHandle(CurrentSpecHandle));
-	}
+	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(CurrentActorInfo->AbilitySystemComponent.Get());
+	FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(Effect, MakeEffectContext(CurrentSpecHandle, CurrentActorInfo));
+	ApplyAbilityTagsToGameplayEffectSpec(*Spec.Data, ASC->FindAbilitySpecFromHandle(CurrentSpecHandle));
 	return Spec;
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitState>& HitState) const
 {
 	const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::Damage);
-	if (Spec.IsValid())
-	{
-		FAgGameplayEffectContext* Context = new FAgGameplayEffectContext();
-		static_cast<FGameplayEffectContext&>(*Context) = *Spec.Data->GetContext().Get();
-		Context->HitState = HitState;
-		Spec.Data->SetContext(FGameplayEffectContextHandle(Context));
-		Damage.AddToSpec(*Spec.Data);
-	}
+	FAgGameplayEffectContext* Context = new FAgGameplayEffectContext();
+	static_cast<FGameplayEffectContext&>(*Context) = *Spec.Data->GetContext().Get();
+	Context->HitState = HitState;
+	Spec.Data->SetContext(FGameplayEffectContextHandle(Context));
+	Damage.AddToSpec(*Spec.Data);
 	return Spec;
 }
 
@@ -290,11 +280,8 @@ void UAgGameplayAbility::ApplyCost(FGameplayAbilitySpecHandle Handle, const FGam
 	if (!Definition.Cost.IsFree())
 	{
 		const FGameplayEffectSpecHandle Spec = MakeEffectSpec(EAgEffect::Resource);
-		if (Spec.IsValid())
-		{
-			Definition.Cost.AddToSpec(*Spec.Data);
-			ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
-		}
+		Definition.Cost.AddToSpec(*Spec.Data);
+		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, Spec);
 	}
 }
 
@@ -314,19 +301,15 @@ void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const 
 		// 출처로 이 어빌리티 인스턴스를 넣어, 행동마다의 쿨다운을 구분합니다.
 		FGameplayEffectContextHandle Context = ASC->MakeEffectContext();
 		Context.AddSourceObject(this);
-		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Cooldown, GetAbilityLevel(Handle, ActorInfo), Context);
-		if (Spec.IsValid())
-		{
-			Spec.Data->SetDuration(QueuedTime + Definition.Cooldown, true);
-			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
-		}
+		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Cooldown, Context);
+		Spec.Data->SetDuration(QueuedTime + Definition.Cooldown, true);
+		ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	}
 }
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
 {
-	const UGameplayEffect* GameplayEffect = UAgAssetManager::Get().GetEffect(Effect);
-	return GameplayEffect ? MakeEffectSpec(*GameplayEffect) : FGameplayEffectSpecHandle();
+	return MakeEffectSpec(*UAgAssetManager::Get().GetEffect(Effect));
 }
 
 AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data) const

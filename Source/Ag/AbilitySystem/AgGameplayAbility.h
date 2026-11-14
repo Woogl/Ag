@@ -30,7 +30,10 @@ public:
 	/** 다음 충전까지 남은 시간과 쿨다운 길이입니다. 충전이 남아 있어도 값을 줍니다. */
 	void GetRechargeTimeRemainingAndDuration(float& TimeRemaining, float& CooldownDuration) const;
 
-	/** 엔진 MakeOutgoingGameplayEffectSpec은 GE 클래스를 받는데 Effects.json의 효과는 GE 객체이므로 직접 만듭니다. */
+	/**
+	 * 엔진 MakeOutgoingGameplayEffectSpec은 GE 클래스를 받는데 Effects.json의 효과는 GE 객체이므로 직접 만듭니다. 부여된
+	 * 인스턴스에서 부르며 늘 유효한 스펙을 줍니다.
+	 */
 	FGameplayEffectSpecHandle MakeEffectSpec(const UGameplayEffect& Effect) const;
 	FGameplayEffectSpecHandle MakeDamageSpec(const FAgDamage& Damage, const TSharedPtr<FAgHitState>& HitState) const;
 

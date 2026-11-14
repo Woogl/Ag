@@ -9,21 +9,24 @@
 
 UAbilityTask* FAgHitRewardParams::MakeTask(const FAgTaskContext& Context) const
 {
-	const FGameplayEventData* TriggerEvent = Context.Ability.GetTriggerEvent();
-	if (!TriggerEvent)
-	{
-		UE_LOG(LogAg, Error, TEXT("HitReward (ability %s): place it in Tasks of an ability triggered by Event.AttackHit"),
-			*Context.Ability.GetAbilityId().ToString());
-		return nullptr;
-	}
 	UAgAbilityTask_HitReward* Task = UAbilityTask::NewAbilityTask<UAgAbilityTask_HitReward>(&Context.Ability);
 	Task->Params = *this;
-	Task->AttackTags = TriggerEvent->InstigatorTags;
 	return Task;
 }
 
 void UAgAbilityTask_HitReward::Activate()
 {
+	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
+	const FGameplayEventData* TriggerEvent = AgAbility->GetTriggerEvent();
+	if (!TriggerEvent)
+	{
+		UE_LOG(LogAg, Error, TEXT("HitReward (ability %s): place it in Tasks of an ability triggered by Event.AttackHit"),
+			*AgAbility->GetAbilityId().ToString());
+		EndTask();
+		return;
+	}
+	// 공격한 어빌리티의 태그입니다.
+	const FGameplayTagContainer AttackTags = TriggerEvent->InstigatorTags;
 	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(AbilitySystemComponent.Get());
 	const FName Section = ASC->GetCurrentMontageSectionName();
 	for (const FAgHitReward& Reward : Params.Rewards)
@@ -32,12 +35,9 @@ void UAgAbilityTask_HitReward::Activate()
 		{
 			continue;
 		}
-		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Resource, 1.f, FGameplayEffectContextHandle());
-		if (Spec.IsValid())
-		{
-			Reward.AddToSpec(*Spec.Data);
-			ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
-		}
+		const FGameplayEffectSpecHandle Spec = ASC->MakeEffectSpec(EAgEffect::Resource);
+		Reward.AddToSpec(*Spec.Data);
+		ASC->ApplyGameplayEffectSpecToSelf(*Spec.Data);
 	}
 	EndTask();
 }

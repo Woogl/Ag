@@ -5,6 +5,7 @@
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "Camera/AgExecutionCameraModifier.h"
+#include "Camera/AgFieldOfViewCameraModifier.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
@@ -49,12 +50,8 @@ AAgPlayerCameraManager::AAgPlayerCameraManager()
 
 void AAgPlayerCameraManager::InitializeFor(APlayerController* PC)
 {
-	if (PCOwner)
-	{
-		PCOwner->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::HandlePossessedPawnChanged);
-	}
 	Super::InitializeFor(PC);
-	PC->OnPossessedPawnChanged.AddUniqueDynamic(this, &ThisClass::HandlePossessedPawnChanged);
+	PC->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::HandlePossessedPawnChanged);
 	const AAgPlayerCharacter* Player = GetPlayerCharacter();
 	SetObservedAbilitySystem(Player ? Player->GetAbilitySystemComponent() : nullptr);
 }
@@ -63,7 +60,7 @@ void AAgPlayerCameraManager::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (const AAgPlayerCharacter* Player = GetPlayerCharacter())
+	if (AAgPlayerCharacter* Player = GetPlayerCharacter())
 	{
 		const FVector PivotLocation = Player->GetCameraBoom()->GetComponentLocation();
 		AAgCharacterBase* Target = Player->GetLockOnTarget();
@@ -75,9 +72,9 @@ void AAgPlayerCameraManager::Tick(float DeltaSeconds)
 		}
 		if (Target)
 		{
-			UpdateLockOnCamera(*Target, PivotLocation, DeltaSeconds);
+			UpdateLockOnCamera(*Player, *Target, PivotLocation, DeltaSeconds);
 		}
-		UpdateCameraTurn(PivotLocation, DeltaSeconds);
+		UpdateCameraTurn(*Player, PivotLocation, DeltaSeconds);
 	}
 }
 
@@ -113,7 +110,8 @@ void AAgPlayerCameraManager::ProcessViewRotation(float DeltaTime, FRotator& OutV
 void AAgPlayerCameraManager::PlayCameraReaction(EAgCameraSituation Situation, const AActor* TurnTarget)
 {
 	const FAgCameraReactionSettings* ReactionSettings = UAgAssetManager::Get().GetCameraData().ReactionsBySituation.Find(Situation);
-	if (!ReactionSettings || !GetPlayerCharacter())
+	const AAgPlayerCharacter* Player = GetPlayerCharacter();
+	if (!ReactionSettings || !Player)
 	{
 		return;
 	}
@@ -124,7 +122,7 @@ void AAgPlayerCameraManager::PlayCameraReaction(EAgCameraSituation Situation, co
 	FieldOfViewCamera->Play(ReactionSettings->FieldOfView);
 	if (ReactionSettings->bTurnToOpponent && TurnTarget)
 	{
-		StartCameraTurn(*TurnTarget, ReactionSettings->TurnAngle);
+		StartCameraTurn(*Player, *TurnTarget, ReactionSettings->TurnAngle);
 	}
 }
 
@@ -134,16 +132,10 @@ void AAgPlayerCameraManager::PostInitializeComponents()
 
 	ExecutionCamera = CastChecked<UAgExecutionCameraModifier>(FindCameraModifierByClass(UAgExecutionCameraModifier::StaticClass()));
 	FieldOfViewCamera = CastChecked<UAgFieldOfViewCameraModifier>(FindCameraModifierByClass(UAgFieldOfViewCameraModifier::StaticClass()));
-#if WITH_EDITOR
-	UAgAssetManager::Get().OnJsonDataReloaded.AddUObject(this, &ThisClass::HandleCameraDataReloaded);
-#endif
 }
 
 void AAgPlayerCameraManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-#if WITH_EDITOR
-	UAgAssetManager::Get().OnJsonDataReloaded.RemoveAll(this);
-#endif
 	if (PCOwner)
 	{
 		PCOwner->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::HandlePossessedPawnChanged);
@@ -187,7 +179,7 @@ void AAgPlayerCameraManager::SetObservedAbilitySystem(UAgAbilitySystemComponent*
 		.AddUObject(this, &ThisClass::HandleSprintFieldOfViewChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleCutsceneChanged);
-	HandleSprintFieldOfViewChanged(AgGameplayTags::State_Sprinting, ASC->GetTagCount(AgGameplayTags::State_Sprinting));
+	UpdateSprintFieldOfView();
 	HandleCutsceneChanged(AgGameplayTags::State_Cutscene, ASC->GetTagCount(AgGameplayTags::State_Cutscene));
 }
 
@@ -207,15 +199,10 @@ void AAgPlayerCameraManager::HandlePossessedPawnChanged(APawn* OldPawn, APawn* N
 	SetObservedAbilitySystem(Player ? Player->GetAbilitySystemComponent() : nullptr);
 }
 
-void AAgPlayerCameraManager::UpdateLockOnCamera(const AAgCharacterBase& Target, const FVector& PivotLocation, float DeltaTime)
+void AAgPlayerCameraManager::UpdateLockOnCamera(AAgPlayerCharacter& Player, const AAgCharacterBase& Target, const FVector& PivotLocation, float DeltaTime)
 {
-	if (!PCOwner)
-	{
-		return;
-	}
-
 	const FAgLockOnCameraSettings& Settings = UAgAssetManager::Get().GetCameraData().LockOn;
-	FRotator Goal = (Target.GetTargetLocation(GetPlayerCharacter()) - PivotLocation).Rotation();
+	FRotator Goal = (Target.GetTargetLocation(&Player) - PivotLocation).Rotation();
 	Goal.Pitch =
 		FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), Settings.PitchMin, Settings.PitchMax) - Settings.LookDown;
 
@@ -255,17 +242,11 @@ void AAgPlayerCameraManager::UpdateLockOnFlick(AAgPlayerCharacter& Player, float
 	}
 }
 
-void AAgPlayerCameraManager::StartCameraTurn(const AActor& Opponent, float Angle)
+void AAgPlayerCameraManager::StartCameraTurn(const AAgPlayerCharacter& Player, const AActor& Opponent, float Angle)
 {
-	const AAgPlayerCharacter* Player = GetPlayerCharacter();
-	if (!Player)
-	{
-		return;
-	}
-
 	// 같은 프레임에 여러 회전이 시작되면 처리 순서와 관계없이 가장 가까운 상대 쪽으로 돕니다.
 	if (TurnStartFrame == GFrameCounter && TurnOpponent.IsValid() &&
-		Player->GetSquaredDistanceTo(TurnOpponent.Get()) <= Player->GetSquaredDistanceTo(&Opponent))
+		Player.GetSquaredDistanceTo(TurnOpponent.Get()) <= Player.GetSquaredDistanceTo(&Opponent))
 	{
 		return;
 	}
@@ -278,11 +259,10 @@ void AAgPlayerCameraManager::StartCameraTurn(const AActor& Opponent, float Angle
 	TurnStartFrame = GFrameCounter;
 }
 
-void AAgPlayerCameraManager::UpdateCameraTurn(const FVector& PivotLocation, float DeltaTime)
+void AAgPlayerCameraManager::UpdateCameraTurn(const AAgPlayerCharacter& Player, const FVector& PivotLocation, float DeltaTime)
 {
 	const AActor* Opponent = TurnOpponent.Get();
-	const AAgPlayerCharacter* Player = GetPlayerCharacter();
-	if (!Opponent || !PCOwner || !Player || Player->GetLockOnTarget() || IsExecutionCameraActive())
+	if (!Opponent || Player.GetLockOnTarget() || IsExecutionCameraActive())
 	{
 		TurnOpponent.Reset();
 		return;
@@ -330,23 +310,23 @@ void AAgPlayerCameraManager::HandleAbilityEnded(const FAbilityEndedData& EndedDa
 	}
 }
 
-void AAgPlayerCameraManager::HandleSprintFieldOfViewChanged(const FGameplayTag Tag, int32 NewCount)
+void AAgPlayerCameraManager::UpdateSprintFieldOfView()
 {
 	// 달리기는 Shift만 누르고 멈춰 있어도 이어지므로, 이동 입력이 있을 때만 넓힙니다.
-	const UAbilitySystemComponent* ASC = ObservedAbilitySystem.Get();
-	if (!ASC)
-	{
-		return;
-	}
-	const bool bRunning = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) && ASC->HasMatchingGameplayTag(AgGameplayTags::Input_Move);
-	if (bRunning)
+	const UAbilitySystemComponent& ASC = *ObservedAbilitySystem;
+	if (ASC.HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) && ASC.HasMatchingGameplayTag(AgGameplayTags::Input_Move))
 	{
 		FieldOfViewCamera->Hold(UAgAssetManager::Get().GetCameraData().SprintFieldOfView);
 	}
 	else
 	{
-		FieldOfViewCamera->Release(UAgAssetManager::Get().GetCameraData().SprintFieldOfView);
+		FieldOfViewCamera->Release();
 	}
+}
+
+void AAgPlayerCameraManager::HandleSprintFieldOfViewChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	UpdateSprintFieldOfView();
 }
 
 void AAgPlayerCameraManager::HandleCutsceneChanged(const FGameplayTag Tag, int32 NewCount)
@@ -360,16 +340,3 @@ void AAgPlayerCameraManager::HandleCutsceneChanged(const FGameplayTag Tag, int32
 	FieldOfViewCamera->StopAll();
 	TurnOpponent.Reset();
 }
-
-#if WITH_EDITOR
-void AAgPlayerCameraManager::HandleCameraDataReloaded()
-{
-	// FOV 연출은 정의의 주소로 구분하므로, JSON 맵이 다시 할당되면 이전 연출을 비웁니다.
-	FieldOfViewCamera->StopAll();
-	const UAbilitySystemComponent* ASC = ObservedAbilitySystem.Get();
-	if (ASC && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene))
-	{
-		HandleSprintFieldOfViewChanged(AgGameplayTags::State_Sprinting, ASC->GetTagCount(AgGameplayTags::State_Sprinting));
-	}
-}
-#endif

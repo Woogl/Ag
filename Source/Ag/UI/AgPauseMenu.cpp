@@ -2,18 +2,15 @@
 
 #include "UI/AgPauseMenu.h"
 
-#include "Core/AgGameplayTags.h"
 #include "Game/AgGameMode.h"
 #include "GameFramework/PlayerController.h"
-#include "Input/CommonUIInputTypes.h"
 #include "UI/AgButton.h"
 
 void UAgPauseMenu::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	RegisterUIActionBinding(FBindUIActionArgs(FUIActionTag::ConvertChecked(AgGameplayTags::UI_Action_Escape), false,
-		FSimpleDelegate::CreateUObject(this, &ThisClass::DeactivateWidget)));
+	BindEscapeToClose();
 	ResumeButton->OnClicked().AddUObject(this, &ThisClass::DeactivateWidget);
 
 	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
@@ -47,9 +44,4 @@ void UAgPauseMenu::NativeOnDeactivated()
 UWidget* UAgPauseMenu::NativeGetDesiredFocusTarget() const
 {
 	return ResumeButton;
-}
-
-TOptional<FUIInputConfig> UAgPauseMenu::GetDesiredInputConfig() const
-{
-	return FUIInputConfig(ECommonInputMode::Menu, EMouseCaptureMode::NoCapture);
 }

@@ -27,10 +27,7 @@ AAgShockwave::AAgShockwave()
 void AAgShockwave::OnSpawnedByAbility(const UAgGameplayAbility& Ability)
 {
 	DamageSpec = Ability.MakeDamageSpec(Damage, MakeShared<FAgHitState>());
-	if (DamageSpec.IsValid())
-	{
-		DamageSpec.Data->GetContext().AddInstigator(GetInstigator(), this);
-	}
+	DamageSpec.Data->GetContext().AddInstigator(GetInstigator(), this);
 }
 
 void AAgShockwave::BeginPlay()

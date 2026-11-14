@@ -220,7 +220,7 @@ void UAgAssetManager::StartInitialLoading()
 	{
 		if (bJsonLoadFailed && World->IsGameWorld())
 		{
-			LoadJsonData(false);
+			ReloadJsonData();
 		}
 	});
 	// 엔진은 블루프린트를 다시 컴파일할 때 템플릿(아키타입)은 새 클래스로 바꾸지 않으므로, 옛 클래스로 남은 생성 액터
@@ -231,7 +231,7 @@ void UAgAssetManager::StartInitialLoading()
 		{
 			if (Pair.Value && Pair.Value->GetClass()->HasAnyClassFlags(CLASS_NewerVersionExists))
 			{
-				LoadJsonData(false);
+				ReloadJsonData();
 				return;
 			}
 		}
@@ -264,8 +264,7 @@ bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 		}
 		else
 		{
-			TObjectPtr<UObject> Object = Loaded[Index];
-			bFileRead = Reader.ReadFile(Path, AgAssetManagerPrivate::GetMember(File), &Object);
+			bFileRead = Reader.ReadFile(Path, *Loaded[Index]);
 		}
 		// 오류를 모두 알리도록 실패해도 다음 파일을 읽습니다.
 		bRead = bFileRead && bRead;

@@ -81,17 +81,17 @@ FAnimMontageInstance* UAgAbilitySystemComponent::PlayMontageWithBlendIn(UGamepla
 	return Instance;
 }
 
-FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(EAgEffect Effect, float Level, FGameplayEffectContextHandle Context) const
+FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(EAgEffect Effect, FGameplayEffectContextHandle Context) const
 {
-	const UGameplayEffect* Definition = UAgAssetManager::Get().GetEffect(Effect);
-	return Definition ? MakeEffectSpec(*Definition, Level, Context) : FGameplayEffectSpecHandle();
+	return MakeEffectSpec(*UAgAssetManager::Get().GetEffect(Effect), Context);
 }
 
-FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(const UGameplayEffect& Effect, float Level, FGameplayEffectContextHandle Context) const
+FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(const UGameplayEffect& Effect, FGameplayEffectContextHandle Context) const
 {
 	if (!Context.IsValid())
 	{
 		Context = MakeEffectContext();
 	}
-	return FGameplayEffectSpecHandle(new FGameplayEffectSpec(&Effect, Context, Level));
+	// 어빌리티와 효과에 레벨을 쓰지 않으므로 늘 1입니다.
+	return FGameplayEffectSpecHandle(new FGameplayEffectSpec(&Effect, Context, 1.f));
 }

@@ -56,8 +56,6 @@ private:
 	double StartTime = 0.;
 	double StopTime = 0.;
 	float PlaybackDuration = 0.f;
-	float PlaybackBlendIn = 0.f;
-	float PlaybackBlendOut = 0.f;
 	float StopWeight = 0.f;
 	bool bFadingOut = false;
 };

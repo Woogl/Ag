@@ -75,7 +75,6 @@ private:
 	TWeakObjectPtr<AActor> FacingTarget;
 	FVector MoveInputDirection = FVector::ZeroVector;
 	bool bFacingOnly = false;
-	bool bStopped = false;
 
 	FName WarpTargetName;
 	FVector WarpGoal = FVector::ZeroVector;

@@ -15,7 +15,6 @@ class UAgSkillSlot;
 class UAgStatBar;
 class UImage;
 class UTextBlock;
-struct FGameplayAttribute;
 struct FOnAttributeChangeData;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
@@ -80,13 +79,14 @@ protected:
 
 private:
 	void OpenPauseMenu();
-	void HandleCombatantsChanged();
 
-	void BindPlayer(UAbilitySystemComponent& ASC);
+	void BindPlayer();
 	void UnbindPlayer();
 
 	void UpdateStatusPanel();
 	void UpdatePlayer();
+	void UpdateHPBar();
+	void UpdateMPBar();
 	void UpdatePotion();
 	void UpdateUPGauge();
 	void UpdateSkillSlots();
@@ -96,11 +96,7 @@ private:
 	/** 스킬·궁극기·회복병 칸과 그 칸을 발동하는 입력 태그입니다. */
 	TArray<TPair<UAgSkillSlot*, FGameplayTag>, TInlineAllocator<6>> GetSkillSlots() const;
 
-	static void SetBarValue(UAgStatBar& Bar, const UAbilitySystemComponent& ASC, const FGameplayAttribute& Value, const FGameplayAttribute& MaxValue);
-
 	void HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data);
 
 	TWeakObjectPtr<UAgAbilitySystemComponent> PlayerASC;
-
-	ESlateVisibility StatusPanelVisibility = ESlateVisibility::SelfHitTestInvisible;
 };

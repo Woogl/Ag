@@ -102,7 +102,6 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::EnterState(FStateTreeExecutionC
 	InstanceData.bWasDelaying = InstanceData.Controller->IsInPostPatternDelay();
 	// 움찔이 끝나고 들어왔을 때처럼 쓸 수 있는 패턴이 이미 있으면 첫 틱에 바로 끝나도록 합니다.
 	InstanceData.CheckElapsed = AgEnemyAITasksPrivate::RetryInterval;
-	InstanceData.TargetRange = InstanceData.Controller->GetEnemy()->GetCharacterData()->AI.PreferredDistance;
 	return EStateTreeRunStatus::Running;
 }
 
@@ -125,6 +124,7 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 	if (InstanceData.CheckElapsed >= AgEnemyAITasksPrivate::RetryInterval || bDelayEnded)
 	{
 		InstanceData.CheckElapsed = 0.f;
+		InstanceData.TargetRange = Enemy->GetCharacterData()->AI.PreferredDistance;
 		bool bAttackTurn = false;
 		if (Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->CanStartPattern(*Enemy, false))
 		{
@@ -137,11 +137,10 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 			TArray<FFloatInterval> ReadyRanges;
 			Enemy->GatherReadyPatternRanges(ReadyRanges);
 			bAttackTurn = !ReadyRanges.IsEmpty();
-			InstanceData.TargetRange = bAttackTurn ? AgEnemyAITasksPrivate::PickNearestRange(ReadyRanges, Distance) : Enemy->GetCharacterData()->AI.PreferredDistance;
-		}
-		else
-		{
-			InstanceData.TargetRange = Enemy->GetCharacterData()->AI.PreferredDistance;
+			if (bAttackTurn)
+			{
+				InstanceData.TargetRange = AgEnemyAITasksPrivate::PickNearestRange(ReadyRanges, Distance);
+			}
 		}
 
 		// 공격할 차례인데 목표 거리 안이면 거리는 닿지만 시야 같은 조건이 맞지 않은 것이라, 보이는 곳을 찾아 다가갑니다.
@@ -211,9 +210,9 @@ EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionCon
 	}
 	const FName Pattern = Picked->Key;
 
-	const FGameplayAbilitySpec* Spec = Enemy->FindAbilitySpec(Pattern);
-	const FGameplayAbilitySpecHandle Handle = Spec ? Spec->Handle : FGameplayAbilitySpecHandle();
-	if (!Handle.IsValid() || !ASC->TryActivateAbility(Handle))
+	// 후보는 발동할 수 있는지 스펙으로 확인한 패턴입니다.
+	const FGameplayAbilitySpecHandle Handle = Enemy->FindAbilitySpec(Pattern)->Handle;
+	if (!ASC->TryActivateAbility(Handle))
 	{
 		return EStateTreeRunStatus::Failed;
 	}
@@ -239,7 +238,8 @@ void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, c
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 	AAgEnemyAIController& Controller = *InstanceData.Controller;
 	AAgEnemyCharacter* Enemy = Controller.GetEnemy();
-	if (!Enemy || !InstanceData.Handle.IsValid())
+	// 패턴을 시작하지 못하고 나가는 길(EnterState 실패)입니다.
+	if (!InstanceData.Handle.IsValid())
 	{
 		return;
 	}
@@ -362,11 +362,7 @@ void FAgEnemyAITask_Combat::ExitState(FStateTreeExecutionContext& Context, const
 {
 	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
 	Controller.ClearFocus(EAIFocusPriority::Gameplay);
-	UAgAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
-	if (const FGameplayAbilitySpec* LockOn = ASC->FindSpecByTag(AgGameplayTags::Ability_LockOn))
-	{
-		ASC->CancelAbilityHandle(LockOn->Handle);
-	}
+	Controller.GetEnemy()->GetAbilitySystemComponent()->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_LockOn));
 	Controller.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->RemoveCombatant(*Controller.GetEnemy());
 }
 

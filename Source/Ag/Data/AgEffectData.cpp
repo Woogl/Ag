@@ -100,6 +100,7 @@ UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 			AgEffectDataPrivate::AddAssetTag(*Effect, AgGameplayTags::Effect_Cooldown);
 			break;
 		case EAgEffect::Kill:
+			Effect->AddComponent<UTargetTagRequirementsGameplayEffectComponent>().ApplicationTagRequirements.IgnoreTags.AddTag(AgGameplayTags::State_Dead);
 			AgEffectDataPrivate::AddModifier(*Effect, UAgAttributeSet::GetHPAttribute(), EGameplayModOp::Override, FScalableFloat(0.f));
 			break;
 		case EAgEffect::Hitstop:

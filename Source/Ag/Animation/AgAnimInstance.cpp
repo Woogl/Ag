@@ -17,6 +17,7 @@ namespace AgAnimInstancePrivate
 {
 	const float MinJumpVelocity = 100.f;
 	const float MinMoveSpeed = 3.f;
+	const FName HeadBone(TEXT("head"));
 
 	float GetRootYaw(const UAnimSequence& Animation, float Time)
 	{
@@ -84,8 +85,8 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bShouldLeaveLand = bIsInAir || bShouldMove || IsSlotActive(FAnimSlotGroup::DefaultSlotName);
 
 	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
-	bIsGuarding = GuardMoveBlendSpace && AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
-	bIsGroggy = GroggyAnimation && AbilitySystem && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
+	bIsGuarding = GuardMoveBlendSpace && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);
+	bIsGroggy = GroggyAnimation && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
 
 	// 발사부터 반동이 끝날 때까지 발사 순간의 높이를 유지하므로, 조준 중에만 갱신합니다.
 	const AActor* AimTarget = AimOffset ? Character->GetLockOnTarget() : nullptr;
@@ -187,7 +188,7 @@ void UAgAnimInstance::AdvanceTurn(float DeltaSeconds)
 
 bool UAgAnimInstance::CanTurn() const
 {
-	if (!Character || !Character->GetController() || GetTurnAnimations().IsEmpty() || Character->IsDead() || Character->IsFacingFixed())
+	if (!Character->GetController() || GetTurnAnimations().IsEmpty() || Character->IsFacingFixed())
 	{
 		return false;
 	}
@@ -212,15 +213,14 @@ float UAgAnimInstance::GetTurnOffset() const
 
 void UAgAnimInstance::UpdateLookAt(float DeltaSeconds)
 {
-	static const FName HeadBone(TEXT("head"));
-
 	const AAgCharacterBase* Target = IsLookAtBlocked() ? nullptr : FindLookAtTarget();
 	bool bLooking = false;
 	if (Target)
 	{
 		const USkeletalMeshComponent* TargetMesh = Target->GetMesh();
-		const FVector TargetLocation =
-			TargetMesh->GetBoneIndex(HeadBone) != INDEX_NONE ? TargetMesh->GetBoneLocation(HeadBone) : Target->GetPawnViewLocation();
+		const FVector TargetLocation = TargetMesh->GetBoneIndex(AgAnimInstancePrivate::HeadBone) != INDEX_NONE
+		                                   ? TargetMesh->GetBoneLocation(AgAnimInstancePrivate::HeadBone)
+		                                   : Target->GetPawnViewLocation();
 		const double TargetYaw = (TargetLocation - Character->GetActorLocation()).Rotation().Yaw;
 		const double BodyYaw = Character->GetActorRotation().Yaw + RootYawOffset;
 		bLooking = FMath::Abs(FRotator::NormalizeAxis(TargetYaw - BodyYaw)) <= LookAtBackAngle;
@@ -245,8 +245,7 @@ AAgCharacterBase* UAgAnimInstance::FindLookAtTarget() const
 	{
 		return LockOnTarget;
 	}
-	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
-	if (!AbilitySystem || AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat))
+	if (Character->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat))
 	{
 		return nullptr;
 	}
@@ -255,7 +254,5 @@ AAgCharacterBase* UAgAnimInstance::FindLookAtTarget() const
 
 bool UAgAnimInstance::IsLookAtBlocked() const
 {
-	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
-	return !AbilitySystem || bIsInAir || Character->IsFacingFixed() || AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Dead) ||
-	       AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
+	return bIsInAir || Character->IsFacingFixed() || Character->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
 }

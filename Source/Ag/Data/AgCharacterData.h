@@ -7,6 +7,7 @@
 #include "Math/Interval.h"
 #include "AgCharacterData.generated.h"
 
+// 그로기 중에는 한 단계 낮은 값으로 판정하므로, 값의 순서가 곧 강인도의 단계입니다.
 UENUM()
 enum class EAgToughness : uint8
 {

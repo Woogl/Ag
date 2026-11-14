@@ -6,7 +6,6 @@
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Data/AgHitReward.h"
 #include "Data/AgTaskParams.h"
-#include "GameplayTagContainer.h"
 #include "AgAbilityTask_HitReward.generated.h"
 
 USTRUCT()
@@ -32,6 +31,4 @@ public:
 private:
 	UPROPERTY()
 	FAgHitRewardParams Params;
-
-	FGameplayTagContainer AttackTags;
 };

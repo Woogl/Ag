@@ -62,7 +62,6 @@ bool AAgPlayerCharacter::IsMoveInputIgnored() const
 	Blockers.AddTag(AgGameplayTags::State_HitReaction);
 	Blockers.AddTag(AgGameplayTags::State_Groggy);
 	Blockers.AddTag(AgGameplayTags::State_Execution);
-	Blockers.AddTag(AgGameplayTags::State_Dead);
 	return Super::IsMoveInputIgnored() || GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(Blockers);
 }
 
@@ -373,7 +372,7 @@ void AAgPlayerCharacter::TryRunBufferedInput()
 
 	const FGameplayTag InputTag = BufferedInput;
 	BufferedInput = FGameplayTag();
-	if (IsDead() || (IsReleaseInput(InputTag) && !HeldInputs.Contains(InputTag)))
+	if (IsReleaseInput(InputTag) && !HeldInputs.Contains(InputTag))
 	{
 		return;
 	}
@@ -386,7 +385,7 @@ void AAgPlayerCharacter::ReturnToGuardFromParry()
 {
 	UAgAbilitySystemComponent* ASC = GetAbilitySystemComponent();
 	const FGameplayAbilitySpec* Guard = ASC->FindSpecByTag(AgGameplayTags::Ability_Action_Guard);
-	if (!IsDead() && Guard && Guard->IsActive() && !IsActionInputBlocked(AgGameplayTags::Input_Guard))
+	if (Guard && Guard->IsActive() && !IsActionInputBlocked(AgGameplayTags::Input_Guard))
 	{
 		// 패리 모션은 가드를 끝내지 않으므로, 가드 중이면 후딜에 든 패리 모션만 끝내 가드 자세로 돌아옵니다.
 		ASC->CancelAbilitiesWithSpecTags(FGameplayTagContainer(AgGameplayTags::Ability_Action_Parry));
