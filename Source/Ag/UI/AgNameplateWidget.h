@@ -32,7 +32,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgStatBar> HPBar;
 
-	/** 최대 PP가 0이면 접으므로, HP 바와의 간격도 이 안에 둡니다. */
+	/** 최대 PP가 0이면 접습니다. */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> PPSection;
 

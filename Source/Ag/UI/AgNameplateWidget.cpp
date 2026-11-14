@@ -138,21 +138,31 @@ void UAgNameplateWidget::UpdatePP()
 	PPSection->SetVisibility(MaxPP > 0.f ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 	if (MaxPP <= 0.f || Target->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 	{
+		PPBar->HideGroggy();
 		return;
 	}
 
-	float PPBarRatio = Target->GetNumericAttribute(UAgAttributeSet::GetPPAttribute()) / MaxPP;
-	if (Target->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
+	if (!Target->HasMatchingGameplayTag(AgGameplayTags::State_Groggy))
 	{
-		const FGameplayEffectQuery Query =
-			FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_Groggy));
-		const TArray<TPair<float, float>> Times = Target->GetActiveEffectsTimeRemainingAndDuration(Query);
-		if (!Times.IsEmpty() && Times[0].Value > 0.f)
-		{
-			PPBarRatio = FMath::Clamp(1.f - Times[0].Key / Times[0].Value, 0.f, 1.f);
-		}
-		// 그로기 동안은 남은 시간으로 PP 바를 다시 채우므로 프레임마다 그립니다.
-		GroggyTimer = GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::UpdatePP);
+		PPBar->HideGroggy();
+		PPBar->SetRatio(Target->GetNumericAttribute(UAgAttributeSet::GetPPAttribute()) / MaxPP);
+		return;
 	}
+
+	float Elapsed = 0.f;
+	float PPBarRatio = 1.f;
+	const FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyOwningTags(FGameplayTagContainer(AgGameplayTags::State_Groggy));
+	const TArray<TPair<float, float>> Times = Target->GetActiveEffectsTimeRemainingAndDuration(Query);
+	if (!Times.IsEmpty() && Times[0].Value > 0.f)
+	{
+		Elapsed = Times[0].Value - Times[0].Key;
+		PPBarRatio = FMath::Clamp(Times[0].Key / Times[0].Value, 0.f, 1.f);
+	}
+	// UI 머티리얼의 Time은 실제 시간이라 일시정지·궁극기 시간 정지 중에도 흐르므로, 그로기 경과 시간을 넘깁니다.
+	PPBar->ShowGroggy(Elapsed);
 	PPBar->SetRatio(PPBarRatio);
+	// 남은 시간이 줄어드는 것은 피해가 아니므로, 매 프레임의 감소가 잔상을 남기지 않게 합니다.
+	PPBar->ClearTrail();
+	// 그로기 동안은 남은 시간으로 PP 바를 줄이므로 프레임마다 그립니다.
+	GroggyTimer = GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::UpdatePP);
 }

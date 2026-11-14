@@ -2,10 +2,18 @@
 
 #include "UI/AgStatBar.h"
 
+#include "Components/CanvasPanelSlot.h"
+#include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Engine/World.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "TimerManager.h"
+
+namespace AgStatBarPrivate
+{
+	const FName TimeParameter(TEXT("Time"));
+} // namespace AgStatBarPrivate
 
 void UAgStatBar::SetValue(float Value, float MaxValue)
 {
@@ -57,6 +65,54 @@ void UAgStatBar::ClearTrail()
 	SetTrailRatio(BarRatio);
 }
 
+void UAgStatBar::ShowGroggy(float Time)
+{
+	if (GroggyBurst)
+	{
+		GroggyBurst->SetVisibility(ESlateVisibility::HitTestInvisible);
+		if (UMaterialInstanceDynamic* Burst = GroggyBurst->GetDynamicMaterial())
+		{
+			Burst->SetScalarParameterValue(AgStatBarPrivate::TimeParameter, Time);
+		}
+	}
+
+	if (!GroggyFill)
+	{
+		if (!GroggyFillMaterial)
+		{
+			return;
+		}
+		GroggyFill = UMaterialInstanceDynamic::Create(GroggyFillMaterial, this);
+	}
+	GroggyFill->SetScalarParameterValue(AgStatBarPrivate::TimeParameter, Time);
+
+	if (Bar->GetWidgetStyle().FillImage.GetResourceObject() != GroggyFill)
+	{
+		FProgressBarStyle Style = Bar->GetWidgetStyle();
+		DefaultFillImage = Style.FillImage;
+		Style.FillImage.SetResourceObject(GroggyFill);
+		Style.FillImage.TintColor = FSlateColor(FLinearColor::White);
+		Bar->SetWidgetStyle(Style);
+		// 슬레이트는 브러시 머티리얼의 색에 채움 색을 곱하므로, 흰색으로 두어 머티리얼의 색이 그대로 보이게 합니다.
+		Bar->SetFillColorAndOpacity(FLinearColor::White);
+	}
+}
+
+void UAgStatBar::HideGroggy()
+{
+	if (GroggyBurst)
+	{
+		GroggyBurst->SetVisibility(ESlateVisibility::Collapsed);
+	}
+	if (GroggyFill && Bar->GetWidgetStyle().FillImage.GetResourceObject() == GroggyFill)
+	{
+		FProgressBarStyle Style = Bar->GetWidgetStyle();
+		Style.FillImage = DefaultFillImage;
+		Bar->SetWidgetStyle(Style);
+		Bar->SetFillColorAndOpacity(FillColor);
+	}
+}
+
 void UAgStatBar::NativePreConstruct()
 {
 	Super::NativePreConstruct();
@@ -64,6 +120,12 @@ void UAgStatBar::NativePreConstruct()
 	Bar->SetFillColorAndOpacity(FillColor);
 	TrailBar->SetVisibility(bShowTrail ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	ValueText->SetVisibility(bShowValue ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	if (UCanvasPanelSlot* ValueSlot = Cast<UCanvasPanelSlot>(ValueText->Slot))
+	{
+		const float AnchorY = ValueAlignment == VAlign_Top ? 0.f : (ValueAlignment == VAlign_Bottom ? 1.f : 0.5f);
+		ValueSlot->SetAnchors(FAnchors(1.f, AnchorY));
+		ValueSlot->SetAlignment(FVector2D(0.f, AnchorY));
+	}
 }
 
 void UAgStatBar::StartTrailShrink()
