@@ -9,12 +9,16 @@
 #include "GameplayEffectTypes.h"
 #include "AgProjectile.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
 class UShapeComponent;
 class AAgCharacterBase;
 
 /**
  * 판정 모양은 BP에 둔 모양 컴포넌트(상자·캡슐) 전부이며 섞어 둘 수 있습니다. 생성되는 순간 어빌리티의 행동 대상이 지금 속도로 움직인다고 보고
  * 닿을 위치(예측 지점)를 향해 날아가며, 대상이 없으면 생성 방향으로 날아갑니다.
+ * 비행이 끝나면 나이아가라가 아닌 표시는 바로 감추고, 나이아가라는 새 입자만 멈춰 남은 입자(궤적)가 사라진 뒤 액터를 지웁니다.
+ * 수명이 끝나지 않는 몸체 입자는 그 이미터의 비활성 응답(Inactive Response)을 Kill로 두어야 함께 사라집니다.
  */
 UCLASS(Abstract)
 class AAgProjectile : public AActor, public IAgAbilitySpawnedActor
@@ -26,8 +30,8 @@ public:
 
 	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability) override;
 	void Reflect(AAgCharacterBase& Defender);
-	/** 적중·가드로 피해를 준 뒤 불립니다. */
-	void OnDamageApplied();
+	/** 적중·가드로 피해를 준 뒤 결과 연출과 같은 적중 위치로 불립니다. */
+	void OnDamageApplied(const FVector& HitLocation);
 
 protected:
 	virtual void PostInitializeComponents() override;
@@ -36,6 +40,11 @@ protected:
 
 private:
 	bool IsReflected() const;
+	void PlayImpact(const FVector& Location, const FVector& Normal) const;
+	void EndFlight();
+	void DestroyWhenEffectsFinish();
+	UFUNCTION()
+	void HandleEffectFinished(UNiagaraComponent* Effect);
 
 	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
@@ -51,6 +60,10 @@ private:
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
 	bool bDestroyOnHit = false;
 
+	/** 벽이나, 맞히고 사라지는 대상에 닿은 자리에서 재생합니다. 효과의 앞(X축)은 닿은 면에서 튀어나오는 쪽으로, 벽은 면의 법선이고 대상은 날아온 쪽입니다. 사거리 끝에서는 재생하지 않습니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
+	TObjectPtr<UNiagaraSystem> ImpactEffect;
+
 	UPROPERTY()
 	TArray<TObjectPtr<UShapeComponent>> HitShapes;
 
@@ -63,4 +76,5 @@ private:
 	FGameplayEffectSpecHandle DamageSpec;
 	FVector FlightDirection = FVector::ForwardVector;
 	float Traveled = 0.f;
+	bool bFlightEnded = false;
 };

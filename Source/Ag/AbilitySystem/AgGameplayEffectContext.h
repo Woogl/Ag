@@ -6,7 +6,7 @@
 #include "GameplayEffectTypes.h"
 #include "AgGameplayEffectContext.generated.h"
 
-/** 피해 Task 하나(한 타)가 만든 피해가 모두 함께 가리킵니다. */
+/** 피해 Task 하나(한 타)가 만든 피해가 모두 함께 가리킵니다. 생성 액터는 그 액터가 낸 피해 전체가 한 상태를 가리킵니다. */
 struct FAgHitState
 {
 	bool bLanded = false;

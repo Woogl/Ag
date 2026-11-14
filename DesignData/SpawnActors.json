@@ -37,21 +37,31 @@
     "MaxRadius": 5000,
     "Height": 10,
     "Width": 100,
-    "Damage": {
-      "HPMultiplier": 2,
-      "HitReaction": "KnockUp",
-      "bGuardable": false
-    }
+    "Hits": [
+      {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}
+    ]
   },
   "PhaseTransitionShockwave": {
     "Class": "/Game/Projectiles/BP_RoarShockwave.BP_RoarShockwave_C",
     "Speed": 100000,
     "MaxRadius": 400,
     "Height": 400,
-    "Damage": {
-      "HPMultiplier": 0,
-      "HitReaction": "KnockDown",
-      "bGuardable": false
-    }
+    "Hits": [
+      {"HPMultiplier": 0, "HitReaction": "KnockDown", "bGuardable": false}
+    ]
+  },
+  "PunishingEdgeVortex": {
+    "Class": "/Game/Projectiles/BP_PunishingEdgeVortex.BP_PunishingEdgeVortex_C",
+    "Speed": 100000,
+    "MaxRadius": 400,
+    "Height": 400,
+    "Interval": 0.25,
+    "Hits": [
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "KnockDown", "bGuardable": true}
+    ]
   }
 }

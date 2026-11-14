@@ -387,6 +387,6 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 	}
 	if (!bParry && IsValid(Projectile))
 	{
-		Projectile->OnDamageApplied();
+		Projectile->OnDamageApplied(Context.GetOrigin());
 	}
 }

@@ -13,6 +13,8 @@
 #include "Core/AgAssetManager.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Ag.h"
 
 namespace AgProjectilePrivate
@@ -71,11 +73,12 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 	TouchedActors.Reset();
 }
 
-void AAgProjectile::OnDamageApplied()
+void AAgProjectile::OnDamageApplied(const FVector& HitLocation)
 {
 	if (bDestroyOnHit)
 	{
-		Destroy();
+		PlayImpact(HitLocation, -FlightDirection);
+		EndFlight();
 	}
 }
 
@@ -126,7 +129,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	AAgCharacterBase* DamageSource = IsReflected() ? Reflector.Get() : ShooterCharacter;
 	if (HitShapes.IsEmpty() || !IsValid(ShooterCharacter) || !IsValid(DamageSource) || !DamageSpec.IsValid())
 	{
-		Destroy();
+		EndFlight();
 		return;
 	}
 
@@ -137,16 +140,16 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	const FVector ActorStart = GetActorLocation();
 	const float Step = FMath::Min(Speed * DeltaSeconds, Range - Traveled);
 	float MoveDistance = Step;
-	bool bHitWall = false;
+	FHitResult WallHit;
 	for (const UShapeComponent* Shape : HitShapes)
 	{
 		const FVector Start = Shape->GetComponentLocation();
-		FHitResult WallHit;
-		if (GetWorld()->LineTraceSingleByObjectType(WallHit, Start, Start + FlightDirection * MoveDistance,
+		FHitResult ShapeWallHit;
+		if (GetWorld()->LineTraceSingleByObjectType(ShapeWallHit, Start, Start + FlightDirection * MoveDistance,
 				FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams))
 		{
-			MoveDistance = WallHit.Distance;
-			bHitWall = true;
+			MoveDistance = ShapeWallHit.Distance;
+			WallHit = ShapeWallHit;
 		}
 	}
 
@@ -178,9 +181,13 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		const FGameplayEffectSpecHandle Spec = DamageSpec;
 		Spec.Data->GetContext().AddOrigin(HitLocation);
 		DamageSource->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToTarget(*Spec.Data, Target->GetAbilitySystemComponent());
-		if (IsActorBeingDestroyed() || !IsValid(ShooterCharacter))
+		if (bFlightEnded)
 		{
-			Destroy();
+			return;
+		}
+		if (!IsValid(ShooterCharacter))
+		{
+			EndFlight();
 			return;
 		}
 		// 패리 전에 구한 남은 충돌과 벽은 반사 경로에 속하지 않습니다.
@@ -190,16 +197,16 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		}
 	}
 
-	if (bHitWall)
-	{
-		Destroy();
-		return;
-	}
 	SetActorLocation(ActorStart + Move);
 	Traveled += Step;
-	if (Traveled >= Range)
+	if (WallHit.bBlockingHit)
 	{
-		Destroy();
+		PlayImpact(WallHit.ImpactPoint, WallHit.ImpactNormal);
+		EndFlight();
+	}
+	else if (Traveled >= Range)
+	{
+		EndFlight();
 	}
 }
 
@@ -207,4 +214,54 @@ bool AAgProjectile::IsReflected() const
 {
 	// 반사한 캐릭터가 사라져도 반사됨으로 남아야, 원래 발사자의 피해로 돌아가지 않고 Tick에서 사라집니다.
 	return !Reflector.IsExplicitlyNull();
+}
+
+void AAgProjectile::PlayImpact(const FVector& Location, const FVector& Normal) const
+{
+	if (ImpactEffect)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, Location, Normal.Rotation());
+	}
+}
+
+void AAgProjectile::EndFlight()
+{
+	bFlightEnded = true;
+	SetActorTickEnabled(false);
+	TInlineComponentArray<UPrimitiveComponent*> Looks(this);
+	for (UPrimitiveComponent* Look : Looks)
+	{
+		if (UNiagaraComponent* Effect = Cast<UNiagaraComponent>(Look))
+		{
+			Effect->Deactivate();
+		}
+		else
+		{
+			Look->SetVisibility(false);
+		}
+	}
+	DestroyWhenEffectsFinish();
+}
+
+void AAgProjectile::DestroyWhenEffectsFinish()
+{
+	bool bPlaying = false;
+	TInlineComponentArray<UNiagaraComponent*> Effects(this);
+	for (UNiagaraComponent* Effect : Effects)
+	{
+		if (Effect->IsActive())
+		{
+			Effect->OnSystemFinished.AddUniqueDynamic(this, &ThisClass::HandleEffectFinished);
+			bPlaying = true;
+		}
+	}
+	if (!bPlaying)
+	{
+		Destroy();
+	}
+}
+
+void AAgProjectile::HandleEffectFinished(UNiagaraComponent* Effect)
+{
+	DestroyWhenEffectsFinish();
 }

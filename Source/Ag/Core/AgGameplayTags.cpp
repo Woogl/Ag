@@ -153,7 +153,6 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Teleport, "GameplayCue.Teleport", "순간이동으로 사라지거나 나타나는 자리의 효과");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_BlinkRushThrust, "GameplayCue.BlinkRushThrust", "스킬 1 찌르기에서 칼끝의 섬광");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UpperSlashBlade, "GameplayCue.UpperSlashBlade", "스킬 2 동작 동안 칼날에 서리는 기운");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PunishingEdge, "GameplayCue.PunishingEdge", "스킬 4 내려찍기 VFX: 판정 반경(RawMagnitude)까지 퍼짐");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PotionBottle, "GameplayCue.PotionBottle", "회복병을 마시는 동안 왼손에 보이는 병");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PotionHeal, "GameplayCue.PotionHeal", "회복병을 삼킨 순간의 회복 효과");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Groggy, "GameplayCue.Groggy", "그로기가 시작되는 순간 유리 조각이 흩어지는 연출");
