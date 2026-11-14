@@ -155,5 +155,7 @@ UEdGraph* UAgAnimationToolset::AddAnimStateTransition(UEdGraph* StateMachineGrap
 	UAnimStateTransitionNode* Transition = CastChecked<UAnimStateTransitionNode>(Source->GetOutputPin()->LinkedTo.Last()->GetOwningNode());
 	Transition->PriorityOrder = Priority;
 	Transition->bAutomaticRuleBasedOnSequencePlayerInState = bAutomaticRule;
+	// 엔진은 새로 놓은 전환에 관성 블렌드 대체를 켜지만, 애님 그래프에 관성 노드가 없어 요청이 오류만 남긴다.
+	Transition->bAllowInertializationForSelfTransitions = false;
 	return Transition->BoundGraph;
 }
