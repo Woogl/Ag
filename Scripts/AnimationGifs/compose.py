@@ -13,8 +13,6 @@ FONT_PATH = "C:/Windows/Fonts/arial.ttf"
 def compose_sequence(sequence_dir):
     folder = Path(sequence_dir)
     meta = json.loads((folder / "ready.json").read_text(encoding="utf-8"))
-    if meta.get("mask") != "inverse_opacity":
-        raise ValueError("이전 색상 키잉 프레임에는 실루엣 정보가 없습니다. 새 설정으로 재촬영하세요.")
     start = time.perf_counter()
     font = ImageFont.truetype(FONT_PATH, HEADER_FONT_SIZE)
     name = meta["path"].rsplit("/", 1)[-1]
@@ -25,7 +23,7 @@ def compose_sequence(sequence_dir):
     frames, durations = [], []
     for index, moment in enumerate(meta["times"]):
         with Image.open(folder / ("%06d.png" % index)) as source:
-            if source.size != tuple(meta.get("capture_size", (WIDTH, HEIGHT))):
+            if source.size != tuple(meta["capture_size"]):
                 raise ValueError("Unexpected capture size: %s" % (source.size,))
             frame = source.convert("RGB")
         with Image.open(folder / ("%06d.mask.png" % index)) as mask_image:
@@ -40,7 +38,7 @@ def compose_sequence(sequence_dir):
         draw = ImageDraw.Draw(canvas)
         draw.text((6, 4), name, font=name_font, fill="white")
         label = "%.2f / %.2f s | 1x | %d fps" % (moment, meta["length"], FPS)
-        if not meta.get("weapon", "/Fab/" in meta["path"]):
+        if not meta["weapon"]:
             label += " | body motion (no weapon)"
         draw.text((6, 30), label, font=font, fill=(170, 190, 210))
         frames.append(canvas)

@@ -154,7 +154,7 @@ def send(slot, code):
             time.sleep(0.5)
         if not rx.remote_nodes:
             return "창이 원격 실행에 응답하지 않음"
-        rx.open_command_connection(rx.remote_nodes[0])
+        rx.open_command_connection(rx.remote_nodes[0]["node_id"])
         # MODE_EXEC_FILE은 보낸 글의 첫 '.py' 바로 뒤가 공백이나 끝이면 그 앞을 파일 경로로 읽는다(시나리오의 주석이라도).
         res = rx.run_command(code, unattended=True, exec_mode=remote.MODE_EXEC_FILE, raise_on_failure=False)
         return None if res.get("success") else "시나리오 실행 실패: %s" % res.get("result")

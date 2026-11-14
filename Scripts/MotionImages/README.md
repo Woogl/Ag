@@ -6,13 +6,13 @@
 
 ```powershell
 # 전체 조합 GIF를 Docs/Art/Attachments에 갱신합니다.
-python Scripts/MotionImages/motion_images.py assemble
+python Scripts/MotionImages/motion_images.py
 
 # 지정한 조합만 갱신합니다.
-python Scripts/MotionImages/motion_images.py assemble "플레이어 모션 기본 공격"
+python Scripts/MotionImages/motion_images.py "플레이어 모션 기본 공격"
 
 # 별도 폴더에서 먼저 확인합니다.
-python Scripts/MotionImages/motion_images.py assemble --out Saved/Tools/MotionImages/Preview
+python Scripts/MotionImages/motion_images.py --out Saved/Tools/MotionImages/Preview
 ```
 
 구간·배속을 바꾼 뒤 다시 실행하면 됩니다. 없는 원본이나 원본 길이를 벗어난 구간은 오류로 알립니다. 원본 모션이 바뀌었으면 [시퀀스 촬영 도구](<../AnimationGifs/README.md>)로 해당 원본을 갱신한 뒤 조립합니다.

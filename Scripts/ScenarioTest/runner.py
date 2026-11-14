@@ -39,9 +39,8 @@ class Ctx:
         self.rows, self.notes, self.fps = [], [], {}
         self.t0 = self.warm = None
         self.step_index = 0
-        self.done = False
         self.window_locked = False
-        self.chars, self.asc, self.aset, self.brains = {}, {}, {}, []
+        self.chars, self.asc, self.aset = {}, {}, {}
         self.down, self.move_keys, self.taps = set(), set(), []
         self.mashing = self.holding = None
         self.mouse = (0.0, 0.0)
@@ -141,12 +140,8 @@ class Ctx:
         unreal.AbilitySystemLibrary.send_gameplay_event_to_actor(self.chars[who], _tag(tag), payload)
 
     def ai(self, on):
-        """적 AI를 모두 켜거나 끈다."""
-        for brain in self.brains:
-            if on:
-                brain.start_logic()
-            else:
-                brain.stop_logic("qa")
+        """적 AI를 모두 켜거나 끈다. 사람이 쓰는 콘솔 명령과 같은 경로라, 이미 그 상태인 적과 죽은 적은 건드리지 않는다."""
+        self.console("AgStartAI" if on else "AgStopAI")
 
     def face(self, who, dist):
         """who에서 dist cm 떨어진 곳(지금 방향 그대로)에 플레이어를 두고, 플레이어와 카메라가 who를 보게 한다."""
@@ -275,7 +270,6 @@ def _setup():
     for key, actor in ctx.chars.items():
         ctx.asc[key] = actor.get_component_by_class(unreal.AbilitySystemComponent)
         ctx.aset[key] = unreal.find_object(None, actor.get_path_name() + ".AttributeSet")
-    ctx.brains = [a.get_controller().get_component_by_class(unreal.BrainComponent) for k, a in ctx.chars.items() if k != "p" and a.get_controller()]
     # 패드처럼 창을 거치지 않는 입력도 뷰포트에서 버린다. 키 입력 명령(AgPressKey 등)은 뷰포트를 거치지 않는다.
     ctx.console("AgIgnoreDeviceInput 1")
     # 준비: 적 AI를 멈추고, 맵을 연 직후의 적 공격이 끝나고 프레임이 안정되기를 기다린다.
@@ -368,7 +362,6 @@ def _finish(error=None):
                    "seconds": ctx.rows[-1]["t"] if ctx.rows else 0, "frames": len(ctx.rows),
                    "fps_min": min(full) if full else 0, "rows": ctx.rows}, f, ensure_ascii=False, default=str)
     os.replace(OUT + ".tmp", OUT)
-    ctx.done = True
 
 
 def _tick(dt):

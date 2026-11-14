@@ -275,7 +275,7 @@ class Capture:
                     atomic_json(self.sequence_dir / "ready.json", {
                         "path": self.path, "output": self.jobs["sequences"][self.sequence_index]["output"],
                         "length": self.length, "times": self.times, "capture_size": [WIDTH * RENDER_SCALE, HEIGHT * RENDER_SCALE],
-                        "mask": "inverse_opacity", "weapon": self.weapon_visible,
+                        "weapon": self.weapon_visible,
                         "capture_seconds": time.perf_counter() - self.sequence_started})
                     self.sequence_index += 1
                     self.phase = "sequence"

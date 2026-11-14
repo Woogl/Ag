@@ -72,7 +72,7 @@ def remote(code, port):
         if not nodes:
             raise RuntimeError("지정한 포트에 이 프로젝트의 에디터가 없습니다." if port is not None
                                else "이 프로젝트를 연 에디터의 Python 원격 실행에 연결할 수 없습니다.")
-        connection.open_command_connection(nodes[0])
+        connection.open_command_connection(nodes[0]["node_id"])
         reply = connection.run_command(code, unattended=True, exec_mode=remote_execution.MODE_EXEC_FILE, raise_on_failure=False)
     finally:
         connection.stop()

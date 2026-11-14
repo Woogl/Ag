@@ -1,7 +1,7 @@
 # Copyright Woogle. All Rights Reserved.
 """sheets/의 조합 정의로 기획서 모션 그림(Docs/Art/Attachments/<그림 이름>.gif)을 만듭니다. 쓰는 법은 README.md를 따릅니다.
 
-    python Scripts/MotionImages/motion_images.py assemble [image ...] [--out DIR]
+    python Scripts/MotionImages/motion_images.py [image ...] [--out DIR]
 
 image는 .json을 뺀 조합 정의 파일 이름이고, 없으면 모든 그림입니다.
 """
@@ -35,7 +35,6 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["assemble"])
     parser.add_argument("images", nargs="*")
     parser.add_argument("--out", default=ATTACHMENTS, help="그림을 둘 폴더 (기본 Docs/Art/Attachments)")
     args = parser.parse_args()
