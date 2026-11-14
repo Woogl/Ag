@@ -79,8 +79,9 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 bool AAgEnemyCharacter::CanLosePP() const
 {
 	// 누워 있는 동안의 무적(하위 태그)은 플레이어만 지키고 적은 누워서도 맞아 PP를 잃으므로, 무적은 부모 태그만 봅니다.
+	// 대미지는 HP를 PP보다 먼저 깎아, 죽는 타격의 PP 감소는 사망(그로기 효과도 지워짐) 뒤에 들어오므로 사망도 막습니다.
 	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	return !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
+	return !IsDead() && !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy) &&
 	       !ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution) &&
 	       !ASC->GetOwnedGameplayTags().HasTagExact(AgGameplayTags::State_Invincible);
 }

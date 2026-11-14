@@ -21,7 +21,7 @@
     {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_Visible", "Socket": "Muzzle"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_LineOfSight", "Socket": "Muzzle"},
     {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ],
   "Teleport": [
@@ -30,7 +30,7 @@
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/Ag.AgTargetingFilterTask_LockOnTarget"},
-    {"Class": "/Script/Ag.AgTargetingFilterTask_Visible"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_LineOfSight"},
     {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ],
   "LockOn": [
@@ -38,6 +38,7 @@
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_TagRequirements", "Requirements": {"IgnoreTags": ["State.Dead"]}},
     {"Class": "/Script/Ag.AgTargetingFilterTask_OnScreen"},
+    {"Class": "/Script/Ag.AgTargetingFilterTask_LineOfSight"},
     {"Class": "/Script/Ag.AgTargetingSortTask_ScreenCenter"}
   ],
   "LookAt": [

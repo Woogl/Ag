@@ -28,6 +28,77 @@
 DECLARE_TARGETING_DATA_STORE(FAgTargetingRequest)
 DEFINE_TARGETING_DATA_STORE(FAgTargetingRequest)
 
+namespace AgTargetingPrivate
+{
+	/** 출처가 AI면 지각의 시야가 대상을 지금 감지하고, 출처 메시의 Socket(없으면 출처 캡슐 중심)에서 대상 캡슐 중심까지 WorldStatic이 가리지 않습니다. */
+	bool HasLineOfSight(const AActor& Source, const AActor& Target, FName Socket)
+	{
+		const APawn* Pawn = Cast<APawn>(&Source);
+		AAIController* AIController = Pawn ? Cast<AAIController>(Pawn->GetController()) : nullptr;
+		const UAIPerceptionComponent* Perception = AIController ? AIController->GetPerceptionComponent() : nullptr;
+		if (Perception && !Perception->HasActiveStimulus(Target, UAISense::GetSenseID<UAISense_Sight>()))
+		{
+			return false;
+		}
+		FVector Start = Source.GetActorLocation();
+		if (!Socket.IsNone())
+		{
+			const ACharacter* Character = Cast<ACharacter>(&Source);
+			const USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
+			if (!Mesh || !Mesh->DoesSocketExist(Socket))
+			{
+				return false;
+			}
+			Start = Mesh->GetSocketLocation(Socket);
+		}
+		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgLineOfSight), false, &Source);
+		QueryParams.AddIgnoredActor(&Target);
+		return !Source.GetWorld()->LineTraceTestByObjectType(Start, Target.GetActorLocation(), FCollisionObjectQueryParams(ECC_WorldStatic),
+			QueryParams);
+	}
+
+	/** 조종하는 폰의 카메라 컴포넌트 시야로 투영합니다. 처형 카메라나 컷신이 화면을 바꿔도 게임 카메라 기준입니다. */
+	bool ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition, FVector2D* OutScreenSize = nullptr)
+	{
+		const APlayerController* Controller = Cast<APlayerController>(Pawn.GetController());
+		const ULocalPlayer* LocalPlayer = Controller ? Controller->GetLocalPlayer() : nullptr;
+		const UCameraComponent* Camera = Pawn.FindComponentByClass<UCameraComponent>();
+		int32 ViewportWidth = 0;
+		int32 ViewportHeight = 0;
+		if (Controller)
+		{
+			Controller->GetViewportSize(ViewportWidth, ViewportHeight);
+		}
+		if (!LocalPlayer || !Camera || ViewportWidth <= 0 || ViewportHeight <= 0)
+		{
+			return false;
+		}
+		if (OutScreenSize)
+		{
+			*OutScreenSize = FVector2D(ViewportWidth, ViewportHeight);
+		}
+
+		// 엔진 투영(ULocalPlayer::GetProjectionData)은 카메라 매니저의 최종 시야를 쓰므로, 같은 계산을 카메라 컴포넌트의
+		// 시야로 합니다. 컴포넌트의 GetCameraView는 회전을 고치는 부작용이 있어 값을 직접 읽습니다.
+		FMinimalViewInfo View;
+		View.Location = Camera->GetComponentLocation();
+		View.Rotation = Camera->GetComponentRotation();
+		View.FOV = Camera->FieldOfView;
+		View.AspectRatio = Camera->AspectRatio;
+		View.bConstrainAspectRatio = Camera->bConstrainAspectRatio;
+		View.ProjectionMode = Camera->ProjectionMode;
+		const FIntRect ViewRect(0, 0, ViewportWidth, ViewportHeight);
+		FSceneViewProjectionData Projection;
+		Projection.SetViewRectangle(ViewRect);
+		Projection.ViewOrigin = View.Location;
+		Projection.ViewRotationMatrix = FInverseRotationMatrix(View.Rotation) *
+		                                FMatrix(FPlane(0, 0, 1, 0), FPlane(1, 0, 0, 0), FPlane(0, 1, 0, 0), FPlane(0, 0, 0, 1));
+		FMinimalViewInfo::CalculateProjectionMatrixGivenViewRectangle(View, LocalPlayer->AspectRatioAxisConstraint, ViewRect, Projection);
+		return FSceneView::ProjectWorldToScreen(WorldLocation, Projection.GetConstrainedViewRect(), Projection.ComputeViewProjectionMatrix(),
+			OutScreenPosition);
+	}
+} // namespace AgTargetingPrivate
+
 TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AActor& Source)
 {
 	TArray<AActor*> Targets;
@@ -74,76 +145,10 @@ bool AgTargeting::IsInRange(const AActor& Source, const AActor& Target, float Ra
 	return Range > 0.f && Collision && Collision->OverlapComponent(Source.GetActorLocation(), FQuat::Identity, FCollisionShape::MakeSphere(Range));
 }
 
-bool AgTargeting::IsVisible(const AActor& Source, const AActor& Target, FName Socket)
-{
-	const APawn* Pawn = Cast<APawn>(&Source);
-	AAIController* AIController = Pawn ? Cast<AAIController>(Pawn->GetController()) : nullptr;
-	const UAIPerceptionComponent* Perception = AIController ? AIController->GetPerceptionComponent() : nullptr;
-	if (Perception && !Perception->HasActiveStimulus(Target, UAISense::GetSenseID<UAISense_Sight>()))
-	{
-		return false;
-	}
-	FVector Start = Source.GetActorLocation();
-	if (!Socket.IsNone())
-	{
-		const ACharacter* Character = Cast<ACharacter>(&Source);
-		const USkeletalMeshComponent* Mesh = Character ? Character->GetMesh() : nullptr;
-		if (!Mesh || !Mesh->DoesSocketExist(Socket))
-		{
-			return false;
-		}
-		Start = Mesh->GetSocketLocation(Socket);
-	}
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgVisible), false, &Source);
-	QueryParams.AddIgnoredActor(&Target);
-	return !Source.GetWorld()->LineTraceTestByObjectType(Start, Target.GetActorLocation(), FCollisionObjectQueryParams(ECC_WorldStatic),
-		QueryParams);
-}
-
-bool AgTargeting::ProjectToGameScreen(const APawn& Pawn, const FVector& WorldLocation, FVector2D& OutScreenPosition, FVector2D* OutScreenSize)
-{
-	const APlayerController* Controller = Cast<APlayerController>(Pawn.GetController());
-	const ULocalPlayer* LocalPlayer = Controller ? Controller->GetLocalPlayer() : nullptr;
-	const UCameraComponent* Camera = Pawn.FindComponentByClass<UCameraComponent>();
-	int32 ViewportWidth = 0;
-	int32 ViewportHeight = 0;
-	if (Controller)
-	{
-		Controller->GetViewportSize(ViewportWidth, ViewportHeight);
-	}
-	if (!LocalPlayer || !Camera || ViewportWidth <= 0 || ViewportHeight <= 0)
-	{
-		return false;
-	}
-	if (OutScreenSize)
-	{
-		*OutScreenSize = FVector2D(ViewportWidth, ViewportHeight);
-	}
-
-	// 엔진 투영(ULocalPlayer::GetProjectionData)은 카메라 매니저의 최종 시야를 쓰므로, 같은 계산을 카메라 컴포넌트의
-	// 시야로 합니다. 컴포넌트의 GetCameraView는 회전을 고치는 부작용이 있어 값을 직접 읽습니다.
-	FMinimalViewInfo View;
-	View.Location = Camera->GetComponentLocation();
-	View.Rotation = Camera->GetComponentRotation();
-	View.FOV = Camera->FieldOfView;
-	View.AspectRatio = Camera->AspectRatio;
-	View.bConstrainAspectRatio = Camera->bConstrainAspectRatio;
-	View.ProjectionMode = Camera->ProjectionMode;
-	const FIntRect ViewRect(0, 0, ViewportWidth, ViewportHeight);
-	FSceneViewProjectionData Projection;
-	Projection.SetViewRectangle(ViewRect);
-	Projection.ViewOrigin = View.Location;
-	Projection.ViewRotationMatrix = FInverseRotationMatrix(View.Rotation) *
-	                                FMatrix(FPlane(0, 0, 1, 0), FPlane(1, 0, 0, 0), FPlane(0, 1, 0, 0), FPlane(0, 0, 0, 1));
-	FMinimalViewInfo::CalculateProjectionMatrixGivenViewRectangle(View, LocalPlayer->AspectRatioAxisConstraint, ViewRect, Projection);
-	return FSceneView::ProjectWorldToScreen(WorldLocation, Projection.GetConstrainedViewRect(), Projection.ComputeViewProjectionMatrix(),
-		OutScreenPosition);
-}
-
 AActor* AgTargeting::FindSideTarget(const FAgTargetingRequest& Request, APawn& Source, const AActor& Current, float Direction)
 {
 	FVector2D CurrentPosition;
-	if (!ProjectToGameScreen(Source, Current.GetActorLocation(), CurrentPosition))
+	if (!AgTargetingPrivate::ProjectToGameScreen(Source, Current.GetActorLocation(), CurrentPosition))
 	{
 		return nullptr;
 	}
@@ -152,7 +157,7 @@ AActor* AgTargeting::FindSideTarget(const FAgTargetingRequest& Request, APawn& S
 	for (AActor* Candidate : FindTargets(Request, Source))
 	{
 		FVector2D Position;
-		if (Candidate == &Current || !ProjectToGameScreen(Source, Candidate->GetActorLocation(), Position))
+		if (Candidate == &Current || !AgTargetingPrivate::ProjectToGameScreen(Source, Candidate->GetActorLocation(), Position))
 		{
 			continue;
 		}
@@ -241,16 +246,17 @@ bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequest
 	const AActor* Candidate = TargetData.HitResult.GetActor();
 	FVector2D ScreenPosition;
 	FVector2D ScreenSize;
-	const bool bOnScreen = Pawn && Candidate && AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition, &ScreenSize) &&
+	const bool bOnScreen = Pawn && Candidate &&
+	                       AgTargetingPrivate::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition, &ScreenSize) &&
 	                       ScreenPosition.X >= 0. && ScreenPosition.Y >= 0. && ScreenPosition.X <= ScreenSize.X && ScreenPosition.Y <= ScreenSize.Y;
 	return !bOnScreen;
 }
 
-bool UAgTargetingFilterTask_Visible::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+bool UAgTargetingFilterTask_LineOfSight::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
 	const AActor* Candidate = TargetData.HitResult.GetActor();
-	return !Source || !Source->SourceActor || !Candidate || !AgTargeting::IsVisible(*Source->SourceActor, *Candidate, Socket);
+	return !Source || !Source->SourceActor || !Candidate || !AgTargetingPrivate::HasLineOfSight(*Source->SourceActor, *Candidate, Socket);
 }
 
 float UAgTargetingSortTask_ScreenCenter::GetScoreForTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
@@ -260,7 +266,7 @@ float UAgTargetingSortTask_ScreenCenter::GetScoreForTarget(const FTargetingReque
 	const AActor* Candidate = TargetData.HitResult.GetActor();
 	FVector2D ScreenPosition;
 	FVector2D ScreenSize;
-	if (!Pawn || !Candidate || !AgTargeting::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition, &ScreenSize))
+	if (!Pawn || !Candidate || !AgTargetingPrivate::ProjectToGameScreen(*Pawn, Candidate->GetActorLocation(), ScreenPosition, &ScreenSize))
 	{
 		return TNumericLimits<float>::Max();
 	}
