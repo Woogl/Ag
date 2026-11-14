@@ -98,6 +98,7 @@ void AAgGameMode::HandleCharacterDied(AAgCharacterBase& DeadCharacter)
 	StageState->DecideStageResult(bPlayerDied ? EAgStageResult::GameOver : EAgStageResult::Clear);
 	if (StageResultPresentationTime > 0.f)
 	{
+		FTimerHandle ResultTimer;
 		GetWorldTimerManager().SetTimer(ResultTimer, this, &ThisClass::ShowResult, StageResultPresentationTime);
 	}
 	else

@@ -34,10 +34,12 @@ void AAgShockwave::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 생성 위치는 발사자의 캡슐 중심이므로 발이 닿은 지면으로 내립니다.
+	// 생성 위치가 캡슐 중심이든 소켓이든, 고리는 발사자의 발이 닿은 지면에서 퍼집니다.
 	if (const AAgCharacterBase* Shooter = GetInstigator<AAgCharacterBase>())
 	{
-		AddActorWorldOffset(FVector(0.f, 0.f, -Shooter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+		FVector Location = GetActorLocation();
+		Location.Z = Shooter->GetActorLocation().Z - Shooter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		SetActorLocation(Location);
 	}
 	UpdateLook();
 }

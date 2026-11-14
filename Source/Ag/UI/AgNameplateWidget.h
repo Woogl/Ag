@@ -44,8 +44,6 @@ protected:
 
 private:
 	void Unbind();
-
-	/** 처형 피격 중의 PP 바는 처형으로 전환될 때 멈춘 표시를 그대로 둡니다. */
 	void ClearTrails();
 
 	void HandleAttributeChanged(const FOnAttributeChangeData& Data);

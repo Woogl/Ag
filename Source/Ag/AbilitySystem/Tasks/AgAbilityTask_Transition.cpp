@@ -28,7 +28,7 @@ void UAgAbilityTask_Transition::Activate()
 	}
 	if (ASC && Params.TagRemoved.IsValid())
 	{
-		// 같은 시각에 시작한 항목이 아직 태그를 붙이지 않았을 수 있어, 없으면 다음 틱에 다시 봅니다.
+		// 같은 시각에 시작한 항목이 아직 태그를 붙이지 않았을 수 있어, 없으면 타이머 매니저의 다음 틱(이번 프레임일 수 있음)에 다시 봅니다.
 		if (!WaitForTag())
 		{
 			EndingTimer = GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateUObject(this, &ThisClass::RecheckTag));

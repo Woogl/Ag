@@ -140,7 +140,7 @@ void AAgCharacterBase::PushDisableMontageRootMotion()
 
 void AAgCharacterBase::PopDisableMontageRootMotion()
 {
-	if (MontageRootMotionDisableCount == 0 || --MontageRootMotionDisableCount > 0)
+	if (--MontageRootMotionDisableCount > 0)
 	{
 		return;
 	}
@@ -294,7 +294,11 @@ void AAgCharacterBase::MoveBlockedBy(const FHitResult& Impact)
 
 void AAgCharacterBase::FellOutOfWorld(const UDamageType& DamageType)
 {
-	Kill();
+	// 죽은 몸은 그 자리에 남아 엔진이 매 프레임 다시 부릅니다.
+	if (!IsDead())
+	{
+		Kill();
+	}
 }
 
 void AAgCharacterBase::ApplyDeathState()
@@ -317,27 +321,6 @@ void AAgCharacterBase::NotifyGameModeOfDeath()
 	}
 }
 
-void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
-{
-	FGameplayEventData Payload;
-	Payload.EventTag = EventTag;
-	Payload.Instigator = this;
-	Payload.Target = this;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
-}
-
-void AAgCharacterBase::DieWithRagdoll(const FVector& PushVelocity)
-{
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-	{
-		AnimInstance->StopAllMontages(0.f);
-	}
-
-	ApplyDeathState();
-	StartRagdoll(PushVelocity);
-	NotifyGameModeOfDeath();
-}
-
 void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 {
 	GetCharacterMovement()->DisableMovement();
@@ -356,9 +339,25 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 
 void AAgCharacterBase::Die(const AActor* Attacker)
 {
+	// 사망 상태를 먼저 붙여, 몽타주가 끊기며 끝나는 어빌리티의 콜백도 죽은 캐릭터로 봅니다.
+	ApplyDeathState();
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		AnimInstance->StopAllMontages(0.f);
+	}
 	const FVector Push =
 		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * AgCharacterBasePrivate::DeathPushSpeed : FVector::ZeroVector;
-	DieWithRagdoll(Push);
+	StartRagdoll(Push);
+	NotifyGameModeOfDeath();
+}
+
+void AAgCharacterBase::SendEventToSelf(const FGameplayTag& EventTag)
+{
+	FGameplayEventData Payload;
+	Payload.EventTag = EventTag;
+	Payload.Instigator = this;
+	Payload.Target = this;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventTag, Payload);
 }
 
 void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)

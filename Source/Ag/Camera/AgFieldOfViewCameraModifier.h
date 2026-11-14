@@ -7,7 +7,7 @@
 #include "Data/AgCameraData.h"
 #include "AgFieldOfViewCameraModifier.generated.h"
 
-UCLASS()
+UCLASS(NotBlueprintable)
 class UAgFieldOfViewCameraModifier : public UCameraModifier
 {
 	GENERATED_BODY()

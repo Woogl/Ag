@@ -71,6 +71,4 @@ protected:
 
 private:
 	void ShowResult();
-
-	FTimerHandle ResultTimer;
 };

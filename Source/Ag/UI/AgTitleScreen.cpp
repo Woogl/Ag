@@ -19,7 +19,7 @@ void UAgTitleScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	StartButton->OnClicked().AddUObject(this, &ThisClass::OpenStageSelect);
+	PlayButton->OnClicked().AddUObject(this, &ThisClass::OpenStageSelect);
 	ControlsButton->OnClicked().AddUObject(this, &ThisClass::OpenControls);
 
 	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
@@ -30,7 +30,7 @@ void UAgTitleScreen::NativeOnInitialized()
 
 UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
 {
-	return StartButton;
+	return PlayButton;
 }
 
 void UAgTitleScreen::OpenStageSelect()

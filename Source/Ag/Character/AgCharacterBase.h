@@ -126,10 +126,6 @@ protected:
 	/** 승패는 게임 모드가 정하므로, 죽은 캐릭터가 게임 모드에 직접 알립니다. */
 	void NotifyGameModeOfDeath();
 
-	void SendEventToSelf(const FGameplayTag& EventTag);
-
-	void DieWithRagdoll(const FVector& PushVelocity);
-
 	void StartRagdoll(const FVector& PushVelocity);
 
 	/** 살아 있는 캐릭터가 사망 이벤트를 받으면 한 번 불립니다. */
@@ -142,6 +138,8 @@ protected:
 	TObjectPtr<UAgCharacterData> CharacterData;
 
 private:
+	void SendEventToSelf(const FGameplayTag& EventTag);
+
 	void HandleDeathEvent(const FGameplayEventData* Payload);
 
 	void GrantAbilities();

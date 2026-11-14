@@ -29,7 +29,7 @@ protected:
 	TSubclassOf<UAgControlsPopup> ControlsPopupClass;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> StartButton;
+	TObjectPtr<UAgButton> PlayButton;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> ControlsButton;

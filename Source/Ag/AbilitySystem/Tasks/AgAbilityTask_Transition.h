@@ -29,6 +29,7 @@ struct FAgTransitionParams : public FAgTaskParams
 	UPROPERTY()
 	FGameplayTag TagRemoved;
 
+	/** TagRemoved와 함께 켜면, 그 태그를 주는 효과가 끝나기 ToSection 길이만큼 전에 미리 넘어가 그 섹션이 효과와 함께 끝납니다. */
 	UPROPERTY()
 	bool bSectionEndsWithTag = false;
 

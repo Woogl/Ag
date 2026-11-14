@@ -88,11 +88,7 @@ void UAgNameplateWidget::Unbind()
 void UAgNameplateWidget::ClearTrails()
 {
 	HPBar->ClearTrail();
-	const UAbilitySystemComponent* Target = ASC.Get();
-	if (!Target || !Target->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
-	{
-		PPBar->ClearTrail();
-	}
+	PPBar->ClearTrail();
 }
 
 void UAgNameplateWidget::HandleAttributeChanged(const FOnAttributeChangeData& Data)
