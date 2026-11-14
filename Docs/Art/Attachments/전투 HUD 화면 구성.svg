@@ -59,10 +59,11 @@
   <circle cx="960" cy="470" r="10" fill="none" stroke="#FFFFFF" stroke-width="2"/>
   <circle cx="960" cy="470" r="2" fill="#FFFFFF"/>
 
-  <!-- [5] 처형 안내: 락온 마커 오른쪽 가장자리에서 12px -->
-  <rect x="982" y="447" width="248" height="46" rx="23" fill="#000000" fill-opacity="0.55"/>
-  <text x="1106" y="481" font-size="32" fill="#FFFFFF" text-anchor="middle">[F] 처형</text>
-  <text x="982" y="512" font-size="14" fill="#9aa4b1">(처형 가능 시)</text>
+  <!-- [5] 상호작용 안내: 락온 마커 오른쪽 가장자리에서 12px, 키 표시 지름 36px, 행동 이름까지 8px -->
+  <circle cx="1000" cy="470" r="18" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5"/>
+  <text x="1000" y="478" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle">F</text>
+  <text x="1026" y="481" font-size="32" fill="#FFFFFF" stroke="#000000" stroke-width="4" paint-order="stroke">처형</text>
+  <text x="982" y="512" font-size="14" fill="#9aa4b1">(상호작용 대상이 있을 때)</text>
 
   <!-- [6] 적 네임플레이트: 머리 위 16px, HP 118 × 10px, 간격 6px, PP 118 × 4px -->
   <rect x="1341" y="376" width="118" height="10" fill="#000000" fill-opacity="0.5"/>

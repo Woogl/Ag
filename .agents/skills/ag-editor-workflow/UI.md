@@ -7,6 +7,7 @@
   - `OverlaySlot`은 기본이 왼쪽 위 정렬이라 배경 이미지는 채우기로 바꾼다.
   - `ProgressBar`의 기본 스타일은 엔진 텍스처를 쓴다. 단색 막대는 `ResourceName`을 "None", `ImageType`을 NoImage로 둔다.
   - `GetWidgets`는 부모 클래스의 BindWidget 이름도 `widget: None`으로 보여 준다. 이름이 이미 쓰였는지는 `widget`이 있는지로 판단한다.
+  - 에디터 파이썬에서는 `unreal.UMGToolSet`에 함수 이름이 없다. 기본 객체로 부른다: `unreal.get_default_object(unreal.UMGToolSet).call_method("AddWidget", (bp, 클래스, 이름, 부모, -1))`. 돌려받은 정보의 `widget`·`slot`은 `get_editor_property`로 읽는다. 새 위젯 블루프린트는 `CreateWidgetBlueprint`, 컴파일은 `CompileWidgetBlueprint`도 같은 방식이다.
 - 슬레이트는 틴트 알파가 0인 박스를 그리지 않는다. 채움이 투명한 둥근 박스는 외곽선도 보이지 않는다.
 - `FKey::GetDisplayName()`은 에디터 언어를 따른다(한국어 에디터에서 '왼쪽 Shift').
 - CommonUI에서 위 화면은 포커스와 키 입력만 가져가고 클릭은 뒤 화면에 닿는다. 팝업은 화면 전체를 덮는 배경으로 클릭을 막는다.
