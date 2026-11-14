@@ -13,7 +13,7 @@ class UStaticMeshComponent;
 
 /**
  * 상호작용하면 위로 올라가 열리는 성문입니다. 한 번 열리면 닫히지 않습니다. 열리는 시간과 올라가는 높이는 BP의 이동
- * 컴포넌트(Duration, ControlPoints)가, 막는 범위와 상호작용 범위는 상자 크기가 정합니다.
+ * 컴포넌트(Duration, ControlPoints)가, 상호작용 범위는 상자 크기가 정합니다.
  */
 UCLASS(Abstract)
 class AAgGate : public AActor, public IAgInteractable
@@ -29,20 +29,10 @@ public:
 
 	virtual void PreInitializeComponents() override;
 
-protected:
-	virtual void BeginPlay() override;
-
 private:
-	UFUNCTION()
-	void HandleOpened(const FHitResult& ImpactResult, float Time);
-
-	/** 보이는 문입니다. 올라가는 도중에 아래로 지나가지 못하도록 충돌은 Blocker가 맡습니다. */
+	/** 이동, 시선, 탄환을 막는 문입니다. 올라간 만큼 아래가 열립니다. */
 	UPROPERTY(VisibleAnywhere, Category = "Gate")
 	TObjectPtr<UStaticMeshComponent> Door;
-
-	/** 문이 다 올라갈 때까지 이동, 시선, 탄환을 막습니다. */
-	UPROPERTY(VisibleAnywhere, Category = "Gate")
-	TObjectPtr<UBoxComponent> Blocker;
 
 	UPROPERTY(VisibleAnywhere, Category = "Gate")
 	TObjectPtr<UBoxComponent> InteractionRange;
