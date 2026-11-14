@@ -297,7 +297,7 @@ sequenceDiagram
 | `UAgDamageExecution` | `UGameplayEffectExecutionCalculation` | 피해(보너스 대미지 포함) 계산과 결과 태그 생성 |
 | `UAgFallDamageMagnitude` | `UGameplayModMagnitudeCalculation` | 스펙의 떨어진 높이, `CombatRules.json`의 두 높이, 대상의 MaxHP로 낙하 대미지의 HP 감소량을 계산합니다. |
 | `UAgDamageResultGameplayEffectComponent` | `UGameplayEffectComponent` | 강인도·슈퍼아머·현재 상태에 따른 반응 이벤트 선택, 물리 피격, 전투 결과와 실제 반응의 GameplayCue 전달·히트스톱·타의 첫 적중 알림(`Event.AttackHit`), 패리한 공격자에게 패리 대미지(`CombatRules.json`의 배율로 만든 `Damage` 스펙, 결과 연출과 대미지 숫자 없음), 가드한 쪽의 이동 잠금(`MoveLock`). 반응 억제와 다른 적중 처리를 분리합니다. |
-| `UAgGameplayCueNotify_Burst` | `UGameplayCueNotify_Burst` | 일회성 효과 재생 뒤 전투 카메라 연출을 요청합니다. 공통 정적 함수는 네 전투 태그만 처리하며 BurstLatent에서도 호출합니다. `MagnitudeNiagaraParameter`를 두면 큐의 `RawMagnitude`(예: 판정 반경)를 생성한 나이아가라의 그 파라미터에 넣습니다. |
+| `UAgGameplayCueNotify_Burst` | `UGameplayCueNotify_Burst` | 일회성 효과 재생 뒤 전투 카메라 연출을 요청합니다. 공통 정적 함수는 네 전투 태그만 처리하며 BurstLatent에서도 호출합니다. |
 | `AAgGameplayCueNotify_BurstLatent` | `AGameplayCueNotify_BurstLatent` | 화면 효과(`UAgPostProcessComponent`)가 있는 일회성 큐. 화면 효과가 실제 시간으로 끝나면 회수하며, 길이는 큐의 `Duration`이고 없으면 진행 중인 슬로우모션의 길이입니다. 전투 카메라 연출도 요청합니다. |
 | `AAgGameplayCueNotify_Looping` | `AGameplayCueNotify_Looping` | 지속 큐에 엔진 큐 데이터로 안 되는 칸을 더합니다. 무기에 붙이기, 나이아가라 색·값 파라미터, 두 소켓 사이에 놓기, 대상의 시간 배율 따르기(히트스톱, 시간 정지 보정), 화면 효과, 반복 실행마다 놓는 메시와 그 자리의 꺼질 때 효과입니다. |
 | `UAgGameplayCueNotify_DamageFloater` | `UGameplayCueNotify_Static` | 플레이어가 준 피해의 대미지 숫자(`AAgDamageFloater`)를 띄웁니다. |
