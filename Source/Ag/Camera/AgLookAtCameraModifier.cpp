@@ -14,6 +14,11 @@ UAgLookAtCameraModifier::UAgLookAtCameraModifier(const FObjectInitializer& Objec
 
 void UAgLookAtCameraModifier::Start(const AActor& InTarget, const FAgCameraLookAt& LookAt)
 {
+	// 엔진은 바로 끌 때(컷신 시작, 대상 소멸) 알파를 그대로 두므로, 꺼져 있었으면 0에서부터 옮겨 갑니다.
+	if (IsDisabled())
+	{
+		Alpha = 0.f;
+	}
 	Target = &InTarget;
 	Distance = LookAt.Distance;
 	AlphaInTime = LookAt.BlendInTime;

@@ -47,7 +47,6 @@ EDataValidationResult AAgGameplayCueNotify_BurstLatent::IsDataValid(FDataValidat
 
 bool AAgGameplayCueNotify_BurstLatent::ExecuteBurst(AActor* Target, const FGameplayCueParameters& Parameters)
 {
-	PostProcess->Reset();
 	// 엔진은 회수한 큐 액터를 숨겨 두고, 숨은 액터의 포스트프로세스 컴포넌트는 그려지지 않습니다.
 	SetActorHiddenInGame(false);
 	if (!PostProcess->HasMaterial())

@@ -218,6 +218,7 @@ void AAgPlayerCameraManager::SetObservedAbilitySystem(UAgAbilitySystemComponent*
 
 void AAgPlayerCameraManager::ResetCameraState()
 {
+	StopAllCameraShakes(true);
 	ExecutionCamera->DisableModifier(true);
 	FieldOfViewCamera->StopAll();
 	PreviousCameraTarget.Reset();
@@ -365,13 +366,9 @@ void AAgPlayerCameraManager::HandleSprintFieldOfViewChanged(const FGameplayTag T
 
 void AAgPlayerCameraManager::HandleCutsceneChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	if (NewCount == 0)
+	// 모디파이어와 셰이크는 컷신 카메라에도 적용되고 시간 정지 동안에는 스스로 끝나지 못하므로, 진행 중인 것을 모두 끝냅니다.
+	if (NewCount > 0)
 	{
-		return;
+		ResetCameraState();
 	}
-	// 셰이크는 컷신 카메라에도 더해지므로 진행 중인 연출을 끝냅니다.
-	StopAllCameraShakes(true);
-	FieldOfViewCamera->StopAll();
-	TurnOpponent.Reset();
-	LookAtCamera->DisableModifier(true);
 }

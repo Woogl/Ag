@@ -13,6 +13,11 @@
 namespace AgStatBarPrivate
 {
 	const FName TimeParameter(TEXT("Time"));
+
+	bool UsesFill(const UProgressBar& Bar, const UObject* Fill)
+	{
+		return Fill && Bar.GetWidgetStyle().FillImage.GetResourceObject() == Fill;
+	}
 } // namespace AgStatBarPrivate
 
 void UAgStatBar::SetValue(float Value, float MaxValue)
@@ -86,7 +91,7 @@ void UAgStatBar::ShowGroggy(float Time)
 	}
 	GroggyFill->SetScalarParameterValue(AgStatBarPrivate::TimeParameter, Time);
 
-	if (Bar->GetWidgetStyle().FillImage.GetResourceObject() != GroggyFill)
+	if (!AgStatBarPrivate::UsesFill(*Bar, GroggyFill))
 	{
 		FProgressBarStyle Style = Bar->GetWidgetStyle();
 		DefaultFillImage = Style.FillImage;
@@ -104,7 +109,7 @@ void UAgStatBar::HideGroggy()
 	{
 		GroggyBurst->SetVisibility(ESlateVisibility::Collapsed);
 	}
-	if (GroggyFill && Bar->GetWidgetStyle().FillImage.GetResourceObject() == GroggyFill)
+	if (AgStatBarPrivate::UsesFill(*Bar, GroggyFill))
 	{
 		FProgressBarStyle Style = Bar->GetWidgetStyle();
 		Style.FillImage = DefaultFillImage;
@@ -117,7 +122,11 @@ void UAgStatBar::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	Bar->SetFillColorAndOpacity(FillColor);
+	// 화면 공간 위젯은 숨겼다 보이거나 레이어를 옮길 때마다 다시 구성되므로, 그로기 채움을 보이는 중이면 그 흰색을 덮지 않습니다.
+	if (!AgStatBarPrivate::UsesFill(*Bar, GroggyFill))
+	{
+		Bar->SetFillColorAndOpacity(FillColor);
+	}
 	TrailBar->SetVisibility(bShowTrail ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	ValueText->SetVisibility(bShowValue ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 	if (UCanvasPanelSlot* ValueSlot = Cast<UCanvasPanelSlot>(ValueText->Slot))

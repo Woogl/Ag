@@ -16,6 +16,11 @@ UAgExecutionCameraModifier::UAgExecutionCameraModifier(const FObjectInitializer&
 
 void UAgExecutionCameraModifier::Start(const AActor& InPlayer, const AActor& InTarget)
 {
+	// 엔진은 바로 끌 때(컷신 시작) 알파를 그대로 두므로, 꺼져 있었으면 0에서부터 옮겨 갑니다.
+	if (IsDisabled())
+	{
+		Alpha = 0.f;
+	}
 	Elapsed = 0.f;
 	Settings = UAgAssetManager::Get().GetCameraData().Execution;
 	AlphaInTime = Settings.AlphaInTime;
