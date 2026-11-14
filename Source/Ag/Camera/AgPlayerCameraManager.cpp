@@ -6,6 +6,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "Camera/AgExecutionCameraModifier.h"
 #include "Camera/AgFieldOfViewCameraModifier.h"
+#include "Camera/AgLookAtCameraModifier.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
@@ -46,6 +47,7 @@ AAgPlayerCameraManager::AAgPlayerCameraManager()
 
 	DefaultModifiers.Add(UAgExecutionCameraModifier::StaticClass());
 	DefaultModifiers.Add(UAgFieldOfViewCameraModifier::StaticClass());
+	DefaultModifiers.Add(UAgLookAtCameraModifier::StaticClass());
 }
 
 void AAgPlayerCameraManager::InitializeFor(APlayerController* PC)
@@ -63,10 +65,15 @@ void AAgPlayerCameraManager::Tick(float DeltaSeconds)
 	if (AAgPlayerCharacter* Player = GetPlayerCharacter())
 	{
 		const FVector PivotLocation = Player->GetCameraBoom()->GetComponentLocation();
-		AAgCharacterBase* Target = Player->GetLockOnTarget();
-		if (Target != PreviousLockOnTarget.Get())
+		if (IsExecutionCameraActive())
 		{
-			PreviousLockOnTarget = Target;
+			LookAtCamera->Stop();
+		}
+		const AActor* LockOnTarget = Player->GetLockOnTarget();
+		const AActor* Target = LockOnTarget ? LockOnTarget : LookAtCamera->GetLookAtTarget();
+		if (Target != PreviousCameraTarget.Get())
+		{
+			PreviousCameraTarget = Target;
 			LockOnPitchRate = 0.f;
 			LockOnYawRate = 0.f;
 		}
@@ -95,7 +102,7 @@ void AAgPlayerCameraManager::ProcessViewRotation(float DeltaTime, FRotator& OutV
 			FlickSamples.Reset();
 			FlickDirection = 0.f;
 		}
-		if (bLockedOn || IsExecutionCameraActive())
+		if (bLockedOn || IsExecutionCameraActive() || LookAtCamera->GetLookAtTarget())
 		{
 			OutDeltaRot = FRotator::ZeroRotator;
 		}
@@ -126,12 +133,38 @@ void AAgPlayerCameraManager::PlayCameraReaction(EAgCameraSituation Situation, co
 	}
 }
 
+void AAgPlayerCameraManager::StartLookAt(const AActor& Target, const FAgCameraLookAt& LookAt)
+{
+	const AAgPlayerCharacter* Player = GetPlayerCharacter();
+	if (!Player || IsExecutionCameraActive())
+	{
+		return;
+	}
+	// 같은 프레임에 여러 비추기가 시작되면 처리 순서와 관계없이 가장 가까운 대상을 비춥니다.
+	const AActor* Current = LookAtCamera->GetLookAtTarget();
+	if (LookAtStartFrame == GFrameCounter && Current && Player->GetSquaredDistanceTo(Current) <= Player->GetSquaredDistanceTo(&Target))
+	{
+		return;
+	}
+	LookAtCamera->Start(Target, LookAt);
+	LookAtStartFrame = GFrameCounter;
+}
+
+void AAgPlayerCameraManager::StopLookAt(const AActor& Target)
+{
+	if (LookAtCamera->GetLookAtTarget() == &Target)
+	{
+		LookAtCamera->Stop();
+	}
+}
+
 void AAgPlayerCameraManager::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
 	ExecutionCamera = CastChecked<UAgExecutionCameraModifier>(FindCameraModifierByClass(UAgExecutionCameraModifier::StaticClass()));
 	FieldOfViewCamera = CastChecked<UAgFieldOfViewCameraModifier>(FindCameraModifierByClass(UAgFieldOfViewCameraModifier::StaticClass()));
+	LookAtCamera = CastChecked<UAgLookAtCameraModifier>(FindCameraModifierByClass(UAgLookAtCameraModifier::StaticClass()));
 }
 
 void AAgPlayerCameraManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -187,7 +220,8 @@ void AAgPlayerCameraManager::ResetCameraState()
 {
 	ExecutionCamera->DisableModifier(true);
 	FieldOfViewCamera->StopAll();
-	PreviousLockOnTarget.Reset();
+	PreviousCameraTarget.Reset();
+	LookAtCamera->DisableModifier(true);
 	TurnOpponent.Reset();
 	FlickSamples.Reset();
 	FlickDirection = 0.f;
@@ -199,7 +233,7 @@ void AAgPlayerCameraManager::HandlePossessedPawnChanged(APawn* OldPawn, APawn* N
 	SetObservedAbilitySystem(Player ? Player->GetAbilitySystemComponent() : nullptr);
 }
 
-void AAgPlayerCameraManager::UpdateLockOnCamera(AAgPlayerCharacter& Player, const AAgCharacterBase& Target, const FVector& PivotLocation, float DeltaTime)
+void AAgPlayerCameraManager::UpdateLockOnCamera(AAgPlayerCharacter& Player, const AActor& Target, const FVector& PivotLocation, float DeltaTime)
 {
 	const FAgLockOnCameraSettings& Settings = UAgAssetManager::Get().GetCameraData().LockOn;
 	FRotator Goal = (Target.GetTargetLocation(&Player) - PivotLocation).Rotation();
@@ -262,7 +296,7 @@ void AAgPlayerCameraManager::StartCameraTurn(const AAgPlayerCharacter& Player, c
 void AAgPlayerCameraManager::UpdateCameraTurn(const AAgPlayerCharacter& Player, const FVector& PivotLocation, float DeltaTime)
 {
 	const AActor* Opponent = TurnOpponent.Get();
-	if (!Opponent || Player.GetLockOnTarget() || IsExecutionCameraActive())
+	if (!Opponent || Player.GetLockOnTarget() || IsExecutionCameraActive() || LookAtCamera->GetLookAtTarget())
 	{
 		TurnOpponent.Reset();
 		return;
@@ -339,4 +373,5 @@ void AAgPlayerCameraManager::HandleCutsceneChanged(const FGameplayTag Tag, int32
 	StopAllCameraShakes(true);
 	FieldOfViewCamera->StopAll();
 	TurnOpponent.Reset();
+	LookAtCamera->DisableModifier(true);
 }

@@ -52,6 +52,23 @@ struct FAgFieldOfViewEffect
 	}
 };
 
+// 몽타주의 대상 비추기 노티파이 상태에서 고치므로 편집 가능하게 둡니다.
+USTRUCT()
+struct FAgCameraLookAt
+{
+	GENERATED_BODY()
+
+	/** 카메라를 대상의 락온 지점에서 이 거리까지 당깁니다. 이미 더 가까우면 당기지 않습니다. */
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0"))
+	float Distance = 400.f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0"))
+	float BlendInTime = 0.5f;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = "0"))
+	float BlendOutTime = 0.6f;
+};
+
 USTRUCT()
 struct FAgCameraReactionSettings
 {
