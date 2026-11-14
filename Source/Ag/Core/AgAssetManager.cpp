@@ -13,6 +13,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
+#include "Internationalization/StringTableRegistry.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "TargetingSystem/TargetingPreset.h"
@@ -213,6 +214,9 @@ void UAgAssetManager::StartInitialLoading()
 		const EAgEffect Effect = static_cast<EAgEffect>(NativeEffectEnum->GetValueByIndex(Index));
 		NativeEffects.Add(Effect, AgEffectData::MakeNativeEffect(Effect, *this));
 	}
+	// 현지화가 필요한 문구의 표입니다. JSON의 글자 값이 이 표를 가리키므로 먼저 등록합니다. 엔진의 번역 수집이 소스에서 이 매크로를
+	// 찾아 CSV를 읽으므로, 경로를 글자 그대로 적은 매크로로 등록합니다. 에디터에서는 엔진이 이 CSV의 변경을 감시해 다시 읽습니다.
+	LOCTABLE_FROMFILE_GAME("StringTable", "StringTable", "StringTables/StringTable.csv");
 	LoadJsonData(true);
 #if WITH_EDITOR
 	// 에셋 쪽에서 고친 오류는 JSON이 바뀌지 않아 파일 감시가 다시 읽지 않으므로, 게임 월드를 시작할 때 다시 읽습니다.

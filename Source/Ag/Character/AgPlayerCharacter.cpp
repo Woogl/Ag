@@ -21,6 +21,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputActionValue.h"
+#include "Interaction/AgInteractionComponent.h"
 #include "TimerManager.h"
 
 AAgPlayerCharacter::AAgPlayerCharacter()
@@ -52,6 +53,9 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
 
 	CombatStats = CreateDefaultSubobject<UAgCombatStatsComponent>(TEXT("CombatStats"));
+
+	Interaction = CreateDefaultSubobject<UAgInteractionComponent>(TEXT("Interaction"));
+	Interaction->SetupAttachment(RootComponent);
 }
 
 bool AAgPlayerCharacter::IsMoveInputIgnored() const
@@ -152,7 +156,7 @@ void AAgPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		{Skill3Action, AgGameplayTags::Input_Skill3},
 		{Skill4Action, AgGameplayTags::Input_Skill4},
 		{UltimateAction, AgGameplayTags::Input_Ultimate},
-		{ExecuteAction, AgGameplayTags::Input_Execute},
+		{InteractAction, AgGameplayTags::Input_Interact},
 		{LockOnAction, AgGameplayTags::Input_LockOn},
 		{PotionAction, AgGameplayTags::Input_Potion},
 	};
@@ -247,7 +251,7 @@ void AAgPlayerCharacter::HandleInputPressed(FGameplayTag InputTag)
 		return;
 	}
 	const bool bFallingJump = InputTag == AgGameplayTags::Input_Jump && GetCharacterMovement()->IsFalling();
-	const bool bUnbuffered = bFallingJump || InputTag == AgGameplayTags::Input_Execute || InputTag == AgGameplayTags::Input_Potion;
+	const bool bUnbuffered = bFallingJump || InputTag == AgGameplayTags::Input_Interact || InputTag == AgGameplayTags::Input_Potion;
 	if (!bUnbuffered)
 	{
 		BufferedInput = InputTag;
@@ -260,6 +264,12 @@ void AAgPlayerCharacter::RunInput(const FGameplayTag& InputTag)
 	if (InputTag == AgGameplayTags::Input_Jump)
 	{
 		Jump();
+		return;
+	}
+	// 상호작용은 안내가 가리키는 대상에 해야 하므로, 대상을 고르는 컴포넌트가 어빌리티 발동과 장치 상호작용 중 하나를 합니다.
+	if (InputTag == AgGameplayTags::Input_Interact)
+	{
+		Interaction->Interact();
 		return;
 	}
 	// 같은 키의 어빌리티는 발동 조건이 서로 배타적이라 하나만 발동합니다. 발동한 것이 없으면 실행 중인 행동이 이 입력을

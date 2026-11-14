@@ -8,7 +8,6 @@
 #include "GameplayTagContainer.h"
 #include "AgEnemyCharacter.generated.h"
 
-class AAgPlayerCharacter;
 class APlayerController;
 class FTokenizedMessage;
 class UAnimMontage;
@@ -104,8 +103,6 @@ private:
 
 	void HandleAbilityEnded(const FAbilityEndedData& Data);
 
-	bool IsExecutionTargetOf(AAgPlayerCharacter& Player) const;
-
 	void UpdateWorldWidgets();
 
 	/** 네임플레이트 기준점이 화면 안에 있고, 카메라에서 몸 중심까지 벽·지형에 가리지 않았습니다. */
@@ -121,9 +118,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> LockOnMarker;
-
-	UPROPERTY(VisibleAnywhere, Category = "UI")
-	TObjectPtr<UWidgetComponent> ExecutionPrompt;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UAgNameplateComponent> Nameplate;

@@ -383,7 +383,8 @@
   },
   "Execution": {
     "AbilityTags": ["Ability.Action.Execution"],
-    "InputTag": "Input.Execute",
+    "InputTag": "Input.Interact",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Interaction.Execute\")",
     "ActivationBlockedTags": ["State.Busy", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead"],
     "ActivationOwnedTags": ["State.Execution", "State.Invincible", "State.Busy", "State.Acting"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],

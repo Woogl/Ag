@@ -8,6 +8,7 @@
 #include "AgPlayerCharacter.generated.h"
 
 class UAgCombatStatsComponent;
+class UAgInteractionComponent;
 class UCameraComponent;
 class UCapsuleComponent;
 class UGameplayAbility;
@@ -113,6 +114,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	TObjectPtr<UAgCombatStatsComponent> CombatStats;
 
+	UPROPERTY(VisibleAnywhere, Category = "Interaction")
+	TObjectPtr<UAgInteractionComponent> Interaction;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> InputMapping;
 
@@ -150,7 +154,7 @@ private:
 	TObjectPtr<UInputAction> UltimateAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	TObjectPtr<UInputAction> ExecuteAction;
+	TObjectPtr<UInputAction> InteractAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> LockOnAction;

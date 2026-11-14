@@ -5,7 +5,6 @@
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgGameplayAbility.h"
-#include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
 #include "Animation/AnimInstance.h"
@@ -56,13 +55,11 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	GetCharacterMovement()->bCanWalkOffLedges = false;
 
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
-	ExecutionPrompt = CreateDefaultSubobject<UWidgetComponent>(TEXT("ExecutionPrompt"));
 	Nameplate = CreateDefaultSubobject<UAgNameplateComponent>(TEXT("Nameplate"));
 	LockOnMarker->SetupAttachment(GetMesh(), AgEnemyCharacterPrivate::LockOnBone);
-	ExecutionPrompt->SetupAttachment(GetMesh(), AgEnemyCharacterPrivate::LockOnBone);
 	Nameplate->SetupAttachment(GetMesh(), AgEnemyCharacterPrivate::NameplateBone);
 	Nameplate->SetRelativeLocation(AgEnemyCharacterPrivate::NameplateOffset);
-	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), ExecutionPrompt.Get(), static_cast<UWidgetComponent*>(Nameplate.Get())})
+	for (UWidgetComponent* WorldWidget : {LockOnMarker.Get(), static_cast<UWidgetComponent*>(Nameplate.Get())})
 	{
 		WorldWidget->SetWidgetSpace(EWidgetSpace::Screen);
 		WorldWidget->SetDrawAtDesiredSize(true);
@@ -71,7 +68,6 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 		WorldWidget->SetHiddenInGame(true);
 	}
 
-	ExecutionPrompt->SetPivot(FVector2D(0.f, 0.5f));
 	Nameplate->SetPivot(FVector2D(0.5f, 1.f));
 
 #if WITH_EDITORONLY_DATA
@@ -340,13 +336,6 @@ void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 }
 
-bool AAgEnemyCharacter::IsExecutionTargetOf(AAgPlayerCharacter& Player) const
-{
-	const FGameplayAbilitySpec* Spec = Player.GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_Action_Execution);
-	const FAgAbilityData* Execution = Spec ? Player.FindAbility(Spec->Handle) : nullptr;
-	return Execution && Execution->Targeting && AgTargeting::FindTarget(*Execution->Targeting, Player) == this;
-}
-
 void AAgEnemyCharacter::UpdateWorldWidgets()
 {
 	// 플레이어 화면에 관한 것이라 AI의 대상이 아니라 로컬 플레이어를 기준으로 합니다.
@@ -360,19 +349,13 @@ void AAgEnemyCharacter::UpdateWorldWidgets()
 	const bool bLockOnTarget = bShown && Player->GetLockOnTarget() == this;
 	LockOnMarker->SetHiddenInGame(!bLockOnTarget);
 
-	// 지금 하는 행동 때문에 처형 키를 받지 않는 동안에도 표시하므로 발동 가능 여부는 보지 않습니다. 범위 확인은
-	// 대상 찾기 쿼리를 돌리므로 그로기 중에만 합니다.
-	const UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	const bool bGroggy = ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
-	ExecutionPrompt->SetHiddenInGame(!(bShown && bGroggy && IsExecutionTargetOf(*Player)));
-
 	UAgNameplateWidget* NameplateWidget = Cast<UAgNameplateWidget>(Nameplate->GetUserWidgetObject());
 	if (!NameplateWidget || !HasNameplate())
 	{
 		return;
 	}
 	const bool bAllowed = bShown && IsNameplateInView(*PlayerController);
-	const bool bInCombat = !ASC->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
+	const bool bInCombat = !GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_NonCombat);
 	Nameplate->SetFrontmost(bLockOnTarget);
 	Nameplate->SetHiddenInGame(!NameplateWidget->Update(bAllowed, bLockOnTarget || bInCombat));
 }

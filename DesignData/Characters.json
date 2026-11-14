@@ -1,6 +1,6 @@
 {
   "Player": {
-    "DisplayName": "린",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Character.Player\")",
     "Team": "Player",
     "Toughness": "Small",
     "Attributes": {
@@ -47,7 +47,7 @@
     ]
   },
   "Boss": {
-    "DisplayName": "커스터",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Character.Boss\")",
     "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
@@ -88,7 +88,7 @@
     "Effects": ["PPRegen"]
   },
   "Sandbag": {
-    "DisplayName": "샌드백",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Character.Sandbag\")",
     "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
@@ -116,7 +116,7 @@
     "Effects": ["SandbagPPRegen"]
   },
   "AttackSandbag": {
-    "DisplayName": "공격 샌드백",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Character.AttackSandbag\")",
     "Team": "Neutral",
     "Toughness": "Small",
     "Attributes": {
@@ -147,7 +147,7 @@
     "Effects": ["SandbagPPRegen"]
   },
   "Cutter": {
-    "DisplayName": "절단자",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Character.Cutter\")",
     "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
@@ -180,7 +180,7 @@
     "Effects": ["CutterPPRegen"]
   },
   "Gunner": {
-    "DisplayName": "경비 사수",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Character.Gunner\")",
     "Team": "Enemy",
     "Toughness": "Small",
     "Attributes": {

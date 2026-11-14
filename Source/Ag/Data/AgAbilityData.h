@@ -179,6 +179,10 @@ struct FAgAbilityData
 	UPROPERTY()
 	FGameplayTag InputTag;
 
+	/** 플레이어에게 보이는 이름입니다. 상호작용 안내의 행동 이름으로 씁니다. */
+	UPROPERTY()
+	FText DisplayName;
+
 	UPROPERTY()
 	TObjectPtr<UTexture2D> Icon;
 
