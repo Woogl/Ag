@@ -134,6 +134,7 @@ namespace AgGameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_UltimateScreen);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_PerfectDodgeScreen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_HurtScreen);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_PerfectDodge);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Hit);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Guard);

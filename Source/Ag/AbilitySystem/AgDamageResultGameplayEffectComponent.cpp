@@ -306,6 +306,10 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 		                               : Outcome.Result == EAgDamageResult::Guard ? AgGameplayTags::GameplayCue_Guard
 		                                                                          : AgGameplayTags::GameplayCue_Hit;
 		TargetASC->ExecuteGameplayCue(ResultCue, CueParameters);
+		if (Outcome.Result == EAgDamageResult::Hit && Outcome.Target->IsPlayerControlled())
+		{
+			TargetASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_HurtScreen, CueParameters);
+		}
 
 		// 엔진이 범위로 고정하기 전의 변화량이라, 남은 HP로 줄이지 않은 피해량을 보여 줍니다.
 		const FGameplayEffectModifiedAttribute* HPChange = Spec.GetModifiedAttribute(UAgAttributeSet::GetHPAttribute());

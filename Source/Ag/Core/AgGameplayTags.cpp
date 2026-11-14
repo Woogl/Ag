@@ -140,6 +140,7 @@ namespace AgGameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UltimateScreen, "GameplayCue.UltimateScreen", "궁극기 포스트프로세스");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PerfectDodgeScreen, "GameplayCue.PerfectDodgeScreen", "극한 회피 성공 포스트프로세스");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_HurtScreen, "GameplayCue.HurtScreen", "플레이어 피격 포스트프로세스");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PerfectDodge, "GameplayCue.PerfectDodge", "극한 회피 성공 연출");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Hit, "GameplayCue.Hit", "일반 피격의 이펙트와 효과음");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Guard, "GameplayCue.Guard", "가드의 이펙트와 효과음");
