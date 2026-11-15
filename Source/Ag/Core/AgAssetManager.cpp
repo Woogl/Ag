@@ -168,7 +168,7 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 	}
 
 	// JSON에서 읽은 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 읽으면서 만든 객체(캐릭터 데이터, GE, 대상
-	// 프리셋과 그 Task)는 저장되지 않으므로, 그 객체의 클래스와 그 객체가 가리키는 것까지 따라갑니다.
+	// 프리셋과 그 Task, 생성 액터 템플릿)는 저장되지 않으므로, 그 객체의 클래스와 그 객체가 가리키는 것까지 따라갑니다.
 	TArray<UObject*> Pending;
 	for (const AgAssetManagerPrivate::FAgJsonFile& File : AgAssetManagerPrivate::JsonFiles)
 	{
