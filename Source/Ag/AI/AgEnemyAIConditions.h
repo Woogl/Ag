@@ -89,7 +89,10 @@ struct FAgEnemyAICondition_PhaseTransitionReady : public FStateTreeAIConditionBa
 	virtual bool TestCondition(FStateTreeExecutionContext& Context) const override;
 };
 
-/** 패턴 후딜레이 중에만 참입니다. 평가할 때마다 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. */
+/**
+ * 패턴 후딜레이는 보지 않고, 패턴 실행·피격 반응 중이 아닌지는 이 조건을 둔 상태(간격 지키기)가 정합니다. 평가할 때마다 발동 확률을
+ * 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다.
+ */
 USTRUCT(meta = (DisplayName = "적: 반응형 패턴 발동 조건", Category = "Ag|Enemy AI"))
 struct FAgEnemyAICondition_ResponseReady : public FStateTreeAIConditionBase
 {

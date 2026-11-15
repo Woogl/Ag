@@ -45,13 +45,13 @@
 | `AAgPatrolRoute` | `AActor` | 레벨에 놓는 정찰 경로. 정찰 지점은 루트 스플라인(`Spline`, 닫힌 고리, 직선 점)의 점이고, 게임에서는 점 개수·월드 위치와 수평 거리로 가장 가까운 점(`FindNearestPoint`)만 제공합니다. 여러 적이 하나를 함께 쓰고, 적을 옮겨도 경로는 그대로입니다. 에디터 기능(바닥 스냅, 경로 확인과 경고, `SetPointLocations`)은 [개발 도구와 검증](<개발 도구와 검증.md>) '정찰 경로 미리 보기'를 따릅니다. |
 | `FAgEnemyAITask_Patrol` | `FStateTreeAITaskBase` | 가장 가까운 정찰 지점부터 순서대로 이동을 요청합니다. 부분 경로를 허용하지 않아 요청이 실패한 점은 갈 수 없는 점으로 보고 경고 로그를 남긴 뒤 같은 틱에 다음 점을 요청하며, 연달아 모든 점에 실패하면 처음 자리로 갑니다. |
 | `FAgEnemyAITask_KeepDistance` | `FStateTreeAITaskBase` | '간격 지키기'. 첫 틱, 패턴 후딜레이가 끝난 틱, 그 뒤 0.5초마다 패턴을 시작해도 되면(`UAgCombatSubsystem::CanStartPattern`) 쓸 수 있는 패턴을 찾고, 있으면 완료해 패턴 실행으로 넘깁니다. 없는 동안은 목표 거리(공격할 차례면 `GatherReadyPatternRanges`, 기다리는 중이면 `AI.PreferredDistance`)에 따라 경로 이동·뒤로 걷기·좌우 걷기·제자리를 고릅니다. 나갈 때 경로만 끊고 속도는 감속에 맡깁니다. |
-| `FAgEnemyAICondition_ResponseReady` | `FStateTreeAIConditionBase` | 패턴 후딜레이 중에만 참입니다. 평가할 때마다 반응형 패턴의 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. |
+| `FAgEnemyAICondition_ResponseReady` | `FStateTreeAIConditionBase` | 패턴 후딜레이는 보지 않고, 패턴 실행·피격 반응 중이 아닌지는 이 조건을 둔 간격 지키기 상태가 정합니다. 평가할 때마다 반응형 패턴의 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. |
 | `FAgEnemyAICondition_PatternsBlocked` | `FStateTreeAIConditionBase` | '패턴 금지'. `UAgCombatSubsystem::ArePatternsBlocked`를 그대로 묻습니다. 패턴 실행 상태에서 간격 지키기로 가는 전환에 둡니다. |
 | `FAgEnemyAITask_RunPattern` | `FStateTreeAITaskBase` | 후보 패턴을 가중치로 선택해 실행하고, 어빌리티가 끝나면 완료합니다. 패턴을 시작하면 안 되면(`UAgCombatSubsystem::CanStartPattern`) 실패하고(반응형 패턴 상태가 끝나면 간격 지키기를 거치지 않고 이리로 옵니다), 발동하면 반응형이 아닐 때 공격 시작을 서브시스템에 알립니다. 끝난 뒤의 처리는 끝난 까닭(완료, 피격 반응·패턴 금지·플레이어 사망 등의 전환)과 관계없이 상태를 나갈 때 한 곳에서 합니다. 실행 중이면 어빌리티를 취소하고, 피격 반응 중이 아니면 패턴 후딜레이를 걸고(반응형이면 지움), 반응형이 아니면 공격 끝을 알립니다. |
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, 범위 고정과 PP 감소 허용 조건 적용, 사망·그로기 판정 |
 
 - 일반 적 `BP_Cutter`·`BP_Gunner`는 `AAgEnemyCharacter`를 바로 상속하고 `ST_Enemy`를 공유합니다. 캐릭터별 스탯·시야·후딜레이·적정 거리·어빌리티 구성은 `Characters.json`의 `Cutter`·`Gunner`로 선택하며, 전용 C++ 캐릭터 클래스는 없습니다.
-- 패턴 후딜레이는 `FAgEnemyAITask_RunPattern`이 나갈 때 한 곳에서만 걸거나 지웁니다. 반응형 패턴은 후딜레이 중에 써야 해서 어빌리티 발동 차단으로 막을 수 없고 고르는 쪽(AI)만 보는 값이라, GAS 효과로 두지 않습니다.
+- 패턴 후딜레이는 `FAgEnemyAITask_RunPattern`이 나갈 때 한 곳에서만 걸거나 지웁니다. 반응형 패턴은 후딜레이 중에도 써야 해서 어빌리티 발동 차단으로 막을 수 없고 고르는 쪽(AI)만 보는 값이라, GAS 효과로 두지 않습니다.
 
 - AI 빙의 시 감각 설정 뒤 `RequestStimuliListenerUpdate`로 청취자의 팀을 다시 읽습니다. 레벨에 놓인 적과 실행 중 생성한 적 모두 현재 캐릭터의 팀으로 지각합니다.
 

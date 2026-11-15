@@ -46,7 +46,7 @@ bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
 	const AAgEnemyCharacter* Enemy = Controller->GetEnemy();
 	const AAgCharacterBase* Target = Controller->GetTarget();
-	if (!Target || !Controller->IsInPostPatternDelay())
+	if (!Target)
 	{
 		return false;
 	}
