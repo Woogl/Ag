@@ -642,11 +642,11 @@
       "Sections": {
         "Attack1": [
           {"Task": "RootMotion", "Start": 0, "End": 0.386, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": true},
-          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1.4, "HitReaction": "KnockDown", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1.4, "PPMultiplier": 1, "HitReaction": "KnockDown", "bGuardable": true}},
           {"Task": "Transition", "Start": 1.05, "ToSection": "Attack1", "BlendTime": 0.2}
         ]
       }
@@ -663,7 +663,7 @@
       "Sections": {
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.37, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.46, "End": 0.62, "Damage": {"HPMultiplier": 1.5, "HitReaction": "KnockUp", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.46, "End": 0.62, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true}}
         ]
       }
     },
@@ -684,7 +684,7 @@
         "Dash": [
           {"Task": "RootMotion", "Start": 0, "End": 0.08333, "bWarpTranslation": false},
           {"Task": "Dash", "Start": 0.1, "EndSection": "Hold", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000},
-          {"Task": "WeaponHit", "Start": 0.1, "EndSection": "Hold", "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.1, "EndSection": "Hold", "Damage": {"HPMultiplier": 2, "PPMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true}},
           {"Task": "ApplyEffect", "Start": 0.1, "EndSection": "Hold", "Effect": "PassThrough"}
         ],
         "Hold": [
@@ -727,7 +727,7 @@
       "Sections": {
         "Attack1": [
           {"Task": "RootMotion", "Start": 0, "End": 0.722222, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.777778, "End": 0.877778, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.777778, "End": 0.877778, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.927778, "ToSection": "Windup2", "BlendTime": 0.12}
         ],
         "Windup2": [
@@ -736,7 +736,7 @@
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.26667, "ToSection": "Windup3", "BlendTime": 0.12}
         ],
         "Windup3": [
@@ -745,7 +745,7 @@
         ],
         "Attack3": [
           {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.26667, "ToSection": "Windup4", "BlendTime": 0.12}
         ],
         "Windup4": [
@@ -754,7 +754,7 @@
         ],
         "Attack4": [
           {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.3, "ToSection": "Windup5", "BlendTime": 0.12}
         ],
         "Windup5": [
@@ -806,7 +806,7 @@
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.274, "bWarpTranslation": true},
           {"Task": "RootMotion", "Start": 0.274, "End": 0.4, "bWarpTranslation": true},
-          {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "HitReaction": "KnockDown", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "PPMultiplier": 1, "HitReaction": "KnockDown", "bGuardable": true}}
         ]
       }
     },
@@ -836,7 +836,7 @@
         "Default": [
           {"Task": "DisableRootMotion", "Start": 0},
           {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ]
       }
     },
@@ -852,7 +852,7 @@
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.6133, "bWarpTranslation": true},
           {"Task": "RootMotion", "Direction": "Back", "Start": 0.6133, "End": 1.23, "Distance": 0},
-          {"Task": "WeaponHit", "Start": 0.6633, "End": 0.7833, "Damage": {"HPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.6633, "End": 0.7833, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ]
       }
     },
@@ -869,13 +869,13 @@
         "Attack1": [
           {"Task": "RootMotion", "Start": 0, "End": 0.615, "bWarpTranslation": true},
           {"Task": "RootMotion", "Direction": "Back", "Start": 0.615, "End": 0.875, "Distance": 0},
-          {"Task": "WeaponHit", "Start": 0.765, "End": 0.865, "Damage": {"HPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "WeaponHit", "Start": 0.765, "End": 0.865, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.875, "ToSection": "Attack2", "BlendTime": 0.2}
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.4155, "bWarpTranslation": true},
           {"Task": "RootMotion", "Direction": "Back", "Start": 0.4155, "End": 1.32, "Distance": 0},
-          {"Task": "WeaponHit", "Start": 0.5655, "End": 0.6655, "Damage": {"HPMultiplier": 0.8, "HitReaction": "Flinch", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.5655, "End": 0.6655, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ]
       }
     },

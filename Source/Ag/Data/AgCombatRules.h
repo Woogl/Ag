@@ -30,12 +30,6 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Bonus Damage")
 	float AerialBonusDamage = 0.f;
 
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Parry")
-	float ParryHPMultiplier = 0.f;
-
-	UPROPERTY(Transient, VisibleAnywhere, Category = "Parry")
-	float ParryPPMultiplier = 0.f;
-
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Fall")
 	float FallDamageStartHeight = 0.f;
 

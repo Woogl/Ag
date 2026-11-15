@@ -5,6 +5,7 @@
     "Range": 2000,
     "Damage": {
       "HPMultiplier": 1.2,
+      "PPMultiplier": 1,
       "HitReaction": "Flinch",
       "bGuardable": true
     }
@@ -27,6 +28,7 @@
     "bDestroyOnHit": true,
     "Damage": {
       "HPMultiplier": 1,
+      "PPMultiplier": 2,
       "HitReaction": "Flinch",
       "bGuardable": true
     }

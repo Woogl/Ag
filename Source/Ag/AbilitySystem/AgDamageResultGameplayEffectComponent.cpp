@@ -232,13 +232,11 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 		Dodger.GetAbilitySystemComponent()->ExecuteGameplayCue(AgGameplayTags::GameplayCue_PerfectDodge, Parameters);
 	}
 
-	void DamageParriedAttacker(UAgAbilitySystemComponent& DefenderASC, AAgCharacterBase& Attacker)
+	void DamageParriedAttacker(UAgAbilitySystemComponent& DefenderASC, AAgCharacterBase& Attacker, const FGameplayEffectSpec& ParriedSpec)
 	{
 		const FGameplayEffectSpecHandle Spec = DefenderASC.MakeEffectSpec(EAgEffect::Damage);
-		const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
 		FAgDamage Damage;
-		Damage.HPMultiplier = Rules.ParryHPMultiplier;
-		Damage.PPMultiplier = Rules.ParryPPMultiplier;
+		Damage.PPMultiplier = ParriedSpec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_PPMultiplier, false);
 		Damage.AddToSpec(*Spec.Data);
 		Spec.Data->AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Parry);
 		Spec.Data->GetContext().AddOrigin(Attacker.GetActorLocation());
@@ -257,7 +255,7 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 	}
 
 	/** 맞은 쪽의 반응(패리, 가드, 피격)을 시작하고, 연출에 넘길 반응 이벤트를 돌려줍니다. 반응이 없으면 빈 태그입니다. */
-	FGameplayTag StartDefenderReaction(const FAgDamageOutcome& Outcome)
+	FGameplayTag StartDefenderReaction(const FAgDamageOutcome& Outcome, const FGameplayEffectSpec& Spec)
 	{
 		UAgAbilitySystemComponent* TargetASC = Outcome.Target->GetAbilitySystemComponent();
 		FGameplayTag Reaction;
@@ -268,7 +266,7 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 				// 투사체는 반사되어 돌아가 맞히므로 패리 대미지를 따로 주지 않습니다.
 				if (!Cast<AAgProjectile>(Outcome.Causer))
 				{
-					DamageParriedAttacker(*TargetASC, *Outcome.Attacker);
+					DamageParriedAttacker(*TargetASC, *Outcome.Attacker, Spec);
 				}
 				SendEvent(Outcome.Target, AgGameplayTags::Event_Parry, Outcome.Causer, Outcome.Context);
 				break;
@@ -352,7 +350,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		*Attacker->GetName(), *Target->GetName(), bParry, !bParry && !bHit, TargetStats->GetHP(), TargetStats->GetPP());
 
 	// 사망 판정(어트리뷰트 세트)이 이 처리보다 먼저이므로, 이번 타격으로 죽었으면 반응하지 않습니다.
-	const FGameplayTag Reaction = Target->IsDead() ? FGameplayTag() : AgDamageResultGameplayEffectComponentPrivate::StartDefenderReaction(Outcome);
+	const FGameplayTag Reaction = Target->IsDead() ? FGameplayTag() : AgDamageResultGameplayEffectComponentPrivate::StartDefenderReaction(Outcome, GESpec);
 	if (!bHit)
 	{
 		AgDamageResultGameplayEffectComponentPrivate::SendEvent(Attacker, AgGameplayTags::Event_AttackBlocked, Target, Context);

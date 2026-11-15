@@ -10,8 +10,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/ShapeComponent.h"
 #include "Engine/World.h"
-#include "Core/AgAssetManager.h"
-#include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -61,7 +59,6 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 		return;
 	}
 	const FGameplayEffectSpecHandle ReflectedSpec = Defender.GetAbilitySystemComponent()->MakeEffectSpec(EAgEffect::Damage);
-	Damage.PPMultiplier = UAgAssetManager::Get().GetCombatRules().ParryPPMultiplier;
 	Damage.AddToSpec(*ReflectedSpec.Data);
 	ReflectedSpec.Data->GetContext().AddInstigator(&Defender, this);
 	DamageSpec = ReflectedSpec;
