@@ -111,12 +111,9 @@ struct FAgEnemyAITask_WaitReactionInstanceData
 
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<AAgEnemyAIController> Controller = nullptr;
-
-	/** 머무는 동안 움찔이 아닌 피격 반응(넉업·넉다운·그로기·처형 피격)이 있었습니다. */
-	bool bHeavyReaction = false;
 };
 
-/** 피격 반응이 끝날 때까지 기다립니다. 움찔이 아닌 반응이 있었으면 끝날 때 패턴 후딜레이를 겁니다. */
+/** 피격 반응이 끝날 때까지 기다립니다. */
 USTRUCT(meta = (DisplayName = "적: 피격 반응 대기", Category = "Ag|Enemy AI"))
 struct FAgEnemyAITask_WaitReaction : public FStateTreeAITaskBase
 {
@@ -130,7 +127,6 @@ struct FAgEnemyAITask_WaitReaction : public FStateTreeAITaskBase
 
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const override;
-	virtual void ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const override;
 };
 
 USTRUCT()

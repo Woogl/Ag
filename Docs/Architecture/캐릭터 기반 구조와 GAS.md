@@ -41,7 +41,7 @@
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 머리 위 네임플레이트 없음(`HasNameplate`, HUD 보스 상태로 표시), 보스 처치 슬로우모션 값 |
 | `UAgNameplateComponent` | `UWidgetComponent` | 적 머리 위 네임플레이트(화면 공간 위젯, `head` 뼈). 락온 대상일 때 엔진 화면 레이어를 바로 위 레이어로 바꿔 다시 등록(`SetFrontmost`) |
 | `UAgNameplateWidget` | `UCommonUserWidget` | HP·PP 바 묶음(`WBP_Nameplate`, HUD 보스 상태 `WBP_BossStatus`가 함께 씀). 대상 ASC 구독, 그로기 중 남은 시간으로 PP 바 줄이기와 그로기 연출(`M_GroggyFill`·`M_GroggyBurst`)·처형 피격 중 정지, 최대 PP 0이면 PP 영역 접기, 네임플레이트의 최근 감소 표시 시간과 다시 표시할 때 잔상 정리(`Update`) |
-| `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`) 조회, 패턴 후딜레이(끝나는 월드 시각 하나, 아래 '패턴 후딜레이를 거는 때' 표), AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 빙의한 캐릭터의 팀 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달 |
+| `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`) 조회, 패턴 후딜레이(끝나는 월드 시각 하나), AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 빙의한 캐릭터의 팀 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달 |
 | `AAgPatrolRoute` | `AActor` | 레벨에 놓는 정찰 경로. 정찰 지점은 루트 스플라인(`Spline`, 닫힌 고리, 직선 점)의 점이고, 게임에서는 점 개수·월드 위치와 수평 거리로 가장 가까운 점(`FindNearestPoint`)만 제공합니다. 여러 적이 하나를 함께 쓰고, 적을 옮겨도 경로는 그대로입니다. 에디터 기능(바닥 스냅, 경로 확인과 경고, `SetPointLocations`)은 [개발 도구와 검증](<개발 도구와 검증.md>) '정찰 경로 미리 보기'를 따릅니다. |
 | `FAgEnemyAITask_Patrol` | `FStateTreeAITaskBase` | 가장 가까운 정찰 지점부터 순서대로 이동을 요청합니다. 부분 경로를 허용하지 않아 요청이 실패한 점은 갈 수 없는 점으로 보고 경고 로그를 남긴 뒤 같은 틱에 다음 점을 요청하며, 연달아 모든 점에 실패하면 처음 자리로 갑니다. |
 | `FAgEnemyAITask_KeepDistance` | `FStateTreeAITaskBase` | '간격 지키기'. 첫 틱, 패턴 후딜레이가 끝난 틱, 그 뒤 0.5초마다 패턴을 시작해도 되면(`UAgCombatSubsystem::CanStartPattern`) 쓸 수 있는 패턴을 찾고, 있으면 완료해 패턴 실행으로 넘깁니다. 없는 동안은 목표 거리(공격할 차례면 `GatherReadyPatternRanges`, 기다리는 중이면 `AI.PreferredDistance`)에 따라 경로 이동·뒤로 걷기·좌우 걷기·제자리를 고릅니다. 나갈 때 경로만 끊고 속도는 감속에 맡깁니다. |
@@ -51,15 +51,7 @@
 | `UAgAttributeSet` | `UAttributeSet` | 기획서 스탯 13개, 범위 고정과 PP 감소 허용 조건 적용, 사망·그로기 판정 |
 
 - 일반 적 `BP_Cutter`·`BP_Gunner`는 `AAgEnemyCharacter`를 바로 상속하고 `ST_Enemy`를 공유합니다. 캐릭터별 스탯·시야·후딜레이·적정 거리·어빌리티 구성은 `Characters.json`의 `Cutter`·`Gunner`로 선택하며, 전용 C++ 캐릭터 클래스는 없습니다.
-- 패턴 후딜레이는 행동을 끝낸 Task가 겁니다. 피격 반응 상태 하나가 움찔과 다른 반응을 함께 다루므로, 끝난 뒤를 트리 상태로 나누지 않고 반응을 지켜본 Task가 정합니다. 반응형 패턴은 후딜레이 중에 써야 해서 어빌리티 발동 차단으로 막을 수 없고 고르는 쪽(AI)만 보는 값이라, GAS 효과로 두지 않습니다.
-
-| 패턴 후딜레이를 거는 때 | 거는 곳 |
-| - | - |
-| 전투에 들어갈 때 | `FAgEnemyAITask_Combat` 들어갈 때 |
-| 공격 패턴을 끝까지 마쳤을 때 | `FAgEnemyAITask_RunPattern` 나갈 때. 피격 반응 중이 아니면 겁니다(패턴 금지로 멈춘 패턴 포함). 피격 반응으로 끊겼으면 그 반응이 맡습니다. |
-| 넉업·넉다운·그로기·처형 피격이 끝날 때 | `FAgEnemyAITask_WaitReaction` 나갈 때. 머무는 동안 움찔이 아닌 반응이 한 번이라도 있었으면 겁니다. |
-| 페이즈 전환이 끝날 때 | `FAgEnemyAITask_PhaseTransition` |
-| (지움) 반응형 패턴을 끝까지 마쳤을 때 | 반응형 `FAgEnemyAITask_RunPattern` 나갈 때. 피격 반응 중이 아니면 지웁니다. |
+- 패턴 후딜레이는 `FAgEnemyAITask_RunPattern`이 나갈 때 한 곳에서만 걸거나 지웁니다. 반응형 패턴은 후딜레이 중에 써야 해서 어빌리티 발동 차단으로 막을 수 없고 고르는 쪽(AI)만 보는 값이라, GAS 효과로 두지 않습니다.
 
 - AI 빙의 시 감각 설정 뒤 `RequestStimuliListenerUpdate`로 청취자의 팀을 다시 읽습니다. 레벨에 놓인 적과 실행 중 생성한 적 모두 현재 캐릭터의 팀으로 지각합니다.
 
@@ -208,7 +200,7 @@ classDiagram
 - 가드 움찔 `GuardFlinch`는 `Event.Guard.Flinch`로 발동하는 덧입힘 몽타주 어빌리티입니다. 피격 반응이 아니어서 상태 태그를 부여하지 않고, 태그도 `Ability.Reaction.HitReaction` 밖에 두어 다른 피격 반응이 끊지 않습니다. ASC는 몽타주를 재생하는 어빌리티를 하나만 기록하고 방향 고정은 그 기록으로 판단하므로, 몸 모션 몽타주가 재생 중인 가드 밀림·패리 중에는 발동을 막습니다.
 - 그로기 효과는 Groggy 어빌리티와 따로 지속 시간 동안 남고, 처형·사망 태그가 붙으면 효과 정의의 `RemovalTags`로 지워집니다. Groggy 어빌리티는 움찔을 끊고 그로기 모션을 재생하지만, 다른 피격 반응(넉다운·넉업·가드 밀림) 중에는 발동이 막히고 엔진은 막혔던 태그 트리거를 다시 시도하지 않습니다. 이때와 피격 반응 몽타주가 그로기 몽타주를 끊어 어빌리티가 취소된 때에도 그로기는 이어지며, 피격 반응 뒤의 그로기 자세는 ABP가 보여 줍니다.
 - 플레이어 입력은 부모 피격 상태가 있으면 공중의 기본 공격까지 막습니다. 선입력은 상태가 해제된 다음 틱에 재검사해, 재발동 중 태그가 잠시 빠지는 순간에 실행하지 않습니다.
-- `ST_Enemy`의 피격 반응 상태는 움찔과 다른 반응을 함께 다루며 `WaitReaction` Task로 종료를 기다린 뒤 간격 지키기로 갑니다. 움찔만 끝났고 후딜레이가 없으며 쓸 수 있는 패턴이 있으면, 간격 지키기가 첫 틱에 바로 패턴 실행으로 넘깁니다. 페이즈 전환 조건은 패턴 실행보다 먼저 확인합니다. 패턴 실행 상태(일반·반응형)는 '패턴 금지'면 간격 지키기로 가며, 피격 반응·사망처럼 상위 상태에 둔 전환보다 우선순위가 낮습니다.
+- `ST_Enemy`의 피격 반응 상태는 움찔과 다른 반응을 함께 다루며 `WaitReaction` Task로 종료를 기다린 뒤 간격 지키기로 갑니다. 반응이 끝났을 때 후딜레이가 없고 쓸 수 있는 패턴이 있으면, 간격 지키기가 첫 틱에 바로 패턴 실행으로 넘깁니다. 페이즈 전환 조건은 패턴 실행보다 먼저 확인합니다. 패턴 실행 상태(일반·반응형)는 '패턴 금지'면 간격 지키기로 가며, 피격 반응·사망처럼 상위 상태에 둔 전환보다 우선순위가 낮습니다.
 
 ### 레벨 시작에서 BeginPlay까지
 

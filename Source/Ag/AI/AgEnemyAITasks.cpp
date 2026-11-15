@@ -250,7 +250,7 @@ void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, c
 	{
 		ASC->CancelAbilityHandle(InstanceData.Handle);
 	}
-	// 피격 반응으로 끊겼으면 후딜레이는 그 반응이 끝날 때 정하고, 그 밖에는 멈춘 패턴도 끝까지 마친 것으로 봅니다.
+	// 피격 반응으로 끊겼으면 후딜레이를 건드리지 않고, 그 밖에는 멈춘 패턴도 끝까지 마친 것으로 봅니다.
 	if (!Controller.IsEnemyReacting())
 	{
 		// 반응형 패턴(Backstep)은 끝까지 마치면 남은 후딜레이 없이 바로 다음 패턴을 고릅니다.
@@ -278,43 +278,18 @@ EStateTreeRunStatus FAgEnemyAITask_PhaseTransition::EnterState(FStateTreeExecuti
 EStateTreeRunStatus FAgEnemyAITask_PhaseTransition::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	if (InstanceData.Controller->GetEnemy()->IsPhaseTransitionActive())
-	{
-		return EStateTreeRunStatus::Running;
-	}
-	InstanceData.Controller->StartPostPatternDelay();
-	return EStateTreeRunStatus::Succeeded;
+	return InstanceData.Controller->GetEnemy()->IsPhaseTransitionActive() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 EStateTreeRunStatus FAgEnemyAITask_WaitReaction::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	InstanceData.bHeavyReaction = false;
 	return Tick(Context, 0.f);
 }
 
 EStateTreeRunStatus FAgEnemyAITask_WaitReaction::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
-	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	const AAgEnemyAIController& Controller = *InstanceData.Controller;
-	if (!Controller.IsEnemyReacting())
-	{
-		return EStateTreeRunStatus::Succeeded;
-	}
-	// 움찔 도중 넉다운으로 바뀌는 것처럼 반응이 이어질 수 있어, 머무는 동안 한 번이라도 있었는지 기록합니다. 움찔은
-	// 그로기 중에도 발동해 겹치므로, 움찔 중이어도 그로기면 기록합니다.
-	const UAbilitySystemComponent* ASC = Controller.GetEnemy()->GetAbilitySystemComponent();
-	InstanceData.bHeavyReaction |= !ASC->HasMatchingGameplayTag(AgGameplayTags::State_HitReaction_Flinch) || ASC->HasMatchingGameplayTag(AgGameplayTags::State_Groggy);
-	return EStateTreeRunStatus::Running;
-}
-
-void FAgEnemyAITask_WaitReaction::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
-{
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	if (InstanceData.bHeavyReaction)
-	{
-		InstanceData.Controller->StartPostPatternDelay();
-	}
+	return InstanceData.Controller->IsEnemyReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 FAgEnemyAITask_NonCombat::FAgEnemyAITask_NonCombat()
@@ -347,7 +322,6 @@ EStateTreeRunStatus FAgEnemyAITask_Combat::EnterState(FStateTreeExecutionContext
 {
 	AAgEnemyAIController& Controller = *Context.GetInstanceData(*this).Controller;
 	AgEnemyAITasksPrivate::UpdateCombatTarget(Controller);
-	Controller.StartPostPatternDelay();
 	Controller.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->AddCombatant(*Controller.GetEnemy());
 	return EStateTreeRunStatus::Running;
 }
