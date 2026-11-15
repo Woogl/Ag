@@ -22,7 +22,7 @@
   },
   "PistolBullet": {
     "Class": "/Game/Projectiles/BP_PistolBullet.BP_PistolBullet_C",
-    "Speed": 3000,
+    "Speed": 8000,
     "Range": 10000,
     "bDestroyOnHit": true,
     "Damage": {
