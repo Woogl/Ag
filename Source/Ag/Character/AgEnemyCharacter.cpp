@@ -140,6 +140,19 @@ void AAgEnemyCharacter::GatherReadyPatternRanges(TArray<FFloatInterval>& OutRang
 	}
 }
 
+bool AAgEnemyCharacter::IsRunningPattern() const
+{
+	for (FName Id : GetCharacterData()->Abilities)
+	{
+		const FGameplayAbilitySpec* Spec = FindPattern(Id) ? FindAbilitySpec(Id) : nullptr;
+		if (Spec && Spec->IsActive())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void AAgEnemyCharacter::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();

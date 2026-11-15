@@ -43,6 +43,9 @@ public:
 	/** 현재 페이즈에서 쓰고 쿨다운이 끝난 패턴(반응형 패턴 제외)의 발동 가능 거리를 모읍니다. 거리와 대상 찾기는 보지 않습니다. */
 	void GatherReadyPatternRanges(TArray<FFloatInterval>& OutRanges) const;
 
+	/** 반응형 패턴을 포함해 패턴을 실행하고 있습니다. */
+	bool IsRunningPattern() const;
+
 	virtual bool CanReturnToNonCombat() const
 	{
 		return true;

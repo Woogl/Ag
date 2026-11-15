@@ -17,7 +17,9 @@ namespace AgCombatSubsystemPrivate
 	bool IsWaitingForTurn(const AAgEnemyCharacter& Enemy)
 	{
 		const AAgEnemyAIController* Controller = Cast<AAgEnemyAIController>(Enemy.GetController());
-		if (!Controller || !Controller->GetTarget() || Enemy.IsDead() || Controller->IsInPostPatternDelay() || Controller->IsEnemyReacting() || Enemy.IsPhaseTransitionActive())
+		// 반응형 패턴은 차례를 차지하지 않아 공격 중으로 세지 않으므로, 실행 중인지 여기서 따로 봅니다.
+		if (!Controller || !Controller->GetTarget() || Enemy.IsDead() || Controller->IsInPostPatternDelay() || Controller->IsEnemyReacting() || Enemy.IsPhaseTransitionActive() ||
+			Enemy.IsRunningPattern())
 		{
 			return false;
 		}
