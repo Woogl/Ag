@@ -13,7 +13,7 @@ sys.dont_write_bytecode = True
 
 PROJECT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "Ag.uproject"))
 WORK = os.path.join(os.path.dirname(PROJECT), "Saved", "ScenarioTest")
-MAP = "/Game/Maps/LV_BossStage"
+MAP = "/Game/Maps/LV_SimulationRoom?Enemies=,,Boss"
 
 
 def engine_dir():
@@ -190,7 +190,7 @@ def main():
     ap.add_argument("scenario")
     ap.add_argument("--hold", type=float, default=10, help="판정을 띄운 채 창을 두는 시간(초)")
     ap.add_argument("--keep", action="store_true", help="창을 닫지 않음. 떠 있는 동안 Build.bat이 실패한다.")
-    ap.add_argument("--map", default=MAP, help="열 맵 경로(기본: 보스 스테이지)")
+    ap.add_argument("--map", default=MAP, help="열 맵 경로(기본: 보스를 배치 자리 3에 둔 시뮬레이션 룸)")
     a = ap.parse_args()
 
     scenario = open(a.scenario, encoding="utf-8").read()

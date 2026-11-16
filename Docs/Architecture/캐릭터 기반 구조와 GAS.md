@@ -7,7 +7,7 @@
 | 항목 | 결정 | 이유 |
 | - | - | - |
 | ASC 위치 | 캐릭터에 둡니다. | 싱글플레이라 PlayerState에 둘 이유가 없습니다. |
-| 게임 모드와 게임 스테이트 | 게임 모드 클래스는 `AAgGameMode`이고, 타이틀(`BP_FrontEndGameMode`)과 스테이지(`BP_StageGameMode`)는 BP 기본값(시작 화면, 스테이지 목록, 폰)으로만 나뉩니다. 시뮬레이션 룸만 하위 클래스 `AAgSimulationRoomGameMode`를 두고, `LV_SimulationRoom`의 월드 설정에서 게임 모드를 `BP_SimulationRoomGameMode`로 재정의합니다. 스테이지의 보스는 최대 한 명입니다. 게임 모드가 정한 스테이지 결과는 `AAgGameState`가 들고 HUD와 전투 결과 화면이 읽으며, HUD의 보스 상태는 전투 서브시스템(`UAgCombatSubsystem`)이 전투 중인 적 가운데서 찾은 보스를 보여 줍니다. 플레이어 컨트롤러는 레이어에 화면을 여는 UI 명령만 전달합니다. | 게임 모드는 규칙, 게임 스테이트는 UI도 읽는 상태라는 엔진의 역할 구분을 따릅니다. 게임 스테이트와 월드 서브시스템은 플레이어 로그인보다 먼저 생기므로, HUD는 로그인과 `BeginPlay`의 순서와 관계없이 현재 값을 읽고 이후 변경을 구독합니다. 보스 상태는 보스가 전투 중일 때만 보이므로, 전투 중인 적 목록을 가진 서브시스템에서 찾습니다. 시뮬레이션 룸은 배치, 선택 화면, 클리어 조건이 달라 레벨마다 규칙을 바꾸는 엔진의 방식(게임 모드 재정의)을 씁니다. |
+| 게임 모드와 게임 스테이트 | 게임 모드 클래스는 `AAgGameMode`이고, 타이틀(`BP_FrontEndGameMode`)과 스테이지(`BP_StageGameMode`)는 BP 기본값(시작 화면, 폰)으로만 나뉩니다. 시뮬레이션 룸만 하위 클래스 `AAgSimulationRoomGameMode`를 두고, `LV_SimulationRoom`의 월드 설정에서 게임 모드를 `BP_SimulationRoomGameMode`로 재정의합니다. 스테이지의 보스는 최대 한 명입니다. 게임 모드가 정한 스테이지 결과는 `AAgGameState`가 들고 HUD와 전투 결과 화면이 읽으며, HUD의 보스 상태는 전투 서브시스템(`UAgCombatSubsystem`)이 전투 중인 적 가운데서 찾은 보스를 보여 줍니다. 플레이어 컨트롤러는 레이어에 화면을 여는 UI 명령만 전달합니다. | 게임 모드는 규칙, 게임 스테이트는 UI도 읽는 상태라는 엔진의 역할 구분을 따릅니다. 게임 스테이트와 월드 서브시스템은 플레이어 로그인보다 먼저 생기므로, HUD는 로그인과 `BeginPlay`의 순서와 관계없이 현재 값을 읽고 이후 변경을 구독합니다. 보스 상태는 보스가 전투 중일 때만 보이므로, 전투 중인 적 목록을 가진 서브시스템에서 찾습니다. 시뮬레이션 룸은 배치, 선택 화면, 클리어 조건이 달라 레벨마다 규칙을 바꾸는 엔진의 방식(게임 모드 재정의)을 씁니다. |
 | 동시 공격 수 | 전투 중인 적 목록과 공격 차례는 월드 서브시스템 `UAgCombatSubsystem`이 맡습니다. 적은 `ST_Enemy`의 '전투' 상태에 들어갈 때 등록하고 나갈 때 빠집니다(사망, 플레이어 사망 대기, 비전투 복귀가 모두 '전투' 밖입니다). 간격 지키기와 패턴 실행은 패턴을 시작해도 되는지(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 차례 순으로 확인하고 반응형 패턴은 패턴 금지만 확인)를 묻고, 패턴 실행이 공격의 시작과 끝을 알리며, 끝을 알리면 재공격 대기가 시작됩니다. 차례는 물을 때마다 목록에서 셉니다. 패턴 금지(`ArePatternsBlocked`)는 플레이어가 처형하는 동안이며, 실행 중인 패턴은 `ST_Enemy`의 패턴 실행 상태에 둔 '패턴 금지' 전환(`FAgEnemyAICondition_PatternsBlocked`)으로 멈춥니다. | 차례는 여러 적 사이의 규칙이라 한 적의 컨트롤러가 아니라 전투 전체의 주인이 맡고, 재공격 대기도 차례에만 쓰는 값이라 함께 둡니다. 등록 지점이 상태 하나라 모든 액터를 훑지 않습니다. 앞 순서의 적은 패턴을 시작했든 아직 기다리든 한 자리로 세므로, 같은 프레임에서 적들이 묻는 순서와 관계없이 결과가 같습니다. |
 | 팀과 대상 판정 | 캐릭터의 팀은 캐릭터 데이터의 `Team`이고, AI 컨트롤러는 빙의한 캐릭터의 팀을 전달합니다. 팀 사이의 태도는 게임 모듈(`Ag.cpp`)이 시작할 때 엔진 `FGenericTeamId::SetAttitudeSolver`에 등록한 함수 하나가 정합니다. 적 팀과 중립 팀(샌드백)은 서로를 `Neutral`로 보며 대상 선택과 지각은 `Hostile`만 받습니다. 적중은 죽지 않았고 `Friendly`가 아닌 상대에게 적용하며, 이 판정은 `AAgCharacterBase::CanBeHitBy` 하나를 무기·투사체·충격파와 범위 적중용 `Hit` 프리셋(`AgTargetingFilterTask_Hittable`)이 함께 씁니다. | 공격 대상 선택과 공격 판정에 휘말리는 대상을 구분하면서 팀 태도는 한곳에서 정합니다. 맞는 대상이 공격 방식마다 갈리지 않습니다. 엔진 기본 구현이 솔버를 부르므로 캐릭터와 컨트롤러가 태도 함수를 재정의하지 않고, 팀 ID로 판정하는 엔진 감각도 같은 규칙을 봅니다. |
 | 어트리뷰트 | 세트 하나에 기획서 스탯을 기획서 이름 그대로 둡니다. HP, MaxHP, MP, MaxMP, UP, MaxUP, PP, MaxPP, ATK, DEF, MOV, Potion, MaxPotion. 보스가 쓰지 않는 MP·UP와 플레이어만 쓰는 Potion·MaxPotion은 쓰지 않는 캐릭터에서 0입니다. 기본값이 바뀌기 전에 범위(0 ~ 최대값)로 고정합니다. PP 감소량은 대미지 실행 계산(`UAgDamageExecution`)이 반올림한 정수로 줄입니다. 반올림 규칙은 [전투 시스템](<../Design/System/전투 시스템.md>) '대미지'를 따릅니다. | 기획서, JSON, 코드의 이름이 같아 대조하기 쉽습니다. 최대값에서 리젠이 더해져도 기본값이 넘치지 않아야 다음 감소가 바로 보입니다. PP 감소량을 계산하는 곳에서 반올림하면 패리 대미지도 같은 계산을 거쳐 같은 규칙을 따르고, 리젠으로 생긴 남은 PP의 소수부는 보존됩니다. |
@@ -135,7 +135,7 @@ classDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록(`Stages`: 이름과 레벨)과 레벨이 게임에 있는지 확인(`IsStageAvailable`), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료), 도전 횟수 알림(다시 시작 전 `RequestRestart`, 레벨을 열 때 `BeginAttempt`) |
+| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록 찾기(`FindStages`: `Content/Maps`의 레벨에서 처음 열리는 레벨을 뺀 것), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료), 도전 횟수 알림(다시 시작 전 `RequestRestart`, 레벨을 열 때 `BeginAttempt`) |
 | `AAgGameState` | `AGameStateBase` | 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함)와 변경 알림(`OnStageResultChanged`) |
 | `UAgCombatStatsSubsystem` | `UGameInstanceSubsystem` | 레벨을 다시 열어도 남는 전투 통계 상태. 도전 횟수(Restart 요청이 있었으면 +1, 아니면 1)와 이번 실행의 기록 파일(`Saved/CombatStats/<실행 시각>.json`, 기록이 끝날 때마다 엔진 `FJsonObjectConverter`로 전체를 다시 씀) |
 | `UAgCombatStatsComponent` | `UActorComponent` | 플레이어의 지금 전투 기록. 전투 중인 적 목록이 비었다가 생기면 시작하고 비면 끝내며(플레이어 사망 → 사망, 상대한 적이 모두 사망 → 처치, 그 밖 → 이탈), Stage Clear가 정해지면 바로 처치로 끝냄. 패리·극한 회피는 플레이어 ASC의 `Event.Parry`·`Event.PerfectDodge`, 피격은 엔진 `OnGameplayEffectAppliedDelegateToSelf`의 `Effect.Damage.Result.Hit`로 세고, 전투 시간은 일시정지에 멈추고 시간 배율을 받지 않는 엔진 시계(`GetAudioTimeSeconds`)로 잼. 스테이지 결과가 정해진 뒤에 끝난 기록을 시뮬레이션 룸 결과창에 내줌(`GetStageResultStats`) |
@@ -244,7 +244,7 @@ sequenceDiagram
     C->>D: 시작 효과 ID 목록<br>(정의는 Effects.json)
     C->>ASC: GameplayEffect 적용<br>(리젠)
     C->>C: 루트 모션 자르기 연결
-    Note over C,D: 플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작, 상태 태그 구독, 락온 회전 방식, 사망 시 시야를 제외한 입력 차단<br>적: 그로기 이벤트·태그, 어빌리티 끝 구독, 처형 사망 모션
+    Note over C,D: 플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작, 상태 태그 구독, 락온 회전 방식<br>적: 그로기 이벤트·태그, 어빌리티 끝 구독
 ```
 
 ### 어빌리티 실행

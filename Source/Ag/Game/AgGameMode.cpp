@@ -3,6 +3,7 @@
 #include "Game/AgGameMode.h"
 
 #include "Ag.h"
+#include "AssetRegistry/IAssetRegistry.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
@@ -15,12 +16,17 @@
 #include "GameMapsSettings.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Misc/PackageName.h"
 #include "TimerManager.h"
 #include "UI/AgBattleResultScreen.h"
 #include "UI/AgHUDWidget.h"
 #include "UI/AgTitleScreen.h"
 #include "UI/AgUILayout.h"
+
+namespace AgGameModePrivate
+{
+	const TCHAR* const StageMapsPath = TEXT("/Game/Maps");
+	const TCHAR* const LevelPrefix = TEXT("LV_");
+} // namespace AgGameModePrivate
 
 AAgGameMode::AAgGameMode()
 {
@@ -28,13 +34,34 @@ AAgGameMode::AAgGameMode()
 	GameStateClass = AAgGameState::StaticClass();
 }
 
-bool AAgGameMode::IsStageAvailable(int32 StageIndex) const
+TArray<FAgStage> AAgGameMode::FindStages()
 {
-	if (!Stages.IsValidIndex(StageIndex) || Stages[StageIndex].Map.IsNull())
+	IAssetRegistry& AssetRegistry = IAssetRegistry::GetChecked();
+#if WITH_EDITOR
+	// 에디터 실행 파일의 -game 실행은 에셋 레지스트리를 미리 훑지 않아, 맵 폴더를 직접 훑게 합니다.
+	AssetRegistry.ScanPathsSynchronous({AgGameModePrivate::StageMapsPath});
+#endif
+
+	FARFilter Filter;
+	Filter.PackagePaths.Add(AgGameModePrivate::StageMapsPath);
+	Filter.bRecursivePaths = true;
+	Filter.ClassPaths.Add(UWorld::StaticClass()->GetClassPathName());
+	TArray<FAssetData> Maps;
+	AssetRegistry.GetAssets(Filter, Maps);
+	Maps.Sort([](const FAssetData& A, const FAssetData& B) { return A.AssetName.LexicalLess(B.AssetName); });
+
+	const FName FrontEndMap(FSoftObjectPath(UGameMapsSettings::GetGameDefaultMap()).GetLongPackageName());
+	TArray<FAgStage> Stages;
+	for (const FAssetData& Map : Maps)
 	{
-		return false;
+		if (Map.PackageName != FrontEndMap)
+		{
+			FString Name = Map.AssetName.ToString();
+			Name.RemoveFromStart(AgGameModePrivate::LevelPrefix);
+			Stages.Add({Map.PackageName, FText::AsCultureInvariant(FName::NameToDisplayString(Name, false))});
+		}
 	}
-	return FPackageName::DoesPackageExist(Stages[StageIndex].Map.GetLongPackageName());
+	return Stages;
 }
 
 void AAgGameMode::OpenFrontEnd()
@@ -48,14 +75,12 @@ void AAgGameMode::OpenFrontEnd()
 	UGameplayStatics::OpenLevelBySoftObjectPtr(this, TSoftObjectPtr<UWorld>(Map));
 }
 
-void AAgGameMode::OpenStage(int32 StageIndex)
+void AAgGameMode::OpenStage(FName Map)
 {
-	if (!IsStageAvailable(StageIndex))
+	if (!Map.IsNone())
 	{
-		UE_LOG(LogAg, Error, TEXT("OpenStage: stage %d has no map in the game (BP_FrontEndGameMode Stages)."), StageIndex);
-		return;
+		UGameplayStatics::OpenLevel(this, Map);
 	}
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, Stages[StageIndex].Map);
 }
 
 void AAgGameMode::RestartStage()

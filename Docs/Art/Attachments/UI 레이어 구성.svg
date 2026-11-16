@@ -64,8 +64,8 @@
   <line x1="341" y1="100" x2="341" y2="222" stroke="#f5c84c" stroke-width="4" marker-end="url(#arrowInput)"/>
   <text x="356" y="122" font-size="24" font-weight="700" fill="#f5c84c">입력</text>
 
-  <!-- ============ 오른쪽: LV_BossStage ============ -->
-  <text x="1020" y="70" font-size="32" font-weight="700" fill="#FFFFFF">LV_BossStage · 일시정지 메뉴를 연 상태</text>
+  <!-- ============ 오른쪽: 스테이지 레벨 ============ -->
+  <text x="1020" y="70" font-size="32" font-weight="700" fill="#FFFFFF">스테이지 레벨 · 일시정지 메뉴를 연 상태</text>
 
   <!-- 월드 위치 UI: 락온 마커, 상호작용 안내, 대미지 숫자 -->
   <g transform="matrix(1 0 -0.35 0.4 1060 720)">

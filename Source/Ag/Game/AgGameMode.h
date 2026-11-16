@@ -11,16 +11,10 @@ class UAgBattleResultScreen;
 class UAgHUDWidget;
 class UAgTitleScreen;
 
-USTRUCT()
 struct FAgStage
 {
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly)
+	FName Map;
 	FText DisplayName;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSoftObjectPtr<UWorld> Map;
 };
 
 UCLASS(Abstract)
@@ -31,16 +25,11 @@ class AAgGameMode : public AGameModeBase
 public:
 	AAgGameMode();
 
-	const TArray<FAgStage>& GetStages() const
-	{
-		return Stages;
-	}
-
-	/** 그 스테이지의 레벨이 지정되어 있고 게임에 있는지 답합니다. */
-	bool IsStageAvailable(int32 StageIndex) const;
+	/** /Game/Maps 아래의 레벨을 이름순으로 찾습니다. 게임을 실행하면 처음 열리는 레벨은 뺍니다. */
+	static TArray<FAgStage> FindStages();
 
 	void OpenFrontEnd();
-	void OpenStage(int32 StageIndex);
+	void OpenStage(FName Map);
 	void RestartStage();
 	void QuitGame();
 
@@ -62,9 +51,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Maps")
-	TArray<FAgStage> Stages;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Result")
 	float StageResultPresentationTime = 4.f;
