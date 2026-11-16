@@ -3,6 +3,7 @@
 #include "AgAnimationToolset.h"
 #include "AgBlueprintToolset.h"
 #include "AgEnemySightVisualizer.h"
+#include "AgLevelToolset.h"
 #include "AgPatrolVisualizer.h"
 #include "AgStateTreeToolset.h"
 #include "AI/AgPatrolPreviewComponent.h"
@@ -19,6 +20,7 @@ public:
 	{
 		UToolsetRegistry::RegisterToolsetClass(UAgAnimationToolset::StaticClass());
 		UToolsetRegistry::RegisterToolsetClass(UAgBlueprintToolset::StaticClass());
+		UToolsetRegistry::RegisterToolsetClass(UAgLevelToolset::StaticClass());
 		UToolsetRegistry::RegisterToolsetClass(UAgStateTreeToolset::StaticClass());
 		if (GUnrealEd)
 		{
@@ -42,6 +44,7 @@ public:
 		{
 			UToolsetRegistry::UnregisterToolsetClass(UAgAnimationToolset::StaticClass());
 			UToolsetRegistry::UnregisterToolsetClass(UAgBlueprintToolset::StaticClass());
+			UToolsetRegistry::UnregisterToolsetClass(UAgLevelToolset::StaticClass());
 			UToolsetRegistry::UnregisterToolsetClass(UAgStateTreeToolset::StaticClass());
 		}
 	}
