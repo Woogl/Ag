@@ -43,7 +43,7 @@ if defined FINGERPRINT >"%STAMP%" echo %FINGERPRINT%
 
 :Build
 echo 빌드합니다. 바뀐 코드가 없으면 금방 끝납니다.
-call "%ENGINE%\Engine\Build\BatchFiles\Build.bat" AgEditor Win64 DebugGame "-Project=%PROJECT%" -WaitMutex
+call "%ENGINE%\Engine\Build\BatchFiles\Build.bat" AgEditor Win64 Development "-Project=%PROJECT%" -WaitMutex
 if errorlevel 1 (
     echo.
     echo 빌드에 실패했습니다. 에디터가 켜져 있으면 닫고 다시 실행하세요.
@@ -52,4 +52,4 @@ if errorlevel 1 (
     exit /b 1
 )
 
-start "" "%ENGINE%\Engine\Binaries\Win64\UnrealEditor.exe" "%PROJECT%" -debug
+start "" "%ENGINE%\Engine\Binaries\Win64\UnrealEditor.exe" "%PROJECT%"

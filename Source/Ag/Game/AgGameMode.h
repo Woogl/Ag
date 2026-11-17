@@ -25,7 +25,10 @@ class AAgGameMode : public AGameModeBase
 public:
 	AAgGameMode();
 
-	/** /Game/Maps 아래의 레벨을 이름순으로 찾습니다. 게임을 실행하면 처음 열리는 레벨은 뺍니다. */
+	/**
+	 * 에셋 매니저의 Map 타입(DefaultGame.ini, /Game/Maps 아래의 레벨)을 이름순으로 돌려줍니다. 같은 설정이 쿡할 레벨도 정합니다.
+	 * 게임을 실행하면 처음 열리는 레벨은 뺍니다.
+	 */
 	static TArray<FAgStage> FindStages();
 
 	void OpenFrontEnd();

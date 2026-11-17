@@ -49,8 +49,6 @@ ABrush* UAgLevelToolset::AddBrush(TSubclassOf<UBrushBuilder> BuilderClass, FVect
 	const FScopedTransaction Transaction(NSLOCTEXT("AgLevelToolset", "AddBrush", "Add Brush"));
 	// 액터 배치 패널과 같은 순서입니다. BRUSH 명령은 빌더 브러시의 모양, 변환, 빌더를 복사해 새 브러시를 만들므로,
 	// 빌더 브러시를 이 빌더로 만들고 옮긴 뒤 빌더를 달아 둡니다. 빌더가 없으면 새 브러시에 브러시 세팅이 없습니다.
-	// 빌더는 빌더 브러시를 선택된 액터 자리로 옮기므로 선택을 먼저 비웁니다.
-	GEditor->SelectNone(false, true);
 	if (!Builder->Build(World))
 	{
 		UKismetSystemLibrary::RaiseScriptError(TEXT("빌더가 이 세팅으로 모양을 만들지 못했습니다."));
@@ -59,6 +57,8 @@ ABrush* UAgLevelToolset::AddBrush(TSubclassOf<UBrushBuilder> BuilderClass, FVect
 	DefaultBrush->Modify();
 	DefaultBrush->SetActorTransform(FTransform(Rotation, Location));
 	DefaultBrush->BrushBuilder = DuplicateObject<UBrushBuilder>(Builder, DefaultBrush->GetOuter());
+	// BRUSH 명령은 브러시를 만들지 못하면 선택을 그대로 두므로, 전에 선택한 브러시를 돌려주지 않도록 선택을 비웁니다.
+	GEditor->SelectNone(false, true);
 	GEditor->Exec(World, bSubtract ? TEXT("BRUSH SUBTRACT SELECTNEWBRUSH") : TEXT("BRUSH ADD SELECTNEWBRUSH"));
 	DefaultBrush->SetIsTemporarilyHiddenInEditor(true);
 	return GEditor->GetSelectedActors()->GetTop<ABrush>();
@@ -74,23 +74,25 @@ bool UAgLevelToolset::SetBrushSettings(ABrush* Brush, const FString& Settings)
 		return false;
 	}
 
-	// 엔진은 맞는 속성을 넣은 뒤에 틀린 속성을 알리므로, 브러시를 건드리기 전에 임시 복제본에 먼저 넣어 봅니다.
-	if (!UToolsetLibrary::SetObjectProperties(DuplicateObject<UBrushBuilder>(Builder, GetTransientPackage()), Settings))
+	// 엔진은 맞는 속성을 넣은 뒤에 틀린 속성을 알리고, 빌더는 모양을 만들 때에야 값을 검사합니다. 그래서 임시 복제본에 넣고
+	// 그것으로 모양을 만들어 본 뒤에 브러시의 빌더에 넣습니다. 빌더는 값이 틀리면 브러시를 건드리지 않고 돌아옵니다.
+	UBrushBuilder* Probe = DuplicateObject<UBrushBuilder>(Builder, GetTransientPackage());
+	if (!UToolsetLibrary::SetObjectProperties(Probe, Settings))
 	{
 		AgLevelToolsetPrivate::RaiseSettingsError();
 		return false;
 	}
 
-	const FScopedTransaction Transaction(NSLOCTEXT("AgLevelToolset", "SetBrushSettings", "Set Brush Settings"));
+	FScopedTransaction Transaction(NSLOCTEXT("AgLevelToolset", "SetBrushSettings", "Set Brush Settings"));
 	Brush->Modify();
-	Builder->Modify();
-	UToolsetLibrary::SetObjectProperties(Builder, Settings);
-	// 빌더는 바깥 객체가 브러시일 때만 속성 변경 알림에서 스스로 다시 만들므로, 직접 한 번 더 만듭니다.
-	if (!Builder->Build(World, Brush))
+	if (!Probe->Build(World, Brush))
 	{
+		Transaction.Cancel();
 		UKismetSystemLibrary::RaiseScriptError(TEXT("빌더가 이 세팅으로 모양을 만들지 못했습니다."));
 		return false;
 	}
+	Builder->Modify();
+	UToolsetLibrary::SetObjectProperties(Builder, Settings);
 	RebuildGeometry();
 	return true;
 }

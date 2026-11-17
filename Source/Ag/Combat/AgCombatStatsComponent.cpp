@@ -36,7 +36,13 @@ void UAgCombatStatsComponent::BeginPlay()
 	PerfectDodgeHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_PerfectDodge).AddUObject(this, &ThisClass::HandlePerfectDodge);
 	ASC->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::HandleEffectApplied);
 
-	GetWorld()->GetSubsystem<UAgCombatSubsystem>()->OnCombatantsChanged.AddUObject(this, &ThisClass::HandleCombatantsChanged);
+	// 블루프린트 편집기의 시뮬레이션은 미리 보기 월드에서도 BeginPlay를 부르고, 그 월드에는 월드 서브시스템이 없습니다.
+	UAgCombatSubsystem* CombatSubsystem = GetWorld()->GetSubsystem<UAgCombatSubsystem>();
+	if (!CombatSubsystem)
+	{
+		return;
+	}
+	CombatSubsystem->OnCombatantsChanged.AddUObject(this, &ThisClass::HandleCombatantsChanged);
 	if (AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>())
 	{
 		StageState->OnStageResultChanged.AddUObject(this, &ThisClass::HandleStageResultChanged);

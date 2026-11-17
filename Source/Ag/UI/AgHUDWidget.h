@@ -7,7 +7,6 @@
 #include "GameplayTagContainer.h"
 #include "AgHUDWidget.generated.h"
 
-class UAbilitySystemComponent;
 class UAgAbilitySystemComponent;
 class UAgNameplateWidget;
 class UAgPauseMenu;

@@ -159,8 +159,8 @@ void AAgCharacterBase::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
 
-	// 편집 중인 월드(에디터, 블루프린트 미리 보기)에서는 데이터를 쓰는 플레이 코드가 돌지 않으므로 연결하지 않습니다.
-	// 데이터를 아직 적지 않은 캐릭터를 놓거나 띄워도 에디터가 멈추지 않습니다.
+	// 편집 중인 월드(에디터, 블루프린트 미리 보기)에서는 연결하지 않습니다. 데이터를 아직 적지 않은 캐릭터를 놓거나 띄워도
+	// 에디터가 멈추지 않습니다.
 	if (!GetWorld()->IsGameWorld())
 	{
 		return;
@@ -209,9 +209,13 @@ void AAgCharacterBase::BeginPlay()
 	                       .AddUObject(this, &ThisClass::HandleDeathEvent);
 	PawnResponse = GetCapsuleComponent()->GetCollisionResponseToChannel(ECC_Pawn);
 	AbilitySystemComponent->SetLooseGameplayTagCount(AgGameplayTags::State_Airborne, GetCharacterMovement()->IsFalling() ? 1 : 0);
-	InitializeAttributes();
-	GrantAbilities();
-	ApplyEffects();
+	// 블루프린트 편집기의 시뮬레이션은 미리 보기 월드에서도 BeginPlay를 부르고, 그 월드의 캐릭터에는 데이터가 없습니다.
+	if (CharacterData)
+	{
+		InitializeAttributes();
+		GrantAbilities();
+		ApplyEffects();
+	}
 
 	GetCharacterMovement()->ProcessRootMotionPostConvertToWorld.BindUObject(this, &ThisClass::ClampRootMotion);
 }

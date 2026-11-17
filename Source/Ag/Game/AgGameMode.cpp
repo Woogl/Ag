@@ -3,12 +3,12 @@
 #include "Game/AgGameMode.h"
 
 #include "Ag.h"
-#include "AssetRegistry/IAssetRegistry.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgCharacterBase.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Camera/AgPlayerCameraManager.h"
 #include "Combat/AgTimeSubsystem.h"
+#include "Engine/AssetManager.h"
 #include "Engine/GameInstance.h"
 #include "Game/AgCombatStatsSubsystem.h"
 #include "Game/AgGameState.h"
@@ -24,7 +24,6 @@
 
 namespace AgGameModePrivate
 {
-	const TCHAR* const StageMapsPath = TEXT("/Game/Maps");
 	const TCHAR* const LevelPrefix = TEXT("LV_");
 } // namespace AgGameModePrivate
 
@@ -36,19 +35,11 @@ AAgGameMode::AAgGameMode()
 
 TArray<FAgStage> AAgGameMode::FindStages()
 {
-	IAssetRegistry& AssetRegistry = IAssetRegistry::GetChecked();
-#if WITH_EDITOR
-	// 에디터 실행 파일의 -game 실행은 에셋 레지스트리를 미리 훑지 않아, 맵 폴더를 직접 훑게 합니다.
-	AssetRegistry.ScanPathsSynchronous({AgGameModePrivate::StageMapsPath});
-#endif
-
-	FARFilter Filter;
-	Filter.PackagePaths.Add(AgGameModePrivate::StageMapsPath);
-	Filter.bRecursivePaths = true;
-	Filter.ClassPaths.Add(UWorld::StaticClass()->GetClassPathName());
+	// 에셋 레지스트리를 직접 뒤지면 패키지 빌드에서 월드 파티션이 쿡할 때 만든 스트리밍 셀도 레벨로 잡힙니다.
 	TArray<FAssetData> Maps;
-	AssetRegistry.GetAssets(Filter, Maps);
-	Maps.Sort([](const FAssetData& A, const FAssetData& B) { return A.AssetName.LexicalLess(B.AssetName); });
+	UAssetManager::Get().GetPrimaryAssetDataList(UAssetManager::MapType, Maps);
+	Maps.Sort([](const FAssetData& A, const FAssetData& B)
+	{ return A.AssetName.LexicalLess(B.AssetName); });
 
 	const FName FrontEndMap(FSoftObjectPath(UGameMapsSettings::GetGameDefaultMap()).GetLongPackageName());
 	TArray<FAgStage> Stages;
