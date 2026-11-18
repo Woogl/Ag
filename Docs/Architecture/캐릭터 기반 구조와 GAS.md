@@ -37,12 +37,12 @@
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
 | `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
 | `UAgLookAtCameraModifier` | `UCameraModifier` | 대상 비추기의 구도. 매 프레임 게임 카메라에서 대상의 락온 지점을 잇는 선을 따라 정한 거리까지 당겨 덮는 네이티브 모디파이어로, 비추는 대상을 가집니다. 처형 카메라 뒤, FOV 모디파이어와 셰이크 앞에 적용합니다. 몽타주의 `AgAnimNotifyState_CameraLookAt` 구간이 시작과 끝을 정합니다. |
-| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 경로(`PatrolRoute`, 레벨 인스턴스 값)·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(전환을 발동할 때 페이즈를 올림), 지금 고를 수 있는 패턴 모으기(`GatherPatterns`)와 쿨다운이 끝난 패턴의 발동 가능 거리 모으기(`GatherReadyPatternRanges`), 패턴(반응형 포함)을 실행 중인지(`IsRunningPattern`, 동시 공격 수의 차례 계산이 씀), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 머리 위 네임플레이트)와 그 표시 조건(생존·컷신 중이 아님·스테이지 결과가 정해지기 전·화면 안·`WorldStatic` 가림·락온·전투, 최근 감소는 위젯이 더함). 엔진 `bCanWalkOffLedges`를 꺼서 걷기 상태의 이동(이동 입력, 경로 따라가기, 몽타주 루트 모션)이 낭떠러지를 넘지 않습니다. 공중 상태(Launch의 넉업·저글, 도약)는 해당하지 않습니다. 보스 예외는 가상 함수 `HasNameplate`. 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
+| `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 경로(`PatrolRoute`, 레벨 인스턴스 값)·적 그룹 이름(`GroupId`, 레벨 인스턴스 값, 같은 이름끼리 한 그룹, 플레이 시작·끝에 `UAgCombatSubsystem`의 그룹에 들고 나며 사망을 알림, 같은 이름의 다른 적이 열린 레벨에 없으면 맵 검사 경고)·처음 위치와 방향, 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(전환을 발동할 때 페이즈를 올림), 지금 고를 수 있는 패턴 모으기(`GatherPatterns`)와 쿨다운이 끝난 패턴의 발동 가능 거리 모으기(`GatherReadyPatternRanges`), 패턴(반응형 포함)을 실행 중인지(`IsRunningPattern`, 동시 공격 수의 차례 계산이 씀), PP 감소 허용 여부(`CanLosePP`), `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 머리 위 네임플레이트)와 그 표시 조건(생존·컷신 중이 아님·스테이지 결과가 정해지기 전·화면 안·`WorldStatic` 가림·락온·전투, 최근 감소는 위젯이 더함). 엔진 `bCanWalkOffLedges`를 꺼서 걷기 상태의 이동(이동 입력, 경로 따라가기, 몽타주 루트 모션)이 낭떠러지를 넘지 않습니다. 공중 상태(Launch의 넉업·저글, 도약)는 해당하지 않습니다. 보스 예외는 가상 함수 `HasNameplate`. 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 머리 위 네임플레이트 없음(`HasNameplate`, HUD 보스 상태로 표시), 보스 처치 슬로우모션 값 |
 | `BP_Boss02` | `BP_Boss` | 커스터 대형 변형. `Boss` 캐릭터 데이터와 무기 부착을 상속하고 메시 배율·위치와 몸 캡슐 크기를 지정합니다. |
 | `UAgNameplateComponent` | `UWidgetComponent` | 적 머리 위 네임플레이트(화면 공간 위젯, `head` 뼈). 락온 대상일 때 엔진 화면 레이어를 바로 위 레이어로 바꿔 다시 등록(`SetFrontmost`) |
 | `UAgNameplateWidget` | `UCommonUserWidget` | HP·PP 바 묶음(`WBP_Nameplate`, HUD 보스 상태 `WBP_BossStatus`가 함께 씀). 대상 ASC 구독, 그로기 중 남은 시간으로 PP 바 줄이기와 그로기 연출(`M_GroggyFill`·`M_GroggyBurst`)·처형 피격 중 정지, 최대 PP 0이면 PP 영역 접기, 네임플레이트의 최근 감소 표시 시간과 다시 표시할 때 잔상 정리(`Update`) |
-| `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`) 조회, 패턴 후딜레이(끝나는 월드 시각 하나), AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 빙의한 캐릭터의 팀 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달 |
+| `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 전체 반응(`IsEnemyReacting`) 조회, 패턴 후딜레이(끝나는 월드 시각 하나), AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 플레이어 인식(`IsTargetNoticed`: 그룹이 있으면 그룹의 인식, 없으면 자기 감각 `PerceivesTarget`), 빙의한 캐릭터의 팀 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달 |
 | `AAgPatrolRoute` | `AActor` | 레벨에 놓는 정찰 경로. 정찰 지점은 루트 스플라인(`Spline`, 닫힌 고리, 직선 점)의 점이고, 게임에서는 점 개수·월드 위치와 수평 거리로 가장 가까운 점(`FindNearestPoint`)만 제공합니다. 여러 적이 하나를 함께 쓰고, 적을 옮겨도 경로는 그대로입니다. 에디터 기능(바닥 스냅, 경로 확인과 경고, `SetPointLocations`)은 [개발 도구와 검증](<개발 도구와 검증.md>) '정찰 경로 미리 보기'를 따릅니다. |
 | `FAgEnemyAITask_Patrol` | `FStateTreeAITaskBase` | 가장 가까운 정찰 지점부터 순서대로 이동을 요청합니다. 부분 경로를 허용하지 않아 요청이 실패한 점은 갈 수 없는 점으로 보고 경고 로그를 남긴 뒤 같은 틱에 다음 점을 요청하며, 연달아 모든 점에 실패하면 처음 자리로 갑니다. |
 | `FAgEnemyAITask_KeepDistance` | `FStateTreeAITaskBase` | '간격 지키기'. 첫 틱, 패턴 후딜레이가 끝난 틱, 그 뒤 0.5초마다 패턴을 시작해도 되면(`UAgCombatSubsystem::CanStartPattern`) 쓸 수 있는 패턴을 찾고, 있으면 완료해 패턴 실행으로 넘깁니다. 없는 동안은 목표 거리(공격할 차례면 `GatherReadyPatternRanges`, 기다리는 중이면 `AI.PreferredDistance`)에 따라 경로 이동·뒤로 걷기·좌우 걷기·제자리를 고릅니다. 나갈 때 경로만 끊고 속도는 감속에 맡깁니다. |
@@ -55,6 +55,7 @@
 - 패턴 후딜레이는 `FAgEnemyAITask_RunPattern`이 나갈 때 한 곳에서만 걸거나 지웁니다. 반응형 패턴은 후딜레이 중에도 써야 해서 어빌리티 발동 차단으로 막을 수 없고 고르는 쪽(AI)만 보는 값이라, GAS 효과로 두지 않습니다.
 
 - AI 빙의 시 감각 설정 뒤 `RequestStimuliListenerUpdate`로 청취자의 팀을 다시 읽습니다. 레벨에 놓인 적과 실행 중 생성한 적 모두 현재 캐릭터의 팀으로 지각합니다.
+- 적 그룹의 인식은 그룹원 각자의 지각을 묻기만 하므로, 시야 상실 대기(감각의 최대 나이)가 그룹 전체에 그대로 적용됩니다. 엔진 팀 감각(`AISense_Team`)은 반경으로 퍼지고 벽을 무시해 쓰지 않습니다. 죽은 적의 지각은 계속 돌아가므로 셈에서 빼고, 죽는 순간 인식 중이었으면 그룹이 시야 상실 대기만큼 인식을 이어 갑니다. 그룹 때문에 전투에 들어간 적도 대상은 적 락온(`EnemyLockOn`의 대상 찾기 범위)으로 잡으므로, 그 범위 밖의 그룹원은 플레이어가 들어올 때까지 제자리에 있습니다.
 
 ```mermaid
 classDiagram
@@ -140,7 +141,7 @@ classDiagram
 | `AAgGameState` | `AGameStateBase` | 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함)와 변경 알림(`OnStageResultChanged`) |
 | `UAgCombatStatsSubsystem` | `UGameInstanceSubsystem` | 레벨을 다시 열어도 이어 쓰는 이번 실행의 전투 통계 기록 파일(`Saved/CombatStats/<실행 시각>.json`, 기록이 끝날 때마다 엔진 `FJsonObjectConverter`로 전체를 다시 씀) |
 | `UAgCombatStatsComponent` | `UActorComponent` | 플레이어의 지금 전투 기록. 전투 중인 적 목록이 비었다가 생기면 시작하고 비면 끝내며(플레이어 사망 → 사망, 상대한 적이 모두 사망 → 처치, 그 밖 → 이탈), Stage Clear가 정해지면 바로 처치로 끝냄. 패리·극한 회피는 플레이어 ASC의 `Event.Parry`·`Event.PerfectDodge`, 피격은 엔진 `OnGameplayEffectAppliedDelegateToSelf`의 `Effect.Damage.Result.Hit`로 세고, 전투 시간은 일시정지에 멈추고 시간 배율을 받지 않는 엔진 시계(`GetAudioTimeSeconds`)로 잼. 스테이지 결과가 정해진 뒤에 끝난 기록을 시뮬레이션 룸 결과창에 내줌(`GetStageResultStats`) |
-| `UAgCombatSubsystem` | `UWorldSubsystem` | 전투 중인 적 목록(`FAgEnemyAITask_Combat`이 등록·해제, `GetCombatants`)과 변경 알림(`OnCombatantsChanged`), 목록의 보스(`FindBoss`), 플레이어가 처형하는 동안의 패턴 금지(`ArePatternsBlocked`), 패턴 시작 허가(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 동시 공격 수의 차례)와 공격 시작·끝(`StartAttack`, `EndAttack`, 끝나면 재공격 대기) |
+| `UAgCombatSubsystem` | `UWorldSubsystem` | 전투 중인 적 목록(`FAgEnemyAITask_Combat`이 등록·해제, `GetCombatants`)과 변경 알림(`OnCombatantsChanged`), 목록의 보스(`FindBoss`), 플레이어가 처형하는 동안의 패턴 금지(`ArePatternsBlocked`), 패턴 시작 허가(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 동시 공격 수의 차례)와 공격 시작·끝(`StartAttack`, `EndAttack`, 끝나면 재공격 대기), 적 그룹(그룹 이름별 그룹원과 사망한 그룹원의 인식이 끝나는 시각, `IsGroupNoticingTarget`: 살아 있는 그룹원의 자기 감각을 OR) |
 | `AAgSimulationRoomGameMode` | `AAgGameMode` | 후보 적 클래스(`EnemyClasses`), 레벨의 배치 지점을 `Slot` 순으로 수집, 레벨 주소 옵션 `Enemies`(자리 번호 순서의 캐릭터 데이터 ID)로 받은 구성을 플레이어 참가 처리에서 배치하고 놓은 캐릭터마다 플레이어에게 맞은 것과 같은 엔진 대미지 감각 자극(`ReportDamageEvent`)을 보내 시야와 관계없이 전투 진입, 구성이 비었으면 적 선택 화면 열기, 어느 적을 어느 자리에 둘 수 있는지(`CanPlace`), 같은 맵을 구성 옵션으로 다시 열기, 후보 적마다 표시 액터(`EnemyPreviewClass`)를 처음 쓸 때 하나 띄워 두고 그 렌더 타깃을 돌려줌(`GetEnemyPreview`). Stage Clear 조건은 적 팀 캐릭터가 모두 사망 |
 | `AAgEnemySpawnPoint` | `ATargetPoint` | 레벨에 놓는 배치 자리 표시. 자리 번호 `Slot`만 가짐 |
 | `AAgCharacterPreview` | `AActor` | 캐릭터 클래스 하나를 AI 빙의 없이 스폰해 정면의 씬 캡처(`Capture`)로 렌더 타깃에 그림. 띄운 캐릭터는 씬 캡처에만 보이고, 자기 조명(`Light`)과 함께 라이팅 채널 1에만 두어 레벨의 조명·그림자와 섞이지 않음. 게임이 멈춘 동안에도 메시와 캡처가 틱하며, 메시 범위로 캡처 높이와 거리를 맞춤 |
@@ -175,7 +176,8 @@ classDiagram
     UAgDropdownOptionWidget <|-- UAgEnemyCard
     AAgSimulationRoomGameMode <.. UAgEnemyCard : GetEnemyPreview
     UWorldSubsystem <|-- UAgCombatSubsystem
-    UAgCombatSubsystem --> AAgEnemyCharacter : 전투 중인 적
+    UAgCombatSubsystem --> AAgEnemyCharacter : 전투 중인 적·그룹원
+    AAgEnemyAIController ..> UAgCombatSubsystem : 그룹 인식
     UAgCombatSubsystem ..> AAgCharacterBase : 플레이어의 처형 상태
     UGameInstanceSubsystem <|-- UAgCombatStatsSubsystem
     UAgCombatStatsComponent ..> UAgCombatSubsystem : 전투 시작·끝
