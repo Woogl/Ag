@@ -7,6 +7,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "AI/AgEnemyAIController.h"
+#include "Combat/AgCombatSubsystem.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgPlayerCharacter.h"
@@ -31,6 +32,7 @@
 #endif
 
 #if WITH_EDITOR
+#include "EngineUtils.h"
 #include "Logging/MessageLog.h"
 #include "Logging/TokenizedMessage.h"
 #endif
@@ -204,6 +206,7 @@ void AAgEnemyCharacter::CheckForErrors()
 
 	TArray<TSharedRef<FTokenizedMessage>> Messages;
 	CollectPatrolProblems(Messages);
+	CollectGroupProblems(Messages);
 	FMessageLog(TEXT("MapCheck")).AddMessages(Messages);
 }
 #endif
@@ -217,6 +220,10 @@ void AAgEnemyCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleGroggyChanged);
 	GroggyEventHandle = ASC->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Groggy).AddUObject(this, &ThisClass::HandleGroggyEvent);
 	ASC->OnAbilityEnded.AddUObject(this, &ThisClass::HandleAbilityEnded);
+	if (!GroupId.IsNone())
+	{
+		GetWorld()->GetSubsystem<UAgCombatSubsystem>()->AddGroupMember(*this);
+	}
 
 	UAgNameplateWidget* NameplateWidget = Cast<UAgNameplateWidget>(Nameplate->GetUserWidgetObject());
 	if (NameplateWidget && HasNameplate())
@@ -235,6 +242,10 @@ void AAgEnemyCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		DeathMotion->OnMontageBlendingOutStarted.Unbind();
 	}
 	GetAbilitySystemComponent()->GenericGameplayEventCallbacks.FindOrAdd(AgGameplayTags::Event_Groggy).Remove(GroggyEventHandle);
+	if (!GroupId.IsNone())
+	{
+		GetWorld()->GetSubsystem<UAgCombatSubsystem>()->RemoveGroupMember(*this);
+	}
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -248,6 +259,11 @@ void AAgEnemyCharacter::Tick(float DeltaSeconds)
 
 void AAgEnemyCharacter::Die(const AActor* Attacker)
 {
+	if (!GroupId.IsNone())
+	{
+		GetWorld()->GetSubsystem<UAgCombatSubsystem>()->HandleGroupMemberDied(*this);
+	}
+
 	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 사망 처리 전에 읽습니다.
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	const UAnimMontage* Playing = AnimInstance ? GetAbilitySystemComponent()->GetCurrentMontage() : nullptr;
@@ -415,5 +431,21 @@ void AAgEnemyCharacter::CollectPatrolProblems(TArray<TSharedRef<FTokenizedMessag
 		OutMessages.Add(AAgPatrolRoute::MakeWarning(
 			*this, FString::Printf(TEXT("Cannot walk from the start position to patrol point %d of %s."), NearestIndex + 1, *PatrolRoute->GetActorLabel())));
 	}
+}
+
+void AAgEnemyCharacter::CollectGroupProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const
+{
+	if (GroupId.IsNone())
+	{
+		return;
+	}
+	for (TActorIterator<AAgEnemyCharacter> It(GetWorld()); It; ++It)
+	{
+		if (*It != this && It->GroupId == GroupId)
+		{
+			return;
+		}
+	}
+	OutMessages.Add(AAgPatrolRoute::MakeWarning(*this, FString::Printf(TEXT("No other loaded enemy has group '%s'. Check the name."), *GroupId.ToString())));
 }
 #endif

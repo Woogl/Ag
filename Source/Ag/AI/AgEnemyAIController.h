@@ -28,7 +28,10 @@ public:
 
 	bool IsEnemyReacting() const;
 
+	/** 그룹이 있으면 그룹의 인식, 없으면 자기 감각의 인식입니다. */
 	bool IsTargetNoticed() const;
+
+	bool PerceivesTarget() const;
 
 	/** 캐릭터 데이터의 범위에서 무작위로 정한 길이로 패턴 후딜레이를 겁니다. 걸려 있으면 새 길이로 처음부터 셉니다. */
 	void StartPostPatternDelay();

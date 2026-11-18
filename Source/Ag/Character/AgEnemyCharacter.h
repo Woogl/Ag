@@ -61,6 +61,11 @@ public:
 		return PatrolRoute;
 	}
 
+	FName GetGroupId() const
+	{
+		return GroupId;
+	}
+
 	const FTransform& GetHomeTransform() const
 	{
 		return HomeTransform;
@@ -114,10 +119,17 @@ private:
 #if WITH_EDITOR
 	/** 정찰 경로를 쓸 수 없는 MOV와, 처음 자리에서 가장 가까운 정찰 지점까지 걸어서 갈 수 없는 배치를 모읍니다. */
 	void CollectPatrolProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const;
+
+	/** 그룹 이름을 잘못 적으면 그룹이 갈리므로, 같은 그룹의 다른 적이 열린 레벨에 없으면 알립니다. */
+	void CollectGroupProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const;
 #endif
 
 	UPROPERTY(EditInstanceOnly, Category = "AI")
 	TObjectPtr<AAgPatrolRoute> PatrolRoute;
+
+	/** 같은 이름을 가진 적끼리 플레이어 인식을 나눕니다. 비워 두면 그룹이 없습니다. */
+	UPROPERTY(EditInstanceOnly, Category = "AI")
+	FName GroupId;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
 	TObjectPtr<UWidgetComponent> LockOnMarker;

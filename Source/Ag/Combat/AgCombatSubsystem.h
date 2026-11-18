@@ -38,9 +38,25 @@ public:
 	/** 재공격 대기를 시작합니다. */
 	void EndAttack(const AAgEnemyCharacter& Enemy);
 
+	/** GroupId가 있는 적은 플레이를 시작할 때 그룹에 들고 끝낼 때 나갑니다. */
+	void AddGroupMember(AAgEnemyCharacter& Enemy);
+	void RemoveGroupMember(AAgEnemyCharacter& Enemy);
+
+	/** 살아 있는 그룹원 누구라도 자기 감각으로 플레이어를 인식하거나, 인식하던 그룹원이 죽은 뒤 시야 상실 대기가 지나지 않았습니다. */
+	bool IsGroupNoticingTarget(FName GroupId) const;
+
+	/** 죽은 적의 지각은 계속 돌아가 셈에서 빼므로, 그때 인식하고 있었으면 죽은 순간을 놓친 순간으로 봅니다. */
+	void HandleGroupMemberDied(const AAgEnemyCharacter& Enemy);
+
 	FSimpleMulticastDelegate OnCombatantsChanged;
 
 private:
+	struct FAgEnemyGroup
+	{
+		TArray<TWeakObjectPtr<AAgEnemyCharacter>> Members;
+		double DeadMemberNoticeEndTime = 0.0;
+	};
+
 	struct FAgCombatant
 	{
 		TWeakObjectPtr<AAgEnemyCharacter> Enemy;
@@ -55,4 +71,6 @@ private:
 	const FAgCombatant* FindCombatant(const AAgEnemyCharacter& Enemy) const;
 
 	TArray<FAgCombatant> Combatants;
+
+	TMap<FName, FAgEnemyGroup> Groups;
 };

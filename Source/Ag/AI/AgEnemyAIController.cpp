@@ -4,6 +4,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "Character/AgEnemyCharacter.h"
+#include "Combat/AgCombatSubsystem.h"
 #include "Components/StateTreeAIComponent.h"
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
@@ -53,6 +54,12 @@ bool AAgEnemyAIController::IsEnemyReacting() const
 }
 
 bool AAgEnemyAIController::IsTargetNoticed() const
+{
+	const FName GroupId = GetEnemy()->GetGroupId();
+	return GroupId.IsNone() ? PerceivesTarget() : GetWorld()->GetSubsystem<UAgCombatSubsystem>()->IsGroupNoticingTarget(GroupId);
+}
+
+bool AAgEnemyAIController::PerceivesTarget() const
 {
 	// 엔진은 보이지 않게 되거나 맞은 순간부터 자극의 나이를 세고, 감각의 최대 나이가 지나면 잊습니다. 대미지 감각은 팀을
 	// 가리지 않지만 적대 목록은 적대 상대만 담으므로, 노리지 않는 상대(샌드백)에게 맞은 것은 빠집니다.

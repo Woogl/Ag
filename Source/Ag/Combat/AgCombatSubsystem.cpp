@@ -111,6 +111,51 @@ void UAgCombatSubsystem::EndAttack(const AAgEnemyCharacter& Enemy)
 	}
 }
 
+void UAgCombatSubsystem::AddGroupMember(AAgEnemyCharacter& Enemy)
+{
+	Groups.FindOrAdd(Enemy.GetGroupId()).Members.AddUnique(&Enemy);
+}
+
+void UAgCombatSubsystem::RemoveGroupMember(AAgEnemyCharacter& Enemy)
+{
+	if (FAgEnemyGroup* Group = Groups.Find(Enemy.GetGroupId()))
+	{
+		Group->Members.Remove(&Enemy);
+	}
+}
+
+bool UAgCombatSubsystem::IsGroupNoticingTarget(FName GroupId) const
+{
+	const FAgEnemyGroup* Group = Groups.Find(GroupId);
+	if (!Group)
+	{
+		return false;
+	}
+	if (GetWorld()->GetTimeSeconds() < Group->DeadMemberNoticeEndTime)
+	{
+		return true;
+	}
+	for (const TWeakObjectPtr<AAgEnemyCharacter>& Member : Group->Members)
+	{
+		const AAgEnemyAIController* Controller = Member.IsValid() ? Member->GetController<AAgEnemyAIController>() : nullptr;
+		if (Controller && !Member->IsDead() && Controller->PerceivesTarget())
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void UAgCombatSubsystem::HandleGroupMemberDied(const AAgEnemyCharacter& Enemy)
+{
+	FAgEnemyGroup* Group = Groups.Find(Enemy.GetGroupId());
+	const AAgEnemyAIController* Controller = Enemy.GetController<AAgEnemyAIController>();
+	if (Group && Controller && Controller->PerceivesTarget())
+	{
+		Group->DeadMemberNoticeEndTime = GetWorld()->GetTimeSeconds() + UAgAssetManager::Get().GetCombatRules().TargetLostTime;
+	}
+}
+
 bool UAgCombatSubsystem::HasAttackTurn(const AAgEnemyCharacter& Enemy) const
 {
 	const FAgCombatant* Self = FindCombatant(Enemy);
