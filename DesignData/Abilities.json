@@ -641,14 +641,14 @@
       "StartSections": [{"Section": "Attack2"}],
       "Sections": {
         "Attack1": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.39, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
+          {"Task": "RootMotion", "Start": 0, "End": 0.463077, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.503077, "End": 0.593077, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": true},
           {"Task": "RootMotion", "Start": 0.9, "End": 0.92, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1.4, "PPMultiplier": 1, "HitReaction": "KnockDown", "bGuardable": true}},
-          {"Task": "Transition", "Start": 1.05, "ToSection": "Attack1", "BlendTime": 0.2}
+          {"Task": "Transition", "Start": 1.05, "ToSection": "Attack1", "BlendTime": 0.14}
         ]
       }
     },
@@ -665,8 +665,8 @@
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.42, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.46, "End": 0.62, "Damage": {"HPMultiplier": 0.6, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
-          {"Task": "RootMotion", "Start": 0.65, "End": 0.91, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.945, "End": 1.095, "Damage": {"HPMultiplier": 0.9, "PPMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true}}
+          {"Task": "RootMotion", "Start": 0.65, "End": 0.98375, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 1.01875, "End": 1.16875, "Damage": {"HPMultiplier": 0.9, "PPMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true}}
         ]
       }
     },
