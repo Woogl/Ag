@@ -641,11 +641,12 @@
       "StartSections": [{"Section": "Attack2"}],
       "Sections": {
         "Attack1": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.386, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.39, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.43, "End": 0.52, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}}
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.9, "bWarpTranslation": true},
+          {"Task": "RootMotion", "Start": 0.9, "End": 0.92, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.95, "End": 1.05, "Damage": {"HPMultiplier": 1.4, "PPMultiplier": 1, "HitReaction": "KnockDown", "bGuardable": true}},
           {"Task": "Transition", "Start": 1.05, "ToSection": "Attack1", "BlendTime": 0.2}
         ]
@@ -662,8 +663,10 @@
       "Asset": "/Game/Animations/AM_Boss_Sweep.AM_Boss_Sweep",
       "Sections": {
         "Default": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.37, "bWarpTranslation": false},
-          {"Task": "WeaponHit", "Start": 0.46, "End": 0.62, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true}}
+          {"Task": "RootMotion", "Start": 0, "End": 0.42, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.46, "End": 0.62, "Damage": {"HPMultiplier": 0.6, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "RootMotion", "Start": 0.65, "End": 0.91, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.945, "End": 1.095, "Damage": {"HPMultiplier": 0.9, "PPMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true}}
         ]
       }
     },
@@ -683,7 +686,7 @@
         ],
         "Dash": [
           {"Task": "RootMotion", "Start": 0, "End": 0.08333, "bWarpTranslation": false},
-          {"Task": "Dash", "Start": 0.1, "EndSection": "Hold", "Speed": 2000, "HomingTurnRate": 90, "Overshoot": 200, "MaxDistance": 2000},
+          {"Task": "Dash", "Start": 0.1, "EndSection": "Hold", "Speed": 2000, "HomingTurnRate": 135, "Overshoot": 200, "MaxDistance": 2000},
           {"Task": "WeaponHit", "Start": 0.1, "EndSection": "Hold", "Damage": {"HPMultiplier": 2, "PPMultiplier": 1, "HitReaction": "KnockUp", "bGuardable": true}},
           {"Task": "ApplyEffect", "Start": 0.1, "EndSection": "Hold", "Effect": "PassThrough"}
         ],
@@ -726,7 +729,7 @@
       "Asset": "/Game/Animations/AM_Boss_QuintupleStrike.AM_Boss_QuintupleStrike",
       "Sections": {
         "Attack1": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.722222, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.74, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.777778, "End": 0.877778, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.927778, "ToSection": "Windup2", "BlendTime": 0.12}
         ],
@@ -735,7 +738,7 @@
           {"Task": "Transition", "Start": 0.43333, "ToSection": "Attack2", "BlendTime": 0.12}
         ],
         "Attack2": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.08, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.26667, "ToSection": "Windup3", "BlendTime": 0.12}
         ],
@@ -744,7 +747,7 @@
           {"Task": "Transition", "Start": 0.43333, "ToSection": "Attack3", "BlendTime": 0.12}
         ],
         "Attack3": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.08, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.26667, "ToSection": "Windup4", "BlendTime": 0.12}
         ],
@@ -753,7 +756,7 @@
           {"Task": "Transition", "Start": 0.43333, "ToSection": "Attack4", "BlendTime": 0.12}
         ],
         "Attack4": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.06667, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.08, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.11667, "End": 0.21667, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
           {"Task": "Transition", "Start": 0.3, "ToSection": "Windup5", "BlendTime": 0.12}
         ],
@@ -762,7 +765,7 @@
           {"Task": "Transition", "Start": 0.63333, "ToSection": "Attack5", "BlendTime": 0.12}
         ],
         "Attack5": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.165, "bWarpTranslation": false},
           {"Task": "WeaponHit", "Start": 0.2, "End": 0.4, "Damage": {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}}
         ]
       }
@@ -778,17 +781,17 @@
       "Asset": "/Game/Animations/AM_Boss_SwordWave.AM_Boss_SwordWave",
       "Sections": {
         "Attack1": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.65, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.71, "bWarpTranslation": false},
           {"Task": "SpawnActor", "Start": 0.75, "Actor": "SwordWave"},
           {"Task": "Transition", "Start": 0.88, "ToSection": "Attack2", "BlendTime": 0.2}
         ],
         "Attack2": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.25, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.46, "bWarpTranslation": false},
           {"Task": "SpawnActor", "Start": 0.5, "Actor": "SwordWave"},
           {"Task": "Transition", "Start": 0.63, "ToSection": "Attack3", "BlendTime": 0.2}
         ],
         "Attack3": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": false},
+          {"Task": "RootMotion", "Start": 0, "End": 0.24, "bWarpTranslation": false},
           {"Task": "SpawnActor", "Start": 0.28, "Actor": "SwordWave"}
         ]
       }
@@ -806,7 +809,18 @@
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.274, "bWarpTranslation": true},
           {"Task": "RootMotion", "Start": 0.274, "End": 0.4, "bWarpTranslation": true},
-          {"Task": "WeaponHit", "Start": 0.533, "End": 0.613, "Damage": {"HPMultiplier": 1.6, "PPMultiplier": 1, "HitReaction": "KnockDown", "bGuardable": true}}
+          {"Task": "RootMotion", "Start": 0.4, "End": 0.51, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.545, "End": 0.63, "Damage": {"HPMultiplier": 0.5, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.70, "ToSection": "RisingCut", "BlendTime": 0.16}
+        ],
+        "RisingCut": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.265, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.30, "End": 0.40, "Damage": {"HPMultiplier": 0.4, "PPMultiplier": 1, "HitReaction": "Flinch", "bGuardable": true}},
+          {"Task": "Transition", "Start": 0.60, "ToSection": "Finish", "BlendTime": 0.16}
+        ],
+        "Finish": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.195, "bWarpTranslation": false},
+          {"Task": "WeaponHit", "Start": 0.23, "End": 0.39, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 1, "HitReaction": "KnockDown", "bGuardable": true}}
         ]
       }
     },

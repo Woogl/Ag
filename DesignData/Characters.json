@@ -51,8 +51,8 @@
     "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
-      "HP": 3000,
-      "MaxHP": 3000,
+      "HP": 6000,
+      "MaxHP": 6000,
       "PP": 1500,
       "MaxPP": 1500,
       "ATK": 200,
@@ -84,7 +84,7 @@
       "SightDistance": 2000,
       "SightAngle": 120
     },
-    "PhaseTransitionHPRatios": [0.5],
+    "PhaseTransitionHPRatios": [0.65],
     "Effects": ["PPRegen"]
   },
   "Sandbag": {
