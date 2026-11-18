@@ -21,6 +21,10 @@ public:
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit")
 	float HitstopDuration = 0.f;
 
+	/** 극한 회피 판정 상자의 한 변 길이(cm)입니다. */
+	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit")
+	float PerfectDodgeBoxSize = 0.f;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Bonus Damage")
 	float GroggyBonusDamage = 0.f;
 

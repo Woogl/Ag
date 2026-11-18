@@ -6,6 +6,7 @@
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgGameplayEffectContext.h"
 #include "Character/AgCharacterBase.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -96,14 +97,27 @@ void AAgShockwave::Tick(float DeltaSeconds)
 	for (const FOverlapResult& Overlap : Overlaps)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Overlap.GetActor());
-		const UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(Overlap.GetComponent());
-		if (!IsValid(Target) || !Capsule || TouchedActors.Contains(Target) || !Target->CanBeHitBy(*Shooter))
+		if (!IsValid(Target) || TouchedActors.Contains(Target) || !Target->CanBeHitBy(*Shooter))
 		{
 			continue;
 		}
-		const float Distance = FVector::Dist2D(Capsule->GetComponentLocation(), Center);
-		const float CapsuleRadius = Capsule->GetScaledCapsuleRadius();
-		if (Distance - CapsuleRadius > Radius || Distance + CapsuleRadius < InnerRadius)
+		// 캐릭터 메시도 Pawn 오브젝트 종류라 몸 캡슐과 극한 회피 판정 상자만 봅니다. 상자는 반 변을 반경으로 한 원기둥으로
+		// 봅니다.
+		float BodyRadius = 0.f;
+		if (const UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(Overlap.GetComponent()))
+		{
+			BodyRadius = Capsule->GetScaledCapsuleRadius();
+		}
+		else if (const UBoxComponent* Box = Cast<UBoxComponent>(Overlap.GetComponent()))
+		{
+			BodyRadius = Box->GetScaledBoxExtent().X;
+		}
+		else
+		{
+			continue;
+		}
+		const float Distance = FVector::Dist2D(Overlap.GetComponent()->GetComponentLocation(), Center);
+		if (Distance - BodyRadius > Radius || Distance + BodyRadius < InnerRadius)
 		{
 			continue;
 		}

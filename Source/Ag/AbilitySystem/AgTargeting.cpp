@@ -184,7 +184,7 @@ void UAgTargetingSelectionTask_Sphere::SelectTargets_Implementation(const FTarge
 			FCollisionShape::MakeSphere(Request->Range), QueryParams);
 		for (const FOverlapResult& Overlap : Overlaps)
 		{
-			// 캐릭터 메시도 Pawn 오브젝트 종류라, 캡슐(몸과 회피를 시작한 자리)에 닿은 결과만 씁니다.
+			// 캐릭터 메시와 극한 회피 판정 상자도 Pawn 오브젝트 종류라, 몸 캡슐에 닿은 결과만 씁니다.
 			AAgCharacterBase* Candidate = Cast<AAgCharacterBase>(Overlap.GetActor());
 			if (Candidate && Cast<UCapsuleComponent>(Overlap.GetComponent()))
 			{

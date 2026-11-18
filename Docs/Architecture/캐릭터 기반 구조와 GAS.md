@@ -32,7 +32,7 @@
 | - | - | - |
 | `AAgCharacterBase` | `ACharacter`, `IAbilitySystemInterface`, `IGenericTeamAgentInterface` | 플레이어·적 공통. 캐릭터 데이터 연결(BP 기본값 `CharacterDataId`로 `Characters.json` 로드), ASC, 어트리뷰트, 팀(적대 판정)과 적중 가능 판정(`CanBeHitBy`), 어빌리티 부여와 스펙의 어빌리티 항목 찾기(`FindAbility`, `FindAbilitySpec`), 무기 리소스, 공중 상태(`State.Airborne`)와 이동 사건(`Event.Landed`, 띄울 때마다(`LaunchCharacter`) 켜는 엔진 정점 알림으로 보내는 `Event.Apex`, 이동이 가로막히면 보내는 `Event.MoveBlocked`), 재생 중인 어빌리티의 대상과 간격으로 루트 모션 자르기(최소 간격), 상태 태그 처리(캐릭터 통과, 넉업·넉다운 동안 캡슐도 무기에 맞음, `State.Hidden` 동안 무기까지 숨김), 락온 대상 조회(`GetLockOnTarget`), 이동 입력 방향(`GetMoveInputDirection`), 방향 고정(`IsFacingFixed`)과 등 쪽 90° 판정(`IsBehind`: 백어택, 등 쪽 움찔, 등 뒤의 대상에게 돌지 않기), 피격 흔들림 컴포넌트(`UAgHitPhysicsComponent`, 래그돌 전에 멈춤), 히트스톱 중의 시간 배율, 기본 래그돌 사망 처리 |
 | `UAgCharacterMovementComponent` | `UCharacterMovementComponent` | 모든 캐릭터의 회전과 낙하 높이. 엔진 회전을 쓰고, 방향 고정 중에는 돌지 않습니다. 방향 고정(`AAgCharacterBase::IsFacingFixed`)은 `DefaultSlot`을 쓰는 어빌리티 몽타주를 재생하는 동안과 그로기, 사망이며, 상체 슬롯만 쓰는 몽타주(회복병)는 재생 중에도 돕니다. 서 있을 때 발을 붙여 두는 것은 애님 인스턴스가 루트 뼈를 반대로 돌려서 합니다. 낙하 높이는 공중에서 마지막으로 발이 가장 높았던 지점(걸어 나가 떨어지면 딛고 있던 바닥)부터 착지한 바닥까지 잽니다. |
-| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소), 달리기·락온 발동과 취소, 락온 대상 전환, 상호작용 컴포넌트(`Interaction`, [상호작용](<상호작용.md>)), 몸 회전, 극한 회피 캡슐(`PerfectDodgeCapsule`), 전투 통계 기록(`CombatStats`), 궁극기 시간 정지 요청, 행동을 시작할 때 남은 반격 기회와 다음 타 예약 효과 지우기, 가드가 끝날 때 가드로 건 이동 잠금 지우기, 사망 시 시야를 제외한 입력 차단. |
+| `AAgPlayerCharacter` | `AAgCharacterBase` | 카메라 리그(`CameraBoom`, `FollowCamera`), 입력 매핑, 입력 계층(위 '입력': 입력 태그로 어빌리티 찾기 `FindInputAbilities`, 눌림 상태, 선입력, 입력 제한 검사, 키를 떼면 끝나는 어빌리티의 취소), 달리기·락온 발동과 취소, 락온 대상 전환, 상호작용 컴포넌트(`Interaction`, [상호작용](<상호작용.md>)), 몸 회전, 전투 통계 기록(`CombatStats`), 궁극기 시간 정지 요청, 행동을 시작할 때 남은 반격 기회와 다음 타 예약 효과 지우기, 가드가 끝날 때 가드로 건 이동 잠금 지우기, 사망 시 시야를 제외한 입력 차단. |
 | `AAgPlayerCameraManager` | `APlayerCameraManager` | BP 파생 클래스 없이 생성합니다. 락온 보간·시야 입력 판단(엔진 `ProcessViewRotation`에서 락온·처형·대상 비추기 중 회전 차단, 락온 중 대상 전환 튕김 판정)·상대 쪽 회전·대상 비추기(`StartLookAt`·`StopLookAt`, 비추는 동안 락온이 아니면 락온 보간으로 대상 쪽 회전)·요청받은 상황의 연출 재생·달리기 시야각·처형 카메라 시작과 종료·컷신 진입 정리를 맡고, 설정은 `UAgCameraData`에서 읽습니다. 엔진 점유 알림으로 플레이어 ASC에 연결합니다. 기본 모디파이어 클래스는 C++ 생성자의 `DefaultModifiers`에서 지정하고 엔진이 생성합니다. |
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
 | `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
@@ -76,7 +76,6 @@ classDiagram
         <<BP_Player>>
         USpringArmComponent CameraBoom
         UCameraComponent FollowCamera
-        UCapsuleComponent PerfectDodgeCapsule
         UAgCombatStatsComponent CombatStats
         UAgInteractionComponent Interaction
         UInputMappingContext InputMapping
@@ -246,7 +245,7 @@ sequenceDiagram
     C->>D: 시작 효과 ID 목록<br>(정의는 Effects.json)
     C->>ASC: GameplayEffect 적용<br>(리젠)
     C->>C: 루트 모션 자르기 연결
-    Note over C,D: 플레이어: 극한 회피 구간·시간 정지 태그 구독, 어빌리티 시작, 상태 태그 구독, 락온 회전 방식<br>적: 그로기 이벤트·태그, 어빌리티 끝 구독
+    Note over C,D: 플레이어: 시간 정지 태그 구독, 어빌리티 시작, 상태 태그 구독, 락온 회전 방식<br>적: 그로기 이벤트·태그, 어빌리티 끝 구독
 ```
 
 ### 어빌리티 실행
@@ -284,7 +283,7 @@ sequenceDiagram
 
 ### GameplayEffect
 
-효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가, 낙하 대미지 계산은 `UAgFallDamageMagnitude`가 맡습니다. 어빌리티 비용·쿨다운은 어빌리티가, 어빌리티가 거는 효과(패리 구간, 극한 회피 구간, 패리·극한 회피의 보상과 회피 반격 기회)는 ApplyEffect가, 적중 충전은 HitReward Task가, 히트스톱, 가드 반격 기회(가드·패리 결과), 가드 뒤 이동 잠금과 패리 대미지는 피격 결과 처리 컴포넌트가, 그로기 효과와 PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과, Kill과 낙하 대미지는 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
+효과 정의의 JSON 형식은 [데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'를 따릅니다. 이 절에서는 효과를 거는 객체의 역할과, 코드가 효과를 만들고 쓰는 방법(아래 '코드가 효과를 쓰는 방법')을 정리합니다. 대미지 효과의 계산과 결과 처리는 `UAgDamageExecution`과 `UAgDamageResultGameplayEffectComponent`가, 낙하 대미지 계산은 `UAgFallDamageMagnitude`가 맡습니다. 어빌리티 비용·쿨다운은 어빌리티가, 어빌리티가 거는 효과(패리 구간, 패리·극한 회피의 보상과 회피 반격 기회)는 ApplyEffect가, 극한 회피 구간은 판정 상자와 함께 PerfectDodgeWindow Task가, 적중 충전은 HitReward Task가, 히트스톱, 가드 반격 기회(가드·패리 결과), 가드 뒤 이동 잠금과 패리 대미지는 피격 결과 처리 컴포넌트가, 그로기 효과와 PP 회복(그로기·처형 피격·페이즈 전환이 끝날 때)은 적 캐릭터가, 시작 효과, Kill과 낙하 대미지는 캐릭터가, 리젠 대기는 회복 효과의 리젠 대기 컴포넌트가, 슬로우모션은 슬로우모션 효과의 컴포넌트가 겁니다.
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |

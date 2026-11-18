@@ -11,8 +11,6 @@
 #include "Camera/CameraComponent.h"
 #include "Combat/AgCombatStatsComponent.h"
 #include "Combat/AgTimeSubsystem.h"
-#include "Components/CapsuleComponent.h"
-#include "Core/AgCollision.h"
 #include "Core/AgGameplayTags.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -39,18 +37,6 @@ AAgPlayerCharacter::AAgPlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
-
-	PerfectDodgeCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("PerfectDodgeCapsule"));
-	PerfectDodgeCapsule->SetupAttachment(GetCapsuleComponent());
-	PerfectDodgeCapsule->SetUsingAbsoluteLocation(true);
-	PerfectDodgeCapsule->SetUsingAbsoluteRotation(true);
-	PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	// 투사체와 대상 찾기는 Pawn 오브젝트 종류로 찾고 응답은 보지 않으므로, 응답은 무기 판정 채널만 둡니다.
-	PerfectDodgeCapsule->SetCollisionObjectType(ECC_Pawn);
-	PerfectDodgeCapsule->SetCollisionResponseToAllChannels(ECR_Ignore);
-	PerfectDodgeCapsule->SetCollisionResponseToChannel(ECC_AgWeapon, ECR_Overlap);
-	PerfectDodgeCapsule->SetGenerateOverlapEvents(false);
-	PerfectDodgeCapsule->SetCanEverAffectNavigation(false);
 
 	CombatStats = CreateDefaultSubobject<UAgCombatStatsComponent>(TEXT("CombatStats"));
 
@@ -115,11 +101,8 @@ void AAgPlayerCharacter::BeginPlay()
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Airborne, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleInputBlockChanged);
-	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_PerfectDodgeWindow, EGameplayTagEventType::NewOrRemoved)
-		.AddUObject(this, &ThisClass::HandlePerfectDodgeWindowChanged);
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_TimeStop, EGameplayTagEventType::NewOrRemoved)
 		.AddUObject(this, &ThisClass::HandleTimeStopChanged);
-	PerfectDodgeCapsule->SetCapsuleSize(GetCapsuleComponent()->GetUnscaledCapsuleRadius(), GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 	UpdateRotationMode();
 }
 
@@ -469,19 +452,6 @@ void AAgPlayerCharacter::HandleGuardingChanged(const FGameplayTag Tag, int32 New
 		GetAbilitySystemComponent()->RemoveActiveEffectsWithGrantedTags(FGameplayTagContainer(AgGameplayTags::State_MoveLocked));
 	}
 	UpdateRotationMode();
-}
-
-void AAgPlayerCharacter::HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount)
-{
-	if (NewCount > 0)
-	{
-		PerfectDodgeCapsule->SetWorldLocation(GetCapsuleComponent()->GetComponentLocation());
-		PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	}
-	else
-	{
-		PerfectDodgeCapsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
 }
 
 void AAgPlayerCharacter::HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount)

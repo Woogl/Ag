@@ -2,6 +2,7 @@
   "GuardReduction": 0.5,
   "DefenseConstant": 100,
   "HitstopDuration": 0.12,
+  "PerfectDodgeBoxSize": 800,
   "GroggyBonusDamage": 0.5,
   "BackAttackBonusDamage": 0.1,
   "AerialBonusDamage": 0.1,

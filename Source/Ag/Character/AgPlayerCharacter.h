@@ -10,7 +10,6 @@
 class UAgCombatStatsComponent;
 class UAgInteractionComponent;
 class UCameraComponent;
-class UCapsuleComponent;
 class UGameplayAbility;
 class UInputAction;
 class UInputMappingContext;
@@ -98,8 +97,6 @@ private:
 
 	void HandleGuardingChanged(const FGameplayTag Tag, int32 NewCount);
 
-	void HandlePerfectDodgeWindowChanged(const FGameplayTag Tag, int32 NewCount);
-
 	void HandleTimeStopChanged(const FGameplayTag Tag, int32 NewCount);
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -107,9 +104,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
-
-	UPROPERTY(VisibleAnywhere, Category = "Combat")
-	TObjectPtr<UCapsuleComponent> PerfectDodgeCapsule;
 
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	TObjectPtr<UAgCombatStatsComponent> CombatStats;
