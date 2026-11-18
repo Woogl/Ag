@@ -151,7 +151,7 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_ParryTelegraph, "GameplayCue.ParryTelegraph", "패리 예고");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_WeaponTrail, "GameplayCue.WeaponTrail", "무기 궤적");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_Teleport, "GameplayCue.Teleport", "순간이동으로 사라지거나 나타나는 자리의 효과");
-	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_BlinkRushThrust, "GameplayCue.BlinkRushThrust", "스킬 1 찌르기에서 칼끝의 섬광");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_BlinkRushThrust, "GameplayCue.BlinkRushThrust", "스킬 1 베기에서 칼끝의 섬광");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_UpperSlashBlade, "GameplayCue.UpperSlashBlade", "스킬 2 동작 동안 칼날에 서리는 기운");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PotionBottle, "GameplayCue.PotionBottle", "회복병을 마시는 동안 왼손에 보이는 병");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(GameplayCue_PotionHeal, "GameplayCue.PotionHeal", "회복병을 삼킨 순간의 회복 효과");

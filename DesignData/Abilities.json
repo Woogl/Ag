@@ -266,13 +266,13 @@
       "Sections": {
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.08, "bWarpTranslation": false},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.45, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.44, "Effect": "Busy"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.16, "Effect": "Invincible"},
           {"Task": "ApplyEffect", "Start": 0.08, "End": 0.16, "Effect": "Hidden"},
           {"Task": "DisableRootMotion", "Start": 0.08, "End": 0.16},
           {"Task": "Teleport", "Start": 0.16, "Distance": 300},
           {"Task": "RootMotion", "Start": 0.17, "End": 0.34, "TargetingRange": 500, "bWarpTranslation": true},
-          {"Task": "WeaponHit", "Start": 0.351, "End": 0.45, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
+          {"Task": "WeaponHit", "Start": 0.351, "End": 0.44, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "bGuardable": true}}
         ]
       }
     }
