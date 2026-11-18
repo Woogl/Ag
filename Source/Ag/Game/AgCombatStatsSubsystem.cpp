@@ -17,17 +17,6 @@ void UAgCombatStatsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("CombatStats"), FDateTime::Now().ToString(TEXT("%Y-%m-%d_%H-%M-%S")) + TEXT(".json"));
 }
 
-void UAgCombatStatsSubsystem::RequestRestart()
-{
-	bRestartRequested = true;
-}
-
-void UAgCombatStatsSubsystem::BeginAttempt()
-{
-	Attempt = bRestartRequested ? Attempt + 1 : 1;
-	bRestartRequested = false;
-}
-
 void UAgCombatStatsSubsystem::Save(const FAgCombatStats& Stats)
 {
 	File.Records.Add(Stats);

@@ -9,8 +9,6 @@
 #include "Camera/AgPlayerCameraManager.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "Engine/AssetManager.h"
-#include "Engine/GameInstance.h"
-#include "Game/AgCombatStatsSubsystem.h"
 #include "Game/AgGameState.h"
 #include "Game/AgPlayerController.h"
 #include "GameMapsSettings.h"
@@ -78,7 +76,6 @@ void AAgGameMode::RestartStage()
 {
 	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
 	{
-		GetGameInstance()->GetSubsystem<UAgCombatStatsSubsystem>()->RequestRestart();
 		PlayerController->RestartLevel();
 	}
 }
@@ -121,13 +118,6 @@ void AAgGameMode::HandleCharacterDied(AAgCharacterBase& DeadCharacter)
 	{
 		ShowResult();
 	}
-}
-
-void AAgGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
-{
-	Super::InitGame(MapName, Options, ErrorMessage);
-
-	GetGameInstance()->GetSubsystem<UAgCombatStatsSubsystem>()->BeginAttempt();
 }
 
 void AAgGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)

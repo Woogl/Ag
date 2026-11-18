@@ -35,37 +35,35 @@
   <text x="56" y="34" font-size="16" fill="#9aa4b1">시뮬레이션 룸 Stage Clear UI · 기준 해상도 1920 × 1080 · 제목, 통계 표, 버튼을 화면 가운데에 세로로 놓음</text>
 
   <!-- 제목 -->
-  <text x="960" y="281" font-size="112" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="8">STAGE CLEAR</text>
+  <text x="960" y="301" font-size="112" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="8">STAGE CLEAR</text>
 
   <!-- 전투 통계 표 (글자 Medium, 줄 간격 40px) -->
   <g font-size="24" fill="#FFFFFF">
-    <text x="793" y="397">도전 횟수</text>
-    <text x="937" y="397">2</text>
-    <text x="793" y="437">전투 시간</text>
-    <text x="937" y="437">0:48.312</text>
-    <text x="793" y="477">상대한 적</text>
-    <text x="937" y="477">커스터, 절단자 × 2</text>
-    <text x="793" y="517">패리 성공</text>
-    <text x="937" y="517">3</text>
-    <text x="793" y="557">회피 성공</text>
-    <text x="937" y="557">1</text>
-    <text x="793" y="597">피격 횟수</text>
-    <text x="937" y="597">5</text>
+    <text x="793" y="417">전투 시간</text>
+    <text x="937" y="417">0:48.312</text>
+    <text x="793" y="457">상대한 적</text>
+    <text x="937" y="457">커스터, 절단자 × 2</text>
+    <text x="793" y="497">패리 성공</text>
+    <text x="937" y="497">3</text>
+    <text x="793" y="537">회피 성공</text>
+    <text x="937" y="537">1</text>
+    <text x="793" y="577">피격 횟수</text>
+    <text x="937" y="577">5</text>
   </g>
-  <text x="1190" y="397" font-size="16" fill="#9aa4b1">← 항목 이름과 값, 위에서부터 차례로</text>
+  <text x="1190" y="417" font-size="16" fill="#9aa4b1">← 항목 이름과 값, 위에서부터 차례로</text>
 
   <!-- 버튼 (세로 배치) -->
   <g font-size="32" font-weight="700" text-anchor="middle">
-    <rect x="750" y="674" width="420" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
-    <text x="960" y="721" fill="#FFFFFF">Restart</text>
+    <rect x="750" y="654" width="420" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <text x="960" y="701" fill="#FFFFFF">Restart</text>
 
-    <rect x="750" y="766" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
-    <text x="960" y="813" fill="#c9d1db">Return to Title</text>
+    <rect x="750" y="746" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="793" fill="#c9d1db">Return to Title</text>
 
-    <rect x="750" y="858" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
-    <text x="960" y="905" fill="#c9d1db">Quit</text>
+    <rect x="750" y="838" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="960" y="885" fill="#c9d1db">Quit</text>
   </g>
-  <text x="1190" y="716" font-size="16" fill="#9aa4b1">← 처음 선택된 버튼</text>
+  <text x="1190" y="696" font-size="16" fill="#9aa4b1">← 처음 선택된 버튼</text>
 
   <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
   <text x="960" y="1000" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, ↑·↓ / 실행: 좌클릭, Enter</text>

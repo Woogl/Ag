@@ -86,7 +86,6 @@ void UAgCombatStatsComponent::HandleCombatantsChanged()
 		}
 		Recording.Emplace();
 		Recording->Level = UGameplayStatics::GetCurrentLevelName(this, true);
-		Recording->Attempt = GetWorld()->GetGameInstance()->GetSubsystem<UAgCombatStatsSubsystem>()->GetAttempt();
 		// 일시정지에는 멈추고 시간 배율은 받지 않는 시계입니다.
 		StartTime = GetWorld()->GetAudioTimeSeconds();
 	}

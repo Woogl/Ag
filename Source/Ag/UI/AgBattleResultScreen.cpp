@@ -93,7 +93,6 @@ void UAgBattleResultScreen::ShowCombatStats()
 	{
 		return;
 	}
-	AttemptText->SetText(FText::AsNumber(Stats->Attempt));
 	const int32 Milliseconds = FMath::RoundToInt32(Stats->Duration * 1000.f);
 	DurationText->SetText(FText::FromString(FString::Printf(TEXT("%d:%02d.%03d"), Milliseconds / 60000, Milliseconds / 1000 % 60, Milliseconds % 1000)));
 	EnemiesText->SetText(AgBattleResultScreenPrivate::FormatEnemies(Stats->Enemies));

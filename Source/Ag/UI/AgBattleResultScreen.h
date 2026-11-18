@@ -37,9 +37,6 @@ protected:
 	TObjectPtr<UWidget> CombatStatsTable;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonTextBlock> AttemptText;
-
-	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> DurationText;
 
 	UPROPERTY(meta = (BindWidget))
