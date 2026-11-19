@@ -18,9 +18,10 @@ HOLD_START_FRAMES, HOLD_END_FRAMES = 8, 10
 
 def read_clip(clip):
     pack, name = clip.split("/", 1)
-    path = ROOT / "Docs/Art/GIF" / pack / ("ARPG_" + pack + "_Anim_UE_" + name + ".gif")
+    folder = ROOT / "Docs/Art/GIF" / pack
+    path = folder / ("ARPG_" + pack + "_Anim_UE_" + name + ".gif")
     if not path.exists():
-        path = path.with_name(name + ".gif")
+        path = folder / (name + ".gif")
     frames, samples = [], []
     with Image.open(path) as image:
         if image.size != (SOURCE.WIDTH, SOURCE.HEIGHT + SOURCE.HEADER):

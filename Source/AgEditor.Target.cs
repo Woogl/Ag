@@ -1,7 +1,6 @@
 // Copyright Woogle. All Rights Reserved.
 
 using UnrealBuildTool;
-using System.Collections.Generic;
 
 public class AgEditorTarget : TargetRules
 {

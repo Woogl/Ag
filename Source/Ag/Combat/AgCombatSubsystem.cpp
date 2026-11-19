@@ -146,11 +146,13 @@ bool UAgCombatSubsystem::IsGroupNoticingTarget(FName GroupId) const
 	return false;
 }
 
-void UAgCombatSubsystem::HandleGroupMemberDied(const AAgEnemyCharacter& Enemy)
+void UAgCombatSubsystem::HandleGroupMemberDied(const AAgEnemyCharacter& Enemy, const AActor* Killer)
 {
 	FAgEnemyGroup* Group = Groups.Find(Enemy.GetGroupId());
 	const AAgEnemyAIController* Controller = Enemy.GetController<AAgEnemyAIController>();
-	if (Group && Controller && Controller->PerceivesTarget())
+	// 엔진은 대미지 자극을 다음 지각 갱신에 넣으므로, 죽인 타격은 이때 죽은 적의 감각에 아직 없습니다.
+	const bool bKilledByHostile = Killer && FGenericTeamId::GetAttitude(&Enemy, Killer) == ETeamAttitude::Hostile;
+	if (Group && (bKilledByHostile || (Controller && Controller->PerceivesTarget())))
 	{
 		Group->DeadMemberNoticeEndTime = GetWorld()->GetTimeSeconds() + UAgAssetManager::Get().GetCombatRules().TargetLostTime;
 	}

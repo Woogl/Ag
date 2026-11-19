@@ -18,12 +18,7 @@ UAbilityTask* FAgSpawnActorParams::MakeTask(const FAgTaskContext& Context) const
 
 void UAgAbilityTask_SpawnActor::Activate()
 {
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!Character)
-	{
-		EndTask();
-		return;
-	}
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
 	AActor* Template = UAgAssetManager::Get().FindSpawnActor(Params.Actor);
 	if (!Template)

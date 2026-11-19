@@ -257,11 +257,11 @@ void AAgEnemyCharacter::Tick(float DeltaSeconds)
 	UpdateWorldWidgets();
 }
 
-void AAgEnemyCharacter::Die(const AActor* Attacker)
+void AAgEnemyCharacter::Die(const FGameplayEventData& DeathEvent)
 {
 	if (!GroupId.IsNone())
 	{
-		GetWorld()->GetSubsystem<UAgCombatSubsystem>()->HandleGroupMemberDied(*this);
+		GetWorld()->GetSubsystem<UAgCombatSubsystem>()->HandleGroupMemberDied(*this, DeathEvent.ContextHandle.GetInstigator());
 	}
 
 	// 행동을 취소하면 재생 중인 몽타주가 멈추므로, 재생 위치는 사망 처리 전에 읽습니다.
@@ -274,7 +274,7 @@ void AAgEnemyCharacter::Die(const AActor* Attacker)
 		return;
 	}
 
-	Super::Die(Attacker);
+	Super::Die(DeathEvent);
 }
 
 int32 AAgEnemyCharacter::GetReachedPhase() const

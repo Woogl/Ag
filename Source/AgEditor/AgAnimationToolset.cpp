@@ -40,9 +40,9 @@ bool UAgAnimationToolset::SetSlotGroup(USkeleton* Skeleton, FName SlotName, FNam
 bool UAgAnimationToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments)
 {
 	// 입력을 모두 검사한 뒤에만 몽타주를 고칩니다.
-	// 도중에 실패해 반쯤 바뀐 몽타주가 더티로 남지 않게 합니다.
+	// 도중에 실패해 반쯤 바뀐 몽타주가 더티로 남지 않게 합니다. 엔진은 0에 가까운 조각 재생 속도를 1로 재생합니다.
 	if (!Montage || Montage->SlotAnimTracks.IsEmpty() || Segments.IsEmpty() || Segments.ContainsByPredicate([](const FAgMontageSegment& Segment)
-	{ return !Segment.Animation; }))
+	{ return !Segment.Animation || Segment.PlayRate <= UE_SMALL_NUMBER; }))
 	{
 		return false;
 	}
@@ -59,7 +59,7 @@ bool UAgAnimationToolset::SetMontageSegments(UAnimMontage* Montage, FName SlotNa
 		AnimSegment.SetAnimReference(Segment.Animation, true);
 		AnimSegment.AnimStartTime = Segment.StartTime;
 		AnimSegment.AnimEndTime = Segment.EndTime > 0.f ? Segment.EndTime : Segment.Animation->GetPlayLength();
-		AnimSegment.AnimPlayRate = FMath::Max(Segment.PlayRate, UE_KINDA_SMALL_NUMBER);
+		AnimSegment.AnimPlayRate = Segment.PlayRate;
 		AnimSegment.StartPos = Position;
 		Position += AnimSegment.GetLength();
 	}
@@ -113,11 +113,7 @@ bool UAgAnimationToolset::SetMontageSections(UAnimMontage* Montage, const TArray
 	}
 	for (const FAgMontageSection& Section : Sections)
 	{
-		const int32 Index = Montage->GetSectionIndex(Section.Name);
-		if (Index != INDEX_NONE)
-		{
-			Montage->CompositeSections[Index].NextSectionName = Section.NextSection;
-		}
+		Montage->CompositeSections[Montage->GetSectionIndex(Section.Name)].NextSectionName = Section.NextSection;
 	}
 	Montage->PostEditChange();
 	Montage->MarkPackageDirty();

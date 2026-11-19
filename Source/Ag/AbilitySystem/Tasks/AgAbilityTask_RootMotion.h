@@ -61,7 +61,6 @@ public:
 private:
 	bool HasGoal() const;
 	FVector GetFacingDirection() const;
-	void RemoveWarpTarget();
 
 	UPROPERTY()
 	FAgRootMotionParams Params;

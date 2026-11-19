@@ -24,12 +24,10 @@ void UAgStatBar::SetValue(float Value, float MaxValue)
 {
 	SetRatio(MaxValue > 0.f ? Value / MaxValue : 0.f);
 
-	const FIntPoint Values(FMath::RoundToInt(Value), FMath::RoundToInt(MaxValue));
-	if (bShowValue && Values != ShownValues)
+	if (bShowValue)
 	{
-		ShownValues = Values;
 		const FNumberFormattingOptions& Format = FNumberFormattingOptions::DefaultNoGrouping();
-		ValueText->SetText(FText::Format(INVTEXT("{0} / {1}"), FText::AsNumber(Values.X, &Format), FText::AsNumber(Values.Y, &Format)));
+		ValueText->SetText(FText::Format(INVTEXT("{0} / {1}"), FText::AsNumber(FMath::RoundToInt(Value), &Format), FText::AsNumber(FMath::RoundToInt(MaxValue), &Format)));
 	}
 }
 
@@ -72,13 +70,10 @@ void UAgStatBar::ClearTrail()
 
 void UAgStatBar::ShowGroggy(float Time)
 {
-	if (GroggyBurst)
+	GroggyBurst->SetVisibility(ESlateVisibility::HitTestInvisible);
+	if (UMaterialInstanceDynamic* Burst = GroggyBurst->GetDynamicMaterial())
 	{
-		GroggyBurst->SetVisibility(ESlateVisibility::HitTestInvisible);
-		if (UMaterialInstanceDynamic* Burst = GroggyBurst->GetDynamicMaterial())
-		{
-			Burst->SetScalarParameterValue(AgStatBarPrivate::TimeParameter, Time);
-		}
+		Burst->SetScalarParameterValue(AgStatBarPrivate::TimeParameter, Time);
 	}
 
 	if (!GroggyFill)
@@ -105,10 +100,7 @@ void UAgStatBar::ShowGroggy(float Time)
 
 void UAgStatBar::HideGroggy()
 {
-	if (GroggyBurst)
-	{
-		GroggyBurst->SetVisibility(ESlateVisibility::Collapsed);
-	}
+	GroggyBurst->SetVisibility(ESlateVisibility::Collapsed);
 	if (AgStatBarPrivate::UsesFill(*Bar, GroggyFill))
 	{
 		FProgressBarStyle Style = Bar->GetWidgetStyle();

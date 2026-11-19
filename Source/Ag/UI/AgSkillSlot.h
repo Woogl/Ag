@@ -54,16 +54,11 @@ protected:
 	float DisabledOpacity = 1.f;
 
 private:
-	/** 이 칸의 입력 태그로 발동하는 어빌리티입니다. */
 	const UAgGameplayAbility* FindAbility() const;
 
 	TWeakObjectPtr<AAgPlayerCharacter> Player;
 
 	FGameplayTag InputTag;
-
-	int32 ShownCost = INDEX_NONE;
-	FIntPoint ShownCooldown = FIntPoint(INDEX_NONE, INDEX_NONE);
-	int32 ShownCharges = INDEX_NONE;
 
 	FTimerHandle CooldownTimer;
 };

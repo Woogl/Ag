@@ -16,8 +16,6 @@
 #include "Engine/World.h"
 #include "Game/AgGameState.h"
 #include "Game/AgPlayerController.h"
-#include "GameplayEffect.h"
-#include "GameplayEffectExtension.h"
 #include "Input/CommonUIInputTypes.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UI/AgNameplateWidget.h"

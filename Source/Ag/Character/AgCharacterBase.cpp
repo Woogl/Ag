@@ -341,7 +341,7 @@ void AAgCharacterBase::StartRagdoll(const FVector& PushVelocity)
 	}
 }
 
-void AAgCharacterBase::Die(const AActor* Attacker)
+void AAgCharacterBase::Die(const FGameplayEventData& DeathEvent)
 {
 	// 사망 상태를 먼저 붙여, 몽타주가 끊기며 끝나는 어빌리티의 콜백도 죽은 캐릭터로 봅니다.
 	ApplyDeathState();
@@ -349,8 +349,9 @@ void AAgCharacterBase::Die(const AActor* Attacker)
 	{
 		AnimInstance->StopAllMontages(0.f);
 	}
+	const AActor* DamageCauser = DeathEvent.Instigator.Get();
 	const FVector Push =
-		Attacker ? (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal2D() * AgCharacterBasePrivate::DeathPushSpeed : FVector::ZeroVector;
+		DamageCauser ? (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal2D() * AgCharacterBasePrivate::DeathPushSpeed : FVector::ZeroVector;
 	StartRagdoll(Push);
 	NotifyGameModeOfDeath();
 }
@@ -369,7 +370,7 @@ void AAgCharacterBase::HandleDeathEvent(const FGameplayEventData* Payload)
 	// 죽은 캐릭터의 HP를 다시 0으로 쓰는 효과(테스트용 HP 설정)도 사망 이벤트를 보냅니다.
 	if (!IsDead())
 	{
-		Die(Payload ? Payload->Instigator.Get() : nullptr);
+		Die(*Payload);
 	}
 }
 
@@ -384,10 +385,7 @@ void AAgCharacterBase::GrantAbilities()
 		AbilityIds.Add(Spec.Handle, AbilityId);
 		Spec.GetDynamicSpecSourceTags() = Ability.AbilityTags;
 		Spec.DynamicAbilityTriggers = Ability.AbilityTriggers;
-		if (!AbilitySystemComponent->GiveAbility(Spec).IsValid())
-		{
-			AbilityIds.Remove(Spec.Handle);
-		}
+		AbilitySystemComponent->GiveAbility(Spec);
 	}
 }
 

@@ -83,13 +83,8 @@ UAgAbilityTask_PlayMontage::UAgAbilityTask_PlayMontage()
 
 void UAgAbilityTask_PlayMontage::Activate()
 {
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	const AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	const UAbilitySystemComponent* ASC = AbilitySystemComponent.Get();
-	if (!Character || !ASC)
-	{
-		EndTask();
-		return;
-	}
 	// 읽지 못한 몽타주는 데이터를 읽을 때 오류로 알렸습니다.
 	if (!Params.Asset)
 	{
@@ -317,7 +312,6 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 	for (int32 Index = 0; Index < TimelineEntries.Num(); ++Index)
 	{
 		const FAgTimelineEntry& Entry = TimelineEntries[Index];
-		// 앞으로 진행하며 Start를 지났으면 시작하고, End까지 지났으면 함께 끝냅니다.
 		if (bForward && !Entry.bActive && Previous < Entry.Start && Entry.Start <= NewPosition)
 		{
 			Pending.Add(FAgPending{Entry.Start, EAgPhase::Begin, Index});
@@ -327,7 +321,6 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 			}
 			continue;
 		}
-		// 앞으로 진행하며 켜진 구간의 End를 지났으면 끝냅니다.
 		if (bForward && Entry.bActive && Entry.End <= NewPosition)
 		{
 			Pending.Add(FAgPending{Entry.End, EAgPhase::End, Index});

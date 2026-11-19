@@ -16,6 +16,7 @@ namespace AgAttributeSetPrivate
 		Payload.EventTag = EventTag;
 		Payload.Target = Character;
 		Payload.Instigator = Spec.GetContext().GetEffectCauser();
+		Payload.ContextHandle = Spec.GetContext();
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Character, EventTag, Payload);
 	}
 }

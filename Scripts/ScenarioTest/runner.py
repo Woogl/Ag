@@ -14,7 +14,6 @@ _RUNNER_LINE = inspect.currentframe().f_lineno
 # PIE 밖에서 액터 속성을 알림과 함께 쓰면 엔진이 컴포넌트를 다시 등록하고, 그때 ASC가 어빌리티를 모두 지운다.
 NEVER = unreal.PropertyAccessChangeNotifyMode.NEVER
 
-# 화면 안내 색
 GRAY, YELLOW, DONE = (0.7, 0.7, 0.7), (1, 0.9, 0.2), (0.6, 0.85, 0.6)
 PASS, FAIL = (0.3, 1, 0.4), (1, 0.4, 0.3)
 
@@ -274,7 +273,6 @@ def _setup():
     ctx.console("AgIgnoreDeviceInput 1")
     # 준비: 적 AI를 멈추고, 맵을 연 직후의 적 공격이 끝나고 프레임이 안정되기를 기다린다.
     ctx.ai(False)
-    # 화면에 제목, 준비, 시험 항목 전체를 한 줄씩 띄운다. 판정은 끝나고 그 아래에 붙는다.
     ctx.banner(TITLE, "title")
     ctx.banner("[진행] 준비: 보스 동작이 끝나고 프레임이 안정되기를 기다림", "warm", YELLOW)
     for i in range(len(STEPS)):

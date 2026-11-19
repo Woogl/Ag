@@ -12,11 +12,8 @@ UAbilityTask* FAgDisableRootMotionParams::MakeTask(const FAgTaskContext& Context
 
 void UAgAbilityTask_DisableRootMotion::Activate()
 {
-	if (AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor()))
-	{
-		bMontageRootMotionDisabled = true;
-		Character->PushDisableMontageRootMotion();
-	}
+	bMontageRootMotionDisabled = true;
+	CastChecked<AAgCharacterBase>(GetAvatarActor())->PushDisableMontageRootMotion();
 }
 
 void UAgAbilityTask_DisableRootMotion::OnDestroy(bool bInOwnerFinished)

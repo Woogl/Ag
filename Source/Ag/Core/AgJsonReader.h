@@ -32,7 +32,6 @@ public:
 private:
 	bool ParseFile(const FString& Path, TSharedPtr<FJsonValue>& OutValue);
 
-	/** 속성의 종류를 가려 아래 함수 하나로 넘깁니다. */
 	bool Read(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FProperty& Property, void* Out);
 
 	bool ReadArray(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FArrayProperty& Property, void* Out);

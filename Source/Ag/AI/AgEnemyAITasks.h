@@ -113,7 +113,6 @@ struct FAgEnemyAITask_WaitReactionInstanceData
 	TObjectPtr<AAgEnemyAIController> Controller = nullptr;
 };
 
-/** 피격 반응이 끝날 때까지 기다립니다. */
 USTRUCT(meta = (DisplayName = "적: 피격 반응 대기", Category = "Ag|Enemy AI"))
 struct FAgEnemyAITask_WaitReaction : public FStateTreeAITaskBase
 {

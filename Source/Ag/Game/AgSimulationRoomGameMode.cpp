@@ -134,7 +134,7 @@ void AAgSimulationRoomGameMode::HandleStartingNewPlayer_Implementation(APlayerCo
 		return;
 	}
 
-	if (APawn* Player = NewPlayer ? NewPlayer->GetPawn() : nullptr)
+	if (APawn* Player = NewPlayer->GetPawn())
 	{
 		SpawnLineup(*Player);
 	}

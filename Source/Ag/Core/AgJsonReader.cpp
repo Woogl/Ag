@@ -36,7 +36,7 @@ namespace AgJsonReaderPrivate
 		return Path.EndsWith(TEXT(".json")) ? Path + TEXT(": ") + Key : Path + TEXT(".") + Key;
 	}
 
-	/** 읽지 못한 에셋·클래스·정의 ID·Task는 비어 있습니다. 배열·맵에 남기면 쓰는 코드가 빈 원소를 만나므로 원소째 뺍니다. */
+	/** 읽지 못한 에셋·클래스·정의 ID·Task는 비어 있습니다. 맵에 남기면 쓰는 코드가 빈 항목을 만나므로 항목째 뺍니다. */
 	bool IsEmptyReference(const FProperty& Property, const void* Value)
 	{
 		if (const FObjectPropertyBase* Object = CastField<FObjectPropertyBase>(&Property))
@@ -231,15 +231,14 @@ bool FAgJsonReader::ReadArray(const FString& Path, const TSharedPtr<FJsonValue>&
 	bool bRead = true;
 	for (int32 Index = 0, Slot = 0; Index < Items->Num(); ++Index)
 	{
-		const bool bItem = Read(FString::Printf(TEXT("%s[%d]"), *Path, Index), (*Items)[Index], *Property.Inner, Helper.GetRawPtr(Slot));
-		bRead = bItem && bRead;
-		if (!bItem && AgJsonReaderPrivate::IsEmptyReference(*Property.Inner, Helper.GetRawPtr(Slot)))
+		if (Read(FString::Printf(TEXT("%s[%d]"), *Path, Index), (*Items)[Index], *Property.Inner, Helper.GetRawPtr(Slot)))
 		{
-			Helper.RemoveValues(Slot);
+			++Slot;
 		}
 		else
 		{
-			++Slot;
+			bRead = false;
+			Helper.RemoveValues(Slot);
 		}
 	}
 	return bRead;

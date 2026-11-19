@@ -28,12 +28,7 @@ UAgAbilityTask_RootMotion::UAgAbilityTask_RootMotion()
 void UAgAbilityTask_RootMotion::Activate()
 {
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!Character)
-	{
-		EndTask();
-		return;
-	}
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	if (Params.Direction == EAgRootMotionDirection::Target)
 	{
 		// 피격 방향은 이벤트의 공격자이므로 추적 거리로 제한하지 않습니다.
@@ -72,7 +67,7 @@ void UAgAbilityTask_RootMotion::Activate()
 	LastPosition = Instance->GetPosition();
 
 	UMotionWarpingComponent* Warping = Character->GetMotionWarping();
-	if (!Warping || !Instance->Montage->HasRootMotion())
+	if (!Instance->Montage->HasRootMotion())
 	{
 		return;
 	}
@@ -179,7 +174,11 @@ void UAgAbilityTask_RootMotion::OnDestroy(bool bInOwnerFinished)
 	{
 		Warp->SetState(ERootMotionModifierState::MarkedForRemoval);
 	}
-	RemoveWarpTarget();
+	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	if (Character && !WarpTargetName.IsNone())
+	{
+		Character->GetMotionWarping()->RemoveWarpTarget(WarpTargetName);
+	}
 	Super::OnDestroy(bInOwnerFinished);
 }
 
@@ -198,14 +197,4 @@ FVector UAgAbilityTask_RootMotion::GetFacingDirection() const
 		return Params.bKeepBack && Character->IsBehind(TargetLocation) ? FVector::ZeroVector : (TargetLocation - Character->GetActorLocation()).GetSafeNormal2D();
 	}
 	return MoveInputDirection;
-}
-
-void UAgAbilityTask_RootMotion::RemoveWarpTarget()
-{
-	const AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (Character && !WarpTargetName.IsNone())
-	{
-		Character->GetMotionWarping()->RemoveWarpTarget(WarpTargetName);
-	}
-	WarpTargetName = NAME_None;
 }

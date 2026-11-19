@@ -39,7 +39,7 @@ protected:
 	TObjectPtr<UTextBlock> ValueText;
 
 	/** 그로기가 시작되는 순간의 번쩍임과 파편입니다. 바 바깥까지 그리도록 바보다 크게 놓고, 브러시 머티리얼이 Time으로 재생합니다. */
-	UPROPERTY(meta = (BindWidgetOptional))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> GroggyBurst;
 
 	UPROPERTY(EditAnywhere, Category = "Stat Bar")
@@ -73,8 +73,6 @@ private:
 	TObjectPtr<UMaterialInstanceDynamic> GroggyFill;
 
 	FSlateBrush DefaultFillImage;
-
-	FIntPoint ShownValues = FIntPoint(INDEX_NONE, INDEX_NONE);
 
 	float BarRatio = 0.f;
 	float TrailRatio = 0.f;

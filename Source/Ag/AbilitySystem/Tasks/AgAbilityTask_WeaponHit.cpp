@@ -106,12 +106,7 @@ UAgAbilityTask_WeaponHit::UAgAbilityTask_WeaponHit()
 void UAgAbilityTask_WeaponHit::Activate()
 {
 	Super::Activate();
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
-	if (!Character)
-	{
-		EndTask();
-		return;
-	}
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	HitState = MakeShared<FAgHitState>();
 	TArray<UCapsuleComponent*> Capsules;
 	Character->GetComponents(Capsules);

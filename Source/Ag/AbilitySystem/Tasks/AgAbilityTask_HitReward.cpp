@@ -25,13 +25,12 @@ void UAgAbilityTask_HitReward::Activate()
 		EndTask();
 		return;
 	}
-	// 공격한 어빌리티의 태그입니다.
-	const FGameplayTagContainer AttackTags = TriggerEvent->InstigatorTags;
+	const FGameplayTagContainer AttackAbilityTags = TriggerEvent->InstigatorTags;
 	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(AbilitySystemComponent.Get());
 	const FName Section = ASC->GetCurrentMontageSectionName();
 	for (const FAgHitReward& Reward : Params.Rewards)
 	{
-		if (!AttackTags.HasTag(Reward.AbilityTag) || (!Reward.Section.IsNone() && Reward.Section != Section))
+		if (!AttackAbilityTags.HasTag(Reward.AbilityTag) || (!Reward.Section.IsNone() && Reward.Section != Section))
 		{
 			continue;
 		}

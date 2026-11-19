@@ -18,14 +18,9 @@ UAbilityTask* FAgLaunchParams::MakeTask(const FAgTaskContext& Context) const
 
 void UAgAbilityTask_Launch::Activate()
 {
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!Movement)
-	{
-		EndTask();
-		return;
-	}
+	const UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
 
 	FVector Direction = FVector::ZeroVector;
 	float Distance = 0.f;

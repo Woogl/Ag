@@ -18,7 +18,6 @@ class UAgInteractionComponent : public UWidgetComponent
 public:
 	UAgInteractionComponent();
 
-	/** 지금 고른 대상에 상호작용합니다. 대상이 없으면 아무 일도 하지 않습니다. */
 	void Interact();
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

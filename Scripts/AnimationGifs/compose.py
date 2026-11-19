@@ -16,7 +16,6 @@ def compose_sequence(sequence_dir):
     start = time.perf_counter()
     font = ImageFont.truetype(FONT_PATH, HEADER_FONT_SIZE)
     name = meta["path"].rsplit("/", 1)[-1]
-    # 긴 시퀀스 이름은 띠 너비에 들어갈 때까지만 글씨를 줄입니다.
     name_font = font
     while name_font.size > 12 and name_font.getlength(name) > WIDTH - 12:
         name_font = ImageFont.truetype(FONT_PATH, name_font.size - 1)

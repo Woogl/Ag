@@ -91,7 +91,7 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaSeconds) override;
 
-	virtual void Die(const AActor* Attacker) override;
+	virtual void Die(const FGameplayEventData& DeathEvent) override;
 
 private:
 	/** 현재 HP로 들어선 마지막 페이즈입니다. 페이즈 전환이 끝나야 현재 페이즈가 됩니다. */

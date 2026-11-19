@@ -139,7 +139,7 @@ AActor* AgTargeting::FindTarget(const FAgTargetingRequest& Request, AActor& Sour
 
 bool AgTargeting::IsInRange(const AActor& Source, const AActor& Target, float Range)
 {
-	// 찾을 때와 같은 구 겹침으로 보되, 극한 회피 자리 캡슐은 빼고 몸 캡슐(루트)만 봅니다. 거리로 비교하면 범위 끝에서
+	// 찾을 때와 같은 구 겹침으로 보되, 극한 회피 판정 상자는 빼고 몸 캡슐(루트)만 봅니다. 거리로 비교하면 범위 끝에서
 	// 찾자마자 풀리기를 되풀이합니다.
 	const UPrimitiveComponent* Collision = Cast<UPrimitiveComponent>(Target.GetRootComponent());
 	return Range > 0.f && Collision && Collision->OverlapComponent(Source.GetActorLocation(), FQuat::Identity, FCollisionShape::MakeSphere(Range));

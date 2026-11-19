@@ -37,6 +37,4 @@ private:
 
 	UPROPERTY()
 	FAgTrackTargetParams Params;
-
-	float ReleaseRange = 0.f;
 };

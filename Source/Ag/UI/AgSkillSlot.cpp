@@ -38,12 +38,8 @@ void UAgSkillSlot::UpdateAbility()
 	IconImage->SetVisibility(Icon ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
 	const int32 Cost = Data ? FMath::RoundToInt(Data->Cost.MP) : 0;
-	if (Cost != ShownCost)
-	{
-		ShownCost = Cost;
-		CostText->SetText(FText::AsNumber(Cost));
-		CostText->SetVisibility(Cost > 0 ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-	}
+	CostText->SetText(FText::AsNumber(Cost));
+	CostText->SetVisibility(Cost > 0 ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 
 	const bool bUsable = Ability && Ability->CheckCost(Ability->GetCurrentAbilitySpecHandle(), Ability->GetCurrentActorInfo());
 	Body->SetRenderOpacity(bUsable ? 1.f : DisabledOpacity);
@@ -68,11 +64,7 @@ void UAgSkillSlot::UpdateCooldown()
 
 	const bool bShowsCharges = MaxCharges >= 2;
 	ChargeText->SetVisibility(bShowsCharges ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-	if (bShowsCharges && Charges != ShownCharges)
-	{
-		ShownCharges = Charges;
-		ChargeText->SetText(FText::AsNumber(Charges));
-	}
+	ChargeText->SetText(FText::AsNumber(Charges));
 
 	const bool bRecharging = Remaining > 0.f && Duration > 0.f;
 	const bool bCoolingDown = bRecharging && Charges == 0;
@@ -87,16 +79,10 @@ void UAgSkillSlot::UpdateCooldown()
 	}
 	if (bCoolingDown)
 	{
-		const bool bWholeSeconds = Remaining >= 1.f;
-		const FIntPoint Shown(bWholeSeconds ? 1 : 0, FMath::CeilToInt(bWholeSeconds ? Remaining : Remaining * 10.f));
-		if (Shown != ShownCooldown)
-		{
-			ShownCooldown = Shown;
-			FNumberFormattingOptions OneDecimal;
-			OneDecimal.MinimumFractionalDigits = 1;
-			OneDecimal.MaximumFractionalDigits = 1;
-			CooldownText->SetText(bWholeSeconds ? FText::AsNumber(Shown.Y) : FText::AsNumber(Shown.Y / 10.f, &OneDecimal));
-		}
+		FNumberFormattingOptions OneDecimal;
+		OneDecimal.MinimumFractionalDigits = 1;
+		OneDecimal.MaximumFractionalDigits = 1;
+		CooldownText->SetText(Remaining >= 1.f ? FText::AsNumber(FMath::CeilToInt(Remaining)) : FText::AsNumber(FMath::CeilToInt(Remaining * 10.f) / 10.f, &OneDecimal));
 	}
 	if (Charges < MaxCharges)
 	{

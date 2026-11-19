@@ -17,24 +17,21 @@ UAbilityTask* FAgAreaHitParams::MakeTask(const FAgTaskContext& Context) const
 
 void UAgAbilityTask_AreaHit::Activate()
 {
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	if (Character)
+	const TSharedPtr<FAgHitState> HitState = MakeShared<FAgHitState>();
+	for (AActor* Target : AgTargeting::FindTargets(Params.Area, *Character))
 	{
-		const TSharedPtr<FAgHitState> HitState = MakeShared<FAgHitState>();
-		for (AActor* Target : AgTargeting::FindTargets(Params.Area, *Character))
+		if (UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target))
 		{
-			if (UAbilitySystemComponent* TargetASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(Target))
-			{
-				const FGameplayEffectSpecHandle Spec = AgAbility->MakeDamageSpec(Params.Damage, HitState);
-				Spec.Data->GetContext().AddOrigin(Target->GetActorLocation());
-				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, TargetASC);
-			}
-			// 피해가 행동을 끝냈으면 남은 대상은 치지 않습니다.
-			if (IsFinished() || !AgAbility->IsActive())
-			{
-				break;
-			}
+			const FGameplayEffectSpecHandle Spec = AgAbility->MakeDamageSpec(Params.Damage, HitState);
+			Spec.Data->GetContext().AddOrigin(Target->GetActorLocation());
+			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*Spec.Data, TargetASC);
+		}
+		// 피해가 행동을 끝냈으면 남은 대상은 치지 않습니다.
+		if (IsFinished() || !AgAbility->IsActive())
+		{
+			break;
 		}
 	}
 	EndTask();

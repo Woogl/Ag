@@ -81,7 +81,6 @@ private:
 	void HandleInputBlockChanged(const FGameplayTag Tag, int32 NewCount);
 	void HandleInputUnblocked();
 
-	/** 기억한 입력이 있고 기억 시간(InputBufferTime)이 지나지 않았습니다. */
 	bool HasBufferedInput() const;
 	void TryRunBufferedInput();
 

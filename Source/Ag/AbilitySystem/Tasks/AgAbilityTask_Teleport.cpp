@@ -123,13 +123,8 @@ UAbilityTask* FAgTeleportParams::MakeTask(const FAgTaskContext& Context) const
 
 void UAgAbilityTask_Teleport::Activate()
 {
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	if (!Character)
-	{
-		EndTask();
-		return;
-	}
 
 	const ACharacter* Target = Cast<ACharacter>(AgAbility->GetActionTarget());
 	const TOptional<FVector> Location = Target ? AgAbilityTask_TeleportPrivate::FindAppearLocation(*Character, *Target, Params.Distance) : NullOpt;

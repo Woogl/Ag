@@ -286,7 +286,6 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 		return Reaction;
 	}
 
-	/** 결과 연출(피격, 가드, 패리)과 대미지 숫자를 냅니다. */
 	void PlayResultCues(const FAgDamageOutcome& Outcome, const FGameplayTag& Reaction, const FGameplayEffectSpec& Spec)
 	{
 		UAgAbilitySystemComponent* TargetASC = Outcome.Target->GetAbilitySystemComponent();

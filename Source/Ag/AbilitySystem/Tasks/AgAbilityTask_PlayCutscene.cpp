@@ -30,7 +30,7 @@ UAgAbilityTask_PlayCutscene::UAgAbilityTask_PlayCutscene()
 
 void UAgAbilityTask_PlayCutscene::Activate()
 {
-	if (!Params.Sequence || !GetAvatarActor() || !AbilitySystemComponent.IsValid())
+	if (!Params.Sequence)
 	{
 		EndTask();
 		return;

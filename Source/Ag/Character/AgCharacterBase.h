@@ -129,7 +129,7 @@ protected:
 	void StartRagdoll(const FVector& PushVelocity);
 
 	/** 살아 있는 캐릭터가 사망 이벤트를 받으면 한 번 불립니다. */
-	virtual void Die(const AActor* Attacker);
+	virtual void Die(const FGameplayEventData& DeathEvent);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Data", meta = (GetOptions = "GetCharacterDataIds"))
 	FName CharacterDataId;

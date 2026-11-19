@@ -18,10 +18,9 @@ UAbilityTask* FAgDashParams::MakeTask(const FAgTaskContext& Context) const
 
 void UAgAbilityTask_Dash::Activate()
 {
-	AAgCharacterBase* Character = Cast<AAgCharacterBase>(GetAvatarActor());
+	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	const UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
-	if (!Movement || !AbilitySystemComponent.IsValid() || Params.Speed <= 0.f)
+	if (Params.Speed <= 0.f)
 	{
 		EndTask();
 		return;
@@ -49,7 +48,7 @@ void UAgAbilityTask_Dash::Activate()
 	                        .AddUObject(this, &ThisClass::HandleMoveBlocked);
 
 	// 엔진 Task의 생성 함수가 하는 설정입니다.
-	ForceName = TEXT("AgDash");
+	ForceName = GetInstanceName();
 	WorldDirection = Forward;
 	Strength = Params.Speed;
 	// 속도가 일정하고 막히면 바로 멈추므로, 거리를 속도로 나눈 시간이 지나면 휘어진 경로로도 그 거리를 간 것입니다.

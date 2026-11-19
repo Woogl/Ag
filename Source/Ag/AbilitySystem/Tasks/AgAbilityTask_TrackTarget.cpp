@@ -20,8 +20,6 @@ UAgAbilityTask_TrackTarget::UAgAbilityTask_TrackTarget()
 
 void UAgAbilityTask_TrackTarget::Activate()
 {
-	const UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	ReleaseRange = Params.ReleaseRange.Get(AgAbility->GetTargetingRange());
 	if (!UpdateTarget())
 	{
 		EndTask();
@@ -46,5 +44,5 @@ bool UAgAbilityTask_TrackTarget::UpdateTarget()
 		AgAbility->RefreshTarget();
 		Current = Cast<AAgCharacterBase>(AgAbility->GetActionTarget());
 	}
-	return Owner && Current && !Current->IsDead() && AgTargeting::IsInRange(*Owner, *Current, ReleaseRange);
+	return Owner && Current && !Current->IsDead() && AgTargeting::IsInRange(*Owner, *Current, Params.ReleaseRange.Get(AgAbility->GetTargetingRange()));
 }
