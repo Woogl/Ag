@@ -1,0 +1,42 @@
+{
+  "image": "보스 모션 휩쓸기",
+  "animation": {
+    "play_rate": 0.68,
+    "segments": [
+      {
+        "clip": "Halberd/Attack_Sprint",
+        "from": 0.0333,
+        "to": 0.25,
+        "rate": 0.8025
+      },
+      {
+        "clip": "Halberd/Attack_Sprint",
+        "from": 0.25,
+        "to": 0.6
+      },
+      {
+        "clip": "Halberd/Attack_Sprint",
+        "from": 0.6,
+        "to": 0.69,
+        "rate": 0.5
+      },
+      {
+        "clip": "Halberd/Attack_Sprint",
+        "from": 0.69,
+        "to": 0.735,
+        "rate": 0.24
+      },
+      {
+        "clip": "Halberd/Attack_Sprint",
+        "from": 0.735,
+        "to": 0.9,
+        "rate": 0.8
+      },
+      {
+        "clip": "Halberd/Attack_Sprint",
+        "from": 0.9,
+        "to": 1.2333
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "image": "플레이어 모션 스킬 1",
+  "animation": {
+    "play_rate": 1.0,
+    "segments": [
+      {
+        "clip": "ACS2ComboSkill/Attack09",
+        "from": 0.0,
+        "to": 0.12,
+        "rate": 1.5
+      },
+      {
+        "clip": "ACS2ComboSkill/Attack09",
+        "from": 0.12,
+        "to": 0.2
+      },
+      {
+        "clip": "Samurai/Attack_HeavyB",
+        "from": 0.02,
+        "to": 0.3
+      },
+      {
+        "clip": "Samurai/Attack_HeavyB",
+        "from": 0.3,
+        "to": 0.32,
+        "rate": 0.06
+      }
+    ]
+  }
+}

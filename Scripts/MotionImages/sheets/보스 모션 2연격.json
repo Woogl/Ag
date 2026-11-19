@@ -1,0 +1,41 @@
+{
+  "image": "보스 모션 2연격",
+  "animation": {
+    "play_rate": 0.8,
+    "segments": [
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.0,
+        "to": 0.4
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.4,
+        "to": 0.65,
+        "rate": 0.5
+      },
+      {
+        "clip": "Halberd/Attack_Combo2",
+        "from": 0.65,
+        "to": 0.8
+      },
+      {
+        "clip": "Halberd/Attack_Combo1",
+        "from": 0.0,
+        "to": 0.1,
+        "rate": 0.5
+      },
+      {
+        "clip": "Halberd/Attack_Combo1",
+        "from": 0.1,
+        "to": 0.1333,
+        "rate": 0.13
+      },
+      {
+        "clip": "Halberd/Attack_Combo1",
+        "from": 0.1333,
+        "to": 0.8167
+      }
+    ]
+  }
+}
