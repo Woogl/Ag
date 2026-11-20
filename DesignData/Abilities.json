@@ -308,7 +308,7 @@
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Cost": {"MP": 10},
     "Cooldown": 3,
-    "MaxCharges": 3,
+    "MaxCharges": 2,
     "Targeting": {"Preset": "Attack", "Range": 2000, "TargetSpacing": 100},
     "Montage": {
       "Asset": "/Game/Animations/AM_Player_Skill3.AM_Player_Skill3",

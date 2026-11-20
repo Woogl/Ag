@@ -15,7 +15,7 @@
     "Speed": 2500,
     "Range": 2000,
     "Damage": {
-      "HPMultiplier": 0.5,
+      "HPMultiplier": 0.75,
       "PPMultiplier": 0.5,
       "HitReaction": "Flinch",
       "bGuardable": true
