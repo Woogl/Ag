@@ -25,7 +25,7 @@
 - 시퀀스 폴더: `/Game/Fab/ARPG_Pack/ARPG_Dual_Wield/Animations_UE5`.
 - 에셋 이름은 표의 모션 이름 앞에 `ARPG_Dual_Wield_Anim_UE_`를 붙입니다.
 - 스켈레톤: `/Game/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin`.
-- 현재 루트 모션 활성 0개, 강제 루트 고정 0개. 원본 팩의 기본값과 현재 프로젝트 설정을 구분합니다.
+- 현재 루트 모션 활성 1개(`Attack_Combo1`, 린의 스킬 1 던지기), 강제 루트 고정 0개. 원본 팩의 기본값과 현재 프로젝트 설정을 구분합니다.
 - 노티파이가 있는 시퀀스 0개. 애디티브 시퀀스 0개.
 - `_IPC`와 `_Rootmotion`은 별개의 시퀀스입니다. 이름의 `_Rootmotion`은 루트 본 이동 데이터가 있다는 뜻이며, 현재 `Enable Root Motion` 설정과 같은 뜻이 아닙니다.
 
@@ -44,7 +44,7 @@
 - `Attack_Heavy1_Start`와 `Attack_Heavy1`은 준비와 발동이 나뉜 별개 시퀀스입니다. `Attack_Heavy2`는 별도 강공격입니다.
 - `Attack_Dodge_to_Combo1`이라는 연결 전용 시퀀스가 있으므로, 회피 공격에서 일반 콤보로 이어질 때 `Attack_Dodge`와 함께 비교할 수 있습니다.
 - `Executed`·`Executed2`·`Executed3`에는 각각 사망 변형이 있고, Samurai·Warrior 상대용 변형도 따로 있습니다. 서로 다른 길이이므로 이름만 보고 재생 시간을 공유하지 않습니다.
-- 팩의 모든 시퀀스는 현재 루트 모션 옵션과 강제 루트 고정이 꺼져 있습니다. 루트 본에 들어 있는 이동 데이터는 아래 표에서 따로 확인합니다.
+- 팩의 시퀀스는 `Attack_Combo1`(루트 모션 켬)을 빼고 루트 모션 옵션과 강제 루트 고정이 꺼져 있습니다. 루트 본에 들어 있는 이동 데이터는 아래 표에서 따로 확인합니다.
 
 ## 회전 시퀀스
 
@@ -62,7 +62,7 @@
 | [Attack_Airborne_End](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Airborne_End.gif>) | 0.650 | 39 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Attack_Airborne_Mid](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Airborne_Mid.gif>) | 0.983 | 59 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Attack_Airborne_Start](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Airborne_Start.gif>) | 0.317 | 19 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0 | — |
-| [Attack_Combo1](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Combo1.gif>) | 0.733 | 44 | 0.96 | 0.00 | 0.00 | 0.00 | 0.0 | — |
+| [Attack_Combo1](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Combo1.gif>) | 0.733 | 44 | 0.96 | 0.00 | 0.00 | 0.00 | 0.0 | RM |
 | [Attack_Combo2](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Combo2.gif>) | 0.767 | 46 | 1.21 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Attack_Combo3](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Combo3.gif>) | 1.250 | 75 | 1.14 | 0.00 | 0.00 | 0.00 | 0.0 | — |
 | [Attack_Combo4](<GIF/Dual_Wield/ARPG_Dual_Wield_Anim_UE_Attack_Combo4.gif>) | 0.933 | 56 | 1.38 | 0.00 | 0.00 | 0.00 | 0.0 | — |
