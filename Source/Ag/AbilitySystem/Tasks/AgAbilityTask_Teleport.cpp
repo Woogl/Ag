@@ -3,7 +3,6 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_Teleport.h"
 
 #include "AbilitySystem/AgGameplayAbility.h"
-#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
 #include "Components/CapsuleComponent.h"
@@ -53,10 +52,10 @@ namespace AgAbilityTask_TeleportPrivate
 	}
 
 	/**
-	 * 대상의 등 뒤(대상 정면의 반대)에서 좌우 MaxAngle 안의, 정후방에 가장 가까운 나타날 수 있는 캡슐 중심 위치입니다.
+	 * 대상 둘레에서 대상의 정후방(대상 정면의 반대)에 가장 가까운, 나타날 수 있는 캡슐 중심 위치입니다.
 	 * 대상이 떠 있으면 그 아래 바닥에서 찾습니다.
 	 */
-	TOptional<FVector> FindAppearLocation(const ACharacter& Character, const ACharacter& Target, float Distance, float MaxAngle)
+	TOptional<FVector> FindAppearLocation(const ACharacter& Character, const ACharacter& Target, float Distance)
 	{
 		const UCharacterMovementComponent* Movement = Character.GetCharacterMovement();
 		const UCharacterMovementComponent* TargetMovement = Target.GetCharacterMovement();
@@ -77,11 +76,12 @@ namespace AgAbilityTask_TeleportPrivate
 		}
 
 		TArray<float, TInlineAllocator<25>> Angles = {0.f};
-		for (float Angle = AngleStep; Angle <= MaxAngle; Angle += AngleStep)
+		for (float Angle = AngleStep; Angle < 180.f; Angle += AngleStep)
 		{
 			Angles.Add(Angle);
 			Angles.Add(-Angle);
 		}
+		Angles.Add(180.f);
 
 		const FVector Behind = -Target.GetActorForwardVector().GetSafeNormal2D();
 		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgTeleport), false, &Character);
@@ -118,46 +118,18 @@ UAbilityTask* FAgTeleportParams::MakeTask(const FAgTaskContext& Context) const
 
 void UAgAbilityTask_Teleport::Activate()
 {
-	EventHandle = AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(Params.Event).AddUObject(this, &ThisClass::HandleEvent);
-}
-
-void UAgAbilityTask_Teleport::OnDestroy(bool bInOwnerFinished)
-{
-	if (UAbilitySystemComponent* ASC = AbilitySystemComponent.Get(); ASC && EventHandle.IsValid())
-	{
-		ASC->GenericGameplayEventCallbacks.FindOrAdd(Params.Event).Remove(EventHandle);
-	}
-	Super::OnDestroy(bInOwnerFinished);
-}
-
-void UAgAbilityTask_Teleport::HandleEvent(const FGameplayEventData* Payload)
-{
-	// 같은 때 맞은 다른 공격(반사한 투사체 등)의 상대에게는 가지 않습니다.
-	AAgCharacterBase* Target = Cast<AAgCharacterBase>(const_cast<AActor*>(Payload->Instigator.Get()));
-	if (IsFinished() || Payload->ContextHandle.GetAbilityInstance_NotReplicated() != Ability || !Target || Target->IsDead())
-	{
-		return;
-	}
 	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
-	const TOptional<FVector> Location =
-		AgAbilityTask_TeleportPrivate::FindAppearLocation(*Character, *Target, Params.Distance, Params.MaxAngle);
-	if (!Location)
-	{
-		return;
-	}
+	const ACharacter* Target = Cast<ACharacter>(CastChecked<UAgGameplayAbility>(Ability)->GetActionTarget());
+	const TOptional<FVector> Location = Target ? AgAbilityTask_TeleportPrivate::FindAppearLocation(*Character, *Target, Params.Distance) : NullOpt;
 
 	FGameplayCueParameters CueParameters;
 	CueParameters.Location = Character->GetActorLocation();
 	AbilitySystemComponent->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Teleport, CueParameters);
-	Character->TeleportTo(*Location, FRotator(0.f, (Target->GetActorLocation() - *Location).Rotation().Yaw, 0.f), false, true);
+	if (Location)
+	{
+		Character->TeleportTo(*Location, FRotator(0.f, (Target->GetActorLocation() - *Location).Rotation().Yaw, 0.f), false, true);
+	}
 	CueParameters.Location = Character->GetActorLocation();
 	AbilitySystemComponent->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Teleport, CueParameters);
-	CastChecked<UAgGameplayAbility>(Ability)->SetActionTarget(Target);
 	EndTask();
-
-	FGameplayEventData Teleported;
-	Teleported.EventTag = AgGameplayTags::Event_Teleported;
-	Teleported.Instigator = Target;
-	Teleported.Target = Character;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Character, AgGameplayTags::Event_Teleported, Teleported);
 }
