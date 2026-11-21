@@ -168,7 +168,8 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	for (const FHitResult& Contact : Reached)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
-		if (!IsValid(Target) || !Target->CanBeHitBy(*DamageSource) || TouchedActors.Contains(Target))
+		if (!IsValid(Target) || !Target->CanBeHitBy(*DamageSource) || TouchedActors.Contains(Target) ||
+			(bAimTargetOnly && Target != AimTarget.Get()))
 		{
 			continue;
 		}

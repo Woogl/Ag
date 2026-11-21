@@ -268,7 +268,7 @@
           {"Task": "RootMotion", "Start": 0, "End": 0.29, "bWarpTranslation": false},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.69, "Effect": "Busy"},
           {"Task": "SpawnActor", "Start": 0.29, "Actor": "Dagger", "SocketName": "hand_l"},
-          {"Task": "Transition", "Start": 0, "End": 0.69, "Event": "Event.AttackHit", "ToSection": "Slash", "bTargetEventInstigator": true}
+          {"Task": "Transition", "Start": 0, "End": 0.69, "Event": "Event.AttackHit", "ToSection": "Slash"}
         ],
         "Slash": [
           {"Task": "Teleport", "Start": 0, "Distance": 300},

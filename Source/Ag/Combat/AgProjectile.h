@@ -63,6 +63,10 @@ private:
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
 	bool bPredictAim = true;
 
+	/** 켜면 생성될 때의 행동 대상에게만 맞고 다른 캐릭터는 지나가며, 대상이 없으면 아무도 맞히지 않습니다. */
+	UPROPERTY(EditInstanceOnly, Category = "Projectile")
+	bool bAimTargetOnly = false;
+
 	/** 벽이나, 맞히고 사라지는 대상에 닿은 자리에서 재생합니다. 효과의 앞(X축)은 닿은 면에서 튀어나오는 쪽으로, 벽은 면의 법선이고 대상은 날아온 쪽입니다. 사거리 끝에서는 재생하지 않습니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
 	TObjectPtr<UNiagaraSystem> ImpactEffect;

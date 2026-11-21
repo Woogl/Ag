@@ -37,13 +37,6 @@ struct FAgTransitionParams : public FAgTaskParams
 	UPROPERTY()
 	bool bCommitAbility = false;
 
-	/**
-	 * 켜면 Event의 상대(Instigator)를 행동 대상으로 삼아 옮기고, 상대가 죽었으면 옮기지 않고 계속 기다립니다.
-	 * BlendTime으로 다시 재생하면 행동 대상을 다시 고르므로 BlendTime 없이 씁니다.
-	 */
-	UPROPERTY()
-	bool bTargetEventInstigator = false;
-
 	virtual UAbilityTask* MakeTask(const FAgTaskContext& Context) const override;
 };
 
@@ -64,7 +57,7 @@ private:
 	bool WaitForTag();
 	void RecheckTag();
 
-	void TryTransition(AActor* NewActionTarget = nullptr);
+	void TryTransition();
 	void HandleEvent(const FGameplayEventData* Payload);
 	void HandleTagChanged(const FGameplayTag Tag, int32 NewCount);
 

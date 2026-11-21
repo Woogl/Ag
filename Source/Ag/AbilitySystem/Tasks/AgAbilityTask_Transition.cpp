@@ -6,7 +6,6 @@
 #include "AbilitySystem/Tasks/AgAbilityTask_PlayMontage.h"
 #include "AbilitySystemComponent.h"
 #include "Animation/AnimMontage.h"
-#include "Character/AgCharacterBase.h"
 #include "Engine/World.h"
 #include "GameplayEffect.h"
 #include "TimerManager.h"
@@ -96,7 +95,7 @@ bool UAgAbilityTask_Transition::WaitForTag()
 		else
 		{
 			// 효과의 지속 시간은 월드 시간이므로 월드 타이머로 기다립니다.
-			GetWorld()->GetTimerManager().SetTimer(EndingTimer, FTimerDelegate::CreateUObject(this, &ThisClass::TryTransition, static_cast<AActor*>(nullptr)), *Delay, false);
+			GetWorld()->GetTimerManager().SetTimer(EndingTimer, FTimerDelegate::CreateUObject(this, &ThisClass::TryTransition), *Delay, false);
 		}
 	}
 	return true;
@@ -110,17 +109,12 @@ void UAgAbilityTask_Transition::RecheckTag()
 	}
 }
 
-void UAgAbilityTask_Transition::TryTransition(AActor* NewActionTarget)
+void UAgAbilityTask_Transition::TryTransition()
 {
 	if (IsFinished() ||
 		(Params.bCommitAbility && !Ability->CommitAbility(Ability->GetCurrentAbilitySpecHandle(), Ability->GetCurrentActorInfo(), Ability->GetCurrentActivationInfo())))
 	{
 		return;
-	}
-	// 옮긴 섹션의 0초 항목이 옮기는 중에 시작하므로 그 전에 바꿉니다.
-	if (NewActionTarget)
-	{
-		CastChecked<UAgGameplayAbility>(Ability)->SetActionTarget(NewActionTarget);
 	}
 	if (Playback.IsValid())
 	{
@@ -138,16 +132,7 @@ void UAgAbilityTask_Transition::TryTransition(AActor* NewActionTarget)
 
 void UAgAbilityTask_Transition::HandleEvent(const FGameplayEventData* Payload)
 {
-	if (!Params.bTargetEventInstigator)
-	{
-		TryTransition();
-		return;
-	}
-	AAgCharacterBase* Instigator = Cast<AAgCharacterBase>(const_cast<AActor*>(Payload->Instigator.Get()));
-	if (Instigator && !Instigator->IsDead())
-	{
-		TryTransition(Instigator);
-	}
+	TryTransition();
 }
 
 void UAgAbilityTask_Transition::HandleTagChanged(const FGameplayTag Tag, int32 NewCount)
