@@ -17,6 +17,13 @@ enum class EAgHitReaction : uint8
 	KnockUp,
 };
 
+UENUM()
+enum class EAgAttackType : uint8
+{
+	Normal,
+	Unblockable,
+};
+
 USTRUCT()
 struct FAgDamage
 {
@@ -35,7 +42,7 @@ struct FAgDamage
 	bool bIgnoreToughness = false;
 
 	UPROPERTY()
-	bool bGuardable = true;
+	EAgAttackType AttackType = EAgAttackType::Normal;
 
 	UPROPERTY()
 	bool bFinisher = false;

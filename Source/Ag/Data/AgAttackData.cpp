@@ -26,9 +26,13 @@ void FAgDamage::AddToSpec(FGameplayEffectSpec& Spec) const
 	{
 		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_IgnoreToughness);
 	}
-	if (!bGuardable)
+	switch (AttackType)
 	{
-		Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Unblockable);
+		case EAgAttackType::Unblockable:
+			Spec.AddDynamicAssetTag(AgGameplayTags::Effect_Damage_Unblockable);
+			break;
+		default:
+			break;
 	}
 	if (bFinisher)
 	{

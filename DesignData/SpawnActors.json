@@ -7,7 +7,7 @@
       "HPMultiplier": 1.2,
       "PPMultiplier": 1,
       "HitReaction": "Flinch",
-      "bGuardable": true
+      "AttackType": "Normal"
     }
   },
   "CrescentWave": {
@@ -18,7 +18,7 @@
       "HPMultiplier": 0.75,
       "PPMultiplier": 0.5,
       "HitReaction": "Flinch",
-      "bGuardable": true
+      "AttackType": "Normal"
     }
   },
   "PistolBullet": {
@@ -30,7 +30,7 @@
       "HPMultiplier": 1,
       "PPMultiplier": 2,
       "HitReaction": "Flinch",
-      "bGuardable": true
+      "AttackType": "Normal"
     }
   },
   "GroundSlamShockwave": {
@@ -40,7 +40,7 @@
     "Height": 10,
     "Width": 100,
     "Hits": [
-      {"HPMultiplier": 2, "HitReaction": "KnockUp", "bGuardable": false}
+      {"HPMultiplier": 2, "HitReaction": "KnockUp", "AttackType": "Unblockable"}
     ]
   },
   "PhaseTransitionShockwave": {
@@ -49,7 +49,7 @@
     "MaxRadius": 400,
     "Height": 400,
     "Hits": [
-      {"HPMultiplier": 0, "HitReaction": "KnockDown", "bGuardable": false}
+      {"HPMultiplier": 0, "HitReaction": "KnockDown", "AttackType": "Unblockable"}
     ]
   },
   "PunishingEdgeVortex": {
@@ -59,11 +59,11 @@
     "Height": 400,
     "Interval": 0.25,
     "Hits": [
-      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
-      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
-      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
-      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "bGuardable": true},
-      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "KnockDown", "bGuardable": true}
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "AttackType": "Normal"},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "AttackType": "Normal"},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "AttackType": "Normal"},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "Flinch", "AttackType": "Normal"},
+      {"HPMultiplier": 0.4, "PPMultiplier": 0.4, "HitReaction": "KnockDown", "AttackType": "Normal"}
     ]
   }
 }
