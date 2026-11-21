@@ -109,7 +109,9 @@ void AAgProjectile::BeginPlay()
 		return;
 	}
 	const FVector From = GetActorLocation();
-	const FVector AimLocation = AgProjectilePrivate::PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed);
+	const FVector AimLocation = bPredictAim
+	                                ? AgProjectilePrivate::PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed)
+	                                : Target->GetActorLocation();
 	const FVector AimDirection = (AimLocation - From).GetSafeNormal();
 	if (!AimDirection.IsNearlyZero())
 	{

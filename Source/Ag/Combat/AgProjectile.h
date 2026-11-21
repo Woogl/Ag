@@ -16,7 +16,7 @@ class AAgCharacterBase;
 
 /**
  * 판정 모양은 BP에 둔 모양 컴포넌트(상자·캡슐) 전부이며 섞어 둘 수 있습니다. 생성되는 순간 어빌리티의 행동 대상이 지금 속도로 움직인다고 보고
- * 닿을 위치(예측 지점)를 향해 날아가며, 대상이 없으면 생성 방향으로 날아갑니다.
+ * 닿을 위치(예측 지점)를 향해 날아가며(bPredictAim을 끄면 대상의 지금 위치), 대상이 없으면 생성 방향으로 날아갑니다.
  * 비행이 끝나면 나이아가라가 아닌 표시는 바로 감추고, 나이아가라는 새 입자만 멈춰 남은 입자(궤적)가 사라진 뒤 액터를 지웁니다.
  * 수명이 끝나지 않는 몸체 입자는 그 이미터의 비활성 응답(Inactive Response)을 Kill로 두어야 함께 사라집니다.
  */
@@ -59,6 +59,9 @@ private:
 	/** 꺼져 있으면 피해를 준 대상을 뚫고 지나갑니다. */
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
 	bool bDestroyOnHit = false;
+
+	UPROPERTY(EditInstanceOnly, Category = "Projectile")
+	bool bPredictAim = true;
 
 	/** 벽이나, 맞히고 사라지는 대상에 닿은 자리에서 재생합니다. 효과의 앞(X축)은 닿은 면에서 튀어나오는 쪽으로, 벽은 면의 법선이고 대상은 날아온 쪽입니다. 사거리 끝에서는 재생하지 않습니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")

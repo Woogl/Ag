@@ -21,6 +21,19 @@
       "AttackType": "Normal"
     }
   },
+  "Dagger": {
+    "Class": "/Game/Projectiles/BP_Dagger.BP_Dagger_C",
+    "Speed": 4000,
+    "Range": 1500,
+    "bDestroyOnHit": true,
+    "bPredictAim": false,
+    "Damage": {
+      "HPMultiplier": 0.3,
+      "PPMultiplier": 0.3,
+      "HitReaction": "None",
+      "AttackType": "Normal"
+    }
+  },
   "PistolBullet": {
     "Class": "/Game/Projectiles/BP_PistolBullet.BP_PistolBullet_C",
     "Speed": 6400,

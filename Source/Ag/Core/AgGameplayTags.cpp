@@ -111,7 +111,9 @@ namespace AgGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_BasicAttackStarted, "Event.BasicAttackStarted",
 		"플레이어가 기본 공격의 한 타, 대시 공격, 점프 공격을 시작함 (Backstep 검사)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackHit, "Event.AttackHit",
-		"내 공격의 한 타가 처음 적중함. 그 피해의 효과 컨텍스트와 스펙 태그(InstigatorTags)를 실음 (적중 보상)");
+		"내 공격의 한 타가 처음 적중함. Instigator는 맞은 캐릭터이고, 그 피해의 효과 컨텍스트와 스펙 태그(InstigatorTags)를 실음 (적중 보상, 스킬 1 순간이동)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Teleported, "Event.Teleported",
+		"Teleport Task가 순간이동함 (Task가 자기 캐릭터에게 보냄, Instigator는 그 상대, 스킬 1이 베기로 넘어감)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_AttackBlocked, "Event.AttackBlocked",
 		"내 공격이 가드·패리로 막힘. 그 피해의 효과 컨텍스트를 실음 (DashThrust의 돌진이 멈춤)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_Landed, "Event.Landed", "캐릭터가 착지함 (캐릭터가 자기에게 보냄)");

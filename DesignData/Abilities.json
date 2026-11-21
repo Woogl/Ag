@@ -260,19 +260,23 @@
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Cost": {"MP": 20},
     "Cooldown": 6,
-    "Targeting": {"Preset": "Teleport", "Range": 1500, "TargetSpacing": 100},
+    "Targeting": {"Preset": "Throw", "Range": 1500, "TargetSpacing": 100},
     "Montage": {
       "Asset": "/Game/Animations/AM_Player_Skill1.AM_Player_Skill1",
       "Sections": {
-        "Default": [
-          {"Task": "RootMotion", "Start": 0, "End": 0.08, "bWarpTranslation": false},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.44, "Effect": "Busy"},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.16, "Effect": "Invincible"},
-          {"Task": "ApplyEffect", "Start": 0.08, "End": 0.16, "Effect": "Hidden"},
-          {"Task": "DisableRootMotion", "Start": 0.08, "End": 0.16},
-          {"Task": "Teleport", "Start": 0.16, "Distance": 300},
-          {"Task": "RootMotion", "Start": 0.17, "End": 0.34, "TargetingRange": 500, "bWarpTranslation": true},
-          {"Task": "WeaponHit", "Start": 0.351, "End": 0.44, "Damage": {"HPMultiplier": 1.5, "PPMultiplier": 1.5, "HitReaction": "Flinch", "AttackType": "Normal"}}
+        "Throw": [
+          {"Task": "RootMotion", "Start": 0, "End": 0.29, "bWarpTranslation": false},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.69, "Effect": "Busy"},
+          {"Task": "SpawnActor", "Start": 0.29, "Actor": "Dagger", "SocketName": "hand_l"},
+          {"Task": "Teleport", "Start": 0, "End": 0.69, "Event": "Event.AttackHit", "Distance": 300, "MaxAngle": 45},
+          {"Task": "Transition", "Start": 0, "End": 0.69, "Event": "Event.Teleported", "ToSection": "Slash"}
+        ],
+        "Slash": [
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.36, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.08, "Effect": "Invincible"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.08, "Effect": "Hidden"},
+          {"Task": "RootMotion", "Start": 0.09, "End": 0.26, "TargetingRange": 500, "bWarpTranslation": true},
+          {"Task": "WeaponHit", "Start": 0.271, "End": 0.36, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "AttackType": "Normal"}}
         ]
       }
     }
@@ -460,7 +464,7 @@
         {"AbilityTag": "Ability.Action.JumpAttack", "MP": 5},
         {"AbilityTag": "Ability.Action.DodgeCounter", "MP": 10},
         {"AbilityTag": "Ability.Action.GuardCounter", "MP": 10},
-        {"AbilityTag": "Ability.Action.Skill.1", "UP": 15},
+        {"AbilityTag": "Ability.Action.Skill.1", "Section": "Throw", "UP": 15},
         {"AbilityTag": "Ability.Action.Skill.2", "UP": 15},
         {"AbilityTag": "Ability.Action.Skill.3", "UP": 5},
         {"AbilityTag": "Ability.Action.Skill.4", "UP": 15}

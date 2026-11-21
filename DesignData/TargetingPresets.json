@@ -24,7 +24,7 @@
     {"Class": "/Script/Ag.AgTargetingFilterTask_LineOfSight", "Socket": "Muzzle"},
     {"Class": "/Script/TargetingSystem.TargetingFilterTask_SortByDistance"}
   ],
-  "Teleport": [
+  "Throw": [
     {"Class": "/Script/Ag.AgTargetingSelectionTask_Sphere"},
     {"Class": "/Script/Ag.AgTargetingSelectionTask_LockOnTarget"},
     {"Class": "/Script/Ag.AgTargetingFilterTask_Hostile"},
