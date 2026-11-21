@@ -24,7 +24,7 @@ UE 5.8 에디터를 AI가 다루는 순서와 요령, 이 프로젝트에서 겪
   - 엔진의 `Engine/Plugins/Experimental/PythonScriptPlugin/Content/Python`을 `sys.path`에 넣고 `import remote_execution as remote`.
   - `config = remote.RemoteExecutionConfig()`, `config.multicast_bind_address = "127.0.0.1"`, `rx = remote.RemoteExecution(config)`, `rx.start()`.
   - `rx.remote_nodes`가 차면 `rx.open_command_connection(node["node_id"])`, 코드는 `rx.run_command(code, unattended=True, exec_mode=remote.MODE_EXEC_FILE, raise_on_failure=False)`로 보내고, 끝나면 `rx.stop()`.
-  - `MODE_EXEC_FILE`은 보낸 코드에 `.py`라는 글자가 있으면(주석이라도) 파일 경로로 여겨 실패한다.
+  - `MODE_EXEC_FILE`은 보낸 코드에서 처음 나오는 `.py` 글자 바로 뒤가 공백이나 끝이면(주석이라도) 그 앞을 파일 경로로 여겨 실패한다.
   - 보낸 코드의 전역 변수는 다음 명령에도 남는다. 에셋(노티파이 구조체 등)을 담은 전역 변수가 남아 있으면 그 에셋을 지울 때 '사용 중'으로 실패하므로, 에셋은 함수 안에서만 잡거나 지우기 전에 전역 변수를 비운다.
   - 다른 프로젝트의 에디터도 켜져 있으면 첫 노드가 이 프로젝트가 아닐 수 있다. 노드의 `project_root`로 이 프로젝트의 노드를 고른다. 노드 ID 대신 노드 정보(dict)를 통째로 넘기면 대상 지정이 무시되어 켜져 있는 모든 에디터가 연결 요청을 받는다.
   - 테스트 창도 원격 실행을 쓴다. 창마다 포트를 나누는 방법은 `Scripts/ScenarioTest`의 코드를 따른다.

@@ -132,7 +132,13 @@ void UAgAbilityTask_Transition::TryTransition()
 
 void UAgAbilityTask_Transition::HandleEvent(const FGameplayEventData* Payload)
 {
-	TryTransition();
+	// 적중 이벤트는 주인의 모든 공격(앞 행동이 쏜 투사체 포함)에 오므로, 피해의 효과 컨텍스트를 실은 이벤트는 이 행동의 공격일 때만
+	// 넘어갑니다. 입력·착지처럼 컨텍스트가 없는 이벤트는 그대로 넘어갑니다.
+	const UGameplayAbility* Source = Payload ? Payload->ContextHandle.GetAbilityInstance_NotReplicated() : nullptr;
+	if (!Source || Source == Ability)
+	{
+		TryTransition();
+	}
 }
 
 void UAgAbilityTask_Transition::HandleTagChanged(const FGameplayTag Tag, int32 NewCount)

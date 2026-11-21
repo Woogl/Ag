@@ -155,7 +155,6 @@ def send(slot, code):
         if not rx.remote_nodes:
             return "창이 원격 실행에 응답하지 않음"
         rx.open_command_connection(rx.remote_nodes[0]["node_id"])
-        # MODE_EXEC_FILE은 보낸 글의 첫 '.py' 바로 뒤가 공백이나 끝이면 그 앞을 파일 경로로 읽는다(시나리오의 주석이라도).
         res = rx.run_command(code, unattended=True, exec_mode=remote.MODE_EXEC_FILE, raise_on_failure=False)
         return None if res.get("success") else "시나리오 실행 실패: %s" % res.get("result")
     finally:
@@ -200,6 +199,11 @@ def main():
     clash = sorted(top_level_names(tree, False) & (top_level_names(ast.parse(runner), True) | {"OUT"}))
     if clash:
         print("시나리오의 이름이 실행기와 겹침(이름을 바꿀 것): %s" % ", ".join(clash))
+        return 2
+    # 원격 실행(MODE_EXEC_FILE)은 보낸 글의 첫 '.py' 바로 뒤가 공백이나 끝이면 그 앞을 파일 경로로 읽는다(주석이라도).
+    first_py = re.search(r"\.py", scenario)
+    if first_py and re.match(r"\s|$", scenario[first_py.end():]):
+        print("시나리오 %d줄의 '.py' 뒤가 공백이나 줄 끝임(창이 파일 경로로 읽으므로 글자를 바꿀 것)" % (scenario.count("\n", 0, first_py.start()) + 1))
         return 2
     title = scenario_title(tree, a.scenario) or os.path.basename(a.scenario)
     os.makedirs(WORK, exist_ok=True)

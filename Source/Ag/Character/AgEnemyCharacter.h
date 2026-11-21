@@ -94,7 +94,7 @@ protected:
 	virtual void Die(const FGameplayEventData& DeathEvent) override;
 
 private:
-	/** 현재 HP로 들어선 마지막 페이즈입니다. 페이즈 전환이 끝나야 현재 페이즈가 됩니다. */
+	/** 현재 HP로 들어선 마지막 페이즈입니다. 전환을 발동해야 현재 페이즈가 됩니다. */
 	int32 GetReachedPhase() const;
 
 	/** AI가 고르는 패턴은 패턴 선택 값이 있는 어빌리티입니다. 아니면 없습니다. */

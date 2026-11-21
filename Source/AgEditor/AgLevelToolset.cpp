@@ -61,7 +61,12 @@ ABrush* UAgLevelToolset::AddBrush(TSubclassOf<UBrushBuilder> BuilderClass, FVect
 	GEditor->SelectNone(false, true);
 	GEditor->Exec(World, bSubtract ? TEXT("BRUSH SUBTRACT SELECTNEWBRUSH") : TEXT("BRUSH ADD SELECTNEWBRUSH"));
 	DefaultBrush->SetIsTemporarilyHiddenInEditor(true);
-	return GEditor->GetSelectedActors()->GetTop<ABrush>();
+	ABrush* NewBrush = GEditor->GetSelectedActors()->GetTop<ABrush>();
+	if (!NewBrush)
+	{
+		UKismetSystemLibrary::RaiseScriptError(TEXT("에디터가 이 레벨에 브러시를 놓지 못했습니다."));
+	}
+	return NewBrush;
 }
 
 bool UAgLevelToolset::SetBrushSettings(ABrush* Brush, const FString& Settings)

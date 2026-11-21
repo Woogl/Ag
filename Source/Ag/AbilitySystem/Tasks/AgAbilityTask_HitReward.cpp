@@ -27,6 +27,8 @@ void UAgAbilityTask_HitReward::Activate()
 	}
 	const FGameplayTagContainer AttackAbilityTags = TriggerEvent->InstigatorTags;
 	UAgAbilitySystemComponent* ASC = CastChecked<UAgAbilitySystemComponent>(AbilitySystemComponent.Get());
+	// 엔진은 이벤트로 발동하는 어빌리티를 그 이벤트의 구독자(Transition)보다 먼저 실행하므로, 적중으로 섹션을 옮기는 행동도
+	// 옮기기 전의 섹션으로 봅니다.
 	const FName Section = ASC->GetCurrentMontageSectionName();
 	for (const FAgHitReward& Reward : Params.Rewards)
 	{

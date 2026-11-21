@@ -66,7 +66,8 @@ public:
 	 * 몽타주의 첫 슬롯 트랙을 SlotName 슬롯에서 차례로 재생하는 조각들로 바꿉니다. 새 끝보다 뒤에서 시작하는 섹션은
 	 * 처음으로 옮깁니다.
 	 * @param Segments StartTime과 EndTime은 그 조각 애니메이션 안의 시각입니다.
-	 * @return 몽타주에 슬롯 트랙이 없거나, Segments가 비었거나, 애니메이션이 없는 조각이 있으면 false이고 몽타주는 그대로입니다.
+	 * @return 몽타주에 슬롯 트랙이 없거나, Segments가 비었거나, 애니메이션이 없거나 PlayRate가 0 이하인 조각이 있으면 false이고
+	 *         몽타주는 그대로입니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static bool SetMontageSegments(UAnimMontage* Montage, FName SlotName, const TArray<FAgMontageSegment>& Segments);

@@ -36,7 +36,7 @@ public:
 	 * @param bSubtract true면 빼기 브러시(구멍, 홈)입니다.
 	 * @param Settings 브러시 세팅. 예: CubeBuilder면 {"X":400,"Y":200,"Z":50}. 비우면 빌더의 기본값입니다.
 	 *        원기둥·원뿔의 OuterRadius는 축에서 꼭짓점이 아니라 옆면까지의 거리입니다.
-	 * @return 놓은 브러시. 열린 레벨이 없거나, 빌더 클래스나 세팅이 잘못되었으면 null이고 오류를 알립니다.
+	 * @return 놓은 브러시. 열린 레벨이 없거나, 빌더 클래스나 세팅이 잘못되었거나, 에디터가 브러시를 놓지 못했으면 null이고 오류를 알립니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static ABrush* AddBrush(TSubclassOf<UBrushBuilder> BuilderClass, FVector Location, FRotator Rotation, bool bSubtract, const FString& Settings);

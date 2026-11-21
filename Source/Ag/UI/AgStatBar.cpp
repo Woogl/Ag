@@ -124,8 +124,10 @@ void UAgStatBar::NativePreConstruct()
 	if (UCanvasPanelSlot* ValueSlot = Cast<UCanvasPanelSlot>(ValueText->Slot))
 	{
 		const float AnchorY = ValueAlignment == VAlign_Top ? 0.f : (ValueAlignment == VAlign_Bottom ? 1.f : 0.5f);
-		ValueSlot->SetAnchors(FAnchors(1.f, AnchorY));
-		ValueSlot->SetAlignment(FVector2D(0.f, AnchorY));
+		FAnchors Anchors = ValueSlot->GetAnchors();
+		Anchors.Minimum.Y = Anchors.Maximum.Y = AnchorY;
+		ValueSlot->SetAnchors(Anchors);
+		ValueSlot->SetAlignment(FVector2D(ValueSlot->GetAlignment().X, AnchorY));
 	}
 }
 
