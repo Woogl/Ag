@@ -13,6 +13,9 @@ class UAgControlsPopup : public UAgMenuScreen
 {
 	GENERATED_BODY()
 
+public:
+	UAgControlsPopup(const FObjectInitializer& ObjectInitializer);
+
 protected:
 	virtual void NativeOnInitialized() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;

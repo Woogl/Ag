@@ -5,6 +5,7 @@
 #include "Ag.h"
 #include "Camera/AgPlayerCameraManager.h"
 #include "CommonActivatableWidget.h"
+#include "EnhancedInputSubsystems.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Game/AgCheatManager.h"
 #include "UI/AgNavigationConfig.h"
@@ -24,6 +25,12 @@ void AAgPlayerController::ReceivedPlayer()
 	if (FSlateApplication::IsInitialized())
 	{
 		FSlateApplication::Get().SetNavigationConfig(MakeShared<FAgNavigationConfig>());
+	}
+
+	if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	{
+		InputSubsystem->AddMappingContext(UIInputMapping, 0);
 	}
 
 	// 게임 모드가 PostLogin에서 첫 화면을 열기 전에 레이아웃이 있어야 합니다.

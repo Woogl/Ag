@@ -14,6 +14,9 @@ class UAgStageSelectScreen : public UAgMenuScreen
 {
 	GENERATED_BODY()
 
+public:
+	UAgStageSelectScreen(const FObjectInitializer& ObjectInitializer);
+
 protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;

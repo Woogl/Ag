@@ -149,6 +149,4 @@ namespace AgGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_PotionBottle);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_PotionHeal);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(GameplayCue_Groggy);
-
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(UI_Action_Escape);
 } // namespace AgGameplayTags

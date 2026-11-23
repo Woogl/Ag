@@ -14,6 +14,4 @@ class UAgMenuScreen : public UCommonActivatableWidget
 
 protected:
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
-
-	void BindEscapeToClose();
 };

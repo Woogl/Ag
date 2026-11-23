@@ -7,6 +7,7 @@
 #include "AgPlayerController.generated.h"
 
 class UCommonActivatableWidget;
+class UInputMappingContext;
 class UAgUILayout;
 enum class EAgUILayer : uint8;
 
@@ -25,6 +26,10 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgUILayout> UILayoutClass;
+
+	/** CommonUI는 Enhanced Input UI 액션(뒤로 등)의 키를 로컬 플레이어에 걸린 매핑에서 찾으므로, 화면과 관계없이 늘 걸어 둡니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TObjectPtr<UInputMappingContext> UIInputMapping;
 
 private:
 	UPROPERTY()

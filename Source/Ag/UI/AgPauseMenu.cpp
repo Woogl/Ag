@@ -6,11 +6,16 @@
 #include "GameFramework/PlayerController.h"
 #include "UI/AgButton.h"
 
+UAgPauseMenu::UAgPauseMenu(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bIsBackHandler = true;
+}
+
 void UAgPauseMenu::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	BindEscapeToClose();
 	ResumeButton->OnClicked().AddUObject(this, &ThisClass::DeactivateWidget);
 
 	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())

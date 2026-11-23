@@ -13,6 +13,9 @@ class UAgPauseMenu : public UAgMenuScreen
 {
 	GENERATED_BODY()
 
+public:
+	UAgPauseMenu(const FObjectInitializer& ObjectInitializer);
+
 protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;

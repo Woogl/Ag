@@ -6,11 +6,16 @@
 #include "UI/AgButton.h"
 #include "UI/AgDropdown.h"
 
+UAgStageSelectScreen::UAgStageSelectScreen(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bIsBackHandler = true;
+}
+
 void UAgStageSelectScreen::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	BindEscapeToClose();
 	StartButton->OnClicked().AddUObject(this, &ThisClass::OpenSelectedStage);
 	BackButton->OnClicked().AddUObject(this, &ThisClass::DeactivateWidget);
 }

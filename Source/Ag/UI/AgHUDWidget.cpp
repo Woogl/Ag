@@ -8,6 +8,8 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatSubsystem.h"
+#include "CommonInputSettings.h"
+#include "ICommonInputModule.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Core/AgAssetManager.h"
@@ -41,13 +43,11 @@ void UAgHUDWidget::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	// Esc는 Enhanced Input이 아니라 CommonUI UI 액션으로 받습니다. CommonUI의 Enhanced Input 지원은 전역 설정이고,
-	// 타이틀에는 IMC_Default가 없어 팝업이 키를 찾지 못합니다.
-	FBindUIActionArgs EscapeArgs(FUIActionTag::ConvertChecked(AgGameplayTags::UI_Action_Escape), false,
+	// 엔진의 뒤로 처리(bIsBackHandler)는 메뉴 입력 모드에서만 받으므로, 게임 입력 모드인 HUD는 뒤로 액션을 직접 바인딩합니다.
+	FBindUIActionArgs BackArgs(ICommonInputModule::GetSettings().GetEnhancedInputBackAction(), false,
 		FSimpleDelegate::CreateUObject(this, &ThisClass::OpenPauseMenu));
-	// UI 액션 바인딩은 기본으로 메뉴 입력 모드에서만 받으므로, 게임 입력 모드인 HUD는 바꿔 둡니다.
-	EscapeArgs.InputMode = ECommonInputMode::Game;
-	RegisterUIActionBinding(EscapeArgs);
+	BackArgs.InputMode = ECommonInputMode::Game;
+	RegisterUIActionBinding(BackArgs);
 }
 
 void UAgHUDWidget::NativeConstruct()
