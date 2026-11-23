@@ -30,8 +30,12 @@ FSlateBrush UAgActionWidget::GetIcon() const
 		}
 	}
 
+	// 엔진은 여러 키에 맞는 키 묶음이 없으면 아이콘을 찾지 않으므로, 그때는 엔진 위젯처럼 첫 키의 아이콘을 씁니다.
+	const UCommonInputPlatformSettings* Settings = UCommonInputPlatformSettings::Get();
+	const FName GamepadName = InputSubsystem->GetCurrentGamepadName();
 	FSlateBrush Brush;
-	if (UCommonInputPlatformSettings::Get()->TryGetInputBrush(Brush, Keys, InputType, InputSubsystem->GetCurrentGamepadName()))
+	if (Settings->TryGetInputBrush(Brush, Keys, InputType, GamepadName) ||
+		(Keys.Num() > 1 && Settings->TryGetInputBrush(Brush, Keys[0], InputType, GamepadName)))
 	{
 		return Brush;
 	}

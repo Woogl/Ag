@@ -29,29 +29,29 @@
   <rect width="1920" height="1080" fill="#000000" fill-opacity="0.7"/>
 
   <!-- 팝업 패널: 안쪽 여백 40px -->
-  <rect x="717" y="156" width="486" height="768" rx="8" fill="#2b3036"/>
-  <text x="757" y="226" font-size="32" font-weight="700" fill="#FFFFFF">Controls</text>
+  <rect x="710" y="145" width="500" height="791" fill="#2b3036"/>
+  <text x="750" y="215" font-size="32" fill="#FFFFFF">Controls</text>
 
-  <!-- 조작 안내: 제목 아래 24px, 안쪽 여백 24px, 글자 Medium, 키는 굵게, 줄 간격 1.5배, 키와 조작 이름 사이 48px -->
-  <rect x="757" y="260" width="406" height="520" rx="8" fill="#000000" fill-opacity="0.45"/>
+  <!-- 조작 안내: 제목 아래 24px, 안쪽 여백 24px, 키 아이콘 36px(키가 여럿이면 4px 간격), 줄 사이 6px, 키 아이콘 열과 조작 이름 사이 48px, 조작 이름은 글자 Medium -->
+  <rect x="750" y="246" width="420" height="546" rx="8" fill="#000000" fill-opacity="0.45"/>
   <g font-size="24" fill="#FFFFFF">
-    <text x="781" y="308" font-weight="700">W, A, S, D</text><text x="964" y="308">이동</text>
-    <text x="781" y="348" font-weight="700">마우스 이동</text><text x="964" y="348">시야</text>
-    <text x="781" y="388" font-weight="700">좌클릭</text><text x="964" y="388">기본 공격</text>
-    <text x="781" y="428" font-weight="700">우클릭</text><text x="964" y="428">가드 / 패리</text>
-    <text x="781" y="468" font-weight="700">Left Shift</text><text x="964" y="468">회피 / 달리기</text>
-    <text x="781" y="508" font-weight="700">Space</text><text x="964" y="508">점프</text>
-    <text x="781" y="548" font-weight="700">1, 2, 3, 4</text><text x="964" y="548">스킬 1, 2, 3, 4</text>
-    <text x="781" y="588" font-weight="700">Q</text><text x="964" y="588">궁극기</text>
-    <text x="781" y="628" font-weight="700">F</text><text x="964" y="628">상호작용</text>
-    <text x="781" y="668" font-weight="700">R</text><text x="964" y="668">회복병 사용</text>
-    <text x="781" y="708" font-weight="700">휠 클릭</text><text x="964" y="708">락온 / 락온 해제</text>
-    <text x="781" y="748" font-weight="700">Esc</text><text x="964" y="748">일시정지</text>
+    <rect x="778.5" y="274.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="292.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">W</text><rect x="818.5" y="274.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="832.0" y="292.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">A</text><rect x="858.5" y="274.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="872.0" y="292.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">S</text><rect x="898.5" y="274.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="912.0" y="292.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">D</text><text x="978" y="296">이동</text>
+    <rect x="783.0" y="317.0" width="18" height="26" rx="9" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><line x1="783.0" y1="327.0" x2="801.0" y2="327.0" stroke="#1c1c20" stroke-width="1.5"/><rect x="790.0" y="320.0" width="4" height="8" rx="2" fill="#FFFFFF" stroke="#1c1c20" stroke-width="1"/><polygon points="792.0,310.0 789.0,313.0 795.0,313.0" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="0.8"/><polygon points="792.0,350.0 789.0,347.0 795.0,347.0" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="0.8"/><polygon points="774.0,330.0 777.0,327.0 777.0,333.0" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="0.8"/><polygon points="810.0,330.0 807.0,327.0 807.0,333.0" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="0.8"/><text x="978" y="338">시야</text>
+    <rect x="783.0" y="359.0" width="18" height="26" rx="9" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><path d="M792.0 359.0 h-6 a3 3 0 0 0 -3 3 v7 h9 z" fill="#e83a4a"/><line x1="783.0" y1="369.0" x2="801.0" y2="369.0" stroke="#1c1c20" stroke-width="1.5"/><rect x="790.0" y="362.0" width="4" height="8" rx="2" fill="#FFFFFF" stroke="#1c1c20" stroke-width="1"/><text x="978" y="380">기본 공격</text>
+    <rect x="783.0" y="401.0" width="18" height="26" rx="9" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><path d="M792.0 401.0 h6 a3 3 0 0 1 3 3 v7 h-9 z" fill="#e83a4a"/><line x1="783.0" y1="411.0" x2="801.0" y2="411.0" stroke="#1c1c20" stroke-width="1.5"/><rect x="790.0" y="404.0" width="4" height="8" rx="2" fill="#FFFFFF" stroke="#1c1c20" stroke-width="1"/><text x="978" y="422">가드 / 패리</text>
+    <rect x="778.5" y="442.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="458.5" font-size="7" font-weight="700" fill="#1c1c20" text-anchor="middle">SHIFT</text><text x="978" y="464">회피 / 달리기</text>
+    <rect x="778.5" y="484.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="500.5" font-size="7" font-weight="700" fill="#1c1c20" text-anchor="middle">SPACE</text><text x="978" y="506">점프</text>
+    <rect x="778.5" y="526.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="544.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">1</text><rect x="818.5" y="526.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="832.0" y="544.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">2</text><rect x="858.5" y="526.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="872.0" y="544.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">3</text><rect x="898.5" y="526.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="912.0" y="544.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">4</text><text x="978" y="548">스킬 1, 2, 3, 4</text>
+    <rect x="778.5" y="568.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="586.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">Q</text><text x="978" y="590">궁극기</text>
+    <rect x="778.5" y="610.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="628.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">F</text><text x="978" y="632">상호작용</text>
+    <rect x="778.5" y="652.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="670.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">R</text><text x="978" y="674">회복병 사용</text>
+    <rect x="783.0" y="695.0" width="18" height="26" rx="9" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><line x1="783.0" y1="705.0" x2="801.0" y2="705.0" stroke="#1c1c20" stroke-width="1.5"/><rect x="790.0" y="698.0" width="4" height="8" rx="2" fill="#e83a4a" stroke="#1c1c20" stroke-width="1"/><text x="978" y="716">락온 / 락온 해제</text>
+    <rect x="778.5" y="736.5" width="27.0" height="27.0" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="792.0" y="752.5" font-size="7" font-weight="700" fill="#1c1c20" text-anchor="middle">ESC</text><text x="978" y="758">일시정지</text>
   </g>
 
   <!-- Confirm 버튼: 조작 안내 아래 32px -->
-  <rect x="840" y="812" width="240" height="72" rx="8" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
-  <text x="960" y="859" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
+  <rect x="840" y="824" width="240" height="72" rx="8" fill="#354052" stroke="#FFFFFF" stroke-width="3"/>
+  <text x="960" y="871" font-size="32" text-anchor="middle" fill="#FFFFFF" font-weight="700">Confirm</text>
 
   <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
   <text x="960" y="1000" font-size="20" fill="#9aa4b1" text-anchor="middle">(참고) 닫기: Confirm 버튼, Esc · 팝업 뒤의 타이틀 버튼은 조작할 수 없음</text>

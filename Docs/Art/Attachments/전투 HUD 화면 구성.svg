@@ -59,10 +59,9 @@
   <circle cx="960" cy="470" r="10" fill="none" stroke="#FFFFFF" stroke-width="2"/>
   <circle cx="960" cy="470" r="2" fill="#FFFFFF"/>
 
-  <!-- [5] 상호작용 안내: 락온 마커 오른쪽 가장자리에서 12px, 키 표시 지름 36px, 행동 이름까지 8px -->
-  <circle cx="1000" cy="470" r="18" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5"/>
-  <text x="1000" y="478" font-size="24" font-weight="700" fill="#FFFFFF" text-anchor="middle">F</text>
-  <text x="1026" y="481" font-size="32" fill="#FFFFFF" stroke="#000000" stroke-width="4" paint-order="stroke">처형</text>
+  <!-- [5] 상호작용 안내: 락온 마커 오른쪽 가장자리에서 12px, 키 아이콘 48px, 행동 이름까지 8px -->
+  <rect x="988" y="452" width="36" height="36" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="1006" y="476.2" font-size="17.3" font-weight="700" fill="#1c1c20" text-anchor="middle">F</text>
+  <text x="1038" y="481" font-size="32" fill="#FFFFFF" stroke="#000000" stroke-width="4" paint-order="stroke">처형</text>
   <text x="982" y="512" font-size="14" fill="#9aa4b1">(상호작용 대상이 있을 때)</text>
 
   <!-- [6] 적 네임플레이트: 머리 위 16px, HP 118 × 9px, PP 118 × 6px -->
@@ -82,12 +81,11 @@
   <rect x="48" y="1003" width="160" height="10" fill="#3D8BFD"/>
   <text x="460" y="1022" font-size="24" fill="#FFFFFF">40 / 100</text>
 
-  <!-- 회복병: HP 바 12px 위, 지름 80px, 키는 칸 중심에서 오른쪽 45px -->
+  <!-- 회복병: HP 바 12px 위, 지름 80px, 키 아이콘 36px은 칸 중심에서 아래로 36px, 횟수는 칸 오른쪽 8px -->
   <circle cx="88" cy="936" r="40" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5"/>
   <rect x="61" y="909" width="54" height="54" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 3"/>
-  <circle cx="133" cy="936" r="14" fill="#000000" fill-opacity="0.55"/>
-  <text x="133" y="943" font-size="18.7" fill="#FFFFFF" text-anchor="middle">R</text>
-  <text x="155" y="945" font-size="24" fill="#FFFFFF">2/3</text>
+  <rect x="74.5" y="958.5" width="27" height="27" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="88" y="976.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">R</text>
+  <text x="136" y="945" font-size="24" fill="#FFFFFF">2/3</text>
 
   <!-- [2] 슬롯: 스킬 1~4 십자와 궁극기 (오른쪽 아래), 지름 80px, 십자 가운데 (1736, 917) -->
   <g fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5">
@@ -114,19 +112,11 @@
   </g>
   <!-- 남은 충전 횟수(스킬 3, 최대 충전 2회 이상): 슬롯 중심에서 (29, -29), MP 코스트와 같은 글자 -->
   <text x="1840" y="895" font-size="18.7" fill="#FFFFFF" text-anchor="middle" stroke="#000000" stroke-width="3" paint-order="stroke">3</text>
-  <!-- 키 표시: 십자 가운데에서 30px, 지름 28px -->
-  <g fill="#000000" fill-opacity="0.55">
-    <circle cx="1706" cy="917" r="14"/>
-    <circle cx="1736" cy="887" r="14"/>
-    <circle cx="1766" cy="917" r="14"/>
-    <circle cx="1736" cy="947" r="14"/>
-  </g>
-  <g font-size="18.7" fill="#FFFFFF" text-anchor="middle">
-    <text x="1706" y="924">1</text>
-    <text x="1736" y="894">2</text>
-    <text x="1766" y="924">3</text>
-    <text x="1736" y="954">4</text>
-  </g>
+  <!-- 키 아이콘: 십자 가운데에서 30px, 36px -->
+  <rect x="1692.5" y="903.5" width="27" height="27" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="1706" y="921.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">1</text>
+  <rect x="1722.5" y="873.5" width="27" height="27" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="1736" y="891.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">2</text>
+  <rect x="1752.5" y="903.5" width="27" height="27" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="1766" y="921.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">3</text>
+  <rect x="1722.5" y="933.5" width="27" height="27" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="1736" y="951.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">4</text>
   <!-- 궁극기: 십자 가운데에서 (96, -96), UP 부족으로 흐림, UP 게이지는 그대로 -->
   <g opacity="0.5">
     <circle cx="1832" cy="821" r="40" fill="#000000" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.4" stroke-width="1.5"/>
@@ -138,6 +128,8 @@
   <text x="1600" y="980" font-size="14" fill="#9aa4b1" text-anchor="end">점선: 아이콘 이미지</text>
   <text x="1600" y="1000" font-size="14" fill="#9aa4b1" text-anchor="end">스킬 3 오른쪽 위: 남은 충전 횟수</text>
 
+  <!-- 궁극기 키 아이콘: 슬롯 중심에서 아래로 36px, 36px -->
+  <rect x="1818.5" y="843.5" width="27" height="27" rx="4" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/><text x="1832" y="861.7" font-size="13" font-weight="700" fill="#1c1c20" text-anchor="middle">Q</text>
   <!-- 번호 표시 -->
   <g font-size="18" font-weight="700" text-anchor="middle" fill="#1b1f24">
     <circle cx="624" cy="996" r="16" fill="#FFD23F"/>

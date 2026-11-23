@@ -145,12 +145,16 @@ classDiagram
 | `AAgEnemySpawnPoint` | `ATargetPoint` | 레벨에 놓는 배치 자리 표시. 자리 번호 `Slot`만 가짐 |
 | `AAgCharacterPreview` | `AActor` | 캐릭터 클래스 하나를 AI 빙의 없이 스폰해 정면의 씬 캡처(`Capture`)로 렌더 타깃에 그림. 띄운 캐릭터는 씬 캡처에만 보이고, 자기 조명(`Light`)과 함께 라이팅 채널 1에만 두어 레벨의 조명·그림자와 섞이지 않음. 게임이 멈춘 동안에도 메시와 캡처가 틱하며, 메시 범위로 캡처 높이와 거리를 맞춤 |
 | `UAgTimeSubsystem` | `UWorldSubsystem` | 게임 전체 시간 배율의 주인. 슬로우모션(길이는 실제 시간이고, 겹치면 더 느린 속도와 더 긴 남은 시간을 고름)과 궁극기 시간 정지(요청한 캐릭터만 시간 보정으로 계속 움직이고, 정지 중에 요청된 슬로우모션은 정지가 끝날 때 시작) |
-| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴·모달 화면(타이틀, 스테이지 선택, 적 선택, 일시정지, 조작 안내, 전투 결과)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정하고, Esc로 닫는 화면이 쓰는 등록 함수(`BindEscapeToClose`)를 둠 |
+| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴·모달 화면(타이틀, 스테이지 선택, 적 선택, 일시정지, 조작 안내, 전투 결과)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. Esc로 닫는 화면(스테이지 선택, 일시정지, 조작 안내)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
+| `UAgActionWidget` | `UCommonActionWidget` | 입력 액션의 키 아이콘(HUD의 스킬·궁극기·회복병 키, 상호작용 안내, 조작 안내). 엔진은 Enhanced Input 액션의 첫 키 아이콘만 찾으므로, 지금 입력 종류로 매핑된 키를 모두 CommonInput 플랫폼 설정에 넘겨 키가 여럿이면 컨트롤러 데이터의 키 묶음 아이콘을 찾고, 맞는 키 묶음이 없으면 엔진처럼 첫 키의 아이콘을 씀 |
 | `UAgEnemySelectScreen` | `UAgMenuScreen` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
 | `UAgDropdown` | `UCommonUserWidget` | 메뉴 화면(적 선택, 스테이지 선택)이 함께 쓰는 드롭다운. 엔진 `UComboBoxKey`를 감싸 모양을 위젯 블루프린트(`WBP_Dropdown`, 적 선택의 `WBP_EnemySlot`)에 두고, 화면이 키와 표시 글자로 목록을 채우며, 사람이 고른 변경만 알림. 닫힌 칸 위젯(`SelectedWidgetClass`)을 목록 항목(`OptionWidgetClass`)과 따로 둘 수 있음 |
 | `UAgDropdownOptionWidget` | `UCommonUserWidget` | 드롭다운의 닫힌 칸과 목록 항목 하나. 받은 키와 글자 가운데 글자를 표시(`SetOption`) |
 | `UAgEnemyCard` | `UAgDropdownOptionWidget` | 적 드롭다운의 닫힌 칸(적 카드). 키로 게임 모드에서 적 클래스와 렌더 타깃을 받아 모델을 표시하고, 후보 적이 아니면(Empty) 빈 자리 표시 |
 
+- 키 아이콘은 CommonUI의 Enhanced Input 지원(`bEnableEnhancedInputSupport`)으로 로컬 플레이어에 걸린 매핑에서 키를 찾고, 아이콘은 입력 종류마다 등록한 컨트롤러 데이터에서 찾습니다. UI 매핑(`IMC_UI`, Esc의 뒤로 액션)은 화면과 관계없이 늘 필요해 `AAgPlayerController`가 겁니다. 화면마다 엔진 속성 `InputMapping`으로 같은 매핑을 걸면 한 화면이 닫힐 때 다른 화면의 매핑까지 빠지기 때문입니다. 게임 매핑(`IMC_Default`)이 없는 타이틀에서는 조작 안내 팝업이 열린 동안만 `InputMapping`으로 `IMC_Default`를 겁니다. 타이틀에는 그 액션을 바인딩한 폰이 없어 게임 입력은 생기지 않습니다.
+- 엔진 뒤로 처리는 메뉴 입력 모드에서만 받으므로, 게임 입력 모드인 HUD는 뒤로 액션을 게임 입력 모드로 직접 바인딩해 일시정지 메뉴를 엽니다.
+- 게임 개요가 키보드·마우스만 지원하므로 CommonInput 플랫폼 설정의 `bSupportsGamepad`를 꺼 둡니다. 켜 둔 채 게임패드용 컨트롤러 데이터가 없으면 패드를 건드릴 때 입력 종류가 게임패드로 바뀌어 아이콘이 사라집니다. 게임패드를 지원할 때는 게임패드용 컨트롤러 데이터를 등록하고, 매핑과 뒤로 액션에 패드 키를 더하고, 이 설정을 켭니다.
 - 구성은 같은 맵을 주소 옵션으로 다시 여는 엔진의 기본 경로로 전합니다. `RestartLevel`은 상대 이동이라 옵션이 남아 Restart가 같은 구성을 유지하고, 타이틀 이동은 절대 이동이라 옵션이 버려집니다.
 - `UComboBoxKey`를 상속하지 않고 사용자 위젯으로 감싼 것은 모양을 위젯 블루프린트 기본값에 두고, 사용자 위젯만 받는 `UDynamicEntryBox`(적 선택 화면의 자리 줄)의 항목으로 만들기 위해서입니다. CommonUI 버튼이 엔진 버튼을 감싸는 것과 같은 구조입니다.
 - 표시용 캐릭터는 그 적의 클래스 그대로 스폰합니다. 블루프린트에서 소켓에 붙인 무기와 ABP를 엔진의 생성 과정이 그대로 만들어 카드의 모습이 게임과 같습니다. UMG의 3D 뷰포트 위젯(`UViewport`)은 엔진에서 Experimental이라 쓰지 않습니다.
