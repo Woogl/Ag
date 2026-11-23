@@ -42,7 +42,6 @@ AI와 함께 레벨을 만들 때의 요령과, 지금까지 밟은 함정을 �
 그레이박스의 지형과 구조물은 [기본 방침](<../../../Docs/Architecture/기본 방침.md>) '그레이박스'대로 BSP 브러시로 만든다.
 
 - 프로젝트 MCP 도구 `AgEditor.AgLevelToolset`의 `AddBrush`로 놓고, 크기는 `SetBrushSettings`로 바꾼다. 에디터 파이썬에서는 `unreal.AgLevelToolset.add_brush(...)`처럼 부른다. 모양(`/Script/UnrealEd.<모양>Builder`)과 브러시 세팅 이름, 모양마다 `location`이 가리키는 자리는 도구 설명에 있다.
-- 새 브러시 면에는 콘텐츠 브라우저에서 선택된 재질이 들어간다. 기본 재질(`WorldGridMaterial`)로 놓으려면 선택된 에셋이 없는지 먼저 보고, 다른 재질로 놓으려면 `EditorAppToolset.SelectAssets`로 그 재질을 고른 뒤 놓는다.
 - 맵의 내비 메시는 정적이라 저장된 것이 게임에서 쓰인다. 지형을 바꾸면 `RebuildNavigation`으로 내비게이션을 다시 빌드하고, 바뀐 곳마다 길 찾기(`NavigationSystemV1.find_path_to_location_synchronously`, 결과의 `is_partial()`)가 이어지는지 확인한 뒤 레벨을 저장한다(`RecastNavMesh` 액터 포함).
   - 지오메트리를 다시 빌드한 바로 뒤에 보낸 `RebuildNavigation`은 로그에 "navigation build is locked"를 남기고 무시될 수 있다. 그 사이 내비 메시는 비어 있으니, 다음 명령에서 다시 보내고 로그의 `UNavigationSystemV1::Build total execution time` 줄을 확인한다.
 

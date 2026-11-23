@@ -5,10 +5,13 @@
 #include "Editor.h"
 #include "Engine/Brush.h"
 #include "Engine/BrushBuilder.h"
+#include "Engine/Polys.h"
 #include "Engine/Selection.h"
 #include "Engine/World.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "LevelUtils.h"
+#include "Materials/MaterialInterface.h"
+#include "Model.h"
 #include "ScopedTransaction.h"
 #include "Settings/LevelEditorMiscSettings.h"
 #include "ToolsetRegistry/ToolsetLibrary.h"
@@ -28,13 +31,18 @@ namespace AgLevelToolsetPrivate
 	}
 }
 
-ABrush* UAgLevelToolset::AddBrush(TSubclassOf<UBrushBuilder> BuilderClass, FVector Location, FRotator Rotation, bool bSubtract, const FString& Settings)
+ABrush* UAgLevelToolset::AddBrush(TSubclassOf<UBrushBuilder> BuilderClass, FVector Location, FRotator Rotation, bool bSubtract, const FString& Settings, UMaterialInterface* Material)
 {
 	UWorld* World = AgLevelToolsetPrivate::GetEditorWorld();
-	ABrush* DefaultBrush = World ? World->GetDefaultBrush() : nullptr;
-	if (!DefaultBrush || !BuilderClass || BuilderClass->HasAnyClassFlags(CLASS_Abstract))
+	ABrush* BuilderBrush = World ? World->GetDefaultBrush() : nullptr;
+	if (!Material)
 	{
-		UKismetSystemLibrary::RaiseScriptError(TEXT("열린 레벨이 없거나 빌더 클래스가 비어 있거나 추상 클래스입니다."));
+		Material = GetDefault<UAgLevelToolset>()->BrushMaterial.LoadSynchronous();
+	}
+	if (!BuilderBrush || !BuilderClass || BuilderClass->HasAnyClassFlags(CLASS_Abstract) || !Material)
+	{
+		UKismetSystemLibrary::RaiseScriptError(
+			TEXT("열린 레벨이 없거나, 빌더 클래스가 비어 있거나 추상 클래스거나, 재질이 없습니다(DefaultEditor.ini의 BrushMaterial 포함)."));
 		return nullptr;
 	}
 
@@ -54,13 +62,24 @@ ABrush* UAgLevelToolset::AddBrush(TSubclassOf<UBrushBuilder> BuilderClass, FVect
 		UKismetSystemLibrary::RaiseScriptError(TEXT("빌더가 이 세팅으로 모양을 만들지 못했습니다."));
 		return nullptr;
 	}
-	DefaultBrush->Modify();
-	DefaultBrush->SetActorTransform(FTransform(Rotation, Location));
-	DefaultBrush->BrushBuilder = DuplicateObject<UBrushBuilder>(Builder, DefaultBrush->GetOuter());
+	// BRUSH 명령은 빌더 브러시의 면을 복사한 뒤, 재질이 비었거나 엔진 기본 재질인 면에만 콘텐츠 브라우저에서 선택된 재질을 넣습니다.
+	// 그래서 빌더 브러시의 면에 재질을 먼저 넣어 선택과 상관없이 정하고, 놓은 뒤에는 비웁니다. 빌더 브러시는 다음 모양을 만들 때
+	// 면 재질을 이어받으므로, 남겨 두면 사람이 액터 배치 패널로 놓는 브러시도 선택된 재질 대신 이 재질을 받습니다.
+	for (FPoly& Poly : BuilderBrush->Brush->Polys->Element)
+	{
+		Poly.Material = Material;
+	}
+	BuilderBrush->Modify();
+	BuilderBrush->SetActorTransform(FTransform(Rotation, Location));
+	BuilderBrush->BrushBuilder = DuplicateObject<UBrushBuilder>(Builder, BuilderBrush->GetOuter());
 	// BRUSH 명령은 브러시를 만들지 못하면 선택을 그대로 두므로, 전에 선택한 브러시를 돌려주지 않도록 선택을 비웁니다.
 	GEditor->SelectNone(false, true);
 	GEditor->Exec(World, bSubtract ? TEXT("BRUSH SUBTRACT SELECTNEWBRUSH") : TEXT("BRUSH ADD SELECTNEWBRUSH"));
-	DefaultBrush->SetIsTemporarilyHiddenInEditor(true);
+	for (FPoly& Poly : BuilderBrush->Brush->Polys->Element)
+	{
+		Poly.Material = nullptr;
+	}
+	BuilderBrush->SetIsTemporarilyHiddenInEditor(true);
 	ABrush* NewBrush = GEditor->GetSelectedActors()->GetTop<ABrush>();
 	if (!NewBrush)
 	{
