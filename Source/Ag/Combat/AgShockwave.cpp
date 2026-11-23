@@ -55,12 +55,12 @@ void AAgShockwave::BeginPlay()
 	UpdateLook();
 
 	const float WaveInterval = (Speed > 0.f ? MaxRadius / Speed : 0.f) + Interval;
-	TInlineComponentArray<UNiagaraComponent*> Effects(this);
-	for (UNiagaraComponent* Effect : Effects)
+	TInlineComponentArray<UNiagaraComponent*> NiagaraComponents(this);
+	for (UNiagaraComponent* Niagara : NiagaraComponents)
 	{
-		Effect->SetVariableFloat(AgShockwavePrivate::RadiusParameter, MaxRadius);
-		Effect->SetVariableFloat(AgShockwavePrivate::DurationParameter, FMath::Max(Hits.Num() - 1, 0) * WaveInterval);
-		Effect->SetVariableFloat(AgShockwavePrivate::IntervalParameter, WaveInterval);
+		Niagara->SetVariableFloat(AgShockwavePrivate::RadiusParameter, MaxRadius);
+		Niagara->SetVariableFloat(AgShockwavePrivate::DurationParameter, FMath::Max(Hits.Num() - 1, 0) * WaveInterval);
+		Niagara->SetVariableFloat(AgShockwavePrivate::IntervalParameter, WaveInterval);
 	}
 }
 
@@ -141,7 +141,7 @@ void AAgShockwave::Tick(float DeltaSeconds)
 		return;
 	}
 	SetActorTickEnabled(false);
-	DestroyWhenEffectsFinish();
+	DestroyWhenVFXFinish();
 }
 
 void AAgShockwave::UpdateLook()
@@ -153,16 +153,16 @@ void AAgShockwave::UpdateLook()
 	}
 }
 
-void AAgShockwave::DestroyWhenEffectsFinish()
+void AAgShockwave::DestroyWhenVFXFinish()
 {
 	// 마지막 파동과 함께 지우면 그때 터지는 나이아가라도 함께 사라지므로, 켜져 있는 나이아가라가 모두 끝난 뒤 지웁니다.
 	bool bPlaying = false;
-	TInlineComponentArray<UNiagaraComponent*> Effects(this);
-	for (UNiagaraComponent* Effect : Effects)
+	TInlineComponentArray<UNiagaraComponent*> NiagaraComponents(this);
+	for (UNiagaraComponent* Niagara : NiagaraComponents)
 	{
-		if (Effect->IsActive())
+		if (Niagara->IsActive())
 		{
-			Effect->OnSystemFinished.AddUniqueDynamic(this, &ThisClass::HandleEffectFinished);
+			Niagara->OnSystemFinished.AddUniqueDynamic(this, &ThisClass::HandleVFXFinished);
 			bPlaying = true;
 		}
 	}
@@ -172,7 +172,7 @@ void AAgShockwave::DestroyWhenEffectsFinish()
 	}
 }
 
-void AAgShockwave::HandleEffectFinished(UNiagaraComponent* Effect)
+void AAgShockwave::HandleVFXFinished(UNiagaraComponent* Niagara)
 {
-	DestroyWhenEffectsFinish();
+	DestroyWhenVFXFinish();
 }

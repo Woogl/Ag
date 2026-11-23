@@ -218,9 +218,9 @@ bool AAgProjectile::IsReflected() const
 
 void AAgProjectile::PlayImpact(const FVector& Location, const FVector& Normal) const
 {
-	if (ImpactEffect)
+	if (ImpactVFX)
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, Location, Normal.Rotation());
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactVFX, Location, Normal.Rotation());
 	}
 }
 
@@ -231,27 +231,27 @@ void AAgProjectile::EndFlight()
 	TInlineComponentArray<UPrimitiveComponent*> Looks(this);
 	for (UPrimitiveComponent* Look : Looks)
 	{
-		if (UNiagaraComponent* Effect = Cast<UNiagaraComponent>(Look))
+		if (UNiagaraComponent* Niagara = Cast<UNiagaraComponent>(Look))
 		{
-			Effect->Deactivate();
+			Niagara->Deactivate();
 		}
 		else
 		{
 			Look->SetVisibility(false);
 		}
 	}
-	DestroyWhenEffectsFinish();
+	DestroyWhenVFXFinish();
 }
 
-void AAgProjectile::DestroyWhenEffectsFinish()
+void AAgProjectile::DestroyWhenVFXFinish()
 {
 	bool bPlaying = false;
-	TInlineComponentArray<UNiagaraComponent*> Effects(this);
-	for (UNiagaraComponent* Effect : Effects)
+	TInlineComponentArray<UNiagaraComponent*> NiagaraComponents(this);
+	for (UNiagaraComponent* Niagara : NiagaraComponents)
 	{
-		if (Effect->IsActive())
+		if (Niagara->IsActive())
 		{
-			Effect->OnSystemFinished.AddUniqueDynamic(this, &ThisClass::HandleEffectFinished);
+			Niagara->OnSystemFinished.AddUniqueDynamic(this, &ThisClass::HandleVFXFinished);
 			bPlaying = true;
 		}
 	}
@@ -261,7 +261,7 @@ void AAgProjectile::DestroyWhenEffectsFinish()
 	}
 }
 
-void AAgProjectile::HandleEffectFinished(UNiagaraComponent* Effect)
+void AAgProjectile::HandleVFXFinished(UNiagaraComponent* Niagara)
 {
-	DestroyWhenEffectsFinish();
+	DestroyWhenVFXFinish();
 }

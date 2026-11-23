@@ -32,9 +32,9 @@ protected:
 
 private:
 	void UpdateLook();
-	void DestroyWhenEffectsFinish();
+	void DestroyWhenVFXFinish();
 	UFUNCTION()
-	void HandleEffectFinished(UNiagaraComponent* Effect);
+	void HandleVFXFinished(UNiagaraComponent* Niagara);
 
 	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
 	UPROPERTY(EditInstanceOnly, Category = "Shockwave")

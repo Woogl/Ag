@@ -42,9 +42,9 @@ private:
 	bool IsReflected() const;
 	void PlayImpact(const FVector& Location, const FVector& Normal) const;
 	void EndFlight();
-	void DestroyWhenEffectsFinish();
+	void DestroyWhenVFXFinish();
 	UFUNCTION()
-	void HandleEffectFinished(UNiagaraComponent* Effect);
+	void HandleVFXFinished(UNiagaraComponent* Niagara);
 
 	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
 	UPROPERTY(EditInstanceOnly, Category = "Projectile")
@@ -69,7 +69,7 @@ private:
 
 	/** 벽이나, 맞히고 사라지는 대상에 닿은 자리에서 재생합니다. 효과의 앞(X축)은 닿은 면에서 튀어나오는 쪽으로, 벽은 면의 법선이고 대상은 날아온 쪽입니다. 사거리 끝에서는 재생하지 않습니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
-	TObjectPtr<UNiagaraSystem> ImpactEffect;
+	TObjectPtr<UNiagaraSystem> ImpactVFX;
 
 	UPROPERTY()
 	TArray<TObjectPtr<UShapeComponent>> HitShapes;
