@@ -27,6 +27,8 @@ public:
 	/** 쿨다운 표시와 남은 충전 수를 다시 그리고, 충전이 최대보다 적으면 다음 틱에 다시 부릅니다. */
 	void UpdateCooldown();
 
+	const UAgGameplayAbility* FindAbility() const;
+
 protected:
 	virtual void NativeDestruct() override;
 
@@ -54,8 +56,6 @@ protected:
 	float DisabledOpacity = 1.f;
 
 private:
-	const UAgGameplayAbility* FindAbility() const;
-
 	TWeakObjectPtr<AAgPlayerCharacter> Player;
 
 	FGameplayTag InputTag;

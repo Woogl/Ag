@@ -13,12 +13,14 @@ class UAgCharacterSet;
 class UAgCombatRules;
 class AActor;
 class UAgEffectSet;
+class UAgItemSet;
 class UAgSpawnActorSet;
 class UAgTargetingPresetSet;
 class UGameplayEffect;
 class UTargetingPreset;
 enum class EAgEffect : uint8;
 struct FAgAbilityData;
+struct FAgItemData;
 
 UCLASS()
 class UAgAssetManager : public UAssetManager
@@ -52,6 +54,11 @@ public:
 
 	TArray<FName> GetCharacterDataIds() const;
 
+	/** 데이터를 다시 읽으면 바뀌므로 포인터는 그 함수 안에서만 씁니다. */
+	const FAgItemData* FindItem(FName Id) const;
+
+	const TMap<FName, FAgItemData>& GetItems() const;
+
 #if WITH_EDITOR
 	AG_API void ReloadJsonData();
 	FSimpleMulticastDelegate OnJsonDataReloaded;
@@ -84,6 +91,9 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UAgTargetingPresetSet> TargetingPresets;
+
+	UPROPERTY()
+	TObjectPtr<UAgItemSet> Items;
 
 	UPROPERTY()
 	TObjectPtr<UAgAbilitySet> Abilities;

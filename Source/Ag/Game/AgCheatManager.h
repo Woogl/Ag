@@ -58,6 +58,12 @@ public:
 	void AgNoCooldown(const FString& OnOff);
 
 	UFUNCTION(Exec)
+	void AgAddItem(FName Id, int32 Count);
+
+	UFUNCTION(Exec)
+	void AgRemoveItem(FName Id, int32 Count);
+
+	UFUNCTION(Exec)
 	void AgTargetGroggy();
 
 	UFUNCTION(Exec)

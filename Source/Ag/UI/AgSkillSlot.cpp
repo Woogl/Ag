@@ -90,16 +90,6 @@ void UAgSkillSlot::UpdateCooldown()
 	}
 }
 
-void UAgSkillSlot::NativeDestruct()
-{
-	if (const UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(CooldownTimer);
-	}
-
-	Super::NativeDestruct();
-}
-
 const UAgGameplayAbility* UAgSkillSlot::FindAbility() const
 {
 	const AAgPlayerCharacter* Character = Player.Get();
@@ -110,4 +100,14 @@ const UAgGameplayAbility* UAgSkillSlot::FindAbility() const
 	}
 	const FGameplayAbilitySpec* Spec = Handles.IsEmpty() ? nullptr : Character->GetAbilitySystemComponent()->FindAbilitySpecFromHandle(Handles[0]);
 	return Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
+}
+
+void UAgSkillSlot::NativeDestruct()
+{
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(CooldownTimer);
+	}
+
+	Super::NativeDestruct();
 }

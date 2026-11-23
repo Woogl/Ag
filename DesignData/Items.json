@@ -1,0 +1,7 @@
+{
+  "Potion": {
+    "Category": "Consumable",
+    "MaxCount": 3,
+    "StartCount": 3
+  }
+}

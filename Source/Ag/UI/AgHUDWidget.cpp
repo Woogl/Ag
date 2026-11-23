@@ -4,6 +4,7 @@
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
+#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
@@ -15,10 +16,12 @@
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
+#include "Data/AgItemData.h"
 #include "Engine/World.h"
 #include "Game/AgGameState.h"
 #include "Game/AgPlayerController.h"
 #include "Input/CommonUIInputTypes.h"
+#include "Item/AgInventoryComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UI/AgNameplateWidget.h"
 #include "UI/AgPauseMenu.h"
@@ -33,8 +36,7 @@ namespace AgHUDWidgetPrivate
 	TArray<FGameplayAttribute> PlayerAttributes()
 	{
 		return {UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute(), UAgAttributeSet::GetMPAttribute(),
-			UAgAttributeSet::GetMaxMPAttribute(), UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute(),
-			UAgAttributeSet::GetPotionAttribute(), UAgAttributeSet::GetMaxPotionAttribute()};
+			UAgAttributeSet::GetMaxMPAttribute(), UAgAttributeSet::GetUPAttribute(), UAgAttributeSet::GetMaxUPAttribute()};
 	}
 
 } // namespace AgHUDWidgetPrivate
@@ -56,6 +58,8 @@ void UAgHUDWidget::NativeConstruct()
 
 	AAgPlayerCharacter* Player = Cast<AAgPlayerCharacter>(GetOwningPlayerPawn());
 	PlayerASC = Player ? Player->GetAbilitySystemComponent() : nullptr;
+	const AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>();
+	PlayerInventory = PlayerController ? PlayerController->GetInventory() : nullptr;
 	BindPlayer();
 	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
 	{
@@ -63,12 +67,13 @@ void UAgHUDWidget::NativeConstruct()
 	}
 
 #if WITH_EDITOR
-	// 데이터 파일을 다시 읽으면 보스 이름과 스킬 아이콘·코스트·최대 충전이 바뀝니다.
+	// 데이터 파일을 다시 읽으면 보스 이름, 스킬 아이콘·코스트·최대 충전, 회복병의 최대 보유 수가 바뀝니다.
 	UAgAssetManager::Get().OnJsonDataReloaded.AddWeakLambda(this, [this]
 	{
 		UpdateSkillSlots();
 		UpdateCooldowns();
 		UpdateBoss();
+		UpdatePotion();
 	});
 #endif
 
@@ -87,6 +92,7 @@ void UAgHUDWidget::NativeDestruct()
 {
 	UnbindPlayer();
 	PlayerASC.Reset();
+	PlayerInventory.Reset();
 #if WITH_EDITOR
 	UAgAssetManager::Get().OnJsonDataReloaded.RemoveAll(this);
 #endif
@@ -121,6 +127,15 @@ void UAgHUDWidget::OpenPauseMenu()
 
 void UAgHUDWidget::BindPlayer()
 {
+	if (UAgInventoryComponent* Inventory = PlayerInventory.Get())
+	{
+		// 슬롯의 흐림은 그 어빌리티가 쓰는 아이템의 보유 수도 봅니다.
+		Inventory->OnItemsChanged.AddWeakLambda(this, [this]
+		{
+			UpdatePotion();
+			UpdateSkillSlots();
+		});
+	}
 	UAbilitySystemComponent* ASC = PlayerASC.Get();
 	if (!ASC)
 	{
@@ -133,12 +148,13 @@ void UAgHUDWidget::BindPlayer()
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
 		.AddWeakLambda(this, [this](const FGameplayTag, int32)
 	{ UpdateStatusPanel(); });
-	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 스펙이 바뀔 때(부여, 발동, 종료) 스킬 슬롯을
-	// 다시 그립니다.
+	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 스펙이 바뀔 때(부여, 발동, 종료) 스킬 슬롯과
+	// 회복병 칸 어빌리티의 아이템으로 세는 회복병 횟수를 다시 그립니다.
 	ASC->AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
 	{
 		UpdateSkillSlots();
 		UpdateCooldowns();
+		UpdatePotion();
 	});
 	ASC->AbilityCommittedCallbacks.AddWeakLambda(this, [this](UGameplayAbility*)
 	{ UpdateCooldowns(); });
@@ -146,6 +162,10 @@ void UAgHUDWidget::BindPlayer()
 
 void UAgHUDWidget::UnbindPlayer()
 {
+	if (UAgInventoryComponent* Inventory = PlayerInventory.Get())
+	{
+		Inventory->OnItemsChanged.RemoveAll(this);
+	}
 	UAbilitySystemComponent* ASC = PlayerASC.Get();
 	if (!ASC)
 	{
@@ -195,10 +215,13 @@ void UAgHUDWidget::UpdateMPBar()
 
 void UAgHUDWidget::UpdatePotion()
 {
-	if (const UAbilitySystemComponent* ASC = PlayerASC.Get())
+	const UAgGameplayAbility* Ability = PotionSlot->FindAbility();
+	const FAgAbilityData* Data = Ability ? Ability->FindDefinition() : nullptr;
+	const FAgItemData* Item = Data ? UAgAssetManager::Get().FindItem(Data->Item) : nullptr;
+	const UAgInventoryComponent* Inventory = PlayerInventory.Get();
+	if (Item && Inventory)
 	{
-		PotionCountText->SetText(FText::Format(INVTEXT("{0}/{1}"), FText::AsNumber(FMath::RoundToInt(ASC->GetNumericAttribute(UAgAttributeSet::GetPotionAttribute()))),
-			FText::AsNumber(FMath::RoundToInt(ASC->GetNumericAttribute(UAgAttributeSet::GetMaxPotionAttribute())))));
+		PotionCountText->SetText(FText::Format(INVTEXT("{0}/{1}"), FText::AsNumber(Inventory->GetCount(Data->Item)), FText::AsNumber(Item->MaxCount)));
 	}
 }
 
@@ -264,10 +287,6 @@ void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Da
 	else if (Attribute == UAgAttributeSet::GetMPAttribute() || Attribute == UAgAttributeSet::GetMaxMPAttribute())
 	{
 		UpdateMPBar();
-	}
-	else if (Attribute == UAgAttributeSet::GetPotionAttribute() || Attribute == UAgAttributeSet::GetMaxPotionAttribute())
-	{
-		UpdatePotion();
 	}
 	else
 	{

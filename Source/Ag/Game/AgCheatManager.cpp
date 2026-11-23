@@ -8,16 +8,20 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgEnemyCharacter.h"
 #include "Character/AgPlayerCharacter.h"
+#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
+#include "Data/AgItemData.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/LocalPlayer.h"
 #include "EngineUtils.h"
+#include "Game/AgPlayerController.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectComponents/ImmunityGameplayEffectComponent.h"
 #include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 #include "GenericPlatform/GenericPlatformInputDeviceMapper.h"
 #include "InputCoreTypes.h"
 #include "InputKeyEventArgs.h"
+#include "Item/AgInventoryComponent.h"
 
 namespace AgCheatManagerPrivate
 {
@@ -107,6 +111,22 @@ namespace AgCheatManagerPrivate
 			return;
 		}
 		ApplyPercent(*Player, *Player, Attribute, MaxAttribute, Percent);
+	}
+
+	/** 아이템 ID와 수가 맞으면 플레이어의 인벤토리를 돌려줍니다. */
+	UAgInventoryComponent* FindInventory(const UCheatManager& Cheats, const TCHAR* Command, FName Id, int32 Count)
+	{
+		if (!UAgAssetManager::Get().FindItem(Id) || Count <= 0)
+		{
+			Report(Cheats, FString::Printf(TEXT("%s: use an item ID in Items.json and a count above 0"), Command));
+			return nullptr;
+		}
+		return CastChecked<AAgPlayerController>(Cheats.GetOuterAPlayerController())->GetInventory();
+	}
+
+	void ReportItem(const UCheatManager& Cheats, const TCHAR* Command, FName Id, const UAgInventoryComponent& Inventory)
+	{
+		Report(Cheats, FString::Printf(TEXT("%s: %s %d/%d"), Command, *Id.ToString(), Inventory.GetCount(Id), UAgAssetManager::Get().FindItem(Id)->MaxCount));
 	}
 
 	constexpr EAgCheatSwitch AllSwitches[] = {EAgCheatSwitch::Invincible, EAgCheatSwitch::NoCooldown, EAgCheatSwitch::InfiniteMP,
@@ -269,6 +289,24 @@ void UAgCheatManager::AgInfiniteUP(const FString& OnOff)
 void UAgCheatManager::AgNoCooldown(const FString& OnOff)
 {
 	RunSwitch(TEXT("AgNoCooldown"), OnOff, {EAgCheatSwitch::NoCooldown});
+}
+
+void UAgCheatManager::AgAddItem(FName Id, int32 Count)
+{
+	if (UAgInventoryComponent* Inventory = AgCheatManagerPrivate::FindInventory(*this, TEXT("AgAddItem"), Id, Count))
+	{
+		Inventory->AddItem(Id, Count);
+		AgCheatManagerPrivate::ReportItem(*this, TEXT("AgAddItem"), Id, *Inventory);
+	}
+}
+
+void UAgCheatManager::AgRemoveItem(FName Id, int32 Count)
+{
+	if (UAgInventoryComponent* Inventory = AgCheatManagerPrivate::FindInventory(*this, TEXT("AgRemoveItem"), Id, Count))
+	{
+		const bool bRemoved = Inventory->RemoveItem(Id, Count);
+		AgCheatManagerPrivate::ReportItem(*this, bRemoved ? TEXT("AgRemoveItem") : TEXT("AgRemoveItem (not enough)"), Id, *Inventory);
+	}
 }
 
 void UAgCheatManager::AgTargetGroggy()

@@ -76,8 +76,7 @@
   },
   "PotionHeal": {
     "Modifiers": [
-      {"Attribute": "HP", "Coefficient": 0.4, "BackingAttribute": "MaxHP"},
-      {"Attribute": "Potion", "Value": -1}
+      {"Attribute": "HP", "Coefficient": 0.4, "BackingAttribute": "MaxHP"}
     ]
   },
   "SprintSpeed": {

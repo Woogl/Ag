@@ -8,6 +8,7 @@
 #include "AgHUDWidget.generated.h"
 
 class UAgAbilitySystemComponent;
+class UAgInventoryComponent;
 class UAgNameplateWidget;
 class UAgPauseMenu;
 class UAgSkillSlot;
@@ -98,4 +99,6 @@ private:
 	void HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data);
 
 	TWeakObjectPtr<UAgAbilitySystemComponent> PlayerASC;
+
+	TWeakObjectPtr<UAgInventoryComponent> PlayerInventory;
 };

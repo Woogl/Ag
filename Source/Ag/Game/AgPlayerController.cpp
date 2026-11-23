@@ -8,6 +8,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Game/AgCheatManager.h"
+#include "Item/AgInventoryComponent.h"
 #include "UI/AgNavigationConfig.h"
 #include "UI/AgUILayout.h"
 
@@ -15,6 +16,7 @@ AAgPlayerController::AAgPlayerController()
 {
 	CheatClass = UAgCheatManager::StaticClass();
 	PlayerCameraManagerClass = AAgPlayerCameraManager::StaticClass();
+	Inventory = CreateDefaultSubobject<UAgInventoryComponent>(TEXT("Inventory"));
 }
 
 void AAgPlayerController::ReceivedPlayer()

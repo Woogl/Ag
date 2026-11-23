@@ -14,6 +14,8 @@
 #include "Data/AgAttackData.h"
 #include "Data/AgEffectData.h"
 #include "Data/AgTaskParams.h"
+#include "GameFramework/PlayerController.h"
+#include "Item/AgInventoryComponent.h"
 #include "Ag.h"
 
 namespace AgGameplayAbilityPrivate
@@ -92,10 +94,11 @@ bool UAgGameplayAbility::CheckCost(FGameplayAbilitySpecHandle Handle, const FGam
 	// 활성 스펙의 재발동 사전 검사도 여기로 들어오므로 새 요청의 현재 정의를 확인합니다.
 	const FAgAbilityData* Data = FindDefinition();
 	const UAbilitySystemComponent* ASC = ActorInfo ? ActorInfo->AbilitySystemComponent.Get() : nullptr;
+	const APlayerController* PlayerController = ActorInfo ? ActorInfo->PlayerController.Get() : nullptr;
+	const UAgInventoryComponent* Inventory = PlayerController ? PlayerController->FindComponentByClass<UAgInventoryComponent>() : nullptr;
 	if (Data && ASC && ASC->GetNumericAttribute(UAgAttributeSet::GetMPAttribute()) >= Data->Cost.MP &&
 		ASC->GetNumericAttribute(UAgAttributeSet::GetUPAttribute()) >= Data->Cost.UP &&
-		!Data->ActivationAttributes.ContainsByPredicate([ASC](const FAgAttributeCondition& Condition)
-	{ return ASC->GetNumericAttribute(Condition.Attribute) < Condition.AtLeast; }))
+		(Data->Item.IsNone() || (Inventory && Inventory->GetCount(Data->Item) > 0)))
 	{
 		return true;
 	}

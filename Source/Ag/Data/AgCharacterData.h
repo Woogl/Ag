@@ -68,12 +68,6 @@ struct FAgAttributes
 
 	UPROPERTY()
 	float MOV = 0.f;
-
-	UPROPERTY()
-	float Potion = 0.f;
-
-	UPROPERTY()
-	float MaxPotion = 0.f;
 };
 
 USTRUCT()

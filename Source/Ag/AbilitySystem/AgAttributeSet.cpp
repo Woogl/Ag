@@ -77,10 +77,6 @@ void UAgAttributeSet::ClampToRange(const FGameplayAttribute& Attribute, float& V
 	{
 		Value = FMath::Clamp(Value, 0.f, GetMaxPP());
 	}
-	else if (Attribute == GetPotionAttribute())
-	{
-		Value = FMath::Clamp(Value, 0.f, GetMaxPotion());
-	}
 	else
 	{
 		Value = FMath::Max(Value, 0.f);

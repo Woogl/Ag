@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "AgPlayerController.generated.h"
 
+class UAgInventoryComponent;
 class UCommonActivatableWidget;
 class UInputMappingContext;
 class UAgUILayout;
@@ -23,6 +24,11 @@ public:
 
 	void PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
+	UAgInventoryComponent* GetInventory() const
+	{
+		return Inventory;
+	}
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgUILayout> UILayoutClass;
@@ -32,6 +38,9 @@ protected:
 	TObjectPtr<UInputMappingContext> UIInputMapping;
 
 private:
+	UPROPERTY(VisibleAnywhere, Category = "Items")
+	TObjectPtr<UAgInventoryComponent> Inventory;
+
 	UPROPERTY()
 	TObjectPtr<UAgUILayout> UILayout;
 };

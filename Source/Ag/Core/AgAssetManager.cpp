@@ -8,6 +8,7 @@
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
 #include "Data/AgEffectData.h"
+#include "Data/AgItemData.h"
 #include "Data/AgSpawnActorData.h"
 #include "Data/AgTargetingPresetData.h"
 #include "Engine/Engine.h"
@@ -43,6 +44,7 @@ namespace AgAssetManagerPrivate
 		{TEXT("Camera.json"), TEXT("Camera"), nullptr},
 		{TEXT("SpawnActors.json"), TEXT("SpawnActors"), TEXT("SpawnActors")},
 		{TEXT("TargetingPresets.json"), TEXT("TargetingPresets"), TEXT("Definitions")},
+		{TEXT("Items.json"), TEXT("Items"), TEXT("Items")},
 		{TEXT("Abilities.json"), TEXT("Abilities"), TEXT("Abilities")},
 		{TEXT("Characters.json"), TEXT("Characters"), TEXT("Characters")},
 	};
@@ -141,6 +143,16 @@ TArray<FName> UAgAssetManager::GetCharacterDataIds() const
 	TArray<FName> Ids;
 	Characters->Characters.GetKeys(Ids);
 	return Ids;
+}
+
+const FAgItemData* UAgAssetManager::FindItem(FName Id) const
+{
+	return Items->Items.Find(Id);
+}
+
+const TMap<FName, FAgItemData>& UAgAssetManager::GetItems() const
+{
+	return Items->Items;
 }
 
 #if WITH_EDITOR

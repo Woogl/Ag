@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbilityTriggerType.h"
-#include "AttributeSet.h"
 #include "Data/AgTaskParams.h"
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
@@ -30,19 +29,6 @@ struct FAgResourceCost
 	bool IsFree() const;
 
 	void AddToSpec(FGameplayEffectSpec& Spec) const;
-};
-
-/** 이만큼 있어야 발동하지만 발동할 때 치르지는 않는 어트리뷰트입니다. */
-USTRUCT()
-struct FAgAttributeCondition
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FGameplayAttribute Attribute;
-
-	UPROPERTY()
-	float AtLeast = 0.f;
 };
 
 USTRUCT()
@@ -210,8 +196,9 @@ struct FAgAbilityData
 	UPROPERTY()
 	FAgResourceCost Cost;
 
-	UPROPERTY()
-	TArray<FAgAttributeCondition> ActivationAttributes;
+	/** 있으면 이 아이템이 1개 이상일 때만 발동합니다. 발동할 때 쓰지 않고, 타임라인의 UseItem이 씁니다. */
+	UPROPERTY(meta = (DataId = "Items"))
+	FName Item;
 
 	UPROPERTY()
 	float Cooldown = 0.f;

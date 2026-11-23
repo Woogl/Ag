@@ -431,14 +431,13 @@
     "ActivationBlockedTags": ["State.Busy", "State.Acting", "State.Guarding", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne"],
     "ActivationOwnedTags": ["State.Busy"],
     "CancelAbilitiesWithTag": ["Ability.Sprint"],
-    "ActivationAttributes": [
-      {"Attribute": "Potion", "AtLeast": 1}
-    ],
+    "Item": "Potion",
     "Montage": {
       "Asset": "/Game/Animations/AM_Player_Potion.AM_Player_Potion",
       "Sections": {
         "Default": [
-          {"Task": "ApplyEffect", "Start": 0.8, "Effect": "PotionHeal"}
+          {"Task": "ApplyEffect", "Start": 0.8, "Effect": "PotionHeal"},
+          {"Task": "UseItem", "Start": 0.8}
         ]
       }
     }
