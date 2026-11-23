@@ -14,6 +14,7 @@
 #include "Data/AgCharacterData.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "NavigationSystem.h"
 #include "StateTreeExecutionContext.h"
 
 namespace AgEnemyAITasksPrivate
@@ -28,6 +29,25 @@ namespace AgEnemyAITasksPrivate
 		// 그때마다 끊깁니다. 경로만 끊고 남은 속도는 이동 컴포넌트의 감속에 맡깁니다.
 		Controller.GetPathFollowingComponent()->AbortMove(Controller, FPathFollowingResultFlags::ForcedScript, FAIRequestID::CurrentRequest,
 			EPathFollowingVelocityMode::Keep);
+	}
+
+	/** 물러나기·좌우 걷기의 한 걸음입니다. 경로 이동과 달리 이동 입력은 내비메시를 보지 않으므로, 내비메시 끝을 넘을 걸음은 걷지 않습니다. */
+	void WalkInsideNavMesh(AAgEnemyAIController& Controller, AAgEnemyCharacter& Enemy, const FVector& Direction, float DeltaTime)
+	{
+		// 엔진 레이캐스트는 시작점이 내비메시 밖이면 모든 방향을 막힘으로 답합니다. 멈추며 끝을 조금 넘었거나 넉다운 등으로
+		// 벽에 붙거나 가장자리에 선 적도 안쪽이나 옆으로는 걷도록, 가장 가까운 내비메시 점에서 봅니다.
+		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(Enemy.GetWorld());
+		FNavLocation Start;
+		if (!NavSys || !NavSys->ProjectPointToNavigation(Enemy.GetActorLocation(), Start, INVALID_NAVEXTENT, &Enemy.GetNavAgentPropertiesRef()))
+		{
+			return;
+		}
+		const FVector End = Start.Location + Direction * Enemy.GetCharacterMovement()->GetMaxSpeed() * DeltaTime;
+		FVector HitLocation;
+		if (!UNavigationSystemV1::NavigationRaycast(&Enemy, Start.Location, End, HitLocation, nullptr, &Controller))
+		{
+			Enemy.AddMovementInput(Direction);
+		}
 	}
 
 	/** 거리가 들어 있는 범위가 있으면 그 범위, 없으면 가장 조금 움직여 닿는 범위입니다. 차이가 같으면 다가가는 쪽입니다. */
@@ -164,11 +184,11 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 	// 적은 스스로 대상을 향해 돌므로, 반대쪽으로 걸으면 바라본 채 물러나고 옆으로 걸으면 대상 주위를 돕니다.
 	if (Distance < InstanceData.TargetRange.Min)
 	{
-		Enemy->AddMovementInput((Enemy->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal2D());
+		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, (Enemy->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal2D(), DeltaTime);
 	}
 	else if (Enemy->GetCharacterData()->AI.WaitMovement == EAgWaitMovement::Strafe)
 	{
-		Enemy->AddMovementInput(Enemy->GetActorRightVector(), InstanceData.StrafeDirection);
+		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, Enemy->GetActorRightVector() * InstanceData.StrafeDirection, DeltaTime);
 	}
 	return EStateTreeRunStatus::Running;
 }

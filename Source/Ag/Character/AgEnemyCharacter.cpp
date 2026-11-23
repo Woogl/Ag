@@ -11,6 +11,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Character/AgPlayerCharacter.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Core/AgAssetManager.h"
@@ -54,7 +55,6 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
-	GetCharacterMovement()->bCanWalkOffLedges = false;
 
 	LockOnMarker = CreateDefaultSubobject<UWidgetComponent>(TEXT("LockOnMarker"));
 	Nameplate = CreateDefaultSubobject<UAgNameplateComponent>(TEXT("Nameplate"));
@@ -161,6 +161,11 @@ void AAgEnemyCharacter::PreInitializeComponents()
 
 	// AI 컨트롤러는 컴포넌트 초기화 안에서 빙의하며 StateTree를 시작하므로, 그 전에 처음 자리를 기록합니다.
 	HomeTransform = GetActorTransform();
+
+	// 엔진 기본값 0은 캡슐 아랫면 반구가 모서리에 걸리기만 해도 서게 해, 가장자리에서 멈춘 적이 중심을 반지름 가까이 밖에 둔 채
+	// 가라앉아 떠 보입니다. 반지름만큼 주면 중심 바로 아래에 바닥이 있어야 서고, 넘으면 떨어집니다. 캡슐 크기가 BP마다 달라
+	// 생성자가 아니라 여기서 정합니다.
+	GetCharacterMovement()->PerchRadiusThreshold = GetCapsuleComponent()->GetScaledCapsuleRadius();
 }
 
 void AAgEnemyCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
