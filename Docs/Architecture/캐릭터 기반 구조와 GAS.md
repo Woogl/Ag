@@ -151,6 +151,14 @@ classDiagram
 | `UAgLanguageSubsystem` | `UGameInstanceSubsystem` | 게임 언어의 주인. 시작할 때 문구 표의 언어 칼럼을 엔진 번역(Polyglot 텍스트 데이터)으로 등록함. 엔진은 번역을 등록하기 전에 시작 언어를 고르므로, 등록한 뒤 엔진과 같은 순서(명령줄, 저장한 언어, 윈도우 언어)로 원하는 언어를 찾아 번역이 있으면 그 언어, 없으면 영어로 다시 고름. 언어 바꾸기는 엔진 `SetCurrentLanguage`로 저장하고, 에디터(PIE)에서는 에디터 UI 언어가 바뀌지 않게 엔진의 게임 번역 미리 보기만 바꿈 |
 | `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴·모달 화면(타이틀, 스테이지 선택, 적 선택, 일시정지, 조작 안내, Settings, 전투 결과)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. Esc로 닫는 화면(스테이지 선택, 일시정지, 조작 안내, Settings)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
 | `UAgSettingsPopup` | `UAgMenuScreen` | 타이틀의 Settings 팝업. 열 때마다 언어 드롭다운을 언어 서브시스템의 언어 목록(엔진 문화권의 그 언어 이름)과 지금 언어로 채우고, 사람이 고르면 언어 서브시스템으로 바꿈 |
+| `UAgPauseMenu` | `UAgMenuScreen` | 일시정지 메뉴. 켜진 동안 게임을 멈추고, 탭 바(`TabList`)를 내용 전환기(엔진 `UCommonActivatableWidgetSwitcher`, 메뉴가 켜져 있을 때 고른 탭의 내용 화면만 켬)에 연결 |
+| `UAgTabList` | `UCommonTabListWidgetBase` | 탭 바. 탭 배열(`Tabs`: 탭 이름 + 내용 화면 클래스)로 내용 화면을 한 번 만들어 전환기에 넣고, 화면에 붙을 때마다 탭을 등록하고 기본 탭(`DefaultTabIndex`)을 고름. 엔진이 화면에서 빠질 때 탭을 모두 지우고, 메뉴가 켜진 뒤에 탭을 바꾸면 지난번 탭이 먼저 켜져 CommonUI의 첫 포커스가 그쪽에 남기 때문. 양 끝 키 아이콘에 엔진의 탭 바꾸기 입력 액션을 넘김. 탭 하나를 더하는 일은 내용 화면 위젯 블루프린트 하나와 `Tabs` 한 줄 |
+| `UAgTabButton` | `UCommonButtonBase` | 탭 이름. 글자는 버튼 스타일의 글자 스타일이고, 선택되면 밑줄을 보임. 방향키 포커스를 받지 않음 |
+| `UAgSystemTab` | `UCommonActivatableWidget` | 일시정지 메뉴의 System 탭. Resume은 자신을 담은 일시정지 메뉴를 끄고(엔진 `UCommonUILibrary::FindParentWidgetOfType`), 나머지 버튼은 게임 모드로 |
+| `UAgInventoryTab` | `UCommonActivatableWidget` | 일시정지 메뉴의 Inventory 탭. 켜질 때마다 인벤토리와 아이템 데이터로 그리드(CommonUI `UCommonTileView`)를 채우고 첫 칸을 고르며, 고른 칸을 상세 패널에 넘김. 메뉴가 열린 동안 게임이 멈춰 보유 수가 바뀌지 않으므로 바뀜 알림은 받지 않음 |
+| `UAgInventoryEntry` | `UObject` | 그리드 항목 하나(아이템 ID, 보유 수). 엔진 리스트 뷰가 항목을 UObject로 받음 |
+| `UAgInventorySlot` | `UCommonButtonBase`, `IUserObjectListEntry` | 그리드 칸. CommonUI 타일 뷰가 버튼 항목의 선택을 리스트의 선택과 맞추므로 모양과 효과음은 버튼 스타일이 맡음. 좌클릭과 방향키로 고르고, 마우스 올림으로는 고르지 않음 |
+| `UAgItemDetail` | `UCommonUserWidget` | 아이템 하나의 이름, 카테고리 이름(`CategoryNames`, 문구 표 항목), '보유 수 / 최대 보유 수', 아이콘, 설명 |
 | `UAgActionWidget` | `UCommonActionWidget` | 입력 액션의 키 아이콘(HUD의 스킬·궁극기·회복병 키, 상호작용 안내, 조작 안내). 엔진은 Enhanced Input 액션의 첫 키 아이콘만 찾으므로, 지금 입력 종류로 매핑된 키를 모두 CommonInput 플랫폼 설정에 넘겨 키가 여럿이면 컨트롤러 데이터의 키 묶음 아이콘을 찾고, 맞는 키 묶음이 없으면 엔진처럼 첫 키의 아이콘을 씀 |
 | `UAgEnemySelectScreen` | `UAgMenuScreen` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
 | `UAgDropdown` | `UCommonUserWidget` | 메뉴 화면(적 선택, 스테이지 선택, Settings)이 함께 쓰는 드롭다운. 엔진 `UComboBoxKey`를 감싸 모양을 위젯 블루프린트(`WBP_Dropdown`, 적 선택의 `WBP_EnemySlot`)에 두고, 화면이 키와 표시 글자로 목록을 채우며, 사람이 고른 변경만 알림. 닫힌 칸 위젯(`SelectedWidgetClass`)을 목록 항목(`OptionWidgetClass`)과 따로 둘 수 있음 |
@@ -159,6 +167,8 @@ classDiagram
 
 - 키 아이콘은 CommonUI의 Enhanced Input 지원(`bEnableEnhancedInputSupport`)으로 로컬 플레이어에 걸린 매핑에서 키를 찾고, 아이콘은 입력 종류마다 등록한 컨트롤러 데이터에서 찾습니다. UI 매핑(`IMC_UI`, Esc의 뒤로 액션)은 화면과 관계없이 늘 필요해 `AAgPlayerController`가 겁니다. 화면마다 엔진 속성 `InputMapping`으로 같은 매핑을 걸면 한 화면이 닫힐 때 다른 화면의 매핑까지 빠지기 때문입니다. 게임 매핑(`IMC_Default`)이 없는 타이틀에서는 조작 안내 팝업이 열린 동안만 `InputMapping`으로 `IMC_Default`를 겁니다. 타이틀에는 그 액션을 바인딩한 폰이 없어 게임 입력은 생기지 않습니다.
 - 엔진 뒤로 처리는 메뉴 입력 모드에서만 받으므로, 게임 입력 모드인 HUD는 뒤로 액션을 게임 입력 모드로 직접 바인딩해 일시정지 메뉴를 엽니다.
+- 일시정지 메뉴의 탭 바꾸기 액션(`IA_PreviousTab` Q, `IA_NextTab` E)도 `IMC_UI`에 있습니다. Q는 게임 매핑의 궁극기와 같은 키라서, 두 액션은 입력을 소비하지 않게 두고 `IMC_UI`를 게임 매핑(우선순위 0)보다 높은 1로 겁니다. Enhanced Input은 매핑을 다시 만들 때 높은 맥락의 소비 액션이 쓴 키를 낮은 맥락에서 지우므로, 탭 액션이 소비하면 궁극기가 사라지고 `IMC_UI`가 낮으면 CommonUI가 Q를 탭 액션의 키로 찾지 못합니다. 게임 입력 모드에서는 탭 액션을 듣는 위젯이 없어 Q는 궁극기만 냅니다.
+- 일시정지 메뉴가 켜진 동안 HUD의 상태 묶음(플레이어 상태, 슬롯, 보스 상태)을 숨깁니다. `AAgPlayerController::PushScreen`이 스택이 만든(또는 다시 쓰는) 화면을 돌려주고, HUD는 일시정지 메뉴의 켜짐·꺼짐 알림을 받아 컷신·스테이지 결과와 같은 숨김 조건으로 봅니다.
 - 게임 개요가 키보드·마우스만 지원하므로 CommonInput 플랫폼 설정의 `bSupportsGamepad`를 꺼 둡니다. 켜 둔 채 게임패드용 컨트롤러 데이터가 없으면 패드를 건드릴 때 입력 종류가 게임패드로 바뀌어 아이콘이 사라집니다. 게임패드를 지원할 때는 게임패드용 컨트롤러 데이터를 등록하고, 매핑과 뒤로 액션에 패드 키를 더하고, 이 설정을 켭니다.
 - 구성은 같은 맵을 주소 옵션으로 다시 여는 엔진의 기본 경로로 전합니다. `RestartLevel`은 상대 이동이라 옵션이 남아 Restart가 같은 구성을 유지하고, 타이틀 이동은 절대 이동이라 옵션이 버려집니다.
 - `UComboBoxKey`를 상속하지 않고 사용자 위젯으로 감싼 것은 모양을 위젯 블루프린트 기본값에 두고, 사용자 위젯만 받는 `UDynamicEntryBox`(적 선택 화면의 자리 줄)의 항목으로 만들기 위해서입니다. CommonUI 버튼이 엔진 버튼을 감싸는 것과 같은 구조입니다.
@@ -190,6 +200,21 @@ classDiagram
     UGameInstanceSubsystem <|-- UAgCombatStatsSubsystem
     UAgCombatStatsComponent ..> UAgCombatSubsystem : 전투 시작·끝
     UAgCombatStatsComponent ..> UAgCombatStatsSubsystem : 기록 저장
+```
+
+```mermaid
+classDiagram
+    direction LR
+    UAgMenuScreen <|-- UAgPauseMenu
+    UAgHUDWidget ..> UAgPauseMenu : PauseMenuClass
+    UAgPauseMenu *-- UAgTabList : TabList
+    UAgTabList ..> UAgTabButton : TabButtonClass
+    UAgTabList ..> UAgSystemTab : Tabs
+    UAgTabList ..> UAgInventoryTab : Tabs
+    UAgInventoryTab *-- UAgInventorySlot : ItemGrid 항목
+    UAgInventorySlot ..> UAgInventoryEntry
+    UAgInventoryTab *-- UAgItemDetail : ItemDetail
+    UAgInventoryTab ..> UAgInventoryComponent : 보유 수
 ```
 
 ### 피격 상태와 AI 조건
