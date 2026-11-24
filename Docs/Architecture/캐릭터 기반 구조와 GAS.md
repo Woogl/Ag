@@ -148,10 +148,12 @@ classDiagram
 | `AAgEnemySpawnPoint` | `ATargetPoint` | 레벨에 놓는 배치 자리 표시. 자리 번호 `Slot`만 가짐 |
 | `AAgCharacterPreview` | `AActor` | 캐릭터 클래스 하나를 AI 빙의 없이 스폰해 정면의 씬 캡처(`Capture`)로 렌더 타깃에 그림. 띄운 캐릭터는 씬 캡처에만 보이고, 자기 조명(`Light`)과 함께 라이팅 채널 1에만 두어 레벨의 조명·그림자와 섞이지 않음. 게임이 멈춘 동안에도 메시와 캡처가 틱하며, 메시 범위로 캡처 높이와 거리를 맞춤 |
 | `UAgTimeSubsystem` | `UWorldSubsystem` | 게임 전체 시간 배율의 주인. 슬로우모션(길이는 실제 시간이고, 겹치면 더 느린 속도와 더 긴 남은 시간을 고름)과 궁극기 시간 정지(요청한 캐릭터만 시간 보정으로 계속 움직이고, 정지 중에 요청된 슬로우모션은 정지가 끝날 때 시작) |
-| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴·모달 화면(타이틀, 스테이지 선택, 적 선택, 일시정지, 조작 안내, 전투 결과)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. Esc로 닫는 화면(스테이지 선택, 일시정지, 조작 안내)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
+| `UAgLanguageSubsystem` | `UGameInstanceSubsystem` | 게임 언어의 주인. 시작할 때 문구 표의 언어 칼럼을 엔진 번역(Polyglot 텍스트 데이터)으로 등록함. 엔진은 번역을 등록하기 전에 시작 언어를 고르므로, 등록한 뒤 엔진과 같은 순서(명령줄, 저장한 언어, 윈도우 언어)로 원하는 언어를 찾아 번역이 있으면 그 언어, 없으면 영어로 다시 고름. 언어 바꾸기는 엔진 `SetCurrentLanguage`로 저장하고, 에디터(PIE)에서는 에디터 UI 언어가 바뀌지 않게 엔진의 게임 번역 미리 보기만 바꿈 |
+| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴·모달 화면(타이틀, 스테이지 선택, 적 선택, 일시정지, 조작 안내, Settings, 전투 결과)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. Esc로 닫는 화면(스테이지 선택, 일시정지, 조작 안내, Settings)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
+| `UAgSettingsPopup` | `UAgMenuScreen` | 타이틀의 Settings 팝업. 열 때마다 언어 드롭다운을 언어 서브시스템의 언어 목록(엔진 문화권의 그 언어 이름)과 지금 언어로 채우고, 사람이 고르면 언어 서브시스템으로 바꿈 |
 | `UAgActionWidget` | `UCommonActionWidget` | 입력 액션의 키 아이콘(HUD의 스킬·궁극기·회복병 키, 상호작용 안내, 조작 안내). 엔진은 Enhanced Input 액션의 첫 키 아이콘만 찾으므로, 지금 입력 종류로 매핑된 키를 모두 CommonInput 플랫폼 설정에 넘겨 키가 여럿이면 컨트롤러 데이터의 키 묶음 아이콘을 찾고, 맞는 키 묶음이 없으면 엔진처럼 첫 키의 아이콘을 씀 |
 | `UAgEnemySelectScreen` | `UAgMenuScreen` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
-| `UAgDropdown` | `UCommonUserWidget` | 메뉴 화면(적 선택, 스테이지 선택)이 함께 쓰는 드롭다운. 엔진 `UComboBoxKey`를 감싸 모양을 위젯 블루프린트(`WBP_Dropdown`, 적 선택의 `WBP_EnemySlot`)에 두고, 화면이 키와 표시 글자로 목록을 채우며, 사람이 고른 변경만 알림. 닫힌 칸 위젯(`SelectedWidgetClass`)을 목록 항목(`OptionWidgetClass`)과 따로 둘 수 있음 |
+| `UAgDropdown` | `UCommonUserWidget` | 메뉴 화면(적 선택, 스테이지 선택, Settings)이 함께 쓰는 드롭다운. 엔진 `UComboBoxKey`를 감싸 모양을 위젯 블루프린트(`WBP_Dropdown`, 적 선택의 `WBP_EnemySlot`)에 두고, 화면이 키와 표시 글자로 목록을 채우며, 사람이 고른 변경만 알림. 닫힌 칸 위젯(`SelectedWidgetClass`)을 목록 항목(`OptionWidgetClass`)과 따로 둘 수 있음 |
 | `UAgDropdownOptionWidget` | `UCommonUserWidget` | 드롭다운의 닫힌 칸과 목록 항목 하나. 받은 키와 글자 가운데 글자를 표시(`SetOption`) |
 | `UAgEnemyCard` | `UAgDropdownOptionWidget` | 적 드롭다운의 닫힌 칸(적 카드). 키로 게임 모드에서 적 클래스와 렌더 타깃을 받아 모델을 표시하고, 후보 적이 아니면(Empty) 빈 자리 표시 |
 
