@@ -17,5 +17,7 @@
 
 - PIE에서는 Esc가 PIE를 끝낸다. CommonUI가 에디터의 PIE 종료 단축키와 같은 키를 일부러 넘긴다. Esc 동작은 Standalone Game으로 확인하고, 에디터 단축키는 사용자 설정이라 바꾸지 않는다.
 - CommonUI는 에디터에서 PIE 뷰포트가 포커스를 가질 때만 입력 설정과 첫 포커스를 적용한다. 뒤에 있는 PIE에서 버튼 선택이 보이지 않으면 버그로 보기 전에 포커스부터 확인한다. 사람의 마우스가 떠 있는 PIE 창을 지나가도 버튼이 선택되니, 선택이 이상하면 `is_hovered()`와 커서 위치를 본다.
+- 게임 입력 중에 메뉴를 열면 CommonUI가 숨었던 커서를 뷰포트 가운데로 옮긴다. 뒤에 뜬 PIE·테스트 창에서도 사람의 실제 커서가 그 창 가운데로 옮겨지고, 그 자리의 버튼에 마우스 올림이 생겨 선택이 바뀐다. 메뉴의 처음 선택은 로그 `LogUIActionRouter`의 `Focused desired target` 줄로 본다.
+- 테스트 창에 `WM_KEYDOWN`·`WM_KEYUP`을 보내면 CommonUI 메뉴(뒤로, 탭 바꾸기, 방향키, Enter)에는 들어가지만 게임 입력에는 들어가지 않는다. 게임 입력은 확인용 입력 `AgPressKey`로 넣는다.
 - CommonUI 버튼은 `<화면>.WidgetTree_0.<버튼>.WidgetTree_0.InternalRootButtonBase`의 `on_clicked.broadcast()`로 누른다. 화면은 `is_activated()`로 고른다. 이전 월드의 화면이 GameInstance에 남아 있다.
 - 에디터 파이썬에 `unreal.WidgetBlueprintLibrary`·`unreal.SlateBlueprintLibrary`가 없다. 화면은 `unreal.ObjectIterator(<위젯 클래스>)`를 `get_world()`가 PIE 월드인 것으로 걸러 찾는다. 뒤에 있는 PIE에서는 위젯의 캐시된 지오메트리가 0이라 배치는 `shot showui` 캡처로 본다.

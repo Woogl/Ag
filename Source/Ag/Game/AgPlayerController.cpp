@@ -32,7 +32,10 @@ void AAgPlayerController::ReceivedPlayer()
 	if (UEnhancedInputLocalPlayerSubsystem* InputSubsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
-		InputSubsystem->AddMappingContext(UIInputMapping, 0);
+		// 일시정지 메뉴의 탭 바꾸기(Q)가 게임 매핑(우선순위 0)의 궁극기와 키를 나눠 쓰므로 더 높게 겁니다. Enhanced Input은
+		// 매핑을 다시 만들 때 높은 맥락의 소비 액션이 쓴 키를 낮은 맥락에서 지워, 낮으면 CommonUI가 탭 액션의 키를 찾지
+		// 못합니다. 탭 액션은 입력을 소비하지 않아 궁극기 매핑도 남습니다.
+		InputSubsystem->AddMappingContext(UIInputMapping, 1);
 	}
 
 	// 게임 모드가 PostLogin에서 첫 화면을 열기 전에 레이아웃이 있어야 합니다.
@@ -46,15 +49,12 @@ void AAgPlayerController::ReceivedPlayer()
 	UILayout->AddToPlayerScreen();
 }
 
-void AAgPlayerController::PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass)
+UCommonActivatableWidget* AAgPlayerController::PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass)
 {
 	if (!ScreenClass)
 	{
 		UE_LOG(LogAg, Error, TEXT("PushScreen: screen class is not set (check the Blueprint defaults)."));
-		return;
+		return nullptr;
 	}
-	if (UILayout)
-	{
-		UILayout->PushScreen(Layer, ScreenClass);
-	}
+	return UILayout ? UILayout->PushScreen(Layer, ScreenClass) : nullptr;
 }

@@ -119,10 +119,19 @@ TOptional<FUIInputConfig> UAgHUDWidget::GetDesiredInputConfig() const
 
 void UAgHUDWidget::OpenPauseMenu()
 {
-	if (AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>())
+	AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>();
+	UCommonActivatableWidget* Menu = PlayerController ? PlayerController->PushScreen(EAgUILayer::Menu, PauseMenuClass) : nullptr;
+	if (!Menu)
 	{
-		PlayerController->PushScreen(EAgUILayer::Menu, PauseMenuClass);
+		return;
 	}
+	// 스택은 닫힌 화면 인스턴스를 다시 쓰므로 먼저 걸어 둔 알림을 지웁니다.
+	Menu->OnActivated().RemoveAll(this);
+	Menu->OnDeactivated().RemoveAll(this);
+	Menu->OnActivated().AddUObject(this, &ThisClass::UpdateStatusPanel);
+	Menu->OnDeactivated().AddUObject(this, &ThisClass::UpdateStatusPanel);
+	PauseMenu = Menu;
+	UpdateStatusPanel();
 }
 
 void UAgHUDWidget::BindPlayer()
@@ -186,7 +195,8 @@ void UAgHUDWidget::UpdateStatusPanel()
 	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
 	const bool bCutscene = ASC && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
 	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
-	StatusPanel->SetVisibility(bCutscene || bStageEnded ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+	const bool bPaused = PauseMenu.IsValid() && PauseMenu->IsActivated();
+	StatusPanel->SetVisibility(bCutscene || bStageEnded || bPaused ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
 }
 
 void UAgHUDWidget::UpdatePlayer()

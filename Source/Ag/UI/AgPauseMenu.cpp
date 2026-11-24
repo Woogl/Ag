@@ -2,9 +2,9 @@
 
 #include "UI/AgPauseMenu.h"
 
-#include "Game/AgGameMode.h"
+#include "CommonActivatableWidgetSwitcher.h"
 #include "GameFramework/PlayerController.h"
-#include "UI/AgButton.h"
+#include "UI/AgTabList.h"
 
 UAgPauseMenu::UAgPauseMenu(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -16,14 +16,7 @@ void UAgPauseMenu::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	ResumeButton->OnClicked().AddUObject(this, &ThisClass::DeactivateWidget);
-
-	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
-	{
-		RestartButton->OnClicked().AddUObject(GameMode, &AAgGameMode::RestartStage);
-		ReturnToTitleButton->OnClicked().AddUObject(GameMode, &AAgGameMode::OpenFrontEnd);
-		QuitButton->OnClicked().AddUObject(GameMode, &AAgGameMode::QuitGame);
-	}
+	TabList->SetLinkedSwitcher(TabContent);
 }
 
 void UAgPauseMenu::NativeOnActivated()
@@ -44,9 +37,4 @@ void UAgPauseMenu::NativeOnDeactivated()
 	}
 
 	Super::NativeOnDeactivated();
-}
-
-UWidget* UAgPauseMenu::NativeGetDesiredFocusTarget() const
-{
-	return ResumeButton;
 }

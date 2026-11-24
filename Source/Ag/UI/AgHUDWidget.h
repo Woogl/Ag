@@ -29,8 +29,8 @@ protected:
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
 	/**
-	 * 궁극기 컷신과 스테이지 결과 동안 한꺼번에 숨기는 묶음이라, 플레이어 상태·스킬 슬롯·보스 상태를 모두 이 안에
-	 * 둡니다.
+	 * 궁극기 컷신, 스테이지 결과, 일시정지 메뉴 동안 한꺼번에 숨기는 묶음이라, 플레이어 상태·스킬 슬롯·보스 상태를
+	 * 모두 이 안에 둡니다.
 	 */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> StatusPanel;
@@ -101,4 +101,6 @@ private:
 	TWeakObjectPtr<UAgAbilitySystemComponent> PlayerASC;
 
 	TWeakObjectPtr<UAgInventoryComponent> PlayerInventory;
+
+	TWeakObjectPtr<UCommonActivatableWidget> PauseMenu;
 };

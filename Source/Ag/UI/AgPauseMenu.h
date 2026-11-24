@@ -6,8 +6,10 @@
 #include "UI/AgMenuScreen.h"
 #include "AgPauseMenu.generated.h"
 
-class UAgButton;
+class UAgTabList;
+class UCommonActivatableWidgetSwitcher;
 
+/** 스테이지에서 Esc로 여는 메뉴입니다. 켜져 있는 동안 게임을 멈추고, 탭 바로 내용 화면을 바꿉니다. */
 UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgPauseMenu : public UAgMenuScreen
 {
@@ -20,17 +22,10 @@ protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual void NativeOnDeactivated() override;
-	virtual UWidget* NativeGetDesiredFocusTarget() const override;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> ResumeButton;
+	TObjectPtr<UAgTabList> TabList;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> RestartButton;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> ReturnToTitleButton;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> QuitButton;
+	TObjectPtr<UCommonActivatableWidgetSwitcher> TabContent;
 };

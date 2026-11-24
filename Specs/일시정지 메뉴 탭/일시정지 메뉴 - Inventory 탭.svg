@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a4553"/>
+      <stop offset="1" stop-color="#2a323d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 배경: 멈춘 전투 장면 (임시) -->
+  <rect width="1920" height="760" fill="url(#sky)"/>
+  <rect y="760" width="1920" height="320" fill="#222831"/>
+  <path d="M0 760 H1920" stroke="#4a5563" stroke-width="2"/>
+  <g fill="#4b5563">
+    <circle cx="1180" cy="360" r="30"/>
+    <rect x="1122" y="396" width="116" height="220" rx="24"/>
+    <rect x="1132" y="606" width="40" height="150" rx="14"/>
+    <rect x="1188" y="606" width="40" height="150" rx="14"/>
+  </g>
+  <g fill="#3f4753">
+    <circle cx="760" cy="560" r="24"/>
+    <rect x="714" y="590" width="92" height="170" rx="20"/>
+  </g>
+
+  <!-- 전투 HUD(플레이어 상태, 슬롯, 보스 상태)는 메뉴가 열려 있는 동안 숨김 -->
+
+  <!-- 화면을 어둡게 -->
+  <rect width="1920" height="1080" fill="#000000" fill-opacity="0.6"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">일시정지 메뉴 · Inventory 탭 · 기준 해상도 1920 × 1080</text>
+
+  <!-- 탭 바 -->
+  <g>
+    <rect x="726" y="51" width="36" height="36" rx="6" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/>
+    <text x="744" y="76" font-size="20" font-weight="700" fill="#1c1c20" text-anchor="middle">Q</text>
+
+    <text x="872" y="80" font-size="32" font-weight="700" fill="#FFFFFF" text-anchor="middle">Inventory</text>
+    <rect x="794" y="96" width="157" height="4" fill="#FFFFFF"/>
+
+    <text x="1071" y="80" font-size="32" fill="#8a929d" text-anchor="middle">System</text>
+
+    <rect x="1159" y="51" width="36" height="36" rx="6" fill="#FFFFFF" stroke="#1c1c20" stroke-opacity="0.6" stroke-width="1.5"/>
+    <text x="1177" y="76" font-size="20" font-weight="700" fill="#1c1c20" text-anchor="middle">E</text>
+  </g>
+  <g font-size="14" fill="#9aa4b1">
+    <text x="660" y="74" text-anchor="end">32px →</text>
+    <text x="983" y="44" text-anchor="middle">← 64px →</text>
+    <text x="1210" y="74">← 32px</text>
+    <text x="872" y="122" text-anchor="middle">밑줄 4px (이름 아래 8px)</text>
+  </g>
+
+  <!-- 그리드와 상세 패널: 48px 띄운 한 묶음을 화면 가운데에, 위쪽은 탭 바 아래 72px -->
+  <path d="M150 100 V172" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+  <text x="142" y="142" font-size="14" fill="#9aa4b1" text-anchor="end">72px</text>
+
+  <!-- 그리드 (7칸 × 4줄이 보임, 넘으면 세로 스크롤) -->
+  <rect x="304" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="448" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="592" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="736" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="880" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="1024" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="160" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="304" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="448" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="592" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="736" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="880" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="1024" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="160" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="304" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="448" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="592" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="736" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="880" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="1024" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="160" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="304" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="448" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="592" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="736" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="880" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <rect x="1024" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+
+  <!-- 첫 칸: 회복병 (골라진 칸) -->
+  <rect x="160" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.15"/>
+  <rect x="160" y="300" width="128" height="32" fill="#FFFFFF" fill-opacity="0.18"/>
+  <g transform="translate(176 184) scale(1.5)">
+    <rect x="25" y="6" width="14" height="10" rx="2" fill="#7a5a44"/>
+    <rect x="27" y="14" width="10" height="10" fill="#d9a3a3"/>
+    <circle cx="32" cy="40" r="20" fill="#c62f3a"/>
+    <circle cx="32" cy="40" r="20" fill="none" stroke="#f1d4d4" stroke-width="2"/>
+  </g>
+  <text x="224" y="323" font-size="24" fill="#FFFFFF" text-anchor="middle">3</text>
+  <rect x="160" y="172" width="128" height="160" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+  <g font-size="14" fill="#9aa4b1">
+    <text x="312" y="196">← 칸 128 × 160px · 칸 사이 16px</text>
+    <text x="312" y="216">아이콘 96px (위 12px) · 아래 32px 띠에 보유 수</text>
+    <text x="312" y="236">골라진 칸: 굵은 흰 테두리, 밝은 바탕</text>
+    <text x="656" y="884" text-anchor="middle">(참고) 소비 → 재화, 같은 카테고리는 아이템 목록 순서 · 7칸 × 4줄이 보이고 넘으면 세로 스크롤</text>
+  </g>
+
+  <!-- 상세 패널 (너비 560px) -->
+  <rect x="1200" y="172" width="560" height="376" fill="#000000" fill-opacity="0.55"/>
+  <rect x="1200" y="172" width="560" height="72" fill="#FFFFFF" fill-opacity="0.14"/>
+  <text x="1224" y="220" font-size="32" font-weight="700" fill="#FFFFFF">회복병</text>
+  <text x="1224" y="284" font-size="24" fill="#8a929d">소비 아이템</text>
+  <text x="1224" y="336" font-size="19" fill="#8a929d">보유</text>
+  <text x="1224" y="376" font-size="32" font-weight="700" fill="#FFFFFF">3 / 3</text>
+  <g transform="translate(1544 260) scale(3)">
+    <rect x="25" y="6" width="14" height="10" rx="2" fill="#7a5a44"/>
+    <rect x="27" y="14" width="10" height="10" fill="#d9a3a3"/>
+    <circle cx="32" cy="40" r="20" fill="#c62f3a"/>
+    <circle cx="32" cy="40" r="20" fill="none" stroke="#f1d4d4" stroke-width="2"/>
+  </g>
+  <path d="M1224 468 H1736" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="1"/>
+  <text x="1224" y="516" font-size="24" fill="#e2e6eb">마시면 HP를 회복합니다.</text>
+  <g font-size="14" fill="#9aa4b1">
+    <text x="1772" y="212">이름 띠 72px</text>
+    <text x="1772" y="360">정보 칸 224px</text>
+    <text x="1772" y="380">아이콘 192px</text>
+    <text x="1772" y="512">설명 (여백 24px)</text>
+    <text x="1480" y="572" text-anchor="middle">← 그리드와 48px · 패널 높이는 설명이 끝나는 곳까지 →</text>
+  </g>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 탭 바꾸기: Q·E, 탭 이름 좌클릭 / 칸 고르기: 좌클릭, 방향키 (마우스를 올리면 옅은 테두리만) / 닫기: Esc / 비면 빈 그리드, 상세 패널 없음</text>
+</svg>
