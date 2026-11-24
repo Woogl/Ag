@@ -149,10 +149,10 @@
     "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
-      "HP": 600,
-      "MaxHP": 600,
-      "PP": 400,
-      "MaxPP": 400,
+      "HP": 1680,
+      "MaxHP": 1680,
+      "PP": 950,
+      "MaxPP": 950,
       "ATK": 120,
       "MOV": 250
     },
