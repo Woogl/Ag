@@ -1,6 +1,8 @@
 {
   "Potion": {
     "Category": "Consumable",
+    "DisplayName": "LOCTABLE(\"StringTable\", \"Item.Potion\")",
+    "Description": "LOCTABLE(\"StringTable\", \"Item.Potion.Description\")",
     "Icon": "/Game/UI/Icons/T_Potion.T_Potion",
     "MaxCount": 3,
     "StartCount": 3

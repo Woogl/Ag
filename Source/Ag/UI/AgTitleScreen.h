@@ -8,6 +8,7 @@
 
 class UAgButton;
 class UAgControlsPopup;
+class UAgSettingsPopup;
 class UAgStageSelectScreen;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
@@ -28,6 +29,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgControlsPopup> ControlsPopupClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgSettingsPopup> SettingsPopupClass;
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> PlayButton;
 
@@ -35,9 +39,13 @@ protected:
 	TObjectPtr<UAgButton> ControlsButton;
 
 	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UAgButton> SettingsButton;
+
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> QuitButton;
 
 private:
 	void OpenStageSelect();
 	void OpenControls();
+	void OpenSettings();
 };

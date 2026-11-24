@@ -24,6 +24,12 @@ struct FAgItemData
 	EAgItemCategory Category = EAgItemCategory::Consumable;
 
 	UPROPERTY()
+	FText DisplayName;
+
+	UPROPERTY()
+	FText Description;
+
+	UPROPERTY()
 	TSoftObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY()
