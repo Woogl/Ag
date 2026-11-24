@@ -12,6 +12,7 @@
 #include "GameplayTagContainer.h"
 #include "JsonObjectConverter.h"
 #include "Misc/FileHelper.h"
+#include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -392,6 +393,16 @@ bool FAgJsonReader::ReadValue(const FString& Path, const TSharedPtr<FJsonValue>&
 	if (ObjectProperty && !Referenced && !Value->AsString().IsEmpty() && Value->AsString() != TEXT("None"))
 	{
 		return AgJsonReaderPrivate::Fail(Path, Value->AsString() + TEXT(" is not an asset or class of ") + ObjectProperty->PropertyClass->GetName());
+	}
+	// 소프트 참조는 쓰는 쪽이 비동기로 읽으므로, 여기서는 읽지 않고 패키지가 있는지만 봅니다.
+	if (CastField<FSoftObjectProperty>(&Property))
+	{
+		FSoftObjectPtr& Soft = *static_cast<FSoftObjectPtr*>(Out);
+		if (!Soft.IsNull() && !FPackageName::DoesPackageExist(Soft.ToSoftObjectPath().GetLongPackageName()))
+		{
+			Soft.Reset();
+			return AgJsonReaderPrivate::Fail(Path, Value->AsString() + TEXT(" is not an asset"));
+		}
 	}
 	// 엔진 로더는 리다이렉터를 따라가 옛 경로도 읽지만, 에디터는 JSON 경로를 참조로 모르므로 리다이렉터가 지워지기 전에 알립니다.
 	if (Referenced && !Referenced->GetPathName().Equals(Value->AsString(), ESearchCase::IgnoreCase))

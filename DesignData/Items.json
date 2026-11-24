@@ -1,6 +1,7 @@
 {
   "Potion": {
     "Category": "Consumable",
+    "Icon": "/Game/UI/Icons/T_Potion.T_Potion",
     "MaxCount": 3,
     "StartCount": 3
   }

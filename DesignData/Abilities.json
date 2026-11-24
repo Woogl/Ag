@@ -427,7 +427,6 @@
   "Potion": {
     "AbilityTags": ["Ability.Action"],
     "InputTag": "Input.Potion",
-    "Icon": "/Game/UI/Icons/T_Potion.T_Potion",
     "ActivationBlockedTags": ["State.Busy", "State.Acting", "State.Guarding", "State.HitReaction", "State.Groggy", "State.Execution", "State.Dead", "State.Airborne"],
     "ActivationOwnedTags": ["State.Busy"],
     "CancelAbilitiesWithTag": ["Ability.Sprint"],

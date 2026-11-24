@@ -7,6 +7,7 @@
 #include "Data/AgTaskParams.h"
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
+#include "UObject/SoftObjectPtr.h"
 #include "AgAbilityData.generated.h"
 
 class UAbilityTask;
@@ -170,7 +171,7 @@ struct FAgAbilityData
 	FText DisplayName;
 
 	UPROPERTY()
-	TObjectPtr<UTexture2D> Icon;
+	TSoftObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY()
 	FGameplayTagContainer ActivationRequiredTags;

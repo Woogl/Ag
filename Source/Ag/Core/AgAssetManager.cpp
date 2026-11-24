@@ -211,6 +211,14 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 				PackagesToCook.AddUnique(Package->GetFName());
 			}
 		}
+		for (TPropertyValueIterator<FSoftObjectProperty> It(Object->GetClass(), Object); It; ++It)
+		{
+			const FSoftObjectPtr& Soft = *static_cast<const FSoftObjectPtr*>(It.Value());
+			if (!Soft.IsNull())
+			{
+				PackagesToCook.AddUnique(Soft.ToSoftObjectPath().GetLongPackageFName());
+			}
+		}
 	}
 }
 #endif

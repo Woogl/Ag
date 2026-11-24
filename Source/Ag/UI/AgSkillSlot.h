@@ -9,6 +9,7 @@
 
 class AAgPlayerCharacter;
 class UAgGameplayAbility;
+class UCommonLazyImage;
 class UImage;
 class UTextBlock;
 
@@ -37,7 +38,7 @@ protected:
 	TObjectPtr<UWidget> Body;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UImage> IconImage;
+	TObjectPtr<UCommonLazyImage> IconImage;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> CostText;

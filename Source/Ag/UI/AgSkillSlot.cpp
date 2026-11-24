@@ -5,9 +5,12 @@
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "Character/AgPlayerCharacter.h"
+#include "CommonLazyImage.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
+#include "Data/AgItemData.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -32,10 +35,22 @@ void UAgSkillSlot::UpdateAbility()
 	const UAgGameplayAbility* Ability = FindAbility();
 	const FAgAbilityData* Data = Ability ? Ability->FindDefinition() : nullptr;
 
-	UTexture2D* Icon = Data ? Data->Icon.Get() : nullptr;
-	IconImage->SetBrushFromTexture(Icon);
+	TSoftObjectPtr<UTexture2D> Icon;
+	if (Data)
+	{
+		Icon = Data->Icon;
+		const FAgItemData* Item = Icon.IsNull() ? UAgAssetManager::Get().FindItem(Data->Item) : nullptr;
+		if (Item)
+		{
+			Icon = Item->Icon;
+		}
+	}
 	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로 숨깁니다.
-	IconImage->SetVisibility(Icon ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+	IconImage->SetVisibility(Icon.IsNull() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+	if (!Icon.IsNull())
+	{
+		IconImage->SetBrushFromLazyTexture(Icon);
+	}
 
 	const int32 Cost = Data ? FMath::RoundToInt(Data->Cost.MP) : 0;
 	CostText->SetText(FText::AsNumber(Cost));

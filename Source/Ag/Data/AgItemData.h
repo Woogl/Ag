@@ -3,7 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/SoftObjectPtr.h"
 #include "AgItemData.generated.h"
+
+class UTexture2D;
 
 UENUM()
 enum class EAgItemCategory : uint8
@@ -19,6 +22,9 @@ struct FAgItemData
 
 	UPROPERTY()
 	EAgItemCategory Category = EAgItemCategory::Consumable;
+
+	UPROPERTY()
+	TSoftObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY()
 	int32 MaxCount = 1;
