@@ -29,8 +29,8 @@
     "bPredictAim": false,
     "bAimTargetOnly": true,
     "Damage": {
-      "HPMultiplier": 0.3,
-      "PPMultiplier": 0.3,
+      "HPMultiplier": 0.21,
+      "PPMultiplier": 0.21,
       "HitReaction": "None",
       "AttackType": "Normal"
     }

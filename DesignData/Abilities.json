@@ -259,7 +259,7 @@
     "ActivationOwnedTags": ["State.Acting"],
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Cost": {"MP": 20},
-    "Cooldown": 6,
+    "Cooldown": 15,
     "Targeting": {"Preset": "Throw", "Range": 1500, "TargetSpacing": 100},
     "Montage": {
       "Asset": "/Game/Animations/AM_Player_Skill1.AM_Player_Skill1",
@@ -267,16 +267,16 @@
         "Throw": [
           {"Task": "RootMotion", "Start": 0, "End": 0.29, "bWarpTranslation": false},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.69, "Effect": "Busy"},
-          {"Task": "SpawnActor", "Start": 0.29, "Actor": "Dagger", "SocketName": "hand_l"},
-          {"Task": "Transition", "Start": 0, "End": 0.69, "Event": "Event.AttackHit", "ToSection": "Slash"}
+          {"Task": "Transition", "Start": 0, "End": 0.69, "Event": "Event.AttackHit", "ToSection": "Thrust"},
+          {"Task": "SpawnActor", "Start": 0.29, "Actor": "Dagger", "SocketName": "hand_l"}
         ],
-        "Slash": [
+        "Thrust": [
           {"Task": "Teleport", "Start": 0, "Distance": 300},
-          {"Task": "ApplyEffect", "Start": 0, "End": 0.36, "Effect": "Busy"},
+          {"Task": "ApplyEffect", "Start": 0, "End": 0.37, "Effect": "Busy"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.08, "Effect": "Invincible"},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.08, "Effect": "Hidden"},
           {"Task": "RootMotion", "Start": 0.09, "End": 0.26, "TargetingRange": 500, "bWarpTranslation": true},
-          {"Task": "WeaponHit", "Start": 0.271, "End": 0.36, "Damage": {"HPMultiplier": 1.2, "PPMultiplier": 1.2, "HitReaction": "Flinch", "AttackType": "Normal"}}
+          {"Task": "WeaponHit", "Start": 0.271, "End": 0.37, "Damage": {"HPMultiplier": 0.84, "PPMultiplier": 0.84, "HitReaction": "Flinch", "AttackType": "Normal"}}
         ]
       }
     }
@@ -312,7 +312,7 @@
     "CancelAbilitiesWithTag": ["Ability.Action", "Ability.Sprint"],
     "Cost": {"MP": 10},
     "Cooldown": 3,
-    "MaxCharges": 2,
+    "MaxCharges": 3,
     "Targeting": {"Preset": "Attack", "Range": 2000, "TargetSpacing": 100},
     "Montage": {
       "Asset": "/Game/Animations/AM_Player_Skill3.AM_Player_Skill3",
