@@ -49,8 +49,8 @@
     "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
-      "HP": 6000,
-      "MaxHP": 6000,
+      "HP": 5400,
+      "MaxHP": 5400,
       "PP": 1500,
       "MaxPP": 1500,
       "ATK": 200,
@@ -149,8 +149,8 @@
     "Team": "Enemy",
     "Toughness": "Medium",
     "Attributes": {
-      "HP": 1680,
-      "MaxHP": 1680,
+      "HP": 1512,
+      "MaxHP": 1512,
       "PP": 950,
       "MaxPP": 950,
       "ATK": 120,
