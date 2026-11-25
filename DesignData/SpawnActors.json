@@ -5,7 +5,7 @@
     "Range": 2000,
     "Damage": {
       "HPMultiplier": 1.2,
-      "PPMultiplier": 1,
+      "PPMultiplier": 1.1,
       "HitReaction": "Flinch",
       "AttackType": "Normal"
     }
