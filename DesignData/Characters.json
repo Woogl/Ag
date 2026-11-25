@@ -51,8 +51,8 @@
     "Attributes": {
       "HP": 5000,
       "MaxHP": 5000,
-      "PP": 1500,
-      "MaxPP": 1500,
+      "PP": 1650,
+      "MaxPP": 1650,
       "ATK": 200,
       "DEF": 100,
       "MOV": 200
@@ -151,8 +151,8 @@
     "Attributes": {
       "HP": 728,
       "MaxHP": 728,
-      "PP": 975,
-      "MaxPP": 975,
+      "PP": 955,
+      "MaxPP": 955,
       "ATK": 120,
       "MOV": 250
     },
