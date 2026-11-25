@@ -81,6 +81,7 @@ public:
 		return false;
 	}
 
+	/** 수평 단위 벡터이고, 입력이 없으면 0입니다. */
 	virtual FVector GetMoveInputDirection() const
 	{
 		return FVector::ZeroVector;

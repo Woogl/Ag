@@ -16,9 +16,10 @@ struct FAgTimelineEntry
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	TInstancedStruct<FAgTaskParams> Params;
+	/** 재생 Task가 가진 정의 사본(Params.Sections) 안의 항목을 가리킵니다. */
+	const FAgTaskParams* Params = nullptr;
 
+	/** 구간이 켜져 있는 동안의 Task입니다. 스스로 끝난 Task는 구간이 닫힐 때까지 남습니다. */
 	UPROPERTY()
 	TObjectPtr<UAbilityTask> Task;
 
@@ -73,9 +74,12 @@ private:
 	void HandleMontageEnded(UAnimMontage* EndedMontage, bool bInterrupted, int32 InstanceId);
 	void FinishPlayback(bool bInterrupted);
 
-	void BeginTimeline(const FAnimMontageInstance& Instance);
+	/** 타임라인 항목의 시각을 몽타주 기준으로 바꿔 둡니다. 재생을 바꿔도 항목과 시각은 그대로입니다. */
+	void BuildTimeline();
 	void EvaluateTimeline(float NewPosition, EAgTimelineMode Mode);
+	/** 켜진 구간을 모두 닫고 그 Task를 끝냅니다. */
 	void EndTimeline();
+	/** 켜진 구간을 Task를 끝내지 않고 닫힌 것으로만 돌립니다. */
 	void ResetTimeline();
 	void StartTimelineWindow(int32 Entry);
 	void EndTimelineWindow(int32 Entry);
@@ -86,12 +90,14 @@ private:
 
 	/**
 	 * 지금 재생의 ID로, 콜백이 이 재생의 것인지 가리고 끝날 때 멈출 재생을 찾습니다. INDEX_NONE이면 전환 요청을
-	 * 받지 않으므로, 끝나는 구간이 요청하는 전환을 거르도록 구간을 끝내기 전에 비웁니다.
+	 * 받지 않으므로, 끝나는 구간이 요청하는 전환을 거르도록 구간을 끝내기 전에 비웁니다. 행동이 끝나며 엔진이 Task를
+	 * 끝내는 동안의 전환 요청은 행동이 켜져 있는지로 거릅니다.
 	 */
 	int32 MontageInstanceId = INDEX_NONE;
 
 	bool bPlaybackInterrupted = false;
 
+	/** 시작할 때 한 번 만들고, 재생하는 동안에는 켜짐 상태와 Task만 바뀝니다. */
 	UPROPERTY()
 	TArray<FAgTimelineEntry> TimelineEntries;
 

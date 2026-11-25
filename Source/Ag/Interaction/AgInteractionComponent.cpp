@@ -104,7 +104,7 @@ void UAgInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType
 {
 	AAgPlayerCharacter* Player = CastChecked<AAgPlayerCharacter>(GetOwner());
 	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
-	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
+	const bool bStageEnded = StageState && StageState->IsStageResultDecided();
 	const bool bCutscene = Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
 
 	// 지금 하는 행동 때문에 상호작용 키를 받지 않는 동안에도 표시하므로 입력 제한은 보지 않습니다.

@@ -5,7 +5,7 @@
 #include "CommonActivatableWidget.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
-UCommonActivatableWidget* UAgUILayout::PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass)
+void UAgUILayout::PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass)
 {
 	UCommonActivatableWidgetStack* Stack = nullptr;
 	switch (Layer)
@@ -17,5 +17,5 @@ UCommonActivatableWidget* UAgUILayout::PushScreen(EAgUILayer Layer, TSubclassOf<
 			Stack = MenuStack;
 			break;
 	}
-	return Stack->AddWidget(ScreenClass);
+	Stack->AddWidget(ScreenClass);
 }

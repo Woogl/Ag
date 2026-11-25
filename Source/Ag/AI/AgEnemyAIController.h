@@ -26,8 +26,6 @@ public:
 
 	AAgCharacterBase* GetTarget() const;
 
-	bool IsEnemyReacting() const;
-
 	/** 그룹이 있으면 그룹의 인식, 없으면 자기 감각의 인식입니다. */
 	bool IsTargetNoticed() const;
 

@@ -185,7 +185,7 @@ void UAgHUDWidget::UpdateStatusPanel()
 	const UAbilitySystemComponent* ASC = PlayerASC.Get();
 	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
 	const bool bCutscene = ASC && ASC->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
-	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
+	const bool bStageEnded = StageState && StageState->IsStageResultDecided();
 	StatusPanel->SetVisibility(bCutscene || bStageEnded ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
 }
 

@@ -18,7 +18,7 @@ namespace AgCombatStatsComponentPrivate
 	bool IsStageResultDecided(const UWorld& World)
 	{
 		const AAgGameState* StageState = World.GetGameState<AAgGameState>();
-		return StageState && StageState->GetStageResult() != EAgStageResult::None;
+		return StageState && StageState->IsStageResultDecided();
 	}
 } // namespace AgCombatStatsComponentPrivate
 

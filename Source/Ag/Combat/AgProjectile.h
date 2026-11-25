@@ -40,6 +40,10 @@ protected:
 
 private:
 	bool IsReflected() const;
+	/** 각 판정 모양 가운데에서 날아가는 쪽으로 그은 선이 벽에 닿기까지의 거리 중 가장 짧은 것입니다. 닿지 않으면 Step입니다. */
+	float TraceWall(float Step, const FCollisionQueryParams& QueryParams, FHitResult& OutWallHit) const;
+	/** 모든 판정 모양을 Move만큼 쓸어 닿은 캐릭터 충돌을 닿은 순서로 모읍니다. */
+	void SweepContacts(const FVector& Move, const FCollisionQueryParams& QueryParams, TArray<FHitResult>& OutReached) const;
 	void PlayImpact(const FVector& Location, const FVector& Normal) const;
 	void EndFlight();
 	void DestroyWhenVFXFinish();

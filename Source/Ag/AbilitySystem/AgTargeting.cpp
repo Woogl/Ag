@@ -248,7 +248,7 @@ bool UAgTargetingFilterTask_MoveInput::ShouldFilterTarget(const FTargetingReques
 	{
 		return true;
 	}
-	const FVector Input = Owner->GetMoveInputDirection().GetSafeNormal2D();
+	const FVector Input = Owner->GetMoveInputDirection();
 	if (Owner->GetLockOnTarget() || Input.IsNearlyZero())
 	{
 		return false;

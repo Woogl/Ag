@@ -88,7 +88,7 @@ void AAgGameMode::QuitGame()
 void AAgGameMode::HandleCharacterDied(AAgCharacterBase& DeadCharacter)
 {
 	AAgGameState* StageState = GetGameState<AAgGameState>();
-	if (StageState->GetStageResult() != EAgStageResult::None)
+	if (StageState->IsStageResultDecided())
 	{
 		return;
 	}

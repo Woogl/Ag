@@ -51,15 +51,6 @@ AAgCharacterBase* AAgEnemyAIController::GetTarget() const
 	return Enemy ? Enemy->GetLockOnTarget() : nullptr;
 }
 
-bool AAgEnemyAIController::IsEnemyReacting() const
-{
-	FGameplayTagContainer ReactionTags;
-	ReactionTags.AddTag(AgGameplayTags::State_HitReaction);
-	ReactionTags.AddTag(AgGameplayTags::State_Groggy);
-	ReactionTags.AddTag(AgGameplayTags::State_Execution);
-	return GetEnemy()->GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(ReactionTags);
-}
-
 bool AAgEnemyAIController::IsTargetNoticed() const
 {
 	const FName GroupId = GetEnemy()->GetGroupId();

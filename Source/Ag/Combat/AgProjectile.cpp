@@ -138,33 +138,10 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	QueryParams.AddIgnoredActor(DamageSource);
 	const FVector ActorStart = GetActorLocation();
 	const float Step = FMath::Min(Speed * DeltaSeconds, Range - Traveled);
-	float MoveDistance = Step;
 	FHitResult WallHit;
-	for (const UShapeComponent* Shape : HitShapes)
-	{
-		const FVector Start = Shape->GetComponentLocation();
-		FHitResult ShapeWallHit;
-		if (GetWorld()->LineTraceSingleByObjectType(ShapeWallHit, Start, Start + FlightDirection * MoveDistance,
-				FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams))
-		{
-			MoveDistance = ShapeWallHit.Distance;
-			WallHit = ShapeWallHit;
-		}
-	}
-
-	const FVector Move = FlightDirection * MoveDistance;
+	const FVector Move = FlightDirection * TraceWall(Step, QueryParams, WallHit);
 	TArray<FHitResult> Reached;
-	for (const UShapeComponent* Shape : HitShapes)
-	{
-		const FVector Start = Shape->GetComponentLocation();
-		TArray<FHitResult> ShapeReached;
-		GetWorld()->SweepMultiByObjectType(ShapeReached, Start, Start + Move, Shape->GetComponentQuat(),
-			FCollisionObjectQueryParams(ECC_Pawn), Shape->GetCollisionShape(), QueryParams);
-		Reached.Append(ShapeReached);
-	}
-	// 모든 모양이 같은 거리를 쓸므로 Time이 곧 이동 거리의 비율이고, 여러 모양의 충돌을 닿은 순서로 맞힙니다.
-	Reached.StableSort([](const FHitResult& A, const FHitResult& B)
-	{ return A.Time < B.Time; });
+	SweepContacts(Move, QueryParams, Reached);
 	for (const FHitResult& Contact : Reached)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
@@ -214,6 +191,38 @@ bool AAgProjectile::IsReflected() const
 {
 	// 반사한 캐릭터가 사라져도 반사됨으로 남아야, 원래 발사자의 피해로 돌아가지 않고 Tick에서 사라집니다.
 	return !Reflector.IsExplicitlyNull();
+}
+
+float AAgProjectile::TraceWall(float Step, const FCollisionQueryParams& QueryParams, FHitResult& OutWallHit) const
+{
+	float MoveDistance = Step;
+	for (const UShapeComponent* Shape : HitShapes)
+	{
+		const FVector Start = Shape->GetComponentLocation();
+		FHitResult ShapeWallHit;
+		if (GetWorld()->LineTraceSingleByObjectType(ShapeWallHit, Start, Start + FlightDirection * MoveDistance,
+				FCollisionObjectQueryParams(ECC_WorldStatic), QueryParams))
+		{
+			MoveDistance = ShapeWallHit.Distance;
+			OutWallHit = ShapeWallHit;
+		}
+	}
+	return MoveDistance;
+}
+
+void AAgProjectile::SweepContacts(const FVector& Move, const FCollisionQueryParams& QueryParams, TArray<FHitResult>& OutReached) const
+{
+	for (const UShapeComponent* Shape : HitShapes)
+	{
+		const FVector Start = Shape->GetComponentLocation();
+		TArray<FHitResult> ShapeReached;
+		GetWorld()->SweepMultiByObjectType(ShapeReached, Start, Start + Move, Shape->GetComponentQuat(),
+			FCollisionObjectQueryParams(ECC_Pawn), Shape->GetCollisionShape(), QueryParams);
+		OutReached.Append(ShapeReached);
+	}
+	// 모든 모양이 같은 거리를 쓸므로 Time이 곧 이동 거리의 비율이고, 여러 모양의 충돌을 닿은 순서로 맞힙니다.
+	OutReached.StableSort([](const FHitResult& A, const FHitResult& B)
+	{ return A.Time < B.Time; });
 }
 
 void AAgProjectile::PlayImpact(const FVector& Location, const FVector& Normal) const

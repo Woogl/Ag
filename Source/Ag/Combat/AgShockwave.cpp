@@ -22,6 +22,29 @@ namespace AgShockwavePrivate
 	constexpr const TCHAR* RadiusParameter = TEXT("User.Radius");
 	constexpr const TCHAR* DurationParameter = TEXT("User.Duration");
 	constexpr const TCHAR* IntervalParameter = TEXT("User.Interval");
+
+	/**
+	 * 닿은 컴포넌트가 고리 구간(InnerRadius ~ Radius)에 걸쳤는지 봅니다. 캐릭터 메시도 Pawn 오브젝트 종류라 몸 캡슐과 극한 회피
+	 * 판정 상자만 보며, 상자는 반 변을 반경으로 한 원기둥으로 봅니다.
+	 */
+	bool IsOnRing(const UPrimitiveComponent& Component, const FVector& Center, float InnerRadius, float Radius)
+	{
+		float BodyRadius = 0.f;
+		if (const UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(&Component))
+		{
+			BodyRadius = Capsule->GetScaledCapsuleRadius();
+		}
+		else if (const UBoxComponent* Box = Cast<UBoxComponent>(&Component))
+		{
+			BodyRadius = Box->GetScaledBoxExtent().X;
+		}
+		else
+		{
+			return false;
+		}
+		const float Distance = FVector::Dist2D(Component.GetComponentLocation(), Center);
+		return Distance - BodyRadius <= Radius && Distance + BodyRadius >= InnerRadius;
+	}
 } // namespace AgShockwavePrivate
 
 AAgShockwave::AAgShockwave()
@@ -97,27 +120,8 @@ void AAgShockwave::Tick(float DeltaSeconds)
 	for (const FOverlapResult& Overlap : Overlaps)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Overlap.GetActor());
-		if (!IsValid(Target) || TouchedActors.Contains(Target) || !Target->CanBeHitBy(*Shooter))
-		{
-			continue;
-		}
-		// 캐릭터 메시도 Pawn 오브젝트 종류라 몸 캡슐과 극한 회피 판정 상자만 봅니다. 상자는 반 변을 반경으로 한 원기둥으로
-		// 봅니다.
-		float BodyRadius = 0.f;
-		if (const UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(Overlap.GetComponent()))
-		{
-			BodyRadius = Capsule->GetScaledCapsuleRadius();
-		}
-		else if (const UBoxComponent* Box = Cast<UBoxComponent>(Overlap.GetComponent()))
-		{
-			BodyRadius = Box->GetScaledBoxExtent().X;
-		}
-		else
-		{
-			continue;
-		}
-		const float Distance = FVector::Dist2D(Overlap.GetComponent()->GetComponentLocation(), Center);
-		if (Distance - BodyRadius > Radius || Distance + BodyRadius < InnerRadius)
+		if (!IsValid(Target) || TouchedActors.Contains(Target) || !Target->CanBeHitBy(*Shooter) ||
+			!AgShockwavePrivate::IsOnRing(*Overlap.GetComponent(), Center, InnerRadius, Radius))
 		{
 			continue;
 		}

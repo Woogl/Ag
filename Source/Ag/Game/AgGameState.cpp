@@ -4,7 +4,7 @@
 
 void AAgGameState::DecideStageResult(EAgStageResult InStageResult)
 {
-	if (StageResult == EAgStageResult::None)
+	if (!IsStageResultDecided())
 	{
 		StageResult = InStageResult;
 		OnStageResultChanged.Broadcast();

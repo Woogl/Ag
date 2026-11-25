@@ -29,6 +29,9 @@ public:
 
 	virtual bool CanLosePP() const override;
 
+	/** 피격 반응, 그로기, 처형 피격 중입니다. */
+	bool IsReacting() const;
+
 	/** HP가 들어선 페이즈로 아직 전환하지 않았습니다. */
 	bool IsPhaseTransitionPending() const;
 

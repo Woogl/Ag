@@ -88,6 +88,59 @@ namespace AgEnemyAITasksPrivate
 		return Picked;
 	}
 
+	/**
+	 * 지금 쓸 수 있는 패턴이 있으면 true입니다. 없으면 지킬 거리를 고르고, 그보다 멀면 다가가기를 요청합니다.
+	 */
+	bool ChooseTargetRange(AAgEnemyAIController& Controller, const AAgEnemyCharacter& Enemy, AAgCharacterBase& Target, float Distance, FAgEnemyAITask_KeepDistanceInstanceData& InstanceData)
+	{
+		InstanceData.TargetRange = Enemy.GetCharacterData()->AI.PreferredDistance;
+		bool bAttackTurn = false;
+		if (Enemy.GetWorld()->GetSubsystem<UAgCombatSubsystem>()->CanStartPattern(Enemy, false))
+		{
+			TArray<TPair<FName, float>> Usable;
+			Enemy.GatherPatterns(Distance, false, Usable);
+			if (!Usable.IsEmpty())
+			{
+				return true;
+			}
+			TArray<FFloatInterval> ReadyRanges;
+			Enemy.GatherReadyPatternRanges(ReadyRanges);
+			bAttackTurn = !ReadyRanges.IsEmpty();
+			if (bAttackTurn)
+			{
+				InstanceData.TargetRange = PickNearestRange(ReadyRanges, Distance);
+			}
+		}
+
+		// 공격할 차례인데 목표 거리 안이면 거리는 닿지만 시야 같은 조건이 맞지 않은 것이라, 보이는 곳을 찾아 다가갑니다.
+		const bool bApproach = Distance > InstanceData.TargetRange.Max || (bAttackTurn && Distance >= InstanceData.TargetRange.Min);
+		// 엔진의 막힘 감지나 부분 경로의 끝에 닿아 경로 이동이 도착 전에 끝날 수 있으므로, 다가가는 중에 멈춰 있으면 다시 요청합니다.
+		if (bApproach && (!InstanceData.bApproaching || Controller.GetMoveStatus() == EPathFollowingStatus::Idle))
+		{
+			Controller.MoveToActor(&Target);
+		}
+		InstanceData.bApproaching = bApproach;
+		return false;
+	}
+
+	/** 지킬 거리보다 가까우면 물러나고, 그 안이면 캐릭터 데이터에 따라 좌우로 걷거나 제자리에 섭니다. */
+	void WalkAtTargetRange(AAgEnemyAIController& Controller, AAgEnemyCharacter& Enemy, const AAgCharacterBase& Target, float Distance, const FAgEnemyAITask_KeepDistanceInstanceData& InstanceData)
+	{
+		// 적은 스스로 대상을 향해 돌므로, 반대쪽으로 걸으면 바라본 채 물러나고 옆으로 걸으면 대상 주위를 돕니다.
+		if (Distance < InstanceData.TargetRange.Min)
+		{
+			WalkInsideNavMesh(Controller, Enemy, (Enemy.GetActorLocation() - Target.GetActorLocation()).GetSafeNormal2D());
+		}
+		else if (Enemy.GetCharacterData()->AI.WaitMovement == EAgWaitMovement::Strafe)
+		{
+			WalkInsideNavMesh(Controller, Enemy, Enemy.GetActorRightVector() * InstanceData.StrafeDirection);
+		}
+		else
+		{
+			StopPathMove(Controller);
+		}
+	}
+
 	bool RequestPatrolMove(AAgEnemyAIController& Controller, const FVector& Destination)
 	{
 		// 부분 경로를 허용하면 갈 수 없는 곳으로도 요청이 성공해 가까운 데까지 걸어가므로, 실패로 받아 건너뜁니다.
@@ -159,54 +212,18 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 	InstanceData.bWasDelaying = bDelaying;
 	InstanceData.CheckElapsed += DeltaTime;
 
+	// 고른 거리와 다가가기는 다음에 다시 고를 때까지 인스턴스 데이터에 남아, 그 사이의 틱은 그 값으로 걷습니다.
 	if (InstanceData.CheckElapsed >= AgEnemyAITasksPrivate::RetryInterval || bDelayEnded)
 	{
 		InstanceData.CheckElapsed = 0.f;
-		InstanceData.TargetRange = Enemy->GetCharacterData()->AI.PreferredDistance;
-		bool bAttackTurn = false;
-		if (Enemy->GetWorld()->GetSubsystem<UAgCombatSubsystem>()->CanStartPattern(*Enemy, false))
+		if (AgEnemyAITasksPrivate::ChooseTargetRange(Controller, *Enemy, *Target, Distance, InstanceData))
 		{
-			TArray<TPair<FName, float>> Usable;
-			Enemy->GatherPatterns(Distance, false, Usable);
-			if (!Usable.IsEmpty())
-			{
-				return EStateTreeRunStatus::Succeeded;
-			}
-			TArray<FFloatInterval> ReadyRanges;
-			Enemy->GatherReadyPatternRanges(ReadyRanges);
-			bAttackTurn = !ReadyRanges.IsEmpty();
-			if (bAttackTurn)
-			{
-				InstanceData.TargetRange = AgEnemyAITasksPrivate::PickNearestRange(ReadyRanges, Distance);
-			}
+			return EStateTreeRunStatus::Succeeded;
 		}
-
-		// 공격할 차례인데 목표 거리 안이면 거리는 닿지만 시야 같은 조건이 맞지 않은 것이라, 보이는 곳을 찾아 다가갑니다.
-		const bool bApproach = Distance > InstanceData.TargetRange.Max || (bAttackTurn && Distance >= InstanceData.TargetRange.Min);
-		// 엔진의 막힘 감지나 부분 경로의 끝에 닿아 경로 이동이 도착 전에 끝날 수 있으므로, 다가가는 중에 멈춰 있으면 다시 요청합니다.
-		if (bApproach && (!InstanceData.bApproaching || Controller.GetMoveStatus() == EPathFollowingStatus::Idle))
-		{
-			Controller.MoveToActor(Target);
-		}
-		InstanceData.bApproaching = bApproach;
 	}
-
-	if (InstanceData.bApproaching)
+	if (!InstanceData.bApproaching)
 	{
-		return EStateTreeRunStatus::Running;
-	}
-	// 적은 스스로 대상을 향해 돌므로, 반대쪽으로 걸으면 바라본 채 물러나고 옆으로 걸으면 대상 주위를 돕니다.
-	if (Distance < InstanceData.TargetRange.Min)
-	{
-		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, (Enemy->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal2D());
-	}
-	else if (Enemy->GetCharacterData()->AI.WaitMovement == EAgWaitMovement::Strafe)
-	{
-		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, Enemy->GetActorRightVector() * InstanceData.StrafeDirection);
-	}
-	else
-	{
-		AgEnemyAITasksPrivate::StopPathMove(Controller);
+		AgEnemyAITasksPrivate::WalkAtTargetRange(Controller, *Enemy, *Target, Distance, InstanceData);
 	}
 	return EStateTreeRunStatus::Running;
 }
@@ -285,7 +302,7 @@ void FAgEnemyAITask_RunPattern::ExitState(FStateTreeExecutionContext& Context, c
 		ASC->CancelAbilityHandle(InstanceData.Handle);
 	}
 	// 피격 반응으로 끊겼으면 후딜레이를 건드리지 않고, 그 밖에는 멈춘 패턴도 끝까지 마친 것으로 봅니다.
-	if (!Controller.IsEnemyReacting())
+	if (!Enemy->IsReacting())
 	{
 		// 반응형 패턴(Backstep)은 끝까지 마치면 남은 후딜레이 없이 바로 다음 패턴을 고릅니다.
 		if (InstanceData.bResponse)
@@ -323,7 +340,7 @@ EStateTreeRunStatus FAgEnemyAITask_WaitReaction::EnterState(FStateTreeExecutionC
 EStateTreeRunStatus FAgEnemyAITask_WaitReaction::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	return InstanceData.Controller->IsEnemyReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
+	return InstanceData.Controller->GetEnemy()->IsReacting() ? EStateTreeRunStatus::Running : EStateTreeRunStatus::Succeeded;
 }
 
 FAgEnemyAITask_NonCombat::FAgEnemyAITask_NonCombat()

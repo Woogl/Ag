@@ -106,6 +106,7 @@ void UAgAbilityTask_PlayMontage::Activate()
 		}
 		Section = Start->Section;
 	}
+	BuildTimeline();
 	Play(Section, -1.f);
 }
 
@@ -129,6 +130,9 @@ void UAgAbilityTask_PlayMontage::TickTask(float DeltaTime)
 
 void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 {
+	// 끝나는 구간이 요청하는 전환을 받지 않도록 재생 ID를 먼저 비웁니다.
+	const int32 InstanceId = MontageInstanceId;
+	MontageInstanceId = INDEX_NONE;
 	// 행동이 끝나 엔진이 끝내면 남은 Task도 엔진이 끝내므로, 스스로 끝날 때만 타임라인 Task를 끝냅니다.
 	if (!bInOwnerFinished)
 	{
@@ -139,8 +143,6 @@ void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 		ResetTimeline();
 	}
 
-	const int32 InstanceId = MontageInstanceId;
-	MontageInstanceId = INDEX_NONE;
 	UAnimInstance* Anim = InstanceId != INDEX_NONE ? AgAbilityTask_PlayMontagePrivate::FindAnimInstance(Ability) : nullptr;
 	FAnimMontageInstance* Instance = Anim ? Anim->GetMontageInstanceForID(InstanceId) : nullptr;
 	if (Instance && Instance->Montage && !Instance->IsStopped())
@@ -154,7 +156,7 @@ void UAgAbilityTask_PlayMontage::OnDestroy(bool bInOwnerFinished)
 
 void UAgAbilityTask_PlayMontage::JumpToSection(FName Section)
 {
-	if (IsFinished() || Section.IsNone() || MontageInstanceId == INDEX_NONE)
+	if (IsFinished() || !Ability->IsActive() || Section.IsNone() || MontageInstanceId == INDEX_NONE)
 	{
 		return;
 	}
@@ -176,7 +178,7 @@ void UAgAbilityTask_PlayMontage::JumpToSection(FName Section)
 
 void UAgAbilityTask_PlayMontage::ReplaySection(FName Section, float BlendTime)
 {
-	if (IsFinished() || Section.IsNone() || MontageInstanceId == INDEX_NONE)
+	if (IsFinished() || !Ability->IsActive() || Section.IsNone() || MontageInstanceId == INDEX_NONE)
 	{
 		return;
 	}
@@ -228,7 +230,8 @@ void UAgAbilityTask_PlayMontage::Play(FName Section, float BlendTime)
 	Instance->OnMontageEnded = FOnMontageEnded::CreateUObject(this, &ThisClass::HandleMontageEnded, InstanceId);
 
 	// 시작 위치의 판정에서 전환하거나 행동이 끝날 수 있으므로 마지막에 합니다.
-	BeginTimeline(*Instance);
+	TimelinePosition = Instance->GetPosition();
+	EvaluateTimeline(TimelinePosition, EAgTimelineMode::Jump);
 }
 
 void UAgAbilityTask_PlayMontage::EndInterrupted()
@@ -265,9 +268,9 @@ void UAgAbilityTask_PlayMontage::FinishPlayback(bool bInterrupted)
 	EndTask();
 }
 
-void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Instance)
+void UAgAbilityTask_PlayMontage::BuildTimeline()
 {
-	UAnimMontage* PlayedMontage = Instance.Montage;
+	const UAnimMontage* PlayedMontage = Params.Asset;
 	for (const TPair<FName, FAgTimelineSection>& Section : Params.Sections)
 	{
 		for (const TInstancedStruct<FAgTaskParams>& Item : Section.Value.Tasks)
@@ -282,13 +285,11 @@ void UAgAbilityTask_PlayMontage::BeginTimeline(const FAnimMontageInstance& Insta
 				continue;
 			}
 			FAgTimelineEntry& Entry = TimelineEntries.AddDefaulted_GetRef();
-			Entry.Params = Item;
+			Entry.Params = &ItemParams;
 			Entry.Start = *Start;
 			Entry.End = *End;
 		}
 	}
-	TimelinePosition = Instance.GetPosition();
-	EvaluateTimeline(TimelinePosition, EAgTimelineMode::Jump);
 }
 
 void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimelineMode Mode)
@@ -373,7 +374,7 @@ void UAgAbilityTask_PlayMontage::EvaluateTimeline(float NewPosition, EAgTimeline
 
 void UAgAbilityTask_PlayMontage::EndTimeline()
 {
-	// Task가 끝나며 다시 재생해도 버린 타임라인에 닿지 않도록, 켜진 구간의 Task를 모아 타임라인을 버린 뒤 끝냅니다.
+	// Task가 끝나며 다시 재생해도 닫은 구간에 닿지 않도록, 켜진 구간의 Task를 모아 구간을 모두 닫은 뒤 끝냅니다.
 	TArray<UAbilityTask*> Active;
 	for (const FAgTimelineEntry& Entry : TimelineEntries)
 	{
@@ -391,19 +392,23 @@ void UAgAbilityTask_PlayMontage::EndTimeline()
 
 void UAgAbilityTask_PlayMontage::ResetTimeline()
 {
-	TimelineEntries.Reset();
+	for (FAgTimelineEntry& Entry : TimelineEntries)
+	{
+		Entry.Task = nullptr;
+		Entry.bActive = false;
+	}
 	TimelinePosition = 0.f;
 }
 
 void UAgAbilityTask_PlayMontage::StartTimelineWindow(int32 Entry)
 {
 	FAgTimelineEntry& Item = TimelineEntries[Entry];
-	UAbilityTask* Task = Item.Params.Get().MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), FFloatInterval(Item.Start, Item.End), this});
+	UAbilityTask* Task = Item.Params->MakeTask(FAgTaskContext{*CastChecked<UAgGameplayAbility>(Ability), FFloatInterval(Item.Start, Item.End), this});
 	if (!Task)
 	{
 		return;
 	}
-	// 시작하는 동안 전환하면 타임라인이 바뀔 수 있으므로 항목에는 시작하기 전에 둡니다.
+	// 시작하는 동안 전환하면 이 구간도 닫히며 Task를 끝내야 하므로 항목에는 시작하기 전에 둡니다.
 	Item.Task = Task;
 	Task->ReadyForActivation();
 }

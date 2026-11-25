@@ -22,7 +22,7 @@ public:
 
 	virtual void ReceivedPlayer() override;
 
-	UCommonActivatableWidget* PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
+	void PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
 	UAgInventoryComponent* GetInventory() const
 	{

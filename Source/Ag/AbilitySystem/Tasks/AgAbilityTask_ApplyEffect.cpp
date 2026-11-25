@@ -54,14 +54,17 @@ void UAgAbilityTask_ApplyEffect::Activate()
 
 void UAgAbilityTask_ApplyEffect::OnDestroy(bool bInOwnerFinished)
 {
-	if (Applied.IsValid() && AbilitySystemComponent.IsValid())
+	// 지우면서 부른 알림이 이 함수로 다시 들어와도 같은 효과를 두 번 지우지 않도록 핸들을 먼저 비웁니다.
+	const FActiveGameplayEffectHandle Handle = Applied;
+	Applied.Invalidate();
+	if (Handle.IsValid() && AbilitySystemComponent.IsValid())
 	{
 		// 지우면서 부른 알림이 Task를 다시 끝내지 않도록 먼저 풉니다.
-		if (FOnActiveGameplayEffectRemoved_Info* Removed = AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(Applied))
+		if (FOnActiveGameplayEffectRemoved_Info* Removed = AbilitySystemComponent->OnGameplayEffectRemoved_InfoDelegate(Handle))
 		{
 			Removed->Remove(RemovedHandle);
 		}
-		AbilitySystemComponent->RemoveActiveGameplayEffect(Applied);
+		AbilitySystemComponent->RemoveActiveGameplayEffect(Handle);
 	}
 	Super::OnDestroy(bInOwnerFinished);
 }

@@ -21,8 +21,7 @@ class UAgUILayout : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	/** 스택이 만들거나 다시 쓰는 화면 인스턴스를 돌려줍니다. */
-	UCommonActivatableWidget* PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
+	void PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
 protected:
 	UPROPERTY(meta = (BindWidget))

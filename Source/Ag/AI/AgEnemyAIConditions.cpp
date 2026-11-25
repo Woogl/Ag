@@ -25,7 +25,7 @@ bool FAgEnemyAICondition_PlayerDead::TestCondition(FStateTreeExecutionContext& C
 bool FAgEnemyAICondition_Reacting::TestCondition(FStateTreeExecutionContext& Context) const
 {
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
-	return Controller->IsEnemyReacting();
+	return Controller->GetEnemy()->IsReacting();
 }
 
 bool FAgEnemyAICondition_PatternsBlocked::TestCondition(FStateTreeExecutionContext& Context) const
@@ -38,7 +38,7 @@ bool FAgEnemyAICondition_PhaseTransitionReady::TestCondition(FStateTreeExecution
 {
 	const AAgEnemyAIController* Controller = Context.GetInstanceData(*this).Controller;
 	const AAgEnemyCharacter* Enemy = Controller->GetEnemy();
-	return !Enemy->IsDead() && !Controller->IsEnemyReacting() && Enemy->IsPhaseTransitionPending();
+	return !Enemy->IsDead() && !Enemy->IsReacting() && Enemy->IsPhaseTransitionPending();
 }
 
 bool FAgEnemyAICondition_ResponseReady::TestCondition(FStateTreeExecutionContext& Context) const

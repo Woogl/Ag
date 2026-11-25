@@ -43,13 +43,13 @@ void UAgAbilityTask_RootMotion::Activate()
 		// 고르지 않는 행동은 입력을 따르지 않습니다.
 		if (!FacingTarget.IsValid() && AgAbility->GetDefinition().Targeting)
 		{
-			MoveInputDirection = Character->GetMoveInputDirection().GetSafeNormal2D();
+			MoveInputDirection = Character->GetMoveInputDirection();
 			bFollowMoveInput = !MoveInputDirection.IsNearlyZero();
 		}
 	}
 	else if (Params.Direction == EAgRootMotionDirection::MoveInput)
 	{
-		MoveInputDirection = Character->GetMoveInputDirection().GetSafeNormal2D();
+		MoveInputDirection = Character->GetMoveInputDirection();
 		bFacingOnly = Params.Distance <= 0.f;
 	}
 
@@ -130,7 +130,7 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 	if (bFollowMoveInput)
 	{
 		// 입력을 떼면 마지막 입력 방향을 지킵니다.
-		const FVector Input = Character->GetMoveInputDirection().GetSafeNormal2D();
+		const FVector Input = Character->GetMoveInputDirection();
 		if (!Input.IsNearlyZero())
 		{
 			MoveInputDirection = Input;

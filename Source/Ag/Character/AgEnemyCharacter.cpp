@@ -88,6 +88,15 @@ bool AAgEnemyCharacter::CanLosePP() const
 	       !ASC->GetOwnedGameplayTags().HasTagExact(AgGameplayTags::State_Invincible);
 }
 
+bool AAgEnemyCharacter::IsReacting() const
+{
+	FGameplayTagContainer ReactionTags;
+	ReactionTags.AddTag(AgGameplayTags::State_HitReaction);
+	ReactionTags.AddTag(AgGameplayTags::State_Groggy);
+	ReactionTags.AddTag(AgGameplayTags::State_Execution);
+	return GetAbilitySystemComponent()->HasAnyMatchingGameplayTags(ReactionTags);
+}
+
 bool AAgEnemyCharacter::IsPhaseTransitionPending() const
 {
 	return GetReachedPhase() > Phase;
@@ -378,7 +387,7 @@ void AAgEnemyCharacter::UpdateWorldWidgets()
 	const APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	AAgPlayerCharacter* Player = PlayerController ? Cast<AAgPlayerCharacter>(PlayerController->GetPawn()) : nullptr;
 	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
-	const bool bStageEnded = StageState && StageState->GetStageResult() != EAgStageResult::None;
+	const bool bStageEnded = StageState && StageState->IsStageResultDecided();
 	const bool bCutscene = Player && Player->GetAbilitySystemComponent()->HasMatchingGameplayTag(AgGameplayTags::State_Cutscene);
 	const bool bShown = Player && !Player->IsDead() && !IsDead() && !bCutscene && !bStageEnded;
 
