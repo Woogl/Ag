@@ -868,7 +868,7 @@
         "Default": [
           {"Task": "RootMotion", "Start": 0, "End": 0.6133, "bWarpTranslation": true},
           {"Task": "RootMotion", "Direction": "Back", "Start": 0.6133, "End": 1.23, "Distance": 0},
-          {"Task": "WeaponHit", "Start": 0.6633, "End": 0.7833, "Damage": {"HPMultiplier": 1, "PPMultiplier": 1.1, "HitReaction": "Flinch", "AttackType": "Normal"}}
+          {"Task": "WeaponHit", "Start": 0.6633, "End": 0.7833, "Damage": {"HPMultiplier": 1, "PPMultiplier": 2.3, "HitReaction": "Flinch", "AttackType": "Normal"}}
         ]
       }
     },
@@ -885,13 +885,13 @@
         "Attack1": [
           {"Task": "RootMotion", "Start": 0, "End": 0.615, "bWarpTranslation": true},
           {"Task": "RootMotion", "Direction": "Back", "Start": 0.615, "End": 0.875, "Distance": 0},
-          {"Task": "WeaponHit", "Start": 0.765, "End": 0.865, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 1.1, "HitReaction": "Flinch", "AttackType": "Normal"}},
+          {"Task": "WeaponHit", "Start": 0.765, "End": 0.865, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 2.3, "HitReaction": "Flinch", "AttackType": "Normal"}},
           {"Task": "Transition", "Start": 0.875, "ToSection": "Attack2", "BlendTime": 0.2}
         ],
         "Attack2": [
           {"Task": "RootMotion", "Start": 0, "End": 0.4155, "bWarpTranslation": true},
           {"Task": "RootMotion", "Direction": "Back", "Start": 0.4155, "End": 1.32, "Distance": 0},
-          {"Task": "WeaponHit", "Start": 0.5655, "End": 0.6655, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 1.1, "HitReaction": "Flinch", "AttackType": "Normal"}}
+          {"Task": "WeaponHit", "Start": 0.5655, "End": 0.6655, "Damage": {"HPMultiplier": 0.8, "PPMultiplier": 2.3, "HitReaction": "Flinch", "AttackType": "Normal"}}
         ]
       }
     },
