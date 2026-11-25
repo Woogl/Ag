@@ -3,10 +3,10 @@
 #include "UI/AgTabList.h"
 
 #include "Ag.h"
+#include "CommonActionWidget.h"
 #include "CommonActivatableWidget.h"
 #include "CommonAnimatedSwitcher.h"
 #include "Components/HorizontalBox.h"
-#include "UI/AgActionWidget.h"
 #include "UI/AgTabButton.h"
 
 UAgTabList::UAgTabList(const FObjectInitializer& ObjectInitializer)

@@ -160,13 +160,13 @@ classDiagram
 | `UAgInventoryEntry` | `UObject` | 그리드 항목 하나(아이템 ID, 보유 수). 엔진 리스트 뷰가 항목을 UObject로 받음 |
 | `UAgInventorySlot` | `UCommonButtonBase`, `IUserObjectListEntry` | 그리드 칸. CommonUI 타일 뷰가 버튼 항목의 선택을 리스트의 선택과 맞추므로 모양과 효과음은 버튼 스타일이 맡음. 좌클릭과 방향키로 고르고, 마우스 올림으로는 고르지 않음 |
 | `UAgItemDetail` | `UCommonUserWidget` | 아이템 하나의 이름, 카테고리 이름(`CategoryNames`, 문구 표 항목), '보유 수 / 최대 보유 수', 아이콘, 설명 |
-| `UAgActionWidget` | `UCommonActionWidget` | 입력 액션의 키 아이콘(HUD의 스킬·궁극기·회복병 키, 상호작용 안내, 조작 안내). 엔진은 Enhanced Input 액션의 첫 키 아이콘만 찾으므로, 지금 입력 종류로 매핑된 키를 모두 CommonInput 플랫폼 설정에 넘겨 키가 여럿이면 컨트롤러 데이터의 키 묶음 아이콘을 찾고, 맞는 키 묶음이 없으면 엔진처럼 첫 키의 아이콘을 씀 |
+| `UAgButton` | `UCommonButtonBase` | 메뉴·모달의 공용 버튼(`WBP_Button`). 글자(`ButtonText`)는 버튼 스타일의 글자 스타일을 따르고, 마우스를 올리면 포커스와 선택을 그 버튼으로 옮김. 키 안내는 엔진 버튼의 키 아이콘 자리(`InputActionWidget`)에 둔 엔진 `UCommonActionWidget`이 맡아, 인스턴스의 `TriggeringEnhancedInputAction`을 정하면 그 키 아이콘을 보이고 그 키로 버튼을 실행하며, 비워 두면 아이콘이 접혀 글자만 가운데에 남음 |
 | `UAgEnemySelectScreen` | `UAgMenuScreen` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
 | `UAgDropdown` | `UCommonUserWidget` | 메뉴 화면(적 선택, 스테이지 선택, Settings)이 함께 쓰는 드롭다운. 엔진 `UComboBoxKey`를 감싸 모양을 위젯 블루프린트(`WBP_Dropdown`, 적 선택의 `WBP_EnemySlot`)에 두고, 화면이 키와 표시 글자로 목록을 채우며, 사람이 고른 변경만 알림. 닫힌 칸 위젯(`SelectedWidgetClass`)을 목록 항목(`OptionWidgetClass`)과 따로 둘 수 있음 |
 | `UAgDropdownOptionWidget` | `UCommonUserWidget` | 드롭다운의 닫힌 칸과 목록 항목 하나. 받은 키와 글자 가운데 글자를 표시(`SetOption`) |
 | `UAgEnemyCard` | `UAgDropdownOptionWidget` | 적 드롭다운의 닫힌 칸(적 카드). 키로 게임 모드에서 적 클래스와 렌더 타깃을 받아 모델을 표시하고, 후보 적이 아니면(Empty) 빈 자리 표시 |
 
-- 키 아이콘은 CommonUI의 Enhanced Input 지원(`bEnableEnhancedInputSupport`)으로 로컬 플레이어에 걸린 매핑에서 키를 찾고, 아이콘은 입력 종류마다 등록한 컨트롤러 데이터에서 찾습니다. UI 매핑(`IMC_UI`, Esc의 뒤로 액션)은 화면과 관계없이 늘 필요해 `AAgPlayerController`가 겁니다. 화면마다 엔진 속성 `InputMapping`으로 같은 매핑을 걸면 한 화면이 닫힐 때 다른 화면의 매핑까지 빠지기 때문입니다. 게임 매핑(`IMC_Default`)이 없는 타이틀에서는 조작 안내 팝업이 열린 동안만 `InputMapping`으로 `IMC_Default`를 겁니다. 타이틀에는 그 액션을 바인딩한 폰이 없어 게임 입력은 생기지 않습니다.
+- 키 아이콘은 엔진 `UCommonActionWidget`이 그립니다. CommonUI의 Enhanced Input 지원(`bEnableEnhancedInputSupport`)으로 로컬 플레이어에 걸린 매핑에서 키를 찾고, 아이콘은 입력 종류마다 등록한 컨트롤러 데이터에서 찾습니다. 엔진은 Enhanced Input 액션에 걸린 키 가운데 첫 키만 보이므로, 키가 여럿인 이동(W·A·S·D)은 CommonUI 입력 액션 표(`DT_CommonInputActions`)에 키마다 한 줄을 두고 키 아이콘 하나에 한 줄씩 지정합니다. UI 매핑(`IMC_UI`, Esc의 뒤로 액션)은 화면과 관계없이 늘 필요해 `AAgPlayerController`가 겁니다. 화면마다 엔진 속성 `InputMapping`으로 같은 매핑을 걸면 한 화면이 닫힐 때 다른 화면의 매핑까지 빠지기 때문입니다. 게임 매핑(`IMC_Default`)이 없는 타이틀에서는 조작 안내 팝업이 열린 동안만 `InputMapping`으로 `IMC_Default`를 겁니다. 타이틀에는 그 액션을 바인딩한 폰이 없어 게임 입력은 생기지 않습니다.
 - 엔진 뒤로 처리는 메뉴 입력 모드에서만 받으므로, 게임 입력 모드인 HUD는 뒤로 액션을 게임 입력 모드로 직접 바인딩해 일시정지 메뉴를 엽니다.
 - 일시정지 메뉴의 탭 바꾸기 액션(`IA_PreviousTab` Q, `IA_NextTab` E)도 `IMC_UI`에 있습니다. Q는 게임 매핑의 궁극기와 같은 키라서, 두 액션은 입력을 소비하지 않게 두고 `IMC_UI`를 게임 매핑(우선순위 0)보다 높은 1로 겁니다. Enhanced Input은 매핑을 다시 만들 때 높은 맥락의 소비 액션이 쓴 키를 낮은 맥락에서 지우므로, 탭 액션이 소비하면 궁극기가 사라지고 `IMC_UI`가 낮으면 CommonUI가 Q를 탭 액션의 키로 찾지 못합니다. 게임 입력 모드에서는 탭 액션을 듣는 위젯이 없어 Q는 궁극기만 냅니다.
 - 게임 개요가 키보드·마우스만 지원하므로 CommonInput 플랫폼 설정의 `bSupportsGamepad`를 꺼 둡니다. 켜 둔 채 게임패드용 컨트롤러 데이터가 없으면 패드를 건드릴 때 입력 종류가 게임패드로 바뀌어 아이콘이 사라집니다. 게임패드를 지원할 때는 게임패드용 컨트롤러 데이터를 등록하고, 매핑과 뒤로 액션에 패드 키를 더하고, 이 설정을 켭니다.

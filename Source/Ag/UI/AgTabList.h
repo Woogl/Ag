@@ -6,8 +6,8 @@
 #include "CommonTabListWidgetBase.h"
 #include "AgTabList.generated.h"
 
-class UAgActionWidget;
 class UAgTabButton;
+class UCommonActionWidget;
 class UCommonActivatableWidget;
 class UHorizontalBox;
 
@@ -50,13 +50,13 @@ protected:
 	TSubclassOf<UAgTabButton> TabButtonClass;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgActionWidget> PreviousTabAction;
+	TObjectPtr<UCommonActionWidget> PreviousTabAction;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UHorizontalBox> TabButtonBox;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgActionWidget> NextTabAction;
+	TObjectPtr<UCommonActionWidget> NextTabAction;
 
 private:
 	UPROPERTY(Transient)
