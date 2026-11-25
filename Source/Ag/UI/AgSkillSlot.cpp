@@ -8,7 +8,6 @@
 #include "CommonLazyImage.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgAbilityData.h"
 #include "Data/AgItemData.h"
 #include "Engine/Texture2D.h"
@@ -39,7 +38,7 @@ void UAgSkillSlot::UpdateAbility()
 	if (Data)
 	{
 		Icon = Data->Icon;
-		const FAgItemData* Item = Icon.IsNull() ? UAgAssetManager::Get().FindItem(Data->Item) : nullptr;
+		const FAgItemData* Item = Icon.IsNull() ? UAgItemSet::FindItem(Data->Item) : nullptr;
 		if (Item)
 		{
 			Icon = Item->Icon;

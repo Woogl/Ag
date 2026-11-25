@@ -2,25 +2,17 @@
 
 #include "Core/AgAssetManager.h"
 
-#include "Core/AgJsonReader.h"
-#include "Data/AgAbilityData.h"
-#include "Data/AgCameraData.h"
-#include "Data/AgCharacterData.h"
-#include "Data/AgCombatRules.h"
-#include "Data/AgEffectData.h"
-#include "Data/AgItemData.h"
-#include "Data/AgSpawnActorData.h"
-#include "Data/AgTargetingPresetData.h"
+#include "Core/AgJsonData.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
-#include "GameFramework/Actor.h"
+#include "HAL/FileManager.h"
 #include "Internationalization/StringTableRegistry.h"
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
-#include "TargetingSystem/TargetingPreset.h"
 #include "UObject/GCObjectScopeGuard.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
+#include "UObject/UObjectHash.h"
 #include "UObject/UnrealType.h"
 
 namespace AgAssetManagerPrivate
@@ -28,63 +20,19 @@ namespace AgAssetManagerPrivate
 	/** JSON 파일은 Content 밖에 둡니다. Content에 두면 에디터가 에셋으로 가져오려 합니다. */
 	const TCHAR* const JsonFolderName = TEXT("DesignData");
 
-	struct FAgJsonFile
+	/** JSON으로 채우는 데이터 클래스를 모두 찾습니다. 클래스를 만들면 따로 등록하지 않아도 읽기, 다시 읽기, 쿡에 들어갑니다. */
+	TArray<UClass*> GetJsonDataClasses()
 	{
-		const TCHAR* FileName;
-		const TCHAR* Member;
-		/** 없으면 Member 객체 자체가 파일 전체를 받습니다. */
-		const TCHAR* Field;
-	};
-
-	// 생성, 읽기, 다시 읽기, 쿡이 모두 이 목록을 돌므로 파일은 여기에만 등록합니다. 다른 파일이 ID로 가리키는 정의 파일을
-	// 먼저 읽습니다.
-	const FAgJsonFile JsonFiles[] = {
-		{TEXT("Effects.json"), TEXT("Effects"), TEXT("Definitions")},
-		{TEXT("CombatRules.json"), TEXT("CombatRules"), nullptr},
-		{TEXT("Camera.json"), TEXT("Camera"), nullptr},
-		{TEXT("SpawnActors.json"), TEXT("SpawnActors"), TEXT("SpawnActors")},
-		{TEXT("TargetingPresets.json"), TEXT("TargetingPresets"), TEXT("Definitions")},
-		{TEXT("Items.json"), TEXT("Items"), TEXT("Items")},
-		{TEXT("Abilities.json"), TEXT("Abilities"), TEXT("Abilities")},
-		{TEXT("Characters.json"), TEXT("Characters"), TEXT("Characters")},
-	};
-
-	const FObjectProperty& GetMember(const FAgJsonFile& File)
-	{
-		const FObjectProperty* Member = FindFProperty<FObjectProperty>(UAgAssetManager::StaticClass(), File.Member);
-		checkf(Member, TEXT("UAgAssetManager has no object property %s for %s."), File.Member, File.FileName);
-		return *Member;
-	}
-
-	template <typename T>
-	T& FindLoaded(const TArray<UObject*>& Loaded)
-	{
-		return *CastChecked<T>(*Loaded.FindByPredicate([](const UObject* Object)
-		{ return Object->IsA<T>(); }));
-	}
-
-	/** 지금 객체를 가리키는 쪽이 그대로 새 값을 보도록 객체를 바꾸지 않고 값만 복사합니다. */
-	void CopyJsonFields(const UObject& From, UObject& To)
-	{
-		for (TFieldIterator<FProperty> It(To.GetClass()); It; ++It)
-		{
-			if (FAgJsonReader::IsField(**It))
-			{
-				It->CopyCompleteValue_InContainer(&To, &From);
-			}
-		}
+		TArray<UClass*> Classes;
+		GetDerivedClasses(UAgJsonData::StaticClass(), Classes);
+		Classes.RemoveAll([](const UClass* Class)
+		{ return Class->HasAnyClassFlags(CLASS_Abstract | CLASS_NewerVersionExists); });
+		// 오류가 늘 같은 순서로 나오게 합니다.
+		Classes.Sort([](const UClass& A, const UClass& B)
+		{ return A.GetName() < B.GetName(); });
+		return Classes;
 	}
 } // namespace AgAssetManagerPrivate
-
-UAgAssetManager::UAgAssetManager()
-{
-	for (const AgAssetManagerPrivate::FAgJsonFile& File : AgAssetManagerPrivate::JsonFiles)
-	{
-		const FObjectProperty& Member = AgAssetManagerPrivate::GetMember(File);
-		UObject* Object = CreateDefaultSubobject(File.Member, Member.PropertyClass, Member.PropertyClass, true, false);
-		Member.SetObjectPropertyValue_InContainer(this, Object);
-	}
-}
 
 UAgAssetManager& UAgAssetManager::Get()
 {
@@ -98,61 +46,9 @@ FString UAgAssetManager::GetJsonFolder()
 	return FPaths::Combine(FPaths::ProjectDir(), AgAssetManagerPrivate::JsonFolderName);
 }
 
-const UAgCombatRules& UAgAssetManager::GetCombatRules() const
+FString UAgAssetManager::GetJsonPath(const TCHAR* FileName)
 {
-	return *CombatRules;
-}
-
-const UAgCameraData& UAgAssetManager::GetCameraData() const
-{
-	return *Camera;
-}
-
-const UTargetingPreset* UAgAssetManager::FindTargetingPreset(FName Id) const
-{
-	return TargetingPresets->Presets.FindRef(Id);
-}
-
-const FAgAbilityData* UAgAssetManager::FindAbility(FName Id) const
-{
-	return Abilities->Abilities.Find(Id);
-}
-
-AActor* UAgAssetManager::FindSpawnActor(FName Id) const
-{
-	return SpawnActors->SpawnActors.FindRef(Id);
-}
-
-const UGameplayEffect* UAgAssetManager::FindEffect(FName Id) const
-{
-	return Effects->Effects.FindRef(Id);
-}
-
-const UGameplayEffect* UAgAssetManager::GetEffect(EAgEffect Effect) const
-{
-	return NativeEffects.FindChecked(Effect).Get();
-}
-
-UAgCharacterData* UAgAssetManager::FindCharacterData(FName Id) const
-{
-	return Characters->Characters.FindRef(Id);
-}
-
-TArray<FName> UAgAssetManager::GetCharacterDataIds() const
-{
-	TArray<FName> Ids;
-	Characters->Characters.GetKeys(Ids);
-	return Ids;
-}
-
-const FAgItemData* UAgAssetManager::FindItem(FName Id) const
-{
-	return Items->Items.Find(Id);
-}
-
-const TMap<FName, FAgItemData>& UAgAssetManager::GetItems() const
-{
-	return Items->Items;
+	return FString(AgAssetManagerPrivate::JsonFolderName) / FileName;
 }
 
 #if WITH_EDITOR
@@ -179,13 +75,33 @@ void UAgAssetManager::ModifyCook(TConstArrayView<const ITargetPlatform*> TargetP
 		return;
 	}
 
-	// JSON에서 읽은 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 읽으면서 만든 객체(캐릭터 데이터, GE, 대상
-	// 프리셋과 그 Task, 생성 액터 템플릿)는 저장되지 않으므로, 그 객체의 클래스와 그 객체가 가리키는 것까지 따라갑니다.
+	// JSON에서 읽은 참조는 저장된 에셋 의존성이 아니므로 쿡에 직접 전달합니다. 쓰는 쪽이 붙잡는 데이터는 지금 들고 있지 않으므로
+	// 여기서 모두 읽어 함께 따라갑니다.
 	TArray<UObject*> Pending;
-	for (const AgAssetManagerPrivate::FAgJsonFile& File : AgAssetManagerPrivate::JsonFiles)
+	for (UAgJsonData* Data : PersistentData)
 	{
-		Pending.Add(AgAssetManagerPrivate::GetMember(File).GetObjectPropertyValue_InContainer(this));
+		Pending.Add(Data);
 	}
+	for (UClass* Class : AgAssetManagerPrivate::GetJsonDataClasses())
+	{
+		if (!Class->GetDefaultObject<UAgJsonData>()->IsAlwaysLoaded())
+		{
+			Pending.Add(NewObject<UAgJsonData>(this, Class));
+		}
+	}
+	const TGCObjectsScopeGuard<UObject> PendingGuard(Pending);
+	FAgJsonReader Reader(*this, JsonDocuments);
+	for (UObject* Object : Pending)
+	{
+		UAgJsonData* Data = CastChecked<UAgJsonData>(Object);
+		if (!Data->IsAlwaysLoaded())
+		{
+			Data->ReadJson(Reader, NAME_None);
+		}
+	}
+
+	// 읽으면서 만든 객체(캐릭터 데이터, GE, 대상 프리셋과 그 Task)는 저장되지 않으므로, 그 객체의 클래스와 그 객체가 가리키는
+	// 것까지 따라갑니다.
 	TSet<UObject*> Visited;
 	while (!Pending.IsEmpty())
 	{
@@ -227,13 +143,6 @@ void UAgAssetManager::StartInitialLoading()
 {
 	Super::StartInitialLoading();
 
-	const UEnum* NativeEffectEnum = StaticEnum<EAgEffect>();
-	// 마지막 값은 UHT가 붙이는 _MAX입니다.
-	for (int32 Index = 0; Index < NativeEffectEnum->NumEnums() - 1; ++Index)
-	{
-		const EAgEffect Effect = static_cast<EAgEffect>(NativeEffectEnum->GetValueByIndex(Index));
-		NativeEffects.Add(Effect, AgEffectData::MakeNativeEffect(Effect, *this));
-	}
 	// 현지화가 필요한 문구의 표입니다. JSON의 글자 값이 이 표를 가리키므로 먼저 등록합니다. 엔진의 번역 수집이 소스에서 이 매크로를
 	// 찾아 CSV를 읽으므로, 경로를 글자 그대로 적은 매크로로 등록합니다. 에디터에서는 엔진이 이 CSV의 변경을 감시해 다시 읽습니다.
 	LOCTABLE_FROMFILE_GAME("StringTable", "StringTable", "StringTables/StringTable.csv");
@@ -247,51 +156,58 @@ void UAgAssetManager::StartInitialLoading()
 			ReloadJsonData();
 		}
 	});
-	// 엔진은 블루프린트를 다시 컴파일할 때 템플릿(아키타입)은 새 클래스로 바꾸지 않으므로, 옛 클래스로 남은 생성 액터
-	// 템플릿은 다시 읽어 새로 만듭니다.
-	FCoreUObjectDelegates::OnObjectsReinstanced.AddWeakLambda(this, [this](const FCoreUObjectDelegates::FReplacementObjectMap&)
-	{
-		for (const TPair<FName, TObjectPtr<AActor>>& Pair : SpawnActors->SpawnActors)
-		{
-			if (Pair.Value && Pair.Value->GetClass()->HasAnyClassFlags(CLASS_NewerVersionExists))
-			{
-				ReloadJsonData();
-				return;
-			}
-		}
-	});
 #endif
+}
+
+UAgJsonData* UAgAssetManager::FindData(const UClass& Class) const
+{
+	const TObjectPtr<UAgJsonData>* Data = PersistentData.FindByPredicate([&Class](const UAgJsonData* Candidate)
+	{ return Candidate->GetClass() == &Class; });
+	return Data ? Data->Get() : nullptr;
+}
+
+UAgJsonData* UAgAssetManager::LoadData(const UClass& Class, FName Key)
+{
+	const TPair<const UClass*, FName> CacheKey(&Class, Key);
+	if (UAgJsonData* Cached = LoadedData.FindRef(CacheKey).Get())
+	{
+		return Cached;
+	}
+	UAgJsonData* Loaded = NewObject<UAgJsonData>(this, &Class);
+	// 읽는 동안 에셋 로딩이 GC를 돌릴 수 있는데, 새 객체는 아직 아무도 가리키지 않습니다.
+	const TGCObjectScopeGuard<UAgJsonData> LoadedGuard(Loaded);
+	FAgJsonReader Reader(*this, JsonDocuments);
+	Loaded->ReadJson(Reader, Key);
+	LoadedData.Add(CacheKey, Loaded);
+	return Loaded;
 }
 
 bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 {
-	TArray<UObject*> Loaded;
-	for (const AgAssetManagerPrivate::FAgJsonFile& File : AgAssetManagerPrivate::JsonFiles)
+	// 모든 파일을 먼저 파싱해 두므로 정의 ID 검사는 읽는 순서와 관계없습니다. 오류를 모두 알리도록 실패해도 다음으로 갑니다.
+	FAgJsonDocuments NewDocuments;
+	FAgJsonReader Reader(*this, NewDocuments);
+	TArray<FString> FileNames;
+	IFileManager::Get().FindFiles(FileNames, *FPaths::Combine(GetJsonFolder(), TEXT("*.json")), true, false);
+	FileNames.Sort();
+	bool bRead = true;
+	for (const FString& FileName : FileNames)
 	{
-		Loaded.Add(NewObject<UObject>(this, AgAssetManagerPrivate::GetMember(File).PropertyClass));
+		bRead = Reader.ParseFile(GetJsonPath(*FileName)) && bRead;
+	}
+
+	// 새 객체에 먼저 읽어, 오류가 있으면 지금 데이터를 건드리지 않고 버릴 수 있게 합니다. 쓰는 쪽이 붙잡는 데이터도 오류를 지금
+	// 알리도록 한 번 모두 읽어 봅니다. 그때 읽힌 에셋은 붙잡는 것이 없어 다음 가비지 컬렉션 때 내려갑니다.
+	TArray<UAgJsonData*> Loaded;
+	for (UClass* Class : AgAssetManagerPrivate::GetJsonDataClasses())
+	{
+		Loaded.Add(NewObject<UAgJsonData>(this, Class));
 	}
 	// 읽는 동안 클래스·에셋 로딩이 GC를 돌릴 수 있는데, 새 객체는 아직 아무도 가리키지 않습니다.
-	const TGCObjectsScopeGuard<UObject> LoadedGuard(Loaded);
-
-	FAgJsonReader Reader(*this);
-	bool bRead = true;
-	for (int32 Index = 0; Index < Loaded.Num(); ++Index)
+	const TGCObjectsScopeGuard<UAgJsonData> LoadedGuard(Loaded);
+	for (UAgJsonData* Data : Loaded)
 	{
-		const AgAssetManagerPrivate::FAgJsonFile& File = AgAssetManagerPrivate::JsonFiles[Index];
-		const FString Path = FString(AgAssetManagerPrivate::JsonFolderName) / File.FileName;
-		bool bFileRead = false;
-		if (File.Field)
-		{
-			const FProperty* Field = FindFProperty<FProperty>(Loaded[Index]->GetClass(), File.Field);
-			checkf(Field, TEXT("%s has no property %s for %s."), *Loaded[Index]->GetClass()->GetName(), File.Field, File.FileName);
-			bFileRead = Reader.ReadFile(Path, *Field, Field->ContainerPtrToValuePtr<void>(Loaded[Index]));
-		}
-		else
-		{
-			bFileRead = Reader.ReadFile(Path, *Loaded[Index]);
-		}
-		// 오류를 모두 알리도록 실패해도 다음 파일을 읽습니다.
-		bRead = bFileRead && bRead;
+		bRead = Data->ReadJson(Reader, NAME_None) && bRead;
 	}
 	bJsonLoadFailed = !bRead;
 	// 처음에는 이전 데이터가 없으므로 오류가 있어도 읽은 값으로 시작합니다. 다시 읽기는 진행 중인 플레이의 데이터를 빼지 않게
@@ -301,33 +217,41 @@ bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 		return false;
 	}
 
-	UAgEffectSet& NewEffects = AgAssetManagerPrivate::FindLoaded<UAgEffectSet>(Loaded);
-	for (const TPair<FName, FAgEffectDefinition>& Pair : NewEffects.Definitions)
+	JsonDocuments = MoveTemp(NewDocuments);
+	for (UAgJsonData* Data : Loaded)
 	{
-		NewEffects.Effects.Add(Pair.Key, AgEffectData::MakeEffect(Pair.Value, *this));
-	}
-	UAgTargetingPresetSet& NewTargetingPresets = AgAssetManagerPrivate::FindLoaded<UAgTargetingPresetSet>(Loaded);
-	for (const TPair<FName, FTargetingTaskSet>& Pair : NewTargetingPresets.Definitions)
-	{
-		UTargetingPreset* Preset = NewObject<UTargetingPreset>(this);
-		Preset->GetMutableTargetingTaskSet() = Pair.Value;
-		NewTargetingPresets.Presets.Add(Pair.Key, Preset);
-	}
-
-	// 캐릭터는 자기 데이터 객체를 들고 있으므로, ID가 그대로인 항목은 기존 객체에 값만 복사합니다.
-	for (TPair<FName, TObjectPtr<UAgCharacterData>>& Pair : AgAssetManagerPrivate::FindLoaded<UAgCharacterSet>(Loaded).Characters)
-	{
-		const TObjectPtr<UAgCharacterData>* Existing = Characters->Characters.Find(Pair.Key);
-		if (Existing)
+		if (!Data->IsAlwaysLoaded())
 		{
-			AgAssetManagerPrivate::CopyJsonFields(*Pair.Value, **Existing);
-			Pair.Value = *Existing;
+			continue;
 		}
+		UAgJsonData* Persistent = FindData(*Data->GetClass());
+		if (!Persistent)
+		{
+			// 에디터 파이썬이 이름으로 찾을 수 있게 클래스 이름으로 둡니다.
+			Persistent = NewObject<UAgJsonData>(this, Data->GetClass(), Data->GetClass()->GetFName());
+			PersistentData.Add(Persistent);
+		}
+		Persistent->CopyJson(*Data);
 	}
 
-	for (int32 Index = 0; Index < Loaded.Num(); ++Index)
+	// 쓰는 쪽이 붙잡고 있는 데이터는 그 객체 그대로 새 값을 받습니다. 늘 들고 있는 데이터를 위에서 먼저 바꿨으므로, 그것을 보고
+	// 읽을 항목을 정하는 데이터도 새 값을 봅니다.
+	FAgJsonReader LoadedReader(*this, JsonDocuments);
+	for (TMap<TPair<const UClass*, FName>, TWeakObjectPtr<UAgJsonData>>::TIterator It = LoadedData.CreateIterator(); It; ++It)
 	{
-		AgAssetManagerPrivate::CopyJsonFields(*Loaded[Index], *AgAssetManagerPrivate::GetMember(AgAssetManagerPrivate::JsonFiles[Index]).GetObjectPropertyValue_InContainer(this));
+		UAgJsonData* Data = It.Value().Get();
+		if (!Data)
+		{
+			It.RemoveCurrent();
+			continue;
+		}
+		UAgJsonData* Fresh = NewObject<UAgJsonData>(this, Data->GetClass());
+		const TGCObjectScopeGuard<UAgJsonData> FreshGuard(Fresh);
+		// 읽을 항목이 없어진 데이터는 옛 값을 그대로 둡니다.
+		if (Fresh->ReadJson(LoadedReader, It.Key().Value))
+		{
+			Data->CopyJson(*Fresh);
+		}
 	}
 	return bRead;
 }

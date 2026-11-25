@@ -6,7 +6,6 @@
 #include "AI/AgEnemyAIController.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgEnemyCharacter.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCombatRules.h"
 #include "Engine/World.h"
@@ -107,7 +106,7 @@ void UAgCombatSubsystem::EndAttack(const AAgEnemyCharacter& Enemy)
 	if (FAgCombatant* Combatant = FindCombatant(Enemy))
 	{
 		Combatant->bAttacking = false;
-		Combatant->ReattackWaitEndTime = GetWorld()->GetTimeSeconds() + UAgAssetManager::Get().GetCombatRules().ReattackWaitTime;
+		Combatant->ReattackWaitEndTime = GetWorld()->GetTimeSeconds() + UAgCombatRules::Get().ReattackWaitTime;
 	}
 }
 
@@ -154,7 +153,7 @@ void UAgCombatSubsystem::HandleGroupMemberDied(const AAgEnemyCharacter& Enemy, c
 	const bool bKilledByHostile = Killer && FGenericTeamId::GetAttitude(&Enemy, Killer) == ETeamAttitude::Hostile;
 	if (Group && (bKilledByHostile || (Controller && Controller->PerceivesTarget())))
 	{
-		Group->DeadMemberNoticeEndTime = GetWorld()->GetTimeSeconds() + UAgAssetManager::Get().GetCombatRules().TargetLostTime;
+		Group->DeadMemberNoticeEndTime = GetWorld()->GetTimeSeconds() + UAgCombatRules::Get().TargetLostTime;
 	}
 }
 
@@ -190,7 +189,7 @@ bool UAgCombatSubsystem::HasAttackTurn(const AAgEnemyCharacter& Enemy) const
 			TakenTurns += bAhead ? 1 : 0;
 		}
 	}
-	return TakenTurns < UAgAssetManager::Get().GetCombatRules().MaxAttackers;
+	return TakenTurns < UAgCombatRules::Get().MaxAttackers;
 }
 
 UAgCombatSubsystem::FAgCombatant* UAgCombatSubsystem::FindCombatant(const AAgEnemyCharacter& Enemy)

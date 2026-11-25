@@ -11,6 +11,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "AgCharacterBase.generated.h"
 
+class UAgAbilitySet;
 class UAgAttributeSet;
 class UAgCharacterData;
 struct FAgAbilityData;
@@ -55,6 +56,9 @@ public:
 
 	/** 데이터를 다시 읽으면 바뀌므로, 받은 포인터는 그 함수 안에서만 씁니다. */
 	const FAgAbilityData* FindAbility(const FGameplayAbilitySpecHandle Handle) const;
+
+	/** 이 캐릭터의 어빌리티 목록에 있는 정의만 찾습니다. 데이터를 다시 읽으면 바뀌므로, 받은 포인터는 그 함수 안에서만 씁니다. */
+	const FAgAbilityData* FindAbility(FName Id) const;
 
 	UMotionWarpingComponent* GetMotionWarping() const
 	{
@@ -137,6 +141,10 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAgCharacterData> CharacterData;
+
+	/** 이 캐릭터가 붙잡고 있는 동안 어빌리티가 가리키는 에셋이 메모리에 남습니다. 같은 종류의 캐릭터가 함께 씁니다. */
+	UPROPERTY(Transient)
+	TObjectPtr<UAgAbilitySet> AbilitySet;
 
 private:
 	void SendEventToSelf(const FGameplayTag& EventTag);

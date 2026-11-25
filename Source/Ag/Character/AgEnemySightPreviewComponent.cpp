@@ -4,7 +4,6 @@
 
 #if WITH_EDITOR
 #include "Character/AgEnemyCharacter.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgCharacterData.h"
 #endif
 
@@ -22,7 +21,7 @@ bool UAgEnemySightPreviewComponent::GetSightPreview(FVector& OutOrigin, FQuat& O
 		return false;
 	}
 	// CharacterData는 플레이 시작 때 연결되므로 편집 중에는 ID로 정본 데이터를 조회합니다.
-	const UAgCharacterData* Data = UAgAssetManager::Get().FindCharacterData(Enemy->GetCharacterDataId());
+	const UAgCharacterData* Data = UAgCharacterData::Find(Enemy->GetCharacterDataId());
 	if (!Data)
 	{
 		return false;

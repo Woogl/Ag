@@ -4,7 +4,6 @@
 
 #include "Algo/StableSort.h"
 #include "CommonTileView.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgItemData.h"
 #include "Game/AgPlayerController.h"
 #include "Item/AgInventoryComponent.h"
@@ -23,12 +22,11 @@ void UAgInventoryTab::NativeOnActivated()
 
 	const AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>();
 	const UAgInventoryComponent* Inventory = PlayerController ? PlayerController->GetInventory() : nullptr;
-	const UAgAssetManager& AssetManager = UAgAssetManager::Get();
 
 	TArray<UAgInventoryEntry*> Entries;
 	if (Inventory)
 	{
-		for (const TPair<FName, FAgItemData>& Pair : AssetManager.GetItems())
+		for (const TPair<FName, FAgItemData>& Pair : UAgItemSet::GetItems())
 		{
 			const int32 Count = Inventory->GetCount(Pair.Key);
 			if (Count > 0)
@@ -41,8 +39,8 @@ void UAgInventoryTab::NativeOnActivated()
 		}
 	}
 	// 같은 카테고리 안에서는 아이템 데이터의 순서를 지킵니다.
-	Algo::StableSortBy(Entries, [&AssetManager](const UAgInventoryEntry* Entry)
-	{ return AssetManager.FindItem(Entry->ItemId)->Category; });
+	Algo::StableSortBy(Entries, [](const UAgInventoryEntry* Entry)
+	{ return UAgItemSet::FindItem(Entry->ItemId)->Category; });
 
 	ItemGrid->SetListItems(Entries);
 	ItemDetail->SetVisibility(Entries.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);

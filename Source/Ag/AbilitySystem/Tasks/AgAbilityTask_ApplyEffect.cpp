@@ -4,7 +4,7 @@
 
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
-#include "Core/AgAssetManager.h"
+#include "Data/AgEffectData.h"
 #include "GameplayEffect.h"
 #include "Ag.h"
 
@@ -17,7 +17,7 @@ UAbilityTask* FAgApplyEffectParams::MakeTask(const FAgTaskContext& Context) cons
 
 void UAgAbilityTask_ApplyEffect::Activate()
 {
-	const UGameplayEffect* Definition = UAgAssetManager::Get().FindEffect(Params.Effect);
+	const UGameplayEffect* Definition = UAgEffectSet::FindEffect(Params.Effect);
 	if (!Definition)
 	{
 		UE_LOG(LogAg, Error, TEXT("ApplyEffect: effect %s is missing in Effects"), *Params.Effect.ToString());

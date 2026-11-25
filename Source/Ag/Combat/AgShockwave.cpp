@@ -53,10 +53,16 @@ AAgShockwave::AAgShockwave()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 }
 
-void AAgShockwave::OnSpawnedByAbility(const UAgGameplayAbility& Ability)
+const UScriptStruct& AAgShockwave::GetSpawnDataType() const
 {
+	return *FAgShockwaveData::StaticStruct();
+}
+
+void AAgShockwave::OnSpawnedByAbility(const UAgGameplayAbility& Ability, const FAgSpawnActorData& Data)
+{
+	SpawnData = static_cast<const FAgShockwaveData&>(Data);
 	const TSharedPtr<FAgHitState> HitState = MakeShared<FAgHitState>();
-	for (const FAgDamage& Hit : Hits)
+	for (const FAgDamage& Hit : SpawnData.Hits)
 	{
 		const FGameplayEffectSpecHandle Spec = Ability.MakeDamageSpec(Hit, HitState);
 		Spec.Data->GetContext().AddInstigator(GetInstigator(), this);
@@ -77,12 +83,12 @@ void AAgShockwave::BeginPlay()
 	}
 	UpdateLook();
 
-	const float WaveInterval = (Speed > 0.f ? MaxRadius / Speed : 0.f) + Interval;
+	const float WaveInterval = (SpawnData.Speed > 0.f ? SpawnData.MaxRadius / SpawnData.Speed : 0.f) + SpawnData.Interval;
 	TInlineComponentArray<UNiagaraComponent*> NiagaraComponents(this);
 	for (UNiagaraComponent* Niagara : NiagaraComponents)
 	{
-		Niagara->SetVariableFloat(AgShockwavePrivate::RadiusParameter, MaxRadius);
-		Niagara->SetVariableFloat(AgShockwavePrivate::DurationParameter, FMath::Max(Hits.Num() - 1, 0) * WaveInterval);
+		Niagara->SetVariableFloat(AgShockwavePrivate::RadiusParameter, SpawnData.MaxRadius);
+		Niagara->SetVariableFloat(AgShockwavePrivate::DurationParameter, FMath::Max(SpawnData.Hits.Num() - 1, 0) * WaveInterval);
 		Niagara->SetVariableFloat(AgShockwavePrivate::IntervalParameter, WaveInterval);
 	}
 }
@@ -108,14 +114,14 @@ void AAgShockwave::Tick(float DeltaSeconds)
 
 	// 고리 구간에 캡슐이 걸친 대상을 맞힙니다. 한 틱 이동이 너비보다 길어도 건너뛰는 곳이 없게 직전 반경까지 포함합니다. 높이는 지면 두께의 상자 질의가 가립니다.
 	const float PreviousRadius = Radius;
-	Radius = FMath::Min(Radius + Speed * DeltaSeconds, MaxRadius);
-	const float InnerRadius = FMath::Min(PreviousRadius, Radius - Width);
+	Radius = FMath::Min(Radius + SpawnData.Speed * DeltaSeconds, SpawnData.MaxRadius);
+	const float InnerRadius = FMath::Min(PreviousRadius, Radius - SpawnData.Width);
 	const FVector Center = GetActorLocation();
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgShockwave), false, this);
 	QueryParams.AddIgnoredActor(Shooter);
 	TArray<FOverlapResult> Overlaps;
-	GetWorld()->OverlapMultiByObjectType(Overlaps, Center + FVector(0.f, 0.f, Height * 0.5f), FQuat::Identity,
-		FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeBox(FVector(Radius, Radius, Height * 0.5f)), QueryParams);
+	GetWorld()->OverlapMultiByObjectType(Overlaps, Center + FVector(0.f, 0.f, SpawnData.Height * 0.5f), FQuat::Identity,
+		FCollisionObjectQueryParams(ECC_Pawn), FCollisionShape::MakeBox(FVector(Radius, Radius, SpawnData.Height * 0.5f)), QueryParams);
 	const FGameplayEffectSpecHandle& Spec = HitSpecs[Wave];
 	for (const FOverlapResult& Overlap : Overlaps)
 	{
@@ -133,7 +139,7 @@ void AAgShockwave::Tick(float DeltaSeconds)
 	}
 
 	UpdateLook();
-	if (Radius < MaxRadius)
+	if (Radius < SpawnData.MaxRadius)
 	{
 		return;
 	}
@@ -141,7 +147,7 @@ void AAgShockwave::Tick(float DeltaSeconds)
 	{
 		Radius = 0.f;
 		TouchedActors.Reset();
-		WaitTime = Interval;
+		WaitTime = SpawnData.Interval;
 		return;
 	}
 	SetActorTickEnabled(false);
@@ -152,8 +158,8 @@ void AAgShockwave::UpdateLook()
 {
 	if (UStaticMeshComponent* Mesh = FindComponentByClass<UStaticMeshComponent>())
 	{
-		SetActorScale3D(FVector(Radius / AgShockwavePrivate::VisualSize, Radius / AgShockwavePrivate::VisualSize, Height / AgShockwavePrivate::VisualSize));
-		Mesh->SetCustomPrimitiveDataFloat(0, Radius > 0.f ? (Radius - Width) / Radius : 0.f);
+		SetActorScale3D(FVector(Radius / AgShockwavePrivate::VisualSize, Radius / AgShockwavePrivate::VisualSize, SpawnData.Height / AgShockwavePrivate::VisualSize));
+		Mesh->SetCustomPrimitiveDataFloat(0, Radius > 0.f ? (Radius - SpawnData.Width) / Radius : 0.f);
 	}
 }
 

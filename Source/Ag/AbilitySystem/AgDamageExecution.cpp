@@ -5,7 +5,6 @@
 #include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgCharacterBase.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
@@ -115,7 +114,7 @@ void UAgDamageExecution::Execute_Implementation(const FGameplayEffectCustomExecu
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().ATK, EvaluateParameters, SourceATK);
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(AgDamageExecutionPrivate::GetCaptures().DEF, EvaluateParameters, TargetDEF);
 
-	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
+	const UAgCombatRules& Rules = UAgCombatRules::Get();
 	const bool bGuardable = !AttackTags.HasTagExact(AgGameplayTags::Effect_Damage_Unblockable);
 	const float HPMultiplier = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_HPMultiplier) * AgDamageExecutionPrivate::GetBonusDamageRatio(Spec, Target, TargetTags, Rules);
 

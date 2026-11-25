@@ -4,7 +4,6 @@
 
 #include "CommonLazyImage.h"
 #include "CommonTextBlock.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgItemData.h"
 #include "UI/AgInventoryTab.h"
 
@@ -19,7 +18,7 @@ void UAgInventorySlot::NativeOnListItemObjectSet(UObject* ListItemObject)
 	IUserObjectListEntry::NativeOnListItemObjectSet(ListItemObject);
 
 	const UAgInventoryEntry* Entry = CastChecked<UAgInventoryEntry>(ListItemObject);
-	if (const FAgItemData* Item = UAgAssetManager::Get().FindItem(Entry->ItemId))
+	if (const FAgItemData* Item = UAgItemSet::FindItem(Entry->ItemId))
 	{
 		Icon->SetBrushFromLazyTexture(Item->Icon);
 	}

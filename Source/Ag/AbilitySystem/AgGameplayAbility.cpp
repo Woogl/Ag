@@ -9,7 +9,6 @@
 #include "Abilities/Tasks/AbilityTask.h"
 #include "AbilitySystemGlobals.h"
 #include "Character/AgCharacterBase.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgEffectData.h"
@@ -312,7 +311,7 @@ void UAgGameplayAbility::ApplyCooldown(FGameplayAbilitySpecHandle Handle, const 
 
 FGameplayEffectSpecHandle UAgGameplayAbility::MakeEffectSpec(EAgEffect Effect) const
 {
-	return MakeEffectSpec(*UAgAssetManager::Get().GetEffect(Effect));
+	return MakeEffectSpec(*UAgEffectSet::GetEffect(Effect));
 }
 
 AActor* UAgGameplayAbility::FindTargetingTarget(const FAgAbilityData& Data) const

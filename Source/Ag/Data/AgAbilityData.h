@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/AgJsonData.h"
 #include "Abilities/GameplayAbilityTriggerType.h"
 #include "Data/AgTaskParams.h"
 #include "GameplayTagContainer.h"
@@ -228,12 +229,24 @@ struct FAgAbilityData
 	bool HasSameGrantSettings(const FAgAbilityData& Other) const;
 };
 
+/**
+ * 캐릭터 종류 하나가 쓰는 어빌리티 정의의 묶음입니다. 캐릭터 ID를 Key로 UAgAssetManager::LoadData에서 받습니다. 그 종류의
+ * 캐릭터가 붙잡고 있는 동안 정의가 가리키는 에셋(몽타주, 컷신, 생성 액터 클래스)이 메모리에 남고, 아무도 붙잡지 않으면 가비지
+ * 컬렉션이 묶음과 에셋을 함께 내립니다.
+ */
 UCLASS()
-class UAgAbilitySet : public UObject
+class UAgAbilitySet : public UAgJsonData
 {
 	GENERATED_BODY()
 
 public:
+	virtual const TCHAR* GetFileName() const override
+	{
+		return TEXT("Abilities.json");
+	}
+
+	virtual bool ReadJson(FAgJsonReader& Reader, FName Key) override;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
 	TMap<FName, FAgAbilityData> Abilities;
 };

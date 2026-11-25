@@ -4,7 +4,6 @@
 
 #include "Character/AgCharacterBase.h"
 #include "Components/DynamicEntryBox.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgCharacterData.h"
 #include "Game/AgSimulationRoomGameMode.h"
 #include "GameFramework/PlayerController.h"
@@ -78,7 +77,7 @@ void UAgEnemySelectScreen::RefreshSlots()
 			if (GameMode->CanPlace(Lineup, Index, EnemyClass))
 			{
 				const FName Id = EnemyClass->GetDefaultObject<AAgCharacterBase>()->GetCharacterDataId();
-				const UAgCharacterData* Data = UAgAssetManager::Get().FindCharacterData(Id);
+				const UAgCharacterData* Data = UAgCharacterData::Find(Id);
 				Options.Add({Id, Data ? Data->DisplayName : FText::FromName(Id)});
 			}
 		}

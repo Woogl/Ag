@@ -6,7 +6,6 @@
 #include "Character/AgPlayerCharacter.h"
 #include "Combat/AgCombatStatsComponent.h"
 #include "CommonTextBlock.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgCharacterData.h"
 #include "Game/AgGameMode.h"
 #include "Game/AgGameState.h"
@@ -21,7 +20,7 @@ namespace AgBattleResultScreenPrivate
 		TArray<TPair<FText, int32>> Groups;
 		for (const FAgCombatEnemyStats& Enemy : Enemies)
 		{
-			const UAgCharacterData* Data = UAgAssetManager::Get().FindCharacterData(Enemy.Id);
+			const UAgCharacterData* Data = UAgCharacterData::Find(Enemy.Id);
 			const FText Name = Data ? Data->DisplayName : FText::FromName(Enemy.Id);
 			if (TPair<FText, int32>* Group = Groups.FindByPredicate([&Name](const TPair<FText, int32>& Candidate)
 			{ return Candidate.Key.EqualTo(Name); }))

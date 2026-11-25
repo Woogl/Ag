@@ -3,7 +3,6 @@
 #include "Item/AgInventoryComponent.h"
 
 #include "Ag.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgItemData.h"
 
 UAgInventoryComponent::UAgInventoryComponent()
@@ -19,7 +18,7 @@ int32 UAgInventoryComponent::GetCount(FName Item) const
 
 int32 UAgInventoryComponent::AddItem(FName Item, int32 Count)
 {
-	const FAgItemData* Data = UAgAssetManager::Get().FindItem(Item);
+	const FAgItemData* Data = UAgItemSet::FindItem(Item);
 	if (!Data)
 	{
 		UE_LOG(LogAg, Warning, TEXT("AddItem: item %s is missing in Items"), *Item.ToString());
@@ -52,7 +51,7 @@ void UAgInventoryComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	for (const TPair<FName, FAgItemData>& Pair : UAgAssetManager::Get().GetItems())
+	for (const TPair<FName, FAgItemData>& Pair : UAgItemSet::GetItems())
 	{
 		Counts.Add(Pair.Key, FMath::Clamp(Pair.Value.StartCount, 0, Pair.Value.MaxCount));
 	}

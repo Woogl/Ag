@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Combat/AgAbilitySpawnedActor.h"
 #include "Data/AgAttackData.h"
+#include "Data/AgSpawnActorData.h"
 #include "GameFramework/Actor.h"
 #include "GameplayEffectTypes.h"
 #include "AgProjectile.generated.h"
@@ -13,6 +14,33 @@ class UNiagaraComponent;
 class UNiagaraSystem;
 class UShapeComponent;
 class AAgCharacterBase;
+
+/** `SpawnActors.json`에 적는 투사체의 값입니다. */
+USTRUCT()
+struct FAgProjectileData : public FAgSpawnActorData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float Speed = 0.f;
+
+	UPROPERTY()
+	float Range = 0.f;
+
+	UPROPERTY()
+	FAgDamage Damage;
+
+	/** 꺼져 있으면 피해를 준 대상을 뚫고 지나갑니다. */
+	UPROPERTY()
+	bool bDestroyOnHit = false;
+
+	UPROPERTY()
+	bool bPredictAim = true;
+
+	/** 켜면 생성될 때의 행동 대상에게만 맞고 다른 캐릭터는 지나가며, 대상이 없으면 아무도 맞히지 않습니다. */
+	UPROPERTY()
+	bool bAimTargetOnly = false;
+};
 
 /**
  * 판정 모양은 BP에 둔 모양 컴포넌트(상자·캡슐) 전부이며 섞어 둘 수 있습니다. 생성되는 순간 어빌리티의 행동 대상이 지금 속도로 움직인다고 보고
@@ -28,7 +56,8 @@ class AAgProjectile : public AActor, public IAgAbilitySpawnedActor
 public:
 	AAgProjectile();
 
-	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability) override;
+	virtual const UScriptStruct& GetSpawnDataType() const override;
+	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability, const FAgSpawnActorData& Data) override;
 	void Reflect(AAgCharacterBase& Defender);
 	/** 적중·가드로 피해를 준 뒤 결과 연출과 같은 적중 위치로 불립니다. */
 	void OnDamageApplied(const FVector& HitLocation);
@@ -50,26 +79,9 @@ private:
 	UFUNCTION()
 	void HandleVFXFinished(UNiagaraComponent* Niagara);
 
-	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
-	UPROPERTY(EditInstanceOnly, Category = "Projectile")
-	float Speed = 0.f;
-
-	UPROPERTY(EditInstanceOnly, Category = "Projectile")
-	float Range = 0.f;
-
-	UPROPERTY(EditInstanceOnly, Category = "Projectile")
-	FAgDamage Damage;
-
-	/** 꺼져 있으면 피해를 준 대상을 뚫고 지나갑니다. */
-	UPROPERTY(EditInstanceOnly, Category = "Projectile")
-	bool bDestroyOnHit = false;
-
-	UPROPERTY(EditInstanceOnly, Category = "Projectile")
-	bool bPredictAim = true;
-
-	/** 켜면 생성될 때의 행동 대상에게만 맞고 다른 캐릭터는 지나가며, 대상이 없으면 아무도 맞히지 않습니다. */
-	UPROPERTY(EditInstanceOnly, Category = "Projectile")
-	bool bAimTargetOnly = false;
+	/** 값은 SpawnActors.json에만 두고, 생성될 때 받습니다. */
+	UPROPERTY()
+	FAgProjectileData SpawnData;
 
 	/** 벽이나, 맞히고 사라지는 대상에 닿은 자리에서 재생합니다. 효과의 앞(X축)은 닿은 면에서 튀어나오는 쪽으로, 벽은 면의 법선이고 대상은 날아온 쪽입니다. 사거리 끝에서는 재생하지 않습니다. */
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")

@@ -10,7 +10,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Core/AgAssetManager.h"
+#include "Data/AgTargetingPresetData.h"
 #include "Data/AgAbilityData.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/LocalPlayer.h"
@@ -107,7 +107,7 @@ TArray<AActor*> AgTargeting::FindTargets(const FAgTargetingRequest& Request, AAc
 		return Targets;
 	}
 	UTargetingSubsystem* Subsystem = UTargetingSubsystem::Get(Source.GetWorld());
-	const UTargetingPreset* Preset = UAgAssetManager::Get().FindTargetingPreset(Request.Preset);
+	const UTargetingPreset* Preset = UAgTargetingPresetSet::FindPreset(Request.Preset);
 	if (!Preset || !Subsystem)
 	{
 		return Targets;

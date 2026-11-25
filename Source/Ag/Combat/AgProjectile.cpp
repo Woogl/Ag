@@ -44,9 +44,15 @@ AAgProjectile::AAgProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AAgProjectile::OnSpawnedByAbility(const UAgGameplayAbility& Ability)
+const UScriptStruct& AAgProjectile::GetSpawnDataType() const
 {
-	DamageSpec = Ability.MakeDamageSpec(Damage, MakeShared<FAgHitState>());
+	return *FAgProjectileData::StaticStruct();
+}
+
+void AAgProjectile::OnSpawnedByAbility(const UAgGameplayAbility& Ability, const FAgSpawnActorData& Data)
+{
+	SpawnData = static_cast<const FAgProjectileData&>(Data);
+	DamageSpec = Ability.MakeDamageSpec(SpawnData.Damage, MakeShared<FAgHitState>());
 	DamageSpec.Data->GetContext().AddInstigator(GetInstigator(), this);
 	AimTarget = Ability.GetActionTarget();
 }
@@ -59,7 +65,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 		return;
 	}
 	const FGameplayEffectSpecHandle ReflectedSpec = Defender.GetAbilitySystemComponent()->MakeEffectSpec(EAgEffect::Damage);
-	Damage.AddToSpec(*ReflectedSpec.Data);
+	SpawnData.Damage.AddToSpec(*ReflectedSpec.Data);
 	ReflectedSpec.Data->GetContext().AddInstigator(&Defender, this);
 	DamageSpec = ReflectedSpec;
 	Reflector = &Defender;
@@ -72,7 +78,7 @@ void AAgProjectile::Reflect(AAgCharacterBase& Defender)
 
 void AAgProjectile::OnDamageApplied(const FVector& HitLocation)
 {
-	if (bDestroyOnHit)
+	if (SpawnData.bDestroyOnHit)
 	{
 		PlayImpact(HitLocation, -FlightDirection);
 		EndFlight();
@@ -104,13 +110,13 @@ void AAgProjectile::BeginPlay()
 	FlightDirection = GetActorForwardVector();
 	// 판정 모양과 루트가 BP 컴포넌트라, 생성을 마친 이때부터 발사 위치를 읽을 수 있습니다.
 	const AActor* Target = AimTarget.Get();
-	if (!Target || Speed <= 0.f)
+	if (!Target || SpawnData.Speed <= 0.f)
 	{
 		return;
 	}
 	const FVector From = GetActorLocation();
-	const FVector AimLocation = bPredictAim
-	                                ? AgProjectilePrivate::PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), Speed)
+	const FVector AimLocation = SpawnData.bPredictAim
+	                                ? AgProjectilePrivate::PredictLocation(From, Target->GetActorLocation(), Target->GetVelocity() * FVector(1.0, 1.0, 0.0), SpawnData.Speed)
 	                                : Target->GetActorLocation();
 	const FVector AimDirection = (AimLocation - From).GetSafeNormal();
 	if (!AimDirection.IsNearlyZero())
@@ -137,7 +143,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AgProjectile), false, this);
 	QueryParams.AddIgnoredActor(DamageSource);
 	const FVector ActorStart = GetActorLocation();
-	const float Step = FMath::Min(Speed * DeltaSeconds, Range - Traveled);
+	const float Step = FMath::Min(SpawnData.Speed * DeltaSeconds, SpawnData.Range - Traveled);
 	FHitResult WallHit;
 	const FVector Move = FlightDirection * TraceWall(Step, QueryParams, WallHit);
 	TArray<FHitResult> Reached;
@@ -146,7 +152,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 	{
 		AAgCharacterBase* Target = Cast<AAgCharacterBase>(Contact.GetActor());
 		if (!IsValid(Target) || !Target->CanBeHitBy(*DamageSource) || TouchedActors.Contains(Target) ||
-			(bAimTargetOnly && Target != AimTarget.Get()))
+			(SpawnData.bAimTargetOnly && Target != AimTarget.Get()))
 		{
 			continue;
 		}
@@ -181,7 +187,7 @@ void AAgProjectile::Tick(float DeltaSeconds)
 		PlayImpact(WallHit.ImpactPoint, WallHit.ImpactNormal);
 		EndFlight();
 	}
-	else if (Traveled >= Range)
+	else if (Traveled >= SpawnData.Range)
 	{
 		EndFlight();
 	}

@@ -3,7 +3,6 @@
 #include "AbilitySystem/AgFallDamageMagnitude.h"
 
 #include "AbilitySystem/AgAttributeSet.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCombatRules.h"
 
@@ -23,7 +22,7 @@ UAgFallDamageMagnitude::UAgFallDamageMagnitude()
 
 float UAgFallDamageMagnitude::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const
 {
-	const UAgCombatRules& Rules = UAgAssetManager::Get().GetCombatRules();
+	const UAgCombatRules& Rules = UAgCombatRules::Get();
 	const float FallHeight = Spec.GetSetByCallerMagnitude(AgGameplayTags::SetByCaller_FallHeight);
 	const float Ratio = FMath::GetMappedRangeValueClamped(FVector2f(Rules.FallDamageStartHeight, Rules.FallDeathHeight), FVector2f(0.f, 1.f), FallHeight);
 

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/AgJsonData.h"
 #include "Templates/SubclassOf.h"
-#include "UObject/Object.h"
 #include "AgCameraData.generated.h"
 
 class UCameraShakeBase;
@@ -148,12 +148,18 @@ struct FAgExecutionCameraSettings
 	float AlphaOutTime = 0.f;
 };
 
+/** 카메라 셰이크 클래스를 가리키므로, 플레이어 캐릭터가 읽어 붙잡는 동안만 메모리에 있습니다. */
 UCLASS()
-class UAgCameraData : public UObject
+class UAgCameraData : public UAgJsonData
 {
 	GENERATED_BODY()
 
 public:
+	virtual const TCHAR* GetFileName() const override
+	{
+		return TEXT("Camera.json");
+	}
+
 	UPROPERTY(Transient, VisibleAnywhere)
 	FAgLockOnCameraSettings LockOn;
 

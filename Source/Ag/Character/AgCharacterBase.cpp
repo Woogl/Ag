@@ -80,7 +80,13 @@ FName AAgCharacterBase::FindAbilityId(const FGameplayAbilitySpecHandle Handle) c
 const FAgAbilityData* AAgCharacterBase::FindAbility(const FGameplayAbilitySpecHandle Handle) const
 {
 	const FName Id = FindAbilityId(Handle);
-	return Id.IsNone() ? nullptr : CharacterData->FindAbility(Id);
+	return Id.IsNone() ? nullptr : FindAbility(Id);
+}
+
+const FAgAbilityData* AAgCharacterBase::FindAbility(FName Id) const
+{
+	// 편집 중인 월드의 캐릭터에는 데이터가 없습니다.
+	return AbilitySet ? AbilitySet->Abilities.Find(Id) : nullptr;
 }
 
 bool AAgCharacterBase::IsDead() const
@@ -118,7 +124,7 @@ bool AAgCharacterBase::IsBehind(const FVector& Location) const
 
 void AAgCharacterBase::Kill()
 {
-	AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::Kill), 1.f,
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgEffectSet::GetEffect(EAgEffect::Kill), 1.f,
 		AbilitySystemComponent->MakeEffectContext());
 }
 
@@ -168,13 +174,16 @@ void AAgCharacterBase::PreInitializeComponents()
 
 	// 적 AI 컨트롤러는 컴포넌트 초기화(APawn::PostInitializeComponents) 안에서 빙의하며 적 데이터를 읽으므로,
 	// 그 전에 연결합니다.
-	CharacterData = UAgAssetManager::Get().FindCharacterData(CharacterDataId);
+	CharacterData = UAgCharacterData::Find(CharacterDataId);
 	if (!CharacterData)
 	{
 		// 엔진은 여기서 지운 액터의 컴포넌트 초기화와 BeginPlay를 건너뛰므로, 데이터가 있다고 보는 코드에 닿지 않습니다.
 		UE_LOG(LogAg, Error, TEXT("%s was removed: character data '%s' is missing."), *GetName(), *CharacterDataId.ToString());
 		Destroy();
+		return;
 	}
+	// 행동은 발동하는 순간 몽타주가 있어야 하므로, 어빌리티를 부여하기 전에 정의와 그 에셋을 모두 읽어 듭니다.
+	AbilitySet = UAgAssetManager::Get().LoadData<UAgAbilitySet>(CharacterDataId);
 }
 
 void AAgCharacterBase::PostInitializeComponents()
@@ -379,7 +388,7 @@ void AAgCharacterBase::GrantAbilities()
 	for (FName AbilityId : CharacterData->Abilities)
 	{
 		// 캐릭터의 어빌리티 ID는 데이터를 읽을 때 검사했습니다. 엔진은 부여할 때 스펙의 트리거를 등록합니다.
-		const FAgAbilityData& Ability = *UAgAssetManager::Get().FindAbility(AbilityId);
+		const FAgAbilityData& Ability = *FindAbility(AbilityId);
 		FGameplayAbilitySpec Spec(UAgGameplayAbility::StaticClass());
 		// GiveAbility 안의 OnGiveAbility가 이 ID로 정의를 찾으므로 먼저 연결합니다.
 		AbilityIds.Add(Spec.Handle, AbilityId);
@@ -393,7 +402,7 @@ void AAgCharacterBase::ApplyEffects()
 {
 	for (FName EffectId : CharacterData->Effects)
 	{
-		AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(EffectId), 1.f,
+		AbilitySystemComponent->ApplyGameplayEffectToSelf(UAgEffectSet::FindEffect(EffectId), 1.f,
 			AbilitySystemComponent->MakeEffectContext());
 	}
 }
@@ -401,7 +410,7 @@ void AAgCharacterBase::ApplyEffects()
 TArray<FString> AAgCharacterBase::GetCharacterDataIds() const
 {
 	TArray<FString> Options;
-	for (FName Id : UAgAssetManager::Get().GetCharacterDataIds())
+	for (FName Id : UAgCharacterData::GetIds())
 	{
 		Options.Add(Id.ToString());
 	}

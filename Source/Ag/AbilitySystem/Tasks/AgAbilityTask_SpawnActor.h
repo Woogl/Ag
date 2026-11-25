@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
+#include "Data/AgSpawnActorData.h"
 #include "Data/AgTaskParams.h"
 #include "AgAbilityTask_SpawnActor.generated.h"
 
@@ -12,8 +13,9 @@ struct FAgSpawnActorParams : public FAgTaskParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY(meta = (DataId = "SpawnActors"))
-	FName Actor;
+	/** JSON에는 `SpawnActors.json`의 ID를 적습니다. */
+	UPROPERTY()
+	FAgSpawnActorDefinition Actor;
 
 	UPROPERTY()
 	FName SocketName;

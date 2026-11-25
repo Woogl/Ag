@@ -3,7 +3,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
-#include "Core/AgAssetManager.h"
 #include "Data/AgEffectData.h"
 #include "GameplayEffect.h"
 
@@ -83,7 +82,7 @@ FAnimMontageInstance* UAgAbilitySystemComponent::PlayMontageWithBlendIn(UGamepla
 
 FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(EAgEffect Effect, FGameplayEffectContextHandle Context) const
 {
-	return MakeEffectSpec(*UAgAssetManager::Get().GetEffect(Effect), Context);
+	return MakeEffectSpec(*UAgEffectSet::GetEffect(Effect), Context);
 }
 
 FGameplayEffectSpecHandle UAgAbilitySystemComponent::MakeEffectSpec(const UGameplayEffect& Effect, FGameplayEffectContextHandle Context) const

@@ -5,7 +5,6 @@
 #include "Character/AgCharacterBase.h"
 #include "Combat/AgAbilitySpawnedActor.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Core/AgAssetManager.h"
 #include "Engine/World.h"
 #include "Ag.h"
 
@@ -20,11 +19,9 @@ void UAgAbilityTask_SpawnActor::Activate()
 {
 	AAgCharacterBase* Character = CastChecked<AAgCharacterBase>(GetAvatarActor());
 	UAgGameplayAbility* AgAbility = CastChecked<UAgGameplayAbility>(Ability);
-	AActor* Template = UAgAssetManager::Get().FindSpawnActor(Params.Actor);
-	if (!Template)
+	if (!Params.Actor.Class)
 	{
-		UE_LOG(LogAg, Error, TEXT("SpawnActor (ability %s): actor %s missing in SpawnActors"), *AgAbility->GetAbilityId().ToString(),
-			*Params.Actor.ToString());
+		UE_LOG(LogAg, Error, TEXT("SpawnActor (ability %s): Actor is missing"), *AgAbility->GetAbilityId().ToString());
 		EndTask();
 		return;
 	}
@@ -41,16 +38,15 @@ void UAgAbilityTask_SpawnActor::Activate()
 	const FTransform Transform(Rotation, Location);
 
 	FActorSpawnParameters SpawnParameters;
-	SpawnParameters.Template = Template;
 	SpawnParameters.Owner = Character;
 	SpawnParameters.Instigator = Character;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParameters.bDeferConstruction = true;
-	if (AActor* Spawned = GetWorld()->SpawnActor(Template->GetClass(), &Transform, SpawnParameters))
+	if (AActor* Spawned = GetWorld()->SpawnActor(Params.Actor.Class, &Transform, SpawnParameters))
 	{
 		if (IAgAbilitySpawnedActor* AbilityActor = Cast<IAgAbilitySpawnedActor>(Spawned))
 		{
-			AbilityActor->OnSpawnedByAbility(*AgAbility);
+			AbilityActor->OnSpawnedByAbility(*AgAbility, Params.Actor.Data.Get());
 		}
 		Spawned->FinishSpawning(Transform);
 	}

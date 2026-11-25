@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "AgPlayerCharacter.generated.h"
 
+class UAgCameraData;
 class UAgCombatStatsComponent;
 class UAgInteractionComponent;
 class UCameraComponent;
@@ -46,7 +47,10 @@ public:
 	/** 락온 어빌리티의 대상을 화면에서 Direction 쪽(양수 = 오른쪽)의 가장 가까운 후보로 바꿉니다. 없으면 그대로 둡니다. */
 	void SwitchLockOnTarget(float Direction);
 
+	const UAgCameraData& GetCameraData() const;
+
 protected:
+	virtual void PreInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void NotifyControllerChanged() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -103,6 +107,10 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	TObjectPtr<UCameraComponent> FollowCamera;
+
+	/** 이 캐릭터가 붙잡고 있는 동안 카메라 반응의 셰이크 클래스가 메모리에 남습니다. */
+	UPROPERTY(Transient)
+	TObjectPtr<UAgCameraData> CameraData;
 
 	UPROPERTY(VisibleAnywhere, Category = "Combat")
 	TObjectPtr<UAgCombatStatsComponent> CombatStats;

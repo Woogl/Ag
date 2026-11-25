@@ -8,7 +8,6 @@
 #include "Camera/AgFieldOfViewCameraModifier.h"
 #include "Camera/AgLookAtCameraModifier.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCameraData.h"
 #include "GameFramework/PlayerController.h"
@@ -116,9 +115,9 @@ void AAgPlayerCameraManager::ProcessViewRotation(float DeltaTime, FRotator& OutV
 
 void AAgPlayerCameraManager::PlayCameraReaction(EAgCameraSituation Situation, const AActor* TurnTarget)
 {
-	const FAgCameraReactionSettings* ReactionSettings = UAgAssetManager::Get().GetCameraData().ReactionsBySituation.Find(Situation);
 	const AAgPlayerCharacter* Player = GetPlayerCharacter();
-	if (!ReactionSettings || !Player)
+	const FAgCameraReactionSettings* ReactionSettings = Player ? Player->GetCameraData().ReactionsBySituation.Find(Situation) : nullptr;
+	if (!ReactionSettings)
 	{
 		return;
 	}
@@ -236,7 +235,7 @@ void AAgPlayerCameraManager::HandlePossessedPawnChanged(APawn* OldPawn, APawn* N
 
 void AAgPlayerCameraManager::UpdateLockOnCamera(AAgPlayerCharacter& Player, const AActor& Target, const FVector& PivotLocation, float DeltaTime)
 {
-	const FAgLockOnCameraSettings& Settings = UAgAssetManager::Get().GetCameraData().LockOn;
+	const FAgLockOnCameraSettings& Settings = Player.GetCameraData().LockOn;
 	FRotator Goal = (Target.GetTargetLocation(&Player) - PivotLocation).Rotation();
 	Goal.Pitch =
 		FMath::Clamp(FRotator::NormalizeAxis(Goal.Pitch), Settings.PitchMin, Settings.PitchMax) - Settings.LookDown;
@@ -314,7 +313,7 @@ void AAgPlayerCameraManager::UpdateCameraTurn(const AAgPlayerCharacter& Player, 
 		return;
 	}
 	const float GoalYaw = CurrentYaw + Offset - FMath::Sign(Offset) * TurnAngle;
-	const FAgLockOnCameraSettings& Settings = UAgAssetManager::Get().GetCameraData().LockOn;
+	const FAgLockOnCameraSettings& Settings = Player.GetCameraData().LockOn;
 	const float Yaw = AgPlayerCameraManagerPrivate::SpringToward(CurrentYaw, TurnYawRate, GoalYaw, DeltaTime, Settings.SmoothingTime, Settings.RotationSpeed);
 	PCOwner->SetControlRotation(FRotator(Current.Pitch, Yaw, 0.f));
 }
@@ -351,7 +350,7 @@ void AAgPlayerCameraManager::UpdateSprintFieldOfView()
 	const UAbilitySystemComponent& ASC = *ObservedAbilitySystem;
 	if (ASC.HasMatchingGameplayTag(AgGameplayTags::State_Sprinting) && ASC.HasMatchingGameplayTag(AgGameplayTags::Input_Move))
 	{
-		FieldOfViewCamera->Hold(UAgAssetManager::Get().GetCameraData().SprintFieldOfView);
+		FieldOfViewCamera->Hold(GetPlayerCharacter()->GetCameraData().SprintFieldOfView);
 	}
 	else
 	{

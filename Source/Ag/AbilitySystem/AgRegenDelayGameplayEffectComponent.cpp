@@ -3,7 +3,7 @@
 #include "AbilitySystem/AgRegenDelayGameplayEffectComponent.h"
 
 #include "AbilitySystemComponent.h"
-#include "Core/AgAssetManager.h"
+#include "Data/AgEffectData.h"
 #include "GameplayEffect.h"
 
 bool UAgRegenDelayGameplayEffectComponent::OnActiveGameplayEffectAdded(FActiveGameplayEffectsContainer& GEContainer, FActiveGameplayEffect& ActiveGE) const
@@ -35,7 +35,7 @@ void UAgRegenDelayGameplayEffectComponent::HandleAttributeChanged(const FOnAttri
 	{
 		return;
 	}
-	const UGameplayEffect* DelayEffect = UAgAssetManager::Get().FindEffect(Delay.Effect);
+	const UGameplayEffect* DelayEffect = UAgEffectSet::FindEffect(Delay.Effect);
 	if (!DelayEffect)
 	{
 		return;

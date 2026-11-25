@@ -5,11 +5,41 @@
 #include "CoreMinimal.h"
 #include "Combat/AgAbilitySpawnedActor.h"
 #include "Data/AgAttackData.h"
+#include "Data/AgSpawnActorData.h"
 #include "GameFramework/Actor.h"
 #include "GameplayEffectTypes.h"
 #include "AgShockwave.generated.h"
 
 class UNiagaraComponent;
+
+/** `SpawnActors.json`에 적는 충격파의 값입니다. */
+USTRUCT()
+struct FAgShockwaveData : public FAgSpawnActorData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float Speed = 0.f;
+
+	UPROPERTY()
+	float MaxRadius = 0.f;
+
+	/** 지면에서 판정이 닿는 높이입니다. */
+	UPROPERTY()
+	float Height = 0.f;
+
+	/** 바깥 가장자리에서 안쪽으로 판정이 닿는 너비입니다. */
+	UPROPERTY()
+	float Width = 0.f;
+
+	/** 앞 파동이 최대 반경에 닿은 뒤 다음 파동이 퍼지기 시작할 때까지의 시간입니다. */
+	UPROPERTY()
+	float Interval = 0.f;
+
+	/** 파동마다 공격 데이터입니다. 파동 수는 배열 길이입니다. */
+	UPROPERTY()
+	TArray<FAgDamage> Hits;
+};
 
 /**
  * 지면에서 모든 수평 방향으로 퍼지는 고리입니다. Hits마다 한 번씩 퍼지며, 앞 파동이 최대 반경에 닿고 Interval초 뒤에 다음 파동이 퍼집니다.
@@ -24,7 +54,8 @@ class AAgShockwave : public AActor, public IAgAbilitySpawnedActor
 public:
 	AAgShockwave();
 
-	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability) override;
+	virtual const UScriptStruct& GetSpawnDataType() const override;
+	virtual void OnSpawnedByAbility(const UAgGameplayAbility& Ability, const FAgSpawnActorData& Data) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,28 +67,9 @@ private:
 	UFUNCTION()
 	void HandleVFXFinished(UNiagaraComponent* Niagara);
 
-	// 값은 SpawnActors.json의 템플릿에만 둡니다. EditInstanceOnly는 JSON 리더가 채우고 BP 기본값에서는 고칠 수 없습니다.
-	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
-	float Speed = 0.f;
-
-	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
-	float MaxRadius = 0.f;
-
-	/** 지면에서 판정이 닿는 높이입니다. */
-	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
-	float Height = 0.f;
-
-	/** 바깥 가장자리에서 안쪽으로 판정이 닿는 너비입니다. */
-	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
-	float Width = 0.f;
-
-	/** 앞 파동이 최대 반경에 닿은 뒤 다음 파동이 퍼지기 시작할 때까지의 시간입니다. */
-	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
-	float Interval = 0.f;
-
-	/** 파동마다 공격 데이터입니다. 파동 수는 배열 길이입니다. */
-	UPROPERTY(EditInstanceOnly, Category = "Shockwave")
-	TArray<FAgDamage> Hits;
+	/** 값은 SpawnActors.json에만 두고, 생성될 때 받습니다. */
+	UPROPERTY()
+	FAgShockwaveData SpawnData;
 
 	/** 파동마다 하나이며 모두 같은 적중 상태를 가리킵니다. 엔진이 적용할 때 스펙을 복사해 실행하므로, 적중마다 적중 위치만 바꿔 다시 씁니다. */
 	UPROPERTY()

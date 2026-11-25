@@ -2,7 +2,8 @@
 
 #include "Camera/AgExecutionCameraModifier.h"
 
-#include "Core/AgAssetManager.h"
+#include "Character/AgPlayerCharacter.h"
+#include "Data/AgCameraData.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 
@@ -22,7 +23,7 @@ void UAgExecutionCameraModifier::Start(const AActor& InPlayer, const AActor& InT
 		Alpha = 0.f;
 	}
 	Elapsed = 0.f;
-	Settings = UAgAssetManager::Get().GetCameraData().Execution;
+	Settings = CastChecked<AAgPlayerCharacter>(&InPlayer)->GetCameraData().Execution;
 	AlphaInTime = Settings.AlphaInTime;
 	AlphaOutTime = Settings.AlphaOutTime;
 

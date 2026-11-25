@@ -14,7 +14,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/WidgetComponent.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAbilityData.h"
 #include "Data/AgCharacterData.h"
@@ -307,7 +306,7 @@ int32 AAgEnemyCharacter::GetReachedPhase() const
 
 const FAgPatternSelection* AAgEnemyCharacter::FindPattern(FName Id) const
 {
-	const FAgAbilityData* Ability = GetCharacterData()->FindAbility(Id);
+	const FAgAbilityData* Ability = FindAbility(Id);
 	return Ability ? Ability->PatternSelection.GetPtrOrNull() : nullptr;
 }
 
@@ -352,7 +351,7 @@ void AAgEnemyCharacter::HandleGroggyChanged(const FGameplayTag Tag, int32 NewCou
 	// 처형으로 끝난 그로기는 처형 상태 태그가 붙어 효과가 지워진 것입니다.
 	if (!ASC->HasMatchingGameplayTag(AgGameplayTags::State_Execution))
 	{
-		ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+		ASC->ApplyGameplayEffectToSelf(UAgEffectSet::GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 	}
 }
 
@@ -360,7 +359,7 @@ void AAgEnemyCharacter::HandleGroggyEvent(const FGameplayEventData* Payload)
 {
 	// 그로기 모션은 이 효과의 태그로 발동하는 어빌리티가 맡고, 태그가 빠지면 엔진이 끝냅니다.
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(AgEnemyCharacterPrivate::GroggyEffectId), 1.f, ASC->MakeEffectContext());
+	ASC->ApplyGameplayEffectToSelf(UAgEffectSet::FindEffect(AgEnemyCharacterPrivate::GroggyEffectId), 1.f, ASC->MakeEffectContext());
 	ASC->ExecuteGameplayCue(AgGameplayTags::GameplayCue_Groggy, ASC->MakeEffectContext());
 }
 
@@ -378,7 +377,7 @@ void AAgEnemyCharacter::HandleAbilityEnded(const FAbilityEndedData& Data)
 		return;
 	}
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	ASC->ApplyGameplayEffectToSelf(UAgAssetManager::Get().GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
+	ASC->ApplyGameplayEffectToSelf(UAgEffectSet::GetEffect(EAgEffect::PPRefill), 1.f, ASC->MakeEffectContext());
 }
 
 void AAgEnemyCharacter::UpdateWorldWidgets()
@@ -432,7 +431,7 @@ void AAgEnemyCharacter::CollectPatrolProblems(TArray<TSharedRef<FTokenizedMessag
 		return;
 	}
 	// CharacterData는 플레이 시작 때 연결되므로 편집 중에는 ID로 정본 데이터를 조회합니다.
-	const UAgCharacterData* Data = UAgAssetManager::Get().FindCharacterData(GetCharacterDataId());
+	const UAgCharacterData* Data = UAgCharacterData::Find(GetCharacterDataId());
 	if (Data && Data->Attributes.MOV <= 0.f)
 	{
 		OutMessages.Add(AAgPatrolRoute::MakeWarning(*this, TEXT("MOV is 0, so this enemy does not walk its patrol route.")));

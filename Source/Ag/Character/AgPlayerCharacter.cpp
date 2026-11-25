@@ -11,6 +11,8 @@
 #include "Camera/CameraComponent.h"
 #include "Combat/AgCombatStatsComponent.h"
 #include "Combat/AgTimeSubsystem.h"
+#include "Core/AgAssetManager.h"
+#include "Data/AgCameraData.h"
 #include "Core/AgGameplayTags.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -80,6 +82,22 @@ void AAgPlayerCharacter::SwitchLockOnTarget(float Direction)
 	if (AActor* Next = AgTargeting::FindSideTarget(*LockOn->GetDefinition().Targeting, *this, *Current, Direction))
 	{
 		LockOn->SetActionTarget(Next);
+	}
+}
+
+const UAgCameraData& AAgPlayerCharacter::GetCameraData() const
+{
+	return *CameraData;
+}
+
+void AAgPlayerCharacter::PreInitializeComponents()
+{
+	Super::PreInitializeComponents();
+
+	// 캐릭터 데이터가 없으면(편집 중인 월드, 데이터가 없어 지워지는 캐릭터) 카메라도 쓰지 않습니다.
+	if (GetCharacterData())
+	{
+		CameraData = UAgAssetManager::Get().LoadData<UAgCameraData>();
 	}
 }
 

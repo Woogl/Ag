@@ -3,15 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
+#include "Core/AgJsonData.h"
 #include "AgCombatRules.generated.h"
 
 UCLASS()
-class UAgCombatRules : public UObject
+class UAgCombatRules : public UAgJsonData
 {
 	GENERATED_BODY()
 
 public:
+	static const UAgCombatRules& Get()
+	{
+		return UAgAssetManager::Get().GetData<UAgCombatRules>();
+	}
+
+	virtual const TCHAR* GetFileName() const override
+	{
+		return TEXT("CombatRules.json");
+	}
+
+	virtual bool IsAlwaysLoaded() const override
+	{
+		return true;
+	}
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Hit")
 	float GuardReduction = 1.f;
 

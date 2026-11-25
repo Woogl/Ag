@@ -99,7 +99,9 @@ class UAgCharacterData : public UObject
 	GENERATED_BODY()
 
 public:
-	const FAgAbilityData* FindAbility(FName Id) const;
+	static UAgCharacterData* Find(FName Id);
+
+	static TArray<FName> GetIds();
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "UI")
 	FText DisplayName;
@@ -127,11 +129,25 @@ public:
 };
 
 UCLASS()
-class UAgCharacterSet : public UObject
+class UAgCharacterSet : public UAgJsonData
 {
 	GENERATED_BODY()
 
 public:
+	virtual const TCHAR* GetFileName() const override
+	{
+		return TEXT("Characters.json");
+	}
+
+	virtual bool IsAlwaysLoaded() const override
+	{
+		return true;
+	}
+
+	virtual bool ReadJson(FAgJsonReader& Reader, FName Key) override;
+
+	virtual void CopyJson(const UAgJsonData& Loaded) override;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Characters")
 	TMap<FName, TObjectPtr<UAgCharacterData>> Characters;
 };

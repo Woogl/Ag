@@ -12,7 +12,6 @@
 #include "Character/AgHitPhysicsComponent.h"
 #include "Combat/AgProjectile.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgAttackData.h"
 #include "Data/AgCharacterData.h"
@@ -245,13 +244,13 @@ namespace AgDamageResultGameplayEffectComponentPrivate
 
 	void GrantGuardCounterChance(UAbilitySystemComponent& DefenderASC)
 	{
-		DefenderASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(GuardCounterChanceEffectId), 1.f,
+		DefenderASC.ApplyGameplayEffectToSelf(UAgEffectSet::FindEffect(GuardCounterChanceEffectId), 1.f,
 			DefenderASC.MakeEffectContext());
 	}
 
 	void LockMove(UAbilitySystemComponent& DefenderASC)
 	{
-		DefenderASC.ApplyGameplayEffectToSelf(UAgAssetManager::Get().FindEffect(MoveLockEffectId), 1.f, DefenderASC.MakeEffectContext());
+		DefenderASC.ApplyGameplayEffectToSelf(UAgEffectSet::FindEffect(MoveLockEffectId), 1.f, DefenderASC.MakeEffectContext());
 	}
 
 	/** 맞은 쪽의 반응(패리, 가드, 피격)을 시작하고, 연출에 넘길 반응 이벤트를 돌려줍니다. 반응이 없으면 빈 태그입니다. */
@@ -361,7 +360,7 @@ void UAgDamageResultGameplayEffectComponent::OnGameplayEffectExecuted(FActiveGam
 		AgDamageResultGameplayEffectComponentPrivate::PlayResultCues(Outcome, Reaction, GESpec);
 		if (!SpecTags.HasTagExact(AgGameplayTags::Ability_Action_Execution))
 		{
-			const float HitstopDuration = UAgAssetManager::Get().GetCombatRules().HitstopDuration;
+			const float HitstopDuration = UAgCombatRules::Get().HitstopDuration;
 			AgDamageResultGameplayEffectComponentPrivate::ApplyHitstop(*Target->GetAbilitySystemComponent(), HitstopDuration);
 			if (Outcome.Causer == Attacker)
 			{

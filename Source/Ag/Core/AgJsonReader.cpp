@@ -4,7 +4,10 @@
 
 #include "Ag.h"
 #include "AttributeSet.h"
+#include "Combat/AgAbilitySpawnedActor.h"
+#include "Core/AgAssetManager.h"
 #include "Data/AgHitReward.h"
+#include "Data/AgSpawnActorData.h"
 #include "Data/AgTaskParams.h"
 #include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
@@ -49,6 +52,10 @@ namespace AgJsonReaderPrivate
 			return Name->GetPropertyValue(Value).IsNone();
 		}
 		const FStructProperty* Struct = CastField<FStructProperty>(&Property);
+		if (Struct && Struct->Struct == FAgSpawnActorDefinition::StaticStruct())
+		{
+			return !static_cast<const FAgSpawnActorDefinition*>(Value)->Class;
+		}
 		return Struct && Struct->Struct == FInstancedStruct::StaticStruct() && !static_cast<const FInstancedStruct*>(Value)->IsValid();
 	}
 
@@ -113,29 +120,110 @@ namespace AgJsonReaderPrivate
 	}
 } // namespace AgJsonReaderPrivate
 
-FAgJsonReader::FAgJsonReader(UObject& InOuter)
+FAgJsonReader::FAgJsonReader(UObject& InOuter, FAgJsonDocuments& InDocuments)
 	: Outer(InOuter)
+	, Documents(InDocuments)
 {
+}
+
+bool FAgJsonReader::ParseFile(const FString& Path)
+{
+	FString Text;
+	if (!FFileHelper::LoadFileToString(Text, *FPaths::Combine(FPaths::ProjectDir(), Path)))
+	{
+		return AgJsonReaderPrivate::Fail(Path, TEXT("can't read the file"));
+	}
+	const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
+	FAgJsonDocument Document;
+	if (!FJsonSerializer::Deserialize(Reader, Document.Root) || !Document.Root.IsValid())
+	{
+		// 최상위가 객체가 아니면 엔진은 메시지 없이 실패합니다.
+		return AgJsonReaderPrivate::Fail(Path, Reader->GetErrorMessage().IsEmpty() ? FString(TEXT("must be an object")) : Reader->GetErrorMessage());
+	}
+	for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : Document.Root->Values)
+	{
+		if (!Pair.Value->IsNull())
+		{
+			Document.Entries.Add(FName(*FString(Pair.Key)), Pair.Value);
+		}
+	}
+	Documents.Add(FName(FPaths::GetBaseFilename(Path)), MoveTemp(Document));
+	return true;
 }
 
 bool FAgJsonReader::ReadFile(const FString& Path, const FProperty& Property, void* Out)
 {
-	TSharedPtr<FJsonValue> Value;
-	return ParseFile(Path, Value) && Read(Path, Value, Property, Out);
+	const FAgJsonDocument* Document = FindDocument(Path);
+	return Document && Read(Path, MakeShared<FJsonValueObject>(Document->Root), Property, Out);
+}
+
+bool FAgJsonReader::ReadEntries(const FString& Path, TConstArrayView<FName> Ids, const FProperty& Property, void* Out)
+{
+	const FAgJsonDocument* Document = FindDocument(Path);
+	if (!Document)
+	{
+		return false;
+	}
+	const TSharedRef<FJsonObject> Entries = MakeShared<FJsonObject>();
+	for (FName Id : Ids)
+	{
+		if (const TSharedPtr<FJsonValue>* Entry = Document->Entries.Find(Id))
+		{
+			Entries->SetField(Id.ToString(), *Entry);
+		}
+	}
+	return Read(Path, MakeShared<FJsonValueObject>(Entries), Property, Out);
 }
 
 bool FAgJsonReader::ReadFile(const FString& Path, UObject& Object)
 {
-	TSharedPtr<FJsonValue> Value;
-	if (!ParseFile(Path, Value))
+	const FAgJsonDocument* Document = FindDocument(Path);
+	return Document && ReadFields(Path, *Document->Root, *Object.GetClass(), &Object);
+}
+
+TArray<FName> FAgJsonReader::GetEntryIds(const FString& Path) const
+{
+	TArray<FName> Ids;
+	if (const FAgJsonDocument* Document = FindDocument(Path))
 	{
-		return false;
+		Document->Entries.GetKeys(Ids);
 	}
-	if (Value->Type != EJson::Object)
+	return Ids;
+}
+
+bool FAgJsonReader::ReadSpawnActor(const FString& Path, FName Id, FAgSpawnActorDefinition& Out)
+{
+	const FString FilePath = UAgAssetManager::GetJsonPath(FAgSpawnActorDefinition::GetFileName());
+	const FAgJsonDocument* Document = FindDocument(FilePath);
+	const TSharedPtr<FJsonValue>* Entry = Document ? Document->Entries.Find(Id) : nullptr;
+	if (!Entry)
 	{
-		return AgJsonReaderPrivate::Fail(Path, TEXT("must be an object"));
+		return AgJsonReaderPrivate::Fail(Path, Id.ToString() + TEXT(" is not an ID in ") + FAgSpawnActorDefinition::GetFileName());
 	}
-	return ReadFields(Path, *Value->AsObject(), *Object.GetClass(), &Object);
+	// 오류는 정의가 적힌 자리로 알립니다.
+	const FString EntryPath = FilePath + TEXT(": ") + Id.ToString();
+	const TSharedPtr<FJsonObject>* Object = nullptr;
+	FString ClassPath;
+	if (!(*Entry)->TryGetObject(Object) || !(*Object)->TryGetStringField(TEXT("Class"), ClassPath))
+	{
+		return AgJsonReaderPrivate::Fail(EntryPath, TEXT("must be an object with Class"));
+	}
+	UClass* Class = LoadClass<AActor>(nullptr, *ClassPath, nullptr, LOAD_NoWarn);
+	if (!Class || Class->HasAnyClassFlags(CLASS_Abstract))
+	{
+		return AgJsonReaderPrivate::Fail(EntryPath, ClassPath + TEXT(" is not a class of Actor"));
+	}
+	Out.Id = Id;
+	Out.Class = Class;
+	// 속성값은 그 액터 클래스가 정한 구조체로 지금 읽어 두고, 생성할 때는 구조체를 그대로 넘깁니다.
+	const IAgAbilitySpawnedActor* SpawnedActor = Cast<IAgAbilitySpawnedActor>(Class->GetDefaultObject());
+	if (!SpawnedActor)
+	{
+		return (*Object)->Values.Num() == 1 || AgJsonReaderPrivate::Fail(EntryPath, ClassPath + TEXT(" takes no properties"));
+	}
+	const UScriptStruct& DataType = SpawnedActor->GetSpawnDataType();
+	Out.Data.InitializeAsScriptStruct(&DataType);
+	return ReadFields(EntryPath, **Object, DataType, Out.Data.GetMutableMemory(), TEXT("Class"));
 }
 
 bool FAgJsonReader::IsField(const FProperty& Property)
@@ -147,31 +235,10 @@ bool FAgJsonReader::IsField(const FProperty& Property)
 	return bField && !Property.HasAnyPropertyFlags(CPF_Deprecated);
 }
 
-bool FAgJsonReader::ParseFile(const FString& Path, TSharedPtr<FJsonValue>& OutValue)
+const FAgJsonDocument* FAgJsonReader::FindDocument(const FString& Path) const
 {
-	FString Text;
-	if (!FFileHelper::LoadFileToString(Text, *FPaths::Combine(FPaths::ProjectDir(), Path)))
-	{
-		return AgJsonReaderPrivate::Fail(Path, TEXT("can't read the file"));
-	}
-	const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Text);
-	if (!FJsonSerializer::Deserialize(Reader, OutValue) || !OutValue.IsValid())
-	{
-		return AgJsonReaderPrivate::Fail(Path, Reader->GetErrorMessage());
-	}
-	const TSharedPtr<FJsonObject>* Root = nullptr;
-	if (OutValue->TryGetObject(Root))
-	{
-		TSet<FName>& FileIds = Ids.Add(FName(FPaths::GetBaseFilename(Path)));
-		for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Pair : (*Root)->Values)
-		{
-			if (!Pair.Value->IsNull())
-			{
-				FileIds.Add(FName(*FString(Pair.Key)));
-			}
-		}
-	}
-	return true;
+	// 파싱하지 못한 파일은 그때 오류를 알렸습니다.
+	return Documents.Find(FName(FPaths::GetBaseFilename(Path)));
 }
 
 bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FProperty& Property, void* Out)
@@ -312,10 +379,7 @@ bool FAgJsonReader::ReadObject(const FString& Path, const TSharedPtr<FJsonValue>
 	}
 	if (!Object && !Class->HasAnyClassFlags(CLASS_Abstract))
 	{
-		// 액터는 월드 밖에서 엔진 스폰 템플릿(FActorSpawnParameters::Template)으로만 쓰므로 엔진의 자식 액터 템플릿처럼
-		// 아키타입으로 만듭니다.
-		const EObjectFlags Flags = Class->IsChildOf<AActor>() ? RF_ArchetypeObject : RF_NoFlags;
-		Object = NewObject<UObject>(&Outer, Class, NAME_None, Flags);
+		Object = NewObject<UObject>(&Outer, Class);
 		Property.SetObjectPropertyValue(Out, Object);
 	}
 	if (!Object)
@@ -327,6 +391,15 @@ bool FAgJsonReader::ReadObject(const FString& Path, const TSharedPtr<FJsonValue>
 
 bool FAgJsonReader::ReadStruct(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FStructProperty& Property, void* Out)
 {
+	if (Property.Struct == FAgSpawnActorDefinition::StaticStruct())
+	{
+		// 생성 액터는 ID로 적고, 그 정의를 읽어 채웁니다. 정의가 쓰는 쪽 데이터 안에 들어가 클래스도 함께 붙잡힙니다.
+		if (Value->Type != EJson::String)
+		{
+			return AgJsonReaderPrivate::Fail(Path, TEXT("must be an ID in SpawnActors.json"));
+		}
+		return ReadSpawnActor(Path, FName(*Value->AsString()), *static_cast<FAgSpawnActorDefinition*>(Out));
+	}
 	// UPROPERTY는 맵 값으로 배열을 담지 못해 배열·맵을 구조체로 감싸므로, 감싸는 키 없이 그 값을 바로 적습니다.
 	TArray<const FProperty*> Fields;
 	for (TFieldIterator<FProperty> It(Property.Struct); It; ++It)
@@ -417,8 +490,8 @@ bool FAgJsonReader::ReadValue(const FString& Path, const TSharedPtr<FJsonValue>&
 #if WITH_METADATA
 	// 배열 원소의 메타데이터는 배열 속성에 있습니다.
 	const FString* DataId = CastField<FNameProperty>(&Property) ? Property.GetOwnerProperty()->FindMetaData(TEXT("DataId")) : nullptr;
-	const TSet<FName>* FileIds = DataId ? Ids.Find(FName(**DataId)) : nullptr;
-	if (DataId && (!FileIds || !FileIds->Contains(*static_cast<const FName*>(Out))))
+	const FAgJsonDocument* Document = DataId ? Documents.Find(FName(**DataId)) : nullptr;
+	if (DataId && (!Document || !Document->Entries.Contains(*static_cast<const FName*>(Out))))
 	{
 		*static_cast<FName*>(Out) = NAME_None;
 		return AgJsonReaderPrivate::Fail(Path, Value->AsString() + TEXT(" is not an ID in ") + *DataId + TEXT(".json"));

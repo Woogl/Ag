@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/AgJsonData.h"
 #include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "AgEffectData.generated.h"
@@ -87,16 +88,41 @@ struct FAgEffectDefinition
 };
 
 UCLASS()
-class UAgEffectSet : public UObject
+class UAgEffectSet : public UAgJsonData
 {
 	GENERATED_BODY()
 
 public:
+	/** `Effects.json`의 ID로 찾습니다. */
+	static const UGameplayEffect* FindEffect(FName Id);
+
+	/** 코드가 고르는 효과입니다. */
+	static const UGameplayEffect* GetEffect(EAgEffect Effect);
+
+	virtual const TCHAR* GetFileName() const override
+	{
+		return TEXT("Effects.json");
+	}
+
+	virtual bool IsAlwaysLoaded() const override
+	{
+		return true;
+	}
+
+	virtual bool ReadJson(FAgJsonReader& Reader, FName Key) override;
+
+	virtual void CopyJson(const UAgJsonData& Loaded) override;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Effects")
 	TMap<FName, FAgEffectDefinition> Definitions;
 
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Effects")
 	TMap<FName, TObjectPtr<UGameplayEffect>> Effects;
+
+private:
+	// JSON 필드(Transient)로 표시하지 않아야 다시 읽을 때 값 복사가 비우지 않습니다.
+	UPROPERTY()
+	TMap<EAgEffect, TObjectPtr<UGameplayEffect>> NativeEffects;
 };
 
 namespace AgEffectData

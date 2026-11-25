@@ -6,7 +6,6 @@
 #include "Character/AgEnemyCharacter.h"
 #include "Combat/AgCombatSubsystem.h"
 #include "Components/StateTreeAIComponent.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
@@ -127,7 +126,7 @@ void AAgEnemyAIController::ConfigurePerception(const FAgEnemyAIData& AI)
 	SightConfig->SightRadius = AI.SightDistance;
 	SightConfig->LoseSightRadius = AI.SightDistance;
 	SightConfig->PeripheralVisionAngleDegrees = AI.SightAngle * 0.5f;
-	const float TargetLostTime = UAgAssetManager::Get().GetCombatRules().TargetLostTime;
+	const float TargetLostTime = UAgCombatRules::Get().TargetLostTime;
 	SightConfig->SetMaxAge(TargetLostTime);
 	DamageConfig->SetMaxAge(TargetLostTime);
 	// 엔진 ConfigureSense는 감각 값만 다시 읽고 청취자의 팀은 등록할 때 값 그대로 둡니다. 게임 도중 생긴 적은 빙의 전에

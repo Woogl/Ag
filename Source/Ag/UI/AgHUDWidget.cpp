@@ -217,7 +217,7 @@ void UAgHUDWidget::UpdatePotion()
 {
 	const UAgGameplayAbility* Ability = PotionSlot->FindAbility();
 	const FAgAbilityData* Data = Ability ? Ability->FindDefinition() : nullptr;
-	const FAgItemData* Item = Data ? UAgAssetManager::Get().FindItem(Data->Item) : nullptr;
+	const FAgItemData* Item = Data ? UAgItemSet::FindItem(Data->Item) : nullptr;
 	const UAgInventoryComponent* Inventory = PlayerInventory.Get();
 	if (Item && Inventory)
 	{

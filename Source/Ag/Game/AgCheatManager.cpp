@@ -8,7 +8,6 @@
 #include "Character/AgBossCharacter.h"
 #include "Character/AgEnemyCharacter.h"
 #include "Character/AgPlayerCharacter.h"
-#include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgItemData.h"
 #include "Engine/GameViewportClient.h"
@@ -116,7 +115,7 @@ namespace AgCheatManagerPrivate
 	/** 아이템 ID와 수가 맞으면 플레이어의 인벤토리를 돌려줍니다. */
 	UAgInventoryComponent* FindInventory(const UCheatManager& Cheats, const TCHAR* Command, FName Id, int32 Count)
 	{
-		if (!UAgAssetManager::Get().FindItem(Id) || Count <= 0)
+		if (!UAgItemSet::FindItem(Id) || Count <= 0)
 		{
 			Report(Cheats, FString::Printf(TEXT("%s: use an item ID in Items.json and a count above 0"), Command));
 			return nullptr;
@@ -126,7 +125,7 @@ namespace AgCheatManagerPrivate
 
 	void ReportItem(const UCheatManager& Cheats, const TCHAR* Command, FName Id, const UAgInventoryComponent& Inventory)
 	{
-		Report(Cheats, FString::Printf(TEXT("%s: %s %d/%d"), Command, *Id.ToString(), Inventory.GetCount(Id), UAgAssetManager::Get().FindItem(Id)->MaxCount));
+		Report(Cheats, FString::Printf(TEXT("%s: %s %d/%d"), Command, *Id.ToString(), Inventory.GetCount(Id), UAgItemSet::FindItem(Id)->MaxCount));
 	}
 
 	constexpr EAgCheatSwitch AllSwitches[] = {EAgCheatSwitch::Invincible, EAgCheatSwitch::NoCooldown, EAgCheatSwitch::InfiniteMP,

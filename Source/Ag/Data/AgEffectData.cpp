@@ -80,6 +80,44 @@ namespace AgEffectDataPrivate
 	}
 } // namespace AgEffectDataPrivate
 
+const UGameplayEffect* UAgEffectSet::FindEffect(FName Id)
+{
+	return UAgAssetManager::Get().GetData<UAgEffectSet>().Effects.FindRef(Id);
+}
+
+const UGameplayEffect* UAgEffectSet::GetEffect(EAgEffect Effect)
+{
+	return UAgAssetManager::Get().GetData<UAgEffectSet>().NativeEffects.FindChecked(Effect).Get();
+}
+
+bool UAgEffectSet::ReadJson(FAgJsonReader& Reader, FName Key)
+{
+	return ReadJsonInto(Reader, GET_MEMBER_NAME_CHECKED(UAgEffectSet, Definitions));
+}
+
+void UAgEffectSet::CopyJson(const UAgJsonData& Loaded)
+{
+	Super::CopyJson(Loaded);
+
+	// 걸려 있는 효과가 옛 GE를 그대로 쓰도록 다시 읽을 때마다 새 객체로 만듭니다.
+	Effects.Reset();
+	for (const TPair<FName, FAgEffectDefinition>& Pair : Definitions)
+	{
+		Effects.Add(Pair.Key, AgEffectData::MakeEffect(Pair.Value, *this));
+	}
+	// 코드 전용 효과는 JSON과 관계없으므로 한 번만 만듭니다.
+	if (NativeEffects.IsEmpty())
+	{
+		const UEnum* NativeEffectEnum = StaticEnum<EAgEffect>();
+		// 마지막 값은 UHT가 붙이는 _MAX입니다.
+		for (int32 Index = 0; Index < NativeEffectEnum->NumEnums() - 1; ++Index)
+		{
+			const EAgEffect Effect = static_cast<EAgEffect>(NativeEffectEnum->GetValueByIndex(Index));
+			NativeEffects.Add(Effect, AgEffectData::MakeNativeEffect(Effect, *this));
+		}
+	}
+}
+
 UGameplayEffect* AgEffectData::MakeNativeEffect(EAgEffect Id, UObject& Outer)
 {
 	UGameplayEffect* Effect = NewObject<UGameplayEffect>(&Outer);

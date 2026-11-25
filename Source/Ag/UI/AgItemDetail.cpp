@@ -4,11 +4,11 @@
 
 #include "CommonLazyImage.h"
 #include "CommonTextBlock.h"
-#include "Core/AgAssetManager.h"
+#include "Data/AgItemData.h"
 
 void UAgItemDetail::SetItem(FName ItemId, int32 Count)
 {
-	const FAgItemData* Item = UAgAssetManager::Get().FindItem(ItemId);
+	const FAgItemData* Item = UAgItemSet::FindItem(ItemId);
 	if (!Item)
 	{
 		return;
