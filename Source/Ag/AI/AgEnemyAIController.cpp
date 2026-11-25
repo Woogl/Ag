@@ -10,12 +10,19 @@
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
 #include "Data/AgCombatRules.h"
+#include "Navigation/CrowdFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Damage.h"
 #include "Perception/AISenseConfig_Sight.h"
 
-AAgEnemyAIController::AAgEnemyAIController()
+// 적끼리 비켜 걷기는 Detour 군중으로 합니다. 엔진 RVO는 내비메시 경계를 보지 않고, 정한 회피 속도를 0.2초 고정해
+// 그동안 걷기를 멈추지 못합니다.
+AAgEnemyAIController::AAgEnemyAIController(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
 {
+	// 물러나기·좌우 걷기는 늘 가까운 목적지로 걸으므로, 도착 감속이 켜져 있으면 계속 느리게 걷습니다.
+	CastChecked<UCrowdFollowingComponent>(GetPathFollowingComponent())->SetCrowdSlowdownAtGoal(false, false);
+
 	StateTreeComponent = CreateDefaultSubobject<UStateTreeAIComponent>(TEXT("StateTree"));
 	// 실행할 StateTree는 빙의할 때 적 캐릭터에서 가져오므로 BeginPlay에 자동으로 시작하지 않습니다.
 	StateTreeComponent->SetStartLogicAutomatically(false);

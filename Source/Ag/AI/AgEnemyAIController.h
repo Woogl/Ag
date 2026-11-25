@@ -20,7 +20,7 @@ class AAgEnemyAIController : public AAIController
 	GENERATED_BODY()
 
 public:
-	AAgEnemyAIController();
+	AAgEnemyAIController(const FObjectInitializer& ObjectInitializer);
 
 	AAgEnemyCharacter* GetEnemy() const;
 

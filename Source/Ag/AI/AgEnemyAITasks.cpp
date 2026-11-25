@@ -23,16 +23,27 @@ namespace AgEnemyAITasksPrivate
 
 	constexpr float HomeFacingDistance = 100.f;
 
+	constexpr float WalkLookAhead = 100.f;
+
+	constexpr float WalkAcceptanceRadius = 5.f;
+
+	// 벽이나 내비메시 끝에 비스듬히 닿으면 레이캐스트가 닿는 점이 걸을 때마다 옆으로 조금씩 밀려나 끝을 따라 미끄러지므로,
+	// 닿는 점이 이만큼 가까우면 걷지 않습니다.
+	constexpr float WalkStopDistance = 10.f;
+
 	void StopPathMove(AAgEnemyAIController& Controller)
 	{
-		// 간격 지키기에서는 다가가기와 물러나기·좌우 걷기가 번갈아 바뀌므로, StopMovement처럼 속도를 0으로 만들면 걸음이
-		// 그때마다 끊깁니다. 경로만 끊고 남은 속도는 이동 컴포넌트의 감속에 맡깁니다.
+		// 간격 지키기에서는 걷기와 제자리가 번갈아 바뀌므로, StopMovement처럼 속도를 0으로 만들면 걸음이 그때마다 끊깁니다.
+		// 경로만 끊고 남은 속도는 이동 컴포넌트의 감속에 맡깁니다.
 		Controller.GetPathFollowingComponent()->AbortMove(Controller, FPathFollowingResultFlags::ForcedScript, FAIRequestID::CurrentRequest,
 			EPathFollowingVelocityMode::Keep);
 	}
 
-	/** 물러나기·좌우 걷기의 한 걸음입니다. 경로 이동과 달리 이동 입력은 내비메시를 보지 않으므로, 내비메시 끝을 넘을 걸음은 걷지 않습니다. */
-	void WalkInsideNavMesh(AAgEnemyAIController& Controller, AAgEnemyCharacter& Enemy, const FVector& Direction, float DeltaTime)
+	/**
+	 * 물러나기·좌우 걷기의 한 걸음입니다. 군중 회피는 경로 이동에만 적용되므로 경로 이동으로 걷되, 목적지를 직선으로 열린 곳까지로
+	 * 잘라 벽이나 내비메시 끝 앞에서 멈추고 돌아가지 않습니다.
+	 */
+	void WalkInsideNavMesh(AAgEnemyAIController& Controller, AAgEnemyCharacter& Enemy, const FVector& Direction)
 	{
 		// 엔진 레이캐스트는 시작점이 내비메시 밖이면 모든 방향을 막힘으로 답합니다. 멈추며 끝을 조금 넘었거나 넉다운 등으로
 		// 벽에 붙거나 가장자리에 선 적도 안쪽이나 옆으로는 걷도록, 가장 가까운 내비메시 점에서 봅니다.
@@ -40,14 +51,21 @@ namespace AgEnemyAITasksPrivate
 		FNavLocation Start;
 		if (!NavSys || !NavSys->ProjectPointToNavigation(Enemy.GetActorLocation(), Start, INVALID_NAVEXTENT, &Enemy.GetNavAgentPropertiesRef()))
 		{
+			StopPathMove(Controller);
 			return;
 		}
-		const FVector End = Start.Location + Direction * Enemy.GetCharacterMovement()->GetMaxSpeed() * DeltaTime;
+		FVector Destination = Start.Location + Direction * WalkLookAhead;
 		FVector HitLocation;
-		if (!UNavigationSystemV1::NavigationRaycast(&Enemy, Start.Location, End, HitLocation, nullptr, &Controller))
+		if (UNavigationSystemV1::NavigationRaycast(&Enemy, Start.Location, Destination, HitLocation, nullptr, &Controller))
 		{
-			Enemy.AddMovementInput(Direction);
+			if (FVector::Dist2D(Start.Location, HitLocation) <= WalkStopDistance)
+			{
+				StopPathMove(Controller);
+				return;
+			}
+			Destination = HitLocation;
 		}
+		Controller.MoveToLocation(Destination, WalkAcceptanceRadius, false, true, false, true, {}, false);
 	}
 
 	/** 거리가 들어 있는 범위가 있으면 그 범위, 없으면 가장 조금 움직여 닿는 범위입니다. 차이가 같으면 다가가는 쪽입니다. */
@@ -165,14 +183,10 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 
 		// 공격할 차례인데 목표 거리 안이면 거리는 닿지만 시야 같은 조건이 맞지 않은 것이라, 보이는 곳을 찾아 다가갑니다.
 		const bool bApproach = Distance > InstanceData.TargetRange.Max || (bAttackTurn && Distance >= InstanceData.TargetRange.Min);
-		// 엔진의 막힘 감지나 부분 경로의 끝에 닿아 경로 이동이 도착 전에 끝날 수 있으므로, 멈춰 있으면 다시 요청합니다.
-		if (bApproach && Controller.GetMoveStatus() == EPathFollowingStatus::Idle)
+		// 엔진의 막힘 감지나 부분 경로의 끝에 닿아 경로 이동이 도착 전에 끝날 수 있으므로, 다가가는 중에 멈춰 있으면 다시 요청합니다.
+		if (bApproach && (!InstanceData.bApproaching || Controller.GetMoveStatus() == EPathFollowingStatus::Idle))
 		{
 			Controller.MoveToActor(Target);
-		}
-		else if (!bApproach && InstanceData.bApproaching)
-		{
-			AgEnemyAITasksPrivate::StopPathMove(Controller);
 		}
 		InstanceData.bApproaching = bApproach;
 	}
@@ -184,22 +198,22 @@ EStateTreeRunStatus FAgEnemyAITask_KeepDistance::Tick(FStateTreeExecutionContext
 	// 적은 스스로 대상을 향해 돌므로, 반대쪽으로 걸으면 바라본 채 물러나고 옆으로 걸으면 대상 주위를 돕니다.
 	if (Distance < InstanceData.TargetRange.Min)
 	{
-		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, (Enemy->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal2D(), DeltaTime);
+		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, (Enemy->GetActorLocation() - Target->GetActorLocation()).GetSafeNormal2D());
 	}
 	else if (Enemy->GetCharacterData()->AI.WaitMovement == EAgWaitMovement::Strafe)
 	{
-		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, Enemy->GetActorRightVector() * InstanceData.StrafeDirection, DeltaTime);
+		AgEnemyAITasksPrivate::WalkInsideNavMesh(Controller, *Enemy, Enemy->GetActorRightVector() * InstanceData.StrafeDirection);
+	}
+	else
+	{
+		AgEnemyAITasksPrivate::StopPathMove(Controller);
 	}
 	return EStateTreeRunStatus::Running;
 }
 
 void FAgEnemyAITask_KeepDistance::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
-	const FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	if (InstanceData.bApproaching)
-	{
-		AgEnemyAITasksPrivate::StopPathMove(*InstanceData.Controller);
-	}
+	AgEnemyAITasksPrivate::StopPathMove(*Context.GetInstanceData(*this).Controller);
 }
 
 EStateTreeRunStatus FAgEnemyAITask_RunPattern::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
