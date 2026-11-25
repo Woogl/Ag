@@ -49,7 +49,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Tab")
 	TSubclassOf<UAgTabButton> TabButtonClass;
 
-	/** 탭 바꾸기 키 아이콘입니다. 키로 바꾸지 않는 목록(분류 목록)에는 두지 않습니다. */
+	/** 탭 바꾸기 키 아이콘입니다. 아이콘을 보이지 않는 목록(분류 목록)에는 두지 않습니다. */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonActionWidget> PreviousTabAction;
 

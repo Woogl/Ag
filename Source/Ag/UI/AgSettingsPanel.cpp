@@ -38,4 +38,9 @@ void UAgSettingsPanel::HandleCategorySelected(FName TabId)
 		CategoryList->SetNavigationRuleBase(EUINavigation::Right, EUINavigationRule::Stop);
 	}
 	CategoryContent->SetNavigationRuleExplicit(EUINavigation::Left, CategoryButton);
+	// W·S로 분류를 바꾸면 포커스가 이전 분류 이름이나 숨겨진 내용에 남으므로 고른 분류의 이름으로 옮깁니다.
+	if (HasFocusedDescendants() && !CategoryButton->HasAnyUserFocus())
+	{
+		CategoryButton->SetFocus();
+	}
 }
