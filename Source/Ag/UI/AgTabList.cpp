@@ -3,10 +3,10 @@
 #include "UI/AgTabList.h"
 
 #include "Ag.h"
+#include "Blueprint/UserWidget.h"
 #include "CommonActionWidget.h"
-#include "CommonActivatableWidget.h"
 #include "CommonAnimatedSwitcher.h"
-#include "Components/HorizontalBox.h"
+#include "Components/PanelWidget.h"
 #include "UI/AgTabButton.h"
 
 UAgTabList::UAgTabList(const FObjectInitializer& ObjectInitializer)
@@ -19,8 +19,14 @@ void UAgTabList::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
 
-	PreviousTabAction->SetEnhancedInputAction(PreviousTabEnhancedInputAction);
-	NextTabAction->SetEnhancedInputAction(NextTabEnhancedInputAction);
+	if (PreviousTabAction)
+	{
+		PreviousTabAction->SetEnhancedInputAction(PreviousTabEnhancedInputAction);
+	}
+	if (NextTabAction)
+	{
+		NextTabAction->SetEnhancedInputAction(NextTabEnhancedInputAction);
+	}
 }
 
 void UAgTabList::NativeConstruct()
@@ -33,12 +39,12 @@ void UAgTabList::NativeConstruct()
 		UE_LOG(LogAg, Error, TEXT("%s: no linked switcher, so the tabs have nowhere to show their content."), *GetName());
 		return;
 	}
-	// 엔진은 화면에서 빠질 때 탭을 모두 지우므로 붙을 때마다 다시 등록합니다. 내용 화면은 처음 한 번만 만들어 상태를 이어 갑니다.
+	// 엔진은 화면에서 빠질 때 탭을 모두 지우므로 붙을 때마다 다시 등록합니다. 내용 위젯은 처음 한 번만 만들어 상태를 이어 갑니다.
 	for (int32 Index = 0; Index < Tabs.Num(); ++Index)
 	{
 		if (!ContentWidgets.IsValidIndex(Index))
 		{
-			UCommonActivatableWidget* Content = CreateWidget<UCommonActivatableWidget>(this, Tabs[Index].Content);
+			UUserWidget* Content = CreateWidget<UUserWidget>(this, Tabs[Index].Content);
 			Switcher->AddChild(Content);
 			ContentWidgets.Add(Content);
 		}
@@ -57,5 +63,5 @@ void UAgTabList::HandleTabCreation_Implementation(FName TabNameID, UCommonButton
 
 	const int32 Index = GetRegisteredTabsByID().FindChecked(TabNameID).TabIndex;
 	CastChecked<UAgTabButton>(TabButton)->SetLabel(Tabs[Index].Label);
-	TabButtonBox->AddChildToHorizontalBox(TabButton);
+	TabButtonBox->AddChild(TabButton);
 }

@@ -27,12 +27,12 @@ void UAgTabButton::NativeOnSelected(bool bBroadcast)
 {
 	Super::NativeOnSelected(bBroadcast);
 
-	Underline->SetVisibility(ESlateVisibility::HitTestInvisible);
+	SelectionMark->SetVisibility(ESlateVisibility::HitTestInvisible);
 }
 
 void UAgTabButton::NativeOnDeselected(bool bBroadcast)
 {
 	Super::NativeOnDeselected(bBroadcast);
 
-	Underline->SetVisibility(ESlateVisibility::Hidden);
+	SelectionMark->SetVisibility(ESlateVisibility::Hidden);
 }

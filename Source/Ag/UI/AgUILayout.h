@@ -12,8 +12,7 @@ class UCommonActivatableWidgetStack;
 enum class EAgUILayer : uint8
 {
 	HUD,
-	Menu,
-	Modal
+	Menu
 };
 
 UCLASS(Abstract, meta = (DisableNativeTick))
@@ -31,7 +30,4 @@ protected:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonActivatableWidgetStack> MenuStack;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UCommonActivatableWidgetStack> ModalStack;
 };

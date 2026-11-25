@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <!-- 불투명한 검은 배경 (메뉴 화면 공통 양식) -->
+  <rect width="1920" height="1080" fill="#000000"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">적 선택 화면 (LV_SimulationRoom) · 화면이 떠 있는 동안 게임은 멈춤 · 기준 해상도 1920 × 1080</text>
+
+  <!-- 제목: 위쪽은 화면 여백, Large 흰 굵은 글자 + 아래 8px의 4px 밑줄 -->
+  <text x="960" y="80" font-size="32" font-weight="700" fill="#FFFFFF" text-anchor="middle">Enemy Select</text>
+  <rect x="858" y="96" width="204" height="4" fill="#FFFFFF"/>
+
+  <!-- 적 카드 다섯 장: 300 × 450px, 사이 24px, 위쪽은 제목 아래 72px -->
+  <rect x="162" y="172" width="300" height="450" rx="8" fill="#000000" stroke="#FFFFFF" stroke-width="3"/>
+  <path d="M162 562 H462" stroke="#3a4250" stroke-width="1"/>
+  <text x="312" y="400" font-size="128" fill="#8a929d" text-anchor="middle">+</text>
+  <text x="312" y="603" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Empty</text>
+  <rect x="486" y="172" width="300" height="450" rx="8" fill="#000000" stroke="#9aa4b1" stroke-width="1.5"/>
+  <path d="M486 562 H786" stroke="#3a4250" stroke-width="1"/>
+  <text x="636" y="400" font-size="128" fill="#8a929d" text-anchor="middle">+</text>
+  <text x="636" y="603" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Empty</text>
+  <rect x="810" y="172" width="300" height="450" rx="8" fill="#000000" stroke="#9aa4b1" stroke-width="1.5"/>
+  <path d="M810 562 H1110" stroke="#3a4250" stroke-width="1"/>
+  <text x="960" y="400" font-size="128" fill="#8a929d" text-anchor="middle">+</text>
+  <text x="960" y="603" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Empty</text>
+  <rect x="1134" y="172" width="300" height="450" rx="8" fill="#000000" stroke="#9aa4b1" stroke-width="1.5"/>
+  <path d="M1134 562 H1434" stroke="#3a4250" stroke-width="1"/>
+  <text x="1284" y="400" font-size="128" fill="#8a929d" text-anchor="middle">+</text>
+  <text x="1284" y="603" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Empty</text>
+  <rect x="1458" y="172" width="300" height="450" rx="8" fill="#000000" stroke="#9aa4b1" stroke-width="1.5"/>
+  <path d="M1458 562 H1758" stroke="#3a4250" stroke-width="1"/>
+  <text x="1608" y="400" font-size="128" fill="#8a929d" text-anchor="middle">+</text>
+  <text x="1608" y="603" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Empty</text>
+  <text x="162" y="652" font-size="16" fill="#9aa4b1">↑ 처음 선택된 것 (배치 자리 1). 카드 바탕은 검은색이고 드롭다운 테두리로 구분</text>
+
+  <!-- Start, Return to Title 버튼 (모든 자리가 Empty이면 Start는 흐리게) -->
+  <g font-size="32" font-weight="700" text-anchor="middle">
+  <g opacity="0.4">
+    <rect x="522" y="670" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="732" y="717" fill="#c9d1db">Start</text>
+  </g>
+    <rect x="990" y="670" width="420" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="1200" y="717" fill="#c9d1db">Return to Title</text>
+  </g>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="18" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, 방향키 / 실행: 좌클릭, Enter / Esc: 아무 일도 하지 않음</text>
+</svg>

@@ -7,8 +7,7 @@
 #include "AgTitleScreen.generated.h"
 
 class UAgButton;
-class UAgControlsPopup;
-class UAgSettingsPopup;
+class UAgSettingsScreen;
 class UAgStageSelectScreen;
 
 UCLASS(Abstract, meta = (DisableNativeTick))
@@ -27,16 +26,10 @@ protected:
 	TSubclassOf<UAgStageSelectScreen> StageSelectScreenClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UAgControlsPopup> ControlsPopupClass;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UAgSettingsPopup> SettingsPopupClass;
+	TSubclassOf<UAgSettingsScreen> SettingsScreenClass;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> PlayButton;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgButton> ControlsButton;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgButton> SettingsButton;
@@ -46,6 +39,5 @@ protected:
 
 private:
 	void OpenStageSelect();
-	void OpenControls();
 	void OpenSettings();
 };

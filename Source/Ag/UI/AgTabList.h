@@ -8,8 +8,8 @@
 
 class UAgTabButton;
 class UCommonActionWidget;
-class UCommonActivatableWidget;
-class UHorizontalBox;
+class UPanelWidget;
+class UUserWidget;
 
 USTRUCT()
 struct FAgTab
@@ -20,12 +20,12 @@ struct FAgTab
 	FText Label;
 
 	UPROPERTY(EditAnywhere, Category = "Tab")
-	TSubclassOf<UCommonActivatableWidget> Content;
+	TSubclassOf<UUserWidget> Content;
 };
 
 /**
- * 탭 바입니다. 탭마다 내용 화면을 한 번 만들어 연결된 전환기에 넣고, 탭 이름 버튼을 양 끝의 탭 바꾸기 키 아이콘 사이에
- * 늘어놓습니다. 화면에 붙을 때마다 기본 탭을 고르고, 탭을 고르면 엔진이 전환기의 화면을 바꿉니다.
+ * 탭 목록입니다(일시정지 메뉴의 탭 바, Settings의 분류 목록). 탭마다 내용 위젯을 한 번 만들어 연결된 전환기에 넣고, 탭 이름
+ * 버튼을 버튼 상자에 늘어놓습니다. 화면에 붙을 때마다 기본 탭을 고르고, 탭을 고르면 엔진이 전환기의 내용을 바꿉니다.
  */
 UCLASS(Abstract, meta = (DisableNativeTick))
 class UAgTabList : public UCommonTabListWidgetBase
@@ -49,16 +49,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Tab")
 	TSubclassOf<UAgTabButton> TabButtonClass;
 
-	UPROPERTY(meta = (BindWidget))
+	/** 탭 바꾸기 키 아이콘입니다. 키로 바꾸지 않는 목록(분류 목록)에는 두지 않습니다. */
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonActionWidget> PreviousTabAction;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UHorizontalBox> TabButtonBox;
+	TObjectPtr<UPanelWidget> TabButtonBox;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UCommonActionWidget> NextTabAction;
 
 private:
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UCommonActivatableWidget>> ContentWidgets;
+	TArray<TObjectPtr<UUserWidget>> ContentWidgets;
 };

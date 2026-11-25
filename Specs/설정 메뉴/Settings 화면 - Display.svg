@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <!-- 불투명한 검은 배경: 일시정지 메뉴와 같음 -->
+  <rect width="1920" height="1080" fill="#000000"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">Settings 화면 (LV_FrontEnd) · Display 분류 · 기준 해상도 1920 × 1080</text>
+
+  <!-- 제목: 탭 바 자리, 고른 탭 이름과 같은 모양(흰 굵은 글자 + 아래 8px의 4px 밑줄), 키 아이콘 없음 -->
+  <text x="960" y="80" font-size="32" font-weight="700" fill="#FFFFFF" text-anchor="middle">Settings</text>
+  <rect x="895" y="96" width="130" height="4" fill="#FFFFFF"/>
+
+  <!-- Settings 내용: 화면 가운데, 위쪽은 일시정지 메뉴의 Settings 탭과 같은 높이 -->
+  <!-- 분류 목록: Large, 분류 사이 24px, 고른 분류는 흰 굵은 글자 + 왼쪽 16px의 4px 세로 막대 -->
+  <text x="547" y="203" font-size="32" fill="#8a929d">Controls</text>
+  <rect x="527" y="240" width="4" height="32" fill="#FFFFFF"/>
+  <text x="547" y="267" font-size="32" font-weight="700" fill="#FFFFFF">Display</text>
+  <text x="547" y="331" font-size="32" fill="#8a929d">Language</text>
+  <!-- 내용 칸: 분류 목록 오른쪽 48px, 크기는 가장 큰 분류(Controls)에 맞춰 고정 -->
+  <rect x="745" y="172" width="648" height="546" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.5"/>
+  <!-- Display: 항목 이름 Large, 드롭다운은 가장 긴 이름의 오른쪽 48px에서 시작, 줄 사이 16px -->
+  <text x="745" y="215" font-size="32" fill="#FFFFFF">Window Mode</text>
+  <g>
+    <rect x="1003" y="172" width="360" height="64" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="1027" y="215" font-size="32" fill="#FFFFFF">Fullscreen</text>
+    <polygon points="1325,198 1341,198 1333,210" fill="#c9d1db"/>
+  </g>
+  <text x="745" y="295" font-size="32" fill="#FFFFFF">Resolution</text>
+  <g>
+    <rect x="1003" y="252" width="360" height="64" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="1027" y="295" font-size="32" fill="#FFFFFF">2560 × 1440</text>
+    <polygon points="1325,278 1341,278 1333,290" fill="#c9d1db"/>
+  </g>
+  <text x="1379" y="292" font-size="16" fill="#9aa4b1">← 표의 해상도 가운데 지금 창 모드에서 고를 수 있는 것</text>
+
+  <!-- Back 버튼: Settings 내용 아래 32px -->
+  <rect x="840" y="750" width="240" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="960" y="797" font-size="32" text-anchor="middle" fill="#c9d1db" font-weight="700">Back</text>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="18" fill="#9aa4b1" text-anchor="middle">(참고) 열면 Controls 분류 · 분류 고르기: 좌클릭, 분류 목록에서 ↑·↓ · 닫기: Back 버튼, Esc (타이틀의 Settings 버튼으로 돌아감)</text>
+</svg>

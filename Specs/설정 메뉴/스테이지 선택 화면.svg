@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <!-- 불투명한 검은 배경 (메뉴 화면 공통 양식) -->
+  <rect width="1920" height="1080" fill="#000000"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">스테이지 선택 화면 (LV_FrontEnd) · 기준 해상도 1920 × 1080</text>
+
+  <!-- 제목: 위쪽은 화면 여백, Large 흰 굵은 글자 + 아래 8px의 4px 밑줄 -->
+  <text x="960" y="80" font-size="32" font-weight="700" fill="#FFFFFF" text-anchor="middle">Stage Select</text>
+  <rect x="862" y="96" width="196" height="4" fill="#FFFFFF"/>
+
+  <!-- 스테이지 드롭다운: 위쪽은 제목 아래 72px, 처음 선택됨 -->
+  <rect x="708" y="172" width="504" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+  <text x="732" y="219" font-size="32" font-weight="700" fill="#FFFFFF">Fortress Breach</text>
+  <polygon points="1174,202 1190,202 1182,214" fill="#FFFFFF"/>
+  <text x="1228" y="214" font-size="16" fill="#9aa4b1">← 처음 선택된 것</text>
+
+  <!-- Start, Back 버튼 -->
+  <g font-size="32" font-weight="700" text-anchor="middle">
+    <rect x="708" y="340" width="228" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="822" y="387" fill="#c9d1db">Start</text>
+    <rect x="984" y="340" width="228" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="1098" y="387" fill="#c9d1db">Back</text>
+  </g>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="18" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, 방향키 / 실행: 좌클릭, Enter / Esc: Back과 같음</text>
+</svg>
