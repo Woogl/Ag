@@ -80,6 +80,19 @@ protected:
 	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
 };
 
+/** 락온 중이 아니고 출처에게 이동 입력이 있으면, 입력 방향에서 수평으로 MaxAngle보다 벗어난 대상을 거릅니다. */
+UCLASS()
+class UAgTargetingFilterTask_MoveInput : public UTargetingFilterTask_BasicFilterTemplate
+{
+	GENERATED_BODY()
+
+protected:
+	virtual bool ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const override;
+
+	UPROPERTY(EditAnywhere, Category = "Target Filter")
+	float MaxAngle = 0.f;
+};
+
 UCLASS()
 class UAgTargetingFilterTask_OnScreen : public UTargetingFilterTask_BasicFilterTemplate
 {

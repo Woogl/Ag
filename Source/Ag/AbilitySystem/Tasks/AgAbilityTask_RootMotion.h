@@ -73,6 +73,7 @@ private:
 	/** 행동 대상이 추적 거리 밖이면 락온 대상으로 바뀌며, 그때는 다가가지 않고 바라보기만 합니다(bFacingOnly). */
 	TWeakObjectPtr<AActor> FacingTarget;
 	FVector MoveInputDirection = FVector::ZeroVector;
+	bool bFollowMoveInput = false;
 	bool bFacingOnly = false;
 
 	FName WarpTargetName;

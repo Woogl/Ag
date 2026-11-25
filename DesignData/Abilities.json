@@ -57,7 +57,7 @@
       "Sections": {
         "Default": [
           {"Task": "SendGameplayEvent", "Start": 0, "Event": "Event.BasicAttackStarted", "Targets": {"Preset": "Enemy", "Range": 5000}},
-          {"Task": "RootMotion", "Start": 0, "End": 0.15, "bWarpTranslation": true},
+          {"Task": "RootMotion", "Start": 0, "End": 0.15, "RotationMethod": "Slerp", "bWarpTranslation": true},
           {"Task": "ApplyEffect", "Start": 0, "End": 0.35, "Effect": "Busy"},
           {"Task": "WeaponHit", "Start": 0.15, "End": 0.23, "Damage": {"HPMultiplier": 0.7, "PPMultiplier": 0.7, "HitReaction": "Flinch", "AttackType": "Normal"}}
         ]

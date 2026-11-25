@@ -185,7 +185,8 @@ void AAgPlayerCharacter::Move(const FInputActionValue& Value)
 		return;
 	}
 
-	// 회피가 누른 키 쪽으로 미끄러지고 Input.Move로 회피 섹션을 고르므로, 이동을 무시할 때도 방향과 태그는 정합니다.
+	// 회피가 누른 키 쪽으로 미끄러지고 공격이 누른 키 쪽으로 돌며 Input.Move로 회피 섹션을 고르므로, 이동을 무시할 때도
+	// 방향과 태그는 정합니다.
 	const FVector2D Input = Value.Get<FVector2D>();
 	const FRotationMatrix YawMatrix(FRotator(0.f, Controller->GetControlRotation().Yaw, 0.f));
 	const FVector Forward = YawMatrix.GetUnitAxis(EAxis::X);

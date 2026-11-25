@@ -39,6 +39,13 @@ void UAgAbilityTask_RootMotion::Activate()
 		AActor* ActionTarget = AgAbility->GetActionTarget();
 		bFacingOnly = !ActionTarget || (Window && !AgTargeting::IsInRange(*Character, *ActionTarget, TargetingRange));
 		FacingTarget = bFacingOnly ? Character->GetLockOnTarget() : ActionTarget;
+		// 공격이 바라볼 대상이 없으면 이동 입력 쪽으로 돌고, 구간 동안 바뀌는 입력을 따라갑니다. 피격 반응처럼 대상을
+		// 고르지 않는 행동은 입력을 따르지 않습니다.
+		if (!FacingTarget.IsValid() && AgAbility->GetDefinition().Targeting)
+		{
+			MoveInputDirection = Character->GetMoveInputDirection().GetSafeNormal2D();
+			bFollowMoveInput = !MoveInputDirection.IsNearlyZero();
+		}
 	}
 	else if (Params.Direction == EAgRootMotionDirection::MoveInput)
 	{
@@ -120,7 +127,16 @@ void UAgAbilityTask_RootMotion::TickTask(float DeltaTime)
 	const float Position = Instance->GetPosition();
 	LastPosition = Position;
 
-	if (Params.Direction == EAgRootMotionDirection::Target)
+	if (bFollowMoveInput)
+	{
+		// 입력을 떼면 마지막 입력 방향을 지킵니다.
+		const FVector Input = Character->GetMoveInputDirection().GetSafeNormal2D();
+		if (!Input.IsNearlyZero())
+		{
+			MoveInputDirection = Input;
+		}
+	}
+	else if (Params.Direction == EAgRootMotionDirection::Target)
 	{
 		const AActor* Goal = FacingTarget.Get();
 		if (!Goal || (!bFacingOnly && !AgTargeting::IsInRange(*Character, *Goal, TargetingRange)))
@@ -184,8 +200,7 @@ void UAgAbilityTask_RootMotion::OnDestroy(bool bInOwnerFinished)
 
 bool UAgAbilityTask_RootMotion::HasGoal() const
 {
-	return Params.Direction == EAgRootMotionDirection::Back ||
-	       (Params.Direction == EAgRootMotionDirection::Target ? FacingTarget.IsValid() : !MoveInputDirection.IsNearlyZero());
+	return Params.Direction == EAgRootMotionDirection::Back || FacingTarget.IsValid() || !MoveInputDirection.IsNearlyZero();
 }
 
 FVector UAgAbilityTask_RootMotion::GetFacingDirection() const

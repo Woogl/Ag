@@ -239,6 +239,24 @@ bool UAgTargetingFilterTask_LockOnTarget::ShouldFilterTarget(const FTargetingReq
 	return LockOnTarget && TargetData.HitResult.GetActor() != LockOnTarget;
 }
 
+bool UAgTargetingFilterTask_MoveInput::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
+{
+	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
+	const AAgCharacterBase* Owner = Source ? Cast<AAgCharacterBase>(Source->SourceActor) : nullptr;
+	const AActor* Candidate = TargetData.HitResult.GetActor();
+	if (!Owner || !Candidate)
+	{
+		return true;
+	}
+	const FVector Input = Owner->GetMoveInputDirection().GetSafeNormal2D();
+	if (Owner->GetLockOnTarget() || Input.IsNearlyZero())
+	{
+		return false;
+	}
+	const FVector ToCandidate = (Candidate->GetActorLocation() - Owner->GetActorLocation()).GetSafeNormal2D();
+	return FVector::DotProduct(Input, ToCandidate) < FMath::Cos(FMath::DegreesToRadians(MaxAngle));
+}
+
 bool UAgTargetingFilterTask_OnScreen::ShouldFilterTarget(const FTargetingRequestHandle& TargetingHandle, const FTargetingDefaultResultData& TargetData) const
 {
 	const FTargetingSourceContext* Source = FTargetingSourceContext::Find(TargetingHandle);
