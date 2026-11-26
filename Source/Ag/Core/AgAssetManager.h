@@ -44,6 +44,17 @@ public:
 		return CastChecked<T>(LoadData(*T::StaticClass(), Key));
 	}
 
+	/**
+	 * LoadData<T>(Key)가 읽을 에셋을 비동기로 미리 읽고, 끝나면 OnLoaded를 부릅니다. 그 뒤의 LoadData는 에셋을 읽느라 멈추지
+	 * 않습니다. 돌려준 핸들을 놓으면 요청이 취소되므로 OnLoaded에서 LoadData로 받아 붙잡을 때까지 들고 있습니다. 읽을 에셋이
+	 * 없으면 OnLoaded를 바로 부르고 빈 핸들을 돌려줍니다.
+	 */
+	template <typename T>
+	TSharedPtr<FStreamableHandle> PreloadData(FName Key, FStreamableDelegate OnLoaded)
+	{
+		return PreloadData(*T::StaticClass(), Key, MoveTemp(OnLoaded));
+	}
+
 #if WITH_EDITOR
 	AG_API void ReloadJsonData();
 	FSimpleMulticastDelegate OnJsonDataReloaded;
@@ -57,6 +68,8 @@ private:
 	UAgJsonData* FindData(const UClass& Class) const;
 
 	UAgJsonData* LoadData(const UClass& Class, FName Key);
+
+	TSharedPtr<FStreamableHandle> PreloadData(const UClass& Class, FName Key, FStreamableDelegate OnLoaded);
 
 	bool LoadJsonData(bool bInitialLoad);
 

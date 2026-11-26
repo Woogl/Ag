@@ -54,6 +54,12 @@ public:
 	/** `SpawnActors.json`의 그 ID 항목을 클래스와, 그 액터 클래스가 정한 구조체의 속성값으로 읽습니다. */
 	bool ReadSpawnActor(const FString& Path, FName Id, FAgSpawnActorDefinition& Out);
 
+	/** 파싱해 둔 파일에서 그 ID의 항목 아래에 적힌 글자 값을 모두 모읍니다. 파일에 없는 ID는 건너뜁니다. */
+	void GatherStrings(const FString& Path, TConstArrayView<FName> Ids, TArray<FString>& OutStrings) const;
+
+	/** 글자 가운데 있는 패키지를 가리키는 경로만 더합니다. 에셋은 읽지 않습니다. */
+	static void AddAssetPaths(TConstArrayView<FString> Strings, TArray<FSoftObjectPath>& OutPaths);
+
 	/** 다시 읽은 데이터를 기존 객체에 복사할 때도 같은 속성만 옮겨야, 읽은 값이 버려지지 않습니다. */
 	static bool IsField(const FProperty& Property);
 

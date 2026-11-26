@@ -8,7 +8,10 @@
 #include "Character/AgPlayerCharacter.h"
 #include "Camera/AgPlayerCameraManager.h"
 #include "Combat/AgTimeSubsystem.h"
+#include "CommonActivatableWidget.h"
 #include "Engine/AssetManager.h"
+#include "EngineUtils.h"
+#include "Game/AgEnemySpawner.h"
 #include "Game/AgGameState.h"
 #include "Game/AgPlayerController.h"
 #include "GameMapsSettings.h"
@@ -120,6 +123,41 @@ void AAgGameMode::HandleCharacterDied(AAgCharacterBase& DeadCharacter)
 	}
 }
 
+void AAgGameMode::RespawnEnemies()
+{
+	// 전투 서브시스템은 그룹원이 모두 빠져야 그 그룹의 인식 기록을 지우므로, 모두 지운 뒤에 생성합니다.
+	for (TActorIterator<AAgEnemySpawner> It(GetWorld()); It; ++It)
+	{
+		It->DestroyEnemy();
+	}
+	for (TActorIterator<AAgEnemySpawner> It(GetWorld()); It; ++It)
+	{
+		It->Spawn();
+	}
+}
+
+void AAgGameMode::StartPlay()
+{
+	// Super가 모든 액터의 BeginPlay를 부르고, 스포너는 그때 에셋 읽기를 요청합니다.
+	Super::StartPlay();
+
+	StartPlayTime = FPlatformTime::Seconds();
+	for (TActorIterator<AAgEnemySpawner> It(GetWorld()); It; ++It)
+	{
+		if (It->IsSpawnPending())
+		{
+			++PendingSpawnerCount;
+			It->OnSpawnFinished.AddUObject(this, &ThisClass::HandleSpawnFinished);
+		}
+	}
+	SpawnerCount = PendingSpawnerCount;
+	AAgPlayerController* PlayerController = Cast<AAgPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	if (PendingSpawnerCount > 0 && PlayerController)
+	{
+		LoadingScreen = PlayerController->PushScreen(EAgUILayer::Menu, LoadingScreenClass);
+	}
+}
+
 void AAgGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
@@ -141,6 +179,21 @@ void AAgGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewP
 bool AAgGameMode::IsStageCleared(const AAgCharacterBase& DeadCharacter) const
 {
 	return DeadCharacter.IsA<AAgBossCharacter>();
+}
+
+void AAgGameMode::HandleSpawnFinished()
+{
+	// 레벨 시작 뒤에 다시 읽기를 기다린 스포너의 알림은 세지 않습니다.
+	if (PendingSpawnerCount == 0 || --PendingSpawnerCount > 0)
+	{
+		return;
+	}
+	UE_LOG(LogAg, Log, TEXT("Stage ready: %d spawners finished %.3f s after StartPlay."), SpawnerCount, FPlatformTime::Seconds() - StartPlayTime);
+	if (LoadingScreen)
+	{
+		LoadingScreen->DeactivateWidget();
+		LoadingScreen = nullptr;
+	}
 }
 
 void AAgGameMode::ShowResult()

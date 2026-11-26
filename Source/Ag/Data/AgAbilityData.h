@@ -247,6 +247,8 @@ public:
 
 	virtual bool ReadJson(FAgJsonReader& Reader, FName Key) override;
 
+	virtual void GatherAssetPaths(const FAgJsonReader& Reader, FName Key, TArray<FSoftObjectPath>& OutPaths) const override;
+
 	UPROPERTY(Transient, VisibleAnywhere, Category = "Abilities")
 	TMap<FName, FAgAbilityData> Abilities;
 };

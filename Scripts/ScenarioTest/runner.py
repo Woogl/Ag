@@ -36,7 +36,7 @@ class Ctx:
 
     def __init__(self):
         self.rows, self.notes, self.fps = [], [], {}
-        self.t0 = self.warm = None
+        self.t0 = self.warm = self.spawn_wait_start = None
         self.step_index = 0
         self.window_locked = False
         self.chars, self.asc, self.aset = {}, {}, {}
@@ -256,6 +256,11 @@ def _setup():
             break
     else:
         return  # 플레이어가 아직 없다. ctx.warm이 None으로 남아 다음 프레임에 다시 온다.
+    # 적 스포너는 에셋을 비동기로 읽은 뒤 적을 생성하므로, 모두 생성할 때까지(늦어도 10초) 기다린다.
+    spawners = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.load_class(None, "/Script/Ag.AgEnemySpawner"))
+    ctx.spawn_wait_start = ctx.spawn_wait_start or time.time()
+    if time.time() - ctx.spawn_wait_start < 10.0 and any(not s.get_editor_property("Enemy") for s in spawners):
+        return
     ctx.world, ctx.pc = world, pc
     ctx.player = pc.get_controlled_pawn()
     boss_class = unreal.load_class(None, "/Script/Ag.AgBossCharacter")

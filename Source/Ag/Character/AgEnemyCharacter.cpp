@@ -26,13 +26,7 @@
 #include "UI/AgNameplateComponent.h"
 #include "UI/AgNameplateWidget.h"
 
-#if WITH_EDITORONLY_DATA
-#include "AI/AgPatrolPreviewComponent.h"
-#include "Character/AgEnemySightPreviewComponent.h"
-#endif
-
 #if WITH_EDITOR
-#include "EngineUtils.h"
 #include "Logging/MessageLog.h"
 #include "Logging/TokenizedMessage.h"
 #endif
@@ -70,11 +64,6 @@ AAgEnemyCharacter::AAgEnemyCharacter()
 	}
 
 	Nameplate->SetPivot(FVector2D(0.5f, 1.f));
-
-#if WITH_EDITORONLY_DATA
-	SightPreview = CreateEditorOnlyDefaultSubobject<UAgEnemySightPreviewComponent>(TEXT("SightPreview"));
-	PatrolPreview = CreateEditorOnlyDefaultSubobject<UAgPatrolPreviewComponent>(TEXT("PatrolPreview"));
-#endif
 }
 
 bool AAgEnemyCharacter::CanLosePP() const
@@ -163,6 +152,12 @@ bool AAgEnemyCharacter::IsRunningPattern() const
 	return false;
 }
 
+void AAgEnemyCharacter::SetPlacement(AAgPatrolRoute* InPatrolRoute, FName InGroupId)
+{
+	PatrolRoute = InPatrolRoute;
+	GroupId = InGroupId;
+}
+
 void AAgEnemyCharacter::PreInitializeComponents()
 {
 	Super::PreInitializeComponents();
@@ -189,38 +184,13 @@ FVector AAgEnemyCharacter::GetTargetLocation(AActor* RequestedBy) const
 }
 
 #if WITH_EDITOR
-void AAgEnemyCharacter::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(ThisClass, PatrolRoute))
-	{
-		TArray<TSharedRef<FTokenizedMessage>> Messages;
-		CollectPatrolProblems(Messages);
-		AAgPatrolRoute::ReportEditProblems(Messages);
-	}
-}
-
-void AAgEnemyCharacter::PostEditMove(bool bFinished)
-{
-	Super::PostEditMove(bFinished);
-
-	if (bFinished)
-	{
-		TArray<TSharedRef<FTokenizedMessage>> Messages;
-		CollectPatrolProblems(Messages);
-		AAgPatrolRoute::ReportEditProblems(Messages);
-	}
-}
-
 void AAgEnemyCharacter::CheckForErrors()
 {
 	Super::CheckForErrors();
 
-	TArray<TSharedRef<FTokenizedMessage>> Messages;
-	CollectPatrolProblems(Messages);
-	CollectGroupProblems(Messages);
-	FMessageLog(TEXT("MapCheck")).AddMessages(Messages);
+	// 맵 검사는 편집 중인 레벨의 액터에 하므로, 여기 오는 적은 레벨에 직접 놓인 것입니다.
+	FMessageLog(TEXT("MapCheck"))
+		.AddMessage(AAgPatrolRoute::MakeWarning(*this, TEXT("Place an AgEnemySpawner instead. An enemy placed in the level does not come back when the player rests.")));
 }
 #endif
 
@@ -422,43 +392,3 @@ bool AAgEnemyCharacter::IsNameplateInView(const APlayerController& PlayerControl
 	PlayerController.GetPlayerViewPoint(ViewLocation, ViewRotation);
 	return !GetWorld()->LineTraceTestByObjectType(ViewLocation, GetActorLocation(), FCollisionObjectQueryParams(ECC_WorldStatic));
 }
-
-#if WITH_EDITOR
-void AAgEnemyCharacter::CollectPatrolProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const
-{
-	if (!PatrolRoute || PatrolRoute->GetPointCount() == 0)
-	{
-		return;
-	}
-	// CharacterData는 플레이 시작 때 연결되므로 편집 중에는 ID로 정본 데이터를 조회합니다.
-	const UAgCharacterData* Data = UAgCharacterData::Find(GetCharacterDataId());
-	if (Data && Data->Attributes.MOV <= 0.f)
-	{
-		OutMessages.Add(AAgPatrolRoute::MakeWarning(*this, TEXT("MOV is 0, so this enemy does not walk its patrol route.")));
-		return;
-	}
-	const int32 NearestIndex = PatrolRoute->FindNearestPoint(GetActorLocation());
-	TArray<FVector> Path;
-	if (AAgPatrolRoute::FindWalkPath(*GetWorld(), GetActorLocation(), PatrolRoute->GetPointLocation(NearestIndex), Path) == EAgPatrolPathResult::Unreachable)
-	{
-		OutMessages.Add(AAgPatrolRoute::MakeWarning(
-			*this, FString::Printf(TEXT("Cannot walk from the start position to patrol point %d of %s."), NearestIndex + 1, *PatrolRoute->GetActorLabel())));
-	}
-}
-
-void AAgEnemyCharacter::CollectGroupProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const
-{
-	if (GroupId.IsNone())
-	{
-		return;
-	}
-	for (TActorIterator<AAgEnemyCharacter> It(GetWorld()); It; ++It)
-	{
-		if (*It != this && It->GroupId == GroupId)
-		{
-			return;
-		}
-	}
-	OutMessages.Add(AAgPatrolRoute::MakeWarning(*this, FString::Printf(TEXT("No other loaded enemy has group '%s'. Check the name."), *GroupId.ToString())));
-}
-#endif

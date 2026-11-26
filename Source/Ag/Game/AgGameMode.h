@@ -10,6 +10,7 @@ class AAgCharacterBase;
 class UAgBattleResultScreen;
 class UAgHUDWidget;
 class UAgTitleScreen;
+class UCommonActivatableWidget;
 
 struct FAgStage
 {
@@ -39,6 +40,11 @@ public:
 	/** 죽은 캐릭터가 부릅니다. 레벨에 놓였든 플레이 중에 생겼든 사망은 모두 이리로 옵니다. */
 	void HandleCharacterDied(AAgCharacterBase& DeadCharacter);
 
+	/** 스포너가 생성한 적을 모두 지우고 다시 생성해, 레벨을 처음 열었을 때의 상태로 되돌립니다. */
+	void RespawnEnemies();
+
+	virtual void StartPlay() override;
+
 protected:
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 
@@ -54,9 +60,24 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgBattleResultScreen> BattleResultScreenClass;
 
+	/** 레벨을 연 뒤 스포너가 적을 모두 생성할 때까지 띄우는 화면입니다. */
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UCommonActivatableWidget> LoadingScreenClass;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Result")
 	float StageResultPresentationTime = 4.f;
 
 private:
+	void HandleSpawnFinished();
+
 	void ShowResult();
+
+	UPROPERTY()
+	TObjectPtr<UCommonActivatableWidget> LoadingScreen;
+
+	int32 PendingSpawnerCount = 0;
+
+	int32 SpawnerCount = 0;
+
+	double StartPlayTime = 0.0;
 };

@@ -182,6 +182,20 @@ UAgJsonData* UAgAssetManager::LoadData(const UClass& Class, FName Key)
 	return Loaded;
 }
 
+TSharedPtr<FStreamableHandle> UAgAssetManager::PreloadData(const UClass& Class, FName Key, FStreamableDelegate OnLoaded)
+{
+	TArray<FSoftObjectPath> Paths;
+	const FAgJsonReader Reader(*this, JsonDocuments);
+	Class.GetDefaultObject<UAgJsonData>()->GatherAssetPaths(Reader, Key, Paths);
+	// 엔진은 빈 요청에는 완료를 알리지 않습니다.
+	if (Paths.IsEmpty())
+	{
+		OnLoaded.ExecuteIfBound();
+		return nullptr;
+	}
+	return GetStreamableManager().RequestAsyncLoad(MoveTemp(Paths), MoveTemp(OnLoaded));
+}
+
 bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 {
 	// 모든 파일을 먼저 파싱해 두므로 정의 ID 검사는 읽는 순서와 관계없습니다. 오류를 모두 알리도록 실패해도 다음으로 갑니다.

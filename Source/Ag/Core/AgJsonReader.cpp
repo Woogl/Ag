@@ -225,6 +225,58 @@ bool FAgJsonReader::ReadSpawnActor(const FString& Path, FName Id, FAgSpawnActorD
 	return ReadFields(EntryPath, **Object, DataType, Out.Data.GetMutableMemory(), TEXT("Class"));
 }
 
+void FAgJsonReader::GatherStrings(const FString& Path, TConstArrayView<FName> Ids, TArray<FString>& OutStrings) const
+{
+	const FAgJsonDocument* Document = FindDocument(Path);
+	if (!Document)
+	{
+		return;
+	}
+	TArray<TSharedPtr<FJsonValue>> Pending;
+	for (FName Id : Ids)
+	{
+		if (const TSharedPtr<FJsonValue>* Entry = Document->Entries.Find(Id))
+		{
+			Pending.Add(*Entry);
+		}
+	}
+	while (!Pending.IsEmpty())
+	{
+		const TSharedPtr<FJsonValue> Value = Pending.Pop();
+		if (Value->Type == EJson::String)
+		{
+			OutStrings.Add(Value->AsString());
+		}
+		else if (Value->Type == EJson::Array)
+		{
+			Pending.Append(Value->AsArray());
+		}
+		else if (Value->Type == EJson::Object)
+		{
+			for (const TPair<FJsonObject::FStringType, TSharedPtr<FJsonValue>>& Field : Value->AsObject()->Values)
+			{
+				Pending.Add(Field.Value);
+			}
+		}
+	}
+}
+
+void FAgJsonReader::AddAssetPaths(TConstArrayView<FString> Strings, TArray<FSoftObjectPath>& OutPaths)
+{
+	for (const FString& String : Strings)
+	{
+		if (!String.StartsWith(TEXT("/")))
+		{
+			continue;
+		}
+		const FSoftObjectPath AssetPath(String);
+		if (AssetPath.IsValid() && FPackageName::DoesPackageExist(AssetPath.GetLongPackageName()))
+		{
+			OutPaths.AddUnique(AssetPath);
+		}
+	}
+}
+
 bool FAgJsonReader::IsField(const FProperty& Property)
 {
 	// 프로젝트의 데이터 클래스는 JSON으로 채우는 필드를 Transient로 표시하고, `Class`로 만드는 엔진 객체(대상 프리셋의

@@ -21,7 +21,7 @@ class UAgUILayout : public UCommonUserWidget
 	GENERATED_BODY()
 
 public:
-	void PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
+	UCommonActivatableWidget* PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
 protected:
 	UPROPERTY(meta = (BindWidget))

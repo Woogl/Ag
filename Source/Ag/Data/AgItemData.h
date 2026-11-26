@@ -38,6 +38,10 @@ struct FAgItemData
 
 	UPROPERTY()
 	int32 StartCount = 0;
+
+	/** 체크포인트에서 휴식하면 최대 보유 수까지 채웁니다. */
+	UPROPERTY()
+	bool bRefill = false;
 };
 
 UCLASS()

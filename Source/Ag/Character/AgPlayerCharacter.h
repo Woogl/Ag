@@ -51,6 +51,9 @@ public:
 	/** 락온 어빌리티의 대상을 화면에서 Direction 쪽(양수 = 오른쪽)의 가장 가까운 후보로 바꿉니다. 없으면 그대로 둡니다. */
 	void SwitchLockOnTarget(float Direction);
 
+	/** 체크포인트에서 휴식할 때의 회복입니다. HP와 휴식으로 채우는 아이템을 최대로 채우고, 남은 쿨다운을 없앱니다. */
+	void Rest();
+
 	const UAgCameraData& GetCameraData() const;
 
 protected:

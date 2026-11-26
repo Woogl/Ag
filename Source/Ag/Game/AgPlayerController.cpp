@@ -49,15 +49,12 @@ void AAgPlayerController::ReceivedPlayer()
 	UILayout->AddToPlayerScreen();
 }
 
-void AAgPlayerController::PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass)
+UCommonActivatableWidget* AAgPlayerController::PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass)
 {
 	if (!ScreenClass)
 	{
 		UE_LOG(LogAg, Error, TEXT("PushScreen: screen class is not set (check the Blueprint defaults)."));
-		return;
+		return nullptr;
 	}
-	if (UILayout)
-	{
-		UILayout->PushScreen(Layer, ScreenClass);
-	}
+	return UILayout ? UILayout->PushScreen(Layer, ScreenClass) : nullptr;
 }

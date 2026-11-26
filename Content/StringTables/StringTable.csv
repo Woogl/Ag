@@ -1,6 +1,7 @@
 ﻿Key,SourceString,en
 Interaction.Execute,"처형","Execute"
 Interaction.OpenGate,"성문 열기","Open Gate"
+Interaction.Rest,"휴식","Rest"
 Character.Player,"린","Rin"
 Character.Boss,"커스터","Custer"
 Character.Sandbag,"샌드백","Sandbag"

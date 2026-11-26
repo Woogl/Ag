@@ -73,6 +73,9 @@ public:
 	void AgTargetHP(float Percent);
 
 	UFUNCTION(Exec)
+	void AgRespawnEnemies();
+
+	UFUNCTION(Exec)
 	void AgStopAI();
 
 	UFUNCTION(Exec)

@@ -22,7 +22,8 @@ public:
 
 	virtual void ReceivedPlayer() override;
 
-	void PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
+	/** 연 화면을 돌려줍니다. 닫을 때는 그 화면의 DeactivateWidget을 부릅니다. */
+	UCommonActivatableWidget* PushScreen(EAgUILayer Layer, TSubclassOf<UCommonActivatableWidget> ScreenClass);
 
 	UAgInventoryComponent* GetInventory() const
 	{

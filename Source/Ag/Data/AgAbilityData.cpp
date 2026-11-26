@@ -66,3 +66,21 @@ bool UAgAbilitySet::ReadJson(FAgJsonReader& Reader, FName Key)
 	}
 	return bRead;
 }
+
+void UAgAbilitySet::GatherAssetPaths(const FAgJsonReader& Reader, FName Key, TArray<FSoftObjectPath>& OutPaths) const
+{
+	const UAgCharacterData* Character = UAgCharacterData::Find(Key);
+	if (!Character)
+	{
+		Super::GatherAssetPaths(Reader, Key, OutPaths);
+		return;
+	}
+	TArray<FString> Strings;
+	Reader.GatherStrings(GetJsonPath(), Character->Abilities, Strings);
+	// 생성 액터는 ID로 적으므로, 적힌 글자가 생성 액터 정의의 ID이면 그 정의에 적힌 클래스도 모읍니다.
+	const FString SpawnActorsPath = UAgAssetManager::GetJsonPath(FAgSpawnActorDefinition::GetFileName());
+	const TArray<FName> SpawnActorIds = Reader.GetEntryIds(SpawnActorsPath).FilterByPredicate([&Strings](FName Id)
+	{ return Strings.Contains(Id.ToString()); });
+	Reader.GatherStrings(SpawnActorsPath, SpawnActorIds, Strings);
+	FAgJsonReader::AddAssetPaths(Strings, OutPaths);
+}

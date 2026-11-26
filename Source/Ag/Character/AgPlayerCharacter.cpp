@@ -4,6 +4,7 @@
 
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystem/AgAbilitySystemComponent.h"
+#include "AbilitySystem/AgAttributeSet.h"
 #include "AbilitySystem/AgTargeting.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
@@ -13,6 +14,7 @@
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgCameraData.h"
+#include "Data/AgItemData.h"
 #include "Core/AgGameplayTags.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -22,6 +24,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "InputActionValue.h"
 #include "Interaction/AgInteractionComponent.h"
+#include "Item/AgInventoryComponent.h"
 #include "TimerManager.h"
 
 AAgPlayerCharacter::AAgPlayerCharacter()
@@ -90,6 +93,25 @@ void AAgPlayerCharacter::SwitchLockOnTarget(float Direction)
 	if (AActor* Next = AgTargeting::FindSideTarget(*LockOn->GetDefinition().Targeting, *this, *Current, Direction))
 	{
 		LockOn->SetActionTarget(Next);
+	}
+}
+
+void AAgPlayerCharacter::Rest()
+{
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	ASC->SetNumericAttributeBase(UAgAttributeSet::GetHPAttribute(), ASC->GetNumericAttribute(UAgAttributeSet::GetMaxHPAttribute()));
+	// 충전 횟수는 걸려 있는 쿨다운 효과의 수로 세므로, 효과를 지우면 함께 돌아옵니다.
+	ASC->RemoveActiveEffectsWithTags(FGameplayTagContainer(AgGameplayTags::Effect_Cooldown));
+
+	if (UAgInventoryComponent* Inventory = GetController() ? GetController()->FindComponentByClass<UAgInventoryComponent>() : nullptr)
+	{
+		for (const TPair<FName, FAgItemData>& Item : UAgItemSet::GetItems())
+		{
+			if (Item.Value.bRefill)
+			{
+				Inventory->AddItem(Item.Key, Item.Value.MaxCount);
+			}
+		}
 	}
 }
 

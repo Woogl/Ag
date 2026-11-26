@@ -9,11 +9,8 @@
 #include "AgEnemyCharacter.generated.h"
 
 class APlayerController;
-class FTokenizedMessage;
 class UAnimMontage;
-class UAgEnemySightPreviewComponent;
 class UAgNameplateComponent;
-class UAgPatrolPreviewComponent;
 class UStateTree;
 class UWidgetComponent;
 struct FAbilityEndedData;
@@ -74,6 +71,9 @@ public:
 		return HomeTransform;
 	}
 
+	/** 스포너가 생성을 마치기 전에 정찰 경로와 그룹을 줍니다. */
+	void SetPlacement(AAgPatrolRoute* InPatrolRoute, FName InGroupId);
+
 	virtual void PreInitializeComponents() override;
 
 	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
@@ -81,8 +81,6 @@ public:
 	virtual FVector GetTargetLocation(AActor* RequestedBy = nullptr) const override;
 
 #if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostEditMove(bool bFinished) override;
 	virtual void CheckForErrors() override;
 #endif
 
@@ -119,19 +117,12 @@ private:
 	/** 네임플레이트 기준점이 화면 안에 있고, 카메라에서 몸 중심까지 벽·지형에 가리지 않았습니다. */
 	bool IsNameplateInView(const APlayerController& PlayerController) const;
 
-#if WITH_EDITOR
-	/** 정찰 경로를 쓸 수 없는 MOV와, 처음 자리에서 가장 가까운 정찰 지점까지 걸어서 갈 수 없는 배치를 모읍니다. */
-	void CollectPatrolProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const;
-
-	/** 그룹 이름을 잘못 적으면 그룹이 갈리므로, 같은 그룹의 다른 적이 열린 레벨에 없으면 알립니다. */
-	void CollectGroupProblems(TArray<TSharedRef<FTokenizedMessage>>& OutMessages) const;
-#endif
-
-	UPROPERTY(EditInstanceOnly, Category = "AI")
+	// 레벨의 배치 값은 스포너가 갖고, 생성할 때 SetPlacement로 줍니다.
+	UPROPERTY(VisibleInstanceOnly, Category = "AI")
 	TObjectPtr<AAgPatrolRoute> PatrolRoute;
 
-	/** 같은 이름을 가진 적끼리 플레이어 인식을 나눕니다. 비워 두면 그룹이 없습니다. */
-	UPROPERTY(EditInstanceOnly, Category = "AI")
+	/** 같은 이름을 가진 적끼리 플레이어 인식을 나눕니다. 비어 있으면 그룹이 없습니다. */
+	UPROPERTY(VisibleInstanceOnly, Category = "AI")
 	FName GroupId;
 
 	UPROPERTY(VisibleAnywhere, Category = "UI")
@@ -141,14 +132,6 @@ private:
 	TObjectPtr<UAgNameplateComponent> Nameplate;
 
 	FTransform HomeTransform;
-
-#if WITH_EDITORONLY_DATA
-	UPROPERTY()
-	TObjectPtr<UAgEnemySightPreviewComponent> SightPreview;
-
-	UPROPERTY()
-	TObjectPtr<UAgPatrolPreviewComponent> PatrolPreview;
-#endif
 
 	int32 Phase = 1;
 

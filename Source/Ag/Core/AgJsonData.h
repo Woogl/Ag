@@ -38,6 +38,12 @@ public:
 	 */
 	virtual bool ReadJson(FAgJsonReader& Reader, FName Key);
 
+	/**
+	 * ReadJson(Reader, Key)가 읽을 항목에 적힌 에셋 경로를 모읍니다. UAgAssetManager::PreloadData가 이 에셋을 비동기로 미리
+	 * 읽습니다. 놓친 경로는 ReadJson이 그 자리에서 읽으므로 오류가 아닙니다. 기본은 파일 전체에서 모읍니다.
+	 */
+	virtual void GatherAssetPaths(const FAgJsonReader& Reader, FName Key, TArray<FSoftObjectPath>& OutPaths) const;
+
 	/** 새로 읽은 객체의 값을 받습니다. 이 객체를 가리키는 쪽이 그대로 새 값을 보도록 객체를 바꾸지 않고 값만 복사합니다. */
 	virtual void CopyJson(const UAgJsonData& Loaded);
 

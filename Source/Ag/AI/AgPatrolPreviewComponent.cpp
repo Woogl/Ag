@@ -3,8 +3,8 @@
 #include "AI/AgPatrolPreviewComponent.h"
 
 #if WITH_EDITOR
-#include "Character/AgEnemyCharacter.h"
 #include "Engine/World.h"
+#include "Game/AgEnemySpawner.h"
 #endif
 
 UAgPatrolPreviewComponent::UAgPatrolPreviewComponent()
@@ -53,18 +53,18 @@ void UAgPatrolPreviewComponent::GetPreviewSegments(TArray<FAgPatrolPreviewSegmen
 			AddSegment(Route->GetPointLocation(Index), Route->GetPointLocation((Index + 1) % PointCount));
 		}
 	}
-	if (const AAgEnemyCharacter* Enemy = Cast<AAgEnemyCharacter>(GetOwner()))
+	if (const AAgEnemySpawner* Spawner = Cast<AAgEnemySpawner>(GetOwner()))
 	{
-		AddSegment(Enemy->GetActorLocation(), Route->GetPointLocation(Route->FindNearestPoint(Enemy->GetActorLocation())));
+		AddSegment(Spawner->GetActorLocation(), Route->GetPointLocation(Route->FindNearestPoint(Spawner->GetActorLocation())));
 	}
 }
 
 const AAgPatrolRoute* UAgPatrolPreviewComponent::GetRoute() const
 {
 	const AActor* Owner = GetOwner();
-	if (const AAgEnemyCharacter* Enemy = Cast<AAgEnemyCharacter>(Owner))
+	if (const AAgEnemySpawner* Spawner = Cast<AAgEnemySpawner>(Owner))
 	{
-		return Enemy->GetPatrolRoute();
+		return Spawner->GetPatrolRoute();
 	}
 	return Cast<AAgPatrolRoute>(Owner);
 }

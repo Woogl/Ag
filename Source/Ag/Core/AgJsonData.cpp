@@ -10,6 +10,13 @@ bool UAgJsonData::ReadJson(FAgJsonReader& Reader, FName Key)
 	return Reader.ReadFile(GetJsonPath(), *this);
 }
 
+void UAgJsonData::GatherAssetPaths(const FAgJsonReader& Reader, FName Key, TArray<FSoftObjectPath>& OutPaths) const
+{
+	TArray<FString> Strings;
+	Reader.GatherStrings(GetJsonPath(), Reader.GetEntryIds(GetJsonPath()), Strings);
+	FAgJsonReader::AddAssetPaths(Strings, OutPaths);
+}
+
 void UAgJsonData::CopyJson(const UAgJsonData& Loaded)
 {
 	CopyJsonFields(Loaded, *this);

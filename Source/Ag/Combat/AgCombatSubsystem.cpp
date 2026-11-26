@@ -120,6 +120,11 @@ void UAgCombatSubsystem::RemoveGroupMember(AAgEnemyCharacter& Enemy)
 	if (FAgEnemyGroup* Group = Groups.Find(Enemy.GetGroupId()))
 	{
 		Group->Members.Remove(&Enemy);
+		// 그룹원이 모두 사라지면 죽은 그룹원의 인식 기록도 지웁니다. 다시 생성된 그룹이 이전 그룹의 인식을 잇지 않습니다.
+		if (Group->Members.IsEmpty())
+		{
+			Groups.Remove(Enemy.GetGroupId());
+		}
 	}
 }
 

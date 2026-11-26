@@ -13,6 +13,7 @@
 #include "Engine/GameViewportClient.h"
 #include "Engine/LocalPlayer.h"
 #include "EngineUtils.h"
+#include "Game/AgGameMode.h"
 #include "Game/AgPlayerController.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectComponents/ImmunityGameplayEffectComponent.h"
@@ -351,6 +352,14 @@ void UAgCheatManager::AgTargetHP(float Percent)
 	}
 
 	AgCheatManagerPrivate::ApplyPercent(*Player, *Enemy, UAgAttributeSet::GetHPAttribute(), UAgAttributeSet::GetMaxHPAttribute(), Percent);
+}
+
+void UAgCheatManager::AgRespawnEnemies()
+{
+	if (AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>())
+	{
+		GameMode->RespawnEnemies();
+	}
 }
 
 void UAgCheatManager::AgStopAI()
