@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <!-- 뒤의 Load Game 화면 -->
+  <rect width="1920" height="1080" fill="#000000"/>
+  <text x="960" y="80" font-size="32" font-weight="700" fill="#FFFFFF" text-anchor="middle">Load Game</text>
+  <rect x="876" y="96" width="168" height="4" fill="#FFFFFF"/>
+  <g fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5">
+    <rect x="504" y="172" width="720" height="96" rx="8"/>
+    <rect x="1248" y="172" width="168" height="96" rx="8"/>
+    <rect x="504" y="292" width="720" height="96" rx="8"/>
+    <rect x="1248" y="292" width="168" height="96" rx="8"/>
+    <rect x="504" y="412" width="720" height="96" rx="8" stroke-opacity="0.35"/>
+    <rect x="504" y="532" width="720" height="96" rx="8"/>
+    <rect x="1248" y="532" width="168" height="96" rx="8"/>
+    <rect x="504" y="652" width="720" height="96" rx="8" stroke-opacity="0.35"/>
+    <rect x="504" y="772" width="720" height="96" rx="8" stroke-opacity="0.35"/>
+    <rect x="846" y="916" width="228" height="72" rx="8"/>
+  </g>
+
+  <!-- 화면 전체를 어둡게 덮음 -->
+  <rect width="1920" height="1080" fill="#000000" fill-opacity="0.7"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">삭제 확인 창 (Load Game 화면 위) · 기준 해상도 1920 × 1080</text>
+
+  <!-- 창 -->
+  <rect x="600" y="388" width="720" height="304" rx="8" fill="#11151b" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="960" y="462" font-size="24" fill="#FFFFFF" text-anchor="middle">Slot 2</text>
+  <text x="960" y="510" font-size="24" fill="#FFFFFF" text-anchor="middle">이 저장 데이터를 삭제하시겠습니까?</text>
+
+  <!-- Yes, No 버튼: 처음 선택된 버튼은 No -->
+  <g font-size="32" font-weight="700" text-anchor="middle">
+    <rect x="708" y="572" width="228" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+    <text x="822" y="619" fill="#c9d1db">Yes</text>
+    <rect x="984" y="572" width="228" height="72" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+    <text x="1098" y="619" fill="#FFFFFF">No</text>
+  </g>
+  <text x="1340" y="614" font-size="16" fill="#9aa4b1">← 처음 선택된 버튼</text>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1000" font-size="18" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, ←·→ / 실행: 좌클릭, Enter / Esc: No와 같음</text>
+</svg>

@@ -14,7 +14,6 @@
 #include "Combat/AgTimeSubsystem.h"
 #include "Core/AgAssetManager.h"
 #include "Data/AgCameraData.h"
-#include "Data/AgItemData.h"
 #include "Core/AgGameplayTags.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -105,13 +104,7 @@ void AAgPlayerCharacter::Rest()
 
 	if (UAgInventoryComponent* Inventory = GetController() ? GetController()->FindComponentByClass<UAgInventoryComponent>() : nullptr)
 	{
-		for (const TPair<FName, FAgItemData>& Item : UAgItemSet::GetItems())
-		{
-			if (Item.Value.bRefill)
-			{
-				Inventory->AddItem(Item.Key, Item.Value.MaxCount);
-			}
-		}
+		Inventory->Refill();
 	}
 }
 

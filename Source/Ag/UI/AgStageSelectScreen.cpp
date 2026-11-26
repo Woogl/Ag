@@ -3,6 +3,7 @@
 #include "UI/AgStageSelectScreen.h"
 
 #include "Game/AgGameMode.h"
+#include "Game/AgSaveSubsystem.h"
 #include "UI/AgButton.h"
 #include "UI/AgDropdown.h"
 
@@ -17,25 +18,33 @@ void UAgStageSelectScreen::NativeOnInitialized()
 	Super::NativeOnInitialized();
 
 	StartButton->OnClicked().AddUObject(this, &ThisClass::OpenSelectedStage);
-	BackButton->OnClicked().AddUObject(this, &ThisClass::DeactivateWidget);
+	BackButton->OnClicked().AddUObject(this, &ThisClass::Close);
 }
 
 void UAgStageSelectScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	// CommonUI 스택은 닫은 화면을 다시 쓰므로, 열 때마다 목록을 다시 채우고 첫 스테이지를 고릅니다.
+	// CommonUI 스택은 닫은 화면을 다시 쓰므로, 열 때마다 목록을 다시 채우고 불러온 슬롯의 마지막 스테이지를 고릅니다.
+	// 마지막 스테이지가 없거나 목록에 없으면 드롭다운이 첫 스테이지를 고릅니다.
 	TArray<FAgDropdownOption> Options;
 	for (const FAgStage& Stage : AAgGameMode::FindStages())
 	{
 		Options.Add({Stage.Map, Stage.DisplayName});
 	}
-	StageDropdown->SetOptions(Options);
+	StageDropdown->SetOptions(Options, UAgSaveSubsystem::Get(this).GetLastStage());
 }
 
 UWidget* UAgStageSelectScreen::NativeGetDesiredFocusTarget() const
 {
 	return StageDropdown->GetDesiredFocusWidget();
+}
+
+bool UAgStageSelectScreen::NativeOnHandleBackAction()
+{
+	// 이 화면부터 타이틀로 나갈 때까지가 슬롯을 불러와 있는 구간입니다. Back 버튼과 Esc가 모두 이리로 옵니다.
+	UAgSaveSubsystem::Get(this).Unload();
+	return Super::NativeOnHandleBackAction();
 }
 
 void UAgStageSelectScreen::OpenSelectedStage()
@@ -44,4 +53,9 @@ void UAgStageSelectScreen::OpenSelectedStage()
 	{
 		GameMode->OpenStage(StageDropdown->GetSelectedOption());
 	}
+}
+
+void UAgStageSelectScreen::Close()
+{
+	NativeOnHandleBackAction();
 }

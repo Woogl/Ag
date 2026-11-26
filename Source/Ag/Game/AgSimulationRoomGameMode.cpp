@@ -94,6 +94,12 @@ UTextureRenderTarget2D* AAgSimulationRoomGameMode::GetEnemyPreview(TSubclassOf<A
 	return Preview->GetRenderTarget();
 }
 
+bool AAgSimulationRoomGameMode::ShouldRestartOnGameOver() const
+{
+	// 연습장은 결과와 전투 통계를 보여 주고, 다시 할지는 사람이 고릅니다.
+	return false;
+}
+
 void AAgSimulationRoomGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);

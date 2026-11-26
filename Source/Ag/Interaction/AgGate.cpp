@@ -7,6 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Core/AgCollision.h"
 #include "Engine/CollisionProfile.h"
+#include "Game/AgSaveSubsystem.h"
 
 AAgGate::AAgGate()
 {
@@ -47,6 +48,7 @@ void AAgGate::Interact(AAgPlayerCharacter& Player)
 	// 열리기 시작한 성문은 상호작용 후보에서 빠집니다.
 	InteractionRange->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	OpenMovement->Activate();
+	UAgSaveSubsystem::Get(this).AddOpenedDevice(*this);
 }
 
 void AAgGate::PreInitializeComponents()
@@ -55,4 +57,20 @@ void AAgGate::PreInitializeComponents()
 
 	// 이동 컴포넌트는 따로 정하지 않으면 루트를 움직이고, BeginPlay에서 움직일 컴포넌트의 자리를 출발점으로 기록합니다.
 	OpenMovement->SetUpdatedComponent(Door);
+}
+
+void AAgGate::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (!UAgSaveSubsystem::Get(this).IsDeviceOpened(*this) || OpenMovement->ControlPoints.IsEmpty())
+	{
+		return;
+	}
+
+	// 이동 컴포넌트를 켜지 않고, 그 컴포넌트가 계산하는 것과 같은 방식으로 문을 경로의 끝 자리에 둡니다.
+	InteractionRange->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	const FInterpControlPoint& End = OpenMovement->ControlPoints.Last();
+	const FVector Offset = Door->GetComponentQuat().RotateVector(End.PositionControlPoint);
+	Door->SetWorldLocation(End.bPositionIsRelative ? Door->GetComponentLocation() + Offset : Offset);
 }

@@ -8,6 +8,7 @@
 #include "Core/AgCollision.h"
 #include "Engine/World.h"
 #include "Game/AgGameMode.h"
+#include "Game/AgSaveSubsystem.h"
 
 AAgCheckpoint::AAgCheckpoint()
 {
@@ -15,6 +16,10 @@ AAgCheckpoint::AAgCheckpoint()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
+
+	StartPoint = CreateDefaultSubobject<USceneComponent>(TEXT("StartPoint"));
+	StartPoint->SetupAttachment(RootComponent);
+	StartPoint->SetRelativeLocationAndRotation(FVector(150., 0., 0.), FRotator(0., 180., 0.));
 
 	PromptPoint = CreateDefaultSubobject<USceneComponent>(TEXT("PromptPoint"));
 	PromptPoint->SetupAttachment(RootComponent);
@@ -41,4 +46,10 @@ void AAgCheckpoint::Interact(AAgPlayerCharacter& Player)
 	{
 		GameMode->RespawnEnemies();
 	}
+	UAgSaveSubsystem::Get(this).SetRestedCheckpoint(*this);
+}
+
+FTransform AAgCheckpoint::GetStartTransform() const
+{
+	return FTransform(StartPoint->GetComponentRotation(), StartPoint->GetComponentLocation());
 }

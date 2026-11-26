@@ -43,7 +43,13 @@ public:
 	/** 스포너가 생성한 적을 모두 지우고 다시 생성해, 레벨을 처음 열었을 때의 상태로 되돌립니다. */
 	void RespawnEnemies();
 
+	/** Game Over가 정해지면 버튼 없이 지금 스테이지를 다시 시작하는지 정합니다. 기본은 다시 시작합니다. */
+	virtual bool ShouldRestartOnGameOver() const;
+
 	virtual void StartPlay() override;
+
+	/** 이 던전에서 휴식한 체크포인트가 레벨에 있으면 엔진의 시작 지점 대신 그 체크포인트의 시작하는 자리에 스폰합니다. */
+	virtual void RestartPlayer(AController* NewPlayer) override;
 
 protected:
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;

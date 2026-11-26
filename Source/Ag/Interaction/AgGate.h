@@ -12,8 +12,8 @@ class UInterpToMovementComponent;
 class UStaticMeshComponent;
 
 /**
- * 상호작용하면 위로 올라가 열리는 성문입니다. 한 번 열리면 닫히지 않습니다. 열리는 시간과 올라가는 높이는 BP의 이동
- * 컴포넌트(Duration, ControlPoints)가, 상호작용 범위는 상자 크기가 정합니다.
+ * 상호작용하면 위로 올라가 열리는 성문입니다. 한 번 열리면 닫히지 않고, 연 것이 저장되어 던전을 다시 열면 처음부터 열려
+ * 있습니다. 열리는 시간과 올라가는 높이는 BP의 이동 컴포넌트(Duration, ControlPoints)가, 상호작용 범위는 상자 크기가 정합니다.
  */
 UCLASS(Abstract)
 class AAgGate : public AActor, public IAgInteractable
@@ -28,6 +28,9 @@ public:
 	virtual void Interact(AAgPlayerCharacter& Player) override;
 
 	virtual void PreInitializeComponents() override;
+
+protected:
+	virtual void BeginPlay() override;
 
 private:
 	/** 이동, 시선, 탄환을 막는 문입니다. 올라간 만큼 아래가 열립니다. */

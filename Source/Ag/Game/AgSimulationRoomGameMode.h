@@ -39,6 +39,8 @@ public:
 	/** 후보 적의 모습을 그리는 렌더 타깃입니다. 처음 부를 때 그 적의 표시 액터를 띄웁니다. 후보가 아니면 nullptr입니다. */
 	UTextureRenderTarget2D* GetEnemyPreview(TSubclassOf<AAgCharacterBase> EnemyClass);
 
+	virtual bool ShouldRestartOnGameOver() const override;
+
 protected:
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;

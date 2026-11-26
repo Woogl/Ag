@@ -9,12 +9,15 @@
 #include "Camera/AgPlayerCameraManager.h"
 #include "Combat/AgTimeSubsystem.h"
 #include "CommonActivatableWidget.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/AssetManager.h"
 #include "EngineUtils.h"
 #include "Game/AgEnemySpawner.h"
 #include "Game/AgGameState.h"
 #include "Game/AgPlayerController.h"
+#include "Game/AgSaveSubsystem.h"
 #include "GameMapsSettings.h"
+#include "Interaction/AgCheckpoint.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
@@ -64,6 +67,7 @@ void AAgGameMode::OpenFrontEnd()
 		UE_LOG(LogAg, Error, TEXT("Game Default Map is not set (Project Settings > Maps & Modes)."));
 		return;
 	}
+	UAgSaveSubsystem::Get(this).Unload();
 	UGameplayStatics::OpenLevelBySoftObjectPtr(this, TSoftObjectPtr<UWorld>(Map));
 }
 
@@ -71,6 +75,7 @@ void AAgGameMode::OpenStage(FName Map)
 {
 	if (!Map.IsNone())
 	{
+		UAgSaveSubsystem::Get(this).SetLastStage(Map);
 		UGameplayStatics::OpenLevel(this, Map);
 	}
 }
@@ -112,6 +117,11 @@ void AAgGameMode::HandleCharacterDied(AAgCharacterBase& DeadCharacter)
 		return;
 	}
 	StageState->DecideStageResult(bPlayerDied ? EAgStageResult::GameOver : EAgStageResult::Clear);
+	if (!bPlayerDied)
+	{
+		// 클리어한 던전은 다음에 들어갈 때 시작 지점에서 처음부터 시작합니다.
+		UAgSaveSubsystem::Get(this).ClearDungeonProgress(*GetWorld());
+	}
 	if (StageResultPresentationTime > 0.f)
 	{
 		FTimerHandle ResultTimer;
@@ -136,6 +146,11 @@ void AAgGameMode::RespawnEnemies()
 	}
 }
 
+bool AAgGameMode::ShouldRestartOnGameOver() const
+{
+	return true;
+}
+
 void AAgGameMode::StartPlay()
 {
 	// Super가 모든 액터의 BeginPlay를 부르고, 스포너는 그때 에셋 읽기를 요청합니다.
@@ -156,6 +171,28 @@ void AAgGameMode::StartPlay()
 	{
 		LoadingScreen = PlayerController->PushScreen(EAgUILayer::Menu, LoadingScreenClass);
 	}
+}
+
+void AAgGameMode::RestartPlayer(AController* NewPlayer)
+{
+	const FName CheckpointName = UAgSaveSubsystem::Get(this).GetRestedCheckpoint(*GetWorld());
+	const UClass* PawnClass = NewPlayer ? GetDefaultPawnClassForController(NewPlayer) : nullptr;
+	const ACharacter* PawnDefaults = PawnClass ? Cast<ACharacter>(PawnClass->GetDefaultObject()) : nullptr;
+	if (!CheckpointName.IsNone() && PawnDefaults)
+	{
+		for (TActorIterator<AAgCheckpoint> It(GetWorld()); It; ++It)
+		{
+			if (It->GetFName() == CheckpointName)
+			{
+				// 체크포인트의 시작하는 자리는 발밑이고, 엔진은 받은 자리에 폰의 중심(캡슐 중심)을 둡니다.
+				FTransform Start = It->GetStartTransform();
+				Start.AddToTranslation(Start.GetUnitAxis(EAxis::Z) * PawnDefaults->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+				RestartPlayerAtTransform(NewPlayer, Start);
+				return;
+			}
+		}
+	}
+	Super::RestartPlayer(NewPlayer);
 }
 
 void AAgGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)

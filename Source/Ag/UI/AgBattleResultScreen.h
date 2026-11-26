@@ -30,6 +30,10 @@ protected:
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	TObjectPtr<UWidgetAnimation> FadeInAnimation;
 
+	/** 버튼 없이 다시 시작할 때 페이드가 끝난 뒤 문구를 유지하는 시간입니다. 모습은 바꾸지 않고 길이만 씁니다. */
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	TObjectPtr<UWidgetAnimation> RestartDelayAnimation;
+
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UCommonTextBlock> TitleText;
 
@@ -61,6 +65,9 @@ protected:
 	TObjectPtr<UAgButton> QuitButton;
 
 private:
+	/** 게임 모드가 Game Over에서 버튼 없이 다시 시작한다고 답하면(던전), 버튼을 숨기고 문구만 보인 뒤 스테이지를 다시 시작합니다. */
+	bool ShouldRestart() const;
+
 	/** 시뮬레이션 룸에서 결과로 끝난 전투가 있으면 통계 표를 채워 보이고, 아니면 접습니다. */
 	void ShowCombatStats();
 

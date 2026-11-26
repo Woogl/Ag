@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif">
+  <!-- 불투명한 검은 배경 (메뉴 화면 공통 양식) -->
+  <rect width="1920" height="1080" fill="#000000"/>
+
+  <!-- 화면 여백 48px -->
+  <rect x="48" y="48" width="1824" height="984" fill="none" stroke="#9aa4b1" stroke-width="2" stroke-dasharray="12 10" opacity="0.4"/>
+  <text x="56" y="34" font-size="16" fill="#9aa4b1">Load Game 화면 (LV_FrontEnd) · 기준 해상도 1920 × 1080 · 슬롯 1, 2, 4가 저장되어 있을 때</text>
+
+  <!-- 제목: Large 흰 굵은 글자 + 아래 8px의 4px 밑줄 -->
+  <text x="960" y="80" font-size="32" font-weight="700" fill="#FFFFFF" text-anchor="middle">Load Game</text>
+  <rect x="876" y="96" width="168" height="4" fill="#FFFFFF"/>
+
+  <!-- 슬롯 1: 저장됨, 처음 선택됨 (저장한 시각이 가장 늦음) -->
+  <rect x="504" y="172" width="720" height="96" rx="8" fill="#FFFFFF" fill-opacity="0.15" stroke="#FFFFFF" stroke-width="3"/>
+  <text x="528" y="231" font-size="32" font-weight="700" fill="#FFFFFF">Slot 1</text>
+  <text x="656" y="229" font-size="24" fill="#FFFFFF">Fortress Breach</text>
+  <text x="1200" y="212" font-size="24" fill="#FFFFFF" text-anchor="end">1:05:32</text>
+  <text x="1200" y="248" font-size="24" fill="#FFFFFF" text-anchor="end">2026-11-27 21:04</text>
+  <rect x="1248" y="172" width="168" height="96" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="1332" y="231" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Delete</text>
+  <text x="1436" y="226" font-size="16" fill="#9aa4b1">← 처음 선택된 줄</text>
+
+  <!-- 슬롯 2: 저장됨 -->
+  <rect x="504" y="292" width="720" height="96" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="528" y="351" font-size="32" font-weight="700" fill="#c9d1db">Slot 2</text>
+  <text x="656" y="349" font-size="24" fill="#c9d1db">Simulation Room</text>
+  <text x="1200" y="332" font-size="24" fill="#c9d1db" text-anchor="end">0:12:07</text>
+  <text x="1200" y="368" font-size="24" fill="#c9d1db" text-anchor="end">2026-11-25 19:40</text>
+  <rect x="1248" y="292" width="168" height="96" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="1332" y="351" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Delete</text>
+
+  <!-- 슬롯 3: 빈 슬롯 (흐리게, 버튼이 아님, Delete 없음) -->
+  <rect x="504" y="412" width="720" height="96" rx="8" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-opacity="0.35"/>
+  <text x="528" y="471" font-size="32" font-weight="700" fill="#c9d1db" fill-opacity="0.35">Slot 3</text>
+  <text x="656" y="469" font-size="24" fill="#c9d1db" fill-opacity="0.35">Empty</text>
+  <text x="1248" y="466" font-size="16" fill="#9aa4b1">← 빈 슬롯: 선택되지 않음</text>
+
+  <!-- 슬롯 4: 저장됨 (마지막 스테이지 없음) -->
+  <rect x="504" y="532" width="720" height="96" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="528" y="591" font-size="32" font-weight="700" fill="#c9d1db">Slot 4</text>
+  <text x="1200" y="572" font-size="24" fill="#c9d1db" text-anchor="end">0:00:41</text>
+  <text x="1200" y="608" font-size="24" fill="#c9d1db" text-anchor="end">2026-11-24 08:15</text>
+  <rect x="1248" y="532" width="168" height="96" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="1332" y="591" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Delete</text>
+  <text x="1436" y="586" font-size="16" fill="#9aa4b1">← 마지막 스테이지가 없는 슬롯</text>
+
+  <!-- 슬롯 5, 6: 빈 슬롯 -->
+  <rect x="504" y="652" width="720" height="96" rx="8" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-opacity="0.35"/>
+  <text x="528" y="711" font-size="32" font-weight="700" fill="#c9d1db" fill-opacity="0.35">Slot 5</text>
+  <text x="656" y="709" font-size="24" fill="#c9d1db" fill-opacity="0.35">Empty</text>
+  <rect x="504" y="772" width="720" height="96" rx="8" fill="none" stroke="#9aa4b1" stroke-width="1.5" stroke-opacity="0.35"/>
+  <text x="528" y="831" font-size="32" font-weight="700" fill="#c9d1db" fill-opacity="0.35">Slot 6</text>
+  <text x="656" y="829" font-size="24" fill="#c9d1db" fill-opacity="0.35">Empty</text>
+
+  <!-- Back 버튼: 마지막 줄 아래 -->
+  <rect x="846" y="916" width="228" height="72" rx="8" fill="#000000" fill-opacity="0.3" stroke="#9aa4b1" stroke-width="1.5"/>
+  <text x="960" y="963" font-size="32" font-weight="700" fill="#c9d1db" text-anchor="middle">Back</text>
+
+  <!-- 크기 안내 (참고용) -->
+  <g font-size="16" fill="#9aa4b1">
+    <text x="504" y="160">슬롯 줄 720 × 96</text>
+    <text x="1248" y="160">Delete 168 × 96</text>
+  </g>
+
+  <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
+  <text x="960" y="1020" font-size="18" fill="#9aa4b1" text-anchor="middle">(참고) 선택: 마우스 이동, 방향키 / 실행: 좌클릭, Enter / Esc: Back과 같음</text>
+</svg>

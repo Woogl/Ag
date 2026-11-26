@@ -21,6 +21,7 @@ protected:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeOnActivated() override;
 	virtual UWidget* NativeGetDesiredFocusTarget() const override;
+	virtual bool NativeOnHandleBackAction() override;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UAgDropdown> StageDropdown;
@@ -33,4 +34,5 @@ protected:
 
 private:
 	void OpenSelectedStage();
+	void Close();
 };

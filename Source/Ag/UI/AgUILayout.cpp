@@ -16,6 +16,9 @@ UCommonActivatableWidget* UAgUILayout::PushScreen(EAgUILayer Layer, TSubclassOf<
 		case EAgUILayer::Menu:
 			Stack = MenuStack;
 			break;
+		case EAgUILayer::Modal:
+			Stack = ModalStack;
+			break;
 	}
 	return Stack->AddWidget(ScreenClass);
 }

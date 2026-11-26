@@ -63,6 +63,12 @@ void UAgBattleResultScreen::NativeOnActivated()
 	TitleText->SetText(bStageCleared ? StageClearTitle : GameOverTitle);
 	ShowCombatStats();
 
+	// 접지 않고 숨겨, 문구가 버튼이 있을 때와 같은 자리에 놓이게 합니다.
+	const ESlateVisibility ButtonVisibility = ShouldRestart() ? ESlateVisibility::Hidden : ESlateVisibility::Visible;
+	for (UAgButton* Button : {RestartButton.Get(), ReturnToTitleButton.Get(), QuitButton.Get()})
+	{
+		Button->SetVisibility(ButtonVisibility);
+	}
 	SetButtonsEnabled(false);
 	PlayAnimation(FadeInAnimation);
 }
@@ -73,14 +79,31 @@ void UAgBattleResultScreen::OnAnimationFinished_Implementation(const UWidgetAnim
 
 	if (Animation == FadeInAnimation)
 	{
+		if (ShouldRestart())
+		{
+			// 위젯 애니메이션으로 기다려, 유지 시간이 페이드와 같이 실제 시간으로 흐릅니다.
+			PlayAnimation(RestartDelayAnimation);
+			return;
+		}
 		SetButtonsEnabled(true);
 		RequestRefreshFocus();
+	}
+	else if (Animation == RestartDelayAnimation)
+	{
+		GetWorld()->GetAuthGameMode<AAgGameMode>()->RestartStage();
 	}
 }
 
 UWidget* UAgBattleResultScreen::NativeGetDesiredFocusTarget() const
 {
-	return RestartButton;
+	return ShouldRestart() ? nullptr : RestartButton.Get();
+}
+
+bool UAgBattleResultScreen::ShouldRestart() const
+{
+	const AAgGameState* StageState = GetWorld()->GetGameState<AAgGameState>();
+	const AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>();
+	return StageState && GameMode && StageState->GetStageResult() == EAgStageResult::GameOver && GameMode->ShouldRestartOnGameOver();
 }
 
 void UAgBattleResultScreen::ShowCombatStats()
