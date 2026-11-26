@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>레벨 3D</title>
+<style>
+  :root { --bg: #16181c; --panel: rgba(28, 31, 37, 0.93); --text: #e8e8e8; --muted: #a8adb5; --line: #3a3f48; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 "Malgun Gothic", system-ui, sans-serif; overflow: hidden; }
+  #view { position: fixed; inset: 0; }
+  #ui { position: fixed; top: 10px; left: 10px; width: 250px; max-width: calc(100vw - 40px); max-height: calc(100vh - 40px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  #ui h1 { font-size: 13px; line-height: 1.35; margin: 0; flex: 1; }
+  .row { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+  button { background: #2b3038; color: var(--text); border: 1px solid #4a515c; border-radius: 6px; padding: 3px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+  .grp { color: var(--muted); font-size: 11px; margin: 7px 0 0; }
+  .toggles label { display: flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; user-select: none; }
+  .toggles input { width: 14px; height: 14px; margin: 0; accent-color: #5c84b8; cursor: pointer; }
+  .toggles { gap: 3px 12px; }
+  #secs button { background: transparent; border-color: #3a3f48; color: #c9ced6; padding: 2px 7px; font-size: 11px; }
+  #secs button::before { content: "› "; color: var(--muted); }
+  .legend { display: grid; grid-template-columns: 16px 1fr; gap: 3px 8px; font-size: 11px; color: var(--muted); align-items: center; margin-top: 4px; }
+  .head { display: flex; align-items: flex-start; gap: 8px; }
+  #bFold { padding: 0 7px; font-size: 14px; line-height: 20px; }
+  #ui.folded .body { display: none; }
+  details.leg summary { cursor: pointer; color: var(--muted); font-size: 11px; margin-top: 7px; }
+  .sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #000; }
+  #tip { position: fixed; pointer-events: none; background: rgba(10, 12, 15, 0.92); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 12px; white-space: pre; display: none; }
+  #err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; color: #f0a0a0; }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="ui">
+  <div class="head"><h1 id="title"></h1><button id="bFold" title="패널 접기">–</button></div>
+  <div class="body">
+  <div class="grp">표시 켜고 끄기</div>
+  <div class="row toggles">
+    <label><input type="checkbox" id="bWall">벽 반투명</label>
+    <label><input type="checkbox" id="bSight">적 시야</label>
+    <label><input type="checkbox" id="bLabel" checked>이름표</label>
+  </div>
+  <div class="grp">카메라</div>
+  <div class="row">
+    <button id="bHome">전체 보기</button>
+    <button id="bTop">위에서 보기</button>
+  </div>
+  <div class="grp">구간으로 이동</div>
+  <div class="row" id="secs"></div>
+  <details class="leg"><summary>범례</summary>
+  <div class="legend">
+    <div class="sw" style="background:linear-gradient(90deg,#4a4b50,#c4c5ca)"></div><div id="floorLegend">바닥 (밝을수록 높음)</div>
+    <div class="sw" style="background:#8fa2c4"></div><div>계단·경사로</div>
+    <div class="sw" style="background:#e6e4dc"></div><div>벽</div>
+    <div class="sw" style="background:#d9963f"></div><div>울타리</div>
+    <div class="sw" style="background:#f8cd28"></div><div>성문 (닫힌 상태)</div>
+    <div class="sw" style="background:#37c873"></div><div>P 플레이어 시작</div>
+    <div class="sw" style="background:#e64b41"></div><div>근 근거리 일반 적 (절단자)</div>
+    <div class="sw" style="background:#f5872a"></div><div>원 원거리 일반 적 (경비 사수)</div>
+    <div class="sw" style="background:#b946e1"></div><div>B 보스 (커스터)</div>
+  </div>
+  </details>
+  </div>
+</div>
+<script>
+(function () {
+  const ui = document.getElementById('ui'), b = document.getElementById('bFold');
+  b.onclick = () => { const f = ui.classList.toggle('folded'); b.textContent = f ? '+' : '–'; b.title = f ? '패널 펴기' : '패널 접기'; };
+})();
+</script>
+<div id="tip"></div>
+<div id="err">three.js를 불러오지 못했습니다. 인터넷 연결을 확인하세요.</div>
+<!-- three.js는 r147에 둔다. r148부터 examples/js가 없어 OrbitControls를 <script>로 불러올 수 없다. cdnjs 경로는 r147이 아니라 0.147.0이다. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.147.0/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const DATA = {"title": "요새 돌파 (LV_FortressBreach)", "boxes": [{"name": "FB_Hill_ParapetS3", "kind": "wall", "e": [-265, 735, 830, 880, 900, 2010], "full": [-265, 735, 830, 880, 900, 2010]}, {"name": "FB_Yard_WallN", "kind": "wall", "e": [5550, 8650, 400, 450, 0, 400], "full": [5550, 8650, 400, 450, 0, 400]}, {"name": "FB_Floor_HighEast_W10", "kind": "obstacle", "e": [12205, 12225, 2930, 2950, 400, 500], "full": [12205, 12225, 2930, 2950, 400, 500]}, {"name": "FB_Link_WallN", "kind": "wall", "e": [14210, 15310, 4000, 4050, 410, 2410], "full": [14210, 15310, 4000, 4050, 410, 2410]}, {"name": "FB_Arena_WallW_N", "kind": "wall", "e": [15250, 15300, 4050, 5450, 310, 2310], "full": [15250, 15300, 4050, 5450, 310, 2310]}, {"name": "FB_Hill_Block2", "kind": "floor", "e": [-270, 530, 270, 870, -450, 1650], "full": [-270, 530, 270, 870, -450, 1650]}, {"name": "FB_BendB_WallS2", "kind": "wall", "e": [8210, 8710, -500, -450, 0, 400], "full": [8210, 8710, -500, -450, 0, 400]}, {"name": "FB_Corridor_WallN1", "kind": "wall", "e": [2795, 4295, -1400, -1350, 0, 400], "full": [2795, 4295, -1400, -1350, 0, 400]}, {"name": "FB_Floor_MoatBottom", "kind": "floor", "e": [11360, 13160, 2950, 4550, 100, 300], "full": [11360, 13160, 2950, 4550, 100, 300]}, {"name": "FB_Floor_HighEast_W13", "kind": "obstacle", "e": [11605, 11625, 4560, 4580, 400, 500], "full": [11605, 11625, 4560, 4580, 400, 500]}, {"name": "FB_Floor_HighEast_W11", "kind": "obstacle", "e": [11405, 11425, 4560, 4580, 400, 500], "full": [11405, 11425, 4560, 4580, 400, 500]}, {"name": "FB_BendC_Leg1E", "kind": "wall", "e": [10300, 10350, 2600, 3500, 400, 800], "full": [10300, 10350, 2600, 3500, 400, 800]}, {"name": "FB_Hill_LandW", "kind": "wall", "e": [2270, 2320, -2050, -1500, 0, 400], "full": [2270, 2320, -2050, -1500, 0, 400]}, {"name": "FB_Floor_HighEast_W4", "kind": "obstacle", "e": [11405, 11425, 2930, 2950, 400, 500], "full": [11405, 11425, 2930, 2950, 400, 500]}, {"name": "FB_Yard_WallW_N", "kind": "wall", "e": [5550, 5600, -400, 450, 0, 400], "full": [5550, 5600, -400, 450, 0, 400]}, {"name": "FB_BendC_NLegW", "kind": "wall", "e": [9750, 9800, 3132, 4008, 400, 800], "full": [9750, 9800, 3132, 4008, 400, 800]}, {"name": "FB_Gate_GateSill", "kind": "floor", "e": [14200, 14250, 3500, 4000, 400, 600], "full": [14200, 14250, 3500, 4000, 400, 600]}, {"name": "FB_Floor_HighWest3", "kind": "floor", "e": [6790, 7590, -2100, -1100, -5, 145], "full": [6790, 7590, -2100, -1100, -5, 145]}, {"name": "FB_BendB_WallS", "kind": "wall", "e": [7585, 9535, -1150, -1100, 0, 400], "full": [7585, 9535, -1150, -1100, 0, 400]}, {"name": "FB_Floor_HighEast_Bastion", "kind": "floor", "e": [12200, 13000, 3350, 4150, 100, 600], "full": [12200, 13000, 3350, 4150, 100, 600]}, {"name": "FB_Arena_WallE", "kind": "wall", "e": [18600, 18650, 2100, 5400, 310, 2310], "full": [18600, 18650, 2100, 5400, 310, 2310]}, {"name": "FB_Yard_WallW_S", "kind": "wall", "e": [5550, 5600, -2050, -900, 0, 400], "full": [5550, 5600, -2050, -900, 0, 400]}, {"name": "FB_Gate_WallE_N", "kind": "wall", "e": [14200, 14250, 4000, 5000, 400, 1000], "full": [14200, 14250, 4000, 5000, 400, 1000]}, {"name": "FB_Hill_ParapetN3", "kind": "wall", "e": [2795, 2845, -445, -305, 403, 840], "full": [2795, 2845, -445, -305, 403, 840]}, {"name": "FB_Gate_WallS", "kind": "wall", "e": [10600, 14250, 2500, 2550, 400, 1000], "full": [10600, 14250, 2500, 2550, 400, 1000]}, {"name": "FB_Corridor_WallE", "kind": "wall", "e": [5000, 5050, -2000, -1400, 0, 400], "full": [5000, 5050, -2000, -1400, 0, 400]}, {"name": "FB_Hill_ParapetE", "kind": "wall", "e": [2970, 3020, -300, 900, 553, 990], "full": [2970, 3020, -300, 900, 553, 990]}, {"name": "FB_Floor_HighEast_N", "kind": "floor", "e": [12400, 18650, 4550, 5450, 0, 400], "full": [12400, 18650, 4550, 5450, 0, 400]}, {"name": "FB_BendB_WallE", "kind": "wall", "e": [9500, 9550, -1100, -500, 0, 400], "full": [9500, 9550, -1100, -500, 0, 400]}, {"name": "FB_Floor_Ground", "kind": "floor", "e": [-300, 19000, -2800, 5800, -50, 0], "full": [-300, 19000, -2800, 5800, -50, 0]}, {"name": "FB_Link_WallS2", "kind": "wall", "e": [14195, 14245, 3480, 4030, 1010, 2410], "full": [14195, 14245, 3480, 4030, 1010, 2410]}, {"name": "FB_Arena_WallW_S", "kind": "wall", "e": [15250, 15300, 2050, 3450, 310, 2310], "full": [15250, 15300, 2050, 3450, 310, 2310]}, {"name": "FB_Gate_WallN", "kind": "wall", "e": [10600, 14250, 4950, 5000, 400, 1000], "full": [10600, 14250, 4950, 5000, 400, 1000]}, {"name": "FB_Floor_HighEast_W7", "kind": "obstacle", "e": [11605, 11625, 2930, 2950, 400, 500], "full": [11605, 11625, 2930, 2950, 400, 500]}, {"name": "FB_BendC_NLegN", "kind": "wall", "e": [9750, 10900, 4000, 4050, 400, 800], "full": [9750, 10900, 4000, 4050, 400, 800]}, {"name": "FB_Floor_HighWest", "kind": "floor", "e": [8650, 10850, 2500, 4100, 0, 400], "full": [8650, 10850, 2500, 4100, 0, 400]}, {"name": "FB_BendC_Leg1S", "kind": "wall", "e": [9500, 10350, 2550, 2600, 400, 800], "full": [9500, 10350, 2550, 2600, 400, 800]}, {"name": "FB_Arena_WallN", "kind": "wall", "e": [15300, 18650, 5400, 5450, 310, 2310], "full": [15300, 18650, 5400, 5450, 310, 2310]}, {"name": "FB_Gate_Terrace", "kind": "floor", "e": [13000, 14200, 2550, 4950, 200, 600], "full": [13000, 14200, 2550, 4950, 200, 600]}, {"name": "FB_Slope_WallE4", "kind": "wall", "e": [9500, 9550, 568, 1692, 0, 800], "full": [9500, 9550, 568, 1692, 0, 800]}, {"name": "FB_BendC_Leg2S", "kind": "wall", "e": [10350, 10900, 3450, 3500, 400, 800], "full": [10350, 10900, 3450, 3500, 400, 800]}, {"name": "FB_Floor_HighEast_E", "kind": "floor", "e": [13300, 18650, 1950, 5550, 0, 400], "full": [13300, 18650, 1950, 5550, 0, 400]}, {"name": "FB_Yard_WallE_N3", "kind": "wall", "e": [7720, 7770, -500, 400, 0, 400], "full": [7720, 7770, -500, 400, 0, 400]}, {"name": "FB_Floor_HighEast_W8", "kind": "obstacle", "e": [12005, 12025, 2930, 2950, 400, 500], "full": [12005, 12025, 2930, 2950, 400, 500]}, {"name": "FB_Hill_ParapetE5", "kind": "wall", "e": [2800, 3050, -345, -295, 553, 990], "full": [2800, 3050, -345, -295, 553, 990]}, {"name": "FB_Floor_HighEast_W6", "kind": "obstacle", "e": [11405, 12205, 2935, 2945, 475, 485], "full": [11405, 12205, 2935, 2945, 475, 485]}, {"name": "FB_Floor_HighEast_W3", "kind": "floor", "e": [11604, 12766, 4551, 5189, 0, 400], "full": [11604, 12766, 4551, 5189, 0, 400]}, {"name": "FB_Hill_ParapetN2", "kind": "wall", "e": [2275, 2325, -445, -305, 403, 840], "full": [2275, 2325, -445, -305, 403, 840]}, {"name": "FB_Slope_WallE6", "kind": "wall", "e": [9510, 9960, 145, 195, -150, 650], "full": [9510, 9960, 145, 195, -150, 650]}, {"name": "FB_BendA_WallS3", "kind": "wall", "e": [5405, 5605, -940, -890, 0, 400], "full": [5405, 5605, -940, -890, 0, 400]}, {"name": "FB_Slope_WallE2", "kind": "wall", "e": [9505, 10305, 565, 615, -150, 650], "full": [9505, 10305, 565, 615, -150, 650]}, {"name": "FB_Hill_ParapetS", "kind": "wall", "e": [-265, 735, 280, 330, 900, 2010], "full": [-265, 735, 280, 330, 900, 2010]}, {"name": "FB_Floor_HighEast_W16", "kind": "obstacle", "e": [12005, 12025, 4560, 4580, 400, 500], "full": [12005, 12025, 4560, 4580, 400, 500]}, {"name": "FB_Gate_GateLine", "kind": "floor", "e": [14200, 14250, 3500, 4000, 600, 603], "full": [14200, 14250, 3500, 4000, 600, 603]}, {"name": "FB_Floor_HighEast_W12", "kind": "obstacle", "e": [11405, 12205, 4565, 4575, 475, 485], "full": [11405, 12205, 4565, 4575, 475, 485]}, {"name": "FB_Floor_HighEast_W5", "kind": "floor", "e": [11304, 12466, 4551, 5189, 0, 400], "full": [11304, 12466, 4551, 5189, 0, 400]}, {"name": "FB_Floor_HighEast_W14", "kind": "obstacle", "e": [11805, 11825, 4560, 4580, 400, 500], "full": [11805, 11825, 4560, 4580, 400, 500]}, {"name": "FB_Yard_WallS1", "kind": "wall", "e": [4206, 7644, -2050, -2000, 0, 400], "full": [4206, 7644, -2050, -2000, 0, 400]}, {"name": "FB_BendA_WallN", "kind": "wall", "e": [5000, 5600, -400, -350, 0, 400], "full": [5000, 5600, -400, -350, 0, 400]}, {"name": "FB_Corridor_WallS1", "kind": "wall", "e": [2306, 4274, -2050, -2000, 0, 400], "full": [2306, 4274, -2050, -2000, 0, 400]}, {"name": "FB_Floor_HighEast_W", "kind": "floor", "e": [9870, 11420, 2050, 5450, 0, 400], "full": [9870, 11420, 2050, 5450, 0, 400]}, {"name": "FB_Gate_WallE_S", "kind": "wall", "e": [14200, 14250, 2500, 3500, 400, 1000], "full": [14200, 14250, 2500, 3500, 400, 1000]}, {"name": "FB_Hill_ParapetE7", "kind": "wall", "e": [1535, 1935, 285, 335, 443, 1100], "full": [1535, 1935, 285, 335, 443, 1100]}, {"name": "FB_Link_WallS", "kind": "wall", "e": [14210, 15310, 3450, 3500, 410, 2410], "full": [14210, 15310, 3450, 3500, 410, 2410]}, {"name": "FB_Hill_ParapetS2", "kind": "wall", "e": [-270, -220, 315, 915, 900, 2010], "full": [-270, -220, 315, 915, 900, 2010]}, {"name": "FB_Gate_WallW_N", "kind": "wall", "e": [10850, 10900, 4050, 5000, 400, 800], "full": [10850, 10900, 4050, 5000, 400, 800]}, {"name": "FB_Slope_WallE", "kind": "wall", "e": [9500, 9550, 1650, 2550, 0, 800], "full": [9500, 9550, 1650, 2550, 0, 800]}, {"name": "FB_Hill_ParapetE3", "kind": "wall", "e": [1710, 1760, 827, 953, 553, 990], "full": [1710, 1760, 827, 953, 553, 990]}, {"name": "FB_Top_WallW", "kind": "wall", "e": [8650, 8700, 2500, 3350, 400, 800], "full": [8650, 8700, 2500, 3350, 400, 800]}, {"name": "FB_Top_WallN", "kind": "wall", "e": [8650, 9800, 3100, 3150, 400, 800], "full": [8650, 9800, 3100, 3150, 400, 800]}, {"name": "FB_Floor_HighEast_W9", "kind": "obstacle", "e": [11805, 11825, 2930, 2950, 400, 500], "full": [11805, 11825, 2930, 2950, 400, 500]}, {"name": "FB_Hill_ParapetE2", "kind": "wall", "e": [1710, 1760, -348, 328, 553, 990], "full": [1710, 1760, -348, 328, 553, 990]}, {"name": "FB_BendB_WallS3", "kind": "wall", "e": [7730, 8230, -500, -450, 0, 400], "full": [7730, 8230, -500, -450, 0, 400]}, {"name": "FB_Gate_WallW_S", "kind": "wall", "e": [10850, 10900, 2500, 3500, 400, 800], "full": [10850, 10900, 2500, 3500, 400, 800]}, {"name": "FB_Corridor_WallS2", "kind": "wall", "e": [4900, 5050, -2050, -2000, 0, 400], "full": [4900, 5050, -2050, -2000, 0, 400]}, {"name": "FB_Hill_ParapetE4", "kind": "wall", "e": [1705, 2305, -345, -295, 553, 990], "full": [1705, 2305, -345, -295, 553, 990]}, {"name": "FB_Hill_ParapetE6", "kind": "wall", "e": [1535, 1935, 825, 875, 443, 1100], "full": [1535, 1935, 825, 875, 443, 1100]}, {"name": "FB_Yard_WallE_S2", "kind": "wall", "e": [7590, 7640, -2000, -1100, 0, 400], "full": [7590, 7640, -2000, -1100, 0, 400]}, {"name": "FB_Slope_WallE5", "kind": "wall", "e": [9500, 9550, -710, 190, -150, 650], "full": [9500, 9550, -710, 190, -150, 650]}, {"name": "FB_Arena_WallS", "kind": "wall", "e": [15300, 18650, 2050, 2100, 310, 2310], "full": [15300, 18650, 2050, 2100, 310, 2310]}, {"name": "FB_Hill_Block", "kind": "floor", "e": [1770, 2970, -300, 900, 0, 600], "full": [1770, 2970, -300, 900, 0, 600]}, {"name": "FB_Slope_WallW", "kind": "wall", "e": [8650, 8700, -500, 2500, 0, 800], "full": [8650, 8700, -500, 2500, 0, 800]}, {"name": "FB_Floor_HighEast_W2", "kind": "floor", "e": [11253, 12997, 2311, 2949, 0, 400], "full": [11253, 12997, 2311, 2949, 0, 400]}, {"name": "FB_Floor_HighEast_W15", "kind": "obstacle", "e": [12205, 12225, 4560, 4580, 400, 500], "full": [12205, 12225, 4560, 4580, 400, 500]}, {"name": "FB_Hill_ParapetN", "kind": "wall", "e": [1720, 3020, 870, 920, 553, 990], "full": [1720, 3020, 870, 920, 553, 990]}, {"name": "FB_Floor_HighEast_S", "kind": "floor", "e": [12400, 18650, 2050, 2950, 0, 400], "full": [12400, 18650, 2050, 2950, 0, 400]}], "rings": [], "steps": [], "rboxes": [{"name": "FB_Gate_RampR", "kind": "ramp", "c": [12626.7, 2750.0, 393.3], "s": [824.6, 400.0, 220.0], "yaw": 0.0, "pitch": 14.0, "top": 600}, {"name": "FB_Hill_Down", "kind": "ramp", "c": [2550.0, -893.3, 286.6], "s": [1341.6, 500.0, 30.0], "yaw": -90.0, "pitch": -26.6, "top": 600}, {"name": "FB_Hill_DownRailL2", "kind": "wall", "c": [2810.0, -1262.4, 204.7], "s": [251.6, 20.0, 406.2], "yaw": -90.0, "pitch": 3.4, "top": 415}, {"name": "FB_Slope_Ramp", "kind": "ramp", "c": [9100.0, 1002.0, 185.1], "s": [3026.6, 800.0, 30.0], "yaw": 90.0, "pitch": 7.6, "top": 400}, {"name": "FB_BendA_WallS", "kind": "wall", "c": [5365.0, -1005.0, 200.0], "s": [200.0, 50.0, 400.0], "yaw": 50.0, "pitch": 0.0, "top": 400}, {"name": "FB_Slope_Ramp4", "kind": "ramp", "c": [6540.0, -1778.0, -20.0], "s": [600.0, 450.0, 30.0], "yaw": 180.0, "pitch": -30.0, "top": 143}, {"name": "FB_Gate_RampL", "kind": "ramp", "c": [12626.7, 4750.0, 393.3], "s": [824.6, 400.0, 220.0], "yaw": 0.0, "pitch": 14.0, "top": 600}, {"name": "FB_Link_RampDown", "kind": "ramp", "c": [14596.7, 3750.0, 393.7], "s": [776.2, 500.0, 220.0], "yaw": 0.0, "pitch": -14.9, "top": 600}, {"name": "FB_Hill_DownRailR4", "kind": "wall", "c": [1015.3, 847.6, 1105.3], "s": [1341.6, 20.0, 825.0], "yaw": 0.0, "pitch": -36.6, "top": 1836}, {"name": "FB_BendA_WallE", "kind": "wall", "c": [5155.0, -1255.0, 200.0], "s": [50.0, 450.0, 400.0], "yaw": -40.0, "pitch": 0.0, "top": 400}, {"name": "FB_Gate_MoatRampR", "kind": "ramp", "c": [11664.4, 3755.0, 286.1], "s": [538.5, 450.0, 30.0], "yaw": 180.0, "pitch": 21.8, "top": 400}, {"name": "FB_Hill_DownRailR3", "kind": "wall", "c": [1015.3, 317.6, 1105.3], "s": [1341.6, 20.0, 825.0], "yaw": 0.0, "pitch": -36.6, "top": 1836}, {"name": "FB_Hill_DownRailR", "kind": "wall", "c": [2310.0, -916.9, 333.7], "s": [1341.6, 20.0, 468.8], "yaw": -90.0, "pitch": -26.6, "top": 843}, {"name": "FB_Hill_Down2", "kind": "ramp", "c": [1330.0, 586.7, 1036.6], "s": [2012.5, 500.0, 30.0], "yaw": 0.0, "pitch": -36.6, "top": 1648}, {"name": "FB_Slope_WallE3", "kind": "wall", "c": [9905.0, 130.0, 250.0], "s": [50.0, 1200.0, 800.0], "yaw": 140.0, "pitch": 0.0, "top": 650}, {"name": "FB_Slope_Ramp2", "kind": "ramp", "c": [9900.0, 72.0, 65.1], "s": [1000.0, 800.0, 30.0], "yaw": 90.0, "pitch": 7.6, "top": 146}, {"name": "FB_BendA_WallW", "kind": "wall", "c": [4725.0, -840.0, 200.0], "s": [50.0, 1400.0, 400.0], "yaw": -40.0, "pitch": 0.0, "top": 400}, {"name": "FB_Hill_DownRailL", "kind": "wall", "c": [2810.0, -790.4, 410.7], "s": [1006.2, 20.0, 468.8], "yaw": -90.0, "pitch": -26.6, "top": 845}], "actors": [{"floor": 1650, "mark": "P", "clsName": "플레이어 시작 지점", "sight": null, "label": "PlayerStart", "cls": "PlayerStart", "x": 200, "y": 570, "yaw": 0.0}, {"floor": 600, "mark": "원", "clsName": "원거리 일반 적, 그룹 3", "sight": [3000, 180], "label": "Enemy_Gunner_GateBastion2", "cls": "BP_Gunner", "x": 13840, "y": 3650, "yaw": -140.0}, {"floor": 145, "mark": "원", "clsName": "원거리 일반 적, 그룹 1", "sight": [3000, 180], "label": "Enemy_Gunner_SlopeL2", "cls": "BP_Gunner", "x": 7410, "y": -1780, "yaw": 150.0}, {"floor": 400, "mark": "원", "clsName": "원거리 일반 적", "sight": [3000, 180], "label": "Enemy_Gunner_SlopeR", "cls": "BP_Gunner", "x": 9970, "y": 2880, "yaw": -170.0}, {"floor": 600, "mark": "근", "clsName": "근거리 일반 적", "sight": [1200, 120], "label": "BP_Cutter", "cls": "BP_Cutter", "x": 2500, "y": -90, "yaw": 100.0}, {"floor": 600, "mark": "원", "clsName": "원거리 일반 적, 그룹 3", "sight": [3000, 180], "label": "Enemy_Gunner_GateBastion3", "cls": "BP_Gunner", "x": 13840, "y": 3850, "yaw": 140.0}, {"floor": 600, "mark": "", "clsName": "성문", "sight": null, "label": "BP_Gate", "cls": "BP_Gate", "x": 14220, "y": 3750, "yaw": 0.0}, {"floor": 0, "mark": "근", "clsName": "근거리 일반 적, 그룹 1", "sight": [1200, 120], "label": "Enemy_Cutter_YardL", "cls": "BP_Cutter", "x": 6610, "y": -370, "yaw": -140.0}, {"floor": 400, "mark": "B", "clsName": "보스 (커스터)", "sight": [2000, 120], "label": "BP_Boss", "cls": "BP_Boss", "x": 17750, "y": 3750, "yaw": 180.0}, {"floor": 594, "mark": "근", "clsName": "근거리 일반 적, 그룹 2", "sight": [1200, 120], "label": "Enemy_Cutter_GateA", "cls": "BP_Cutter", "x": 13106, "y": 2720, "yaw": 159.4}, {"floor": 0, "mark": "원", "clsName": "원거리 일반 적", "sight": [3000, 180], "label": "Enemy_Gunner_Corridor", "cls": "BP_Gunner", "x": 4650, "y": -1700, "yaw": 180.0}, {"floor": 589, "mark": "근", "clsName": "근거리 일반 적, 그룹 2", "sight": [1200, 120], "label": "Enemy_Cutter_GateB", "cls": "BP_Cutter", "x": 13089, "y": 4740, "yaw": 170.9}, {"floor": 400, "mark": "근", "clsName": "근거리 일반 적", "sight": [1200, 120], "label": "Enemy_Cutter_YardR4", "cls": "BP_Cutter", "x": 9860, "y": 3265, "yaw": -90.3}, {"floor": 600, "mark": "원", "clsName": "원거리 일반 적, 그룹 2", "sight": [3000, 180], "label": "Enemy_Gunner_GateBastion", "cls": "BP_Gunner", "x": 12340, "y": 3750, "yaw": 180.0}, {"floor": 400, "mark": "원", "clsName": "원거리 일반 적", "sight": [3000, 180], "label": "Enemy_Gunner_SlopeL", "cls": "BP_Gunner", "x": 9050, "y": 2730, "yaw": -80.0}, {"floor": 146, "mark": "근", "clsName": "근거리 일반 적", "sight": [1200, 120], "label": "Enemy_Cutter_YardR3", "cls": "BP_Cutter", "x": 10070, "y": 515, "yaw": -170.3}], "sections": [["시작 지점", 130, 570, 1650], ["중간 단", 2370, 300, 600], ["통로", 3650, -1700, 0], ["마당", 6600, -800, 0], ["언덕길", 9100, 1000, 200], ["언덕 위", 9500, 2850, 400], ["성문 앞", 12000, 3750, 400], ["보스 아레나", 16950, 3750, 400]]};
+  if (!window.THREE || !THREE.OrbitControls) { document.getElementById('err').style.display = 'flex'; return; }
+  document.getElementById('title').textContent = document.title = DATA.title;
+  // 언리얼 (x, y, z) cm -> three.js (x, z, y) m. 왼손 좌표를 오른손 좌표로 바꾸려고 Y와 Z를 맞바꾼다.
+  const U = (x, y, z) => new THREE.Vector3(x / 100, z / 100, y / 100);
+
+  const view = document.getElementById('view');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  view.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x16181c);
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 3000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  scene.add(new THREE.HemisphereLight(0xf0f0ff, 0x404048, 0.75));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75);
+  sun.position.set(-60, 120, -40);
+  scene.add(sun);
+
+  const KCOL = { wall: 0xe6e4dc, obstacle: 0xd9963f };
+  const tops = [...DATA.boxes.filter(b => b.kind === 'floor').map(b => b.e[5]), ...DATA.rings.filter(r => r.kind === 'floor').map(r => r.top), ...DATA.steps.map(s => s.top), ...DATA.rboxes.map(b => b.top)];
+  const ZMIN = Math.min(...tops), ZSPAN = Math.max(1, Math.max(...tops) - ZMIN);
+  document.getElementById('floorLegend').textContent = `바닥 (밝을수록 높음, ${ZMIN / 100}m ~ ${(ZMIN + ZSPAN) / 100}m)`;
+  const KNAME = { floor: '바닥', wall: '벽', obstacle: '장애물', stair: '계단', ramp: '경사로' };
+  function floorColor(z) {
+    const t = Math.max(0, Math.min(1, (z - ZMIN) / ZSPAN));
+    const v = (70 + 120 * t) / 255;
+    return new THREE.Color(v, v, v * 1.02);
+  }
+  function stairColor(z) {
+    const t = Math.max(0, Math.min(1, (z - ZMIN) / ZSPAN));
+    return new THREE.Color(0.40 + 0.25 * t, 0.47 + 0.25 * t, 0.62 + 0.2 * t);
+  }
+  const m2 = v => (v / 100).toFixed(2);
+
+  const pickables = [], wallMats = [], labels = [], sightObjs = [];
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 });
+  function addMesh(g, kind, top, tipText, pos, rotY) {
+    const col = kind === 'floor' ? floorColor(top) : kind === 'stair' ? stairColor(top) : new THREE.Color(KCOL[kind]);
+    const mat = new THREE.MeshLambertMaterial({ color: col, side: THREE.DoubleSide });
+    const m = new THREE.Mesh(g, mat);
+    m.position.copy(pos);
+    if (rotY) m.rotation.y = rotY;
+    m.userData = { tip: tipText };
+    scene.add(m);
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(g, 20), edgeMat);
+    e.position.copy(m.position); e.rotation.copy(m.rotation);
+    scene.add(e);
+    pickables.push(m);
+    if (kind === 'wall') wallMats.push(mat);
+  }
+  for (const b of DATA.boxes) {
+    const [x0, x1, y0, y1, z0, z1] = b.e;
+    const f = b.full;
+    const g = new THREE.BoxGeometry((x1 - x0) / 100, (z1 - z0) / 100, (y1 - y0) / 100);
+    addMesh(g, b.kind, z1, `${b.name} (${KNAME[b.kind]})\n크기 ${m2(f[1] - f[0])} × ${m2(f[3] - f[2])} × ${m2(f[5] - f[4])} m\n윗면 높이 ${m2(f[5])} m`, U((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2), 0);
+  }
+  for (const r of DATA.rings) {
+    const seg = a => Math.max(1, Math.ceil(a / 7.5));
+    const pt = (rad, deg) => new THREE.Vector2(rad * Math.cos(deg * Math.PI / 180) / 100, -rad * Math.sin(deg * Math.PI / 180) / 100);
+    let shape;
+    const span = r.a1 - r.a0;
+    if (span >= 359.99) {
+      shape = new THREE.Shape();
+      const n = 48;
+      for (let i = 0; i <= n; i++) { const p = pt(r.ro, i * 360 / n); if (i === 0) shape.moveTo(p.x, p.y); else shape.lineTo(p.x, p.y); }
+      if (r.ri > 0) {
+        const hole = new THREE.Path();
+        for (let i = 0; i <= n; i++) { const p = pt(r.ri, -i * 360 / n); if (i === 0) hole.moveTo(p.x, p.y); else hole.lineTo(p.x, p.y); }
+        shape.holes.push(hole);
+      }
+    } else {
+      shape = new THREE.Shape();
+      const n = seg(span);
+      for (let i = 0; i <= n; i++) { const p = pt(r.ro, r.a0 + span * i / n); if (i === 0) shape.moveTo(p.x, p.y); else shape.lineTo(p.x, p.y); }
+      if (r.ri > 0) { for (let i = n; i >= 0; i--) { const p = pt(r.ri, r.a0 + span * i / n); shape.lineTo(p.x, p.y); } }
+      else shape.lineTo(0, 0);
+      shape.closePath();
+    }
+    const g = new THREE.ExtrudeGeometry(shape, { depth: (r.z1 - r.z0) / 100, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2);
+    const rr = r.ri > 0 ? `반지름 ${m2(r.ri)} ~ ${m2(r.ro)} m` : `반지름 ${m2(r.ro)} m`;
+    addMesh(g, r.kind, r.top, `${r.name} (${KNAME[r.kind]})\n${rr}\n윗면 높이 ${m2(r.top)} m`, U(r.c[0], r.c[1], r.z0), 0);
+  }
+  for (const s of DATA.steps) {
+    const g = new THREE.BoxGeometry(s.s[0] / 100, s.s[2] / 100, s.s[1] / 100);
+    addMesh(g, 'stair', s.top, `${s.name} (계단)\n이 단 윗면 높이 ${m2(s.top)} m`, U(s.c[0], s.c[1], s.c[2]), -s.yaw * Math.PI / 180);
+  }
+  for (const b of DATA.rboxes) {
+    // 언리얼 yaw는 three.js Y축 -yaw, pitch(앞이 들림)는 Z축 +pitch. yaw를 나중에 적용한다.
+    const g = new THREE.BoxGeometry(b.s[0] / 100, b.s[2] / 100, b.s[1] / 100);
+    const rmat = new THREE.MeshLambertMaterial({ color: b.kind === 'wall' ? new THREE.Color(KCOL.wall) : stairColor(b.top), side: THREE.DoubleSide });
+    if (b.kind === 'wall') wallMats.push(rmat);
+    const m = new THREE.Mesh(g, rmat);
+    m.position.copy(U(b.c[0], b.c[1], b.c[2]));
+    m.rotation.set(0, -b.yaw * Math.PI / 180, b.pitch * Math.PI / 180, 'YZX');
+    m.userData = { tip: b.kind === 'wall' ? `${b.name} (벽)\n크기 ${m2(b.s[0])} × ${m2(b.s[1])} × ${m2(b.s[2])} m\n윗면 높이 ${m2(b.top)} m` : `${b.name} (${KNAME[b.kind]})\n기울기 ${Math.abs(b.pitch).toFixed(1)}°, 폭 ${m2(b.s[1])} m\n위 끝 높이 ${m2(b.top)} m` };
+    scene.add(m); pickables.push(m);
+    const e = new THREE.LineSegments(new THREE.EdgesGeometry(g), edgeMat);
+    e.position.copy(m.position); e.rotation.copy(m.rotation);
+    scene.add(e);
+  }
+
+  const screenLabels = [];
+  function makeLabel(text, color, px) {
+    const c = document.createElement('canvas');
+    const ctx = c.getContext('2d');
+    const fs = 44;
+    ctx.font = `bold ${fs}px "Malgun Gothic", sans-serif`;
+    const w = Math.ceil(ctx.measureText(text).width) + 24;
+    c.width = w; c.height = fs + 20;
+    ctx.font = `bold ${fs}px "Malgun Gothic", sans-serif`;
+    ctx.fillStyle = 'rgba(15,17,20,0.78)';
+    ctx.fillRect(0, 0, w, c.height);
+    ctx.fillStyle = color;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 12, c.height / 2);
+    const tex = new THREE.CanvasTexture(c);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false }));
+    sp.userData.px = px;
+    sp.userData.ratio = w / c.height;
+    screenLabels.push(sp);
+    sp.renderOrder = 10;
+    return sp;
+  }
+
+  const MCOL = { P: 0x37c873, '근': 0xe64b41, '원': 0xf5872a, B: 0xb946e1 };
+  for (const a of DATA.actors) {
+    if (a.cls === 'BP_Gate') {
+      const g = new THREE.BoxGeometry(0.3, 5, 5);
+      const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0xf8cd28 }));
+      m.position.copy(U(a.x, a.y, a.floor + 250));
+      m.rotation.y = -a.yaw * Math.PI / 180;
+      m.userData = { tip: `${a.label} (성문, 닫힌 상태)\n폭 5m, 높이 5m` };
+      scene.add(m); pickables.push(m);
+      const l = makeLabel('성문', '#f8cd28', 15); l.position.copy(U(a.x, a.y, a.floor + 620)); scene.add(l); labels.push(l);
+      continue;
+    }
+    // 캡슐 크기(전체 높이, 반지름 m)는 BP_Boss와 BP_Player·BP_Cutter·BP_Gunner의 캡슐 컴포넌트 값이다.
+    const h = a.cls === 'BP_Boss' ? 2.112 : 1.76;
+    const r = a.cls === 'BP_Boss' ? 0.408 : 0.34;
+    const g = new THREE.CapsuleGeometry(r, h - 2 * r, 6, 16);
+    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: MCOL[a.mark] }));
+    m.position.copy(U(a.x, a.y, a.floor + h * 50));
+    const s = a.sight ? `\n시야 ${a.sight[0] / 100}m, 정면 ${a.sight[1]}°` : '';
+    m.userData = { tip: `${a.label} (${a.clsName})\n위치 ${(a.x / 100).toFixed(1)}, ${(a.y / 100).toFixed(1)} m, 바닥 ${(a.floor / 100).toFixed(1)} m${s}` };
+    scene.add(m); pickables.push(m);
+    const yaw = a.yaw * Math.PI / 180;
+    const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.6, 10), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    arrow.position.copy(U(a.x + 60 * Math.cos(yaw), a.y + 60 * Math.sin(yaw), a.floor + h * 75));
+    arrow.lookAt(U(a.x + 200 * Math.cos(yaw), a.y + 200 * Math.sin(yaw), a.floor + h * 75));
+    arrow.rotateX(Math.PI / 2);
+    scene.add(arrow);
+    const l = makeLabel(a.mark, '#' + MCOL[a.mark].toString(16).padStart(6, '0'), 14);
+    l.position.copy(U(a.x, a.y, a.floor + h * 100 + 90)); scene.add(l); labels.push(l);
+    if (a.sight) {
+      const half = a.sight[1] / 2 * Math.PI / 180;
+      const fg = new THREE.CircleGeometry(a.sight[0] / 100, 48, yaw - half, 2 * half);
+      fg.rotateX(Math.PI / 2);
+      const fan = new THREE.Mesh(fg, new THREE.MeshBasicMaterial({ color: MCOL[a.mark], transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false }));
+      fan.position.copy(U(a.x, a.y, a.floor + 3));
+      fan.visible = false;
+      scene.add(fan); sightObjs.push(fan);
+      const arc = [U(a.x, a.y, a.floor + 4)];
+      for (let i = 0; i <= 48; i++) { const t = yaw - half + 2 * half * i / 48; arc.push(U(a.x + a.sight[0] * Math.cos(t), a.y + a.sight[0] * Math.sin(t), a.floor + 4)); }
+      arc.push(arc[0]);
+      const rim = new THREE.Line(new THREE.BufferGeometry().setFromPoints(arc), new THREE.LineBasicMaterial({ color: MCOL[a.mark] }));
+      rim.visible = false;
+      scene.add(rim); sightObjs.push(rim);
+    }
+  }
+  for (const s of DATA.sections) {
+    const l = makeLabel(s[0], '#ffffff', 15);
+    l.position.copy(U(s[1], s[2], s[3] + 1000));
+    scene.add(l); labels.push(l);
+  }
+
+  // 전체 보기와 위에서 보기는 구조물의 꼭짓점과 이름표가 화면 가운데에 다 들어오게 카메라를 맞춘다.
+  // 레벨 경계 상자의 꼭짓점에 맞추면 대각선으로 놓인 레벨에서 빈 모서리까지 넣어 화면이 한쪽으로 쏠린다.
+  const points = [];
+  pickables.forEach(o => { o.updateMatrixWorld(true); const pa = o.geometry.attributes.position; for (let i = 0; i < pa.count; i++) points.push(new THREE.Vector3().fromBufferAttribute(pa, i).applyMatrix4(o.matrixWorld)); });
+  labels.forEach(l => points.push(l.position.clone()));
+  const bounds = new THREE.Box3().setFromPoints(points);
+  function fit(dir, L, T) {
+    const R = 0.96, B = -0.92;
+    const target = bounds.getCenter(new THREE.Vector3()), right = new THREE.Vector3(), up = new THREE.Vector3(), p = new THREE.Vector3();
+    let dist = bounds.getSize(new THREE.Vector3()).length();
+    for (let i = 0; i < 10; i++) {
+      camera.position.copy(target).addScaledVector(dir, dist);
+      camera.lookAt(target);
+      camera.updateMatrixWorld();
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (const c of points) { p.copy(c).project(camera); x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+      const k = dist * Math.tan(camera.fov * Math.PI / 360);
+      right.setFromMatrixColumn(camera.matrixWorld, 0);
+      up.setFromMatrixColumn(camera.matrixWorld, 1);
+      target.addScaledVector(right, ((x0 + x1) - (L + R)) / 2 * k * camera.aspect).addScaledVector(up, ((y0 + y1) - (T + B)) / 2 * k);
+      dist *= Math.max((x1 - x0) / (R - L), (y1 - y0) / (T - B));
+    }
+    camera.position.copy(target).addScaledVector(dir, dist);
+    camera.lookAt(target);
+    camera.updateMatrixWorld();
+    controls.target.copy(target);
+  }
+  function panelOverlap(r) {
+    const W = window.innerWidth, H = window.innerHeight, p = new THREE.Vector3();
+    return points.some(c => { p.copy(c).project(camera); return (p.x + 1) / 2 * W < r.right + 8 && (1 - p.y) / 2 * H < r.bottom + 8; });
+  }
+  function frame(dir) {
+    // 왼쪽 위 패널은 레벨과 겹칠 때만 피한다. 패널 폭만큼 오른쪽으로, 또는 패널 높이만큼 아래로 비키는 것 중 레벨이 더 크게 보이는 쪽을 쓴다.
+    const ui = document.getElementById('ui'), r = ui.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight;
+    fit(dir, -0.96, 0.92);
+    if (!panelOverlap(r)) { controls.update(); return; }
+    const opts = [];
+    if (r.right < W * 0.6) opts.push([-1 + 2 * (r.right + 12) / W, 0.92]);
+    if (r.bottom < H * 0.6) opts.push([-0.96, 1 - 2 * (r.bottom + 12) / H]);
+    let best = null;
+    for (const [L, T] of opts) { fit(dir, L, T); const d = camera.position.distanceTo(controls.target); if (!best || d < best.d) best = { L, T, d }; }
+    if (best) fit(dir, best.L, best.T);
+    controls.update();
+  }
+  const homeDir = new THREE.Vector3(-70, 95, 110).normalize(), topDir = new THREE.Vector3(0, 1, 0.0001).normalize();
+  const home = () => frame(homeDir);
+  home();
+  const secs = document.getElementById('secs');
+  for (const s of DATA.sections) {
+    const btn = document.createElement('button');
+    btn.textContent = s[0];
+    btn.onclick = () => { const t = U(s[1], s[2], s[3]); camera.position.set(t.x - 24, t.y + 28, t.z + 28); controls.target.copy(t); controls.update(); };
+    secs.appendChild(btn);
+  }
+  document.getElementById('bHome').onclick = home;
+  document.getElementById('bTop').onclick = () => frame(topDir);
+  function toggle(id, fn) { const b = document.getElementById(id); b.onchange = () => fn(b.checked); }
+  toggle('bWall', on => wallMats.forEach(m => { m.transparent = on; m.opacity = on ? 0.22 : 1; m.depthWrite = !on; m.needsUpdate = true; }));
+  toggle('bSight', on => sightObjs.forEach(o => { o.visible = on; }));
+  toggle('bLabel', on => labels.forEach(o => { o.visible = on; }));
+
+  const tip = document.getElementById('tip');
+  const ray = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  renderer.domElement.addEventListener('mousemove', ev => {
+    mouse.x = ev.clientX / window.innerWidth * 2 - 1;
+    mouse.y = -ev.clientY / window.innerHeight * 2 + 1;
+    ray.setFromCamera(mouse, camera);
+    const hit = ray.intersectObjects(pickables.filter(o => o.visible && !(o.material.transparent && o.material.opacity < 1)))[0];
+    if (hit) { tip.textContent = hit.object.userData.tip; tip.style.display = 'block'; tip.style.left = (ev.clientX + 14) + 'px'; tip.style.top = (ev.clientY + 14) + 'px'; }
+    else tip.style.display = 'none';
+  });
+  // 이름표는 거리와 관계없이 화면에서 같은 픽셀 크기로 그린다(sizeAttenuation을 끄면 크기가 화면 높이 비율이 된다).
+  function sizeLabels() {
+    const k = 2 * Math.tan(camera.fov * Math.PI / 360) / window.innerHeight;
+    screenLabels.forEach(s => s.scale.set(s.userData.px * k * s.userData.ratio, s.userData.px * k, 1));
+  }
+  sizeLabels();
+  window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); sizeLabels(); });
+  (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+})();
+</script>
+</body>
+</html>
