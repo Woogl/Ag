@@ -153,13 +153,13 @@ bool FAgJsonReader::ParseFile(const FString& Path)
 
 bool FAgJsonReader::ReadFile(const FString& Path, const FProperty& Property, void* Out)
 {
-	const FAgJsonDocument* Document = FindDocument(Path);
+	const FAgJsonDocument* Document = FindFile(Path);
 	return Document && Read(Path, MakeShared<FJsonValueObject>(Document->Root), Property, Out);
 }
 
 bool FAgJsonReader::ReadEntries(const FString& Path, TConstArrayView<FName> Ids, const FProperty& Property, void* Out)
 {
-	const FAgJsonDocument* Document = FindDocument(Path);
+	const FAgJsonDocument* Document = FindFile(Path);
 	if (!Document)
 	{
 		return false;
@@ -177,7 +177,7 @@ bool FAgJsonReader::ReadEntries(const FString& Path, TConstArrayView<FName> Ids,
 
 bool FAgJsonReader::ReadFile(const FString& Path, UObject& Object)
 {
-	const FAgJsonDocument* Document = FindDocument(Path);
+	const FAgJsonDocument* Document = FindFile(Path);
 	return Document && ReadFields(Path, *Document->Root, *Object.GetClass(), &Object);
 }
 
@@ -213,7 +213,6 @@ bool FAgJsonReader::ReadSpawnActor(const FString& Path, FName Id, FAgSpawnActorD
 	{
 		return AgJsonReaderPrivate::Fail(EntryPath, ClassPath + TEXT(" is not a class of Actor"));
 	}
-	Out.Id = Id;
 	Out.Class = Class;
 	// 속성값은 그 액터 클래스가 정한 구조체로 지금 읽어 두고, 생성할 때는 구조체를 그대로 넘깁니다.
 	const IAgAbilitySpawnedActor* SpawnedActor = Cast<IAgAbilitySpawnedActor>(Class->GetDefaultObject());
@@ -237,8 +236,18 @@ bool FAgJsonReader::IsField(const FProperty& Property)
 
 const FAgJsonDocument* FAgJsonReader::FindDocument(const FString& Path) const
 {
-	// 파싱하지 못한 파일은 그때 오류를 알렸습니다.
 	return Documents.Find(FName(FPaths::GetBaseFilename(Path)));
+}
+
+const FAgJsonDocument* FAgJsonReader::FindFile(const FString& Path) const
+{
+	const FAgJsonDocument* Document = FindDocument(Path);
+	// 파싱하지 못한 파일은 그때 오류를 알렸습니다. 폴더에 없는 파일은 파싱한 적이 없으므로 여기서 알립니다.
+	if (!Document && !FPaths::FileExists(FPaths::Combine(FPaths::ProjectDir(), Path)))
+	{
+		AgJsonReaderPrivate::Fail(Path, TEXT("can't read the file"));
+	}
+	return Document;
 }
 
 bool FAgJsonReader::Read(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FProperty& Property, void* Out)
@@ -396,7 +405,7 @@ bool FAgJsonReader::ReadStruct(const FString& Path, const TSharedPtr<FJsonValue>
 		// 생성 액터는 ID로 적고, 그 정의를 읽어 채웁니다. 정의가 쓰는 쪽 데이터 안에 들어가 클래스도 함께 붙잡힙니다.
 		if (Value->Type != EJson::String)
 		{
-			return AgJsonReaderPrivate::Fail(Path, TEXT("must be an ID in SpawnActors.json"));
+			return AgJsonReaderPrivate::Fail(Path, FString(TEXT("must be an ID in ")) + FAgSpawnActorDefinition::GetFileName());
 		}
 		return ReadSpawnActor(Path, FName(*Value->AsString()), *static_cast<FAgSpawnActorDefinition*>(Out));
 	}

@@ -41,10 +41,10 @@ public:
 	/** 새로 읽은 객체의 값을 받습니다. 이 객체를 가리키는 쪽이 그대로 새 값을 보도록 객체를 바꾸지 않고 값만 복사합니다. */
 	virtual void CopyJson(const UAgJsonData& Loaded);
 
+protected:
 	/** JSON으로 채우는 필드만 복사합니다. */
 	static void CopyJsonFields(const UObject& From, UObject& To);
 
-protected:
 	/** 리더에 넘기는 파일 경로이자 오류에 적는 위치입니다. */
 	FString GetJsonPath() const;
 

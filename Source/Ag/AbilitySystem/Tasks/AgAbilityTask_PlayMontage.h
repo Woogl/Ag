@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Data/AgAbilityData.h"
-#include "StructUtils/InstancedStruct.h"
 #include "AgAbilityTask_PlayMontage.generated.h"
 
 class UAnimMontage;

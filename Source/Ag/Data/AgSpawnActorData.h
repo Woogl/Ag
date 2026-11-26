@@ -30,10 +30,6 @@ struct FAgSpawnActorDefinition
 		return TEXT("SpawnActors.json");
 	}
 
-	/** `SpawnActors.json`의 ID입니다. 오류에 적습니다. */
-	UPROPERTY()
-	FName Id;
-
 	UPROPERTY()
 	TSubclassOf<AActor> Class;
 

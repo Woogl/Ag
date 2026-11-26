@@ -60,6 +60,9 @@ public:
 private:
 	const FAgJsonDocument* FindDocument(const FString& Path) const;
 
+	/** 읽을 파일을 찾습니다. 폴더에 없는 파일이면 오류를 알립니다. */
+	const FAgJsonDocument* FindFile(const FString& Path) const;
+
 	bool Read(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FProperty& Property, void* Out);
 
 	bool ReadArray(const FString& Path, const TSharedPtr<FJsonValue>& Value, const FArrayProperty& Property, void* Out);
