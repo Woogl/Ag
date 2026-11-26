@@ -43,7 +43,10 @@ public:
 	/** 스포너가 생성한 적을 모두 지우고 다시 생성해, 레벨을 처음 열었을 때의 상태로 되돌립니다. */
 	void RespawnEnemies();
 
-	/** Game Over가 정해지면 버튼 없이 지금 스테이지를 다시 시작하는지 정합니다. 기본은 다시 시작합니다. */
+	/**
+	 * Game Over가 정해지면 버튼 없이 지금 스테이지를 다시 시작하는지 정합니다. 기본은 다시 시작합니다.
+	 * 이렇게 다시 시작하는 스테이지는 일시정지 메뉴에도 Restart가 없습니다.
+	 */
 	virtual bool ShouldRestartOnGameOver() const;
 
 	virtual void StartPlay() override;

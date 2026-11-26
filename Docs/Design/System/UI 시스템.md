@@ -440,6 +440,7 @@ LV_SimulationRoom에서 배치 자리마다 싸울 적을 고르는 화면입니
 #### System 탭
 
 - 화면 가운데에 Resume, Restart, Return to Title, Quit 버튼을 위에서부터 세로로 배치합니다. (글자 Large)
+- 미니던전에는 Restart 버튼이 없습니다. 남은 버튼은 빈자리 없이 위에서부터 놓습니다.
 - 처음 선택된 버튼은 Resume입니다.
 - 버튼의 실행 결과는 [게임 플로우](<게임 플로우.md>)의 '일시정지'를 따릅니다.
 
