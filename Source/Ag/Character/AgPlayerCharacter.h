@@ -9,6 +9,7 @@
 
 class UAgCameraData;
 class UAgCombatStatsComponent;
+class UAgGameplayAbility;
 class UAgInteractionComponent;
 class UCameraComponent;
 class UGameplayAbility;
@@ -43,6 +44,9 @@ public:
 	virtual bool IsMoveInputIgnored() const override;
 
 	void FindInputAbilities(const FGameplayTag& InputTag, TArray<FGameplayAbilitySpecHandle>& OutHandles) const;
+
+	/** 입력 하나에 어빌리티가 하나뿐인 곳(HUD의 스킬·퀵슬롯 버튼)에서 그 어빌리티를 찾습니다. */
+	const UAgGameplayAbility* FindInputAbility(const FGameplayTag& InputTag) const;
 
 	/** 락온 어빌리티의 대상을 화면에서 Direction 쪽(양수 = 오른쪽)의 가장 가까운 후보로 바꿉니다. 없으면 그대로 둡니다. */
 	void SwitchLockOnTarget(float Direction);

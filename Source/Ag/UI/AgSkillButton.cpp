@@ -1,26 +1,24 @@
 // Copyright Woogle. All Rights Reserved.
 
-#include "UI/AgSkillSlot.h"
+#include "UI/AgSkillButton.h"
 
-#include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgGameplayAbility.h"
 #include "Character/AgPlayerCharacter.h"
 #include "CommonLazyImage.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Data/AgAbilityData.h"
-#include "Data/AgItemData.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "TimerManager.h"
 
-namespace AgSkillSlotPrivate
+namespace AgSkillButtonPrivate
 {
 	const FName RatioParameter(TEXT("Ratio"));
 }
 
-void UAgSkillSlot::SetInput(AAgPlayerCharacter* InPlayer, const FGameplayTag& InInputTag)
+void UAgSkillButton::SetInput(AAgPlayerCharacter* InPlayer, const FGameplayTag& InInputTag)
 {
 	Player = InPlayer;
 	InputTag = InInputTag;
@@ -28,22 +26,14 @@ void UAgSkillSlot::SetInput(AAgPlayerCharacter* InPlayer, const FGameplayTag& In
 	UpdateCooldown();
 }
 
-void UAgSkillSlot::UpdateAbility()
+void UAgSkillButton::UpdateAbility()
 {
 	// 데이터를 다시 읽으면 아이콘과 코스트가 바뀌므로, 어빌리티의 사본이 아니라 캐릭터 데이터의 지금 정의를 봅니다.
-	const UAgGameplayAbility* Ability = FindAbility();
+	const AAgPlayerCharacter* Character = Player.Get();
+	const UAgGameplayAbility* Ability = Character ? Character->FindInputAbility(InputTag) : nullptr;
 	const FAgAbilityData* Data = Ability ? Ability->FindDefinition() : nullptr;
 
-	TSoftObjectPtr<UTexture2D> Icon;
-	if (Data)
-	{
-		Icon = Data->Icon;
-		const FAgItemData* Item = Icon.IsNull() ? UAgItemSet::FindItem(Data->Item) : nullptr;
-		if (Item)
-		{
-			Icon = Item->Icon;
-		}
-	}
+	const TSoftObjectPtr<UTexture2D> Icon = Data ? Data->Icon : TSoftObjectPtr<UTexture2D>();
 	// 이미지가 없는 아이콘은 빈 사각형으로 그려지므로 숨깁니다.
 	IconImage->SetVisibility(Icon.IsNull() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 	if (!Icon.IsNull())
@@ -59,7 +49,7 @@ void UAgSkillSlot::UpdateAbility()
 	Body->SetRenderOpacity(bUsable ? 1.f : DisabledOpacity);
 }
 
-void UAgSkillSlot::UpdateCooldown()
+void UAgSkillButton::UpdateCooldown()
 {
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 	TimerManager.ClearTimer(CooldownTimer);
@@ -68,7 +58,8 @@ void UAgSkillSlot::UpdateCooldown()
 	float Duration = 0.f;
 	int32 Charges = 0;
 	int32 MaxCharges = 0;
-	if (const UAgGameplayAbility* Ability = FindAbility())
+	const AAgPlayerCharacter* Character = Player.Get();
+	if (const UAgGameplayAbility* Ability = Character ? Character->FindInputAbility(InputTag) : nullptr)
 	{
 		Ability->GetRechargeTimeRemainingAndDuration(Remaining, Duration);
 		Charges = Ability->GetCharges();
@@ -88,7 +79,7 @@ void UAgSkillSlot::UpdateCooldown()
 	{
 		if (UMaterialInstanceDynamic* Material = CooldownSweep->GetDynamicMaterial())
 		{
-			Material->SetScalarParameterValue(AgSkillSlotPrivate::RatioParameter, Remaining / Duration);
+			Material->SetScalarParameterValue(AgSkillButtonPrivate::RatioParameter, Remaining / Duration);
 		}
 	}
 	if (bCoolingDown)
@@ -104,19 +95,7 @@ void UAgSkillSlot::UpdateCooldown()
 	}
 }
 
-const UAgGameplayAbility* UAgSkillSlot::FindAbility() const
-{
-	const AAgPlayerCharacter* Character = Player.Get();
-	TArray<FGameplayAbilitySpecHandle> Handles;
-	if (Character)
-	{
-		Character->FindInputAbilities(InputTag, Handles);
-	}
-	const FGameplayAbilitySpec* Spec = Handles.IsEmpty() ? nullptr : Character->GetAbilitySystemComponent()->FindAbilitySpecFromHandle(Handles[0]);
-	return Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
-}
-
-void UAgSkillSlot::NativeDestruct()
+void UAgSkillButton::NativeDestruct()
 {
 	if (const UWorld* World = GetWorld())
 	{

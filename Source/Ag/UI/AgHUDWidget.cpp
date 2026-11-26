@@ -4,7 +4,6 @@
 
 #include "AbilitySystem/AgAbilitySystemComponent.h"
 #include "AbilitySystem/AgAttributeSet.h"
-#include "AbilitySystem/AgGameplayAbility.h"
 #include "AbilitySystemComponent.h"
 #include "Character/AgBossCharacter.h"
 #include "Character/AgPlayerCharacter.h"
@@ -16,7 +15,6 @@
 #include "Core/AgAssetManager.h"
 #include "Core/AgGameplayTags.h"
 #include "Data/AgCharacterData.h"
-#include "Data/AgItemData.h"
 #include "Engine/World.h"
 #include "Game/AgGameState.h"
 #include "Game/AgPlayerController.h"
@@ -25,7 +23,8 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UI/AgNameplateWidget.h"
 #include "UI/AgPauseMenu.h"
-#include "UI/AgSkillSlot.h"
+#include "UI/AgQuickslotButton.h"
+#include "UI/AgSkillButton.h"
 #include "UI/AgStatBar.h"
 #include "UI/AgUILayout.h"
 
@@ -61,16 +60,17 @@ void UAgHUDWidget::NativeConstruct()
 	const AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>();
 	PlayerInventory = PlayerController ? PlayerController->GetInventory() : nullptr;
 	BindPlayer();
-	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
+	for (const TPair<UAgSkillButton*, FGameplayTag>& SkillButton : GetSkillButtons())
 	{
-		SkillSlot.Key->SetInput(Player, SkillSlot.Value);
+		SkillButton.Key->SetInput(Player, SkillButton.Value);
 	}
+	PotionButton->SetInput(Player, AgGameplayTags::Input_Potion);
 
 #if WITH_EDITOR
-	// 데이터 파일을 다시 읽으면 보스 이름, 스킬 아이콘·코스트·최대 충전, 회복병의 최대 보유 수가 바뀝니다.
+	// 데이터 파일을 다시 읽으면 보스 이름, 스킬 아이콘·코스트·최대 충전, 회복병의 아이콘·최대 보유 수가 바뀝니다.
 	UAgAssetManager::Get().OnJsonDataReloaded.AddWeakLambda(this, [this]
 	{
-		UpdateSkillSlots();
+		UpdateSkillButtons();
 		UpdateCooldowns();
 		UpdateBoss();
 		UpdatePotion();
@@ -129,11 +129,11 @@ void UAgHUDWidget::BindPlayer()
 {
 	if (UAgInventoryComponent* Inventory = PlayerInventory.Get())
 	{
-		// 슬롯의 흐림은 그 어빌리티가 쓰는 아이템의 보유 수도 봅니다.
+		// 스킬 버튼의 흐림도 그 어빌리티가 쓰는 아이템의 보유 수를 봅니다.
 		Inventory->OnItemsChanged.AddWeakLambda(this, [this]
 		{
 			UpdatePotion();
-			UpdateSkillSlots();
+			UpdateSkillButtons();
 		});
 	}
 	UAbilitySystemComponent* ASC = PlayerASC.Get();
@@ -148,11 +148,11 @@ void UAgHUDWidget::BindPlayer()
 	ASC->RegisterGameplayTagEvent(AgGameplayTags::State_Cutscene, EGameplayTagEventType::NewOrRemoved)
 		.AddWeakLambda(this, [this](const FGameplayTag, int32)
 	{ UpdateStatusPanel(); });
-	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 스펙이 바뀔 때(부여, 발동, 종료) 스킬 슬롯과
-	// 회복병 칸 어빌리티의 아이템으로 세는 회복병 횟수를 다시 그립니다.
+	// 캐릭터는 HUD가 생긴 뒤 BeginPlay에서 어빌리티를 부여할 수 있으므로, 스펙이 바뀔 때(부여, 발동, 종료) 스킬 버튼과
+	// 회복병 버튼(어빌리티의 아이템으로 그림)을 다시 그립니다.
 	ASC->AbilitySpecDirtiedCallbacks.AddWeakLambda(this, [this](const FGameplayAbilitySpec&)
 	{
-		UpdateSkillSlots();
+		UpdateSkillButtons();
 		UpdateCooldowns();
 		UpdatePotion();
 	});
@@ -215,14 +215,7 @@ void UAgHUDWidget::UpdateMPBar()
 
 void UAgHUDWidget::UpdatePotion()
 {
-	const UAgGameplayAbility* Ability = PotionSlot->FindAbility();
-	const FAgAbilityData* Data = Ability ? Ability->FindDefinition() : nullptr;
-	const FAgItemData* Item = Data ? UAgItemSet::FindItem(Data->Item) : nullptr;
-	const UAgInventoryComponent* Inventory = PlayerInventory.Get();
-	if (Item && Inventory)
-	{
-		PotionCountText->SetText(FText::Format(INVTEXT("{0}/{1}"), FText::AsNumber(Inventory->GetCount(Data->Item)), FText::AsNumber(Item->MaxCount)));
-	}
+	PotionButton->UpdateItem();
 }
 
 void UAgHUDWidget::UpdateUPGauge()
@@ -236,19 +229,19 @@ void UAgHUDWidget::UpdateUPGauge()
 	}
 }
 
-void UAgHUDWidget::UpdateSkillSlots()
+void UAgHUDWidget::UpdateSkillButtons()
 {
-	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
+	for (const TPair<UAgSkillButton*, FGameplayTag>& SkillButton : GetSkillButtons())
 	{
-		SkillSlot.Key->UpdateAbility();
+		SkillButton.Key->UpdateAbility();
 	}
 }
 
 void UAgHUDWidget::UpdateCooldowns()
 {
-	for (const TPair<UAgSkillSlot*, FGameplayTag>& SkillSlot : GetSkillSlots())
+	for (const TPair<UAgSkillButton*, FGameplayTag>& SkillButton : GetSkillButtons())
 	{
-		SkillSlot.Key->UpdateCooldown();
+		SkillButton.Key->UpdateCooldown();
 	}
 }
 
@@ -264,15 +257,14 @@ void UAgHUDWidget::UpdateBoss()
 	}
 }
 
-TArray<TPair<UAgSkillSlot*, FGameplayTag>, TInlineAllocator<6>> UAgHUDWidget::GetSkillSlots() const
+TArray<TPair<UAgSkillButton*, FGameplayTag>, TInlineAllocator<5>> UAgHUDWidget::GetSkillButtons() const
 {
 	return {
-		{Skill1Slot.Get(), AgGameplayTags::Input_Skill1},
-		{Skill2Slot.Get(), AgGameplayTags::Input_Skill2},
-		{Skill3Slot.Get(), AgGameplayTags::Input_Skill3},
-		{Skill4Slot.Get(), AgGameplayTags::Input_Skill4},
-		{UltimateSlot.Get(), AgGameplayTags::Input_Ultimate},
-		{PotionSlot.Get(), AgGameplayTags::Input_Potion},
+		{Skill1Button.Get(), AgGameplayTags::Input_Skill1},
+		{Skill2Button.Get(), AgGameplayTags::Input_Skill2},
+		{Skill3Button.Get(), AgGameplayTags::Input_Skill3},
+		{Skill4Button.Get(), AgGameplayTags::Input_Skill4},
+		{UltimateButton.Get(), AgGameplayTags::Input_Ultimate},
 	};
 }
 
@@ -292,6 +284,6 @@ void UAgHUDWidget::HandlePlayerAttributeChanged(const FOnAttributeChangeData& Da
 	{
 		UpdateUPGauge();
 	}
-	// 슬롯의 흐림은 어빌리티 정의의 비용과 발동 조건이 정하므로, 어느 자원이 바뀌어도 다시 봅니다.
-	UpdateSkillSlots();
+	// 스킬 버튼의 흐림은 어빌리티 정의의 비용과 발동 조건이 정하므로, 어느 자원이 바뀌어도 다시 봅니다.
+	UpdateSkillButtons();
 }

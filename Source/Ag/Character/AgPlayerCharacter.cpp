@@ -70,6 +70,14 @@ void AAgPlayerCharacter::FindInputAbilities(const FGameplayTag& InputTag, TArray
 	}
 }
 
+const UAgGameplayAbility* AAgPlayerCharacter::FindInputAbility(const FGameplayTag& InputTag) const
+{
+	TArray<FGameplayAbilitySpecHandle> Handles;
+	FindInputAbilities(InputTag, Handles);
+	const FGameplayAbilitySpec* Spec = Handles.IsEmpty() ? nullptr : GetAbilitySystemComponent()->FindAbilitySpecFromHandle(Handles[0]);
+	return Spec ? Cast<UAgGameplayAbility>(Spec->GetPrimaryInstance()) : nullptr;
+}
+
 void AAgPlayerCharacter::SwitchLockOnTarget(float Direction)
 {
 	const FGameplayAbilitySpec* Spec = GetAbilitySystemComponent()->FindSpecByTag(AgGameplayTags::Ability_LockOn);

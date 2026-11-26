@@ -3,19 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CommonUserWidget.h"
+#include "CommonButtonBase.h"
 #include "GameplayTagContainer.h"
-#include "AgSkillSlot.generated.h"
+#include "AgSkillButton.generated.h"
 
 class AAgPlayerCharacter;
-class UAgGameplayAbility;
 class UCommonLazyImage;
 class UImage;
 class UTextBlock;
 
-/** 전투 HUD의 스킬·궁극기·회복병 칸. 입력 태그의 어빌리티로 아이콘, MP 코스트, 흐림, 쿨다운, 남은 충전 수를 그립니다. */
+/** 전투 HUD의 스킬·궁극기 칸. 입력 태그의 어빌리티로 아이콘, MP 코스트, 흐림, 쿨다운, 남은 충전 수를 그립니다. */
 UCLASS(Abstract, meta = (DisableNativeTick))
-class UAgSkillSlot : public UCommonUserWidget
+class UAgSkillButton : public UCommonButtonBase
 {
 	GENERATED_BODY()
 
@@ -27,8 +26,6 @@ public:
 
 	/** 쿨다운 표시와 남은 충전 수를 다시 그리고, 충전이 최대보다 적으면 다음 틱에 다시 부릅니다. */
 	void UpdateCooldown();
-
-	const UAgGameplayAbility* FindAbility() const;
 
 protected:
 	virtual void NativeDestruct() override;

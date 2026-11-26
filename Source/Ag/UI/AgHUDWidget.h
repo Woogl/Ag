@@ -11,7 +11,8 @@ class UAgAbilitySystemComponent;
 class UAgInventoryComponent;
 class UAgNameplateWidget;
 class UAgPauseMenu;
-class UAgSkillSlot;
+class UAgQuickslotButton;
+class UAgSkillButton;
 class UAgStatBar;
 class UImage;
 class UTextBlock;
@@ -28,7 +29,7 @@ protected:
 	virtual void NativeDestruct() override;
 	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
 
-	/** 궁극기 컷신과 스테이지 결과 동안 한꺼번에 숨기는 묶음이라, 플레이어 상태·스킬 슬롯·보스 상태를 모두 이 안에 둡니다. */
+	/** 궁극기 컷신과 스테이지 결과 동안 한꺼번에 숨기는 묶음이라, 플레이어 상태·스킬 버튼·보스 상태를 모두 이 안에 둡니다. */
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> StatusPanel;
 
@@ -39,28 +40,25 @@ protected:
 	TObjectPtr<UAgStatBar> PlayerMPBar;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgSkillSlot> Skill1Slot;
+	TObjectPtr<UAgSkillButton> Skill1Button;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgSkillSlot> Skill2Slot;
+	TObjectPtr<UAgSkillButton> Skill2Button;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgSkillSlot> Skill3Slot;
+	TObjectPtr<UAgSkillButton> Skill3Button;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgSkillSlot> Skill4Slot;
+	TObjectPtr<UAgSkillButton> Skill4Button;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgSkillSlot> UltimateSlot;
+	TObjectPtr<UAgSkillButton> UltimateButton;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> UPGauge;
 
 	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UAgSkillSlot> PotionSlot;
-
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UTextBlock> PotionCountText;
+	TObjectPtr<UAgQuickslotButton> PotionButton;
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UWidget> BossStatusPanel;
@@ -86,12 +84,12 @@ private:
 	void UpdateMPBar();
 	void UpdatePotion();
 	void UpdateUPGauge();
-	void UpdateSkillSlots();
+	void UpdateSkillButtons();
 	void UpdateCooldowns();
 	void UpdateBoss();
 
-	/** 스킬·궁극기·회복병 칸과 그 칸을 발동하는 입력 태그입니다. */
-	TArray<TPair<UAgSkillSlot*, FGameplayTag>, TInlineAllocator<6>> GetSkillSlots() const;
+	/** 스킬·궁극기 버튼과 그 버튼의 어빌리티를 발동하는 입력 태그입니다. */
+	TArray<TPair<UAgSkillButton*, FGameplayTag>, TInlineAllocator<5>> GetSkillButtons() const;
 
 	void HandlePlayerAttributeChanged(const FOnAttributeChangeData& Data);
 
