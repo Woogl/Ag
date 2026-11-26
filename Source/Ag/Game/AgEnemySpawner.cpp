@@ -172,11 +172,12 @@ void AAgEnemySpawner::HandleClassLoaded()
 
 void AAgEnemySpawner::SpawnEnemy()
 {
-	LoadHandle.Reset();
 	const bool bWaited = bSpawnPending;
 	bSpawnPending = false;
 
 	AbilitySet = UAgAssetManager::Get().LoadData<UAgAbilitySet>(LoadedClass->GetDefaultObject<AAgEnemyCharacter>()->GetCharacterDataId());
+	// 미리 읽은 에셋을 묶음이 붙잡은 뒤에 핸들을 놓습니다.
+	LoadHandle.Reset();
 
 	// 스포너의 위치는 적의 발밑이고, 적 액터의 위치는 캡슐 중심입니다.
 	const float HalfHeight = LoadedClass->GetDefaultObject<AAgEnemyCharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();

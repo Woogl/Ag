@@ -69,10 +69,15 @@ bool UAgAbilitySet::ReadJson(FAgJsonReader& Reader, FName Key)
 
 void UAgAbilitySet::GatherAssetPaths(const FAgJsonReader& Reader, FName Key, TArray<FSoftObjectPath>& OutPaths) const
 {
+	if (Key.IsNone())
+	{
+		Super::GatherAssetPaths(Reader, Key, OutPaths);
+		return;
+	}
+	// ReadJson과 같이, 없는 캐릭터 ID는 읽을 것이 없습니다.
 	const UAgCharacterData* Character = UAgCharacterData::Find(Key);
 	if (!Character)
 	{
-		Super::GatherAssetPaths(Reader, Key, OutPaths);
 		return;
 	}
 	TArray<FString> Strings;

@@ -46,8 +46,9 @@ public:
 
 	/**
 	 * LoadData<T>(Key)가 읽을 에셋을 비동기로 미리 읽고, 끝나면 OnLoaded를 부릅니다. 그 뒤의 LoadData는 에셋을 읽느라 멈추지
-	 * 않습니다. 돌려준 핸들을 놓으면 요청이 취소되므로 OnLoaded에서 LoadData로 받아 붙잡을 때까지 들고 있습니다. 읽을 에셋이
-	 * 없으면 OnLoaded를 바로 부르고 빈 핸들을 돌려줍니다.
+	 * 않습니다. 읽은 에셋은 돌려준 핸들이 붙잡으므로 OnLoaded에서 LoadData로 받아 붙잡은 뒤에 핸들을 놓습니다. 읽는 중에는
+	 * 핸들을 놓아도 엔진이 읽기를 이어 가고 OnLoaded도 부르므로, 그만두려면 핸들의 CancelHandle을 부릅니다. 읽을 에셋이 없으면
+	 * OnLoaded를 바로 부르고 빈 핸들을 돌려줍니다.
 	 */
 	template <typename T>
 	TSharedPtr<FStreamableHandle> PreloadData(FName Key, FStreamableDelegate OnLoaded)
