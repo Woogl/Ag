@@ -18,7 +18,8 @@
 | 강인도·슈퍼아머 | 강인도는 `UAgCharacterData::Toughness`이며 어트리뷰트로 만들지 않습니다. 슈퍼아머는 JSON 효과 `SuperArmor`가 `State.SuperArmor`를 부여합니다. 반응 선택은 대미지 결과 처리 컴포넌트가 맡습니다. | 캐릭터 등급과 일시적인 상태를 구분하고, 반응 억제가 피해량·적중 연출·보상 전체를 건너뛰지 않게 합니다. |
 | 쿨다운 | 어빌리티(플레이어 액션, 보스 패턴)의 쿨다운은 쿨다운 효과(`Cooldown`) 하나로 셉니다. 어빌리티마다 태그를 두지 않고, 효과의 에셋 태그(`Effect.Cooldown`)와 걸 때 넣은 출처(그 스펙의 어빌리티 인스턴스)로 어빌리티를 구분합니다. 시간은 어빌리티 항목의 `Cooldown`이며 0이면 쿨다운이 없습니다. 충전은 걸린 쿨다운 효과 하나가 쓴 충전 하나이고, 걸린 효과가 `MaxCharges`보다 적으면 발동합니다. 새 효과는 걸린 효과 중 가장 늦게 끝나는 것의 남은 시간에 `Cooldown`을 더한 시간으로 걸어, 효과들이 `Cooldown` 간격으로 줄지어 끝나게 합니다. 다음 충전까지 남은 시간 조회(`GetRechargeTimeRemainingAndDuration`)는 충전이 남아 있어도 가장 먼저 끝나는 효과의 남은 시간과 `Cooldown`을 줍니다. 남은 충전 수 조회(`GetCharges`)는 `MaxCharges`에서 걸린 효과 수를 뺀 값이고, HUD는 충전이 최대보다 적은 동안 매 틱 다시 그립니다. 플레이어와 보스가 이 길 하나를 씁니다. | 엔진의 쿨다운 GE는 클래스(`CooldownGameplayEffectClass`)로만 받아, 코드에서 만든 GE 객체로 쿨다운을 확인·적용하는 함수를 재정의합니다. 시간은 어빌리티 정의에 두고, 공통 효과의 구성은 아래 '코드가 효과를 쓰는 방법'을 따릅니다. 어빌리티마다 태그를 두지 않아 어빌리티를 더해도 태그가 늘지 않습니다. 쿨다운 유무를 시간 하나로 정해, 쿨다운 효과가 있는지와 시간이 어긋나지 않습니다. 충전을 효과의 줄로 세어 한 번에 하나씩 충전되고 쓸 때 흐르던 쿨다운이 다시 시작하지 않으며, 충전 수를 따로 두지 않아 쿨다운 효과를 지우면(치트) 충전도 최대가 됩니다. 엔진 GE 스택은 상한이 GE 정의의 값이라 어빌리티마다 쿨다운 GE가 필요하고, 실행 중에 만든 GE의 스택 방식을 정하는 함수가 에디터 전용이라 쓰지 않습니다. |
 | 자원 변화 | 자원이 바뀌는 일마다 그 규칙을 가진 효과를 적용합니다. 어빌리티 비용은 GAS의 비용 흐름(`CheckCost`·`ApplyCost`)에서 자원 효과(`Resource`)를 음수로 걸어 치르고, 적중의 MP·UP 충전도 같은 자원 효과에 얻는 양을 넣습니다. 적중 보상은 피해 Task마다 첫 적중에 한 번, 피격 결과 처리가 공격자에게 보내는 `Event.AttackHit`으로 발동하는 적중 보상 어빌리티(`HitReward`)가 주며, 충전량은 이 어빌리티가 공격한 어빌리티의 태그와 섹션으로 고릅니다. 회복병은 타임라인의 같은 시각(삼키는 순간)에 HP를 회복하는 즉시 효과(`PotionHeal`)와 아이템 쓰기(`UseItem`, 아래 '아이템')를 두므로, 삼키기 전에 끊기면 아무것도 바뀌지 않습니다. PP 회복(그로기·처형 피격이 끝날 때, 페이즈 전환)은 PP를 최대로 덮어쓰는 효과(`PPRefill`)로 처리합니다. | 자원 변경은 GameplayEffect로 적용하고 고정 기획 값은 JSON을 사용합니다. 엔진의 비용 GE는 클래스(`CostGameplayEffectClass`)로만 받아 쓰지 않고, 비용과 얻기가 자원 효과 하나를 함께 씁니다. |
-| 아이템 | 플레이어가 가진 아이템의 보유 수는 플레이어 컨트롤러의 컴포넌트 `UAgInventoryComponent`가 맡습니다. 게임 월드에서 컨트롤러를 만들 때(`InitializeComponent`) `Items.json`의 시작 보유 수로 채우고, 레벨을 다시 열면 컨트롤러도 새로 만들어지므로 Restart와 다른 스테이지 들어가기는 시작 보유 수로 돌아갑니다. 아이템을 쓰는 행동은 어빌리티 항목의 `Item`에 그 아이템을 적어, `CheckCost`가 1개 이상인지 보고 타임라인의 `UseItem`이 쓰는 순간에 1개를 뺍니다. 어빌리티와 `UseItem`은 GAS 액터 정보의 `PlayerController`(캐릭터가 빙의할 때 `RefreshAbilityActorInfo`로 갱신)에서, HUD와 치트는 자기 플레이어 컨트롤러(`GetInventory`)에서 컴포넌트를 찾습니다. 플레이어 컨트롤러가 없는 캐릭터(적)는 `Item`이 있는 행동을 발동하지 못합니다. | 아이템은 몸이 아니라 플레이어의 것이라, 컨트롤러는 플레이어를, 폰은 몸을 나타내는 엔진의 역할 구분을 따릅니다. 발동 조건과 쓰기가 어빌리티 항목의 같은 값을 보고, 발동 조건을 `CheckCost`에서 보므로 HUD 스킬 버튼의 흐림도 따르고, 퀵슬롯 버튼은 같은 아이템의 보유 수로 흐립니다. 쓰는 때가 발동이 아니라 모션의 한 시점이라 발동할 때 치르는 엔진 비용 흐름으로 빼지 않습니다. |
+| 아이템 | 플레이어가 가진 아이템의 보유 수는 플레이어 컨트롤러의 컴포넌트 `UAgInventoryComponent`가 맡습니다. 레벨을 열 때마다 컨트롤러가 새로 만들어지므로, 게임 월드에서 컨트롤러를 만들 때(`InitializeComponent`) 저장 서브시스템의 지금 진행(아래 '저장')에서 보유 수를 읽습니다. 지금 `Items.json`에 없는 아이템은 빠지고 최대 보유 수를 넘는 값은 줄며, 휴식으로 채우는 아이템(`bRefill`)은 최대 보유 수로 시작합니다. 보유 수가 바뀔 때마다 저장 서브시스템에 넘기고, 체크포인트의 휴식도 같은 채우기(`Refill`)를 부릅니다. 아이템을 쓰는 행동은 어빌리티 항목의 `Item`에 그 아이템을 적어, `CheckCost`가 1개 이상인지 보고 타임라인의 `UseItem`이 쓰는 순간에 1개를 뺍니다. 어빌리티와 `UseItem`은 GAS 액터 정보의 `PlayerController`(캐릭터가 빙의할 때 `RefreshAbilityActorInfo`로 갱신)에서, HUD와 치트는 자기 플레이어 컨트롤러(`GetInventory`)에서 컴포넌트를 찾습니다. 플레이어 컨트롤러가 없는 캐릭터(적)는 `Item`이 있는 행동을 발동하지 못합니다. | 아이템은 몸이 아니라 플레이어의 것이라, 컨트롤러는 플레이어를, 폰은 몸을 나타내는 엔진의 역할 구분을 따릅니다. 발동 조건과 쓰기가 어빌리티 항목의 같은 값을 보고, 발동 조건을 `CheckCost`에서 보므로 HUD 스킬 버튼의 흐림도 따르고, 퀵슬롯 버튼은 같은 아이템의 보유 수로 흐립니다. 쓰는 때가 발동이 아니라 모션의 한 시점이라 발동할 때 치르는 엔진 비용 흐름으로 빼지 않습니다. |
+| 저장 | 저장 슬롯은 엔진 `USaveGame`(`UAgSaveGame`)과 `UGameplayStatics`의 슬롯 함수로 읽고 씁니다(`Saved/SaveGames/Slot1.sav` ~ `Slot6.sav`). 주인은 게임 인스턴스 서브시스템 `UAgSaveSubsystem`이고, 언제나 지금 진행을 하나 들고 있습니다. 슬롯을 불러오지 않았으면(에디터에서 스테이지를 바로 플레이, 테스트 창) 시작 보유 수로 만든 진행이며 파일로 쓰지 않습니다. 상태의 주인(인벤토리, 체크포인트, 성문, 게임 모드)이 자기 값이 바뀔 때 서브시스템의 바꾸는 함수를 직접 부르고, 그 함수가 값을 바꾼 직후 동기로 파일을 씁니다. 체크포인트와 성문은 레벨에 놓인 액터의 이름으로, 던전은 레벨 패키지 이름(PIE 접두사를 뗀 것)으로 구분합니다. 슬롯을 내려놓는 곳은 스테이지 선택 화면의 뒤로 처리와 타이틀로 가는 맵 이동이고, 게임이 꺼질 때는 서브시스템의 `Deinitialize`가 저장합니다. 저장 파일은 엔진 읽기 함수에 넘기기 전에 맨 앞의 엔진 표식('SAVG')을 먼저 봅니다. | 레벨을 다시 열어도 남아야 하는 상태라 전투 통계·언어와 같은 자리에 둡니다. 지금 진행이 늘 있어 쓰는 쪽에 슬롯이 있는지 묻는 분기가 없고, 슬롯 없는 플레이도 같은 코드 길로 돕니다. 호출이 한 방향이라 저장되는 순간을 호출 자리에서 찾습니다. 저장 내용이 작고 저장하는 순간이 드물어, 미뤄 쓰기와 그에 따른 레벨 이동·종료 때의 밀어내기를 두지 않습니다. 놓인 액터의 이름은 레벨 파일에 저장되어 실행마다 같고, 사람이 ID를 적지 않아 겹치거나 빠뜨리지 않습니다. 액터를 지우고 다시 놓으면 이름이 바뀌어 저장과 끊기며, 이때는 던전의 시작 지점에서 시작합니다. 엔진은 표식이 다른 파일을 옛 형식으로 보고 파일의 처음을 클래스 이름의 길이로 읽어 그만큼 메모리를 잡습니다. |
 | 리젠 | PP 리젠은 캐릭터마다 회복 효과 하나(`PPRegen` 등)로 처리합니다. 회복은 주기 효과입니다([데이터 로딩과 스키마](<데이터 로딩과 스키마.md>) '효과'). 리젠 대기는 태그를 주는 지속 효과(`PPRegenDelay`)이고, 회복 효과는 대기 태그가 있는 동안 멈춥니다. 회복 효과의 `RegenDelay`가 자원이 줄 때마다 대기 효과를 다시 걸어 처음부터 다시 셉니다. 회복 효과는 캐릭터 데이터의 시작 효과 목록(`Effects`)에 두어 캐릭터가 시작할 때 겁니다. | 자원 변화를 모두 GameplayEffect로 처리하는 GAS 표준 방식입니다. 회복량, 대기 시간, 대기를 다시 거는 규칙이 효과 정의에 있어 한곳에서 고칩니다. GameplayEffect 타이머는 게임 시간으로 흘러, 히트스톱 중에도 리젠이 계속되는 기획서 규칙과 맞습니다. |
 | PP 감소와 그로기 | PP를 잃을 수 있는지(`CanLosePP`)는 적 캐릭터가 정합니다. 적이 아닌 캐릭터(플레이어)는 PP를 잃지 않고, 적은 죽었거나 `State.Groggy`, `State.Execution`, `State.Invincible`(하위 태그 제외) 중 하나가 있으면 잃지 않습니다. PP 감소는 어트리뷰트 세트가 기본값이 바뀌기 전에 이 조건으로 막고, 그로기 판정도 같은 조건을 봅니다. 대미지는 HP를 PP보다 먼저 깎으므로, 죽는 타격의 PP 감소는 사망 뒤에 들어와 그로기를 일으키지 않습니다. | PP와 그로기는 적의 규칙이라 적 캐릭터에 둡니다. 사망·그로기·처형·무적 중에 PP를 잃지 않는 규칙을 한곳에서 확인하고, PP를 줄이는 효과(대미지, 패리로 잃는 PP)마다 조건을 두지 않아 새 효과도 이 규칙을 따릅니다. |
 | 누워 있는 동안의 무적 | 넉업·넉다운으로 누워 있는 동안의 무적은 `State.Invincible`의 하위 태그 `State.Invincible.Downed`(효과 `DownedInvincible`)입니다. 대미지 실행(`UAgDamageExecution`)은 `State.Invincible`을 직접 가진 효과가 없으면 대상이 플레이어 팀일 때만 무적으로 보고, `CanLosePP`는 정확히 `State.Invincible`만 봅니다. | 부모 태그를 보는 다른 검사는 그대로 무적으로 다루고, 플레이어만 지키는 예외는 이 두 곳에만 둡니다. |
@@ -38,7 +39,7 @@
 | `UAgExecutionCameraModifier` | `UCameraModifier` | 처형 시작 시 `UAgCameraData.Execution`을 복사해 구도·줌·복귀를 계산하는 네이티브 모디파이어 |
 | `UAgFieldOfViewCameraModifier` | `UCameraModifier` | 상황별 연출과 달리기의 FOV 변화·중첩·복귀를 처리하는 네이티브 모디파이어 |
 | `UAgLookAtCameraModifier` | `UCameraModifier` | 대상 비추기의 구도. 매 프레임 게임 카메라에서 대상의 락온 지점을 잇는 선을 따라 정한 거리까지 당겨 덮는 네이티브 모디파이어로, 비추는 대상을 가집니다. 처형 카메라 뒤, FOV 모디파이어와 셰이크 앞에 적용합니다. 몽타주의 `AgAnimNotifyState_CameraLookAt` 구간이 시작과 끝을 정합니다. |
-| `UAgInventoryComponent` | `UActorComponent` | 플레이어 컨트롤러의 컴포넌트(`AAgPlayerController`의 `Inventory`). 아이템별 보유 수, 얻기(`AddItem`, 최대 보유 수까지만 더함)·쓰기(`RemoveItem`, 모자라면 그대로)와 바뀜 알림(`OnItemsChanged`). HUD는 이 알림에 회복병 버튼의 '보유 수/최대 보유 수'와 흐림, 스킬 버튼의 흐림을 다시 그립니다. |
+| `UAgInventoryComponent` | `UActorComponent` | 플레이어 컨트롤러의 컴포넌트(`AAgPlayerController`의 `Inventory`). 아이템별 보유 수, 얻기(`AddItem`, 최대 보유 수까지만 더함)·쓰기(`RemoveItem`, 모자라면 그대로), 휴식으로 채우는 아이템 채우기(`Refill`)와 바뀜 알림(`OnItemsChanged`). 시작 값은 저장 서브시스템의 지금 진행에서 읽고, 바뀔 때마다 그쪽에 넘깁니다. HUD는 이 알림에 회복병 버튼의 '보유 수/최대 보유 수'와 흐림, 스킬 버튼의 흐림을 다시 그립니다. |
 | `AAgEnemyCharacter` | `AAgCharacterBase` | 적 공통. 정찰 경로(`PatrolRoute`)·적 그룹 이름(`GroupId`, 같은 이름끼리 한 그룹, 플레이 시작·끝에 `UAgCombatSubsystem`의 그룹에 들고 나며 사망을 알림). 둘은 스포너가 생성을 마치기 전에 줍니다(`SetPlacement`). 처음 위치와 방향(생성된 자리), 시야 기준점, `AIStateTree`, 페이즈와 페이즈 전환(전환을 발동할 때 페이즈를 올림), 지금 고를 수 있는 패턴 모으기(`GatherPatterns`)와 쿨다운이 끝난 패턴의 발동 가능 거리 모으기(`GatherReadyPatternRanges`), 패턴(반응형 포함)을 실행 중인지(`IsRunningPattern`, 동시 공격 수의 차례 계산이 씀), PP 감소 허용 여부(`CanLosePP`), 전체 반응(`IsReacting`: 피격 반응·그로기·처형 피격) 조회, `Event.Groggy`를 받아 그로기 효과 걸기, 그로기·처형 피격·페이즈 전환 종료 시 PP 회복, 재생 중인 어빌리티 정의의 사망 모션(`DeathMontage`, 처형 피격), 락온 지점(`GetTargetLocation`), 월드 위치 HUD(락온 마커, 머리 위 네임플레이트)와 그 표시 조건(생존·컷신 중이 아님·스테이지 결과가 정해지기 전·화면 안·`WorldStatic` 가림·락온·전투, 최근 감소는 위젯이 더함). `bCanWalkOffLedges`는 엔진 기본값(켜짐)이라 몽타주 루트 모션과 피격 반응은 낭떠러지 밖으로 나가 떨어질 수 있고, 낭떠러지를 넘지 않는 것은 내비메시 경로 이동(정찰, 다가가기, `FAgEnemyAITask_KeepDistance`의 걷기)입니다. `PerchRadiusThreshold`를 캡슐 반지름으로 두어 캡슐 중심 아래에 바닥이 없으면 떨어집니다(엔진 기본값 0이면 캡슐 아랫면이 모서리에 걸린 채 중심이 반지름 가까이 밖으로 나가 가라앉아 섭니다). 보스 예외는 가상 함수 `HasNameplate`. 샌드백 2종(`BP_Sandbag`, 자식 `BP_AttackSandbag`)도 이 클래스와 `ST_Enemy`를 쓰며, 패턴이 없거나 하나뿐이고 MOV가 0인 데이터로 구분합니다. 일반 샌드백은 락온 어빌리티가 없어 전투 중에도 대상을 바라보지 않습니다. |
 | `AAgBossCharacter` | `AAgEnemyCharacter` | 보스 전용. 시야 상실에 따른 비전투 복귀 금지(`CanReturnToNonCombat`), 머리 위 네임플레이트 없음(`HasNameplate`, HUD 보스 상태로 표시), 보스 처치 슬로우모션 값 |
 | `BP_Boss02` | `BP_Boss` | 커스터 대형 변형. `Boss` 캐릭터 데이터와 무기 부착을 상속하고 메시 배율·위치와 몸 캡슐 크기를 지정합니다. |
@@ -147,17 +148,25 @@ classDiagram
 
 | 클래스 | 부모 | 역할 |
 | - | - | - |
-| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록 찾기(`FindStages`: `Content/Maps`의 레벨에서 처음 열리는 레벨을 뺀 것), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료), 레벨 시작의 로딩 화면(`StartPlay`에서 생성을 기다리는 적 스포너가 있으면 `LoadingScreenClass`를 Menu 레이어에 열고, 모두 끝나면 닫으며 걸린 시간을 로그로 남김), 적 되돌리기(`RespawnEnemies`: 모든 스포너의 적을 지운 뒤 모두 다시 생성) |
+| `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록 찾기(`FindStages`: `Content/Maps`의 레벨에서 처음 열리는 레벨을 뺀 것), 맵 이동(타이틀, 목록의 스테이지, 다시 시작, 종료), 레벨 시작의 로딩 화면(`StartPlay`에서 생성을 기다리는 적 스포너가 있으면 `LoadingScreenClass`를 Menu 레이어에 열고, 모두 끝나면 닫으며 걸린 시간을 로그로 남김), 적 되돌리기(`RespawnEnemies`: 모든 스포너의 적을 지운 뒤 모두 다시 생성), 던전을 시작하는 자리(엔진 `RestartPlayer`를 재정의해, 저장 서브시스템이 기억하는 휴식한 체크포인트가 레벨에 있으면 그 체크포인트의 시작하는 자리에 엔진 `RestartPlayerAtTransform`으로 스폰하고 없으면 엔진의 시작 지점), 저장 서브시스템에 알리기(스테이지로 이동할 때 마지막 스테이지, 타이틀로 이동할 때 슬롯 내려놓기, Stage Clear가 정해질 때 그 던전의 던전 진행 지우기), Game Over에서 버튼 없이 다시 시작하는지(가상 함수 `ShouldRestartOnGameOver`, 기본은 다시 시작) |
 | `AAgGameState` | `AGameStateBase` | 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함)와 변경 알림(`OnStageResultChanged`) |
 | `UAgCombatStatsSubsystem` | `UGameInstanceSubsystem` | 레벨을 다시 열어도 이어 쓰는 이번 실행의 전투 통계 기록 파일(`Saved/CombatStats/<실행 시각>.json`, 기록이 끝날 때마다 엔진 `FJsonObjectConverter`로 전체를 다시 씀) |
+| `UAgSaveSubsystem` | `UGameInstanceSubsystem` | 저장 슬롯과 지금 진행의 주인(위 '저장'). 슬롯 6개의 파일을 읽어 상태(빈 슬롯, 저장됨, 읽을 수 없음)와 표시할 값을 돌려주기(`ReadSlots`), 새 게임(빈 슬롯 중 가장 앞)·불러오기·가장 늦게 저장한 슬롯 불러오기·지우기·내려놓기, 지금 진행 읽기(보유 수, 마지막 스테이지, 그 월드의 휴식한 체크포인트, 장치가 열렸는지), 값을 바꾸고 바로 저장하는 함수(보유 수, 마지막 스테이지, 휴식한 체크포인트, 연 장치, 던전 진행 지우기). 저장할 때마다 플레이 시간을 더하고 저장한 시각을 적음 |
+| `UAgSaveGame` | `USaveGame` | 슬롯 하나의 저장 내용. 아이템별 보유 수, 던전(레벨 패키지 이름)마다 휴식한 체크포인트와 연 장치의 액터 이름(`FAgDungeonProgress`), 마지막 스테이지, 플레이 시간, 저장한 시각 |
 | `UAgCombatStatsComponent` | `UActorComponent` | 플레이어의 지금 전투 기록. 전투 중인 적 목록이 비었다가 생기면 시작하고 비면 끝내며(플레이어 사망 → 사망, 상대한 적이 모두 사망 → 처치, 그 밖 → 이탈), Stage Clear가 정해지면 바로 처치로 끝냄. 패리·극한 회피는 플레이어 ASC의 `Event.Parry`·`Event.PerfectDodge`, 피격은 엔진 `OnGameplayEffectAppliedDelegateToSelf`의 `Effect.Damage.Result.Hit`로 세고, 전투 시간은 일시정지에 멈추고 시간 배율을 받지 않는 엔진 시계(`GetAudioTimeSeconds`)로 잼. 스테이지 결과가 정해진 뒤에 끝난 기록을 시뮬레이션 룸 결과창에 내줌(`GetStageResultStats`) |
 | `UAgCombatSubsystem` | `UWorldSubsystem` | 전투 중인 적 목록(`FAgEnemyAITask_Combat`이 등록·해제, `GetCombatants`)과 변경 알림(`OnCombatantsChanged`), 목록의 보스(`FindBoss`), 플레이어가 처형하는 동안의 패턴 금지(`ArePatternsBlocked`), 패턴 시작 허가(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 동시 공격 수의 차례)와 공격 시작·끝(`StartAttack`, `EndAttack`, 끝나면 재공격 대기), 적 그룹(그룹 이름별 그룹원과 사망한 그룹원의 인식이 끝나는 시각, `IsGroupNoticingTarget`: 살아 있는 그룹원의 자기 감각을 OR. 그룹원이 모두 사라진 그룹은 지워, 다시 생성된 그룹이 이전 인식을 잇지 않음) |
-| `AAgSimulationRoomGameMode` | `AAgGameMode` | 후보 적 클래스(`EnemyClasses`), 레벨의 배치 지점을 `Slot` 순으로 수집, 레벨 주소 옵션 `Enemies`(자리 번호 순서의 캐릭터 데이터 ID)로 받은 구성을 플레이어 참가 처리에서 배치하고 놓은 캐릭터마다 플레이어에게 맞은 것과 같은 엔진 대미지 감각 자극(`ReportDamageEvent`)을 보내 시야와 관계없이 전투 진입, 구성이 비었으면 적 선택 화면 열기, 어느 적을 어느 자리에 둘 수 있는지(`CanPlace`), 같은 맵을 구성 옵션으로 다시 열기, 후보 적마다 표시 액터(`EnemyPreviewClass`)를 처음 쓸 때 하나 띄워 두고 그 렌더 타깃을 돌려줌(`GetEnemyPreview`). Stage Clear 조건은 적 팀 캐릭터가 모두 사망 |
+| `AAgSimulationRoomGameMode` | `AAgGameMode` | 후보 적 클래스(`EnemyClasses`), 레벨의 배치 지점을 `Slot` 순으로 수집, 레벨 주소 옵션 `Enemies`(자리 번호 순서의 캐릭터 데이터 ID)로 받은 구성을 플레이어 참가 처리에서 배치하고 놓은 캐릭터마다 플레이어에게 맞은 것과 같은 엔진 대미지 감각 자극(`ReportDamageEvent`)을 보내 시야와 관계없이 전투 진입, 구성이 비었으면 적 선택 화면 열기, 어느 적을 어느 자리에 둘 수 있는지(`CanPlace`), 같은 맵을 구성 옵션으로 다시 열기, 후보 적마다 표시 액터(`EnemyPreviewClass`)를 처음 쓸 때 하나 띄워 두고 그 렌더 타깃을 돌려줌(`GetEnemyPreview`). Stage Clear 조건은 적 팀 캐릭터가 모두 사망. Game Over에서는 버튼 없이 다시 시작하지 않고(`ShouldRestartOnGameOver` false) Game Over UI를 띄움 |
 | `AAgEnemySpawnPoint` | `ATargetPoint` | 레벨에 놓는 배치 자리 표시. 자리 번호 `Slot`만 가짐 |
 | `AAgCharacterPreview` | `AActor` | 캐릭터 클래스 하나를 AI 빙의 없이 스폰해 정면의 씬 캡처(`Capture`)로 렌더 타깃에 그림. 띄운 캐릭터는 씬 캡처에만 보이고, 자기 조명(`Light`)과 함께 라이팅 채널 1에만 두어 레벨의 조명·그림자와 섞이지 않음. 게임이 멈춘 동안에도 메시와 캡처가 틱하며, 메시 범위로 캡처 높이와 거리를 맞춤 |
 | `UAgTimeSubsystem` | `UWorldSubsystem` | 게임 전체 시간 배율의 주인. 슬로우모션(길이는 실제 시간이고, 겹치면 더 느린 속도와 더 긴 남은 시간을 고름)과 궁극기 시간 정지(요청한 캐릭터만 시간 보정으로 계속 움직이고, 정지 중에 요청된 슬로우모션은 정지가 끝날 때 시작) |
 | `UAgLanguageSubsystem` | `UGameInstanceSubsystem` | 게임 언어의 주인. 시작할 때 문구 표의 언어 칼럼을 엔진 번역(Polyglot 텍스트 데이터)으로 등록함. 엔진은 번역을 등록하기 전에 시작 언어를 고르므로, 등록한 뒤 엔진과 같은 순서(명령줄, 저장한 언어, 윈도우 언어)로 원하는 언어를 찾아 번역이 있으면 그 언어, 없으면 영어로 다시 고름. 언어 바꾸기는 엔진 `SetCurrentLanguage`로 저장하고, 에디터(PIE)에서는 에디터 UI 언어가 바뀌지 않게 엔진의 게임 번역 미리 보기만 바꿈 |
-| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴 화면(타이틀, 스테이지 선택, Settings, 적 선택, 일시정지, 전투 결과)과 로딩 화면(`WBP_LoadingScreen`)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. 로딩 화면은 이 입력 모드라 떠 있는 동안 게임 입력과 HUD의 뒤로 액션(Esc)이 들어가지 않음. Esc로 닫는 화면(스테이지 선택, Settings, 일시정지)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
+| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴 화면(타이틀, 스테이지 선택, Load Game, 삭제 확인 창, Settings, 적 선택, 일시정지, 전투 결과)과 로딩 화면(`WBP_LoadingScreen`)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. 로딩 화면은 이 입력 모드라 떠 있는 동안 게임 입력과 HUD의 뒤로 액션(Esc)이 들어가지 않음. Esc로 닫는 화면(스테이지 선택, Load Game, 삭제 확인 창, Settings, 일시정지)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
+| `UAgTitleScreen` | `UAgMenuScreen` | 타이틀 화면. 켜질 때마다(위 화면에서 돌아올 때 포함) 저장 서브시스템의 슬롯 상태로 Continue·New Game·Load Game 버튼을 접거나 보이고, 첫 포커스는 보이는 맨 위 버튼. 지난번 포커스를 되돌리는 엔진 기능(`bAutoRestoreFocus`)을 켬. Continue와 New Game은 슬롯을 불러오거나 만든 뒤 스테이지 선택 화면을 엶 |
+| `UAgStageSelectScreen` | `UAgMenuScreen` | 스테이지 선택 화면. 켜질 때마다 스테이지 목록을 채우고 지금 진행의 마지막 스테이지를 고름. 뒤로 처리(Back 버튼과 Esc)에서 슬롯을 내려놓음 |
+| `UAgLoadGameScreen` | `UAgMenuScreen` | Load Game 화면. 슬롯 줄(`SlotRowClass`)을 슬롯 수만큼 한 번 만들어 두고 켜질 때마다 저장 파일을 읽어 다시 채움. 포커스를 줄 슬롯을 기억해(처음은 가장 늦게 저장한 슬롯, 불러오거나 지우려던 줄) 첫 포커스 대상으로 답하고, Delete는 Modal 레이어에 삭제 확인 창을 엶 |
+| `UAgSaveSlotRow` | `UCommonUserWidget` | 슬롯 줄 하나. 저장된 슬롯은 불러오기 버튼(`UAgSaveSlotButton`: `UAgButton`에 스테이지·플레이 시간·저장한 시각 글자를 더함)과 Delete 버튼을, 빈 슬롯과 읽을 수 없는 저장은 버튼 대신 슬롯 이름과 상태 글자만 보임. Delete 버튼은 접지 않고 숨겨 줄의 자리를 맞춤. 슬롯 이름 형식과 상태 글자는 위젯 블루프린트 기본값 |
+| `UAgConfirmDialog` | `UAgMenuScreen` | 문구와 Yes·No의 확인 창. Yes면 창을 닫고 받은 델리게이트를 부르고, No와 Esc는 창만 닫음. 뒤의 메뉴 화면도 켜져 있으므로 네 방향의 엔진 내비게이션 규칙을 Stop으로 두어 방향키 선택이 창 밖으로 넘어가지 않게 함 |
+| `UAgBattleResultScreen` | `UAgMenuScreen` | 전투 결과 화면. 스테이지 결과로 제목을 고르고 페이드(`FadeInAnimation`)가 끝나면 버튼을 켬. Game Over이고 게임 모드가 버튼 없이 다시 시작한다고 답하면 버튼을 숨기고(접지 않아 제목의 자리가 같음), 페이드 뒤에 모습을 바꾸지 않는 위젯 애니메이션(`RestartDelayAnimation`)을 이어 재생한 다음 스테이지를 다시 시작. 시뮬레이션 룸에서는 전투 통계 표를 채움 |
 | `UAgSettingsScreen` | `UAgMenuScreen` | 타이틀의 Settings 화면. 안의 Settings 내용(`SettingsPanel`)은 엔진 인스턴스 값 `bAutoActivate`로 화면과 함께 켜지고 스택에서 빠질 때 꺼지며, 첫 포커스는 그 내용의 포커스 대상. Back 버튼은 화면을 끔 |
 | `UAgSettingsPanel` | `UCommonActivatableWidget` | Settings 내용. 타이틀의 Settings 화면과 일시정지 메뉴의 Settings 탭이 함께 씀. 분류 목록(`CategoryList`, `UAgTabList`)을 분류 내용 전환기(`CategoryContent`, 엔진 `UCommonAnimatedSwitcher`)에 연결 |
 | `UAgDisplaySettings` | `UCommonUserWidget` | Settings의 Display 분류. 창 모드·해상도의 주인인 엔진 `UGameUserSettings`를 직접 읽고 바꾸며(`ApplyResolutionSettings`, `SaveSettings`), 다음 실행에는 엔진이 시작할 때 그 값으로 창을 엶. 고를 수 있는 창 모드(`WindowModeNames`)와 해상도 후보(`StandardResolutions`)는 위젯 블루프린트 기본값이고, Fullscreen은 후보 가운데 엔진이 알려 주는 모니터 지원 해상도와 모니터 해상도, Windowed는 모니터보다 작은 후보 |
@@ -191,6 +200,11 @@ classDiagram
 - 표시용 캐릭터는 그 적의 클래스 그대로 스폰합니다. 블루프린트에서 소켓에 붙인 무기와 ABP를 엔진의 생성 과정이 그대로 만들어 카드의 모습이 게임과 같습니다. UMG의 3D 뷰포트 위젯(`UViewport`)은 엔진에서 Experimental이라 쓰지 않습니다.
 - 표시 액터는 카드 위젯이 아니라 게임 모드가 적 종류마다 하나를 레벨 수명 동안 가집니다. `UComboBoxKey`는 목록을 다시 채울 때마다 닫힌 칸 위젯을 새로 만들어, 카드가 가지면 캐릭터를 다시 스폰하고 대기 모션도 처음부터 다시 시작되기 때문입니다.
 - 전투 통계의 사망 기록은 Game Over가 정해질 때가 아니라 적이 모두 대기로 빠져 전투 중인 적이 없어질 때 끝냅니다. 쓰러뜨린 공격의 효과 적용 알림이 그 공격의 사망 처리(어트리뷰트 세트 → 게임 모드)보다 늦게 와서, Game Over에서 끝내면 마지막 피격이 빠지기 때문입니다.
+- UI 레이아웃(`UAgUILayout`)의 레이어는 HUD, Menu, Modal 세 스택입니다. CommonUI 스택은 맨 위 화면만 보여 주므로, 메뉴 화면을 가리지 않고 그 위에 띄우는 확인 창은 Menu가 아닌 Modal 스택에 엽니다.
+- 타이틀 화면은 쓸 수 없는 버튼을 접습니다. 접힌 버튼이 지난번 포커스 대상이면 엔진 기본값은 포커스 복원에 실패한 채 아무 버튼도 고르지 않으므로, `Config/DefaultEngine.ini`의 `[ConsoleVariables]`에 엔진 설정 `CommonUI.FallbackToDesiredOnAutoRestoreFailure=1`을 두어 화면의 첫 포커스 대상으로 넘어가게 합니다. 이 설정은 모든 CommonUI 화면에 적용됩니다.
+- 버튼을 접어도 자리가 남지 않도록, `WBP_Title`의 버튼 사이 간격은 버튼을 담은 크기 상자의 바깥 여백이 아니라 안쪽 여백에 둡니다. 엔진 크기 상자는 내용이 접히면 크기가 0이 되지만, 상자 슬롯의 바깥 여백은 남습니다.
+- 던전의 다시 시작(사망, Restart)은 모두 레벨을 다시 여는 `RestartStage` 하나이고, 시작하는 자리는 다시 열린 레벨의 게임 모드가 정합니다. 적과 플레이어의 상태를 되돌리는 코드를 따로 두지 않습니다.
+- 문구를 유지하는 시간(`RestartDelayAnimation`)을 위젯 애니메이션으로 둔 것은 페이드와 같은 실제 시간으로 흐르게 하기 위해서입니다. 월드 타이머는 게임 시간을 따릅니다.
 
 ```mermaid
 classDiagram
@@ -239,6 +253,29 @@ classDiagram
     UAgInventorySlot ..> UAgInventoryEntry
     UAgInventoryTab *-- UAgItemDetail : ItemDetail
     UAgInventoryTab ..> UAgInventoryComponent : 보유 수
+```
+
+```mermaid
+classDiagram
+    direction LR
+    UGameInstanceSubsystem <|-- UAgSaveSubsystem
+    USaveGame <|-- UAgSaveGame
+    UAgSaveSubsystem *-- UAgSaveGame : Current
+    UAgInventoryComponent ..> UAgSaveSubsystem : 보유 수
+    AAgCheckpoint ..> UAgSaveSubsystem : 휴식한 체크포인트
+    AAgGate ..> UAgSaveSubsystem : 연 장치
+    AAgGameMode ..> UAgSaveSubsystem : 마지막 스테이지<br>던전 진행 지우기
+    AAgGameMode ..> AAgCheckpoint : 시작하는 자리
+    UAgMenuScreen <|-- UAgTitleScreen
+    UAgMenuScreen <|-- UAgLoadGameScreen
+    UAgMenuScreen <|-- UAgConfirmDialog
+    UAgTitleScreen ..> UAgLoadGameScreen : LoadGameScreenClass
+    UAgTitleScreen ..> UAgSaveSubsystem : 슬롯 상태<br>새 게임·이어 하기
+    UAgLoadGameScreen *-- UAgSaveSlotRow : SlotList 항목
+    UAgSaveSlotRow *-- UAgSaveSlotButton : LoadButton
+    UAgButton <|-- UAgSaveSlotButton
+    UAgLoadGameScreen ..> UAgConfirmDialog : ConfirmDialogClass
+    UAgLoadGameScreen ..> UAgSaveSubsystem : 불러오기·지우기
 ```
 
 ### 피격 상태와 AI 조건
