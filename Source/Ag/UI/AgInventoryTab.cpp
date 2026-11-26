@@ -14,6 +14,8 @@ void UAgInventoryTab::NativeOnInitialized()
 	Super::NativeOnInitialized();
 
 	ItemGrid->OnItemSelectionChanged().AddUObject(this, &ThisClass::HandleSelectionChanged);
+	ItemGrid->OnIsItemSelectableOrNavigable().BindLambda([](UObject* Item)
+	{ return !CastChecked<UAgInventoryEntry>(Item)->IsEmpty(); });
 }
 
 void UAgInventoryTab::NativeOnActivated()
@@ -42,12 +44,19 @@ void UAgInventoryTab::NativeOnActivated()
 	Algo::StableSortBy(Entries, [](const UAgInventoryEntry* Entry)
 	{ return UAgItemSet::FindItem(Entry->ItemId)->Category; });
 
+	const int32 ItemCount = Entries.Num();
+	const int32 SlotCount = FMath::Max(Columns * VisibleRows, FMath::DivideAndRoundUp(ItemCount, Columns) * Columns);
+	while (Entries.Num() < SlotCount)
+	{
+		Entries.Add(NewObject<UAgInventoryEntry>(this));
+	}
+
 	ItemGrid->SetListItems(Entries);
-	ItemDetail->SetVisibility(Entries.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
-	if (!Entries.IsEmpty())
+	ItemGrid->ScrollToTop();
+	ItemDetail->SetVisibility(ItemCount == 0 ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+	if (ItemCount > 0)
 	{
 		ItemGrid->SetSelectedIndex(0);
-		ItemGrid->ScrollToTop();
 	}
 }
 

@@ -30,34 +30,34 @@
   <path d="M150 100 V172" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
   <text x="142" y="142" font-size="14" fill="#9aa4b1" text-anchor="end">72px</text>
 
-  <!-- 그리드 (7칸 × 4줄이 보임, 넘으면 세로 스크롤) -->
-  <rect x="304" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="448" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="592" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="736" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="880" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="1024" y="172" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="160" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="304" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="448" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="592" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="736" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="880" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="1024" y="348" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="160" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="304" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="448" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="592" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="736" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="880" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="1024" y="524" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="160" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="304" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="448" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="592" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="736" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="880" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
-  <rect x="1024" y="700" width="128" height="160" fill="none" stroke="#9aa4b1" stroke-width="1" stroke-dasharray="6 6" opacity="0.35"/>
+  <!-- 그리드 (7칸 × 4줄이 보임, 넘으면 세로 스크롤): 아이템이 없는 자리는 빈 칸(옅은 밝은 바탕만) -->
+  <rect x="304" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="448" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="592" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="736" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="880" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="1024" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="160" y="348" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="304" y="348" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="448" y="348" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="592" y="348" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="736" y="348" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="880" y="348" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="1024" y="348" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="160" y="524" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="304" y="524" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="448" y="524" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="592" y="524" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="736" y="524" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="880" y="524" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="1024" y="524" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="160" y="700" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="304" y="700" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="448" y="700" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="592" y="700" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="736" y="700" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="880" y="700" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
+  <rect x="1024" y="700" width="128" height="160" fill="#FFFFFF" fill-opacity="0.06" rx="8"/>
 
   <!-- 첫 칸: 회복병 (골라진 칸) -->
   <rect x="160" y="172" width="128" height="160" fill="#FFFFFF" fill-opacity="0.15"/>
@@ -101,5 +101,5 @@
   </g>
 
   <!-- UI 조작 안내 (참고용, 화면에 표시하지 않음) -->
-  <text x="960" y="1000" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 탭 바꾸기: Q·E, 탭 이름 좌클릭 / 칸 고르기: 좌클릭, 방향키 (마우스를 올리면 옅은 테두리만) / 닫기: Esc / 비면 빈 그리드, 상세 패널 없음</text>
+  <text x="960" y="1000" font-size="16" fill="#9aa4b1" text-anchor="middle">(참고) 탭 바꾸기: Q·E, 탭 이름 좌클릭 / 칸 고르기: 좌클릭, 방향키 (마우스를 올리면 옅은 테두리만) / 닫기: Esc / 빈 칸은 고르지 않음 / 아이템이 없으면 빈 칸만, 상세 패널 없음</text>
 </svg>

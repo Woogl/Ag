@@ -166,9 +166,9 @@ classDiagram
 | `UAgTabList` | `UCommonTabListWidgetBase` | 탭 목록(일시정지 메뉴의 탭 바 `WBP_TabList`, Settings의 분류 목록 `WBP_CategoryList`). 탭 배열(`Tabs`: 탭 이름 + 내용 위젯 클래스)로 내용 위젯을 한 번 만들어 전환기에 넣고, 화면에 붙을 때마다 탭을 등록하고 기본 탭(`DefaultTabIndex`)을 고름. 엔진이 화면에서 빠질 때 탭을 모두 지우고, 메뉴가 켜진 뒤에 탭을 바꾸면 지난번 탭이 먼저 켜져 CommonUI의 첫 포커스가 그쪽에 남기 때문. 탭 이름 버튼은 버튼 상자(가로·세로 패널)에 늘어놓고, 양 끝 키 아이콘이 있으면(탭 바) 엔진의 탭 바꾸기 입력 액션을 넘김. 탭 하나를 더하는 일은 내용 위젯 블루프린트 하나와 `Tabs` 한 줄 |
 | `UAgTabButton` | `UCommonButtonBase` | 탭 이름. 글자는 버튼 스타일의 글자 스타일이고, 선택되면 선택 표시(`SelectionMark`: 탭 바는 밑줄, 분류 목록은 세로 막대)를 보임. 탭 바의 이름은 방향키 포커스를 받지 않고, 분류 목록의 이름(`WBP_CategoryButton`)은 위젯 블루프린트 기본값에서 포커스를 받으면 선택되게(엔진 `bShouldSelectUponReceivingFocus`) 해 ↑·↓로 분류를 바꿈 |
 | `UAgSystemTab` | `UCommonActivatableWidget` | 일시정지 메뉴의 System 탭. Resume은 자신을 담은 일시정지 메뉴를 끄고(엔진 `UCommonUILibrary::FindParentWidgetOfType`), 나머지 버튼은 게임 모드로 |
-| `UAgInventoryTab` | `UCommonActivatableWidget` | 일시정지 메뉴의 Inventory 탭. 켜질 때마다 인벤토리와 아이템 데이터로 그리드(CommonUI `UCommonTileView`)를 채우고 첫 칸을 고르며, 고른 칸을 상세 패널에 넘김. 메뉴가 열린 동안 게임이 멈춰 보유 수가 바뀌지 않으므로 바뀜 알림은 받지 않음 |
-| `UAgInventoryEntry` | `UObject` | 그리드 항목 하나(아이템 ID, 보유 수). 엔진 리스트 뷰가 항목을 UObject로 받음 |
-| `UAgInventorySlot` | `UCommonButtonBase`, `IUserObjectListEntry` | 그리드 칸. CommonUI 타일 뷰가 버튼 항목의 선택을 리스트의 선택과 맞추므로 모양과 효과음은 버튼 스타일이 맡음. 좌클릭과 방향키로 고르고, 마우스 올림으로는 고르지 않음 |
+| `UAgInventoryTab` | `UCommonActivatableWidget` | 일시정지 메뉴의 Inventory 탭. 켜질 때마다 인벤토리와 아이템 데이터로 그리드(CommonUI `UCommonTileView`)를 채우고 남은 자리를 빈 항목으로 채운 뒤(한 줄 칸 수와 보이는 줄 수는 탭의 에셋 기본값) 첫 칸을 고르며, 빈 항목은 리스트의 '고를 수 있는 항목' 판정으로 고르기와 방향키 이동에서 뺌. 고른 칸을 상세 패널에 넘김. 메뉴가 열린 동안 게임이 멈춰 보유 수가 바뀌지 않으므로 바뀜 알림은 받지 않음 |
+| `UAgInventoryEntry` | `UObject` | 그리드 항목 하나(아이템 ID, 보유 수). 아이템 ID가 없으면 빈 칸. 엔진 리스트 뷰가 항목을 UObject로 받음 |
+| `UAgInventorySlot` | `UCommonButtonBase`, `IUserObjectListEntry` | 그리드 칸. CommonUI 타일 뷰가 버튼 항목의 선택을 리스트의 선택과 맞추므로 모양과 효과음은 버튼 스타일이 맡음. 좌클릭과 방향키로 고르고, 마우스 올림으로는 고르지 않음. 빈 칸은 바탕만 보이고 마우스를 받지 않으며, 칸 위젯이 다른 항목에 다시 쓰이므로 고를 수 있는지는 항목이 바뀔 때마다 다시 정함 |
 | `UAgItemDetail` | `UCommonUserWidget` | 아이템 하나의 이름, 카테고리 이름(`CategoryNames`, 문구 표 항목), '보유 수 / 최대 보유 수', 아이콘, 설명 |
 | `UAgButton` | `UCommonButtonBase` | 메뉴의 공용 버튼(`WBP_Button`). 글자(`ButtonText`)는 버튼 스타일의 글자 스타일을 따르고, 마우스를 올리면 포커스와 선택을 그 버튼으로 옮김. 키 안내는 엔진 버튼의 키 아이콘 자리(`InputActionWidget`)에 둔 엔진 `UCommonActionWidget`이 맡아, 인스턴스의 `TriggeringEnhancedInputAction`을 정하면 그 키 아이콘을 보이고 그 키로 버튼을 실행하며, 비워 두면 아이콘이 접혀 글자만 가운데에 남음 |
 | `UAgEnemySelectScreen` | `UAgMenuScreen` | 적 선택 화면. 배치 자리 수만큼 드롭다운을 만들고, 자리의 선택이 바뀌면 모든 자리의 목록과 Start 잠금을 갱신 |
