@@ -53,10 +53,11 @@
     <div class="sw" style="background:#e6e4dc"></div><div>벽</div>
     <div class="sw" style="background:#d9963f"></div><div>장애물 (엄폐물, 기둥)</div>
     <div class="sw" style="background:#f8cd28"></div><div>성문 (닫힌 상태)</div>
-    <div class="sw" style="background:#37c873"></div><div>P 플레이어 시작</div>
-    <div class="sw" style="background:#e64b41"></div><div>근 근거리 일반 적 (절단자)</div>
-    <div class="sw" style="background:#f5872a"></div><div>원 원거리 일반 적 (경비 사수)</div>
-    <div class="sw" style="background:#b946e1"></div><div>B 보스 (커스터)</div>
+    <div class="sw" style="background:#37c873"></div><div>시작 (플레이어 시작 지점)</div>
+    <div class="sw" style="background:#e64b41"></div><div>근 (근거리 일반 적, 절단자)</div>
+    <div class="sw" style="background:#f5872a"></div><div>원 (원거리 일반 적, 경비 사수)</div>
+    <div class="sw" style="background:#b946e1"></div><div>보스 (커스터)</div>
+    <div class="sw" style="background:#5ad1e6"></div><div>체크포인트</div>
   </div>
   </details>
   </div>
@@ -74,7 +75,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 (function () {
-  const DATA = {"title": "레벨 이름 (LV_Name)", "boxes": [{"name": "Start_Floor", "kind": "floor", "e": [0, 2000, -1000, 1000, -50, 0], "full": [0, 2000, -1000, 1000, -50, 0]}, {"name": "Start_WallBack", "kind": "wall", "e": [-100, 0, -1100, 1100, 0, 500], "full": [-100, 0, -1100, 1100, 0, 500]}, {"name": "Start_WallN", "kind": "wall", "e": [0, 2000, 1000, 1100, 0, 500], "full": [0, 2000, 1000, 1100, 0, 500]}, {"name": "Start_WallS", "kind": "wall", "e": [0, 2000, -1100, -1000, 0, 500], "full": [0, 2000, -1100, -1000, 0, 500]}, {"name": "Start_Ledge", "kind": "floor", "e": [1200, 1800, 500, 1000, 0, 150], "full": [1200, 1800, 500, 1000, 0, 150]}, {"name": "Start_Cover", "kind": "obstacle", "e": [1000, 1200, -600, -400, 0, 120], "full": [1000, 1200, -600, -400, 0, 120]}, {"name": "Hall_Floor", "kind": "floor", "e": [2400, 3100, -300, 300, 150, 200], "full": [2400, 3100, -300, 300, 150, 200]}, {"name": "Hall_WallN", "kind": "wall", "e": [2000, 3000, 300, 400, 0, 700], "full": [2000, 3000, 300, 400, 0, 700]}, {"name": "Hall_WallS", "kind": "wall", "e": [2000, 3000, -400, -300, 0, 700], "full": [2000, 3000, -400, -300, 0, 700]}], "rings": [{"name": "Arena_Floor", "kind": "floor", "c": [5000, 0], "ri": 0, "ro": 2000, "z0": 150, "z1": 200, "a0": 0, "a1": 360, "top": 200}, {"name": "Arena_Wall", "kind": "wall", "c": [5000, 0], "ri": 2000, "ro": 2100, "z0": 200, "z1": 700, "a0": -168, "a1": 168, "top": 700}, {"name": "Arena_Pillar", "kind": "obstacle", "c": [5000, 1000], "ri": 0, "ro": 80, "z0": 200, "z1": 500, "a0": 0, "a1": 360, "top": 500}], "steps": [{"name": "Stair", "c": [2025, 0, 12.5], "s": [50, 400, 25], "yaw": 0, "top": 25}, {"name": "Stair", "c": [2075, 0, 25.0], "s": [50, 400, 50], "yaw": 0, "top": 50}, {"name": "Stair", "c": [2125, 0, 37.5], "s": [50, 400, 75], "yaw": 0, "top": 75}, {"name": "Stair", "c": [2175, 0, 50.0], "s": [50, 400, 100], "yaw": 0, "top": 100}, {"name": "Stair", "c": [2225, 0, 62.5], "s": [50, 400, 125], "yaw": 0, "top": 125}, {"name": "Stair", "c": [2275, 0, 75.0], "s": [50, 400, 150], "yaw": 0, "top": 150}, {"name": "Stair", "c": [2325, 0, 87.5], "s": [50, 400, 175], "yaw": 0, "top": 175}, {"name": "Stair", "c": [2375, 0, 100.0], "s": [50, 400, 200], "yaw": 0, "top": 200}], "rboxes": [{"name": "Start_Ramp", "kind": "ramp", "c": [900, 750, 65], "s": [618.5, 300, 20], "yaw": 0, "pitch": 14.0362, "top": 150}], "actors": [{"label": "PlayerStart", "cls": "PlayerStart", "x": 200, "y": 0, "floor": 0, "yaw": 0, "mark": "P", "clsName": "플레이어 시작 지점", "sight": null}, {"label": "Enemy_Cutter", "cls": "BP_Cutter", "x": 1400, "y": -200, "floor": 0, "yaw": 180, "mark": "근", "clsName": "근거리 일반 적", "sight": [1200, 120]}, {"label": "Enemy_Gunner", "cls": "BP_Gunner", "x": 1500, "y": 750, "floor": 150, "yaw": 180, "mark": "원", "clsName": "원거리 일반 적", "sight": [3000, 180]}, {"label": "Gate", "cls": "BP_Gate", "x": 2900, "y": 0, "floor": 200, "yaw": 0, "mark": "문", "clsName": "성문", "sight": null}, {"label": "BP_Boss", "cls": "BP_Boss", "x": 5800, "y": 0, "floor": 200, "yaw": 180, "mark": "B", "clsName": "보스", "sight": [2000, 120]}], "sections": [["시작 방", 1000, 0, 0], ["복도", 2700, 0, 200], ["아레나", 5000, 0, 200]]};
+  const DATA = {"title": "레벨 이름 (LV_Name)", "boxes": [{"name": "Start_Floor", "kind": "floor", "e": [0, 2000, -1000, 1000, -50, 0], "full": [0, 2000, -1000, 1000, -50, 0]}, {"name": "Start_WallBack", "kind": "wall", "e": [-100, 0, -1100, 1100, 0, 500], "full": [-100, 0, -1100, 1100, 0, 500]}, {"name": "Start_WallN", "kind": "wall", "e": [0, 2000, 1000, 1100, 0, 500], "full": [0, 2000, 1000, 1100, 0, 500]}, {"name": "Start_WallS", "kind": "wall", "e": [0, 2000, -1100, -1000, 0, 500], "full": [0, 2000, -1100, -1000, 0, 500]}, {"name": "Start_Ledge", "kind": "floor", "e": [1200, 1800, 500, 1000, 0, 150], "full": [1200, 1800, 500, 1000, 0, 150]}, {"name": "Start_Cover", "kind": "obstacle", "e": [1000, 1200, -600, -400, 0, 120], "full": [1000, 1200, -600, -400, 0, 120]}, {"name": "Hall_Floor", "kind": "floor", "e": [2400, 3100, -300, 300, 150, 200], "full": [2400, 3100, -300, 300, 150, 200]}, {"name": "Hall_WallN", "kind": "wall", "e": [2000, 3000, 300, 400, 0, 700], "full": [2000, 3000, 300, 400, 0, 700]}, {"name": "Hall_WallS", "kind": "wall", "e": [2000, 3000, -400, -300, 0, 700], "full": [2000, 3000, -400, -300, 0, 700]}], "rings": [{"name": "Arena_Floor", "kind": "floor", "c": [5000, 0], "ri": 0, "ro": 2000, "z0": 150, "z1": 200, "a0": 0, "a1": 360, "top": 200}, {"name": "Arena_Wall", "kind": "wall", "c": [5000, 0], "ri": 2000, "ro": 2100, "z0": 200, "z1": 700, "a0": -168, "a1": 168, "top": 700}, {"name": "Arena_Pillar", "kind": "obstacle", "c": [5000, 1000], "ri": 0, "ro": 80, "z0": 200, "z1": 500, "a0": 0, "a1": 360, "top": 500}], "steps": [{"name": "Stair", "c": [2025, 0, 12.5], "s": [50, 400, 25], "yaw": 0, "top": 25}, {"name": "Stair", "c": [2075, 0, 25.0], "s": [50, 400, 50], "yaw": 0, "top": 50}, {"name": "Stair", "c": [2125, 0, 37.5], "s": [50, 400, 75], "yaw": 0, "top": 75}, {"name": "Stair", "c": [2175, 0, 50.0], "s": [50, 400, 100], "yaw": 0, "top": 100}, {"name": "Stair", "c": [2225, 0, 62.5], "s": [50, 400, 125], "yaw": 0, "top": 125}, {"name": "Stair", "c": [2275, 0, 75.0], "s": [50, 400, 150], "yaw": 0, "top": 150}, {"name": "Stair", "c": [2325, 0, 87.5], "s": [50, 400, 175], "yaw": 0, "top": 175}, {"name": "Stair", "c": [2375, 0, 100.0], "s": [50, 400, 200], "yaw": 0, "top": 200}], "rboxes": [{"name": "Start_Ramp", "kind": "ramp", "c": [900, 750, 65], "s": [618.5, 300, 20], "yaw": 0, "pitch": 14.0362, "top": 150}], "actors": [{"label": "PlayerStart", "cls": "PlayerStart", "x": 200, "y": 0, "floor": 0, "yaw": 0, "mark": "시작", "clsName": "플레이어 시작 지점", "sight": null}, {"label": "Enemy_Cutter", "cls": "BP_Cutter", "x": 1400, "y": -200, "floor": 0, "yaw": 180, "mark": "근", "clsName": "근거리 일반 적", "sight": [1200, 120]}, {"label": "Enemy_Gunner", "cls": "BP_Gunner", "x": 1500, "y": 750, "floor": 150, "yaw": 180, "mark": "원", "clsName": "원거리 일반 적", "sight": [3000, 180]}, {"label": "Gate", "cls": "BP_Gate", "x": 2900, "y": 0, "floor": 200, "yaw": 0, "mark": "성문", "clsName": "성문", "sight": null}, {"label": "Checkpoint", "cls": "BP_Checkpoint", "x": 2600, "y": -200, "floor": 200, "yaw": 90, "mark": "체크포인트", "clsName": "체크포인트", "sight": null}, {"label": "BP_Boss", "cls": "BP_Boss", "x": 5800, "y": 0, "floor": 200, "yaw": 180, "mark": "보스", "clsName": "보스", "sight": [2000, 120]}], "sections": [["시작 방", 1000, 0, 0], ["복도", 2700, 0, 200], ["아레나", 5000, 0, 200]]};
   if (!window.THREE || !THREE.OrbitControls) { document.getElementById('err').style.display = 'flex'; return; }
   document.getElementById('title').textContent = document.title = DATA.title;
   // 언리얼 (x, y, z) cm -> three.js (x, z, y) m. 왼손 좌표를 오른손 좌표로 바꾸려고 Y와 Z를 맞바꾼다.
@@ -86,7 +87,7 @@
   renderer.setSize(window.innerWidth, window.innerHeight);
   view.appendChild(renderer.domElement);
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x16181c);
+  renderer.setClearColor(0x16181c);
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 3000);
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xf0f0ff, 0x404048, 0.75));
@@ -110,7 +111,9 @@
   }
   const m2 = v => (v / 100).toFixed(2);
 
-  const pickables = [], wallMats = [], labels = [], sightObjs = [];
+  // 윤곽선은 화면에서 그린다(아래 draw). 물체마다 모서리 선을 그리면 두 물체가 파고든 자리에는 선이 없어 경계가 보이지 않는다.
+  // 레이어 0은 윤곽선을 낼 물체, 1은 윤곽선 위에 그릴 이름표, 2는 윤곽선을 내지 않을 선과 시야다.
+  const pickables = [], walls = [], labels = [], sightObjs = [];
   const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 });
   function addMesh(g, kind, top, tipText, pos, rotY) {
     const col = kind === 'floor' ? floorColor(top) : kind === 'stair' ? stairColor(top) : new THREE.Color(KCOL[kind]);
@@ -120,11 +123,15 @@
     if (rotY) m.rotation.y = rotY;
     m.userData = { tip: tipText };
     scene.add(m);
-    const e = new THREE.LineSegments(new THREE.EdgesGeometry(g, 20), edgeMat);
-    e.position.copy(m.position); e.rotation.copy(m.rotation);
-    scene.add(e);
     pickables.push(m);
-    if (kind === 'wall') wallMats.push(mat);
+    if (kind === 'wall') {
+      // 반투명한 벽은 뒤의 물체에 윤곽선이 나오도록 화면 윤곽선에서 빼고, 그동안 보일 모서리 선을 따로 둔다.
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(g, 20), edgeMat);
+      e.position.copy(m.position); e.rotation.copy(m.rotation);
+      e.layers.set(2); e.visible = false;
+      scene.add(e);
+      walls.push({ mesh: m, edge: e });
+    }
   }
   for (const b of DATA.boxes) {
     const [x0, x1, y0, y1, z0, z1] = b.e;
@@ -171,9 +178,6 @@
     m.rotation.set(0, -b.yaw * Math.PI / 180, b.pitch * Math.PI / 180, 'YZX');
     m.userData = { tip: `${b.name} (${KNAME[b.kind]})\n기울기 ${b.pitch.toFixed(1)}°, 폭 ${m2(b.s[1])} m\n위 끝 높이 ${m2(b.top)} m` };
     scene.add(m); pickables.push(m);
-    const e = new THREE.LineSegments(new THREE.EdgesGeometry(g), edgeMat);
-    e.position.copy(m.position); e.rotation.copy(m.rotation);
-    scene.add(e);
   }
 
   const screenLabels = [];
@@ -194,12 +198,15 @@
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, sizeAttenuation: false }));
     sp.userData.px = px;
     sp.userData.ratio = w / c.height;
+    sp.layers.set(1);
     screenLabels.push(sp);
     sp.renderOrder = 10;
     return sp;
   }
 
-  const MCOL = { P: 0x37c873, '근': 0xe64b41, '원': 0xf5872a, B: 0xb946e1 };
+  const MCOL = { '시작': 0x37c873, '근': 0xe64b41, '원': 0xf5872a, '보스': 0xb946e1, '체크포인트': 0x5ad1e6 };
+  // 체크포인트는 캡슐 대신 상자(앞뒤, 좌우, 높이 m)로 그린다.
+  const BOXES = { BP_Checkpoint: [0.6, 0.6, 1.4] };
   for (const a of DATA.actors) {
     if (a.cls === 'BP_Gate') {
       const g = new THREE.BoxGeometry(0.3, 5, 5);
@@ -212,11 +219,13 @@
       continue;
     }
     // 캡슐 크기(전체 높이, 반지름 m)는 BP_Boss와 BP_Player·BP_Cutter·BP_Gunner의 캡슐 컴포넌트 값이다.
-    const h = a.cls === 'BP_Boss' ? 2.112 : 1.76;
+    const bx = BOXES[a.cls];
+    const h = bx ? bx[2] : a.cls === 'BP_Boss' ? 2.112 : 1.76;
     const r = a.cls === 'BP_Boss' ? 0.408 : 0.34;
-    const g = new THREE.CapsuleGeometry(r, h - 2 * r, 6, 16);
+    const g = bx ? new THREE.BoxGeometry(bx[0], bx[2], bx[1]) : new THREE.CapsuleGeometry(r, h - 2 * r, 6, 16);
     const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: MCOL[a.mark] }));
     m.position.copy(U(a.x, a.y, a.floor + h * 50));
+    if (bx) m.rotation.y = -a.yaw * Math.PI / 180;
     const s = a.sight ? `\n시야 ${a.sight[0] / 100}m, 정면 ${a.sight[1]}°` : '';
     m.userData = { tip: `${a.label} (${a.clsName})\n위치 ${(a.x / 100).toFixed(1)}, ${(a.y / 100).toFixed(1)} m, 바닥 ${(a.floor / 100).toFixed(1)} m${s}` };
     scene.add(m); pickables.push(m);
@@ -234,13 +243,13 @@
       fg.rotateX(Math.PI / 2);
       const fan = new THREE.Mesh(fg, new THREE.MeshBasicMaterial({ color: MCOL[a.mark], transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false }));
       fan.position.copy(U(a.x, a.y, a.floor + 3));
-      fan.visible = false;
+      fan.visible = false; fan.layers.set(2);
       scene.add(fan); sightObjs.push(fan);
       const arc = [U(a.x, a.y, a.floor + 4)];
       for (let i = 0; i <= 48; i++) { const t = yaw - half + 2 * half * i / 48; arc.push(U(a.x + a.sight[0] * Math.cos(t), a.y + a.sight[0] * Math.sin(t), a.floor + 4)); }
       arc.push(arc[0]);
       const rim = new THREE.Line(new THREE.BufferGeometry().setFromPoints(arc), new THREE.LineBasicMaterial({ color: MCOL[a.mark] }));
-      rim.visible = false;
+      rim.visible = false; rim.layers.set(2);
       scene.add(rim); sightObjs.push(rim);
     }
   }
@@ -307,7 +316,8 @@
   document.getElementById('bHome').onclick = home;
   document.getElementById('bTop').onclick = () => frame(topDir);
   function toggle(id, fn) { const b = document.getElementById(id); b.onchange = () => fn(b.checked); }
-  toggle('bWall', on => wallMats.forEach(m => { m.transparent = on; m.opacity = on ? 0.22 : 1; m.depthWrite = !on; m.needsUpdate = true; }));
+  let wallsClear = false;
+  toggle('bWall', on => { wallsClear = on; walls.forEach(w => { const m = w.mesh.material; m.transparent = on; m.opacity = on ? 0.22 : 1; m.depthWrite = !on; m.needsUpdate = true; w.edge.visible = on; }); });
   toggle('bSight', on => sightObjs.forEach(o => { o.visible = on; }));
   toggle('bLabel', on => labels.forEach(o => { o.visible = on; }));
 
@@ -328,8 +338,59 @@
     screenLabels.forEach(s => s.scale.set(s.userData.px * k * s.userData.ratio, s.userData.px * k, 1));
   }
   sizeLabels();
-  window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); sizeLabels(); });
-  (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+
+  // 화면 윤곽선: 물체를 면 방향 색으로 한 번 더 그려 두고, 이웃 픽셀과 면 방향이나 깊이가 끊기는 곳을 검게 덧칠한다.
+  // 깊이는 버퍼 값(1/거리에 비례)을 그대로 두 번 차분한다. 평면 위에서는 0이라 비스듬히 보는 바닥에 선이 생기지 않는다.
+  const edgeRT = new THREE.WebGLRenderTarget(1, 1, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
+  edgeRT.depthTexture = new THREE.DepthTexture(1, 1);
+  const normalMat = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
+  const edgeQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
+    uniforms: { tNormal: { value: edgeRT.texture }, tDepth: { value: edgeRT.depthTexture }, px: { value: new THREE.Vector2() } },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: `
+      uniform sampler2D tNormal; uniform sampler2D tDepth; uniform vec2 px; varying vec2 vUv;
+      float inv(vec2 uv) { return 1.0 - texture2D(tDepth, uv).x; }
+      vec3 nrm(vec2 uv) { return normalize(texture2D(tNormal, uv).xyz * 2.0 - 1.0); }
+      float edge(vec2 uv) {
+        vec2 dx = vec2(px.x, 0.0), dy = vec2(0.0, px.y);
+        float c = inv(uv); vec3 n = nrm(uv);
+        float bend = abs(inv(uv + dx) + inv(uv - dx) - 2.0 * c) + abs(inv(uv + dy) + inv(uv - dy) - 2.0 * c);
+        float turn = 1.0 - min(min(dot(n, nrm(uv + dx)), dot(n, nrm(uv - dx))), min(dot(n, nrm(uv + dy)), dot(n, nrm(uv - dy))));
+        return max(smoothstep(0.004, 0.012, bend / max(c, 1e-6)), smoothstep(0.03, 0.08, turn));
+      }
+      void main() {
+        vec2 h = 0.5 * px;
+        float e = 0.25 * (edge(vUv + h) + edge(vUv - h) + edge(vUv + vec2(h.x, -h.y)) + edge(vUv + vec2(-h.x, h.y)));
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.6 * e);
+      }`,
+    transparent: true, depthTest: false, depthWrite: false }));
+  edgeQuad.frustumCulled = false;
+  const edgeScene = new THREE.Scene(), edgeCam = new THREE.Camera();
+  edgeScene.add(edgeQuad);
+  function sizeEdges() {
+    // 선이 매끄럽게 나오도록 화면의 두 배로 그려 네 점을 평균한다. 픽셀이 촘촘한 화면에서는 그대로 쓴다.
+    const s = renderer.getDrawingBufferSize(new THREE.Vector2()).multiplyScalar(renderer.getPixelRatio() > 1 ? 1 : 2);
+    s.max(new THREE.Vector2(1, 1));
+    edgeRT.setSize(s.x, s.y);
+    edgeQuad.material.uniforms.px.value.set(1 / s.x, 1 / s.y);
+  }
+  sizeEdges();
+  renderer.autoClear = false;
+  function draw() {
+    walls.forEach(w => { w.mesh.visible = !wallsClear; });
+    camera.layers.set(0);
+    scene.overrideMaterial = normalMat;
+    renderer.setRenderTarget(edgeRT); renderer.clear(); renderer.render(scene, camera);
+    scene.overrideMaterial = null;
+    walls.forEach(w => { w.mesh.visible = true; });
+    renderer.setRenderTarget(null); renderer.clear();
+    camera.layers.enable(2); renderer.render(scene, camera);
+    renderer.render(edgeScene, edgeCam);
+    camera.layers.set(1); renderer.render(scene, camera);
+    camera.layers.set(0);
+  }
+  window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); sizeLabels(); sizeEdges(); });
+  (function loop() { requestAnimationFrame(loop); controls.update(); draw(); })();
 })();
 </script>
 </body>
