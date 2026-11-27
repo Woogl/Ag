@@ -47,7 +47,7 @@
 | `UAgNameplateWidget` | `UCommonUserWidget` | HP·PP 바 묶음(`WBP_Nameplate`, HUD 보스 상태 `WBP_BossStatus`가 함께 씀). 대상 ASC 구독, 그로기 중 남은 시간으로 PP 바 줄이기와 그로기 연출(`M_GroggyFill`·`M_GroggyBurst`)·처형 피격 중 정지, 최대 PP 0이면 PP 영역 접기, 네임플레이트의 최근 감소 표시 시간과 다시 표시할 때 잔상 정리(`Update`) |
 | `AAgEnemyAIController` | `AAIController` | 적 공통 StateTree 실행, 패턴 후딜레이(끝나는 월드 시각 하나), AI 지각의 시야·대미지 감각(놓친 뒤 잊는 시간은 감각의 최대 나이), 플레이어 인식(`IsTargetNoticed`: 그룹이 있으면 그룹의 인식, 없으면 자기 감각 `PerceivesTarget`), 빙의한 캐릭터의 팀 전달, 자기 캐릭터가 받은 기본 공격 시작 이벤트를 StateTree에 전달. 경로 이동 컴포넌트는 엔진 Detour 군중(`UCrowdFollowingComponent`, 도착 감속 끔)이라 경로로 걷는 적끼리 비켜 걷습니다. |
 | `AAgPatrolRoute` | `AActor` | 레벨에 놓는 정찰 경로. 정찰 지점은 루트 스플라인(`Spline`, 닫힌 고리, 직선 점)의 점이고, 게임에서는 점 개수·월드 위치와 수평 거리로 가장 가까운 점(`FindNearestPoint`)만 제공합니다. 여러 스포너가 하나를 함께 쓰고, 스포너를 옮겨도 경로는 그대로입니다. 에디터 기능(바닥 스냅, 경로 확인과 경고, `SetPointLocations`)은 [개발 도구와 검증](<개발 도구와 검증.md>) '정찰 경로 미리 보기'를 따릅니다. |
-| `AAgEnemySpawner` | `AActor` | 레벨에 놓아 적 하나를 생성하는 자리([기본 방침](<기본 방침.md>) '적 배치'). 레벨 인스턴스 값은 적 블루프린트(`EnemyClass`, 소프트 참조), 정찰 경로(`PatrolRoute`), 그룹 이름(`GroupId`)입니다. 플레이를 시작하면 적 클래스를, 이어서 그 종류의 어빌리티 에셋을 비동기로 읽은 뒤(`UAgAssetManager::PreloadData`) 자기 위치를 발밑으로 삼아(적 액터는 캡슐 반높이만큼 위) 자기 방향으로 적을 생성하고, 읽기를 기다린 생성이 끝나면 알립니다(`OnSpawnFinished`, 클래스를 읽지 못했을 때도). 읽은 클래스와 어빌리티 묶음을 붙잡고 있어, 적을 지우고(`DestroyEnemy`) 다시 생성할 때(`Spawn`)는 읽지 않고 같은 프레임에 생성합니다. 스포너가 지워지거나 스트리밍으로 내려가면 읽기 요청을 취소하고 자기 적도 지웁니다. 에디터에서는 적 외형·시야·정찰 경로를 미리 보여 주고 배치를 검사합니다([개발 도구와 검증](<개발 도구와 검증.md>)). 블루프린트 없이 C++ 클래스를 그대로 놓습니다. |
+| `AAgEnemySpawner` | `AActor` | 레벨에 놓아 적 하나를 생성하는 자리([기본 방침](<기본 방침.md>) '적 배치'). 레벨 인스턴스 값은 적 블루프린트(`EnemyClass`, 소프트 참조), 정찰 경로(`PatrolRoute`), 그룹 이름(`GroupId`)입니다. 플레이를 시작하면 적 클래스를, 이어서 그 종류의 어빌리티 에셋을 비동기로 읽은 뒤(`UAgAssetManager::PreloadData`) 자기 위치를 발밑으로 삼아(적 액터는 캡슐 반높이만큼 위) 자기 방향으로 적을 생성하고, 비동기 읽기가 끝나면 알립니다(`OnLoadFinished`, 클래스를 읽지 못했을 때도). 생성을 미뤄 두면(`HoldSpawn`) 읽기를 마쳐도 풀 때(`ReleaseSpawn`)까지 생성하지 않으며, 게임 모드가 레벨을 열 때 모든 스포너의 적을 한 번에 생성하는 데 씁니다. 읽은 클래스와 어빌리티 묶음을 붙잡고 있어, 적을 지우고(`DestroyEnemy`) 다시 생성할 때(`Spawn`)는 읽지 않고 같은 프레임에 생성합니다. 스포너가 지워지거나 스트리밍으로 내려가면 읽기 요청을 취소하고 자기 적도 지웁니다. 에디터에서는 적 외형·시야·정찰 경로를 미리 보여 주고 배치를 검사합니다([개발 도구와 검증](<개발 도구와 검증.md>)). 블루프린트 없이 C++ 클래스를 그대로 놓습니다. |
 | `FAgEnemyAITask_Patrol` | `FStateTreeAITaskBase` | 가장 가까운 정찰 지점부터 순서대로 이동을 요청합니다. 부분 경로를 허용하지 않아 요청이 실패한 점은 갈 수 없는 점으로 보고 경고 로그를 남긴 뒤 같은 틱에 다음 점을 요청하며, 연달아 모든 점에 실패하면 처음 자리로 갑니다. |
 | `FAgEnemyAITask_KeepDistance` | `FStateTreeAITaskBase` | '간격 지키기'. 첫 틱, 패턴 후딜레이가 끝난 틱, 그 뒤 0.5초마다 패턴을 시작해도 되면(`UAgCombatSubsystem::CanStartPattern`) 쓸 수 있는 패턴을 찾고, 있으면 완료해 패턴 실행으로 넘깁니다. 없는 동안은 목표 거리(공격할 차례면 `GatherReadyPatternRanges`, 기다리는 중이면 `AI.PreferredDistance`)에 따라 다가가기·뒤로 걷기·좌우 걷기·제자리를 고르며, 모두 경로 이동이라 군중 회피를 받습니다. 뒤로 걷기·좌우 걷기는 매 틱 가장 가까운 내비메시 점에서 걷는 쪽으로 엔진 `NavigationRaycast`를 해, 열려 있으면 그 끝, 막혔으면 닿은 점으로 `MoveToLocation`을 요청합니다. 닿은 점이 아주 가까우면 서므로 벽이나 내비메시 끝을 돌아가거나 따라 미끄러지지 않습니다. 나갈 때 경로만 끊고 속도는 감속에 맡깁니다. |
 | `FAgEnemyAICondition_ResponseReady` | `FStateTreeAIConditionBase` | 패턴 후딜레이는 보지 않고, 패턴 실행·피격 반응 중이 아닌지는 이 조건을 둔 간격 지키기 상태가 정합니다. 평가할 때마다 반응형 패턴의 발동 확률을 굴리므로, 한 번만 평가하는 이벤트 전환(기본 공격 시작)에만 둡니다. |
@@ -319,16 +319,18 @@ sequenceDiagram
     E->>S: BeginPlay
     S->>S: 적 클래스<br>비동기 읽기 요청
     E->>P: BeginPlay
-    GM->>GM: 기다리는 스포너가 있으면<br>로딩 화면 열기
+    GM->>S: 읽는 중인 스포너의<br>생성 미루기(HoldSpawn)
+    GM->>GM: 읽는 중인 스포너가 있으면<br>로딩 화면 열기
     S->>S: 이어서 그 종류의<br>어빌리티 에셋 미리 읽기
+    S->>GM: OnLoadFinished
+    GM->>S: 모든 스포너가 읽기를 마치면<br>ReleaseSpawn
     S->>B: 지연 생성,<br>정찰 경로·그룹 주기
     B->>B: 데이터 연결,<br>처음 위치·방향 기록
     B->>AI: SpawnDefaultController<br>(AutoPossessAI)
     AI->>B: 빙의, PossessedBy:<br>ASC 액터 정보 갱신
     AI->>AI: OnPossess:<br>기본 공격 시작 이벤트 구독,<br>적 캐릭터 기본값의<br>AIStateTree 시작 (비전투)
     B->>B: 무기 컴포넌트 찾기,<br>BeginPlay
-    S->>GM: OnSpawnFinished
-    GM->>GM: 모든 스포너가 끝나면<br>로딩 화면 닫기
+    GM->>GM: 로딩 화면 닫기
     Note over AI: 시야로 플레이어를 알아차리면<br>전투 진입(전투 서브시스템에 등록)
 ```
 

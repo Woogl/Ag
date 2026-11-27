@@ -210,12 +210,16 @@ bool UAgAssetManager::LoadJsonData(bool bInitialLoad)
 		bRead = Reader.ParseFile(GetJsonPath(*FileName)) && bRead;
 	}
 
-	// 새 객체에 먼저 읽어, 오류가 있으면 지금 데이터를 건드리지 않고 버릴 수 있게 합니다. 쓰는 쪽이 붙잡는 데이터도 오류를 지금
-	// 알리도록 한 번 모두 읽어 봅니다. 그때 읽힌 에셋은 붙잡는 것이 없어 다음 가비지 컬렉션 때 내려갑니다.
+	// 새 객체에 먼저 읽어, 오류가 있으면 지금 데이터를 건드리지 않고 버릴 수 있게 합니다. 다시 읽기와 쿡에서는 쓰는 쪽이 붙잡는
+	// 데이터도 오류를 지금 알리도록 한 번 모두 읽어 봅니다. 그때 읽힌 에셋은 붙잡는 것이 없어 다음 가비지 컬렉션 때 내려갑니다.
+	// 게임을 켤 때는 모든 캐릭터의 에셋을 읽게 되므로 건너뛰고, 그 데이터의 오류는 쓰는 쪽이 읽을 때 알립니다.
 	TArray<UAgJsonData*> Loaded;
 	for (UClass* Class : AgAssetManagerPrivate::GetJsonDataClasses())
 	{
-		Loaded.Add(NewObject<UAgJsonData>(this, Class));
+		if (!bInitialLoad || Class->GetDefaultObject<UAgJsonData>()->IsAlwaysLoaded())
+		{
+			Loaded.Add(NewObject<UAgJsonData>(this, Class));
+		}
 	}
 	// 읽는 동안 클래스·에셋 로딩이 GC를 돌릴 수 있는데, 새 객체는 아직 아무도 가리키지 않습니다.
 	const TGCObjectsScopeGuard<UAgJsonData> LoadedGuard(Loaded);

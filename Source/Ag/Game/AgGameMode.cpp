@@ -159,10 +159,11 @@ void AAgGameMode::StartPlay()
 	StartPlayTime = FPlatformTime::Seconds();
 	for (TActorIterator<AAgEnemySpawner> It(GetWorld()); It; ++It)
 	{
-		if (It->IsSpawnPending())
+		if (It->IsLoading())
 		{
 			++PendingSpawnerCount;
-			It->OnSpawnFinished.AddUObject(this, &ThisClass::HandleSpawnFinished);
+			It->HoldSpawn();
+			It->OnLoadFinished.AddUObject(this, &ThisClass::HandleSpawnerLoaded);
 		}
 	}
 	SpawnerCount = PendingSpawnerCount;
@@ -218,12 +219,17 @@ bool AAgGameMode::IsStageCleared(const AAgCharacterBase& DeadCharacter) const
 	return DeadCharacter.IsA<AAgBossCharacter>();
 }
 
-void AAgGameMode::HandleSpawnFinished()
+void AAgGameMode::HandleSpawnerLoaded()
 {
-	// 레벨 시작 뒤에 다시 읽기를 기다린 스포너의 알림은 세지 않습니다.
-	if (PendingSpawnerCount == 0 || --PendingSpawnerCount > 0)
+	// 레벨 시작 뒤에 다시 읽기를 기다린 스포너의 알림은 세지 않습니다. 레벨을 닫는 중에 사라지는 스포너의 알림으로는 생성하지 않습니다.
+	if (PendingSpawnerCount == 0 || --PendingSpawnerCount > 0 || GetWorld()->bIsTearingDown)
 	{
 		return;
+	}
+	// 먼저 읽힌 적이 로딩 화면 뒤에서 움직이지 않게, 모두 읽은 뒤에 한 번에 생성합니다.
+	for (TActorIterator<AAgEnemySpawner> It(GetWorld()); It; ++It)
+	{
+		It->ReleaseSpawn();
 	}
 	UE_LOG(LogAg, Log, TEXT("Stage ready: %d spawners finished %.3f s after StartPlay."), SpawnerCount, FPlatformTime::Seconds() - StartPlayTime);
 	if (LoadingScreen)

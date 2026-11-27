@@ -77,7 +77,7 @@ protected:
 	float StageResultPresentationTime = 4.f;
 
 private:
-	void HandleSpawnFinished();
+	void HandleSpawnerLoaded();
 
 	void ShowResult();
 

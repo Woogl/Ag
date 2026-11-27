@@ -27,15 +27,27 @@ class AAgEnemySpawner : public AActor
 public:
 	AAgEnemySpawner();
 
-	/** 에셋을 붙잡고 있으면 그 자리에서, 아니면 비동기로 읽은 뒤 적을 생성합니다. 적이 있거나 읽는 중이면 아무것도 하지 않습니다. */
+	/**
+	 * 에셋을 붙잡고 있으면 그 자리에서, 아니면 비동기로 읽은 뒤 적을 생성합니다. 적이 있거나 읽는 중이거나 생성을 미뤄 둔 동안에는
+	 * 아무것도 하지 않습니다.
+	 */
 	void Spawn();
+
+	/**
+	 * 읽기를 마쳐도 ReleaseSpawn까지 생성하지 않게 합니다. 레벨을 열 때 먼저 읽힌 적이 로딩 화면 뒤에서 움직이지 않도록, 게임 모드가
+	 * 모든 스포너의 읽기를 기다렸다가 한 번에 생성하는 데 씁니다.
+	 */
+	void HoldSpawn();
+
+	/** 미뤄 둔 생성을 풉니다. 읽기를 마쳤으면 그 자리에서 생성하고, 읽는 중이면 읽기를 마칠 때 생성합니다. */
+	void ReleaseSpawn();
 
 	/** 살아 있든 죽었든 자기 적을 지웁니다. */
 	void DestroyEnemy();
 
-	bool IsSpawnPending() const
+	bool IsLoading() const
 	{
-		return bSpawnPending;
+		return bLoading;
 	}
 
 	AAgPatrolRoute* GetPatrolRoute() const
@@ -43,8 +55,11 @@ public:
 		return PatrolRoute;
 	}
 
-	/** 읽기를 기다린 생성이 끝나면 부릅니다. 클래스를 읽지 못해 생성하지 못했을 때도 부릅니다. */
-	FSimpleMulticastDelegate OnSpawnFinished;
+	/**
+	 * 비동기 읽기가 끝나면 부릅니다. 생성을 미뤄 두지 않았으면 생성한 뒤에 부릅니다. 클래스를 읽지 못했을 때와 읽는 중에 스포너가
+	 * 사라질 때도 부릅니다.
+	 */
+	FSimpleMulticastDelegate OnLoadFinished;
 
 #if WITH_EDITOR
 	/** 편집 중에 적 블루프린트의 기본값(캐릭터 데이터 ID, 메시)을 봅니다. 클래스는 그 자리에서 읽습니다. */
@@ -65,6 +80,7 @@ protected:
 
 private:
 	void HandleClassLoaded();
+	void HandleAssetsLoaded();
 	void SpawnEnemy();
 
 #if WITH_EDITOR
@@ -102,7 +118,9 @@ private:
 
 	TSharedPtr<FStreamableHandle> LoadHandle;
 
-	bool bSpawnPending = false;
+	bool bLoading = false;
+
+	bool bSpawnHeld = false;
 
 #if WITH_EDITORONLY_DATA
 	/** 적의 몸과, 블루프린트에서 몸에 붙인 메시(무기)의 미리 보기입니다. */

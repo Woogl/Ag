@@ -40,7 +40,7 @@ AAgEnemySpawner::AAgEnemySpawner()
 
 void AAgEnemySpawner::Spawn()
 {
-	if (Enemy || bSpawnPending || EnemyClass.IsNull())
+	if (Enemy || bLoading || bSpawnHeld || EnemyClass.IsNull())
 	{
 		return;
 	}
@@ -49,12 +49,30 @@ void AAgEnemySpawner::Spawn()
 		SpawnEnemy();
 		return;
 	}
-	bSpawnPending = true;
+	bLoading = true;
 	LoadHandle = UAssetManager::GetStreamableManager().RequestAsyncLoad(EnemyClass.ToSoftObjectPath(), FStreamableDelegate::CreateUObject(this, &ThisClass::HandleClassLoaded));
 	// 엔진은 경로가 잘못된 요청에는 핸들도 완료 알림도 주지 않습니다.
 	if (!LoadHandle)
 	{
 		HandleClassLoaded();
+	}
+}
+
+void AAgEnemySpawner::HoldSpawn()
+{
+	bSpawnHeld = true;
+}
+
+void AAgEnemySpawner::ReleaseSpawn()
+{
+	if (!bSpawnHeld)
+	{
+		return;
+	}
+	bSpawnHeld = false;
+	if (!bLoading && LoadedClass && !Enemy)
+	{
+		SpawnEnemy();
 	}
 }
 
@@ -141,10 +159,10 @@ void AAgEnemySpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		LoadHandle->CancelHandle();
 		LoadHandle.Reset();
 	}
-	if (bSpawnPending)
+	if (bLoading)
 	{
-		bSpawnPending = false;
-		OnSpawnFinished.Broadcast();
+		bLoading = false;
+		OnLoadFinished.Broadcast();
 	}
 	// 스포너만 내려가면(월드 파티션 스트리밍, 삭제) 적이 남으므로 함께 지웁니다. 월드가 끝날 때는 엔진이 모든 액터를 정리합니다.
 	if (EndPlayReason == EEndPlayReason::Destroyed || EndPlayReason == EEndPlayReason::RemovedFromWorld)
@@ -162,23 +180,29 @@ void AAgEnemySpawner::HandleClassLoaded()
 	{
 		UE_LOG(LogAg, Error, TEXT("%s: can't load EnemyClass %s."), *GetName(), *EnemyClass.ToString());
 		LoadHandle.Reset();
-		bSpawnPending = false;
-		OnSpawnFinished.Broadcast();
+		bLoading = false;
+		OnLoadFinished.Broadcast();
 		return;
 	}
 	const FName CharacterDataId = LoadedClass->GetDefaultObject<AAgEnemyCharacter>()->GetCharacterDataId();
-	LoadHandle = UAgAssetManager::Get().PreloadData<UAgAbilitySet>(CharacterDataId, FStreamableDelegate::CreateUObject(this, &ThisClass::SpawnEnemy));
+	LoadHandle = UAgAssetManager::Get().PreloadData<UAgAbilitySet>(CharacterDataId, FStreamableDelegate::CreateUObject(this, &ThisClass::HandleAssetsLoaded));
+}
+
+void AAgEnemySpawner::HandleAssetsLoaded()
+{
+	bLoading = false;
+	AbilitySet = UAgAssetManager::Get().LoadData<UAgAbilitySet>(LoadedClass->GetDefaultObject<AAgEnemyCharacter>()->GetCharacterDataId());
+	// 미리 읽은 에셋을 묶음이 붙잡은 뒤에 핸들을 놓습니다.
+	LoadHandle.Reset();
+	if (!bSpawnHeld)
+	{
+		SpawnEnemy();
+	}
+	OnLoadFinished.Broadcast();
 }
 
 void AAgEnemySpawner::SpawnEnemy()
 {
-	const bool bWaited = bSpawnPending;
-	bSpawnPending = false;
-
-	AbilitySet = UAgAssetManager::Get().LoadData<UAgAbilitySet>(LoadedClass->GetDefaultObject<AAgEnemyCharacter>()->GetCharacterDataId());
-	// 미리 읽은 에셋을 묶음이 붙잡은 뒤에 핸들을 놓습니다.
-	LoadHandle.Reset();
-
 	// 스포너의 위치는 적의 발밑이고, 적 액터의 위치는 캡슐 중심입니다.
 	const float HalfHeight = LoadedClass->GetDefaultObject<AAgEnemyCharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	const FTransform Transform(GetActorRotation(), GetActorLocation() + GetActorUpVector() * HalfHeight);
@@ -188,10 +212,6 @@ void AAgEnemySpawner::SpawnEnemy()
 		// 그룹 등록(BeginPlay)과 AI 시작(컴포넌트 초기화)이 생성을 마칠 때 일어나므로 그 전에 줍니다.
 		Enemy->SetPlacement(PatrolRoute, GroupId);
 		Enemy->FinishSpawning(Transform);
-	}
-	if (bWaited)
-	{
-		OnSpawnFinished.Broadcast();
 	}
 }
 
