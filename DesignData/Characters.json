@@ -170,7 +170,7 @@
       "EnemyLockOn"
     ],
     "AI": {
-      "PostPatternDelayTime": {"Min": 0.6, "Max": 1.0},
+      "PostPatternDelayTime": {"Min": 1, "Max": 3},
       "PreferredDistance": {"Min": 200, "Max": 400},
       "SightDistance": 1200,
       "SightAngle": 120
