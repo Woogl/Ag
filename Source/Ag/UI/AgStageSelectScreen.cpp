@@ -25,14 +25,13 @@ void UAgStageSelectScreen::NativeOnActivated()
 {
 	Super::NativeOnActivated();
 
-	// CommonUI 스택은 닫은 화면을 다시 쓰므로, 열 때마다 목록을 다시 채우고 불러온 슬롯의 마지막 스테이지를 고릅니다.
-	// 마지막 스테이지가 없거나 목록에 없으면 드롭다운이 첫 스테이지를 고릅니다.
+	// CommonUI 스택은 닫은 화면을 다시 쓰므로, 열 때마다 목록을 다시 채워 첫 스테이지를 고릅니다.
 	TArray<FAgDropdownOption> Options;
 	for (const FAgStage& Stage : AAgGameMode::FindStages())
 	{
 		Options.Add({Stage.Map, Stage.DisplayName});
 	}
-	StageDropdown->SetOptions(Options, UAgSaveSubsystem::Get(this).GetLastStage());
+	StageDropdown->SetOptions(Options);
 }
 
 UWidget* UAgStageSelectScreen::NativeGetDesiredFocusTarget() const

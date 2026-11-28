@@ -3,6 +3,7 @@
 #include "UI/AgLoadGameScreen.h"
 
 #include "Components/VerticalBox.h"
+#include "Game/AgGameMode.h"
 #include "Game/AgPlayerController.h"
 #include "Game/AgSaveSubsystem.h"
 #include "UI/AgButton.h"
@@ -79,7 +80,12 @@ void UAgLoadGameScreen::RefreshSlots()
 void UAgLoadGameScreen::LoadSlot(int32 SlotIndex)
 {
 	AAgPlayerController* PlayerController = GetOwningPlayer<AAgPlayerController>();
-	if (PlayerController && UAgSaveSubsystem::Get(this).LoadSlot(SlotIndex))
+	if (!PlayerController || !UAgSaveSubsystem::Get(this).LoadSlot(SlotIndex))
+	{
+		return;
+	}
+	AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>();
+	if (!GameMode || !GameMode->OpenLastStage())
 	{
 		// 스테이지 선택 화면에서 Back으로 돌아오면 이 줄이 다시 선택됩니다.
 		FocusSlot = SlotIndex;

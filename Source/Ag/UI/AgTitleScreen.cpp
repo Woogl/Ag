@@ -69,7 +69,12 @@ UWidget* UAgTitleScreen::NativeGetDesiredFocusTarget() const
 
 void UAgTitleScreen::ContinueGame()
 {
-	if (UAgSaveSubsystem::Get(this).LoadLatestSlot())
+	if (!UAgSaveSubsystem::Get(this).LoadLatestSlot())
+	{
+		return;
+	}
+	AAgGameMode* GameMode = GetWorld()->GetAuthGameMode<AAgGameMode>();
+	if (!GameMode || !GameMode->OpenLastStage())
 	{
 		OpenScreen(StageSelectScreenClass);
 	}

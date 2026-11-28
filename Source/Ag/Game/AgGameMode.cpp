@@ -80,6 +80,18 @@ void AAgGameMode::OpenStage(FName Map)
 	}
 }
 
+bool AAgGameMode::OpenLastStage()
+{
+	const FName LastStage = UAgSaveSubsystem::Get(this).GetLastStage();
+	if (LastStage.IsNone() || !FindStages().ContainsByPredicate([LastStage](const FAgStage& Stage)
+	{ return Stage.Map == LastStage; }))
+	{
+		return false;
+	}
+	OpenStage(LastStage);
+	return true;
+}
+
 void AAgGameMode::RestartStage()
 {
 	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))

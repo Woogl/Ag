@@ -34,6 +34,9 @@ public:
 
 	void OpenFrontEnd();
 	void OpenStage(FName Map);
+
+	/** 불러온 슬롯의 마지막 스테이지가 스테이지 목록에 있으면 그 스테이지로 이동합니다. 이동하지 않으면 false입니다. */
+	bool OpenLastStage();
 	void RestartStage();
 	void QuitGame();
 
