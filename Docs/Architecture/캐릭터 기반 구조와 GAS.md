@@ -151,7 +151,7 @@ classDiagram
 | `AAgGameMode` | `AGameModeBase` | 시작 화면(타이틀 또는 HUD) 열기, 죽은 캐릭터가 직접 알리는 사망 받기(`HandleCharacterDied`, 구독이 없어 플레이 중에 생긴 캐릭터도 같은 길로 옴), 승패 판정(Stage Clear 조건은 가상 함수 `IsStageCleared`, 기본은 죽은 캐릭터가 보스)과 전투 결과 화면 열기, 결과가 정해지기 전에 보스가 죽으면 그 보스의 값으로 슬로우모션과 보스 처치 카메라 연출 발동, 스테이지 목록 찾기(`FindStages`: `Content/Maps`의 레벨에서 처음 열리는 레벨을 뺀 것), 맵 이동(타이틀, 목록의 스테이지, 불러온 슬롯의 마지막 스테이지가 목록에 있을 때 그 스테이지(`OpenLastStage`), 다시 시작, 종료), 레벨 시작의 로딩 화면(`StartPlay`에서 생성을 기다리는 적 스포너가 있으면 `LoadingScreenClass`를 Menu 레이어에 열고, 모두 끝나면 닫으며 걸린 시간을 로그로 남김), 적 되돌리기(`RespawnEnemies`: 모든 스포너의 적을 지운 뒤 모두 다시 생성), 던전을 시작하는 자리(엔진 `RestartPlayer`를 재정의해, 저장 서브시스템이 기억하는 휴식한 체크포인트가 레벨에 있으면 그 체크포인트의 시작하는 자리에 엔진 `RestartPlayerAtTransform`으로 스폰하고 없으면 엔진의 시작 지점), 저장 서브시스템에 알리기(스테이지로 이동할 때 마지막 스테이지, 타이틀로 이동할 때 슬롯 내려놓기, Stage Clear가 정해질 때 그 던전의 던전 진행 지우기), Game Over에서 버튼 없이 다시 시작하는지(가상 함수 `ShouldRestartOnGameOver`, 기본은 다시 시작) |
 | `AAgGameState` | `AGameStateBase` | 스테이지 결과(`EAgStageResult`, 먼저 정해진 것으로 한 번만 정함)와 변경 알림(`OnStageResultChanged`) |
 | `UAgCombatStatsSubsystem` | `UGameInstanceSubsystem` | 레벨을 다시 열어도 이어 쓰는 이번 실행의 전투 통계 기록 파일(`Saved/CombatStats/<실행 시각>.json`, 기록이 끝날 때마다 엔진 `FJsonObjectConverter`로 전체를 다시 씀) |
-| `UAgSaveSubsystem` | `UGameInstanceSubsystem` | 저장 슬롯과 지금 진행의 주인(위 '저장'). 슬롯 6개의 파일을 읽어 상태(빈 슬롯, 저장됨, 읽을 수 없음)와 표시할 값을 돌려주기(`ReadSlots`), 새 게임(빈 슬롯 중 가장 앞)·불러오기·가장 늦게 저장한 슬롯 불러오기·지우기·내려놓기, 지금 진행 읽기(보유 수, 마지막 스테이지, 그 월드의 휴식한 체크포인트, 장치가 열렸는지), 값을 바꾸고 바로 저장하는 함수(보유 수, 마지막 스테이지, 휴식한 체크포인트, 연 장치, 던전 진행 지우기). 저장할 때마다 플레이 시간을 더하고 저장한 시각을 적음 |
+| `UAgSaveSubsystem` | `UGameInstanceSubsystem` | 저장 슬롯과 지금 진행의 주인(위 '저장'). 슬롯 6개의 파일을 읽어 상태(빈 슬롯, 저장됨, 읽을 수 없음)와 표시할 값을 돌려주기(`ReadSlots`), 새 게임(고른 슬롯, 저장이 있으면 덮어씀)·불러오기·가장 늦게 저장한 슬롯 불러오기·지우기·내려놓기, 지금 진행 읽기(보유 수, 마지막 스테이지, 그 월드의 휴식한 체크포인트, 장치가 열렸는지), 값을 바꾸고 바로 저장하는 함수(보유 수, 마지막 스테이지, 휴식한 체크포인트, 연 장치, 던전 진행 지우기). 저장할 때마다 플레이 시간을 더하고 저장한 시각을 적음 |
 | `UAgSaveGame` | `USaveGame` | 슬롯 하나의 저장 내용. 아이템별 보유 수, 던전(레벨 패키지 이름)마다 휴식한 체크포인트와 연 장치의 액터 이름(`FAgDungeonProgress`), 마지막 스테이지, 플레이 시간, 저장한 시각 |
 | `UAgCombatStatsComponent` | `UActorComponent` | 플레이어의 지금 전투 기록. 전투 중인 적 목록이 비었다가 생기면 시작하고 비면 끝내며(플레이어 사망 → 사망, 상대한 적이 모두 사망 → 처치, 그 밖 → 이탈), Stage Clear가 정해지면 바로 처치로 끝냄. 패리·극한 회피는 플레이어 ASC의 `Event.Parry`·`Event.PerfectDodge`, 피격은 엔진 `OnGameplayEffectAppliedDelegateToSelf`의 `Effect.Damage.Result.Hit`로 세고, 전투 시간은 일시정지에 멈추고 시간 배율을 받지 않는 엔진 시계(`GetAudioTimeSeconds`)로 잼. 스테이지 결과가 정해진 뒤에 끝난 기록을 시뮬레이션 룸 결과창에 내줌(`GetStageResultStats`) |
 | `UAgCombatSubsystem` | `UWorldSubsystem` | 전투 중인 적 목록(`FAgEnemyAITask_Combat`이 등록·해제, `GetCombatants`)과 변경 알림(`OnCombatantsChanged`), 목록의 보스(`FindBoss`), 플레이어가 처형하는 동안의 패턴 금지(`ArePatternsBlocked`), 패턴 시작 허가(`CanStartPattern`: 패턴 금지, 패턴 후딜레이, 동시 공격 수의 차례)와 공격 시작·끝(`StartAttack`, `EndAttack`, 끝나면 재공격 대기), 적 그룹(그룹 이름별 그룹원과 사망한 그룹원의 인식이 끝나는 시각, `IsGroupNoticingTarget`: 살아 있는 그룹원의 자기 감각을 OR. 그룹원이 모두 사라진 그룹은 지워, 다시 생성된 그룹이 이전 인식을 잇지 않음) |
@@ -160,11 +160,13 @@ classDiagram
 | `AAgCharacterPreview` | `AActor` | 캐릭터 클래스 하나를 AI 빙의 없이 스폰해 정면의 씬 캡처(`Capture`)로 렌더 타깃에 그림. 띄운 캐릭터는 씬 캡처에만 보이고, 자기 조명(`Light`)과 함께 라이팅 채널 1에만 두어 레벨의 조명·그림자와 섞이지 않음. 게임이 멈춘 동안에도 메시와 캡처가 틱하며, 메시 범위로 캡처 높이와 거리를 맞춤 |
 | `UAgTimeSubsystem` | `UWorldSubsystem` | 게임 전체 시간 배율의 주인. 슬로우모션(길이는 실제 시간이고, 겹치면 더 느린 속도와 더 긴 남은 시간을 고름)과 궁극기 시간 정지(요청한 캐릭터만 시간 보정으로 계속 움직이고, 정지 중에 요청된 슬로우모션은 정지가 끝날 때 시작) |
 | `UAgLanguageSubsystem` | `UGameInstanceSubsystem` | 게임 언어의 주인. 시작할 때 문구 표의 언어 칼럼을 엔진 번역(Polyglot 텍스트 데이터)으로 등록함. 엔진은 번역을 등록하기 전에 시작 언어를 고르므로, 등록한 뒤 엔진과 같은 순서(명령줄, 저장한 언어, 윈도우 언어)로 원하는 언어를 찾아 번역이 있으면 그 언어, 없으면 영어로 다시 고름. 언어 바꾸기는 엔진 `SetCurrentLanguage`로 저장하고, 에디터(PIE)에서는 에디터 UI 언어가 바뀌지 않게 엔진의 게임 번역 미리 보기만 바꿈 |
-| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴 화면(타이틀, 스테이지 선택, Load Game, 삭제 확인 창, Settings, 적 선택, 일시정지, 전투 결과)과 로딩 화면(`WBP_LoadingScreen`)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. 로딩 화면은 이 입력 모드라 떠 있는 동안 게임 입력과 HUD의 뒤로 액션(Esc)이 들어가지 않음. Esc로 닫는 화면(스테이지 선택, Load Game, 삭제 확인 창, Settings, 일시정지)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
-| `UAgTitleScreen` | `UAgMenuScreen` | 타이틀 화면. 켜질 때마다(위 화면에서 돌아올 때 포함) 저장 서브시스템의 슬롯 상태로 Continue·New Game·Load Game 버튼을 접거나 보이고, 첫 포커스는 보이는 맨 위 버튼. 지난번 포커스를 되돌리는 엔진 기능(`bAutoRestoreFocus`)을 켬. Continue는 가장 늦게 저장한 슬롯을 불러와 마지막 스테이지로 들어가고, 들어갈 수 없으면 New Game처럼 스테이지 선택 화면을 엶 |
+| `UAgMenuScreen` | `UCommonActivatableWidget` | 메뉴 화면(타이틀, 스테이지 선택, New Game, Load Game, 확인 창, Settings, 적 선택, 일시정지, 전투 결과)과 로딩 화면(`WBP_LoadingScreen`)의 공통 부모. 메뉴 입력 모드(마우스를 잡지 않음)를 정함. 로딩 화면은 이 입력 모드라 떠 있는 동안 게임 입력과 HUD의 뒤로 액션(Esc)이 들어가지 않음. Esc로 닫는 화면(스테이지 선택, New Game, Load Game, 확인 창, Settings, 일시정지)은 엔진 뒤로 처리(`bIsBackHandler`)를 켬 |
+| `UAgTitleScreen` | `UAgMenuScreen` | 타이틀 화면. 켜질 때마다(위 화면에서 돌아올 때 포함) 저장 서브시스템의 슬롯 상태로 Continue·Load Game 버튼을 접거나 보이고, 첫 포커스는 보이는 맨 위 버튼. 지난번 포커스를 되돌리는 엔진 기능(`bAutoRestoreFocus`)을 켬. Continue는 가장 늦게 저장한 슬롯을 불러와 마지막 스테이지로 들어가고, 들어갈 수 없으면 스테이지 선택 화면을 엶. New Game은 New Game 화면을 엶 |
 | `UAgStageSelectScreen` | `UAgMenuScreen` | 스테이지 선택 화면. 켜질 때마다 스테이지 목록을 채움. 뒤로 처리(Back 버튼과 Esc)에서 슬롯을 내려놓음 |
-| `UAgLoadGameScreen` | `UAgMenuScreen` | Load Game 화면. 슬롯 줄(`SlotRowClass`)을 슬롯 수만큼 한 번 만들어 두고 켜질 때마다 저장 파일을 읽어 다시 채움. 포커스를 줄 슬롯을 기억해(처음은 가장 늦게 저장한 슬롯, 불러오거나 지우려던 줄) 첫 포커스 대상으로 답함. 줄을 실행하면 슬롯을 불러와 Continue와 같이 마지막 스테이지로 들어가고, Delete는 Modal 레이어에 삭제 확인 창을 엶 |
-| `UAgSaveSlotRow` | `UCommonUserWidget` | 슬롯 줄 하나. 저장된 슬롯은 불러오기 버튼(`UAgSaveSlotButton`: `UAgButton`에 스테이지·플레이 시간·저장한 시각 글자를 더함)과 Delete 버튼을, 빈 슬롯과 읽을 수 없는 저장은 버튼 대신 슬롯 이름과 상태 글자만 보임. Delete 버튼은 접지 않고 숨겨 줄의 자리를 맞춤. 슬롯 이름 형식과 상태 글자는 위젯 블루프린트 기본값 |
+| `UAgSaveSlotScreen` | `UAgMenuScreen` | 슬롯을 고르는 화면(New Game, Load Game)의 부모. 슬롯 줄(`SlotRowClass`)을 슬롯 수만큼 한 번 만들어 두고 켜질 때마다 저장 파일을 읽어 다시 채움. 포커스를 줄 슬롯을 기억해 첫 포커스 대상으로 답하고(실행하거나 확인 창을 연 줄, 없으면 자식이 고른 슬롯), 확인 창(`ConfirmDialogClass`)을 Modal 레이어에 열고, 스테이지 선택 화면(`StageSelectScreenClass`)을 엶. 줄을 실행했을 때 할 일(`HandleSlotPicked`)과 처음 포커스할 슬롯(`FindDefaultFocusSlot`)은 자식이 정함 |
+| `UAgNewGameScreen` | `UAgSaveSlotScreen` | New Game 화면. 모든 줄을 버튼으로 보이게 하고(`bPickAnySlot`), 빈 슬롯은 바로, 저장이 있는 슬롯은 덮어쓰기 확인 창(`OverwriteMessage`) 뒤에 새 게임을 만들어 스테이지 선택 화면을 엶. 처음 포커스는 가장 앞의 빈 슬롯, 없으면 첫 슬롯 |
+| `UAgLoadGameScreen` | `UAgSaveSlotScreen` | Load Game 화면. 줄을 실행하면 슬롯을 불러와 Continue와 같이 마지막 스테이지로 들어가고, Delete는 삭제 확인 창(`DeleteMessage`) 뒤에 슬롯을 지움. 처음 포커스는 가장 늦게 저장한 슬롯 |
+| `UAgSaveSlotRow` | `UCommonUserWidget` | 슬롯 줄 하나. Load Game 화면에서는 저장된 슬롯만 슬롯 버튼(`UAgSaveSlotButton`: `UAgButton`에 스테이지·플레이 시간·저장한 시각 글자를 더함)과 Delete 버튼을 보이고, 빈 슬롯과 읽을 수 없는 저장은 버튼 대신 슬롯 이름과 상태 글자만 보임. 이때 Delete 버튼은 접지 않고 숨겨 줄의 자리를 맞춤. New Game 화면에서는 모든 슬롯을 슬롯 버튼으로 보이고(빈 슬롯과 읽을 수 없는 저장은 스테이지 자리에 상태 글자) Delete 버튼을 접음. 슬롯 이름 형식과 상태 글자는 위젯 블루프린트 기본값 |
 | `UAgConfirmDialog` | `UAgMenuScreen` | 문구와 Yes·No의 확인 창. Yes면 창을 닫고 받은 델리게이트를 부르고, No와 Esc는 창만 닫음. 뒤의 메뉴 화면도 켜져 있으므로 네 방향의 엔진 내비게이션 규칙을 Stop으로 두어 방향키 선택이 창 밖으로 넘어가지 않게 함 |
 | `UAgBattleResultScreen` | `UAgMenuScreen` | 전투 결과 화면. 스테이지 결과로 제목을 고르고 페이드(`FadeInAnimation`)가 끝나면 버튼을 켬. Game Over이고 게임 모드가 버튼 없이 다시 시작한다고 답하면 버튼을 숨기고(접지 않아 제목의 자리가 같음), 페이드 뒤에 모습을 바꾸지 않는 위젯 애니메이션(`RestartDelayAnimation`)을 이어 재생한 다음 스테이지를 다시 시작. 시뮬레이션 룸에서는 전투 통계 표를 채움 |
 | `UAgSettingsScreen` | `UAgMenuScreen` | 타이틀의 Settings 화면. 안의 Settings 내용(`SettingsPanel`)은 엔진 인스턴스 값 `bAutoActivate`로 화면과 함께 켜지고 스택에서 빠질 때 꺼지며, 첫 포커스는 그 내용의 포커스 대상. Back 버튼은 화면을 끔 |
@@ -267,14 +269,18 @@ classDiagram
     AAgGameMode ..> UAgSaveSubsystem : 마지막 스테이지<br>던전 진행 지우기
     AAgGameMode ..> AAgCheckpoint : 시작하는 자리
     UAgMenuScreen <|-- UAgTitleScreen
-    UAgMenuScreen <|-- UAgLoadGameScreen
+    UAgMenuScreen <|-- UAgSaveSlotScreen
+    UAgSaveSlotScreen <|-- UAgNewGameScreen
+    UAgSaveSlotScreen <|-- UAgLoadGameScreen
     UAgMenuScreen <|-- UAgConfirmDialog
+    UAgTitleScreen ..> UAgNewGameScreen : NewGameScreenClass
     UAgTitleScreen ..> UAgLoadGameScreen : LoadGameScreenClass
-    UAgTitleScreen ..> UAgSaveSubsystem : 슬롯 상태<br>새 게임·이어 하기
-    UAgLoadGameScreen *-- UAgSaveSlotRow : SlotList 항목
-    UAgSaveSlotRow *-- UAgSaveSlotButton : LoadButton
+    UAgTitleScreen ..> UAgSaveSubsystem : 슬롯 상태<br>이어 하기
+    UAgSaveSlotScreen *-- UAgSaveSlotRow : SlotList 항목
+    UAgSaveSlotRow *-- UAgSaveSlotButton : SlotButton
     UAgButton <|-- UAgSaveSlotButton
-    UAgLoadGameScreen ..> UAgConfirmDialog : ConfirmDialogClass
+    UAgSaveSlotScreen ..> UAgConfirmDialog : ConfirmDialogClass
+    UAgNewGameScreen ..> UAgSaveSubsystem : 새 게임
     UAgLoadGameScreen ..> UAgSaveSubsystem : 불러오기·지우기
 ```
 
