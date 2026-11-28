@@ -8,6 +8,7 @@
 
 class UAgButton;
 class UAgLoadGameScreen;
+class UAgNewGameScreen;
 class UAgSettingsScreen;
 class UAgStageSelectScreen;
 
@@ -26,6 +27,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgStageSelectScreen> StageSelectScreenClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UAgNewGameScreen> NewGameScreenClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UAgLoadGameScreen> LoadGameScreenClass;
@@ -50,6 +54,5 @@ protected:
 
 private:
 	void ContinueGame();
-	void StartNewGame();
 	void OpenScreen(TSubclassOf<UCommonActivatableWidget> ScreenClass);
 };

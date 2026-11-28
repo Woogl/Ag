@@ -43,8 +43,8 @@ public:
 	/** 슬롯 파일을 모두 읽어 슬롯 번호순으로 돌려줍니다. */
 	TArray<FAgSaveSlotInfo> ReadSlots() const;
 
-	/** 빈 슬롯 중 번호가 가장 작은 슬롯에 새 게임을 만들어 저장합니다. 빈 슬롯이 없으면 false입니다. */
-	bool StartNewGame();
+	/** 그 슬롯에 새 게임을 만들어 바로 저장하고 지금 진행으로 삼습니다. 저장된 슬롯이면 덮어씁니다. */
+	void StartNewGame(int32 Slot);
 
 	bool LoadSlot(int32 Slot);
 

@@ -90,21 +90,13 @@ TArray<FAgSaveSlotInfo> UAgSaveSubsystem::ReadSlots() const
 	return Slots;
 }
 
-bool UAgSaveSubsystem::StartNewGame()
+void UAgSaveSubsystem::StartNewGame(int32 Slot)
 {
-	const TArray<FAgSaveSlotInfo> Slots = ReadSlots();
-	const int32 Slot = Slots.IndexOfByPredicate([](const FAgSaveSlotInfo& Info)
-	{ return Info.State == EAgSaveSlotState::Empty; });
-	if (Slot == INDEX_NONE)
-	{
-		return false;
-	}
-
+	// 엔진은 슬롯 파일을 통째로 다시 쓰므로, 덮어쓸 때 옛 파일을 따로 지우지 않습니다.
 	Current = CreateNewGame();
 	CurrentSlot = Slot;
 	PlayTimeStamp = FPlatformTime::Seconds();
 	Save();
-	return true;
 }
 
 bool UAgSaveSubsystem::LoadSlot(int32 Slot)
