@@ -10,6 +10,7 @@
 class UAnimMontage;
 class UAnimSequenceBase;
 class UEdGraph;
+class UEdGraphNode;
 class USkeleton;
 
 USTRUCT(BlueprintType)
@@ -96,4 +97,12 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
 	static UEdGraph* AddAnimStateTransition(UEdGraph* StateMachineGraph, FName From, FName To, int32 Priority, bool bAutomaticRule);
+
+	/**
+	 * 컨트롤 릭·링크된 애님 그래프 노드처럼 대상 클래스의 변수를 핀으로 꺼내는 애님 그래프 노드에서, 변수 PropertyName의 핀을
+	 * 보이거나 숨깁니다. 노드를 다시 만들므로 대상 클래스를 바꾼 직후에 불러도 됩니다.
+	 * @return 그런 노드가 아니거나 대상 클래스에 그 변수가 없으면 false입니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ag|Editor", meta = (AICallable))
+	static bool SetAnimNodeVariablePinVisible(UEdGraphNode* Node, FName PropertyName, bool bVisible);
 };

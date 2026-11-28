@@ -83,6 +83,7 @@ void UAgAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	// 행동 몽타주가 착지를 맡으면, 그 몽타주가 끝날 때 뒤에서 재생되던 착지 모션이 드러나지 않도록 바로 끝냅니다.
 	const bool bShouldMove = GroundSpeed > AgAnimInstancePrivate::MinMoveSpeed && !Movement->GetCurrentAcceleration().IsNearlyZero();
 	bShouldLeaveLand = bIsInAir || bShouldMove || IsSlotActive(FAnimSlotGroup::DefaultSlotName);
+	bShouldDoFootIK = !bIsInAir && !IsAnyMontagePlaying();
 
 	const UAbilitySystemComponent* AbilitySystem = Character->GetAbilitySystemComponent();
 	bIsGuarding = GuardMoveBlendSpace && AbilitySystem->HasMatchingGameplayTag(AgGameplayTags::State_Guarding);

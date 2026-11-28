@@ -103,6 +103,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Locomotion")
 	bool bIsGroggy = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = "FootIK")
+	bool bShouldDoFootIK = false;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Aim")
 	float AimPitch = 0.f;
 

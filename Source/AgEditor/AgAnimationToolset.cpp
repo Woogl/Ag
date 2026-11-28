@@ -2,6 +2,7 @@
 
 #include "AgAnimationToolset.h"
 
+#include "AnimGraphNode_CustomProperty.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Animation/Skeleton.h"
@@ -11,6 +12,7 @@
 #include "AnimationStateMachineGraph.h"
 #include "AnimationStateMachineSchema.h"
 #include "EdGraph/EdGraphSchema.h"
+#include "Kismet2/BlueprintEditorUtils.h"
 
 namespace AgAnimationToolsetPrivate
 {
@@ -154,4 +156,32 @@ UEdGraph* UAgAnimationToolset::AddAnimStateTransition(UEdGraph* StateMachineGrap
 	// 엔진은 새로 놓은 전환에 관성 블렌드 대체를 켜지만, 애님 그래프에 관성 노드가 없어 요청이 오류만 남긴다.
 	Transition->bAllowInertializationForSelfTransitions = false;
 	return Transition->BoundGraph;
+}
+
+bool UAgAnimationToolset::SetAnimNodeVariablePinVisible(UEdGraphNode* Node, FName PropertyName, bool bVisible)
+{
+	UAnimGraphNode_CustomProperty* CustomPropertyNode = Cast<UAnimGraphNode_CustomProperty>(Node);
+	if (!CustomPropertyNode)
+	{
+		return false;
+	}
+
+	// 대상 클래스를 노드 값으로만 바꾸면 변수 목록이 아직 옛 클래스 것이라, 먼저 노드를 다시 만들어 목록을 채웁니다.
+	CustomPropertyNode->ReconstructNode();
+
+	// 엔진은 변수 핀 목록과 그 핀을 켜는 SetCustomPinVisibility를 노드의 상세 패널에만 열어 두어 리플렉션으로 고칩니다.
+	const FArrayProperty* PinsProperty = FindFProperty<FArrayProperty>(UAnimGraphNode_CustomProperty::StaticClass(), TEXT("CustomPinProperties"));
+	TArray<FOptionalPinFromProperty>& Pins = *PinsProperty->ContainerPtrToValuePtr<TArray<FOptionalPinFromProperty>>(CustomPropertyNode);
+	FOptionalPinFromProperty* Pin = Pins.FindByPredicate([PropertyName](const FOptionalPinFromProperty& Candidate)
+	{ return Candidate.PropertyName == PropertyName; });
+	if (!Pin)
+	{
+		return false;
+	}
+
+	CustomPropertyNode->Modify();
+	Pin->bShowPin = bVisible;
+	CustomPropertyNode->ReconstructNode();
+	FBlueprintEditorUtils::MarkBlueprintAsStructurallyModified(FBlueprintEditorUtils::FindBlueprintForNodeChecked(CustomPropertyNode));
+	return true;
 }
